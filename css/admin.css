@@ -14,8 +14,12 @@ body.admin{background:var(--surface)}
 .conn[data-state="on"]{color:#7FD6D2}
 .conn[data-state="on"] i{background:#16A6A1;box-shadow:0 0 0 3px rgba(22,166,161,.25)}
 .abar-actions{display:flex;align-items:center;gap:10px;margin-inline-start:auto}
-.alink{color:#7FD6D2;font-size:13.5px;text-decoration:none}
-.alink:hover{color:#fff;text-decoration:underline}
+.btn-open{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 14px;border-radius:999px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.06);color:#CFEFEE;font-size:13.5px;font-weight:600;text-decoration:none;white-space:nowrap;transition:background .2s ease,border-color .2s ease,color .2s ease,transform .2s ease}
+.btn-open svg{width:15px;height:15px;transition:transform .2s ease}
+.btn-open:hover{background:color-mix(in srgb,var(--teal) 24%,transparent);border-color:color-mix(in srgb,var(--teal) 70%,transparent);color:#fff}
+.btn-open:hover svg{transform:translate(2px,-2px)}
+.btn-open:active{transform:translateY(1px)}
+.btn-open:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
 .badge-dirty{font-size:12px;font-weight:700;color:#0B1F27;background:#F5C451;border-radius:999px;padding:4px 10px}
 
 /* ---------- Shell ---------- */
