@@ -1,66 +1,34 @@
 [
   {
-    "name": {
-      "en": "r",
-      "ar": "r",
-      "ku": "r"
-    },
-    "role": {
-      "en": "r",
-      "ar": "r",
-      "ku": "r"
-    },
+    "name": null,
+    "role": null,
+    "photo": null
+  },
+  {
+    "name": null,
+    "role": null,
+    "photo": null
+  },
+  {
+    "name": null,
+    "role": null,
+    "photo": null
+  },
+  {
+    "name": null,
+    "role": null,
     "photo": null
   },
   {
     "name": {
-      "en": "r",
-      "ar": "r",
-      "ku": "r"
+      "en": "",
+      "ar": "",
+      "ku": ""
     },
     "role": {
-      "en": "r",
-      "ar": "r",
-      "ku": "r"
-    },
-    "photo": null
-  },
-  {
-    "name": {
-      "en": "r",
-      "ar": "r",
-      "ku": "r"
-    },
-    "role": {
-      "en": "r",
-      "ar": "r",
-      "ku": "r"
-    },
-    "photo": null
-  },
-  {
-    "name": {
-      "en": "r",
-      "ar": "r",
-      "ku": "r"
-    },
-    "role": {
-      "en": "r",
-      "ar": "r",
-      "ku": "r"
-    },
-    "photo": null
-  },
-  {
-    "name": {
-      "en": "r",
-      "ar": "r",
-      "ku": "r"
-    },
-    "role": {
-      "en": "rr",
-      "ar": "rr",
-      "ku": "r"
+      "en": "",
+      "ar": "",
+      "ku": ""
     },
     "photo": null
   }
