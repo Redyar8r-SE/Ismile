@@ -352,8 +352,9 @@ function buildForm() {
     const tab = document.createElement("button");
     tab.type = "button";
     tab.className = "gnav" + (index === 0 ? " is-active" : "");
-    tab.textContent = group.title;
     tab.dataset.for = group.id;
+    tab.innerHTML = `<span class="n">${index + 1}</span><span class="t"></span><span class="hits" hidden></span>`;
+    tab.querySelector(".t").textContent = group.title;
     tab.addEventListener("click", () => showGroup(group.id));
     nav.append(tab);
 
@@ -361,13 +362,51 @@ function buildForm() {
     section.className = "group";
     section.id = `group-${group.id}`;
     section.hidden = index !== 0;
-    section.innerHTML = `<h2>${group.title}</h2><p class="ghint">${group.hint}</p>`;
 
-    if (group.kind === "speakers") buildSpeakers(section);
-    else if (group.kind === "photos") buildPhotos(section);
-    else if (group.kind === "program") buildProgram(section, listContext);
-    else if (group.kind === "list") buildList(group, section, listContext);
-    else buildTextGroup(group, section);
+    const head = document.createElement("div");
+    head.className = "ghead";
+    head.innerHTML = `<h2></h2><p></p>`;
+    head.querySelector("h2").textContent = `${index + 1}. ${group.title}`;
+    head.querySelector("p").textContent = group.where || "";
+    section.append(head);
+
+    group.blocks.forEach((block) => {
+      const card = document.createElement("div");
+      card.className = "block";
+
+      if (block.title) {
+        const bhead = document.createElement("div");
+        bhead.className = "bhead";
+        const h3 = document.createElement("h3");
+        h3.textContent = block.title;
+        bhead.append(h3);
+        if (block.type === "text") {
+          const count = document.createElement("span");
+          count.className = "count";
+          count.textContent = `${block.fields.length} texts`;
+          bhead.append(count);
+        }
+        card.append(bhead);
+      }
+
+      const body = document.createElement("div");
+      body.className = "bbody";
+      if (block.hint) {
+        const hint = document.createElement("p");
+        hint.className = "ghint";
+        hint.textContent = block.hint;
+        body.append(hint);
+      }
+
+      if (block.type === "speakers") buildSpeakers(body);
+      else if (block.type === "photos") buildPhotos(body);
+      else if (block.type === "program") buildProgram(body, listContext);
+      else if (block.type === "list") buildList(block, body, listContext);
+      else buildTextGroup(block, body);
+
+      card.append(body);
+      section.append(card);
+    });
 
     main.append(section);
   });
@@ -376,6 +415,42 @@ function buildForm() {
 function showGroup(id) {
   document.querySelectorAll(".group").forEach((s) => { s.hidden = s.id !== `group-${id}`; });
   document.querySelectorAll(".gnav").forEach((b) => b.classList.toggle("is-active", b.dataset.for === id));
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+// Search: hide the fields that do not match, and show how many each step has.
+function runSearch(query) {
+  const needle = query.trim().toLowerCase();
+  let firstHit = null;
+
+  GROUPS.forEach((group) => {
+    const section = document.getElementById(`group-${group.id}`);
+    const tab = document.querySelector(`.gnav[data-for="${group.id}"]`);
+    const hits = tab.querySelector(".hits");
+    const fields = [...section.querySelectorAll(".field")];
+    let found = 0;
+
+    fields.forEach((field) => {
+      if (!needle) { field.hidden = false; return; }
+      const text = field.textContent.toLowerCase();
+      const values = [...field.querySelectorAll("input, textarea")].map((i) => i.value.toLowerCase()).join(" ");
+      const match = text.includes(needle) || values.includes(needle);
+      field.hidden = !match;
+      if (match) found += 1;
+    });
+
+    section.querySelectorAll(".block").forEach((block) => {
+      const own = [...block.querySelectorAll(".field")];
+      block.hidden = Boolean(needle) && own.length > 0 && own.every((f) => f.hidden);
+    });
+
+    hits.hidden = !needle || !found;
+    hits.textContent = found ? String(found) : "";
+    tab.classList.toggle("is-empty", Boolean(needle) && !found);
+    if (needle && found && !firstHit) firstHit = group.id;
+  });
+
+  if (needle && firstHit) showGroup(firstHit);
 }
 
 // ---------- connection ----------
@@ -386,6 +461,8 @@ async function connect(token) {
     $("who").textContent = user;
     $("connected").hidden = false;
     $("connectForm").hidden = true;
+    $("connState").dataset.state = "on";
+    $("connText").textContent = `Connected as ${user}`;
     say(`Connected as ${user}. Changes you save go straight to the website.`, "ok");
     await refreshPhotos();
     return true;
@@ -393,6 +470,8 @@ async function connect(token) {
     setToken("");
     $("connected").hidden = true;
     $("connectForm").hidden = false;
+    $("connState").dataset.state = "off";
+    $("connText").textContent = "Not connected";
     say(error.message, "bad");
     return false;
   }
@@ -464,10 +543,13 @@ async function start() {
     setToken("");
     $("connected").hidden = true;
     $("connectForm").hidden = false;
+    $("connState").dataset.state = "off";
+    $("connText").textContent = "Not connected";
     say("Key removed from this browser.", "info");
   });
   $("saveBtn").addEventListener("click", saveToGitHub);
   $("downloadBtn").addEventListener("click", downloadFiles);
+  $("search").addEventListener("input", (event) => runSearch(event.target.value));
 
   // Ctrl + V anywhere: the picture goes to the speaker row you last clicked,
   // otherwise into the photo list.

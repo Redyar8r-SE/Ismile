@@ -17,7 +17,7 @@ const f = (key, label) => ({ key, label });
 const many = (keys) => keys.map((key) => (Array.isArray(key) ? f(key[0], key[1]) : f(key)));
 const numbered = (count, build) => Array.from({ length: count }, (_, i) => build(i + 1)).flat();
 
-export const GROUPS = [
+const PARTS = [
   // ---------- lists with their own data files ----------
   {
     id: "speakers", title: "Speakers", kind: "speakers",
@@ -266,6 +266,79 @@ export const GROUPS = [
       ["foot_org", "Organisers line"], ["foot_links", "Links column title"],
       ["foot_contact", "Contact column title"], ["legal", "Copyright line"],
     ]),
+  },
+];
+
+// ---------------------------------------------------------------------------
+// The admin follows the website from top to bottom. Each step is one screen and
+// may hold several blocks (the wording of a section plus its list of items).
+// ---------------------------------------------------------------------------
+const byId = Object.fromEntries(PARTS.map((part) => [part.id, part]));
+
+const text = (id, title) => ({ ...byId[id], type: "text", title: title ?? null });
+const list = (id, title) => ({ ...byId[id], type: "list", title: title ?? null });
+const special = (id, kind, title) => ({ ...byId[id], type: kind, title: title ?? null });
+
+export const GROUPS = [
+  {
+    id: "hero", title: "Top of the page", where: "The first screen visitors see",
+    blocks: [text("hero", "Title and subtitle"), text("ticket", "Ticket card")],
+  },
+  {
+    id: "stats", title: "Proven reach", where: "The dark panel with the three numbers",
+    blocks: [text("stats")],
+  },
+  {
+    id: "about", title: "About iSmile", where: "The story, the years, italk and the partner",
+    blocks: [text("about")],
+  },
+  {
+    id: "experience", title: "What happens", where: "The eight boxes about the two days",
+    blocks: [text("experience")],
+  },
+  {
+    id: "areas", title: "Scientific areas", where: "The eight numbered subject cards",
+    blocks: [text("areas")],
+  },
+  {
+    id: "program", title: "Program", where: "The day tabs and the schedule table",
+    blocks: [special("program", "program", "Days and sessions"), text("programText", "Wording around the table")],
+  },
+  {
+    id: "workshops", title: "Workshops", where: "The workshop cards with seats",
+    blocks: [list("workshopList", "The workshops"), text("workshopsText", "Wording on the cards")],
+  },
+  {
+    id: "speakers", title: "Speakers", where: "The speaker photos grid",
+    blocks: [special("speakers", "speakers", "The speakers"), text("speakersText", "Wording and placeholders")],
+  },
+  {
+    id: "sponsors", title: "Sponsors & partners", where: "Sponsor tiers and the trusted partner logos",
+    blocks: [list("sponsorTiers", "Sponsor tiers"), list("partnerList", "Trusted partners"), text("sponsorsText", "Wording")],
+  },
+  {
+    id: "companies", title: "For companies", where: "The three cards for companies",
+    blocks: [text("companies")],
+  },
+  {
+    id: "registration", title: "Registration", where: "The three-step form and its messages",
+    blocks: [text("registration")],
+  },
+  {
+    id: "venue", title: "Venue", where: "The hotel card, address and map",
+    blocks: [text("venue")],
+  },
+  {
+    id: "footer", title: "Footer", where: "The bottom of every page",
+    blocks: [text("footer")],
+  },
+  {
+    id: "menu", title: "Menu & buttons", where: "The top bar links, used on every screen",
+    blocks: [text("menu")],
+  },
+  {
+    id: "photos", title: "Photo library", where: "Every picture uploaded to the website",
+    blocks: [special("photos", "photos", null)],
   },
 ];
 

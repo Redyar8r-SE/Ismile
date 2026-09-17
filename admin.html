@@ -18,26 +18,42 @@
 
 <script type="module" src="js/admin/main.js"></script>
 </head>
-<body>
+<body class="admin">
 
-<header class="admin-top">
-  <div class="wrap">
-    <h1>iSmile admin</h1>
-    <span class="tag" id="repo">repository</span>
-    <a href="index.html">View the website ↗</a>
+<header class="abar">
+  <div class="abar-in">
+    <a class="abrand" href="index.html">
+      <svg width="26" height="26" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="15" fill="#16A6A1"/><path d="M8 14c2.5 5 11.5 5 14 0" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round"/></svg>
+      <span>iSmile <b>admin</b></span>
+    </a>
+    <span class="chip" id="repo">repository</span>
+    <span class="conn" id="connState" data-state="off"><i></i><span id="connText">Not connected</span></span>
+
+    <div class="abar-actions">
+      <a class="alink" href="index.html" target="_blank" rel="noopener">Open the website ↗</a>
+      <button type="button" class="btn btn-outline btn-sm" id="downloadBtn">Download files</button>
+      <span class="badge-dirty" id="dirty" hidden>Unsaved changes</span>
+      <button type="button" class="btn btn-primary btn-sm" id="saveBtn" disabled>Save to the website</button>
+    </div>
   </div>
 </header>
 
-<main class="admin-main">
-  <div class="wrap">
+<div class="ashell">
+  <aside class="aside">
+    <label class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input type="search" id="search" placeholder="Find a text…" autocomplete="off">
+    </label>
+    <nav class="steps" id="groupNav" aria-label="Sections of the website"></nav>
+  </aside>
 
+  <main class="acontent">
     <p class="msg is-info" id="msg" hidden></p>
 
-    <!-- Connection -->
-    <div class="card">
+    <section class="card connect" id="connectCard">
       <div id="connectForm">
         <h2>Connect to GitHub</h2>
-        <p>Paste your GitHub key once. It stays in this browser only, and it lets this page save your changes to the website.</p>
+        <p>Paste your GitHub key once. It stays in this browser only, and it lets this page save changes and photos straight to the website.</p>
         <ol>
           <li>Open <code>github.com/settings/personal-access-tokens/new</code></li>
           <li>Repository access → <b>Only select repositories</b> → choose <b>Ismile</b></li>
@@ -49,30 +65,15 @@
           <button type="button" class="btn btn-primary" id="connectBtn">Connect</button>
         </div>
       </div>
-      <div id="connected" hidden>
-        <div class="who">
-          <span>Connected as <b id="who"></b></span>
-          <button type="button" class="btn btn-outline btn-sm" id="disconnectBtn">Disconnect</button>
-        </div>
+      <div class="who" id="connected" hidden>
+        <span>Connected as <b id="who"></b> — changes save straight to the website.</span>
+        <button type="button" class="btn btn-outline btn-sm" id="disconnectBtn">Disconnect</button>
       </div>
-    </div>
+    </section>
 
-    <!-- Editor -->
-    <div class="admin-grid">
-      <nav class="gnavs" id="groupNav" aria-label="Sections"></nav>
-      <div>
-        <div id="groups"></div>
-        <div class="savebar">
-          <span class="spacer">Changes are saved to all three languages at once.</span>
-          <span class="dirty" id="dirty" hidden>Not saved yet</span>
-          <button type="button" class="btn btn-outline" id="downloadBtn">Download files</button>
-          <button type="button" class="btn btn-primary" id="saveBtn" disabled>Save to the website</button>
-        </div>
-      </div>
-    </div>
-
-  </div>
-</main>
+    <div id="groups"></div>
+  </main>
+</div>
 
 </body>
 </html>
