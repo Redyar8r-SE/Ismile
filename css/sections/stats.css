@@ -1,7 +1,9 @@
 /* ==========================================================
    Stats panel ("Proven reach")
    ========================================================== */
-.stats{background:linear-gradient(var(--hero-bg) 0 50%,var(--bg) 50% 100%);padding-bottom:8px}
+/* The hero colour continues behind the top of the panel, then fades into the
+   page background instead of stopping at a hard line. */
+.stats{background:linear-gradient(180deg,var(--hero-bg) 0 38%,var(--bg) 66% 100%);padding-bottom:8px}
 .panel{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-lg);display:grid;grid-template-columns:1fr 3fr;overflow:hidden;box-shadow:0 24px 48px -28px rgba(8,30,38,.55)}
 .panel .cap{padding:40px 36px;background:var(--navy);color:#fff;display:flex;flex-direction:column;justify-content:center;gap:10px;position:relative}
 .panel .cap::after{content:"";position:absolute;inset-block:36px;inset-inline-end:0;width:3px;background:var(--teal);border-radius:3px}
