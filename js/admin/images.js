@@ -1,5 +1,5 @@
 // Photos: shrink what the visitor pastes, then put it in assets/uploads/ on GitHub.
-import { readFile, writeFileBinary, listFolder } from "./github.js";
+import { writeBinary, listPhotos as storePhotos } from "./store.js";
 
 export const UPLOAD_DIR = "assets/uploads";
 const MAX_SIDE = 1600;      // big enough for a full-width photo, small enough to load fast
@@ -44,19 +44,12 @@ export async function upload(file) {
   const { blob, width, height, name } = await prepare(file);
   const path = `${UPLOAD_DIR}/${name}`;
   const bytes = new Uint8Array(await blob.arrayBuffer());
-  await writeFileBinary(path, bytes, `Admin: add photo ${name}`);
+  await writeBinary(path, bytes, `Admin: add photo ${name}`);
   return { path, width, height, size: blob.size };
 }
 
-// Photos already in the repository (newest first). An empty folder is fine.
-export async function listPhotos() {
-  const items = await listFolder(UPLOAD_DIR);
-  return items
-    .filter((item) => item.type === "file" && /\.(webp|png|jpe?g|gif)$/i.test(item.name))
-    .map((item) => item.path)
-    .sort()
-    .reverse();
-}
+// Photos already in the repository, newest first.
+export const listPhotos = storePhotos;
 
 // Used by the paste handler: the first image on the clipboard, if there is one.
 export function imageFromClipboard(event) {
@@ -65,4 +58,3 @@ export function imageFromClipboard(event) {
   return item ? item.getAsFile() : null;
 }
 
-export { readFile };

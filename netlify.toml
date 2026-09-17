@@ -1,0 +1,9 @@
+# Netlify serves the same files as GitHub Pages, plus the small admin server.
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200

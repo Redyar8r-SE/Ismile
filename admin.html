@@ -65,6 +65,15 @@
     <p class="msg is-info" id="msg" hidden></p>
 
     <section class="card connect" id="connectCard">
+      <div id="signinForm" hidden>
+        <h2>Sign in</h2>
+        <p>Use the email and password for this website. Your password is checked on the server; nothing secret is kept in this browser.</p>
+        <div class="row">
+          <input id="email" type="email" placeholder="Email" autocomplete="username">
+          <input id="password" type="password" placeholder="Password" autocomplete="current-password">
+          <button type="button" class="btn btn-primary" id="signinBtn">Sign in</button>
+        </div>
+      </div>
       <div id="connectForm">
         <h2>Connect to GitHub</h2>
         <p>Paste your GitHub key once. It stays in this browser only, and it lets this page save changes and photos straight to the website.</p>
@@ -80,8 +89,8 @@
         </div>
       </div>
       <div class="who" id="connected" hidden>
-        <span>Connected as <b id="who"></b> — changes save straight to the website.</span>
-        <button type="button" class="btn btn-outline btn-sm" id="disconnectBtn">Disconnect</button>
+        <span>Signed in as <b id="who"></b> — changes save straight to the website.</span>
+        <button type="button" class="btn btn-outline btn-sm" id="disconnectBtn">Sign out</button>
       </div>
     </section>
 

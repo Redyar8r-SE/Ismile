@@ -1,6 +1,7 @@
 // iSmile admin: edit every text, list and photo on the site, and save to GitHub.
 import { GROUPS, LANGS, DATA_FILES } from "./fields.js";
-import { getToken, setToken, whoAmI, readFile, writeFile, REPO } from "./github.js";
+import { REPO } from "./github.js";
+import * as store from "./store.js";
 import { upload, listPhotos, imageFromClipboard } from "./images.js";
 import { buildList, buildProgram } from "./lists.js";
 import { loadLock, makeLock, check, remember, isRemembered, forget, LOCK_FILE } from "./lock.js";
@@ -300,8 +301,8 @@ function buildPhotos(section) {
 
 // One upload path for every picture on the page.
 async function uploadImage(file, apply, redraw) {
-  if (!getToken()) {
-    say("Connect your GitHub key first — pictures are saved straight to the website.", "bad");
+  if (!store.ready()) {
+    say("Sign in first — pictures are saved straight to the website.", "bad");
     return null;
   }
   say(`Uploading ${file.name || "picture"}…`);
@@ -325,7 +326,7 @@ async function uploadImage(file, apply, redraw) {
 }
 
 async function refreshPhotos() {
-  if (!getToken()) return;
+  if (!store.ready()) return;
   try {
     state.photos = await listPhotos();
     state.renderers.photos?.();
@@ -333,7 +334,60 @@ async function refreshPhotos() {
 }
 
 // ---------- password ----------
+// Makes the ADMIN_PASSWORD_HASH line for the server settings. The password
+// itself never leaves this page.
+function buildPasswordTool(body) {
+  const box = document.createElement("div");
+  box.className = "pw-grid";
+  box.innerHTML = `
+    <label>Email for signing in<input type="email" id="srvEmail" autocomplete="username"></label>
+    <label>Password (at least 8 characters)<input type="password" id="srvPass" autocomplete="new-password"></label>`;
+
+  const actions = document.createElement("div");
+  actions.className = "pw-actions";
+  const make = document.createElement("button");
+  make.type = "button";
+  make.className = "btn btn-primary btn-sm";
+  make.textContent = "Make the two settings";
+  actions.append(make);
+
+  const out = document.createElement("pre");
+  out.className = "pw-out";
+  out.hidden = true;
+
+  const copy = document.createElement("button");
+  copy.type = "button";
+  copy.className = "btn btn-outline btn-sm";
+  copy.textContent = "Copy";
+  copy.hidden = true;
+  actions.append(copy);
+
+  make.addEventListener("click", async () => {
+    const email = box.querySelector("#srvEmail").value.trim();
+    const password = box.querySelector("#srvPass").value;
+    if (!email.includes("@")) return say("Write a real email address.", "bad");
+    if (password.length < 8) return say("Use a password of at least 8 characters.", "bad");
+    const lock = await makeLock(email, password);
+    out.textContent = `ADMIN_EMAIL = ${lock.email}
+ADMIN_PASSWORD_HASH = pbkdf2$150000$${lock.salt}$${lock.hash}`;
+    out.hidden = false;
+    copy.hidden = false;
+    box.querySelector("#srvPass").value = "";
+    say("Put these two lines in the server settings (Netlify → Site settings → Environment variables).", "ok");
+  });
+  copy.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(out.textContent); say("Copied.", "ok"); }
+    catch { say("Select the text and copy it.", "info"); }
+  });
+
+  const note = document.createElement("p");
+  note.className = "ghint";
+  note.textContent = "Use this when you set up the server, or whenever you want to change the password: paste the two lines into the server settings, then sign in with the new password.";
+  body.append(note, box, actions, out);
+}
+
 function buildSecurity(body) {
+  if (store.mode() === "server") return buildPasswordTool(body);
   const status = document.createElement("p");
   status.className = "ghint";
 
@@ -374,13 +428,11 @@ function buildSecurity(body) {
   }
 
   async function writeLock(lock) {
-    if (!getToken()) return say("Connect your GitHub key first — the password is saved with the website.", "bad");
+    if (!store.ready()) return say("Sign in first — the password is saved with the website.", "bad");
     say("Saving the password…");
     try {
-      let sha;
-      try { sha = (await readFile(LOCK_FILE)).sha; } catch { /* first time */ }
-      await writeFile(LOCK_FILE, `${JSON.stringify(lock, null, 2)}
-`, lock ? "Admin: set the admin password" : "Admin: remove the admin password", sha);
+      await store.writeText(LOCK_FILE, `${JSON.stringify(lock, null, 2)}
+`, "Admin: update the admin password");
       state.lock = lock?.hash ? lock : null;
       if (state.lock) remember(state.lock); else forget();
       refresh();
@@ -546,25 +598,48 @@ function runSearch(query) {
   if (needle && firstHit) showGroup(firstHit);
 }
 
-// ---------- connection ----------
-async function connect(token) {
-  setToken(token);
+// ---------- signing in ----------
+function showSignedIn(name) {
+  $("who").textContent = name;
+  $("connected").hidden = false;
+  $("connectForm").hidden = true;
+  $("signinForm").hidden = true;
+  $("connState").dataset.state = "on";
+  $("connText").textContent = `Signed in as ${name}`;
+}
+
+function showSignedOut() {
+  $("connected").hidden = true;
+  $("connectForm").hidden = store.mode() === "server";
+  $("signinForm").hidden = store.mode() !== "server";
+  $("connState").dataset.state = "off";
+  $("connText").textContent = "Not signed in";
+}
+
+async function signIn(email, password) {
   try {
-    const user = await whoAmI();
-    $("who").textContent = user;
-    $("connected").hidden = false;
-    $("connectForm").hidden = true;
-    $("connState").dataset.state = "on";
-    $("connText").textContent = `Connected as ${user}`;
-    say(`Connected as ${user}. Changes you save go straight to the website.`, "ok");
+    const name = await store.signIn(email, password);
+    showSignedIn(name);
+    say("Signed in. Your changes save straight to the website.", "ok");
     await refreshPhotos();
     return true;
   } catch (error) {
-    setToken("");
-    $("connected").hidden = true;
-    $("connectForm").hidden = false;
-    $("connState").dataset.state = "off";
-    $("connText").textContent = "Not connected";
+    showSignedOut();
+    say(error.message, "bad");
+    return false;
+  }
+}
+
+async function connect(token) {
+  try {
+    const name = await store.connectKey(token);
+    showSignedIn(name);
+    say(`Connected as ${name}. Changes you save go straight to the website.`, "ok");
+    await refreshPhotos();
+    return true;
+  } catch (error) {
+    store.signOut();
+    showSignedOut();
     say(error.message, "bad");
     return false;
   }
@@ -573,23 +648,22 @@ async function connect(token) {
 // ---------- saving ----------
 async function saveToGitHub() {
   if (!state.dirty) return;
-  if (!getToken()) return say("Connect your GitHub key first, or use “Download files” instead.", "bad");
+  if (!store.ready()) return say("Sign in first, or use “Download files” instead.", "bad");
 
   $("saveBtn").disabled = true;
   say("Saving…");
   try {
     for (const { code, label } of LANGS) {
       if (JSON.stringify(state.files[code]) === state.original[code]) continue;
-      const current = await readFile(langPath(code));
+      const current = await store.readFile(langPath(code));
       const merged = { ...JSON.parse(current.text), ...state.files[code] };
-      await writeFile(langPath(code), `${JSON.stringify(merged, null, 2)}\n`, `Admin: update ${label} text`, current.sha);
+      await store.writeText(langPath(code), `${JSON.stringify(merged, null, 2)}\n`, `Admin: update ${label} text`);
       state.files[code] = merged;
       state.original[code] = JSON.stringify(merged);
     }
     for (const [name, path] of Object.entries(DATA_FILES)) {
       if (JSON.stringify(state.data[name]) === state.dataOriginal[name]) continue;
-      const current = await readFile(path);
-      await writeFile(path, `${JSON.stringify(state.data[name], null, 2)}\n`, `Admin: update ${name}`, current.sha);
+      await store.writeText(path, `${JSON.stringify(state.data[name], null, 2)}\n`, `Admin: update ${name}`);
       state.dataOriginal[name] = JSON.stringify(state.data[name]);
     }
     markDirty();
@@ -646,8 +720,12 @@ async function askForPassword() {
 }
 
 async function start() {
-  state.lock = await loadLock();
-  if (state.lock && !isRemembered(state.lock)) await askForPassword();
+  const mode = await store.init();
+  // The browser-only lock is a fallback for when there is no server.
+  if (mode === "key") {
+    state.lock = await loadLock();
+    if (state.lock && !isRemembered(state.lock)) await askForPassword();
+  }
 
   $("repo").textContent = `${REPO.owner}/${REPO.name}`;
   try {
@@ -659,18 +737,23 @@ async function start() {
   buildForm();
   markDirty();
 
+  showSignedOut();
   $("connectBtn").addEventListener("click", async () => {
     const token = $("token").value.trim();
     if (!token) return say("Paste your GitHub key first.", "bad");
     if (await connect(token)) $("token").value = "";
   });
+  $("signinBtn").addEventListener("click", async () => {
+    const email = $("email").value.trim();
+    const password = $("password").value;
+    if (!email || !password) return say("Write your email and password.", "bad");
+    if (await signIn(email, password)) $("password").value = "";
+  });
+  $("password").addEventListener("keydown", (event) => { if (event.key === "Enter") $("signinBtn").click(); });
   $("disconnectBtn").addEventListener("click", () => {
-    setToken("");
-    $("connected").hidden = true;
-    $("connectForm").hidden = false;
-    $("connState").dataset.state = "off";
-    $("connText").textContent = "Not connected";
-    say("Key removed from this browser.", "info");
+    store.signOut();
+    showSignedOut();
+    say("Signed out of this browser.", "info");
   });
   $("saveBtn").addEventListener("click", saveToGitHub);
   $("downloadBtn").addEventListener("click", downloadFiles);
@@ -694,7 +777,7 @@ async function start() {
     if (state.dirty) event.preventDefault();
   });
 
-  if (getToken()) await connect(getToken());
+  if (store.ready()) showSignedIn(store.who());
 }
 
 start();
