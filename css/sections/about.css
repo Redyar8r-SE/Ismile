@@ -21,7 +21,7 @@
 .org-card>p{color:var(--muted);font-size:16px}
 .org-top{display:flex;align-items:center;gap:14px}
 .org-top h3{font-size:22px}
-.org-mark{width:48px;height:48px;border-radius:14px;background:var(--navy);color:var(--teal);display:grid;place-items:center;font-weight:800;font-size:26px;font-family:var(--font);flex:none}
+.org-mark{flex:none;width:44px;height:49px;object-fit:contain;display:block}
 .org-kicker{font-size:13px;color:var(--muted)}
 .org-link{margin-inline-start:auto;font-size:14px;font-weight:600;color:var(--teal-ink);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:6px 14px;white-space:nowrap}
 .org-link:hover{border-color:var(--teal)}
