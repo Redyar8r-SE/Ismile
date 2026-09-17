@@ -131,6 +131,10 @@ function buildSpeakers(section) {
     state.data.speakers.push({ name: { en: "", ar: "", ku: "" }, role: { en: "", ar: "", ku: "" }, photo: null });
     render();
     markDirty();
+    const last = list.querySelector(".srow:last-child .lbody input");
+    last?.scrollIntoView({ behavior: "smooth", block: "center" });
+    last?.focus();
+    say("New speaker added. Write the name, then press Save to the website.", "info");
   });
   section.append(add);
 
@@ -141,9 +145,33 @@ function buildSpeakers(section) {
       list.innerHTML = `<p class="ghint">No speakers yet. Press “Add a speaker”.</p>`;
       return;
     }
+    const flagFor = (row, speaker) => {
+      const empty = isEmpty(speaker);
+      row.classList.toggle("is-empty-row", empty);
+      let flag = row.querySelector(":scope > .emptyflag");
+      if (empty && !flag) {
+        flag = document.createElement("p");
+        flag.className = "emptyflag";
+        flag.textContent = "Empty — shows as “Coming soon” on the website";
+        row.prepend(flag);
+      }
+      if (!empty && flag) flag.remove();
+    };
+
+    const isEmpty = (speaker) => {
+      const any = (value) => value && (typeof value === "object" ? Object.values(value).some(Boolean) : Boolean(value));
+      return !any(speaker.name) && !any(speaker.role) && !speaker.photo;
+    };
+
     speakers.forEach((speaker, index) => {
       const row = document.createElement("div");
-      row.className = "srow";
+      row.className = "srow" + (isEmpty(speaker) ? " is-empty-row" : "");
+      if (isEmpty(speaker)) {
+        const flag = document.createElement("p");
+        flag.className = "emptyflag";
+        flag.textContent = "Empty — shows as “Coming soon” on the website";
+        row.append(flag);
+      }
       const focus = () => { state.pasteTarget = { apply: (path) => { speaker.photo = path; } , redraw: render }; };
       row.addEventListener("focusin", focus);
       row.addEventListener("click", focus);
@@ -204,6 +232,7 @@ function buildSpeakers(section) {
             if (!speaker[key] || typeof speaker[key] !== "object") speaker[key] = { en: "", ar: "", ku: "" };
             speaker[key][code] = input.value;
             if (!LANGS.some(({ code: c }) => speaker[key][c])) speaker[key] = null;
+            flagFor(row, speaker);
             markDirty();
           });
           cell.innerHTML = `<span class="fcode">${name}</span>`;
@@ -682,7 +711,13 @@ async function saveToGitHub() {
       state.dataOriginal[name] = JSON.stringify(state.data[name]);
     }
     markDirty();
-    say("Saved. The website updates in 1–2 minutes — then press Ctrl + F5 on it.", "ok");
+    const blanks = state.data.speakers.filter((speaker) => {
+      const any = (value) => value && (typeof value === "object" ? Object.values(value).some(Boolean) : Boolean(value));
+      return !any(speaker.name) && !any(speaker.role) && !speaker.photo;
+    }).length;
+    say(blanks
+      ? `Saved. Note: ${blanks} speaker${blanks > 1 ? "s are" : " is"} still empty, so ${blanks > 1 ? "they show" : "it shows"} as “Coming soon”. The website updates in 1–2 minutes.`
+      : "Saved. The website updates in 1–2 minutes — then press Ctrl + F5 on it.", "ok");
   } catch (error) {
     say(`Not saved: ${error.message}`, "bad");
   } finally {
