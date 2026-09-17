@@ -130,6 +130,9 @@ async function connect(token) {
 async function saveToGitHub() {
   const changed = LANGS.filter(({ code }) => JSON.stringify(state.files[code]) !== state.original[code]);
   if (!changed.length) return;
+  if (!getToken()) {
+    return say("Connect your GitHub key first, or use “Download files” instead.", "bad");
+  }
 
   $("saveBtn").disabled = true;
   say("Saving…");
