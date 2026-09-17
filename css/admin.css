@@ -90,3 +90,25 @@
   .srow{grid-template-columns:1fr;gap:12px}
   .srow-x{position:absolute;inset-inline-end:12px;inset-block-start:12px}
 }
+
+/* ---------- List editors (workshops, tiers, partners, program) ---------- */
+.rows{display:grid;gap:14px}
+.lrow{border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface);overflow:hidden}
+.lhead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;background:var(--surface-2);border-bottom:1px solid var(--line)}
+.lnum{font-size:13px;font-weight:700;color:var(--muted)}
+.lbody{display:grid;gap:14px;padding:14px;min-width:0}
+.lbody .field{padding:0;border:0}
+input.plain,select.plain{width:100%;max-width:340px;padding:10px 12px;font:inherit;font-size:15px;color:var(--text);background:var(--bg);border:1.5px solid var(--line);border-radius:10px}
+input.plain[type="checkbox"]{width:20px;height:20px;accent-color:var(--teal)}
+input.plain[type="color"]{max-width:70px;height:42px;padding:4px}
+input.plain:focus,select.plain:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 4px color-mix(in srgb,var(--teal) 18%,transparent)}
+.imgfield{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.sphoto.wide{width:120px;aspect-ratio:3/2}
+.sphoto.wide img{object-fit:contain;background:#fff}
+
+/* Program sessions */
+.sessions{display:grid;gap:12px}
+.session{border:1px dashed var(--line);border-radius:10px;padding:12px;display:grid;gap:10px;background:var(--bg)}
+.srow-top{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap}
+.fcell.small{max-width:120px}
+.fcell.small .plain{max-width:120px}

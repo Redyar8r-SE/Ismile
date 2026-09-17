@@ -1,22 +1,21 @@
-// iSmile admin: edit the site's text, speakers and photos, and save to GitHub.
-import { GROUPS, LANGS, HTML_FALLBACK } from "./fields.js";
+// iSmile admin: edit every text, list and photo on the site, and save to GitHub.
+import { GROUPS, LANGS, DATA_FILES } from "./fields.js";
 import { getToken, setToken, whoAmI, readFile, writeFile, REPO } from "./github.js";
 import { upload, listPhotos, imageFromClipboard } from "./images.js";
+import { buildList, buildProgram } from "./lists.js";
 
 const $ = (id) => document.getElementById(id);
 const langPath = (lang) => `data/i18n/${lang}.json`;
-const SPEAKERS = "data/speakers.json";
 
 const state = {
-  files: {},       // language code -> whole dictionary
-  original: {},    // the same, as text, to see what changed
-  speakers: [],
-  speakersOriginal: "[]",
+  files: {},        // language code -> whole dictionary
+  original: {},     // same, as text, to see what changed
+  data: {},         // speakers / workshops / sponsors / partners / program
+  dataOriginal: {},
   photos: [],
   dirty: false,
-  pasteTarget: null, // speaker row waiting for a pasted photo
-  speakerList: null, // set while the form is built (not in the page yet)
-  gallery: null,
+  pasteTarget: null, // { apply(path) } waiting for a pasted picture
+  renderers: {},     // group id -> redraw function
 };
 
 // ---------- loading ----------
@@ -26,23 +25,41 @@ async function loadJSON(path) {
   return response.json();
 }
 
+// The English text written in index.html is the default for every key.
+async function englishFromPage() {
+  const response = await fetch(`index.html?t=${Date.now()}`);
+  if (!response.ok) return {};
+  const page = new DOMParser().parseFromString(await response.text(), "text/html");
+  const english = {};
+  page.querySelectorAll("[data-i18n]").forEach((node) => {
+    const key = node.dataset.i18n;
+    if (!(key in english)) english[key] = node.textContent.trim();
+  });
+  page.querySelectorAll("[data-i18n-ph]").forEach((node) => { english[node.dataset.i18nPh] ??= node.getAttribute("placeholder") || ""; });
+  page.querySelectorAll("[data-i18n-label]").forEach((node) => { english[node.dataset.i18nLabel] ??= node.getAttribute("aria-label") || ""; });
+  english.page_title ??= page.querySelector("title")?.textContent.trim() || "";
+  return english;
+}
+
 async function loadAll() {
+  const fallback = await englishFromPage();
   for (const { code } of LANGS) {
     const data = await loadJSON(langPath(code));
     if (code === "en") {
-      // English lives in index.html until it is edited here for the first time.
-      for (const [key, value] of Object.entries(HTML_FALLBACK)) {
+      for (const [key, value] of Object.entries(fallback)) {
         if (!(key in data)) data[key] = value;
       }
     }
     state.files[code] = data;
     state.original[code] = JSON.stringify(data);
   }
-  state.speakers = await loadJSON(SPEAKERS);
-  state.speakersOriginal = JSON.stringify(state.speakers);
+  for (const [name, path] of Object.entries(DATA_FILES)) {
+    state.data[name] = await loadJSON(path);
+    state.dataOriginal[name] = JSON.stringify(state.data[name]);
+  }
 }
 
-// ---------- shared helpers ----------
+// ---------- shared ----------
 function say(text, kind = "info") {
   const box = $("msg");
   box.textContent = text;
@@ -53,36 +70,27 @@ function say(text, kind = "info") {
 function markDirty() {
   state.dirty =
     LANGS.some(({ code }) => JSON.stringify(state.files[code]) !== state.original[code]) ||
-    JSON.stringify(state.speakers) !== state.speakersOriginal;
+    Object.keys(DATA_FILES).some((name) => JSON.stringify(state.data[name]) !== state.dataOriginal[name]);
   $("saveBtn").disabled = !state.dirty;
   $("dirty").hidden = !state.dirty;
-}
-
-const langValue = (item, field, code) =>
-  (item[field] && typeof item[field] === "object" ? item[field][code] : code === "en" ? item[field] : "") || "";
-
-function setLangValue(item, field, code, value) {
-  if (!item[field] || typeof item[field] !== "object") {
-    const old = typeof item[field] === "string" ? item[field] : "";
-    item[field] = { en: old, ar: "", ku: "" };
-  }
-  item[field][code] = value;
 }
 
 // ---------- text groups ----------
 function buildTextGroup(group, section) {
   group.fields.forEach((field) => {
+    const english = state.files.en?.[field.key] ?? "";
+    const long = english.length > 70;
     const row = document.createElement("div");
     row.className = "field" + (field.short ? " short" : "");
-    row.innerHTML = `<p class="flabel">${field.label}</p>`;
+    row.innerHTML = `<p class="flabel">${field.label || field.key}</p>`;
     const langs = document.createElement("div");
     langs.className = "flangs";
 
     LANGS.forEach(({ code, label, dir }) => {
       const cell = document.createElement("label");
       cell.className = "fcell";
-      const input = field.type === "area" ? document.createElement("textarea") : document.createElement("input");
-      if (field.type === "area") input.rows = 3;
+      const input = long ? document.createElement("textarea") : document.createElement("input");
+      if (long) input.rows = 3;
       input.id = `f-${field.key}-${code}`;
       input.value = state.files[code]?.[field.key] ?? "";
       input.dir = dir;
@@ -104,8 +112,7 @@ function buildTextGroup(group, section) {
 // ---------- speakers ----------
 function buildSpeakers(section) {
   const list = document.createElement("div");
-  list.className = "speakers";
-  state.speakerList = list;
+  list.className = "rows";
   section.append(list);
 
   const add = document.createElement("button");
@@ -113,132 +120,114 @@ function buildSpeakers(section) {
   add.className = "btn btn-outline add-row";
   add.textContent = "+ Add a speaker";
   add.addEventListener("click", () => {
-    state.speakers.push({ name: { en: "", ar: "", ku: "" }, role: { en: "", ar: "", ku: "" }, photo: null });
-    renderSpeakers();
+    state.data.speakers.push({ name: { en: "", ar: "", ku: "" }, role: { en: "", ar: "", ku: "" }, photo: null });
+    render();
     markDirty();
   });
   section.append(add);
-  renderSpeakers();
-}
 
-function renderSpeakers() {
-  const list = state.speakerList;
-  if (!list) return;
-  list.replaceChildren();
-
-  if (!state.speakers.length) {
-    list.innerHTML = `<p class="ghint">No speakers yet. Press “Add a speaker”.</p>`;
-    return;
-  }
-
-  state.speakers.forEach((speaker, index) => {
-    const row = document.createElement("div");
-    row.className = "srow";
-    row.addEventListener("focusin", () => { state.pasteTarget = index; });
-    row.addEventListener("click", () => { state.pasteTarget = index; });
-
-    const photo = document.createElement("div");
-    photo.className = "sphoto";
-    if (speaker.photo) {
-      const img = document.createElement("img");
-      img.src = speaker.photo;
-      img.alt = "";
-      img.addEventListener("error", () => { photo.innerHTML = `<span class="sph-empty">not found</span>`; });
-      photo.append(img);
-    } else {
-      photo.innerHTML = `<span class="sph-empty">No photo</span>`;
+  function render() {
+    const speakers = state.data.speakers;
+    list.replaceChildren();
+    if (!speakers.length) {
+      list.innerHTML = `<p class="ghint">No speakers yet. Press “Add a speaker”.</p>`;
+      return;
     }
+    speakers.forEach((speaker, index) => {
+      const row = document.createElement("div");
+      row.className = "srow";
+      const focus = () => { state.pasteTarget = { apply: (path) => { speaker.photo = path; } , redraw: render }; };
+      row.addEventListener("focusin", focus);
+      row.addEventListener("click", focus);
 
-    const photoBtns = document.createElement("div");
-    photoBtns.className = "sph-btns";
-    const file = document.createElement("input");
-    file.type = "file";
-    file.accept = "image/*";
-    file.hidden = true;
-    file.addEventListener("change", async () => {
-      if (file.files[0]) await uploadFor(index, file.files[0]);
-      file.value = "";
-    });
-    const pick = document.createElement("button");
-    pick.type = "button";
-    pick.className = "btn btn-outline btn-sm";
-    pick.textContent = speaker.photo ? "Change photo" : "Add photo";
-    pick.addEventListener("click", () => file.click());
-    photoBtns.append(pick, file);
-    if (speaker.photo) {
-      const clear = document.createElement("button");
-      clear.type = "button";
-      clear.className = "linkish";
-      clear.textContent = "remove";
-      clear.addEventListener("click", () => {
-        speaker.photo = null;
-        renderSpeakers();
+      const photo = document.createElement("div");
+      photo.className = "sphoto";
+      if (speaker.photo) {
+        const img = document.createElement("img");
+        img.src = speaker.photo;
+        img.alt = "";
+        img.addEventListener("error", () => { photo.innerHTML = `<span class="sph-empty">not found</span>`; });
+        photo.append(img);
+      } else {
+        photo.innerHTML = `<span class="sph-empty">No photo</span>`;
+      }
+
+      const buttons = document.createElement("div");
+      buttons.className = "sph-btns";
+      const file = document.createElement("input");
+      file.type = "file";
+      file.accept = "image/*";
+      file.hidden = true;
+      file.addEventListener("change", async () => {
+        if (file.files[0]) await uploadImage(file.files[0], (path) => { speaker.photo = path; }, render);
+        file.value = "";
+      });
+      const pick = document.createElement("button");
+      pick.type = "button";
+      pick.className = "btn btn-outline btn-sm";
+      pick.textContent = speaker.photo ? "Change photo" : "Add photo";
+      pick.addEventListener("click", () => file.click());
+      buttons.append(pick, file);
+      if (speaker.photo) {
+        const clear = document.createElement("button");
+        clear.type = "button";
+        clear.className = "linkish";
+        clear.textContent = "remove";
+        clear.addEventListener("click", () => { speaker.photo = null; render(); markDirty(); });
+        buttons.append(clear);
+      }
+
+      const fields = document.createElement("div");
+      fields.className = "lbody";
+      [["name", "Name"], ["role", "Specialty, country"]].forEach(([key, label]) => {
+        const block = document.createElement("div");
+        block.className = "field";
+        block.innerHTML = `<p class="flabel">${label}</p>`;
+        const langs = document.createElement("div");
+        langs.className = "flangs";
+        LANGS.forEach(({ code, label: name, dir }) => {
+          const cell = document.createElement("label");
+          cell.className = "fcell";
+          const input = document.createElement("input");
+          input.value = (speaker[key] && typeof speaker[key] === "object" ? speaker[key][code] : code === "en" ? speaker[key] : "") || "";
+          input.dir = dir;
+          input.lang = code === "ku" ? "ckb" : code;
+          input.addEventListener("input", () => {
+            if (!speaker[key] || typeof speaker[key] !== "object") speaker[key] = { en: "", ar: "", ku: "" };
+            speaker[key][code] = input.value;
+            if (!LANGS.some(({ code: c }) => speaker[key][c])) speaker[key] = null;
+            markDirty();
+          });
+          cell.innerHTML = `<span class="fcode">${name}</span>`;
+          cell.append(input);
+          langs.append(cell);
+        });
+        block.append(langs);
+        fields.append(block);
+      });
+
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "srow-x";
+      remove.title = "Remove this speaker";
+      remove.textContent = "✕";
+      remove.addEventListener("click", () => {
+        state.data.speakers.splice(index, 1);
+        state.pasteTarget = null;
+        render();
         markDirty();
       });
-      photoBtns.append(clear);
-    }
 
-    const fields = document.createElement("div");
-    fields.className = "sfields";
-    [["name", "Name"], ["role", "Specialty, country"]].forEach(([key, label]) => {
-      const block = document.createElement("div");
-      block.className = "field";
-      block.innerHTML = `<p class="flabel">${label}</p>`;
-      const langs = document.createElement("div");
-      langs.className = "flangs";
-      LANGS.forEach(({ code, label: name, dir }) => {
-        const cell = document.createElement("label");
-        cell.className = "fcell";
-        const input = document.createElement("input");
-        input.value = langValue(speaker, key, code);
-        input.dir = dir;
-        input.lang = code === "ku" ? "ckb" : code;
-        input.addEventListener("input", () => {
-          setLangValue(speaker, key, code, input.value);
-          markDirty();
-        });
-        cell.innerHTML = `<span class="fcode">${name}</span>`;
-        cell.append(input);
-        langs.append(cell);
-      });
-      block.append(langs);
-      fields.append(block);
+      const left = document.createElement("div");
+      left.className = "sleft";
+      left.append(photo, buttons);
+      row.append(left, fields, remove);
+      list.append(row);
     });
-
-    const remove = document.createElement("button");
-    remove.type = "button";
-    remove.className = "srow-x";
-    remove.title = "Remove this speaker";
-    remove.textContent = "✕";
-    remove.addEventListener("click", () => {
-      state.speakers.splice(index, 1);
-      state.pasteTarget = null;
-      renderSpeakers();
-      markDirty();
-    });
-
-    const left = document.createElement("div");
-    left.className = "sleft";
-    left.append(photo, photoBtns);
-    row.append(left, fields, remove);
-    list.append(row);
-  });
-}
-
-async function uploadFor(index, file) {
-  if (!getToken()) return say("Connect your GitHub key first — photos are saved straight to the website.", "bad");
-  say("Uploading the photo…");
-  try {
-    const { path } = await upload(file);
-    state.speakers[index].photo = path;
-    state.photos.unshift(path);
-    renderSpeakers();
-    renderPhotos();
-    markDirty();
-    say("Photo uploaded. Press “Save to the website” to show it on the speakers page.", "ok");
-  } catch (error) {
-    say(`Photo not uploaded: ${error.message}`, "bad");
   }
+
+  state.renderers.speakers = render;
+  render();
 }
 
 // ---------- photos ----------
@@ -253,7 +242,7 @@ function buildPhotos(section) {
   file.multiple = true;
   file.hidden = true;
   file.addEventListener("change", async () => {
-    for (const one of file.files) await uploadPhoto(one);
+    for (const one of file.files) await uploadImage(one);
     file.value = "";
   });
 
@@ -263,61 +252,68 @@ function buildPhotos(section) {
   drop.addEventListener("drop", async (event) => {
     event.preventDefault();
     drop.classList.remove("is-over");
-    for (const one of event.dataTransfer.files) await uploadPhoto(one);
+    for (const one of event.dataTransfer.files) await uploadImage(one);
   });
 
   const gallery = document.createElement("div");
   gallery.className = "gallery";
-  state.gallery = gallery;
-
   section.append(drop, file, gallery);
-  renderPhotos();
-}
 
-function renderPhotos() {
-  const gallery = state.gallery;
-  if (!gallery) return;
-  gallery.replaceChildren();
-  if (!state.photos.length) {
-    gallery.innerHTML = `<p class="ghint">No photos yet.</p>`;
-    return;
-  }
-  state.photos.forEach((path) => {
-    const card = document.createElement("figure");
-    card.className = "gitem";
-    const img = document.createElement("img");
-    img.src = path;
-    img.alt = "";
-    img.loading = "lazy";
-    const caption = document.createElement("figcaption");
-    caption.textContent = path;
-    const copy = document.createElement("button");
-    copy.type = "button";
-    copy.className = "btn btn-outline btn-sm";
-    copy.textContent = "Copy path";
-    copy.addEventListener("click", async () => {
-      try {
-        await navigator.clipboard.writeText(path);
-        say(`Copied: ${path}`, "ok");
-      } catch {
-        say(`Path: ${path}`, "info");
-      }
+  function render() {
+    gallery.replaceChildren();
+    if (!state.photos.length) {
+      gallery.innerHTML = `<p class="ghint">No photos yet.</p>`;
+      return;
+    }
+    state.photos.forEach((path) => {
+      const card = document.createElement("figure");
+      card.className = "gitem";
+      const img = document.createElement("img");
+      img.src = path;
+      img.alt = "";
+      img.loading = "lazy";
+      const caption = document.createElement("figcaption");
+      caption.textContent = path;
+      const copy = document.createElement("button");
+      copy.type = "button";
+      copy.className = "btn btn-outline btn-sm";
+      copy.textContent = "Copy path";
+      copy.addEventListener("click", async () => {
+        try { await navigator.clipboard.writeText(path); say(`Copied: ${path}`, "ok"); }
+        catch { say(`Path: ${path}`, "info"); }
+      });
+      card.append(img, caption, copy);
+      gallery.append(card);
     });
-    card.append(img, caption, copy);
-    gallery.append(card);
-  });
+  }
+
+  state.renderers.photos = render;
+  render();
 }
 
-async function uploadPhoto(file) {
-  if (!getToken()) return say("Connect your GitHub key first — photos are saved straight to the website.", "bad");
-  say(`Uploading ${file.name || "photo"}…`);
+// One upload path for every picture on the page.
+async function uploadImage(file, apply, redraw) {
+  if (!getToken()) {
+    say("Connect your GitHub key first — pictures are saved straight to the website.", "bad");
+    return null;
+  }
+  say(`Uploading ${file.name || "picture"}…`);
   try {
     const { path, width, height } = await upload(file);
     state.photos.unshift(path);
-    renderPhotos();
-    say(`Photo saved as ${path} (${width}×${height}). It is on the website already.`, "ok");
+    state.renderers.photos?.();
+    if (apply) {
+      apply(path);
+      (redraw || (() => Object.values(state.renderers).forEach((r) => r())))();
+      markDirty();
+      say(`Picture added (${width}×${height}). Press “Save to the website” to show it.`, "ok");
+    } else {
+      say(`Picture saved as ${path} (${width}×${height}). It is on the website already.`, "ok");
+    }
+    return path;
   } catch (error) {
-    say(`Photo not uploaded: ${error.message}`, "bad");
+    say(`Picture not uploaded: ${error.message}`, "bad");
+    return null;
   }
 }
 
@@ -325,11 +321,27 @@ async function refreshPhotos() {
   if (!getToken()) return;
   try {
     state.photos = await listPhotos();
-    renderPhotos();
+    state.renderers.photos?.();
   } catch { /* the folder may not exist yet */ }
 }
 
-// ---------- form ----------
+// ---------- building the page ----------
+const listContext = {
+  markDirty,
+  say,
+  getItems: (group) => (group.listKey ? state.data[group.file][group.listKey] : state.data[group.file]),
+  optionsFor: (group, field) => {
+    if (field.optionsFrom === "tiers") return (state.data[group.file].tiers || []).map((tier) => tier.name);
+    return [];
+  },
+  program: () => state.data.program,
+  register: (id, render) => { state.renderers[id] = render; },
+  uploadImage: async (file, apply) => {
+    const path = await uploadImage(file, apply);
+    if (path) Object.values(state.renderers).forEach((render) => render());
+  },
+};
+
 function buildForm() {
   const nav = $("groupNav");
   const main = $("groups");
@@ -353,6 +365,8 @@ function buildForm() {
 
     if (group.kind === "speakers") buildSpeakers(section);
     else if (group.kind === "photos") buildPhotos(section);
+    else if (group.kind === "program") buildProgram(section, listContext);
+    else if (group.kind === "list") buildList(group, section, listContext);
     else buildTextGroup(group, section);
 
     main.append(section);
@@ -400,10 +414,11 @@ async function saveToGitHub() {
       state.files[code] = merged;
       state.original[code] = JSON.stringify(merged);
     }
-    if (JSON.stringify(state.speakers) !== state.speakersOriginal) {
-      const current = await readFile(SPEAKERS);
-      await writeFile(SPEAKERS, `${JSON.stringify(state.speakers, null, 2)}\n`, "Admin: update speakers", current.sha);
-      state.speakersOriginal = JSON.stringify(state.speakers);
+    for (const [name, path] of Object.entries(DATA_FILES)) {
+      if (JSON.stringify(state.data[name]) === state.dataOriginal[name]) continue;
+      const current = await readFile(path);
+      await writeFile(path, `${JSON.stringify(state.data[name], null, 2)}\n`, `Admin: update ${name}`, current.sha);
+      state.dataOriginal[name] = JSON.stringify(state.data[name]);
     }
     markDirty();
     say("Saved. The website updates in 1–2 minutes — then press Ctrl + F5 on it.", "ok");
@@ -424,8 +439,8 @@ function downloadFiles() {
     URL.revokeObjectURL(url);
   };
   LANGS.forEach(({ code }) => download(`${code}.json`, `${JSON.stringify(state.files[code], null, 2)}\n`));
-  download("speakers.json", `${JSON.stringify(state.speakers, null, 2)}\n`);
-  say("Files downloaded: the three language files go in data/i18n/, speakers.json goes in data/. Photos need a GitHub key.", "ok");
+  Object.keys(DATA_FILES).forEach((name) => download(`${name}.json`, `${JSON.stringify(state.data[name], null, 2)}\n`));
+  say("Files downloaded: the three language files go in data/i18n/, the rest in data/. Pictures need a GitHub key.", "ok");
 }
 
 // ---------- start ----------
@@ -454,15 +469,15 @@ async function start() {
   $("saveBtn").addEventListener("click", saveToGitHub);
   $("downloadBtn").addEventListener("click", downloadFiles);
 
-  // Ctrl + V anywhere: a pasted picture goes to the speaker row you last
-  // clicked, otherwise into the photo list.
+  // Ctrl + V anywhere: the picture goes to the speaker row you last clicked,
+  // otherwise into the photo list.
   document.addEventListener("paste", async (event) => {
     const file = imageFromClipboard(event);
     if (!file) return;
     event.preventDefault();
     const target = state.pasteTarget;
-    if (target !== null && state.speakers[target]) await uploadFor(target, file);
-    else { showGroup("photos"); await uploadPhoto(file); }
+    if (target) await uploadImage(file, target.apply, target.redraw);
+    else { showGroup("photos"); await uploadImage(file); }
   });
   document.addEventListener("click", (event) => {
     if (!event.target.closest(".srow")) state.pasteTarget = null;
