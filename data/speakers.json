@@ -1,7 +1,15 @@
 [
   {
-    "name": null,
-    "role": null,
+    "name": {
+      "en": "rr",
+      "ar": "rr",
+      "ku": "bb"
+    },
+    "role": {
+      "en": "ff",
+      "ar": "nn",
+      "ku": "bb"
+    },
     "photo": null
   },
   {
