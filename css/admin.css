@@ -59,3 +59,34 @@
   .gnavs{position:static;grid-auto-flow:column;grid-auto-columns:1fr;overflow-x:auto}
   .flangs{grid-template-columns:1fr}
 }
+
+/* ---------- Speakers ---------- */
+.speakers{display:grid;gap:14px}
+.srow{position:relative;display:grid;grid-template-columns:150px 1fr 32px;gap:18px;padding:16px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface)}
+.sleft{display:grid;gap:8px;justify-items:center}
+.sphoto{width:110px;aspect-ratio:4/5;border-radius:10px;overflow:hidden;background:var(--surface-2);display:grid;place-items:center}
+.sphoto img{width:100%;height:100%;object-fit:cover}
+.sph-empty{font-size:12.5px;color:var(--muted)}
+.sph-btns{display:flex;flex-direction:column;align-items:center;gap:6px}
+.linkish{border:0;background:none;color:var(--muted);font:inherit;font-size:12.5px;text-decoration:underline;cursor:pointer}
+.linkish:hover{color:var(--danger)}
+.sfields{display:grid;gap:12px;min-width:0}
+.sfields .field{padding:0;border:0}
+.srow-x{align-self:start;width:32px;height:32px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--muted);font-size:14px;cursor:pointer}
+.srow-x:hover{color:var(--danger);border-color:var(--danger)}
+.add-row{margin-top:14px}
+
+/* ---------- Photos ---------- */
+.drop{display:grid;justify-items:center;gap:4px;padding:34px 20px;border:2px dashed color-mix(in srgb,var(--teal) 55%,var(--line));border-radius:var(--r-md);background:var(--surface);cursor:pointer;text-align:center}
+.drop:hover,.drop.is-over{background:color-mix(in srgb,var(--teal) 8%,transparent);border-style:solid}
+.drop b{font-size:16px}
+.drop span{font-size:13.5px;color:var(--muted)}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(170px,100%),1fr));gap:14px;margin-top:18px}
+.gitem{margin:0;display:grid;gap:8px;justify-items:center;padding:10px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface)}
+.gitem img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;background:var(--surface-2)}
+.gitem figcaption{font-size:11.5px;color:var(--muted);word-break:break-all;text-align:center}
+
+@media (max-width:700px){
+  .srow{grid-template-columns:1fr;gap:12px}
+  .srow-x{position:absolute;inset-inline-end:12px;inset-block-start:12px}
+}

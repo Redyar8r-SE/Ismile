@@ -11,6 +11,20 @@ export const LANGS = [
 
 export const GROUPS = [
   {
+    id: "speakers",
+    title: "Speakers",
+    kind: "speakers",
+    hint: "Add a speaker, write the name and specialty in the three languages, and give a photo. Empty rows show as “Coming soon” on the website.",
+    fields: [],
+  },
+  {
+    id: "photos",
+    title: "Photos",
+    kind: "photos",
+    hint: "Paste a picture with Ctrl + V, drop it here, or click to choose a file. Big pictures are made smaller automatically so the site stays fast.",
+    fields: [],
+  },
+  {
     id: "hero",
     title: "Top of the page",
     hint: "The big title visitors see first, and the two buttons under it.",

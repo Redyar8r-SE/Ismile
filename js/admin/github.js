@@ -54,11 +54,12 @@ const toBase64 = (text) => {
   return btoa(binary);
 };
 
-export async function readFile(path) {
+export async function readFile(path, { binary = false } = {}) {
   const url = `${API}/repos/${REPO.owner}/${REPO.name}/contents/${encodeURI(path)}?ref=${REPO.branch}`;
   const response = await fetch(url, { headers: headers() });
   if (!response.ok) throw await fail(response);
   const data = await response.json();
+  if (binary) return { sha: data.sha, text: "" };
   return { sha: data.sha, text: new TextDecoder().decode(Uint8Array.from(atob(data.content.replace(/\n/g, "")), (c) => c.charCodeAt(0))) };
 }
 
@@ -71,4 +72,30 @@ export async function writeFile(path, text, message, sha) {
   });
   if (!response.ok) throw await fail(response);
   return (await response.json()).commit?.sha;
+}
+
+// Binary upload (photos). GitHub replaces the file when it already exists.
+export async function writeFileBinary(path, bytes, message) {
+  let binary = "";
+  bytes.forEach((byte) => { binary += String.fromCharCode(byte); });
+  const url = `${API}/repos/${REPO.owner}/${REPO.name}/contents/${encodeURI(path)}`;
+  let sha;
+  try { sha = (await readFile(path, { binary: true })).sha; } catch { /* new file */ }
+  const response = await fetch(url, {
+    method: "PUT",
+    headers: { ...headers(), "Content-Type": "application/json" },
+    body: JSON.stringify({ message, content: btoa(binary), branch: REPO.branch, ...(sha ? { sha } : {}) }),
+  });
+  if (!response.ok) throw await fail(response);
+  return path;
+}
+
+// What is inside a folder. A folder that does not exist yet counts as empty.
+export async function listFolder(path) {
+  const url = `${API}/repos/${REPO.owner}/${REPO.name}/contents/${encodeURI(path)}?ref=${REPO.branch}`;
+  const response = await fetch(url, { headers: headers() });
+  if (response.status === 404) return [];
+  if (!response.ok) throw await fail(response);
+  const data = await response.json();
+  return Array.isArray(data) ? data : [];
 }
