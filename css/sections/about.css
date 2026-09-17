@@ -5,8 +5,9 @@
 .ab-head .lead{margin-top:14px;font-size:18px}
 
 /* Timeline */
-.journey{list-style:none;padding:0;margin:44px 0 0;display:grid;grid-template-columns:repeat(3,1fr);position:relative}
-.journey::before{content:"";position:absolute;top:21px;inset-inline-start:calc(100% / 6);width:calc(100% * 2 / 3);height:2px;background:linear-gradient(90deg,var(--line) 0 50%,var(--teal) 100%)}
+.journey{list-style:none;padding:0;margin:44px 0 0;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;position:relative}
+.journey::before{content:"";position:absolute;top:21px;inset-inline-start:calc(100% / (2 * var(--count,3)));width:calc(100% - 100% / var(--count,3));height:2px;background:linear-gradient(90deg,var(--line) 0 50%,var(--teal) 100%)}
+html[dir="rtl"] .journey::before{background:linear-gradient(270deg,var(--line) 0 50%,var(--teal) 100%)}
 .journey li{position:relative;display:grid;gap:14px;padding-inline:16px;align-content:start;justify-items:center;text-align:center}
 .journey li p{max-width:30ch}
 .journey .yr{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:800;background:var(--bg);border:2px solid var(--line);color:var(--muted);position:relative;font-family:var(--font)}
@@ -49,7 +50,7 @@
 
 @media (max-width:860px){
   .ab-grid{grid-template-columns:1fr;gap:16px}
-  .journey{grid-template-columns:1fr;gap:18px}
+  .journey{grid-auto-flow:row;grid-template-columns:1fr;gap:18px}
   .journey::before{top:22px;bottom:22px;inset-inline:21px auto;width:2px;height:auto;background:linear-gradient(180deg,var(--line) 0 50%,var(--teal) 100%)}
   .journey li{grid-template-columns:44px 1fr;align-items:center;justify-items:start;text-align:start;padding-inline:0}
 }

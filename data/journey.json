@@ -1,0 +1,42 @@
+[
+  {
+    "year": "2019",
+    "title": {
+      "en": "italk is founded",
+      "ar": "تأسيس italk",
+      "ku": "دامەزراندنی italk"
+    },
+    "text": {
+      "en": "A youth-led non-profit starts in Sulaymaniyah.",
+      "ar": "مؤسسة غير ربحية يقودها الشباب تنطلق في السليمانية.",
+      "ku": "ڕێکخراوێکی نا-قازانج کە لەلایەن گەنجانەوە بەڕێوەدەبرێت لە سلێمانی دەست پێدەکات."
+    }
+  },
+  {
+    "year": "2021",
+    "title": {
+      "en": "First iSmile summit",
+      "ar": "أول قمة iSmile",
+      "ku": "یەکەمین کۆنفرانسی iSmile"
+    },
+    "text": {
+      "en": "1,500+ dental professionals and 40+ partners.",
+      "ar": "أكثر من 1,500 مختص في طب الأسنان وأكثر من 40 شريكاً.",
+      "ku": "زیاتر لە 1,500 پسپۆڕی ددانسازی و زیاتر لە 40 هاوبەش."
+    }
+  },
+  {
+    "year": "2026",
+    "title": {
+      "en": "iSmile returns",
+      "ar": "عودة iSmile",
+      "ku": "گەڕانەوەی iSmile"
+    },
+    "text": {
+      "en": "The 2nd edition, November, Grand Millennium Sulaimani.",
+      "ar": "النسخة الثانية، في تشرين الثاني، في غراند ميلينيوم السليمانية.",
+      "ku": "خولی دووەم، لە تشرینی دووەم، لە گراند میلینیۆم سلێمانی."
+    },
+    "now": true
+  }
+]

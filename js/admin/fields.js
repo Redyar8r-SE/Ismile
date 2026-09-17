@@ -70,6 +70,18 @@ const PARTS = [
     ],
   },
   {
+    id: "journeyList", title: "Years", kind: "list", file: "journey",
+    hint: "The timeline under About. Add a year whenever there is news, for example 2027.",
+    itemName: "year",
+    newItem: () => ({ year: "", title: { en: "", ar: "", ku: "" }, text: { en: "", ar: "", ku: "" } }),
+    itemFields: [
+      { key: "year", label: "Year", type: "text" },
+      { key: "title", label: "Title", type: "i18n" },
+      { key: "text", label: "Text", type: "i18n" },
+      { key: "now", label: "Highlight this one (the coming edition)", type: "checkbox" },
+    ],
+  },
+  {
     id: "photos", title: "Photos", kind: "photos",
     hint: "Paste a picture with Ctrl + V, drop it here, or click to choose a file. Big pictures are made smaller automatically so the site stays fast.",
     fields: [],
@@ -121,9 +133,6 @@ const PARTS = [
     hint: "The story, the three years, and the italk / Vision / Mission cards.",
     fields: many([
       ["ab_title", "Section title"], ["ab_lead", "Section text"],
-      ["jy1", "2019 — title"], ["jy1p", "2019 — text"],
-      ["jy2", "2021 — title"], ["jy2p", "2021 — text"],
-      ["jy3", "2026 — title"], ["jy3p", "2026 — text"],
       ["org_visit", "Link to italk.krd"], ["org_p1", "italk paragraph 1"], ["org_p2", "italk paragraph 2"],
       ["org_f1", "Fact 1 label"], ["org_f2b", "Fact 2 value"], ["org_f2", "Fact 2 label"],
       ["org_f3b", "Fact 3 value"], ["org_f3", "Fact 3 label"], ["org_medx", "italkMedX note"],
@@ -290,7 +299,7 @@ export const GROUPS = [
   },
   {
     id: "about", title: "About iSmile", where: "The story, the years, italk and the partner",
-    blocks: [text("about")],
+    blocks: [list("journeyList", "Years on the timeline"), text("about", "Wording of the section")],
   },
   {
     id: "experience", title: "What happens", where: "The eight boxes about the two days",
@@ -349,6 +358,7 @@ export const GROUPS = [
 // Files the list editors read and write.
 export const DATA_FILES = {
   speakers: "data/speakers.json",
+  journey: "data/journey.json",
   workshops: "data/workshops.json",
   sponsors: "data/sponsors.json",
   partners: "data/partners.json",
