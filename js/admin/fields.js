@@ -340,6 +340,10 @@ export const GROUPS = [
     id: "photos", title: "Photo library", where: "Every picture uploaded to the website",
     blocks: [special("photos", "photos", null)],
   },
+  {
+    id: "security", title: "Password", where: "Who can open this admin page",
+    blocks: [{ type: "security", title: "Sign-in for the admin page", fields: [] }],
+  },
 ];
 
 // Files the list editors read and write.

@@ -3,6 +3,7 @@ import { GROUPS, LANGS, DATA_FILES } from "./fields.js";
 import { getToken, setToken, whoAmI, readFile, writeFile, REPO } from "./github.js";
 import { upload, listPhotos, imageFromClipboard } from "./images.js";
 import { buildList, buildProgram } from "./lists.js";
+import { loadLock, makeLock, check, remember, isRemembered, forget, LOCK_FILE } from "./lock.js";
 
 const $ = (id) => document.getElementById(id);
 const langPath = (lang) => `data/i18n/${lang}.json`;
@@ -16,6 +17,7 @@ const state = {
   dirty: false,
   pasteTarget: null, // { apply(path) } waiting for a pasted picture
   renderers: {},     // group id -> redraw function
+  lock: null,        // { email, salt, hash } when a password is set
 };
 
 // ---------- loading ----------
@@ -330,6 +332,91 @@ async function refreshPhotos() {
   } catch { /* the folder may not exist yet */ }
 }
 
+// ---------- password ----------
+function buildSecurity(body) {
+  const status = document.createElement("p");
+  status.className = "ghint";
+
+  const form = document.createElement("div");
+  form.className = "pw-grid";
+  form.innerHTML = `
+    <label>Email<input type="email" id="pwEmail" autocomplete="username"></label>
+    <label>New password<input type="password" id="pwOne" autocomplete="new-password"></label>
+    <label>Repeat the password<input type="password" id="pwTwo" autocomplete="new-password"></label>`;
+
+  const actions = document.createElement("div");
+  actions.className = "pw-actions";
+  const save = document.createElement("button");
+  save.type = "button";
+  save.className = "btn btn-primary btn-sm";
+  save.textContent = "Save the password";
+  const drop = document.createElement("button");
+  drop.type = "button";
+  drop.className = "btn btn-outline btn-sm";
+  drop.textContent = "Remove the lock";
+  const out = document.createElement("button");
+  out.type = "button";
+  out.className = "btn btn-outline btn-sm";
+  out.textContent = "Sign out of this browser";
+  actions.append(save, drop, out);
+
+  const note = document.createElement("p");
+  note.className = "ghint";
+  note.textContent = "This lock keeps other people out of the admin screen. It is not strong security: the real protection is your GitHub key, which stays in your own browser.";
+
+  function refresh() {
+    status.textContent = state.lock
+      ? `A password is set for ${state.lock.email}. Everyone is asked for it before the admin opens.`
+      : "No password yet. Anyone who opens this page can use the admin (they still cannot save without a GitHub key).";
+    drop.hidden = !state.lock;
+    out.hidden = !state.lock;
+    form.querySelector("#pwEmail").value = state.lock?.email || "";
+  }
+
+  async function writeLock(lock) {
+    if (!getToken()) return say("Connect your GitHub key first — the password is saved with the website.", "bad");
+    say("Saving the password…");
+    try {
+      let sha;
+      try { sha = (await readFile(LOCK_FILE)).sha; } catch { /* first time */ }
+      await writeFile(LOCK_FILE, `${JSON.stringify(lock, null, 2)}
+`, lock ? "Admin: set the admin password" : "Admin: remove the admin password", sha);
+      state.lock = lock?.hash ? lock : null;
+      if (state.lock) remember(state.lock); else forget();
+      refresh();
+      say(lock?.hash ? "Password saved. From now on the admin asks for it." : "Lock removed.", "ok");
+    } catch (error) {
+      say(`Not saved: ${error.message}`, "bad");
+    }
+  }
+
+  save.addEventListener("click", async () => {
+    const email = form.querySelector("#pwEmail").value.trim();
+    const one = form.querySelector("#pwOne").value;
+    const two = form.querySelector("#pwTwo").value;
+    if (!email.includes("@")) return say("Write a real email address.", "bad");
+    if (one.length < 8) return say("Use a password of at least 8 characters.", "bad");
+    if (one !== two) return say("The two passwords are not the same.", "bad");
+    await writeLock(await makeLock(email, one));
+    form.querySelector("#pwOne").value = "";
+    form.querySelector("#pwTwo").value = "";
+  });
+
+  drop.addEventListener("click", async () => {
+    if (!confirm("Remove the password? Anyone who opens the admin page will see it.")) return;
+    await writeLock({});
+  });
+
+  out.addEventListener("click", () => {
+    forget();
+    location.reload();
+  });
+
+  body.append(status, form, actions, note);
+  refresh();
+  state.renderers.security = refresh;
+}
+
 // ---------- building the page ----------
 const listContext = {
   markDirty,
@@ -403,7 +490,8 @@ function buildForm() {
         body.append(hint);
       }
 
-      if (block.type === "speakers") buildSpeakers(body);
+      if (block.type === "security") buildSecurity(body);
+      else if (block.type === "speakers") buildSpeakers(body);
       else if (block.type === "photos") buildPhotos(body);
       else if (block.type === "program") buildProgram(body, listContext);
       else if (block.type === "list") buildList(block, body, listContext);
@@ -528,7 +616,39 @@ function downloadFiles() {
 }
 
 // ---------- start ----------
+async function askForPassword() {
+  const lockBox = $("lock");
+  const form = $("lockForm");
+  const message = $("lockMsg");
+  lockBox.hidden = false;
+  document.body.classList.add("lock-on");
+  $("lockEmail").focus();
+
+  await new Promise((resolve) => {
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const button = $("lockBtn");
+      button.disabled = true;
+      const ok = await check(state.lock, $("lockEmail").value, $("lockPass").value);
+      button.disabled = false;
+      if (!ok) {
+        message.hidden = false;
+        message.textContent = "Wrong email or password.";
+        $("lockPass").select();
+        return;
+      }
+      remember(state.lock);
+      lockBox.hidden = true;
+      document.body.classList.remove("lock-on");
+      resolve();
+    });
+  });
+}
+
 async function start() {
+  state.lock = await loadLock();
+  if (state.lock && !isRemembered(state.lock)) await askForPassword();
+
   $("repo").textContent = `${REPO.owner}/${REPO.name}`;
   try {
     await loadAll();
