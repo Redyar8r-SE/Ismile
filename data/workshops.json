@@ -2,7 +2,8 @@
   {
     "title": {
       "en": "Implant placement",
-      "ar": "زراعة الأسنان"
+      "ar": "زراعة الأسنان",
+      "ku": "چاندنی ددان"
     },
     "company": null,
     "speaker": null,
@@ -12,7 +13,8 @@
   {
     "title": {
       "en": "Digital smile design",
-      "ar": "تصميم الابتسامة الرقمي"
+      "ar": "تصميم الابتسامة الرقمي",
+      "ku": "دیزاینی بزەی دیجیتاڵ"
     },
     "company": null,
     "speaker": null,
@@ -22,7 +24,8 @@
   {
     "title": {
       "en": "Rotary endodontics",
-      "ar": "علاج الجذور بالمبارد الدوارة"
+      "ar": "علاج الجذور بالمبارد الدوارة",
+      "ku": "چارەسەری ڕەگ بە ئامێری سووڕاوە"
     },
     "company": null,
     "speaker": null,
@@ -32,7 +35,8 @@
   {
     "title": {
       "en": "Intraoral scanning workflow",
-      "ar": "سير عمل المسح داخل الفم"
+      "ar": "سير عمل المسح داخل الفم",
+      "ku": "شێوازی کاری سکانی ناو دەم"
     },
     "company": null,
     "speaker": null,

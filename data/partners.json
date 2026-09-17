@@ -5,11 +5,13 @@
       "className": "tc-plat",
       "subtitle": {
         "en": "Top partners",
-        "ar": "الشركاء الأبرز"
+        "ar": "الشركاء الأبرز",
+        "ku": "هاوبەشە باڵاکان"
       },
       "label": {
         "en": "Platinum",
-        "ar": "بلاتيني"
+        "ar": "بلاتيني",
+        "ku": "پلاتین"
       }
     },
     {
@@ -17,11 +19,13 @@
       "className": "tc-gold",
       "subtitle": {
         "en": "Main partners",
-        "ar": "شركاء أساسيون"
+        "ar": "شركاء أساسيون",
+        "ku": "هاوبەشە بنەڕەتییەکان"
       },
       "label": {
         "en": "Gold",
-        "ar": "ذهبي"
+        "ar": "ذهبي",
+        "ku": "زێڕ"
       }
     },
     {
@@ -29,11 +33,13 @@
       "className": "tc-silver",
       "subtitle": {
         "en": "Supporters",
-        "ar": "داعمون"
+        "ar": "داعمون",
+        "ku": "پشتیوانان"
       },
       "label": {
         "en": "Silver",
-        "ar": "فضي"
+        "ar": "فضي",
+        "ku": "زیو"
       }
     },
     {
@@ -41,11 +47,13 @@
       "className": "tc-bronze",
       "subtitle": {
         "en": "Partners",
-        "ar": "شركاء"
+        "ar": "شركاء",
+        "ku": "هاوبەشەکان"
       },
       "label": {
         "en": "Bronze",
-        "ar": "برونزي"
+        "ar": "برونزي",
+        "ku": "برۆنز"
       }
     }
   ],

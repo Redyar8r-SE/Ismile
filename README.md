@@ -40,25 +40,27 @@ when you double-click `index.html`. Serve the folder instead, for example:
 - or in a terminal in this folder: `npx serve` or `python -m http.server 8000`
   then open http://localhost:8000
 
-## Languages (English + Arabic)
+## Languages (English, Arabic, Kurdish)
 
-The header has an **EN / العربية** switch. Arabic turns the whole page
-right-to-left and uses the Noto Kufi Arabic font. The visitor's choice is
-remembered in their browser.
+The header has an **EN / العربية / کوردی** switch. Arabic and Kurdish (Sorani)
+turn the whole page right-to-left and use the Noto Kufi Arabic font. The
+visitor's choice is remembered in their browser.
 
 - **Page text:** every text in `index.html` carries `data-i18n="key"`
   (`data-i18n-ph` for a field placeholder, `data-i18n-label` for an aria-label).
   The English text stays in the HTML; the Arabic lives in `data/i18n/ar.json`
-  under the same key.
-- **Strings only JavaScript uses:** `data/i18n/en.json` + `data/i18n/ar.json`.
+  and the Kurdish in `data/i18n/ku.json`, under the same key.
+- **Strings only JavaScript uses:** `data/i18n/en.json`, `ar.json`, `ku.json`.
 - **Content files** (`program.json`, `workshops.json`, `sponsors.json`,
   `partners.json`): a translatable value is written per language, for example
-  `"title": { "en": "Opening ceremony", "ar": "حفل الافتتاح" }`. A plain string
-  still works and shows in both languages.
+  `"title": { "en": "Opening ceremony", "ar": "حفل الافتتاح", "ku": "ئاهەنگی کردنەوە" }`.
+  A plain string still works and shows in every language.
 - **Adding text:** add the English with a `data-i18n` key, then add the same key
-  to `ar.json`. A missing Arabic key falls back to English, so nothing breaks.
-- To add Kurdish later: write `data/i18n/ku.json`, load it in `js/main.js` the
-  way Arabic is loaded, and add a `ku` button next to the others.
+  to `ar.json` and `ku.json`. A missing key falls back to English, so nothing
+  breaks.
+- To add another language: write `data/i18n/<code>.json`, load it in
+  `js/main.js` the way Arabic and Kurdish are loaded, and add a button next to
+  the others. Right-to-left languages are listed in `RTL` in `js/i18n.js`.
 
 ## Common edits
 

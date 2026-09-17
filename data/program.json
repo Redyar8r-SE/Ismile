@@ -2,27 +2,33 @@
   "types": {
     "ceremony": {
       "en": "Ceremony",
-      "ar": "حفل"
+      "ar": "حفل",
+      "ku": "ئاهەنگ"
     },
     "keynote": {
       "en": "Keynote",
-      "ar": "محاضرة رئيسية"
+      "ar": "محاضرة رئيسية",
+      "ku": "وتاری سەرەکی"
     },
     "clinical": {
       "en": "Clinical",
-      "ar": "سريري"
+      "ar": "سريري",
+      "ku": "کلینیکی"
     },
     "workshop": {
       "en": "Hands-on",
-      "ar": "تدريب عملي"
+      "ar": "تدريب عملي",
+      "ku": "پراکتیکی"
     },
     "panel": {
       "en": "Discussion",
-      "ar": "نقاش"
+      "ar": "نقاش",
+      "ku": "گفتوگۆ"
     },
     "live": {
       "en": "Live",
-      "ar": "مباشر"
+      "ar": "مباشر",
+      "ku": "ڕاستەوخۆ"
     }
   },
   "days": [
@@ -30,11 +36,13 @@
       "id": "1",
       "label": {
         "en": "Day 1",
-        "ar": "اليوم الأول"
+        "ar": "اليوم الأول",
+        "ku": "ڕۆژی یەکەم"
       },
       "subtitle": {
         "en": "Conference and workshops",
-        "ar": "المؤتمر والورشات"
+        "ar": "المؤتمر والورشات",
+        "ku": "کۆنفرانس و وۆرکشۆپ"
       },
       "sessions": [
         {
@@ -43,11 +51,13 @@
           "type": "ceremony",
           "title": {
             "en": "Opening ceremony",
-            "ar": "حفل الافتتاح"
+            "ar": "حفل الافتتاح",
+            "ku": "ئاهەنگی کردنەوە"
           },
           "location": {
             "en": "Main hall",
-            "ar": "القاعة الرئيسية"
+            "ar": "القاعة الرئيسية",
+            "ku": "هۆڵی سەرەکی"
           },
           "topic": null,
           "speaker": null
@@ -58,11 +68,13 @@
           "type": "keynote",
           "title": {
             "en": "Keynote lecture",
-            "ar": "المحاضرة الرئيسية"
+            "ar": "المحاضرة الرئيسية",
+            "ku": "وتاری سەرەکی"
           },
           "location": {
             "en": "Main hall",
-            "ar": "القاعة الرئيسية"
+            "ar": "القاعة الرئيسية",
+            "ku": "هۆڵی سەرەکی"
           },
           "topic": null,
           "speaker": null
@@ -73,11 +85,13 @@
           "type": "clinical",
           "title": {
             "en": "Clinical session",
-            "ar": "جلسة سريرية"
+            "ar": "جلسة سريرية",
+            "ku": "دانیشتنی کلینیکی"
           },
           "location": {
             "en": "Hall B",
-            "ar": "القاعة B"
+            "ar": "القاعة B",
+            "ku": "هۆڵی B"
           },
           "topic": null,
           "speaker": null
@@ -88,7 +102,8 @@
           "type": "break",
           "title": {
             "en": "Lunch break",
-            "ar": "استراحة الغداء"
+            "ar": "استراحة الغداء",
+            "ku": "پشوی نانی نیوەڕۆ"
           }
         },
         {
@@ -97,11 +112,13 @@
           "type": "workshop",
           "title": {
             "en": "Workshops",
-            "ar": "الورشات"
+            "ar": "الورشات",
+            "ku": "وۆرکشۆپەکان"
           },
           "location": {
             "en": "Workshop rooms",
-            "ar": "قاعات الورشات"
+            "ar": "قاعات الورشات",
+            "ku": "ژوورەکانی وۆرکشۆپ"
           },
           "topic": null,
           "speaker": null
@@ -112,11 +129,13 @@
           "type": "panel",
           "title": {
             "en": "Expert panel",
-            "ar": "جلسة نقاش الخبراء"
+            "ar": "جلسة نقاش الخبراء",
+            "ku": "گفتوگۆی پسپۆڕان"
           },
           "location": {
             "en": "Main hall",
-            "ar": "القاعة الرئيسية"
+            "ar": "القاعة الرئيسية",
+            "ku": "هۆڵی سەرەکی"
           },
           "topic": null,
           "speaker": null
@@ -127,11 +146,13 @@
       "id": "2",
       "label": {
         "en": "Day 2",
-        "ar": "اليوم الثاني"
+        "ar": "اليوم الثاني",
+        "ku": "ڕۆژی دووەم"
       },
       "subtitle": {
         "en": "Live surgery and closing",
-        "ar": "الجراحة المباشرة والختام"
+        "ar": "الجراحة المباشرة والختام",
+        "ku": "نەشتەرگەری ڕاستەوخۆ و کۆتایی"
       },
       "sessions": [
         {
@@ -140,11 +161,13 @@
           "type": "live",
           "title": {
             "en": "Live clinical procedure",
-            "ar": "عملية سريرية مباشرة"
+            "ar": "عملية سريرية مباشرة",
+            "ku": "کردەوەی کلینیکی ڕاستەوخۆ"
           },
           "location": {
             "en": "Main hall",
-            "ar": "القاعة الرئيسية"
+            "ar": "القاعة الرئيسية",
+            "ku": "هۆڵی سەرەکی"
           },
           "topic": null,
           "speaker": null
@@ -155,11 +178,13 @@
           "type": "clinical",
           "title": {
             "en": "Clinical session",
-            "ar": "جلسة سريرية"
+            "ar": "جلسة سريرية",
+            "ku": "دانیشتنی کلینیکی"
           },
           "location": {
             "en": "Hall B",
-            "ar": "القاعة B"
+            "ar": "القاعة B",
+            "ku": "هۆڵی B"
           },
           "topic": null,
           "speaker": null
@@ -170,7 +195,8 @@
           "type": "break",
           "title": {
             "en": "Lunch break",
-            "ar": "استراحة الغداء"
+            "ar": "استراحة الغداء",
+            "ku": "پشوی نانی نیوەڕۆ"
           }
         },
         {
@@ -179,11 +205,13 @@
           "type": "workshop",
           "title": {
             "en": "Workshops",
-            "ar": "الورشات"
+            "ar": "الورشات",
+            "ku": "وۆرکشۆپەکان"
           },
           "location": {
             "en": "Workshop rooms",
-            "ar": "قاعات الورشات"
+            "ar": "قاعات الورشات",
+            "ku": "ژوورەکانی وۆرکشۆپ"
           },
           "topic": null,
           "speaker": null
@@ -194,11 +222,13 @@
           "type": "panel",
           "title": {
             "en": "Scientific roundtable",
-            "ar": "طاولة علمية مستديرة"
+            "ar": "طاولة علمية مستديرة",
+            "ku": "مێزی گردی زانستی"
           },
           "location": {
             "en": "Hall B",
-            "ar": "القاعة B"
+            "ar": "القاعة B",
+            "ku": "هۆڵی B"
           },
           "topic": null,
           "speaker": null
@@ -209,11 +239,13 @@
           "type": "ceremony",
           "title": {
             "en": "Closing and certificates",
-            "ar": "الختام وتوزيع الشهادات"
+            "ar": "الختام وتوزيع الشهادات",
+            "ku": "کۆتایی و بڕوانامەکان"
           },
           "location": {
             "en": "Main hall",
-            "ar": "القاعة الرئيسية"
+            "ar": "القاعة الرئيسية",
+            "ku": "هۆڵی سەرەکی"
           },
           "topic": null,
           "speaker": null

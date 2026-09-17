@@ -25,8 +25,12 @@ async function start() {
 
     initI18n(strings);
     // A missing or broken translation file must never take the page down.
-    const arabic = await loadJSON("data/i18n/ar.json").catch(() => null);
+    const [arabic, kurdish] = await Promise.all([
+      loadJSON("data/i18n/ar.json").catch(() => null),
+      loadJSON("data/i18n/ku.json").catch(() => null),
+    ]);
     if (arabic) addLanguage("ar", arabic);
+    if (kurdish) addLanguage("ku", kurdish);
 
     initProgram(program);
     initWorkshops(workshops);

@@ -2,36 +2,42 @@
   {
     "name": {
       "en": "Diamond",
-      "ar": "ماسي"
+      "ar": "ماسي",
+      "ku": "ئەڵماس"
     },
     "className": "tc-dia",
     "subtitle": {
       "en": "Headline partners",
-      "ar": "الشركاء الرئيسيون"
+      "ar": "الشركاء الرئيسيون",
+      "ku": "هاوبەشە سەرەکییەکان"
     },
     "spots": 2
   },
   {
     "name": {
       "en": "Gold",
-      "ar": "ذهبي"
+      "ar": "ذهبي",
+      "ku": "زێڕ"
     },
     "className": "tc-gold",
     "subtitle": {
       "en": "Main partners",
-      "ar": "شركاء أساسيون"
+      "ar": "شركاء أساسيون",
+      "ku": "هاوبەشە بنەڕەتییەکان"
     },
     "spots": 3
   },
   {
     "name": {
       "en": "Silver",
-      "ar": "فضي"
+      "ar": "فضي",
+      "ku": "زیو"
     },
     "className": "tc-silver",
     "subtitle": {
       "en": "Supporting partners",
-      "ar": "شركاء داعمون"
+      "ar": "شركاء داعمون",
+      "ku": "هاوبەشە پشتیوانەکان"
     },
     "spots": 5
   }
