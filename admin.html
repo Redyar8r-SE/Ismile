@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>iSmile admin</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=Noto+Kufi+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="css/base/tokens.css">
+<link rel="stylesheet" href="css/base/base.css">
+<link rel="stylesheet" href="css/components/buttons.css">
+<link rel="stylesheet" href="css/admin.css">
+
+<script type="module" src="js/admin/main.js"></script>
+</head>
+<body>
+
+<header class="admin-top">
+  <div class="wrap">
+    <h1>iSmile admin</h1>
+    <span class="tag" id="repo">repository</span>
+    <a href="index.html">View the website ↗</a>
+  </div>
+</header>
+
+<main class="admin-main">
+  <div class="wrap">
+
+    <p class="msg is-info" id="msg" hidden></p>
+
+    <!-- Connection -->
+    <div class="card">
+      <div id="connectForm">
+        <h2>Connect to GitHub</h2>
+        <p>Paste your GitHub key once. It stays in this browser only, and it lets this page save your changes to the website.</p>
+        <ol>
+          <li>Open <code>github.com/settings/personal-access-tokens/new</code></li>
+          <li>Repository access → <b>Only select repositories</b> → choose <b>Ismile</b></li>
+          <li>Permissions → Repository permissions → <b>Contents</b> → <b>Read and write</b></li>
+          <li>Generate the token and copy it (it starts with <code>github_pat_</code>)</li>
+        </ol>
+        <div class="row">
+          <input id="token" type="password" placeholder="Paste your GitHub key here" autocomplete="off" spellcheck="false">
+          <button type="button" class="btn btn-primary" id="connectBtn">Connect</button>
+        </div>
+      </div>
+      <div id="connected" hidden>
+        <div class="who">
+          <span>Connected as <b id="who"></b></span>
+          <button type="button" class="btn btn-outline btn-sm" id="disconnectBtn">Disconnect</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Editor -->
+    <div class="admin-grid">
+      <nav class="gnavs" id="groupNav" aria-label="Sections"></nav>
+      <div>
+        <div id="groups"></div>
+        <div class="savebar">
+          <span class="spacer">Changes are saved to all three languages at once.</span>
+          <span class="dirty" id="dirty" hidden>Not saved yet</span>
+          <button type="button" class="btn btn-outline" id="downloadBtn">Download files</button>
+          <button type="button" class="btn btn-primary" id="saveBtn" disabled>Save to the website</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+</body>
+</html>

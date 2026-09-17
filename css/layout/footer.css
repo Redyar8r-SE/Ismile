@@ -13,6 +13,8 @@ footer .ltr{text-align:start}
 html[dir="rtl"] footer .ltr{text-align:right}
 footer .legal{border-top:1px solid rgba(255,255,255,.12);margin-top:40px;padding-top:20px;font-size:13px}
 
+.admin-link{margin-inline-start:14px;color:#7FD6D2;font-size:13px}
+
 @media (max-width:860px){
   footer .cols{grid-template-columns:1fr}
 }

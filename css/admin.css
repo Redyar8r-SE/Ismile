@@ -1,0 +1,61 @@
+/* ==========================================================
+   Admin page (not part of the public site design)
+   ========================================================== */
+.admin-top{position:sticky;top:0;z-index:10;background:var(--hero-bg);color:#fff;border-bottom:1px solid rgba(255,255,255,.12)}
+.admin-top .wrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding-block:14px}
+.admin-top h1{font-size:19px;font-weight:800;margin-inline-end:auto}
+.admin-top .tag{font-size:12.5px;color:#A9C9CD;border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:4px 10px}
+.admin-top a{color:#7FD6D2;font-size:14px}
+
+.admin-main{padding-block:28px 60px}
+.admin-grid{display:grid;grid-template-columns:230px 1fr;gap:26px;align-items:start}
+
+/* Connection card */
+.card{background:var(--bg);border:1px solid var(--line);border-radius:var(--r-lg);padding:20px;margin-bottom:22px}
+.card h2{font-size:17px;margin-bottom:6px}
+.card p{font-size:14.5px;color:var(--muted);line-height:1.55}
+.card ol{margin:10px 0 0;padding-inline-start:20px;font-size:14.5px;color:var(--muted);line-height:1.7}
+.card code{background:var(--surface-2);border-radius:6px;padding:1px 6px;font-size:13.5px}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.row input{flex:1 1 280px;height:46px;padding:0 14px;font:inherit;font-size:15px;color:var(--text);background:var(--bg);border:1.5px solid var(--line);border-radius:10px}
+.row input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 4px color-mix(in srgb,var(--teal) 18%,transparent)}
+.who{display:flex;align-items:center;gap:10px;font-size:15px}
+.who b{color:var(--teal-ink)}
+
+/* Messages */
+.msg{margin:0 0 18px;padding:12px 16px;border-radius:12px;font-size:14.5px;line-height:1.5}
+.msg.is-info{background:var(--surface-2);color:var(--text)}
+.msg.is-ok{background:color-mix(in srgb,var(--teal) 14%,transparent);color:var(--teal-ink)}
+.msg.is-bad{background:color-mix(in srgb,var(--danger) 14%,transparent);color:var(--danger)}
+
+/* Group navigation */
+.gnavs{display:grid;gap:6px;position:sticky;top:90px}
+.gnav{text-align:start;border:1px solid transparent;background:none;color:var(--muted);font:inherit;font-size:15px;font-weight:600;padding:11px 14px;border-radius:12px;cursor:pointer}
+.gnav:hover{color:var(--text);background:var(--surface)}
+.gnav.is-active{background:var(--surface-2);border-color:var(--line);color:var(--text)}
+
+/* Fields */
+.group{background:var(--bg);border:1px solid var(--line);border-radius:var(--r-lg);padding:24px}
+.group h2{font-size:20px}
+.ghint{margin:4px 0 20px;font-size:14.5px;color:var(--muted)}
+.field{padding:16px 0;border-top:1px solid var(--line)}
+.field:first-of-type{border-top:0;padding-top:0}
+.flabel{margin:0 0 10px;font-size:14.5px;font-weight:600}
+.flangs{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.fcell{display:flex;flex-direction:column;gap:6px;min-width:0}
+.fcode{font-size:12.5px;font-weight:600;color:var(--muted)}
+.fcell input,.fcell textarea{width:100%;padding:10px 12px;font:inherit;font-size:15px;line-height:1.5;color:var(--text);background:var(--surface);border:1.5px solid var(--line);border-radius:10px;resize:vertical}
+.fcell input:focus,.fcell textarea:focus{outline:none;border-color:var(--teal);background:var(--bg);box-shadow:0 0 0 4px color-mix(in srgb,var(--teal) 18%,transparent)}
+.fcell input[dir="rtl"],.fcell textarea[dir="rtl"]{font-family:var(--font-rtl)}
+.field.short .fcell input{max-width:140px}
+
+/* Save bar */
+.savebar{position:sticky;bottom:0;z-index:5;display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:22px;padding:14px 18px;border:1px solid var(--line);border-radius:var(--r-lg);background:color-mix(in srgb,var(--bg) 92%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 18px 40px -30px rgba(8,30,38,.6)}
+.savebar .spacer{margin-inline-end:auto;font-size:14px;color:var(--muted)}
+.savebar .dirty{font-size:13.5px;font-weight:700;color:var(--teal-ink)}
+
+@media (max-width:900px){
+  .admin-grid{grid-template-columns:1fr}
+  .gnavs{position:static;grid-auto-flow:column;grid-auto-columns:1fr;overflow-x:auto}
+  .flangs{grid-template-columns:1fr}
+}
