@@ -49,7 +49,7 @@ body.admin{background:var(--surface)}
 .who b{color:var(--teal-ink)}
 
 /* ---------- Messages ---------- */
-.msg{margin:0;padding:12px 16px;border-radius:12px;font-size:14.5px;line-height:1.5}
+.msg{position:sticky;top:78px;z-index:6;margin:0;padding:12px 16px;border-radius:12px;font-size:14.5px;line-height:1.5;box-shadow:0 10px 24px -18px rgba(8,30,38,.7)}
 .msg.is-info{background:var(--surface-2);color:var(--text)}
 .msg.is-ok{background:color-mix(in srgb,var(--teal) 14%,transparent);color:var(--teal-ink)}
 .msg.is-bad{background:color-mix(in srgb,var(--danger) 14%,transparent);color:var(--danger)}

@@ -65,6 +65,11 @@ function say(text, kind = "info") {
   box.textContent = text;
   box.className = `msg is-${kind}`;
   box.hidden = !text;
+  // The message sits at the top of the page: bring it into view, otherwise a
+  // warning can go unnoticed while you are working further down.
+  if (text && box.getBoundingClientRect().top < 60) {
+    box.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
 }
 
 function markDirty() {
