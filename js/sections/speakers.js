@@ -14,14 +14,16 @@ export function initSpeakers(speakers) {
         const photo = s.photo
           ? `<img src="${s.photo}" alt="${name || ""}" loading="lazy">`
           : `<em>${t("sp_soon")}</em>${ICONS.person}`;
-        // A speaker who is not announced yet is drawn in a quieter style.
+        // A speaker who is not announced yet shows shaped placeholders instead
+        // of pretend text, with the wording kept for screen readers.
+        const body = name
+          ? `<h3>${name}</h3><p>${role || t("sp_role")}</p>`
+          : `<h3 class="sk-line"><span class="sr-only">${t("sp_name")}</span></h3>
+             <p class="sk-line sk-short"><span class="sr-only">${t("sp_role")}</span></p>`;
         return `
           <article class="sp${name ? "" : " is-soon"}">
             <div class="ph">${photo}</div>
-            <div class="sp-body">
-              <h3>${name || t("sp_name")}</h3>
-              <p>${role || t("sp_role")}</p>
-            </div>
+            <div class="sp-body">${body}</div>
           </article>`;
       })
       .join("");

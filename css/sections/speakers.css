@@ -33,15 +33,18 @@ html[dir="rtl"] .sp::before{transform-origin:right}
 .sp-body p::before{content:"";flex:none;width:16px;height:2px;border-radius:2px;background:var(--teal);transform:translateY(-4px);transition:width .3s ease}
 .sp:hover .sp-body p::before{width:26px}
 
-/* Not announced yet: quieter, so a real speaker stands out */
+/* Not announced yet: shaped placeholders, never pretend text */
 .sp.is-soon{background:var(--surface);border-style:dashed}
-.sp.is-soon .ph{background:color-mix(in srgb,var(--teal) 6%,var(--surface-2))}
-.sp.is-soon .sp-body h3{font-weight:600;color:var(--muted)}
-.sp.is-soon .sp-body p{color:color-mix(in srgb,var(--muted) 75%,transparent)}
-.sp.is-soon .sp-body p::before{background:var(--line)}
+.sp.is-soon .ph{background:radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--teal) 10%,var(--surface-2)),var(--surface-2))}
+.sp.is-soon .ph svg{width:30%;opacity:.28}
+.sk-line{position:relative;height:13px;border-radius:99px;background:linear-gradient(90deg,var(--line),color-mix(in srgb,var(--line) 55%,transparent),var(--line));background-size:200% 100%;animation:skShift 2.6s ease-in-out infinite}
+.sk-line.sk-short{width:62%;height:10px;margin-top:2px;opacity:.75}
+.sp.is-soon .sp-body p::before{display:none}
+@keyframes skShift{0%,100%{background-position:0% 0}50%{background-position:-100% 0}}
 .sp.is-soon:hover{transform:none;box-shadow:none;border-color:var(--line)}
 .sp.is-soon:hover::before{transform:scaleX(0)}
 .sp.is-soon:hover .sp-body p::before{width:16px}
+.sp.is-soon .sp-body{gap:12px;justify-content:center}
 
 @media (max-width:1060px){
   .sp-grid{grid-template-columns:repeat(2,1fr);gap:20px}
@@ -55,6 +58,7 @@ html[dir="rtl"] .sp::before{transform-origin:right}
   .sp .ph em{font-size:10.5px;padding:4px 9px;inset-block-start:9px;inset-inline-start:9px}
 }
 @media (prefers-reduced-motion: reduce){
+  .sk-line{animation:none}
   .sp,.sp .ph img,.sp::before,.sp-body p::before{transition:none}
   .sp:hover{transform:none}
   .sp:hover .ph img{transform:none}
