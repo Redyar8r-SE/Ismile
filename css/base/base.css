@@ -3,7 +3,7 @@
    ========================================================== */
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-wrap:break-word}
 html[dir="rtl"] body{font-family:var(--font-rtl);line-height:1.8}
 img{max-width:100%}
 a{color:inherit}

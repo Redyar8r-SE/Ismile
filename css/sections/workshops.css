@@ -26,3 +26,7 @@
 @media (max-width:560px){
   .ws-grid{grid-template-columns:1fr 1fr;gap:14px}
 }
+/* Two cards side by side leave no room for longer words on a small phone. */
+@media (max-width:400px){
+  .ws-grid{grid-template-columns:1fr}
+}

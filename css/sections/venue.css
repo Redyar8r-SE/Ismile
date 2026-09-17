@@ -14,10 +14,12 @@
 .venue-mark svg{width:26px;height:26px}
 
 .venue-facts{list-style:none;margin:0;padding:0;display:grid;border-top:1px solid var(--line)}
-.venue-facts li{display:flex;align-items:center;gap:14px;padding:16px 0;border-bottom:1px solid var(--line)}
+/* The copy button moves to its own line when a translated label leaves the
+   address too little room (Kurdish "لەبەرگرتنەوە" is much wider than "Copy"). */
+.venue-facts li{display:flex;flex-wrap:wrap;align-items:center;gap:14px;padding:16px 0;border-bottom:1px solid var(--line)}
 .vf-ic{flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:color-mix(in srgb,var(--teal) 13%,transparent);color:var(--teal)}
 .vf-ic svg{width:20px;height:20px}
-.vf-body{flex:1;min-width:0}
+.vf-body{flex:1 1 190px;min-width:0}
 .vf-body small{display:block;font-size:12.5px;color:var(--muted)}
 .vf-body b{display:block;font-size:15.5px;font-weight:600;line-height:1.4}
 
@@ -74,7 +76,6 @@
 @media (max-width:560px){
   .venue-info{padding:22px}
   .venue-map{min-height:320px}
-  .venue-facts li{flex-wrap:wrap}
   .vf-copy{margin-inline-start:54px}
   .venue-actions .btn{flex-basis:100%}
 }

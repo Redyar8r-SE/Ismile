@@ -80,12 +80,19 @@ html[dir="rtl"] .scroll-progress{transform-origin:right}
   .menu-btn{display:block}
 }
 @media (max-width:560px){
-  .top .wrap{height:64px}
+  .top .wrap{height:64px;gap:10px}
   .top-cta{display:none}
-  .lang{margin-inline-start:auto}
-  .lang button{padding:6px 9px;font-size:12.5px}
-  .menu-btn{margin-inline-start:6px}
+  .lang{margin-inline-start:auto;padding:2px;gap:0}
+  .lang button{padding:6px 8px;font-size:12.5px}
+  .menu-btn{margin-inline-start:0}
   nav.links{padding-inline:16px}
+}
+/* Three languages plus the menu button are tight on a small phone. */
+@media (max-width:420px){
+  .brand{font-size:19px;gap:8px}
+  .brand svg{width:26px;height:26px}
+  .lang button{padding:6px 7px;font-size:12px}
+  .menu-btn{width:40px;height:40px}
 }
 @media (prefers-reduced-motion: reduce){
   header.top,nav.links,.menu-btn span,.top-cta svg{transition:none}
