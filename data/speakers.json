@@ -1,34 +1,66 @@
 [
   {
-    "name": null,
-    "role": null,
-    "photo": null
-  },
-  {
-    "name": null,
-    "role": null,
-    "photo": null
-  },
-  {
-    "name": null,
-    "role": null,
-    "photo": null
-  },
-  {
-    "name": null,
-    "role": null,
+    "name": {
+      "en": "r",
+      "ar": "r",
+      "ku": "r"
+    },
+    "role": {
+      "en": "r",
+      "ar": "r",
+      "ku": "r"
+    },
     "photo": null
   },
   {
     "name": {
-      "en": "",
-      "ar": "",
-      "ku": ""
+      "en": "r",
+      "ar": "r",
+      "ku": "r"
     },
     "role": {
-      "en": "",
-      "ar": "",
-      "ku": ""
+      "en": "r",
+      "ar": "r",
+      "ku": "r"
+    },
+    "photo": null
+  },
+  {
+    "name": {
+      "en": "r",
+      "ar": "r",
+      "ku": "r"
+    },
+    "role": {
+      "en": "r",
+      "ar": "r",
+      "ku": "r"
+    },
+    "photo": null
+  },
+  {
+    "name": {
+      "en": "r",
+      "ar": "r",
+      "ku": "r"
+    },
+    "role": {
+      "en": "r",
+      "ar": "r",
+      "ku": "r"
+    },
+    "photo": null
+  },
+  {
+    "name": {
+      "en": "r",
+      "ar": "r",
+      "ku": "r"
+    },
+    "role": {
+      "en": "rr",
+      "ar": "rr",
+      "ku": "r"
     },
     "photo": null
   }
