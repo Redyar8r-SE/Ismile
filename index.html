@@ -281,70 +281,229 @@
 
 <!-- ============ REGISTRATION ============ -->
 <section class="block alt" id="register">
-  <div class="wrap reg">
-    <aside>
-      <h2 data-i18n="reg_title">Register</h2>
-      <p class="lead" data-i18n="reg_sub">It takes about two minutes.</p>
-      <ul>
-        <li><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9.5l4 4 8-9"/></svg><span data-i18n="reg_b1">Confirmation by WhatsApp and email</span></li>
-        <li><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9.5l4 4 8-9"/></svg><span data-i18n="reg_b2">Your ticket and certificate in your account</span></li>
-        <li><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9.5l4 4 8-9"/></svg><span data-i18n="reg_b3">Pay with FIB or FastPay</span></li>
-        <li><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9.5l4 4 8-9"/></svg><span data-i18n="reg_b4">Tickets are non-refundable</span></li>
-      </ul>
-    </aside>
-    <div class="card">
-      <div class="seg" role="tablist">
-        <button role="tab" aria-selected="true" data-mode="person" data-i18n="mode_person">Dental professional</button>
-        <button role="tab" aria-selected="false" data-mode="company" data-i18n="mode_company">Company or clinic</button>
+  <div class="wrap">
+    <div class="reg-head">
+      <p class="section-kicker" data-i18n="reg_kicker">Registration</p>
+      <h2 data-i18n="reg_title">Secure your place at iSmile 2026</h2>
+      <p class="lead" data-i18n="reg_sub">Register in three short steps. Your payment link and ticket are sent to you by WhatsApp and email.</p>
+    </div>
+
+    <div class="reg">
+      <!-- Side column: tickets, how it works, help -->
+      <aside class="reg-aside">
+        <div class="reg-panel">
+          <h3 data-i18n="reg_tickets">Ticket options</h3>
+          <ul class="ticket-list">
+            <li>
+              <span class="tk-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c.8-4 3.8-6 7.5-6s6.7 2 7.5 6"/></svg></span>
+              <div><b data-i18n="tk_prof">Professional</b><small data-i18n="tk_prof_d">Dentists, specialists, technicians and researchers</small></div>
+              <span class="tk-price" data-i18n="tk_soon">Price soon</span>
+            </li>
+            <li>
+              <span class="tk-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"/></svg></span>
+              <div><b data-i18n="tk_student">Student</b><small data-i18n="tk_student_d">For currently enrolled dental students</small></div>
+              <span class="tk-price" data-i18n="tk_soon">Price soon</span>
+            </li>
+            <li>
+              <span class="tk-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-6h6v6"/></svg></span>
+              <div><b data-i18n="tk_team">Team registration</b><small data-i18n="tk_team_d">Clinics and companies registering several dentists</small></div>
+              <span class="tk-price" data-i18n="tk_soon">Price soon</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="reg-panel">
+          <h3 data-i18n="how_title">How it works</h3>
+          <ol class="how-steps">
+            <li><span>1</span><div><b data-i18n="how1">Fill in your details</b><small data-i18n="how1_d">It takes about two minutes.</small></div></li>
+            <li><span>2</span><div><b data-i18n="how2">Pay with FIB or FastPay</b><small data-i18n="how2_d">We send your payment link by WhatsApp and email.</small></div></li>
+            <li><span>3</span><div><b data-i18n="how3">Receive your ticket</b><small data-i18n="how3_d">Your ticket and certificate are kept in your account.</small></div></li>
+          </ol>
+        </div>
+
+        <div class="reg-help">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 11-4.2-7.6L21 3l-1.2 4.1A9 9 0 0121 12z"/><path d="M9.5 9.5a2.5 2.5 0 114 2c-.9.6-1.5 1.1-1.5 2M12 17h.01"/></svg>
+          <div><b data-i18n="help_title">Need help registering?</b><a href="mailto:info@ismile.krd" dir="ltr">info@ismile.krd</a></div>
+        </div>
+        <p class="reg-policy">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
+          <span data-i18n="reg_b4">Tickets are non-refundable.</span>
+        </p>
+      </aside>
+
+      <!-- Form card -->
+      <div class="reg-card" id="regCard">
+        <div class="reg-progress" id="regProgress">
+          <ol class="stepper" id="regStepper">
+            <li class="is-active"><span class="st-dot">1</span><span class="st-label" data-i18n="st1">Registration type</span></li>
+            <li><span class="st-dot">2</span><span class="st-label" data-i18n="st2">Your details</span></li>
+            <li><span class="st-dot">3</span><span class="st-label" data-i18n="st3">Payment &amp; review</span></li>
+          </ol>
+          <div class="st-bar" aria-hidden="true"><i id="regBar"></i></div>
+        </div>
+
+        <form id="regForm" novalidate>
+          <!-- Step 1: type -->
+          <div class="reg-step" data-step="1">
+            <div class="step-head">
+              <h3 tabindex="-1" data-i18n="s1_title">Who is registering?</h3>
+              <p data-i18n="s1_sub">Choose the option that fits you.</p>
+            </div>
+            <div class="type-options">
+              <label class="type-card is-checked">
+                <input type="radio" name="regType" value="person" checked>
+                <span class="tc-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c.8-4 3.8-6 7.5-6s6.7 2 7.5 6"/></svg></span>
+                <span class="tc-text"><b data-i18n="mode_person">Dental professional</b><small data-i18n="mode_person_d">Register yourself as a dentist, specialist, technician, researcher or student.</small></span>
+                <span class="tc-check" aria-hidden="true"></span>
+              </label>
+              <label class="type-card">
+                <input type="radio" name="regType" value="company">
+                <span class="tc-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-6h6v6"/></svg></span>
+                <span class="tc-text"><b data-i18n="mode_company">Company or clinic</b><small data-i18n="mode_company_d">Register several dentists from your clinic or company in one form.</small></span>
+                <span class="tc-check" aria-hidden="true"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Step 2: details -->
+          <div class="reg-step" data-step="2" hidden>
+            <div class="step-head">
+              <h3 tabindex="-1"><span data-type-show="person" data-i18n="s2_title_p">Your details</span><span data-type-show="company" data-i18n="s2_title_c" hidden>Team details</span></h3>
+              <p data-i18n="s2_sub">We use these details to send your payment link and ticket.</p>
+            </div>
+
+            <div class="fields" data-panel="person">
+              <div class="f full">
+                <label for="p_name" data-i18n="f_name">Full name</label>
+                <input id="p_name" autocomplete="name" data-rule="name" placeholder="As it should appear on your certificate">
+              </div>
+              <div class="f">
+                <label for="p_phone" data-i18n="f_phone">WhatsApp number</label>
+                <input id="p_phone" type="tel" inputmode="tel" dir="ltr" autocomplete="tel" placeholder="0750 123 4567" data-rule="phone">
+              </div>
+              <div class="f">
+                <label for="p_email" data-i18n="f_email">Email</label>
+                <input id="p_email" type="email" inputmode="email" dir="ltr" autocomplete="email" placeholder="name@example.com" data-rule="email">
+              </div>
+              <div class="f">
+                <label for="p_spec" data-i18n="f_spec">Specialty</label>
+                <select id="p_spec" data-rule="required">
+                  <option value="" data-i18n="o_choose">Choose your specialty</option>
+                  <option value="gp" data-i18n="o_gp">General dentist</option>
+                  <option value="spec" data-i18n="o_spec">Specialist</option>
+                  <option value="omfs" data-i18n="o_omfs">Oral and maxillofacial surgeon</option>
+                  <option value="lab" data-i18n="o_lab">Dental technician</option>
+                  <option value="acad" data-i18n="o_acad">Academic or researcher</option>
+                  <option value="student" data-i18n="o_student">Dental student</option>
+                </select>
+              </div>
+              <div class="f">
+                <span class="f-label" id="ticketLabel" data-i18n="f_ticket">Ticket type</span>
+                <div class="ticket-toggle" role="radiogroup" aria-labelledby="ticketLabel">
+                  <label class="is-checked"><input type="radio" name="ticket" value="professional" checked><span data-i18n="ticket_prof">Professional</span></label>
+                  <label><input type="radio" name="ticket" value="student"><span data-i18n="ticket_student">Student</span></label>
+                </div>
+              </div>
+              <div class="f full" id="uniWrap" hidden>
+                <label for="p_uni" data-i18n="f_uni">University and department</label>
+                <input id="p_uni" autocomplete="organization" data-rule="required" placeholder="e.g. College of Dentistry, University of Sulaimani">
+              </div>
+            </div>
+
+            <div class="fields" data-panel="company" hidden>
+              <div class="f full">
+                <label for="c_name" data-i18n="f_cname">Company or clinic name</label>
+                <input id="c_name" autocomplete="organization" data-rule="name">
+              </div>
+              <div class="f full">
+                <label for="c_contact" data-i18n="f_contact">Contact person</label>
+                <input id="c_contact" autocomplete="name" data-rule="name">
+              </div>
+              <div class="f">
+                <label for="c_phone" data-i18n="f_phone">WhatsApp number</label>
+                <input id="c_phone" type="tel" inputmode="tel" dir="ltr" autocomplete="tel" placeholder="0750 123 4567" data-rule="phone">
+              </div>
+              <div class="f">
+                <label for="c_email" data-i18n="f_email">Email</label>
+                <input id="c_email" type="email" inputmode="email" dir="ltr" autocomplete="email" placeholder="name@example.com" data-rule="email">
+              </div>
+              <div class="f full dent-block">
+                <div class="dent-head">
+                  <span class="f-label" data-i18n="f_dentists">Dentists attending</span>
+                  <span class="dent-count" id="dentCount"></span>
+                </div>
+                <div class="dentists" id="dentists"></div>
+                <button type="button" class="add" id="addDentist">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                  <span data-i18n="add_dentist">Add another dentist</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 3: payment and review -->
+          <div class="reg-step" data-step="3" hidden>
+            <div class="step-head">
+              <h3 tabindex="-1" data-i18n="s3_title">Payment &amp; review</h3>
+              <p data-i18n="s3_sub">Choose how you'll pay, then check your details.</p>
+            </div>
+
+            <fieldset class="pay-options">
+              <legend data-i18n="pay_legend">Payment method</legend>
+              <label class="pay-card is-checked">
+                <input type="radio" name="pay" value="fib" checked>
+                <span class="pay-logo" aria-hidden="true">FIB</span>
+                <span class="tc-text"><b data-i18n="pay_fib_t">FIB</b><small data-i18n="pay_fib_d">Pay in the First Iraqi Bank app</small></span>
+                <span class="tc-check" aria-hidden="true"></span>
+              </label>
+              <label class="pay-card">
+                <input type="radio" name="pay" value="fastpay">
+                <span class="pay-logo alt" aria-hidden="true">FP</span>
+                <span class="tc-text"><b data-i18n="pay_fastpay_t">FastPay</b><small data-i18n="pay_fastpay_d">Pay with your FastPay wallet</small></span>
+                <span class="tc-check" aria-hidden="true"></span>
+              </label>
+            </fieldset>
+
+            <div class="review">
+              <div class="review-head">
+                <h4 data-i18n="review_title">Review your registration</h4>
+                <button type="button" class="link-btn" id="editDetails" data-i18n="edit">Edit</button>
+              </div>
+              <dl id="reviewList"></dl>
+            </div>
+
+            <label class="terms">
+              <input type="checkbox" id="terms">
+              <span data-i18n="terms">I understand that tickets are non-refundable, and I agree to receive my payment link and ticket by WhatsApp and email.</span>
+            </label>
+            <p class="f-error terms-error" id="termsError" hidden></p>
+          </div>
+
+          <div class="reg-nav">
+            <button type="button" class="btn btn-outline reg-back is-hidden" id="regBack">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+              <span data-i18n="back">Back</span>
+            </button>
+            <span class="reg-count" id="regCount"></span>
+            <button type="button" class="btn btn-primary reg-next" id="regNext">
+              <span data-i18n="continue">Continue</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </button>
+            <button type="submit" class="btn btn-primary reg-next" id="regSubmit" hidden>
+              <span data-i18n="submit">Complete registration</span>
+            </button>
+          </div>
+        </form>
+
+        <!-- Success -->
+        <div class="reg-success" id="regSuccess" tabindex="-1" hidden>
+          <div class="success-ic" aria-hidden="true"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+          <h3 data-i18n="success_title">You're registered!</h3>
+          <p id="successText"></p>
+          <div class="success-ref"><small data-i18n="success_ref">Your reference number</small><b id="successRef" dir="ltr"></b></div>
+          <button type="button" class="btn btn-outline" id="regAgain" data-i18n="register_again">Register someone else</button>
+        </div>
       </div>
-      <form id="regForm" novalidate>
-        <div class="fields" data-panel="person">
-          <div class="f full"><label for="p_name" data-i18n="f_name">Full name</label><input id="p_name" autocomplete="name" data-req></div>
-          <div class="f"><label for="p_phone" data-i18n="f_phone">Phone (WhatsApp)</label><input id="p_phone" type="tel" dir="ltr" placeholder="+964 7xx xxx xxxx" data-req></div>
-          <div class="f"><label for="p_email" data-i18n="f_email">Email</label><input id="p_email" type="email" dir="ltr" data-req></div>
-          <div class="f"><label for="p_spec" data-i18n="f_spec">Specialty</label>
-            <select id="p_spec" class="spec">
-              <option value="" data-i18n="o_choose">Choose</option>
-              <option value="gp" data-i18n="o_gp">General dentist</option>
-              <option value="spec" data-i18n="o_spec">Specialist</option>
-              <option value="omfs" data-i18n="o_omfs">Oral and maxillofacial surgeon</option>
-              <option value="lab" data-i18n="o_lab">Dental technician</option>
-              <option value="acad" data-i18n="o_acad">Academic or researcher</option>
-              <option value="student" data-i18n="o_student">Dental student</option>
-            </select>
-          </div>
-          <div class="f"><label for="p_ticket" data-i18n="f_ticket">Ticket type</label>
-            <select id="p_ticket">
-              <option data-i18n="o_prof">Professional</option>
-              <option data-i18n="o_stu_t">Student</option>
-            </select>
-          </div>
-          <div class="f full" id="uniWrap" hidden><label for="p_uni" data-i18n="f_uni">University and department</label><input id="p_uni"></div>
-        </div>
-
-        <div class="fields" data-panel="company" hidden>
-          <div class="f full"><label for="c_name" data-i18n="f_cname">Company or clinic name</label><input id="c_name" data-req></div>
-          <div class="f full"><label for="c_contact" data-i18n="f_contact">Contact person</label><input id="c_contact" data-req></div>
-          <div class="f"><label for="c_phone" data-i18n="f_phone">Phone (WhatsApp)</label><input id="c_phone" type="tel" dir="ltr" placeholder="+964 7xx xxx xxxx" data-req></div>
-          <div class="f"><label for="c_email" data-i18n="f_email">Email</label><input id="c_email" type="email" dir="ltr" data-req></div>
-          <div class="f full"><label data-i18n="f_dentists">Your dentists</label><div class="dentists" id="dentists"></div></div>
-          <div class="f full"><button type="button" class="add" id="addDentist" data-i18n="add_dentist">+ Add a dentist</button></div>
-        </div>
-
-        <fieldset class="f pay">
-          <legend>Payment method</legend>
-          <div class="checks">
-            <label><input type="radio" name="pay" value="fib" checked>FIB (First Iraqi Bank)</label>
-            <label><input type="radio" name="pay" value="fastpay">FastPay</label>
-          </div>
-        </fieldset>
-
-        <div class="form-foot">
-          <p data-i18n="pay_note">We'll send your payment link by WhatsApp and email after you register.</p>
-          <button class="btn btn-primary" type="submit" data-i18n="submit">Complete registration</button>
-        </div>
-        <div class="msg" id="msg" role="status" aria-live="polite"></div>
-      </form>
     </div>
   </div>
 </section>
@@ -354,7 +513,7 @@
   <div class="wrap">
     <div class="venue-head">
       <div>
-        <p class="venue-kicker" data-i18n="venue_title">Venue</p>
+        <p class="section-kicker" data-i18n="venue_title">Venue</p>
         <h2 data-i18n="venue_heading">Where iSmile 2026 happens</h2>
         <p class="lead" data-i18n="venue_sub">Two days of conference, exhibition and hands-on workshops, all under one roof in Sulaymaniyah.</p>
       </div>
@@ -409,14 +568,19 @@
         </div>
 
         <div class="venue-actions">
-          <a class="btn btn-primary" href="https://www.google.com/maps/dir/?api=1&amp;destination=Grand+Millennium+Sulaimani" target="_blank" rel="noopener">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l18-8-8 18-2-8z"/></svg>
-            <span data-i18n="directions">Get directions</span>
+          <a class="btn btn-primary" id="directionsBtn" href="https://www.google.com/maps/dir/?api=1&amp;destination=Grand+Millennium+Sulaimani" target="_blank" rel="noopener">
+            <svg class="dir-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l18-8-8 18-2-8z"/></svg>
+            <span class="dir-spinner" aria-hidden="true"></span>
+            <span class="dir-label" data-i18n="directions">Get directions</span>
           </a>
           <a class="btn btn-outline" href="https://www.google.com/maps/search/?api=1&amp;query=Grand+Millennium+Sulaimani" target="_blank" rel="noopener">
             <span data-i18n="maps">Open in Google Maps</span>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg>
           </a>
+          <p class="venue-note" id="directionsNote" role="status" aria-live="polite">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="7"/></svg>
+            <span id="directionsNoteText" data-i18n="dir_hint">For the most accurate route, allow location access when your browser asks.</span>
+          </p>
         </div>
       </div>
 

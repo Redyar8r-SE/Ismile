@@ -2,9 +2,6 @@
    Venue: info panel + live Google map
    ========================================================== */
 .venue-head{margin-bottom:36px}
-.venue-kicker{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--teal-ink);margin-bottom:10px}
-.venue-kicker::before{content:"";width:22px;height:2px;border-radius:2px;background:var(--teal)}
-html[dir="rtl"] .venue-kicker{letter-spacing:0}
 
 .venue-card{display:grid;grid-template-columns:minmax(340px,420px) 1fr;border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;background:var(--bg);box-shadow:0 30px 60px -40px rgba(8,30,38,.45)}
 
@@ -35,8 +32,19 @@ html[dir="rtl"] .venue-kicker{letter-spacing:0}
 
 .venue-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:auto}
 .venue-actions .btn{flex:1 1 auto;font-size:15px;padding:12px 18px}
-.btn-outline{background:var(--bg);color:var(--text);box-shadow:inset 0 0 0 1.5px var(--line)}
-.btn-outline:hover{box-shadow:inset 0 0 0 1.5px var(--teal);color:var(--teal-ink)}
+/* Directions button while waiting for the visitor's location */
+.dir-spinner{display:none;width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;animation:dirSpin .8s linear infinite}
+#directionsBtn.is-locating{pointer-events:none;opacity:.9}
+#directionsBtn.is-locating .dir-icon{display:none}
+#directionsBtn.is-locating .dir-spinner{display:inline-block}
+@keyframes dirSpin{to{transform:rotate(360deg)}}
+
+.venue-note{flex-basis:100%;display:flex;align-items:flex-start;gap:8px;font-size:13px;line-height:1.5;color:var(--muted);margin-top:2px}
+.venue-note svg{flex:none;margin-top:2px;color:var(--teal)}
+.venue-note.is-success{color:var(--ok)}
+.venue-note.is-warning{color:var(--danger)}
+.venue-note.is-warning svg{color:var(--danger)}
+
 
 /* Map */
 .venue-map{position:relative;min-height:560px;background:var(--surface-2);isolation:isolate}
@@ -72,4 +80,5 @@ html[dir="rtl"] .venue-kicker{letter-spacing:0}
 }
 @media (prefers-reduced-motion: reduce){
   .map-dot{animation:none}
+  .dir-spinner{animation-duration:2s}
 }

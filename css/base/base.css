@@ -19,6 +19,10 @@ h3{font-size:20px;font-weight:600}
 p{margin:0}
 .lead{color:var(--muted);max-width:62ch;margin-top:12px}
 
+/* Small label above section titles, e.g. "VENUE" */
+.section-kicker{display:inline-flex;align-items:center;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--teal-ink);margin-bottom:10px}
+html[dir="rtl"] .section-kicker{letter-spacing:0}
+
 /* Page sections */
 section.block{padding-block:92px}
 section[id]{scroll-margin-top:72px}
