@@ -9,15 +9,20 @@ export function initSpeakers(speakers) {
   function render() {
     grid.innerHTML = speakers
       .map((s) => {
+        const name = tr(s.name);
+        const role = tr(s.role);
         const photo = s.photo
-          ? `<img src="${s.photo}" alt="${tr(s.name) || ""}" loading="lazy">`
+          ? `<img src="${s.photo}" alt="${name || ""}" loading="lazy">`
           : `<em>${t("sp_soon")}</em>${ICONS.person}`;
+        // A speaker who is not announced yet is drawn in a quieter style.
         return `
-          <div class="sp">
+          <article class="sp${name ? "" : " is-soon"}">
             <div class="ph">${photo}</div>
-            <h3>${tr(s.name) || t("sp_name")}</h3>
-            <p>${tr(s.role) || t("sp_role")}</p>
-          </div>`;
+            <div class="sp-body">
+              <h3>${name || t("sp_name")}</h3>
+              <p>${role || t("sp_role")}</p>
+            </div>
+          </article>`;
       })
       .join("");
   }
