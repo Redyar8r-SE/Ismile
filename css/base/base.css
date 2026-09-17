@@ -1,0 +1,35 @@
+/* ==========================================================
+   Reset, typography and shared layout helpers
+   ========================================================== */
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
+html[dir="rtl"] body{font-family:var(--font-rtl);line-height:1.8}
+img{max-width:100%}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--teal);outline-offset:3px;border-radius:4px}
+[hidden]{display:none!important}
+
+.wrap{max-width:var(--wrap);margin:0 auto;padding-inline:24px}
+
+h1,h2,h3{margin:0;line-height:1.15;letter-spacing:-0.01em}
+html[dir="rtl"] h1,html[dir="rtl"] h2,html[dir="rtl"] h3{letter-spacing:0;line-height:1.4}
+h2{font-size:clamp(30px,4vw,44px);font-weight:700}
+h3{font-size:20px;font-weight:600}
+p{margin:0}
+.lead{color:var(--muted);max-width:62ch;margin-top:12px}
+
+/* Page sections */
+section.block{padding-block:92px}
+section[id]{scroll-margin-top:72px}
+section.alt{background:linear-gradient(180deg,var(--bg) 0,var(--surface) 160px,var(--surface) calc(100% - 160px),var(--bg) 100%)}
+
+/* Shown by js/main.js when the data files cannot be loaded */
+.load-error{background:var(--danger);color:#fff;text-align:center;padding:10px 16px;font-size:15px}
+
+@media (max-width:860px){
+  section.block{padding-block:64px}
+}
+@media (max-width:560px){
+  body{font-size:16px}
+}

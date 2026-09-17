@@ -1,0 +1,61 @@
+/* ==========================================================
+   About: timeline, organizer card, vision / mission
+   ========================================================== */
+.ab-head{max-width:720px}
+.ab-head .lead{margin-top:14px;font-size:18px}
+
+/* Timeline */
+.journey{list-style:none;padding:0;margin:44px 0 0;display:grid;grid-template-columns:repeat(3,1fr);position:relative}
+.journey::before{content:"";position:absolute;top:21px;inset-inline-start:calc(100% / 6);width:calc(100% * 2 / 3);height:2px;background:linear-gradient(90deg,var(--line) 0 50%,var(--teal) 100%)}
+.journey li{position:relative;display:grid;gap:14px;padding-inline:16px;align-content:start;justify-items:center;text-align:center}
+.journey li p{max-width:30ch}
+.journey .yr{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:800;background:var(--bg);border:2px solid var(--line);color:var(--muted);position:relative;font-family:var(--font)}
+.journey .now .yr{background:var(--teal);border-color:var(--teal);color:#fff;box-shadow:0 0 0 6px color-mix(in srgb,var(--teal) 18%,transparent)}
+.journey b{font-size:17px}
+.journey p{color:var(--muted);font-size:14px;margin-top:2px}
+
+.ab-grid{display:grid;grid-template-columns:1.35fr 1fr;gap:20px;margin-top:44px;align-items:start}
+
+/* Organizer card */
+.org-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:26px;display:flex;flex-direction:column;gap:14px}
+.org-card>p{color:var(--muted);font-size:16px}
+.org-top{display:flex;align-items:center;gap:14px}
+.org-top h3{font-size:22px}
+.org-mark{width:48px;height:48px;border-radius:14px;background:var(--navy);color:var(--teal);display:grid;place-items:center;font-weight:800;font-size:26px;font-family:var(--font);flex:none}
+.org-kicker{font-size:13px;color:var(--muted)}
+.org-link{margin-inline-start:auto;font-size:14px;font-weight:600;color:var(--teal-ink);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:6px 14px;white-space:nowrap}
+.org-link:hover{border-color:var(--teal)}
+.org-facts{list-style:none;margin:4px 0 0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.org-facts li{padding:14px 12px;display:grid;gap:2px}
+.org-facts li+li{border-inline-start:1px solid var(--line)}
+.org-facts b{font-size:17px}
+.org-facts span{font-size:13px;color:var(--muted)}
+.org-sub{border-inline-start:3px solid var(--teal);padding-inline-start:14px;margin-top:4px}
+.org-sub h4{margin:0;font-size:16px}
+.org-sub p{font-size:14px;color:var(--muted)}
+
+/* Vision / mission / partner */
+.vm2{display:grid;gap:20px;align-content:start}
+.vm-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:26px;display:flex;flex-direction:column;gap:8px}
+.vm-card p{color:var(--muted)}
+.vm-ic{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:color-mix(in srgb,var(--teal) 14%,transparent);color:var(--teal);margin-bottom:4px}
+.vm-ic svg{width:24px;height:24px}
+.vm-card:not(.partner){display:grid;grid-template-columns:44px 1fr;column-gap:16px;row-gap:4px;align-items:start}
+.vm-card:not(.partner) .vm-ic{grid-row:span 2;margin:0}
+.vm-card:not(.partner) h3{align-self:center}
+.vm-card.partner{background:linear-gradient(135deg,#123B4A,#0E6E6B);border-color:transparent;color:#fff}
+.vm-card.partner .org-kicker{color:#A9C9CD}
+.vm-card.partner h3{font-size:19px}
+
+@media (max-width:860px){
+  .ab-grid{grid-template-columns:1fr;gap:16px}
+  .journey{grid-template-columns:1fr;gap:18px}
+  .journey::before{top:22px;bottom:22px;inset-inline:21px auto;width:2px;height:auto;background:linear-gradient(180deg,var(--line) 0 50%,var(--teal) 100%)}
+  .journey li{grid-template-columns:44px 1fr;align-items:center;justify-items:start;text-align:start;padding-inline:0}
+}
+@media (max-width:560px){
+  .org-top{flex-wrap:wrap}
+  .org-link{margin-inline-start:0}
+  .org-facts{grid-template-columns:1fr}
+  .org-facts li+li{border-inline-start:0;border-top:1px solid var(--line)}
+}

@@ -1,0 +1,38 @@
+{
+  "types": {
+    "ceremony": "Ceremony",
+    "keynote": "Keynote",
+    "clinical": "Clinical",
+    "workshop": "Hands-on",
+    "panel": "Discussion",
+    "live": "Live"
+  },
+  "days": [
+    {
+      "id": "1",
+      "label": "Day 1",
+      "subtitle": "Conference and workshops",
+      "sessions": [
+        { "start": "09:00", "end": "10:00", "type": "ceremony", "title": "Opening ceremony", "location": "Main hall", "topic": null, "speaker": null },
+        { "start": "10:00", "end": "11:15", "type": "keynote", "title": "Keynote lecture", "location": "Main hall", "topic": null, "speaker": null },
+        { "start": "11:30", "end": "13:00", "type": "clinical", "title": "Clinical session", "location": "Hall B", "topic": null, "speaker": null },
+        { "start": "13:00", "end": "14:00", "type": "break", "title": "Lunch break" },
+        { "start": "14:00", "end": "15:45", "type": "workshop", "title": "Workshops", "location": "Workshop rooms", "topic": null, "speaker": null },
+        { "start": "16:00", "end": "17:00", "type": "panel", "title": "Expert panel", "location": "Main hall", "topic": null, "speaker": null }
+      ]
+    },
+    {
+      "id": "2",
+      "label": "Day 2",
+      "subtitle": "Live surgery and closing",
+      "sessions": [
+        { "start": "09:00", "end": "10:45", "type": "live", "title": "Live clinical procedure", "location": "Main hall", "topic": null, "speaker": null },
+        { "start": "11:00", "end": "12:45", "type": "clinical", "title": "Clinical session", "location": "Hall B", "topic": null, "speaker": null },
+        { "start": "13:00", "end": "14:00", "type": "break", "title": "Lunch break" },
+        { "start": "14:00", "end": "15:45", "type": "workshop", "title": "Workshops", "location": "Workshop rooms", "topic": null, "speaker": null },
+        { "start": "16:00", "end": "17:15", "type": "panel", "title": "Scientific roundtable", "location": "Hall B", "topic": null, "speaker": null },
+        { "start": "17:30", "end": "18:00", "type": "ceremony", "title": "Closing and certificates", "location": "Main hall", "topic": null, "speaker": null }
+      ]
+    }
+  ]
+}

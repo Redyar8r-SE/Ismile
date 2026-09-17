@@ -1,0 +1,33 @@
+/* ==========================================================
+   Sponsors: Diamond / Gold / Silver open logo slots
+   (card frame comes from components/tier-card.css)
+   ========================================================== */
+.spon-head{display:flex;justify-content:space-between;align-items:end;gap:24px;flex-wrap:wrap}
+.tiers{display:grid;gap:18px;margin-top:36px}
+
+.tc-slots{display:grid;gap:12px}
+.tc-dia .tc-slots{grid-template-columns:repeat(2,1fr)}
+.tc-gold .tc-slots{grid-template-columns:repeat(3,1fr)}
+.tc-silver .tc-slots{grid-template-columns:repeat(5,1fr)}
+
+.logo-slot{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border-radius:var(--r-md);background:var(--surface);border:1.5px dashed color-mix(in srgb,var(--m2) 45%,var(--line));color:var(--muted);text-decoration:none;font-size:13px;font-weight:500;transition:border-color .2s,background .2s,color .2s}
+.logo-slot:hover{border-style:solid;border-color:var(--m2);color:var(--text);background:color-mix(in srgb,var(--m2) 8%,var(--surface))}
+.tc-dia .logo-slot{height:140px;font-size:14px}
+.tc-gold .logo-slot{height:112px}
+.tc-silver .logo-slot{height:88px}
+
+.slot-plus{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--m2) 18%,transparent);color:var(--m2)}
+.slot-plus svg{width:16px;height:16px}
+.tc-silver .slot-plus{width:26px;height:26px}
+
+@media (max-width:860px){
+  .tc-gold .tc-slots{grid-template-columns:repeat(2,1fr)}
+  .tc-silver .tc-slots{grid-template-columns:repeat(3,1fr)}
+  .tc-gold .logo-slot:last-child:nth-child(odd){grid-column:span 2}
+}
+@media (max-width:560px){
+  .tc-dia .tc-slots{grid-template-columns:1fr}
+  .tc-dia .logo-slot{height:110px}
+  .tc-silver .tc-slots{grid-template-columns:repeat(2,1fr)}
+  .tc-silver .logo-slot:last-child:nth-child(odd){grid-column:span 2}
+}

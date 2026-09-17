@@ -1,0 +1,56 @@
+/* ==========================================================
+   Registration form
+   ========================================================== */
+.reg{display:grid;grid-template-columns:.8fr 1.2fr;gap:64px;align-items:start}
+.reg aside ul{padding:0;margin:26px 0 0;list-style:none;display:grid;gap:14px}
+.reg aside li{display:flex;gap:12px;color:var(--muted)}
+.reg aside li svg{flex:none;color:var(--teal);margin-top:4px}
+
+.card{background:var(--bg);border:1px solid var(--line);border-radius:var(--r-lg);padding:32px}
+
+/* Person / company switch */
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--surface-2);border-radius:var(--r-md);padding:4px;margin-bottom:26px}
+.seg button{border:0;background:none;font:inherit;font-weight:600;padding:11px;border-radius:9px;color:var(--muted);cursor:pointer}
+.seg button[aria-selected="true"]{background:var(--bg);color:var(--text);box-shadow:0 1px 3px rgba(18,59,74,.15)}
+
+/* Fields */
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.f{display:flex;flex-direction:column;gap:6px}
+.f.full{grid-column:1/-1}
+.f label,.f legend{font-size:14px;font-weight:600}
+.f input,.f select{height:48px;line-height:1.2;font:inherit;font-size:16px;color:var(--text);background:var(--surface);border:1.5px solid var(--line);border-radius:var(--r-sm);padding:11px 12px;width:100%}
+.f input:focus,.f select:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px color-mix(in srgb,var(--teal) 25%,transparent)}
+.f input[aria-invalid="true"]{border-color:var(--danger)}
+fieldset.f{border:0;padding:0;margin:0}
+fieldset.f.pay{margin-top:22px}
+.pay legend{margin-bottom:6px;padding:0}
+
+.checks{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.checks label{display:flex;gap:10px;align-items:center;font-weight:500;font-size:15px;border:1.5px solid var(--line);border-radius:var(--r-sm);padding:10px 12px;cursor:pointer}
+.checks label.dis{opacity:.55;cursor:not-allowed}
+.checks input{accent-color:var(--teal);width:18px;height:18px}
+.checks small{margin-inline-start:auto;color:var(--danger);font-weight:600}
+
+/* Company: list of dentists */
+.dentists{display:grid;gap:10px}
+.dentist{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:end}
+.dentist .f label{font-size:12px;color:var(--muted)}
+.rm{border:0;background:none;color:var(--danger);font:inherit;font-size:14px;font-weight:600;padding:12px 6px;cursor:pointer}
+.add{border:1.5px dashed var(--teal);background:none;color:var(--teal-ink);font:inherit;font-weight:600;border-radius:var(--r-sm);padding:10px;cursor:pointer;width:100%}
+
+.form-foot{display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;margin-top:24px}
+.form-foot p{font-size:14px;color:var(--muted);max-width:36ch}
+
+/* Result message */
+.msg{margin-top:18px;border-radius:var(--r-sm);padding:14px 16px;font-weight:600;display:none}
+.msg.ok{display:block;background:color-mix(in srgb,var(--teal) 14%,transparent);color:var(--ok)}
+.msg.err{display:block;background:color-mix(in srgb,var(--danger) 12%,transparent);color:var(--danger)}
+
+@media (max-width:860px){
+  .reg{grid-template-columns:1fr}
+}
+@media (max-width:560px){
+  .fields,.checks{grid-template-columns:1fr}
+  .dentist{grid-template-columns:1fr 1fr}
+  .card{padding:22px}
+}

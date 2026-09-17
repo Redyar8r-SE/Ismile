@@ -1,0 +1,28 @@
+/* ==========================================================
+   Workshops: cards with seat bars
+   ========================================================== */
+.ws-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:40px}
+.ws{background:var(--bg);border:1px solid var(--line);border-radius:var(--r-md);padding:22px;display:flex;flex-direction:column;gap:14px}
+.ws h3{font-size:18px;min-height:2.6em}
+.ws dl{margin:0;display:grid;gap:8px;font-size:15px}
+.ws dt{color:var(--muted);font-size:13px}
+.ws dd{margin:0;font-weight:600}
+
+.seats{height:6px;background:var(--surface-2);border-radius:99px;overflow:hidden}
+.seats i{display:block;height:100%;background:var(--teal)}
+
+.ws .status{display:flex;justify-content:space-between;align-items:center;margin-top:auto;font-size:14px;font-weight:600}
+.ws .status .open{color:var(--ok)}
+.ws .status .seats-left{color:var(--muted);font-weight:500}
+.ws.full .status .full{color:var(--danger)}
+.ws.full .seats i{background:var(--muted)}
+
+.notify{border:1px solid var(--line);background:none;color:var(--text);border-radius:999px;padding:5px 12px;font:inherit;font-size:13px;cursor:pointer}
+.notify[aria-pressed="true"]{background:var(--teal);border-color:var(--teal);color:#fff}
+
+@media (max-width:1060px){
+  .ws-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:560px){
+  .ws-grid{grid-template-columns:1fr 1fr;gap:14px}
+}

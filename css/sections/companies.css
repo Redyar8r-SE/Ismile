@@ -1,0 +1,13 @@
+/* ==========================================================
+   For companies: three call-to-action cards
+   ========================================================== */
+.co-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:40px}
+.co{background:var(--navy);color:#fff;border-radius:var(--r-lg);padding:30px;display:flex;flex-direction:column;gap:12px;min-height:250px}
+.co p{color:#A9C9CD}
+.co .btn{margin-top:auto;align-self:flex-start}
+.co:nth-child(2){background:var(--teal-ink)}
+.co:nth-child(2) p{color:#D5EFEE}
+
+@media (max-width:860px){
+  .co-grid{grid-template-columns:1fr}
+}

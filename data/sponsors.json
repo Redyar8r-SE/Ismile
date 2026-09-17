@@ -1,0 +1,5 @@
+[
+  { "name": "Diamond", "className": "tc-dia", "subtitle": "Headline partners", "spots": 2 },
+  { "name": "Gold", "className": "tc-gold", "subtitle": "Main partners", "spots": 3 },
+  { "name": "Silver", "className": "tc-silver", "subtitle": "Supporting partners", "spots": 5 }
+]

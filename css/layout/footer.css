@@ -1,0 +1,16 @@
+/* ==========================================================
+   Footer
+   ========================================================== */
+footer{background:var(--hero-bg);color:#A9C9CD;padding-block:56px 32px;font-size:15px}
+footer .cols{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:40px}
+footer h3{color:#fff;font-size:16px;margin-bottom:10px}
+footer a{text-decoration:none}
+footer a:hover{color:#fff}
+footer .brand{color:#fff}
+footer .foot-about{margin-top:12px;max-width:36ch}
+footer .ltr{text-align:start}
+footer .legal{border-top:1px solid rgba(255,255,255,.12);margin-top:40px;padding-top:20px;font-size:13px}
+
+@media (max-width:860px){
+  footer .cols{grid-template-columns:1fr}
+}

@@ -1,0 +1,22 @@
+{
+  "w_by": "Run by",
+  "w_speaker": "Speaker",
+  "w_company": "Company name",
+  "w_dr": "Dr. Speaker name",
+  "w_left": "seats left",
+  "w_open": "Open",
+  "w_full": "Full",
+  "w_notify": "Notify me",
+  "w_notified": "We'll notify you",
+
+  "sp_name": "Speaker name",
+  "sp_role": "Specialty, country",
+  "sp_soon": "Coming soon",
+
+  "copied": "Copied",
+
+  "d_name": "Name",
+  "remove": "Remove",
+  "ok_msg": "Registration received. We sent a confirmation to your WhatsApp and email.",
+  "err_msg": "Fill in the fields marked in red to continue."
+}

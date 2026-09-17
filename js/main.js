@@ -1,0 +1,43 @@
+// Entry point: loads the data files, then starts each page section.
+import { loadJSON } from "./utils/load-json.js";
+import { initI18n } from "./i18n.js";
+import { initNav } from "./components/nav.js";
+import { initProgram } from "./sections/program.js";
+import { initWorkshops } from "./sections/workshops.js";
+import { initSpeakers } from "./sections/speakers.js";
+import { initSponsors } from "./sections/sponsors.js";
+import { initPartners } from "./sections/partners.js";
+import { initRegistration } from "./sections/registration.js";
+import { initVenue } from "./sections/venue.js";
+
+async function start() {
+  initNav();
+
+  try {
+    const [strings, program, workshops, speakers, sponsors, partners] = await Promise.all([
+      loadJSON("data/i18n/en.json"),
+      loadJSON("data/program.json"),
+      loadJSON("data/workshops.json"),
+      loadJSON("data/speakers.json"),
+      loadJSON("data/sponsors.json"),
+      loadJSON("data/partners.json"),
+    ]);
+
+    initI18n(strings);
+    initProgram(program);
+    initWorkshops(workshops);
+    initSpeakers(speakers);
+    initSponsors(sponsors);
+    initPartners(partners);
+    initRegistration();
+    initVenue();
+  } catch (error) {
+    console.error(error);
+    const notice = document.createElement("div");
+    notice.className = "load-error";
+    notice.textContent = "Could not load the site data. Open the site through a local server (see README.md).";
+    document.body.prepend(notice);
+  }
+}
+
+start();

@@ -1,0 +1,89 @@
+/* ==========================================================
+   Sticky header + navigation
+   Dark and seamless over the hero; turns into a frosted bar
+   once the page scrolls (js/components/nav.js adds .scrolled).
+   ========================================================== */
+header.top{
+  --h-bg:var(--hero-bg);
+  --h-solid:var(--hero-bg);
+  --h-text:#fff;
+  --h-muted:#A9C9CD;
+  --h-line:rgba(255,255,255,.12);
+  --h-pill:rgba(255,255,255,.06);
+  position:sticky;top:0;z-index:40;
+  background:var(--h-bg);
+  border-bottom:1px solid transparent;
+  transition:background .3s ease,border-color .3s ease,box-shadow .3s ease;
+}
+header.top.scrolled{
+  --h-bg:color-mix(in srgb,var(--bg) 86%,transparent);
+  --h-solid:var(--bg);
+  --h-text:var(--text);
+  --h-muted:var(--muted);
+  --h-line:var(--line);
+  --h-pill:var(--surface);
+  -webkit-backdrop-filter:saturate(1.4) blur(14px);
+  backdrop-filter:saturate(1.4) blur(14px);
+  border-bottom-color:var(--line);
+  box-shadow:0 12px 30px -24px rgba(8,30,38,.55);
+}
+.top .wrap{position:relative;display:flex;align-items:center;gap:16px;height:72px}
+.top .brand{color:var(--h-text);transition:color .3s}
+
+/* Desktop navigation: links inside one soft pill */
+nav.links{display:flex;align-items:center;gap:2px;margin-inline:auto;padding:5px;border-radius:999px;background:var(--h-pill);border:1px solid var(--h-line);transition:background .3s,border-color .3s}
+nav.links a:not(.btn){text-decoration:none;font-size:14.5px;font-weight:500;line-height:1;padding:10px 15px;border-radius:999px;color:var(--h-muted);white-space:nowrap;transition:color .2s,background .2s}
+nav.links a:not(.btn):hover{color:var(--h-text);background:color-mix(in srgb,var(--teal) 14%,transparent)}
+nav.links a[aria-current="true"]{color:#fff;background:var(--teal)}
+nav.links a[aria-current="true"]:hover{color:#fff;background:var(--teal-ink)}
+.nav-cta{display:none}
+
+/* Register button */
+.top-cta{padding:11px 18px 11px 20px;font-size:14.5px;box-shadow:0 10px 22px -12px rgba(22,166,161,.9)}
+.top-cta svg{transition:transform .2s ease}
+.top-cta:hover svg{transform:translateX(3px)}
+html[dir="rtl"] .top-cta svg{transform:scaleX(-1)}
+html[dir="rtl"] .top-cta:hover svg{transform:scaleX(-1) translateX(3px)}
+
+/* Hamburger that turns into an X */
+.menu-btn{display:none;position:relative;flex:none;width:44px;height:44px;border-radius:12px;border:1px solid var(--h-line);background:var(--h-pill);color:var(--h-text);cursor:pointer}
+.menu-btn span{position:absolute;inset-inline:12px;height:2px;border-radius:2px;background:currentColor;transition:transform .25s ease,opacity .2s ease}
+.menu-btn span:nth-child(1){top:15px}
+.menu-btn span:nth-child(2){top:21px}
+.menu-btn span:nth-child(3){top:27px}
+.menu-btn[aria-expanded="true"] span:nth-child(1){transform:translateY(6px) rotate(45deg)}
+.menu-btn[aria-expanded="true"] span:nth-child(2){opacity:0}
+.menu-btn[aria-expanded="true"] span:nth-child(3){transform:translateY(-6px) rotate(-45deg)}
+
+/* Thin reading-progress line under the header */
+.scroll-progress{position:absolute;inset-inline:0;bottom:-1px;height:2px;background:linear-gradient(90deg,var(--teal),#7FD6D2);transform:scaleX(var(--progress,0));transform-origin:left;pointer-events:none}
+html[dir="rtl"] .scroll-progress{transform-origin:right}
+
+/* Language switcher (styles ready, markup not added yet) */
+.lang{display:flex;border:1px solid var(--line);border-radius:999px;padding:3px}
+.lang button{border:0;background:none;color:var(--muted);font:inherit;font-size:13px;font-weight:600;padding:5px 10px;border-radius:999px;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--navy);color:#fff}
+.lang button[data-lang="ku"],.lang button[data-lang="ar"]{font-family:var(--font-rtl)}
+
+@media (max-width:1180px){
+  nav.links a:not(.btn){padding:10px 11px;font-size:14px}
+}
+
+/* Tablet and phone: slide-down menu panel */
+@media (max-width:1060px){
+  nav.links{position:absolute;top:calc(100% + 1px);inset-inline:0;margin:0;flex-direction:column;align-items:stretch;gap:4px;padding:14px 24px 22px;border-radius:0 0 var(--r-lg) var(--r-lg);border:0;border-bottom:1px solid var(--h-line);background:var(--h-solid);box-shadow:0 24px 40px -28px rgba(8,30,38,.6);opacity:0;visibility:hidden;transform:translateY(-8px);transition:opacity .2s ease,transform .2s ease,visibility .2s}
+  nav.links.open{opacity:1;visibility:visible;transform:none}
+  nav.links a:not(.btn){font-size:17px;padding:14px 16px;border-radius:12px}
+  .nav-cta{display:flex;margin-top:10px;padding:14px}
+  .top-cta{margin-inline-start:auto}
+  .menu-btn{display:block}
+}
+@media (max-width:560px){
+  .top .wrap{height:64px}
+  .top-cta{display:none}
+  .menu-btn{margin-inline-start:auto}
+  nav.links{padding-inline:16px}
+}
+@media (prefers-reduced-motion: reduce){
+  header.top,nav.links,.menu-btn span,.top-cta svg{transition:none}
+}

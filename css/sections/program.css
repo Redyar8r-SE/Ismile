@@ -1,0 +1,76 @@
+/* ==========================================================
+   Program: day tabs + timeline schedule
+   ========================================================== */
+.prog-head{display:flex;justify-content:space-between;align-items:end;gap:24px;flex-wrap:wrap}
+
+/* Day tabs */
+.days{display:flex;gap:12px;margin-top:32px;flex-wrap:wrap}
+.days button{border:1.5px solid var(--line);background:var(--bg);color:var(--text);font:inherit;text-align:start;padding:12px 22px;border-radius:var(--r-md);cursor:pointer;min-width:170px}
+.days button b{display:block;font-size:17px}
+.days button small{display:block;color:var(--muted);font-size:13px}
+.days button[aria-selected="true"]{background:var(--teal);border-color:var(--teal);color:#fff}
+.days button[aria-selected="true"] small{color:rgba(255,255,255,.85)}
+
+.day-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+.day-meta span{font-size:14px;color:var(--muted);background:var(--surface-2);border-radius:999px;padding:6px 14px}
+.day-meta b{color:var(--text);font-weight:700}
+
+/* Schedule table */
+.sched{margin-top:24px;border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;background:var(--bg)}
+.sched-head,.slot{display:grid;grid-template-columns:130px 28px 1.1fr 1.3fr 170px;gap:0 18px;align-items:center;padding-inline:28px}
+.sched-head{background:var(--surface-2);padding-block:14px;font-size:13px;font-weight:600;color:var(--muted);border-bottom:1px solid var(--line)}
+
+.slot{padding-block:22px;position:relative}
+.slot+.slot{border-top:1px solid var(--line)}
+.slot:not(.brk){transition:background .15s}
+.slot:not(.brk):hover{background:color-mix(in srgb,var(--teal) 6%,transparent)}
+.slot h3{font-size:18px}
+.slot .tm b{display:block;font-family:var(--font);font-size:20px;font-weight:700;line-height:1.1}
+.slot .tm small{color:var(--muted);font-size:13px}
+
+/* Vertical timeline rail */
+.rail{align-self:stretch;position:relative;display:flex;justify-content:center}
+.rail::before{content:"";position:absolute;top:-22px;bottom:-22px;width:2px;background:var(--line)}
+.sched-head+.slot .rail::before{top:50%}
+.slot:last-child .rail::before{bottom:50%}
+.rail i{position:relative;align-self:center;width:14px;height:14px;border-radius:50%;background:var(--bg);border:3px solid var(--c,var(--teal))}
+
+.badge{display:inline-block;font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;color:var(--c,var(--teal));background:color-mix(in srgb,var(--c,var(--teal)) 14%,transparent);margin-bottom:6px}
+.who{display:grid;gap:4px;font-size:15px;margin:0}
+.who div{display:flex;gap:8px}
+.who dt{color:var(--muted);min-width:64px}
+.who dd{margin:0;font-style:italic;color:var(--muted)}
+.loc{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:500}
+.loc svg{color:var(--teal);flex:none}
+
+/* Break rows */
+.slot.brk{background:var(--surface);padding-block:14px}
+.slot.brk h3{font-size:16px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:10px}
+.slot.brk .tm b{font-size:16px;color:var(--muted)}
+.slot.brk .rail i{--c:var(--muted)}
+
+/* Session type colors (type names come from data/program.json) */
+.t-ceremony{--c:#C9A45C}
+.t-keynote{--c:#16A6A1}
+.t-clinical{--c:#3B82C4}
+.t-workshop{--c:#8B6FD1}
+.t-panel{--c:#E07A5F}
+.t-live{--c:#D64545}
+
+@media (max-width:860px){
+  .sched-head{display:none}
+  .slot{grid-template-columns:52px 16px 1fr;gap:6px 12px;padding-inline:16px}
+  .days button{flex:1;min-width:0;padding:10px 14px}
+  .rail i{align-self:flex-start;margin-top:6px}
+  .slot.brk .rail i{align-self:center;margin-top:0}
+  .sched-head+.slot .rail::before{top:14px}
+  .slot:last-child .rail::before{bottom:auto;height:calc(22px + 14px)}
+  .who dt{min-width:58px}
+  .slot .tm small{font-size:12px}
+  .slot .who,.slot .loc{grid-column:3}
+  .rail{grid-row:1/span 3}
+  .slot .tm{grid-row:1/span 3;align-self:start}
+  .slot .tm b{font-size:17px}
+  .slot.brk .rail{grid-row:auto}
+  .slot.brk .tm{grid-row:auto;align-self:center}
+}

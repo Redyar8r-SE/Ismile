@@ -1,0 +1,33 @@
+/* ==========================================================
+   Stats panel ("Proven reach")
+   ========================================================== */
+.stats{background:linear-gradient(var(--hero-bg) 0 50%,var(--bg) 50% 100%);padding-bottom:8px}
+.panel{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-lg);display:grid;grid-template-columns:1fr 3fr;overflow:hidden;box-shadow:0 24px 48px -28px rgba(8,30,38,.55)}
+.panel .cap{padding:40px 36px;background:var(--navy);color:#fff;display:flex;flex-direction:column;justify-content:center;gap:10px;position:relative}
+.panel .cap::after{content:"";position:absolute;inset-block:36px;inset-inline-end:0;width:3px;background:var(--teal);border-radius:3px}
+.panel .cap h2{font-size:28px;font-weight:700;line-height:1.2}
+.panel .cap p{color:#A9C9CD;font-size:15px;line-height:1.5}
+
+.nums{display:grid;grid-template-columns:repeat(3,1fr)}
+.stat{padding:36px 32px;display:flex;flex-direction:column;gap:14px}
+.stat+.stat{border-inline-start:1px solid var(--line)}
+.stat .ic{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:color-mix(in srgb,var(--teal) 15%,transparent);color:var(--teal)}
+.stat .ic svg{width:22px;height:22px}
+.stat strong{display:block;font-family:var(--font);font-size:52px;font-weight:800;line-height:1;letter-spacing:-0.02em;color:var(--text);font-variant-numeric:normal}
+.stat strong em{font-style:normal;color:var(--teal);margin-inline-start:2px}
+.stat span{font-size:15px;color:var(--muted);line-height:1.45;max-width:22ch}
+
+@media (max-width:980px){
+  .panel{grid-template-columns:1fr}
+  .panel .cap::after{inset-block:auto 0;inset-inline:36px;width:auto;height:3px}
+  .stat strong{font-size:40px}
+  .stat{padding:28px 22px}
+}
+@media (max-width:640px){
+  .nums{grid-template-columns:1fr}
+  .stat{flex-direction:row;align-items:center;gap:16px;padding:20px 22px}
+  .stat+.stat{border-inline-start:0;border-top:1px solid var(--line)}
+  .stat strong{font-size:32px;flex:0 0 128px;white-space:nowrap}
+  .stat .ic{display:none}
+  .panel .cap{padding:28px 22px}
+}

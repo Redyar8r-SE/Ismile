@@ -1,0 +1,78 @@
+/* ==========================================================
+   "What happens at iSmile": bento grid + scientific areas
+   ========================================================== */
+.exp-head{max-width:720px}
+.exp-head .lead{margin-top:12px}
+
+/* Bento grid */
+.bento{display:grid;grid-template-columns:repeat(4,1fr);grid-template-areas:"conf conf exh ws" "conf conf live live" "inno round pod b2b";gap:16px;margin-top:36px}
+.bx{background:var(--bg);border:1px solid var(--line);border-radius:var(--r-lg);padding:24px;display:flex;flex-direction:column;gap:8px;position:relative;overflow:hidden;transition:transform .2s ease,border-color .2s ease}
+.bx:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--teal) 55%,var(--line))}
+.bx h3{font-size:18px}
+.bx p{color:var(--muted);font-size:14.5px;line-height:1.5}
+.bx-ic{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;background:color-mix(in srgb,var(--teal) 14%,transparent);color:var(--teal);margin-bottom:10px}
+.bx-ic svg{width:24px;height:24px}
+
+.bx-conf{grid-area:conf;background:linear-gradient(150deg,#123B4A 0%,#0E6E6B 100%);border-color:transparent;color:#fff;padding:32px;justify-content:flex-end}
+.bx-conf::before{content:"";position:absolute;width:320px;height:320px;border-radius:50%;border:40px solid rgba(255,255,255,.05);top:-120px;inset-inline-end:-110px}
+.bx-conf .bx-ic{background:rgba(255,255,255,.12);color:#fff;margin-bottom:auto}
+.bx-conf h3{font-size:clamp(26px,2.6vw,34px);line-height:1.15}
+.bx-conf p{color:#CFE7E8;font-size:16px;max-width:40ch}
+.bx-tag{font-size:13px!important;font-weight:600;color:#7FD6D2!important;margin-top:28px}
+.chips{list-style:none;padding:0;margin:12px 0 0;display:flex;flex-wrap:wrap;gap:8px}
+.chips li{font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15)}
+
+.bx-exh{grid-area:exh}
+.bx-ws{grid-area:ws}
+.bx-inno{grid-area:inno}
+.bx-round{grid-area:round}
+.bx-pod{grid-area:pod}
+.bx-b2b{grid-area:b2b}
+
+.bx-live{grid-area:live;background:linear-gradient(120deg,var(--bg) 40%,color-mix(in srgb,#D64545 10%,var(--bg)))}
+.bx-live .bx-ic{background:color-mix(in srgb,#D64545 14%,transparent);color:#E05656}
+.live-pill{position:absolute;top:24px;inset-inline-end:24px;display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:#E05656;background:color-mix(in srgb,#D64545 12%,transparent);border-radius:999px;padding:5px 11px}
+.live-pill i{width:8px;height:8px;border-radius:50%;background:#E05656;animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(224,86,86,.55)}50%{box-shadow:0 0 0 6px rgba(224,86,86,0)}}
+
+/* Scientific areas */
+.areas-head{margin-top:64px;display:flex;justify-content:space-between;align-items:end;gap:20px;padding-top:40px;border-top:1px solid var(--line)}
+.areas-head h3{font-size:clamp(24px,2.6vw,30px);font-weight:700}
+.areas-head p{color:var(--muted);margin-top:6px}
+.areas{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:28px}
+.area{position:relative;background:var(--bg);border:1px solid var(--line);border-radius:var(--r-md);padding:22px 20px 20px;display:flex;flex-direction:column;gap:8px;transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease;overflow:hidden}
+.area::after{content:"";position:absolute;inset-inline:0;top:0;height:3px;background:var(--teal);transform:scaleX(0);transform-origin:left;transition:transform .25s ease}
+.area:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--teal) 55%,var(--line));box-shadow:0 14px 30px -18px rgba(8,30,38,.5)}
+.area:hover::after{transform:scaleX(1)}
+.area-ic{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;background:color-mix(in srgb,var(--teal) 14%,transparent);color:var(--teal);margin-bottom:6px}
+.area-ic svg{width:26px;height:26px}
+.area-n{position:absolute;top:18px;inset-inline-end:18px;font-size:13px;font-weight:700;color:var(--muted);opacity:.6;font-variant-numeric:tabular-nums}
+.area h4{margin:0;font-size:17px;font-weight:700;line-height:1.3}
+.area p{margin:0;font-size:14px;color:var(--muted);line-height:1.5}
+
+@media (max-width:1060px){
+  .bento{grid-template-columns:repeat(2,1fr);grid-template-areas:"conf conf" "exh ws" "live live" "inno round" "pod b2b"}
+  .bx-conf{min-height:340px}
+  .areas{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:560px){
+  .bento{grid-template-columns:1fr;grid-template-areas:"conf" "live" "exh" "ws" "inno" "round" "pod" "b2b";gap:12px}
+  .bx{padding:20px}
+  .bx-conf{padding:24px;min-height:0}
+  .bx:not(.bx-conf){display:grid;grid-template-columns:42px 1fr;column-gap:14px;row-gap:2px;align-items:start;padding:16px 18px}
+  .bx:not(.bx-conf) .bx-ic{grid-row:span 2;width:42px;height:42px;margin:0}
+  .bx:not(.bx-conf) h3{font-size:16.5px}
+  .bx-live h3{padding-inline-end:56px}
+  .bx:not(.bx-conf) p{grid-column:2}
+  .live-pill{top:16px;inset-inline-end:16px}
+
+  .areas{grid-template-columns:1fr;gap:10px}
+  .area{flex-direction:row;flex-wrap:wrap;align-items:center;column-gap:14px;padding:16px}
+  .area-ic{margin:0;width:42px;height:42px}
+  .area h4{flex:1;padding-inline-end:28px}
+  .area p{flex-basis:100%}
+}
+@media (prefers-reduced-motion: reduce){
+  .live-pill i{animation:none}
+  .bx,.area,.area::after{transition:none}
+}

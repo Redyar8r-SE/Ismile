@@ -1,0 +1,24 @@
+/* ==========================================================
+   Tier card (shared by Sponsors and Trusted partners)
+   --m1 / --m2 are the medal gradient colors of each tier
+   ========================================================== */
+.tierc{--m1:#BFE9F5;--m2:#5FB6D4;position:relative;background:var(--bg);border:1px solid var(--line);border-radius:var(--r-lg);padding:22px 24px 24px;overflow:hidden}
+.tierc::before{content:"";position:absolute;inset:0 0 auto;height:3px;background:linear-gradient(90deg,var(--m1),var(--m2))}
+
+.tc-gold{--m1:#F3D98B;--m2:#C9A227}
+.tc-silver{--m1:#E4E9EB;--m2:#98A6AC}
+.tc-plat{--m1:#EEF3F6;--m2:#9FB3C0}
+.tc-bronze{--m1:#E8B48A;--m2:#A8622F}
+
+.tc-top{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.tc-top h3{font-size:20px}
+.tc-top p{font-size:13px;color:var(--muted)}
+.medal{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(145deg,var(--m1),var(--m2));color:#fff;flex:none;box-shadow:0 8px 20px -10px var(--m2)}
+.medal svg{width:24px;height:24px}
+.tc-count{margin-inline-start:auto;font-size:13px;font-weight:600;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:5px 12px;white-space:nowrap}
+
+@media (max-width:560px){
+  .tierc{padding:18px}
+  .tc-top{flex-wrap:wrap}
+  .tc-count{margin-inline-start:58px}
+}
