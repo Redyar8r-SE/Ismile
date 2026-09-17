@@ -62,6 +62,38 @@ visitor's choice is remembered in their browser.
   `js/main.js` the way Arabic and Kurdish are loaded, and add a button next to
   the others. Right-to-left languages are listed in `RTL` in `js/i18n.js`.
 
+## Admin page
+
+`admin.html` edits every text, list and photo on the site. Open it at
+`<site>/admin.html` (there is a small **Admin** link in the footer).
+
+It saves in one of two ways, chosen automatically:
+
+1. **Email and password** (preferred) — a Netlify function
+   (`netlify/functions/api.mjs`) checks the sign-in against server settings and
+   writes to GitHub with a token the browser never sees. The function only
+   accepts writes under `data/` and `assets/uploads/`.
+2. **GitHub key** — no server found, so the browser talks to GitHub with a
+   fine-grained token pasted once and kept in that browser.
+
+### Setting up the email and password (free)
+
+1. In the admin, open **16. Password** and press **Make the two settings**.
+   It prints `ADMIN_EMAIL` and `ADMIN_PASSWORD_HASH`; the password itself is
+   never stored anywhere.
+2. Create a free Netlify site from this repository
+   (Add new site → Import an existing project → GitHub → Ismile).
+3. Netlify → Site configuration → Environment variables, add:
+   `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH`, `SESSION_SECRET` (any long random
+   text), `GITHUB_TOKEN` (Contents: read and write on this repository),
+   `GITHUB_REPO` (`Redyar8r-SE/Ismile`). Then redeploy.
+4. Put the Netlify address in `data/admin-server.json`, for example
+   `{ "api": "https://ismile-2026.netlify.app/api" }`, so the admin served from
+   GitHub Pages uses the server too.
+
+To change the password later, repeat step 1 and update the two settings.
+
+
 ## Common edits
 
 - **Add a speaker:** fill `name`, `role`, `photo` (e.g. `assets/speakers/name.jpg`) in `data/speakers.json`.

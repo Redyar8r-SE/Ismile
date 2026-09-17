@@ -387,7 +387,22 @@ ADMIN_PASSWORD_HASH = pbkdf2$150000$${lock.salt}$${lock.hash}`;
 }
 
 function buildSecurity(body) {
-  if (store.mode() === "server") return buildPasswordTool(body);
+  // The helper is always available: you need it to set the server up, and
+  // later whenever you want to change the password.
+  const head = document.createElement("h3");
+  head.className = "flabel";
+  head.textContent = store.mode() === "server"
+    ? "Change the email or password"
+    : "Set up signing in with an email and password";
+  body.append(head);
+  buildPasswordTool(body);
+  if (store.mode() === "server") return;
+
+  const divider = document.createElement("h3");
+  divider.className = "flabel";
+  divider.style.marginTop = "22px";
+  divider.textContent = "Or: a simple lock for this browser only";
+  body.append(divider);
   const status = document.createElement("p");
   status.className = "ghint";
 
