@@ -8,17 +8,14 @@
   "w_full": "Full",
   "w_notify": "Notify me",
   "w_notified": "We'll notify you",
-
   "sp_name": "Speaker name",
   "sp_role": "Specialty, country",
   "sp_soon": "Coming soon",
-
   "copied": "Copied",
   "dir_locating": "Finding your location…",
   "dir_found": "Opening directions from your current location.",
   "dir_denied": "Location access was blocked, so the route starts from Google's estimate. You can allow location for this site in your browser settings.",
   "dir_failed": "We couldn't get your exact location, so the route starts from Google's estimate.",
-
   "step_of": "Step {n} of {total}",
   "rv_type": "Registration",
   "d_name": "Dentist's full name",
@@ -26,12 +23,24 @@
   "dentist": "dentist",
   "dentists": "dentists",
   "remove": "Remove dentist",
-
   "err_required": "This field is required.",
   "err_name": "Please enter at least 3 characters.",
   "err_email": "Enter a valid email address, like name@example.com.",
   "err_phone": "Enter a valid WhatsApp number, like 0750 123 4567 or +964 750 123 4567.",
   "err_terms": "Please confirm this to complete your registration.",
-
-  "success_text": "Your {method} payment link will be sent to {phone} on WhatsApp and to {email}. Keep your reference number for any questions."
+  "success_text": "Your {method} payment link will be sent to {phone} on WhatsApp and to {email}. Keep your reference number for any questions.",
+  "pg_sessions": "sessions",
+  "pg_schedule": "schedule",
+  "pg_locations": "locations",
+  "pg_time": "Time",
+  "pg_session": "Session",
+  "pg_topic_speaker": "Topic and speaker",
+  "pg_location": "Location",
+  "pg_to": "to",
+  "pg_topic": "Topic",
+  "pg_speaker": "Speaker",
+  "pg_tba": "To be announced",
+  "spon_slot": "Your logo here",
+  "spon_spots": "spots available",
+  "tp_company": "company"
 }

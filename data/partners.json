@@ -1,31 +1,163 @@
 {
   "tiers": [
-    { "name": "Platinum", "className": "tc-plat", "subtitle": "Top partners" },
-    { "name": "Gold", "className": "tc-gold", "subtitle": "Main partners" },
-    { "name": "Silver", "className": "tc-silver", "subtitle": "Supporters" },
-    { "name": "Bronze", "className": "tc-bronze", "subtitle": "Partners" }
+    {
+      "name": "Platinum",
+      "className": "tc-plat",
+      "subtitle": {
+        "en": "Top partners",
+        "ar": "الشركاء الأبرز"
+      },
+      "label": {
+        "en": "Platinum",
+        "ar": "بلاتيني"
+      }
+    },
+    {
+      "name": "Gold",
+      "className": "tc-gold",
+      "subtitle": {
+        "en": "Main partners",
+        "ar": "شركاء أساسيون"
+      },
+      "label": {
+        "en": "Gold",
+        "ar": "ذهبي"
+      }
+    },
+    {
+      "name": "Silver",
+      "className": "tc-silver",
+      "subtitle": {
+        "en": "Supporters",
+        "ar": "داعمون"
+      },
+      "label": {
+        "en": "Silver",
+        "ar": "فضي"
+      }
+    },
+    {
+      "name": "Bronze",
+      "className": "tc-bronze",
+      "subtitle": {
+        "en": "Partners",
+        "ar": "شركاء"
+      },
+      "label": {
+        "en": "Bronze",
+        "ar": "برونزي"
+      }
+    }
   ],
   "partners": [
-    { "name": "Hakim", "tier": "Platinum", "logo": "assets/logos/hakim.webp", "bg": "#ffffff", "round": true },
-    { "name": "VANEST", "tier": "Platinum", "logo": "assets/logos/vanest.webp", "bg": "#ffffff" },
-    { "name": "Prettau Dental Lab", "tier": "Platinum", "logo": "assets/logos/prettau-dental-lab.webp", "bg": "#070707" },
-    { "name": "Crown Dent", "tier": "Platinum", "logo": "assets/logos/crown-dent.webp", "bg": "#ffffff" },
-    { "name": "Rayyan Meddent", "tier": "Platinum", "logo": "assets/logos/rayyan-meddent.webp", "bg": "#080c18" },
-
-    { "name": "Al Sharaa", "tier": "Gold", "logo": "assets/logos/al-sharaa.webp", "bg": "#ffffff" },
-    { "name": "Rodi Dent", "tier": "Gold", "logo": "assets/logos/rodi-dent.webp", "bg": "#ffffff" },
-    { "name": "White Zircon", "tier": "Gold", "logo": "assets/logos/white-zircon.webp", "bg": "#004b78" },
-
-    { "name": "Vital Alliance", "tier": "Silver", "logo": "assets/logos/vital-alliance.webp", "bg": "#252527" },
-
-    { "name": "Marka Dental Lab", "tier": "Bronze", "logo": "assets/logos/marka-dental-lab.webp", "bg": "#ffffff" },
-    { "name": "Dentis Iraq", "tier": "Bronze", "logo": "assets/logos/dentis-iraq.webp", "bg": "#ffffff" },
-    { "name": "Wisdom", "tier": "Bronze", "logo": "assets/logos/wisdom.webp", "bg": "#ffffff" },
-    { "name": "KIN", "tier": "Bronze", "logo": "assets/logos/kin.webp", "bg": "#ffffff" },
-    { "name": "Lacer", "tier": "Bronze", "logo": "assets/logos/lacer.webp", "bg": "#ffffff" },
-    { "name": "Master Dent", "tier": "Bronze", "logo": "assets/logos/master-dent.webp", "bg": "#313745" },
-    { "name": "Pearlie White", "tier": "Bronze", "logo": "assets/logos/pearlie-white.webp", "bg": "#fdfdfd" },
-    { "name": "SPLAT", "tier": "Bronze", "logo": "assets/logos/splat.webp", "bg": "#dd002e" },
-    { "name": "Lacalut", "tier": "Bronze", "logo": "assets/logos/lacalut.webp", "bg": "#ffffff" }
+    {
+      "name": "Hakim",
+      "tier": "Platinum",
+      "logo": "assets/logos/hakim.webp",
+      "bg": "#ffffff",
+      "round": true
+    },
+    {
+      "name": "VANEST",
+      "tier": "Platinum",
+      "logo": "assets/logos/vanest.webp",
+      "bg": "#ffffff"
+    },
+    {
+      "name": "Prettau Dental Lab",
+      "tier": "Platinum",
+      "logo": "assets/logos/prettau-dental-lab.webp",
+      "bg": "#070707"
+    },
+    {
+      "name": "Crown Dent",
+      "tier": "Platinum",
+      "logo": "assets/logos/crown-dent.webp",
+      "bg": "#ffffff"
+    },
+    {
+      "name": "Rayyan Meddent",
+      "tier": "Platinum",
+      "logo": "assets/logos/rayyan-meddent.webp",
+      "bg": "#080c18"
+    },
+    {
+      "name": "Al Sharaa",
+      "tier": "Gold",
+      "logo": "assets/logos/al-sharaa.webp",
+      "bg": "#ffffff"
+    },
+    {
+      "name": "Rodi Dent",
+      "tier": "Gold",
+      "logo": "assets/logos/rodi-dent.webp",
+      "bg": "#ffffff"
+    },
+    {
+      "name": "White Zircon",
+      "tier": "Gold",
+      "logo": "assets/logos/white-zircon.webp",
+      "bg": "#004b78"
+    },
+    {
+      "name": "Vital Alliance",
+      "tier": "Silver",
+      "logo": "assets/logos/vital-alliance.webp",
+      "bg": "#252527"
+    },
+    {
+      "name": "Marka Dental Lab",
+      "tier": "Bronze",
+      "logo": "assets/logos/marka-dental-lab.webp",
+      "bg": "#ffffff"
+    },
+    {
+      "name": "Dentis Iraq",
+      "tier": "Bronze",
+      "logo": "assets/logos/dentis-iraq.webp",
+      "bg": "#ffffff"
+    },
+    {
+      "name": "Wisdom",
+      "tier": "Bronze",
+      "logo": "assets/logos/wisdom.webp",
+      "bg": "#ffffff"
+    },
+    {
+      "name": "KIN",
+      "tier": "Bronze",
+      "logo": "assets/logos/kin.webp",
+      "bg": "#ffffff"
+    },
+    {
+      "name": "Lacer",
+      "tier": "Bronze",
+      "logo": "assets/logos/lacer.webp",
+      "bg": "#ffffff"
+    },
+    {
+      "name": "Master Dent",
+      "tier": "Bronze",
+      "logo": "assets/logos/master-dent.webp",
+      "bg": "#313745"
+    },
+    {
+      "name": "Pearlie White",
+      "tier": "Bronze",
+      "logo": "assets/logos/pearlie-white.webp",
+      "bg": "#fdfdfd"
+    },
+    {
+      "name": "SPLAT",
+      "tier": "Bronze",
+      "logo": "assets/logos/splat.webp",
+      "bg": "#dd002e"
+    },
+    {
+      "name": "Lacalut",
+      "tier": "Bronze",
+      "logo": "assets/logos/lacalut.webp",
+      "bg": "#ffffff"
+    }
   ]
 }

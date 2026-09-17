@@ -1,5 +1,38 @@
 [
-  { "name": "Diamond", "className": "tc-dia", "subtitle": "Headline partners", "spots": 2 },
-  { "name": "Gold", "className": "tc-gold", "subtitle": "Main partners", "spots": 3 },
-  { "name": "Silver", "className": "tc-silver", "subtitle": "Supporting partners", "spots": 5 }
+  {
+    "name": {
+      "en": "Diamond",
+      "ar": "ماسي"
+    },
+    "className": "tc-dia",
+    "subtitle": {
+      "en": "Headline partners",
+      "ar": "الشركاء الرئيسيون"
+    },
+    "spots": 2
+  },
+  {
+    "name": {
+      "en": "Gold",
+      "ar": "ذهبي"
+    },
+    "className": "tc-gold",
+    "subtitle": {
+      "en": "Main partners",
+      "ar": "شركاء أساسيون"
+    },
+    "spots": 3
+  },
+  {
+    "name": {
+      "en": "Silver",
+      "ar": "فضي"
+    },
+    "className": "tc-silver",
+    "subtitle": {
+      "en": "Supporting partners",
+      "ar": "شركاء داعمون"
+    },
+    "spots": 5
+  }
 ]

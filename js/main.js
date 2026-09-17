@@ -1,6 +1,6 @@
 // Entry point: loads the data files, then starts each page section.
 import { loadJSON } from "./utils/load-json.js";
-import { initI18n } from "./i18n.js";
+import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from "./i18n.js";
 import { initNav } from "./components/nav.js";
 import { initProgram } from "./sections/program.js";
 import { initWorkshops } from "./sections/workshops.js";
@@ -24,6 +24,10 @@ async function start() {
     ]);
 
     initI18n(strings);
+    // A missing or broken translation file must never take the page down.
+    const arabic = await loadJSON("data/i18n/ar.json").catch(() => null);
+    if (arabic) addLanguage("ar", arabic);
+
     initProgram(program);
     initWorkshops(workshops);
     initSpeakers(speakers);
@@ -31,6 +35,9 @@ async function start() {
     initPartners(partners);
     initRegistration();
     initVenue();
+
+    initLangSwitch();
+    setLang(preferredLang());
   } catch (error) {
     console.error(error);
     const notice = document.createElement("div");

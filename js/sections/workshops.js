@@ -1,5 +1,5 @@
 // Workshops: cards with remaining seats, from data/workshops.json.
-import { t, onLangChange } from "../i18n.js";
+import { t, tr, onLangChange } from "../i18n.js";
 
 export function initWorkshops(workshops) {
   const grid = document.getElementById("wsGrid");
@@ -22,10 +22,10 @@ export function initWorkshops(workshops) {
 
     return `
       <article class="ws${isFull ? " full" : ""}">
-        <h3>${w.title}</h3>
+        <h3>${tr(w.title)}</h3>
         <dl>
-          <div><dt>${t("w_by")}</dt><dd>${w.company || t("w_company")}</dd></div>
-          <div><dt>${t("w_speaker")}</dt><dd>${w.speaker || t("w_dr")}</dd></div>
+          <div><dt>${t("w_by")}</dt><dd>${tr(w.company) || t("w_company")}</dd></div>
+          <div><dt>${t("w_speaker")}</dt><dd>${tr(w.speaker) || t("w_dr")}</dd></div>
         </dl>
         <div class="seats" aria-hidden="true"><i style="width:${takenPercent}%"></i></div>
         <div class="status">${status}</div>

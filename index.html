@@ -58,7 +58,11 @@
       <span data-i18n="nav_register">Register</span>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
     </a>
-    <button class="menu-btn" id="menuBtn" type="button" aria-expanded="false" aria-controls="nav" aria-label="Menu">
+    <div class="lang" id="langSwitch" role="group" aria-label="Language" data-i18n-label="a_lang">
+      <button type="button" data-lang="en" aria-pressed="true" lang="en">EN</button>
+      <button type="button" data-lang="ar" aria-pressed="false" lang="ar">العربية</button>
+    </div>
+    <button class="menu-btn" id="menuBtn" type="button" aria-expanded="false" aria-controls="nav" aria-label="Menu" data-i18n-label="a_menu">
       <span></span><span></span><span></span>
     </button>
     <div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
@@ -82,19 +86,19 @@
     </div>
     <div class="ticket">
       <div class="t-head">
-        <div><p class="t-kicker">Event pass</p><p class="t-name">iSmile 2026</p></div>
-        <span class="t-badge">2nd edition</span>
+        <div><p class="t-kicker" data-i18n="t_pass">Event pass</p><p class="t-name">iSmile 2026</p></div>
+        <span class="t-badge" data-i18n="t_edition">2nd edition</span>
       </div>
       <ul class="t-rows">
-        <li><span class="t-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></span><div><small>When</small><b>November 2026</b></div></li>
-        <li><span class="t-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg></span><div><small>Length</small><b>2 full days</b></div></li>
-        <li><span class="t-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 21s7-6.2 7-11.5a7 7 0 10-14 0C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></span><div><small>Where</small><b>Grand Millennium Sulaimani</b></div></li>
+        <li><span class="t-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></span><div><small data-i18n="t_when">When</small><b data-i18n="t_when_v">November 2026</b></div></li>
+        <li><span class="t-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg></span><div><small data-i18n="t_len">Length</small><b data-i18n="t_len_v">2 full days</b></div></li>
+        <li><span class="t-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 21s7-6.2 7-11.5a7 7 0 10-14 0C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></span><div><small data-i18n="t_where">Where</small><b data-i18n="t_venue">Grand Millennium Sulaimani</b></div></li>
       </ul>
       <div class="tear" aria-hidden="true"></div>
       <div class="t-foot">
         <div class="t-orgs">
-          <div><small>Organized by</small><b>italk Foundation</b></div>
-          <div><small>In collaboration with</small><b>Kurdistan Dental Association</b></div>
+          <div><small data-i18n="org_by">Organized by</small><b data-i18n="org_italk">italk Foundation</b></div>
+          <div><small data-i18n="org_with">In collaboration with</small><b data-i18n="org_kda">Kurdistan Dental Association</b></div>
         </div>
         <svg class="t-logo" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="15" fill="#16A6A1"/><path d="M8 14c2.5 5 11.5 5 14 0" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round"/></svg>
       </div>
@@ -107,13 +111,13 @@
   <div class="wrap">
     <div class="panel">
       <div class="cap">
-        <h2>Proven reach</h2>
-        <p>What the first iSmile summit achieved in 2021.</p>
+        <h2 data-i18n="stat_title">Proven reach</h2>
+        <p data-i18n="stat_sub">What the first iSmile summit achieved in 2021.</p>
       </div>
       <div class="nums">
-        <div class="stat"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><circle cx="17" cy="9" r="2.6"/><path d="M17.5 14.6c2.3.3 3.7 2 4 4.4"/></svg></div><strong><bdi dir="ltr">1,500<em>+</em></bdi></strong><span>Dentists and dental professionals attended</span></div>
-        <div class="stat"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 10l2-6h14l2 6"/><path d="M3 10h18v2a3 3 0 01-6 0 3 3 0 01-6 0 3 3 0 01-6 0z"/><path d="M5 14v6h14v-6"/></svg></div><strong><bdi dir="ltr">40<em>+</em></bdi></strong><span>Exhibition booths, sponsors and partners</span></div>
-        <div class="stat"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3c-3 0-5 1.6-5 4.5 0 2 .7 3.3 1 5.5.4 3 .6 8 2 8 1.2 0 1-4 2-4s.8 4 2 4c1.4 0 1.6-5 2-8 .3-2.2 1-3.5 1-5.5C17 4.6 15 3 12 3z"/></svg></div><strong><bdi dir="ltr">20<em>+</em></bdi></strong><span>Scientific and clinical workshops delivered</span></div>
+        <div class="stat"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><circle cx="17" cy="9" r="2.6"/><path d="M17.5 14.6c2.3.3 3.7 2 4 4.4"/></svg></div><strong><bdi dir="ltr">1,500<em>+</em></bdi></strong><span data-i18n="stat1">Dentists and dental professionals attended</span></div>
+        <div class="stat"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 10l2-6h14l2 6"/><path d="M3 10h18v2a3 3 0 01-6 0 3 3 0 01-6 0 3 3 0 01-6 0z"/><path d="M5 14v6h14v-6"/></svg></div><strong><bdi dir="ltr">40<em>+</em></bdi></strong><span data-i18n="stat2">Exhibition booths, sponsors and partners</span></div>
+        <div class="stat"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3c-3 0-5 1.6-5 4.5 0 2 .7 3.3 1 5.5.4 3 .6 8 2 8 1.2 0 1-4 2-4s.8 4 2 4c1.4 0 1.6-5 2-8 .3-2.2 1-3.5 1-5.5C17 4.6 15 3 12 3z"/></svg></div><strong><bdi dir="ltr">20<em>+</em></bdi></strong><span data-i18n="stat3">Scientific and clinical workshops delivered</span></div>
       </div>
     </div>
   </div>
@@ -123,14 +127,14 @@
 <section class="block" id="about">
   <div class="wrap">
     <div class="ab-head">
-      <h2>About iSmile</h2>
-      <p class="lead">iSmile started in 2021, when italk Foundation and the Kurdistan Dental Association brought science, clinical practice, industry and the dental community together in Kurdistan.</p>
+      <h2 data-i18n="ab_title">About iSmile</h2>
+      <p class="lead" data-i18n="ab_lead">iSmile started in 2021, when italk Foundation and the Kurdistan Dental Association brought science, clinical practice, industry and the dental community together in Kurdistan.</p>
     </div>
 
     <ol class="journey">
-      <li><span class="yr">2019</span><div><b>italk is founded</b><p>A youth-led non-profit starts in Sulaymaniyah.</p></div></li>
-      <li><span class="yr">2021</span><div><b>First iSmile summit</b><p>1,500+ dental professionals and 40+ partners.</p></div></li>
-      <li class="now"><span class="yr">2026</span><div><b>iSmile returns</b><p>The 2nd edition, November, Grand Millennium Sulaimani.</p></div></li>
+      <li><span class="yr">2019</span><div><b data-i18n="jy1">italk is founded</b><p data-i18n="jy1p">A youth-led non-profit starts in Sulaymaniyah.</p></div></li>
+      <li><span class="yr">2021</span><div><b data-i18n="jy2">First iSmile summit</b><p data-i18n="jy2p">1,500+ dental professionals and 40+ partners.</p></div></li>
+      <li class="now"><span class="yr">2026</span><div><b data-i18n="jy3">iSmile returns</b><p data-i18n="jy3p">The 2nd edition, November, Grand Millennium Sulaimani.</p></div></li>
     </ol>
 
     <div class="ab-grid">
@@ -138,38 +142,38 @@
         <div class="org-top">
           <img class="org-mark" src="assets/brand/italk-logo.png" alt="italk Foundation logo" width="44" height="49">
           <div>
-            <p class="org-kicker">Organized by</p>
-            <h3>italk Foundation</h3>
+            <p class="org-kicker" data-i18n="org_by">Organized by</p>
+            <h3 data-i18n="org_italk">italk Foundation</h3>
           </div>
-          <a class="org-link" href="https://italk.krd/" target="_blank" rel="noopener">Visit italk.krd <span aria-hidden="true">↗</span></a>
+          <a class="org-link" href="https://italk.krd/" target="_blank" rel="noopener" data-i18n="org_visit">Visit italk.krd <span aria-hidden="true">↗</span></a>
         </div>
-        <p>italk was founded in Sulaymaniyah in 2019 by a group of young professionals who saw that the city had few places to share knowledge and grow professionally. Their first meetings took place in coffee shops.</p>
-        <p>Today italk brings researchers, speakers and community leaders together through conferences, seminars and workshops, with local and international support.</p>
+        <p data-i18n="org_p1">italk was founded in Sulaymaniyah in 2019 by a group of young professionals who saw that the city had few places to share knowledge and grow professionally. Their first meetings took place in coffee shops.</p>
+        <p data-i18n="org_p2">Today italk brings researchers, speakers and community leaders together through conferences, seminars and workshops, with local and international support.</p>
         <ul class="org-facts">
-          <li><b>2019</b><span>Year founded</span></li>
-          <li><b>Youth-led</b><span>Non-profit organization</span></li>
-          <li><b>Sulaymaniyah</b><span>Kurdistan Region</span></li>
+          <li><b>2019</b><span data-i18n="org_f1">Year founded</span></li>
+          <li><b data-i18n="org_f2b">Youth-led</b><span data-i18n="org_f2">Non-profit organization</span></li>
+          <li><b data-i18n="org_f3b">Sulaymaniyah</b><span data-i18n="org_f3">Kurdistan Region</span></li>
         </ul>
         <div class="org-sub">
           <h4>italkMedX</h4>
-          <p>More about italkMedX will be added soon.</p>
+          <p data-i18n="org_medx">More about italkMedX will be added soon.</p>
         </div>
       </article>
 
       <div class="vm2">
         <article class="vm-card">
           <div class="vm-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></div>
-          <h3>Vision</h3>
-          <p>A recurring international platform connecting Kurdistan and Iraq with global dental expertise.</p>
+          <h3 data-i18n="vis_t">Vision</h3>
+          <p data-i18n="vis_p">A recurring international platform connecting Kurdistan and Iraq with global dental expertise.</p>
         </article>
         <article class="vm-card">
           <div class="vm-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg></div>
-          <h3>Mission</h3>
-          <p>A place where science meets practice, and local talent meets international expertise.</p>
+          <h3 data-i18n="mis_t">Mission</h3>
+          <p data-i18n="mis_p">A place where science meets practice, and local talent meets international expertise.</p>
         </article>
         <article class="vm-card partner">
-          <p class="org-kicker">In collaboration with</p>
-          <h3>Kurdistan Dental Association</h3>
+          <p class="org-kicker" data-i18n="org_with">In collaboration with</p>
+          <h3 data-i18n="org_kda">Kurdistan Dental Association</h3>
         </article>
       </div>
     </div>
@@ -180,38 +184,38 @@
 <section class="block alt">
   <div class="wrap">
     <div class="exp-head">
-      <h2>What happens at iSmile 2026</h2>
-      <p class="lead">Eight experiences across two days, from the main stage to hands-on training.</p>
+      <h2 data-i18n="exp_title">What happens at iSmile 2026</h2>
+      <p class="lead" data-i18n="exp_sub">Eight experiences across two days, from the main stage to hands-on training.</p>
     </div>
     <div class="bento">
       <article class="bx bx-conf">
         <div class="bx-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M12 16v4M8 20h8"/></svg></div>
-        <p class="bx-tag">Main program</p>
-        <h3>Scientific conference</h3>
-        <p>Keynotes, advanced clinical sessions, case discussions and selected research presentations from local and international experts.</p>
-        <ul class="chips"><li>Keynotes</li><li>Clinical sessions</li><li>Case discussions</li><li>Research</li></ul>
+        <p class="bx-tag" data-i18n="bx_tag">Main program</p>
+        <h3 data-i18n="bx1">Scientific conference</h3>
+        <p data-i18n="bx1p">Keynotes, advanced clinical sessions, case discussions and selected research presentations from local and international experts.</p>
+        <ul class="chips"><li data-i18n="chip1">Keynotes</li><li data-i18n="chip2">Clinical sessions</li><li data-i18n="chip3">Case discussions</li><li data-i18n="chip4">Research</li></ul>
       </article>
-      <article class="bx bx-exh"><div class="bx-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10l9-6 9 6v10H3z"/><path d="M9 20v-6h6v6"/></svg></div><h3>Dental exhibition</h3><p>Manufacturers, distributors, labs and technology companies.</p></article>
-      <article class="bx bx-ws"><div class="bx-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18L18 6M15 4l5 5M4 15l5 5"/><circle cx="18" cy="18" r="2.5"/></svg></div><h3>Workshop academy</h3><p>Hands-on training in procedures, materials and workflows.</p></article>
-      <article class="bx bx-live"><div class="bx-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="2.5"/><path d="M7 7a7 7 0 000 10M17 7a7 7 0 010 10M4.2 4.2a11 11 0 000 15.6M19.8 4.2a11 11 0 010 15.6"/></svg></div><span class="live-pill"><i></i>Live</span><h3>Live clinical experience</h3><p>A live transmission of an advanced surgical procedure for hands-on, real-time learning.</p></article>
-      <article class="bx bx-inno"><div class="bx-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2"/><path d="M10 3v4M14 3v4M10 17v4M14 17v4M3 10h4M3 14h4M17 10h4M17 14h4"/></svg></div><h3>Innovation and future zone</h3><p>AI, intraoral scanning, CAD/CAM, 3D printing and robotics.</p></article>
-      <article class="bx bx-round"><div class="bx-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="3.5" r="1.5"/><circle cx="20.5" cy="12" r="1.5"/><circle cx="12" cy="20.5" r="1.5"/><circle cx="3.5" cy="12" r="1.5"/></svg></div><h3>Scientific roundtables</h3><p>Expert talks on education, standards, research and policy.</p></article>
-      <article class="bx bx-pod"><div class="bx-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0013 0M12 17.5V21"/></svg></div><h3>Podcast and media studio</h3><p>Conversations with speakers, clinicians and innovators.</p></article>
-      <article class="bx bx-b2b"><div class="bx-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="8" r="3"/><path d="M2.5 19c.6-3.5 2.8-5.5 5.5-5.5s4.9 2 5.5 5.5M10.5 19c.6-3.5 2.8-5.5 5.5-5.5s4.9 2 5.5 5.5"/></svg></div><h3>B2B and networking lounge</h3><p>Meetings between clinics, companies, labs and universities.</p></article>
+      <article class="bx bx-exh"><div class="bx-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10l9-6 9 6v10H3z"/><path d="M9 20v-6h6v6"/></svg></div><h3 data-i18n="bx2">Dental exhibition</h3><p data-i18n="bx2p">Manufacturers, distributors, labs and technology companies.</p></article>
+      <article class="bx bx-ws"><div class="bx-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18L18 6M15 4l5 5M4 15l5 5"/><circle cx="18" cy="18" r="2.5"/></svg></div><h3 data-i18n="bx3">Workshop academy</h3><p data-i18n="bx3p">Hands-on training in procedures, materials and workflows.</p></article>
+      <article class="bx bx-live"><div class="bx-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="2.5"/><path d="M7 7a7 7 0 000 10M17 7a7 7 0 010 10M4.2 4.2a11 11 0 000 15.6M19.8 4.2a11 11 0 010 15.6"/></svg></div><span class="live-pill"><i></i><span data-i18n="bx_live">Live</span></span><h3 data-i18n="bx4">Live clinical experience</h3><p data-i18n="bx4p">A live transmission of an advanced surgical procedure for hands-on, real-time learning.</p></article>
+      <article class="bx bx-inno"><div class="bx-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2"/><path d="M10 3v4M14 3v4M10 17v4M14 17v4M3 10h4M3 14h4M17 10h4M17 14h4"/></svg></div><h3 data-i18n="bx5">Innovation and future zone</h3><p data-i18n="bx5p">AI, intraoral scanning, CAD/CAM, 3D printing and robotics.</p></article>
+      <article class="bx bx-round"><div class="bx-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="3.5" r="1.5"/><circle cx="20.5" cy="12" r="1.5"/><circle cx="12" cy="20.5" r="1.5"/><circle cx="3.5" cy="12" r="1.5"/></svg></div><h3 data-i18n="bx6">Scientific roundtables</h3><p data-i18n="bx6p">Expert talks on education, standards, research and policy.</p></article>
+      <article class="bx bx-pod"><div class="bx-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0013 0M12 17.5V21"/></svg></div><h3 data-i18n="bx7">Podcast and media studio</h3><p data-i18n="bx7p">Conversations with speakers, clinicians and innovators.</p></article>
+      <article class="bx bx-b2b"><div class="bx-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="8" r="3"/><path d="M2.5 19c.6-3.5 2.8-5.5 5.5-5.5s4.9 2 5.5 5.5M10.5 19c.6-3.5 2.8-5.5 5.5-5.5s4.9 2 5.5 5.5"/></svg></div><h3 data-i18n="bx8">B2B and networking lounge</h3><p data-i18n="bx8p">Meetings between clinics, companies, labs and universities.</p></article>
     </div>
 
     <div class="areas-head">
-      <div><h3>Scientific areas</h3><p>Eight tracks covering the full range of modern dentistry.</p></div>
+      <div><h3 data-i18n="area_title">Scientific areas</h3><p data-i18n="area_sub">Eight tracks covering the full range of modern dentistry.</p></div>
     </div>
     <div class="areas">
-      <article class="area"><div class="area-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 3h11l-1.3 4.5H7.8z"/><path d="M8.5 7.5h7l-1.2 13.5h-4.6z"/><path d="M8.2 11h7.6M8.5 14.5h7M8.8 18h6.4"/></svg></div><span class="area-n">01</span><h4>Implantology and oral surgery</h4><p>Implant planning, placement and surgical techniques.</p></article>
-      <article class="area"><div class="area-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17l1.5-9 4 4L12 6l2.5 6 4-4L20 17z"/><path d="M4 20h16"/></svg></div><span class="area-n">02</span><h4>Prosthodontics and restorative</h4><p>Crowns, bridges, veneers and full-mouth rehabilitation.</p></article>
-      <article class="area"><div class="area-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3.5c1.8 0 3.2.9 5 .9s3.2-.9 5-.9c2.4 0 3.8 2 3.8 4.4 0 3.3-2 5-2.6 8.6-.4 2.6-.9 4.5-2.2 4.5-1.4 0-1.4-4-4-4s-2.6 4-4 4c-1.3 0-1.8-1.9-2.2-4.5C5.2 12.9 3.2 11.2 3.2 7.9 3.2 5.5 4.6 3.5 7 3.5z"/><path d="M12 9v5"/></svg></div><span class="area-n">03</span><h4>Endodontics and periodontology</h4><p>Root canal treatment and gum health.</p></article>
-      <article class="area"><div class="area-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8c2 3 16 3 18 0"/><path d="M3 16c2-3 16-3 18 0"/><rect x="4.5" y="7.5" width="3.5" height="4" rx=".8"/><rect x="10.25" y="8.5" width="3.5" height="4" rx=".8"/><rect x="16" y="7.5" width="3.5" height="4" rx=".8"/></svg></div><span class="area-n">04</span><h4>Orthodontics and pediatric</h4><p>Braces, aligners and children’s dental care.</p></article>
-      <article class="area"><div class="area-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 16l.7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7z"/></svg></div><span class="area-n">05</span><h4>Aesthetic dentistry</h4><p>Smile design, whitening and cosmetic restorations.</p></article>
-      <article class="area"><div class="area-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3v6a4 4 0 008 0V3"/><path d="M10 13v3a5 5 0 0010 0v-2"/><circle cx="20" cy="12" r="2"/></svg></div><span class="area-n">06</span><h4>Oral medicine and pathology</h4><p>Diagnosis and care of oral diseases and lesions.</p></article>
-      <article class="area"><div class="area-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/><path d="M7 10h3l1.5-3 2 6 1.5-3h2"/></svg></div><span class="area-n">07</span><h4>Digital dentistry</h4><p>Intraoral scanning, CAD/CAM and 3D printing.</p></article>
-      <article class="area"><div class="area-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/><path d="M10 14l1.2-4h1.6L14 14M10.5 12.5h3"/></svg></div><span class="area-n">08</span><h4>AI in dentistry</h4><p>AI tools for diagnosis and treatment planning.</p></article>
+      <article class="area"><div class="area-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 3h11l-1.3 4.5H7.8z"/><path d="M8.5 7.5h7l-1.2 13.5h-4.6z"/><path d="M8.2 11h7.6M8.5 14.5h7M8.8 18h6.4"/></svg></div><span class="area-n">01</span><h4 data-i18n="ar1">Implantology and oral surgery</h4><p data-i18n="ar1p">Implant planning, placement and surgical techniques.</p></article>
+      <article class="area"><div class="area-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17l1.5-9 4 4L12 6l2.5 6 4-4L20 17z"/><path d="M4 20h16"/></svg></div><span class="area-n">02</span><h4 data-i18n="ar2">Prosthodontics and restorative</h4><p data-i18n="ar2p">Crowns, bridges, veneers and full-mouth rehabilitation.</p></article>
+      <article class="area"><div class="area-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3.5c1.8 0 3.2.9 5 .9s3.2-.9 5-.9c2.4 0 3.8 2 3.8 4.4 0 3.3-2 5-2.6 8.6-.4 2.6-.9 4.5-2.2 4.5-1.4 0-1.4-4-4-4s-2.6 4-4 4c-1.3 0-1.8-1.9-2.2-4.5C5.2 12.9 3.2 11.2 3.2 7.9 3.2 5.5 4.6 3.5 7 3.5z"/><path d="M12 9v5"/></svg></div><span class="area-n">03</span><h4 data-i18n="ar3">Endodontics and periodontology</h4><p data-i18n="ar3p">Root canal treatment and gum health.</p></article>
+      <article class="area"><div class="area-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8c2 3 16 3 18 0"/><path d="M3 16c2-3 16-3 18 0"/><rect x="4.5" y="7.5" width="3.5" height="4" rx=".8"/><rect x="10.25" y="8.5" width="3.5" height="4" rx=".8"/><rect x="16" y="7.5" width="3.5" height="4" rx=".8"/></svg></div><span class="area-n">04</span><h4 data-i18n="ar4">Orthodontics and pediatric</h4><p data-i18n="ar4p">Braces, aligners and children’s dental care.</p></article>
+      <article class="area"><div class="area-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 16l.7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7z"/></svg></div><span class="area-n">05</span><h4 data-i18n="ar5">Aesthetic dentistry</h4><p data-i18n="ar5p">Smile design, whitening and cosmetic restorations.</p></article>
+      <article class="area"><div class="area-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3v6a4 4 0 008 0V3"/><path d="M10 13v3a5 5 0 0010 0v-2"/><circle cx="20" cy="12" r="2"/></svg></div><span class="area-n">06</span><h4 data-i18n="ar6">Oral medicine and pathology</h4><p data-i18n="ar6p">Diagnosis and care of oral diseases and lesions.</p></article>
+      <article class="area"><div class="area-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/><path d="M7 10h3l1.5-3 2 6 1.5-3h2"/></svg></div><span class="area-n">07</span><h4 data-i18n="ar7">Digital dentistry</h4><p data-i18n="ar7p">Intraoral scanning, CAD/CAM and 3D printing.</p></article>
+      <article class="area"><div class="area-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/><path d="M10 14l1.2-4h1.6L14 14M10.5 12.5h3"/></svg></div><span class="area-n">08</span><h4 data-i18n="ar8">AI in dentistry</h4><p data-i18n="ar8p">AI tools for diagnosis and treatment planning.</p></article>
     </div>
   </div>
 </section>
@@ -222,7 +226,7 @@
     <div class="prog-head">
       <div><h2 data-i18n="prog_title">Program</h2><p class="lead" data-i18n="prog_sub">Session topics and speakers will be announced soon.</p></div>
     </div>
-    <div class="days" id="dayTabs" role="tablist" aria-label="Program day"></div>
+    <div class="days" id="dayTabs" role="tablist" aria-label="Program day" data-i18n-label="a_days"></div>
     <div class="day-meta" id="dayMeta"></div>
     <div class="sched" id="sched" role="tabpanel"></div>
   </div>
@@ -250,18 +254,18 @@
 <section class="block alt" id="sponsors">
   <div class="wrap">
     <div class="spon-head">
-      <div><h2>Sponsors</h2><p class="lead">The partners who make iSmile 2026 possible.</p></div>
-      <a class="btn btn-primary" href="#companies">Become a sponsor</a>
+      <div><h2 data-i18n="spon_title">Sponsors</h2><p class="lead" data-i18n="spon_sub">The partners who make iSmile 2026 possible.</p></div>
+      <a class="btn btn-primary" href="#companies" data-i18n="spon_cta">Become a sponsor</a>
     </div>
     <div class="tiers" id="sponsorTiers"></div>
 
     <div class="partners">
       <div class="tp-head">
-        <div><h3>Trusted partners</h3><p class="lead">Companies that supported iSmile before.</p></div>
-        <span class="tp-count"><b id="partnerCount">0</b> companies</span>
+        <div><h3 data-i18n="tp_title">Trusted partners</h3><p class="lead" data-i18n="tp_sub">Companies that supported iSmile before.</p></div>
+        <span class="tp-count"><b id="partnerCount">0</b> <span data-i18n="tp_companies">companies</span></span>
       </div>
       <div class="ptiers" id="ptiers"></div>
-      <div class="p-cta"><span>Want your company here in 2026?</span><a href="#companies">Become a sponsor <span aria-hidden="true">→</span></a></div>
+      <div class="p-cta"><span data-i18n="tp_cta">Want your company here in 2026?</span><a href="#companies"><span data-i18n="spon_cta">Become a sponsor</span> <span aria-hidden="true">→</span></a></div>
     </div>
   </div>
 </section>
@@ -375,7 +379,7 @@
             <div class="fields" data-panel="person">
               <div class="f full">
                 <label for="p_name" data-i18n="f_name">Full name</label>
-                <input id="p_name" autocomplete="name" data-rule="name" placeholder="As it should appear on your certificate">
+                <input id="p_name" autocomplete="name" data-rule="name" placeholder="As it should appear on your certificate" data-i18n-ph="ph_name">
               </div>
               <div class="f">
                 <label for="p_phone" data-i18n="f_phone">WhatsApp number</label>
@@ -406,7 +410,7 @@
               </div>
               <div class="f full" id="uniWrap" hidden>
                 <label for="p_uni" data-i18n="f_uni">University and department</label>
-                <input id="p_uni" autocomplete="organization" data-rule="required" placeholder="e.g. College of Dentistry, University of Sulaimani">
+                <input id="p_uni" autocomplete="organization" data-rule="required" placeholder="e.g. College of Dentistry, University of Sulaimani" data-i18n-ph="ph_uni">
               </div>
             </div>
 
@@ -539,7 +543,7 @@
               <small data-i18n="venue_addr_label">Address</small>
               <b id="venueAddress" data-i18n="venue_addr">Grand Millennium Sulaimani, Sulaymaniyah, Kurdistan Region, Iraq</b>
             </div>
-            <button type="button" class="vf-copy" id="copyAddress" aria-label="Copy address">
+            <button type="button" class="vf-copy" id="copyAddress" aria-label="Copy address" data-i18n-label="a_copy">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 012-2h9"/></svg>
               <span data-i18n="copy">Copy</span>
             </button>
@@ -563,7 +567,7 @@
         <div class="venue-spaces">
           <p data-i18n="venue_spaces">Spaces at the summit</p>
           <ul>
-            <li>Main hall</li><li>Hall B</li><li>Workshop rooms</li><li>Exhibition area</li>
+            <li data-i18n="vs1">Main hall</li><li data-i18n="vs2">Hall B</li><li data-i18n="vs3">Workshop rooms</li><li data-i18n="vs4">Exhibition area</li>
           </ul>
         </div>
 
@@ -608,7 +612,7 @@
           <span class="map-dot" aria-hidden="true"></span>
           <div>
             <small data-i18n="venue_badge">iSmile 2026 venue</small>
-            <b>Grand Millennium Sulaimani</b>
+            <b data-i18n="t_venue">Grand Millennium Sulaimani</b>
           </div>
         </div>
       </div>

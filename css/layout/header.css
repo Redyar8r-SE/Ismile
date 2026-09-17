@@ -59,10 +59,11 @@ html[dir="rtl"] .top-cta:hover svg{transform:scaleX(-1) translateX(3px)}
 .scroll-progress{position:absolute;inset-inline:0;bottom:-1px;height:2px;background:linear-gradient(90deg,var(--teal),#7FD6D2);transform:scaleX(var(--progress,0));transform-origin:left;pointer-events:none}
 html[dir="rtl"] .scroll-progress{transform-origin:right}
 
-/* Language switcher (styles ready, markup not added yet) */
-.lang{display:flex;border:1px solid var(--line);border-radius:999px;padding:3px}
-.lang button{border:0;background:none;color:var(--muted);font:inherit;font-size:13px;font-weight:600;padding:5px 10px;border-radius:999px;cursor:pointer}
-.lang button[aria-pressed="true"]{background:var(--navy);color:#fff}
+/* Language switcher: follows the header's dark/frosted colours */
+.lang{display:flex;flex:none;gap:2px;border:1px solid var(--h-line);border-radius:999px;padding:3px;background:var(--h-pill);transition:background .3s,border-color .3s}
+.lang button{border:0;background:none;color:var(--h-muted);font:inherit;font-size:13px;font-weight:600;line-height:1;padding:7px 11px;border-radius:999px;cursor:pointer;transition:color .2s,background .2s}
+.lang button:hover{color:var(--h-text)}
+.lang button[aria-pressed="true"]{background:var(--teal);color:#fff}
 .lang button[data-lang="ku"],.lang button[data-lang="ar"]{font-family:var(--font-rtl)}
 
 @media (max-width:1180px){
@@ -81,7 +82,9 @@ html[dir="rtl"] .scroll-progress{transform-origin:right}
 @media (max-width:560px){
   .top .wrap{height:64px}
   .top-cta{display:none}
-  .menu-btn{margin-inline-start:auto}
+  .lang{margin-inline-start:auto}
+  .lang button{padding:6px 9px;font-size:12.5px}
+  .menu-btn{margin-inline-start:6px}
   nav.links{padding-inline:16px}
 }
 @media (prefers-reduced-motion: reduce){

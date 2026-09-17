@@ -1,57 +1,62 @@
 // Program: day tabs + schedule, from data/program.json.
 import { ICONS } from "../config/icons.js";
-
-const TBA = "To be announced";
+import { t, tr, onLangChange } from "../i18n.js";
 
 export function initProgram({ types, days }) {
   const tabs = document.getElementById("dayTabs");
   const meta = document.getElementById("dayMeta");
   const schedule = document.getElementById("sched");
+  let openDay = days[0].id;
 
-  tabs.innerHTML = days
-    .map((day, i) => `<button role="tab" aria-selected="${i === 0}" data-day="${day.id}"><b>${day.label}</b><small>${day.subtitle}</small></button>`)
-    .join("");
+  function renderTabs() {
+    tabs.innerHTML = days
+      .map((day) => `<button role="tab" aria-selected="${day.id === openDay}" data-day="${day.id}"><b>${tr(day.label)}</b><small>${tr(day.subtitle)}</small></button>`)
+      .join("");
+  }
 
   tabs.addEventListener("click", (event) => {
     const tab = event.target.closest("button");
     if (!tab) return;
     tabs.querySelectorAll("button").forEach((b) => b.setAttribute("aria-selected", String(b === tab)));
-    renderDay(tab.dataset.day);
+    openDay = tab.dataset.day;
+    renderDay();
   });
 
-  function renderDay(dayId) {
-    const { sessions } = days.find((day) => day.id === dayId);
+  function renderDay() {
+    const { sessions } = days.find((day) => day.id === openDay);
     const talks = sessions.filter((s) => s.type !== "break");
-    const locations = new Set(talks.map((s) => s.location));
+    const locations = new Set(talks.map((s) => tr(s.location)));
     const first = sessions[0];
     const last = sessions[sessions.length - 1];
 
     meta.innerHTML = `
-      <span><b>${talks.length}</b> sessions</span>
-      <span><b>${first.start}–${last.end}</b> schedule</span>
-      <span><b>${locations.size}</b> locations</span>`;
+      <span><b>${talks.length}</b> ${t("pg_sessions")}</span>
+      <span><b><bdi dir="ltr">${first.start}–${last.end}</bdi></b> ${t("pg_schedule")}</span>
+      <span><b>${locations.size}</b> ${t("pg_locations")}</span>`;
 
     schedule.innerHTML =
-      `<div class="sched-head"><span>Time</span><span></span><span>Session</span><span>Topic and speaker</span><span>Location</span></div>` +
+      `<div class="sched-head"><span>${t("pg_time")}</span><span></span><span>${t("pg_session")}</span><span>${t("pg_topic_speaker")}</span><span>${t("pg_location")}</span></div>` +
       sessions.map(renderSession).join("");
   }
 
   function renderSession(s) {
     if (s.type === "break") {
-      return `<div class="slot brk"><div class="tm"><b>${s.start}</b></div><div class="rail"><i></i></div><h3>${ICONS.cup}${s.title}</h3></div>`;
+      return `<div class="slot brk"><div class="tm"><b>${s.start}</b></div><div class="rail"><i></i></div><h3>${ICONS.cup}${tr(s.title)}</h3></div>`;
     }
     return `
       <div class="slot t-${s.type}">
-        <div class="tm"><b>${s.start}</b><small>to ${s.end}</small></div>
+        <div class="tm"><b>${s.start}</b><small>${t("pg_to")} ${s.end}</small></div>
         <div class="rail"><i></i></div>
-        <div><span class="badge">${types[s.type]}</span><h3>${s.title}</h3></div>
+        <div><span class="badge">${tr(types[s.type])}</span><h3>${tr(s.title)}</h3></div>
         <dl class="who">
-          <div><dt>Topic</dt><dd>${s.topic || TBA}</dd></div>
-          <div><dt>Speaker</dt><dd>${s.speaker || TBA}</dd></div>
+          <div><dt>${t("pg_topic")}</dt><dd>${tr(s.topic) || t("pg_tba")}</dd></div>
+          <div><dt>${t("pg_speaker")}</dt><dd>${tr(s.speaker) || t("pg_tba")}</dd></div>
         </dl>
-        <div class="loc">${ICONS.pin}${s.location}</div>
+        <div class="loc">${ICONS.pin}${tr(s.location)}</div>
       </div>`;
   }
 
-  renderDay(days[0].id);
+  renderTabs();
+  renderDay();
+  onLangChange(() => { renderTabs(); renderDay(); });
 }
