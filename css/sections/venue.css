@@ -10,7 +10,7 @@
 .venue-title{display:flex;align-items:flex-start;gap:14px}
 .venue-title h3{font-size:22px;line-height:1.25}
 .venue-title p{font-size:14px;color:var(--muted)}
-.venue-mark{flex:none;margin-block-start:-5px;width:52px;height:52px;border-radius:14px;display:grid;place-items:center;background:var(--navy);color:var(--teal);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.venue-mark{flex:none;margin-block-start:-1px;width:52px;height:52px;border-radius:14px;display:grid;place-items:center;background:var(--navy);color:var(--teal);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
 .venue-mark svg{width:26px;height:26px}
 
 .venue-facts{list-style:none;margin:0;padding:0;display:grid;border-top:1px solid var(--line)}
