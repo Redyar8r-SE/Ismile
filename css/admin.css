@@ -20,18 +20,11 @@ body.admin{background:var(--surface)}
 .btn-open:hover svg{transform:translate(2px,-2px)}
 .btn-open:active{transform:translateY(1px)}
 .btn-open:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
-.badge-dirty{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 14px;border:1px solid #F5C451;border-radius:999px;background:color-mix(in srgb,#F5C451 22%,transparent);color:#F5C451;font:inherit;font-size:13px;font-weight:700;white-space:nowrap;cursor:pointer;transition:background .2s ease,color .2s ease,transform .15s ease,box-shadow .2s ease}
-.badge-dirty .dot{width:8px;height:8px;border-radius:50%;background:#F5C451;animation:dirtyPulse 1.8s ease-out infinite}
-.badge-dirty:hover{background:#F5C451;color:#0B1F27;box-shadow:0 8px 20px -12px rgba(245,196,81,.9)}
-.badge-dirty:hover .dot{background:#0B1F27;animation:none}
-.badge-dirty:active{transform:translateY(1px)}
-.badge-dirty:focus-visible{outline:2px solid #F5C451;outline-offset:2px}
-@keyframes dirtyPulse{0%{box-shadow:0 0 0 0 rgba(245,196,81,.6)}70%,100%{box-shadow:0 0 0 7px rgba(245,196,81,0)}}
-/* Right after a save */
-.badge-dirty[data-state="saved"]{border-color:var(--teal);background:color-mix(in srgb,var(--teal) 22%,transparent);color:#7FD6D2;cursor:default}
-.badge-dirty[data-state="saved"] .dot{background:var(--teal);animation:none}
-.badge-dirty[data-state="saved"]:hover{background:color-mix(in srgb,var(--teal) 22%,transparent);color:#7FD6D2;box-shadow:none}
-@media (prefers-reduced-motion: reduce){.badge-dirty .dot{animation:none}}
+.badge-dirty{border:0;background:none;padding:0;font:inherit;font-size:13px;font-weight:700;color:#F5C451;cursor:pointer}
+.badge-dirty:hover{text-decoration:underline}
+.badge-dirty:focus-visible{outline:2px solid #F5C451;outline-offset:3px;border-radius:4px}
+.badge-dirty[data-state="saved"]{color:#7FD6D2;cursor:default}
+.badge-dirty[data-state="saved"]:hover{text-decoration:none}
 
 /* ---------- Shell ---------- */
 .ashell{display:grid;grid-template-columns:270px minmax(0,1fr);gap:26px;max-width:1500px;margin:0 auto;padding:24px 22px 70px}

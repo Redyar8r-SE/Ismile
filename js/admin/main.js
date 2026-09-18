@@ -92,7 +92,7 @@ function markDirty() {
 
   if (state.dirty) {
     clearTimeout(savedTimer);
-    showBadge("dirty", "Unsaved — save now");
+    showBadge("dirty", "Unsaved");
     // A new change makes an old "Saved" message stale.
     if (wasClean && $("msg").classList.contains("is-ok")) say("");
   } else if ($("dirty").dataset.state !== "saved") {
@@ -626,7 +626,7 @@ async function saveToGitHub() {
     }
     markDirty();
     // Say it plainly on the button itself, then let it fade away.
-    showBadge("saved", "Saved ✓");
+    showBadge("saved", "Saved");
     clearTimeout(savedTimer);
     savedTimer = setTimeout(() => {
       const badge = $("dirty");
