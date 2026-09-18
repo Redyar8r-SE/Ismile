@@ -46,5 +46,12 @@
       "spots": 5
     }
   ],
-  "sponsors": []
+  "sponsors": [
+    {
+      "name": "",
+      "tier": "gold",
+      "logo": null,
+      "bg": "#ffffff"
+    }
+  ]
 }
