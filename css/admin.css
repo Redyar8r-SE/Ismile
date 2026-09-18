@@ -105,7 +105,9 @@ input.plain[type="color"]{max-width:64px;height:40px;padding:3px}
 .linkish:hover{color:var(--danger)}
 .srow-x{flex:none;align-self:start;width:30px;height:30px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--muted);font-size:13px;cursor:pointer}
 .srow-x:hover{color:var(--danger);border-color:var(--danger)}
-.add-row{justify-self:start}
+/* Add buttons need air between them and the rows above. */
+.add-row{display:inline-flex;align-self:start;justify-self:start;margin-top:18px}
+.lbody .add-row{margin-top:10px}
 
 /* Program sessions */
 .sessions{display:grid;gap:10px}
