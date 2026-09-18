@@ -26,7 +26,7 @@ const PARTS = [
   },
   {
     id: "program", title: "Program", kind: "program",
-    hint: "The two days and every session. Times are written as 09:00.",
+    hint: "Every day and its sessions. Pick the time with the hour, minutes and AM / PM boxes.",
     fields: [],
   },
   {

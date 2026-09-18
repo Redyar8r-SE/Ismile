@@ -329,9 +329,11 @@ export function buildProgram(section, ctx) {
       const sessions = el("div", "sessions");
       day.sessions.forEach((session, sessionIndex) => {
         const item = el("div", "session");
+        const shead = el("div", "shead");
+        shead.append(el("span", "lnum", `Session ${sessionIndex + 1}`));
         const top = el("div", "srow-top");
 
-        const typeCell = el("label", "fcell small");
+        const typeCell = el("label", "fcell type");
         typeCell.append(el("span", "fcode", "Type"));
         const typeSelect = el("select", "plain");
         typeOptions().forEach(([value, text]) => {
@@ -352,8 +354,9 @@ export function buildProgram(section, ctx) {
           ctx.markDirty();
         });
 
-        top.append(timeField(session, "start", "Start", ctx), timeField(session, "end", "End", ctx), typeCell, removeSession);
-        item.append(top);
+        shead.append(removeSession);
+        top.append(timeField(session, "start", "Start", ctx), timeField(session, "end", "End", ctx), typeCell);
+        item.append(shead, top);
         item.append(fieldRow(session, { key: "title", label: "Session title", type: "i18n" }, { ...ctx, rerender: render }));
         if (session.type !== "break") {
           item.append(fieldRow(session, { key: "location", label: "Room", type: "i18n" }, { ...ctx, rerender: render }));
@@ -369,7 +372,7 @@ export function buildProgram(section, ctx) {
         ctx.markDirty();
       });
 
-      body.append(el("p", "flabel", "Sessions"), sessions, addSession);
+      body.append(el("p", "flabel", `Sessions (${day.sessions.length})`), sessions, addSession);
       card.append(head, body);
       wrap.append(card);
     });
