@@ -2,7 +2,7 @@
 import { GROUPS, LANGS, DATA_FILES } from "./fields.js";
 import { REPO } from "./github.js";
 import * as store from "./store.js";
-import { upload, listPhotos, imageFromClipboard } from "./images.js";
+import { upload, imageFromClipboard } from "./images.js";
 import { buildList, buildProgram } from "./lists.js";
 import { loadLock, makeLock, check, remember, isRemembered, forget, LOCK_FILE } from "./lock.js";
 
@@ -14,7 +14,6 @@ const state = {
   original: {},     // same, as text, to see what changed
   data: {},         // speakers / workshops / sponsors / partners / program
   dataOriginal: {},
-  photos: [],
   dirty: false,
   pasteTarget: null, // { apply(path) } waiting for a pasted picture
   renderers: {},     // group id -> redraw function
@@ -267,67 +266,6 @@ function buildSpeakers(section) {
   render();
 }
 
-// ---------- photos ----------
-function buildPhotos(section) {
-  const drop = document.createElement("div");
-  drop.className = "drop";
-  drop.innerHTML = `<b>Paste a photo with Ctrl + V</b><span>or drop it here, or click to choose a file</span>`;
-
-  const file = document.createElement("input");
-  file.type = "file";
-  file.accept = "image/*";
-  file.multiple = true;
-  file.hidden = true;
-  file.addEventListener("change", async () => {
-    for (const one of file.files) await uploadImage(one);
-    file.value = "";
-  });
-
-  drop.addEventListener("click", () => file.click());
-  drop.addEventListener("dragover", (event) => { event.preventDefault(); drop.classList.add("is-over"); });
-  drop.addEventListener("dragleave", () => drop.classList.remove("is-over"));
-  drop.addEventListener("drop", async (event) => {
-    event.preventDefault();
-    drop.classList.remove("is-over");
-    for (const one of event.dataTransfer.files) await uploadImage(one);
-  });
-
-  const gallery = document.createElement("div");
-  gallery.className = "gallery";
-  section.append(drop, file, gallery);
-
-  function render() {
-    gallery.replaceChildren();
-    if (!state.photos.length) {
-      gallery.innerHTML = `<p class="ghint">No photos yet.</p>`;
-      return;
-    }
-    state.photos.forEach((path) => {
-      const card = document.createElement("figure");
-      card.className = "gitem";
-      const img = document.createElement("img");
-      img.src = path;
-      img.alt = "";
-      img.loading = "lazy";
-      const caption = document.createElement("figcaption");
-      caption.textContent = path;
-      const copy = document.createElement("button");
-      copy.type = "button";
-      copy.className = "btn btn-outline btn-sm";
-      copy.textContent = "Copy path";
-      copy.addEventListener("click", async () => {
-        try { await navigator.clipboard.writeText(path); say(`Copied: ${path}`, "ok"); }
-        catch { say(`Path: ${path}`, "info"); }
-      });
-      card.append(img, caption, copy);
-      gallery.append(card);
-    });
-  }
-
-  state.renderers.photos = render;
-  render();
-}
-
 // One upload path for every picture on the page.
 async function uploadImage(file, apply, redraw) {
   if (!store.ready()) {
@@ -337,29 +275,19 @@ async function uploadImage(file, apply, redraw) {
   say(`Uploading ${file.name || "picture"}…`);
   try {
     const { path, width, height } = await upload(file);
-    state.photos.unshift(path);
-    state.renderers.photos?.();
     if (apply) {
       apply(path);
       (redraw || (() => Object.values(state.renderers).forEach((r) => r())))();
       markDirty();
       say(`Picture added (${width}×${height}). Press “Save to the website” to show it.`, "ok");
     } else {
-      say(`Picture saved as ${path} (${width}×${height}). It is on the website already.`, "ok");
+      say(`Picture saved as ${path} (${width}×${height}).`, "ok");
     }
     return path;
   } catch (error) {
     say(`Picture not uploaded: ${error.message}`, "bad");
     return null;
   }
-}
-
-async function refreshPhotos() {
-  if (!store.ready()) return;
-  try {
-    state.photos = await listPhotos();
-    state.renderers.photos?.();
-  } catch { /* the folder may not exist yet */ }
 }
 
 // ---------- password ----------
@@ -588,7 +516,6 @@ function buildForm() {
 
       if (block.type === "security") buildSecurity(body);
       else if (block.type === "speakers") buildSpeakers(body);
-      else if (block.type === "photos") buildPhotos(body);
       else if (block.type === "program") buildProgram(body, listContext);
       else if (block.type === "list") buildList(block, body, listContext);
       else buildTextGroup(block, body);
@@ -665,7 +592,6 @@ async function signIn(email, password) {
     const name = await store.signIn(email, password);
     showSignedIn(name);
     say("Signed in. Your changes save straight to the website.", "ok");
-    await refreshPhotos();
     return true;
   } catch (error) {
     showSignedOut();
@@ -679,7 +605,6 @@ async function connect(token) {
     const name = await store.connectKey(token);
     showSignedIn(name);
     say(`Connected as ${name}. Changes you save go straight to the website.`, "ok");
-    await refreshPhotos();
     return true;
   } catch (error) {
     store.signOut();
@@ -817,7 +742,7 @@ async function start() {
     event.preventDefault();
     const target = state.pasteTarget;
     if (target) await uploadImage(file, target.apply, target.redraw);
-    else { showGroup("photos"); await uploadImage(file); }
+    else say("Click the speaker row first, then paste the photo with Ctrl + V.", "info");
   });
   document.addEventListener("click", (event) => {
     if (!event.target.closest(".srow")) state.pasteTarget = null;

@@ -91,11 +91,6 @@ const PARTS = [
       { key: "text", label: "Text under the name", type: "i18n" },
     ],
   },
-  {
-    id: "photos", title: "Photos", kind: "photos",
-    hint: "Paste a picture with Ctrl + V, drop it here, or click to choose a file. Big pictures are made smaller automatically so the site stays fast.",
-    fields: [],
-  },
 
   // ---------- page text ----------
   {
@@ -354,10 +349,6 @@ export const GROUPS = [
   {
     id: "menu", title: "Menu & buttons", where: "The top bar links, used on every screen",
     blocks: [text("menu")],
-  },
-  {
-    id: "photos", title: "Photo library", where: "Every picture uploaded to the website",
-    blocks: [special("photos", "photos", null)],
   },
   {
     id: "security", title: "Password", where: "Who can open this admin page",
