@@ -1,0 +1,42 @@
+{
+  "links": [
+    {
+      "label": {
+        "en": "Program",
+        "ar": "البرنامج",
+        "ku": "پرۆگرام"
+      },
+      "href": "#program"
+    },
+    {
+      "label": {
+        "en": "Workshops",
+        "ar": "الورشات",
+        "ku": "وۆرکشۆپ"
+      },
+      "href": "#workshops"
+    },
+    {
+      "label": {
+        "en": "Register",
+        "ar": "التسجيل",
+        "ku": "تۆمارکردن"
+      },
+      "href": "#register"
+    }
+  ],
+  "contact": [
+    {
+      "text": "info@ismile.krd",
+      "href": "mailto:info@ismile.krd"
+    },
+    {
+      "text": "+964 7xx xxx xxxx",
+      "href": ""
+    },
+    {
+      "text": "ismile.krd",
+      "href": ""
+    }
+  ]
+}

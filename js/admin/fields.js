@@ -115,6 +115,27 @@ const PARTS = [
     ],
   },
 
+  {
+    id: "footerLinks", title: "Footer links", kind: "list", file: "footer", listKey: "links",
+    hint: "The links under “Summit”. Use #program for a place on this page, or a full address like https://italk.krd/.",
+    itemName: "link",
+    newItem: () => ({ label: { en: "", ar: "", ku: "" }, href: "#program" }),
+    itemFields: [
+      { key: "label", label: "Wording", type: "i18n" },
+      { key: "href", label: "Link", type: "text" },
+    ],
+  },
+  {
+    id: "footerContact", title: "Contact lines", kind: "list", file: "footer", listKey: "contact",
+    hint: "The lines under “Contact”: email, phone, website. Leave the link empty for plain text, or write mailto:you@site.krd for an email and tel:+9647… for a phone.",
+    itemName: "line",
+    newItem: () => ({ text: "", href: "" }),
+    itemFields: [
+      { key: "text", label: "What is shown", type: "text" },
+      { key: "href", label: "Link (optional)", type: "text" },
+    ],
+  },
+
   // ---------- page text ----------
   {
     id: "menu", title: "Menu & buttons",
@@ -367,7 +388,7 @@ export const GROUPS = [
   },
   {
     id: "footer", title: "Footer", where: "The bottom of every page",
-    blocks: [text("footer")],
+    blocks: [text("footer", "Wording"), list("footerLinks", "Links"), list("footerContact", "Contact lines")],
   },
   {
     id: "menu", title: "Menu & buttons", where: "The top bar links, used on every screen",
@@ -382,6 +403,7 @@ export const GROUPS = [
 // Files the list editors read and write.
 export const DATA_FILES = {
   speakers: "data/speakers.json",
+  footer: "data/footer.json",
   journey: "data/journey.json",
   projects: "data/projects.json",
   workshops: "data/workshops.json",
