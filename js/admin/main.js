@@ -3,7 +3,7 @@ import { GROUPS, LANGS, DATA_FILES } from "./fields.js";
 import { REPO } from "./github.js";
 import * as store from "./store.js";
 import { upload, imageFromClipboard } from "./images.js";
-import { buildList, buildProgram } from "./lists.js";
+import { buildList, buildProgram, buildTypes } from "./lists.js";
 import { loadLock, makeLock, check, remember, isRemembered, forget, LOCK_FILE } from "./lock.js";
 
 const $ = (id) => document.getElementById(id);
@@ -452,6 +452,7 @@ const listContext = {
   },
   program: () => state.data.program,
   register: (id, render) => { state.renderers[id] = render; },
+  refresh: (id) => state.renderers[id]?.(),
   uploadImage: async (file, apply) => {
     const path = await uploadImage(file, apply);
     if (path) Object.values(state.renderers).forEach((render) => render());
@@ -517,6 +518,7 @@ function buildForm() {
       if (block.type === "security") buildSecurity(body);
       else if (block.type === "speakers") buildSpeakers(body);
       else if (block.type === "program") buildProgram(body, listContext);
+      else if (block.type === "types") buildTypes(body, listContext);
       else if (block.type === "list") buildList(block, body, listContext);
       else buildTextGroup(block, body);
 

@@ -172,7 +172,7 @@ const PARTS = [
       ["pg_locations", "“locations” (after the count)"],
       ["pg_time", "Column: time"], ["pg_session", "Column: session"],
       ["pg_topic_speaker", "Column: topic and speaker"], ["pg_location", "Column: location"],
-      ["pg_to", "Word between start and end time"], ["pg_topic", "Row: topic"], ["pg_speaker", "Row: speaker"],
+      ["pg_to", "Word between start and end time"], ["am", "Morning (AM)"], ["pm", "Afternoon (PM)"], ["pg_topic", "Row: topic"], ["pg_speaker", "Row: speaker"],
       ["pg_tba", "Shown when the topic is not known yet"],
     ]),
   },
@@ -316,7 +316,7 @@ export const GROUPS = [
   },
   {
     id: "program", title: "Program", where: "The day tabs and the schedule table",
-    blocks: [special("program", "program", "Days and sessions"), text("programText", "Wording around the table")],
+    blocks: [special("program", "program", "Days and sessions"), special("program", "types", "Session types"), text("programText", "Wording around the table")],
   },
   {
     id: "workshops", title: "Workshops", where: "The workshop cards with seats",

@@ -118,6 +118,113 @@ function fieldRow(item, field, ctx, extras = {}) {
   return row;
 }
 
+// A time box: hour, minutes and AM / PM. Stored as "HH:MM" on a 24-hour clock.
+function timeField(session, key, label, ctx) {
+  const cell = el("label", "fcell time");
+  cell.append(el("span", "fcode", label));
+  const row = el("div", "timebox");
+
+  const [rawH, rawM] = String(session[key] || "").split(":");
+  let hour24 = Number(rawH);
+  if (!Number.isFinite(hour24)) hour24 = 9;
+  const minutes = (rawM || "00").padStart(2, "0");
+
+  const hours = el("select", "plain");
+  for (let h = 1; h <= 12; h++) {
+    const option = el("option", null, String(h));
+    option.value = String(h);
+    hours.append(option);
+  }
+  hours.value = String(hour24 % 12 === 0 ? 12 : hour24 % 12);
+
+  const mins = el("select", "plain");
+  for (let m = 0; m < 60; m += 5) {
+    const value = String(m).padStart(2, "0");
+    const option = el("option", null, value);
+    option.value = value;
+    mins.append(option);
+  }
+  if (![...mins.options].some((o) => o.value === minutes)) {
+    const extra = el("option", null, minutes);
+    extra.value = minutes;
+    mins.append(extra);
+  }
+  mins.value = minutes;
+
+  const half = el("select", "plain");
+  [["AM", "AM"], ["PM", "PM"]].forEach(([value, text]) => {
+    const option = el("option", null, text);
+    option.value = value;
+    half.append(option);
+  });
+  half.value = hour24 < 12 ? "AM" : "PM";
+
+  const write = () => {
+    let h = Number(hours.value) % 12;
+    if (half.value === "PM") h += 12;
+    session[key] = `${String(h).padStart(2, "0")}:${mins.value}`;
+    ctx.markDirty();
+  };
+  [hours, mins, half].forEach((box) => box.addEventListener("change", write));
+
+  row.append(hours, el("span", "tsep", ":"), mins, half);
+  cell.append(row);
+  return cell;
+}
+
+// ---------- session types ----------
+export function buildTypes(section, ctx) {
+  // Renaming or adding a type must also redraw the session dropdowns.
+  const own = { ...ctx, markDirty: () => { ctx.markDirty(); ctx.refresh?.("program"); } };
+  const list = el("div", "rows");
+  section.append(list);
+
+  const add = el("button", "btn btn-outline add-row", "+ Add a type");
+  add.type = "button";
+  add.addEventListener("click", () => {
+    const types = ctx.program().types;
+    let id = "type1";
+    for (let n = 1; types[id]; n++) id = `type${n}`;
+    types[id] = { en: "", ar: "", ku: "" };
+    render();
+    own.markDirty();
+  });
+  section.append(add);
+
+  function usedBy(id) {
+    return ctx.program().days.reduce((count, day) => count + day.sessions.filter((s) => s.type === id).length, 0);
+  }
+
+  function render() {
+    const types = ctx.program().types;
+    list.replaceChildren();
+    Object.keys(types).forEach((id) => {
+      const row = el("div", "lrow");
+      const head = el("div", "lhead");
+      const uses = usedBy(id);
+      head.append(el("span", "lnum", `${id} · used in ${uses} session${uses === 1 ? "" : "s"}`));
+      const remove = el("button", "srow-x", "✕");
+      remove.type = "button";
+      remove.title = uses ? "Used by sessions — change those first" : "Remove this type";
+      remove.disabled = uses > 0;
+      remove.addEventListener("click", () => {
+        delete types[id];
+        render();
+        own.markDirty();
+      });
+      head.append(remove);
+
+      const body = el("div", "lbody");
+      body.append(fieldRow(types, { key: id, label: "Shown on the badge", type: "i18n" }, { ...own, rerender: render }));
+      row.append(head, body);
+      list.append(row);
+    });
+  }
+
+  ctx.register("types", render);
+  render();
+}
+
 // ---------- a whole list (workshops, tiers, partners) ----------
 export function buildList(group, section, ctx) {
   const list = el("div", "rows");
@@ -189,7 +296,12 @@ export function buildProgram(section, ctx) {
 
   function typeOptions() {
     const types = ctx.program().types || {};
-    return Object.keys(types).concat("break").map((key) => [key, key]);
+    const label = (key) => {
+      const value = types[key];
+      const text = value && typeof value === "object" ? value.en || value.ar || value.ku : value;
+      return text ? `${text} (${key})` : key;
+    };
+    return Object.keys(types).map((key) => [key, label(key)]).concat([["break", "Break"]]);
   }
 
   function render() {
@@ -219,21 +331,11 @@ export function buildProgram(section, ctx) {
         const item = el("div", "session");
         const top = el("div", "srow-top");
 
-        const time = (key, label) => {
-          const cell = el("label", "fcell small");
-          cell.append(el("span", "fcode", label));
-          const input = el("input", "plain");
-          input.value = session[key] || "";
-          input.placeholder = "09:00";
-          input.addEventListener("input", () => { session[key] = input.value; ctx.markDirty(); });
-          cell.append(input);
-          return cell;
-        };
         const typeCell = el("label", "fcell small");
         typeCell.append(el("span", "fcode", "Type"));
         const typeSelect = el("select", "plain");
-        typeOptions().forEach(([value]) => {
-          const option = el("option", null, value);
+        typeOptions().forEach(([value, text]) => {
+          const option = el("option", null, text);
           option.value = value;
           typeSelect.append(option);
         });
@@ -250,7 +352,7 @@ export function buildProgram(section, ctx) {
           ctx.markDirty();
         });
 
-        top.append(time("start", "Start"), time("end", "End"), typeCell, removeSession);
+        top.append(timeField(session, "start", "Start", ctx), timeField(session, "end", "End", ctx), typeCell, removeSession);
         item.append(top);
         item.append(fieldRow(session, { key: "title", label: "Session title", type: "i18n" }, { ...ctx, rerender: render }));
         if (session.type !== "break") {

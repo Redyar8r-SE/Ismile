@@ -42,5 +42,7 @@
   "pg_tba": "To be announced",
   "spon_slot": "Your logo here",
   "spon_spots": "spots available",
-  "tp_company": "company"
+  "tp_company": "company",
+  "am": "AM",
+  "pm": "PM"
 }
