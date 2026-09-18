@@ -46,6 +46,15 @@ const PARTS = [
     id: "sponsorTiers", title: "Sponsor tiers", kind: "list", file: "sponsors", listKey: "tiers",
     hint: "The Diamond / Gold / Silver cards and how many places are still open in each.",
     itemName: "tier",
+    refreshes: ["sponsorList"],
+    rowInfo: (tier, data) => {
+      const used = (data.sponsors.sponsors || []).filter((s) => s.tier === tier.id).length;
+      return {
+        label: used ? `${used} sponsor${used === 1 ? "" : "s"}` : "no sponsors yet",
+        lock: used > 0,
+        lockReason: "Sponsors use this tier — move them first",
+      };
+    },
     newItem: () => ({ id: `tier${Date.now().toString(36).slice(-4)}`, name: { en: "", ar: "", ku: "" }, className: "tc-silver", subtitle: { en: "", ar: "", ku: "" }, spots: 3 }),
     itemFields: [
       { key: "name", label: "Tier name", type: "i18n" },
@@ -60,6 +69,7 @@ const PARTS = [
     id: "sponsorList", title: "Sponsors", kind: "list", file: "sponsors", listKey: "sponsors",
     hint: "Companies that already sponsor iSmile 2026. Each one shows its logo in its tier, in place of an open slot.",
     itemName: "sponsor",
+    refreshes: ["sponsorTiers"],
     newItem: () => ({ name: "", tier: "gold", logo: null, bg: "#ffffff" }),
     itemFields: [
       { key: "name", label: "Company name", type: "text" },

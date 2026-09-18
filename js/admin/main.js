@@ -454,6 +454,7 @@ const listContext = {
     return [];
   },
   program: () => state.data.program,
+  data: () => state.data,
   register: (id, render) => { state.renderers[id] = render; },
   refresh: (id) => state.renderers[id]?.(),
   uploadImage: async (file, apply) => {

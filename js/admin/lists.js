@@ -233,11 +233,21 @@ export function buildList(group, section, ctx) {
   const add = el("button", "btn btn-outline add-row", `+ Add a ${group.itemName}`);
   add.type = "button";
   add.addEventListener("click", () => {
-    ctx.getItems(group).push(group.newItem());
+    const items = ctx.getItems(group);
+    items.push(group.newItem());
     render();
-    ctx.markDirty();
+    changed();
+    const box = list.querySelector(".lrow:last-child input, .lrow:last-child select");
+    box?.scrollIntoView({ behavior: "smooth", block: "center" });
+    box?.focus();
   });
   section.append(add);
+
+  // Some lists feed another one (tiers fill the sponsor dropdown).
+  function changed() {
+    ctx.markDirty();
+    (group.refreshes || []).forEach((id) => ctx.refresh?.(id));
+  }
 
   function render() {
     const items = ctx.getItems(group);
@@ -249,20 +259,23 @@ export function buildList(group, section, ctx) {
     items.forEach((item, index) => {
       const row = el("div", "lrow");
       const head = el("div", "lhead");
-      head.append(el("span", "lnum", String(index + 1)));
+      const info = group.rowInfo ? group.rowInfo(item, ctx.data()) : null;
+      head.append(el("span", "lnum", info?.label ? `${index + 1} · ${info.label}` : String(index + 1)));
       const remove = el("button", "srow-x", "✕");
       remove.type = "button";
-      remove.title = `Remove this ${group.itemName}`;
+      remove.disabled = Boolean(info?.lock);
+      remove.title = info?.lock ? info.lockReason || "In use — change that first" : `Remove this ${group.itemName}`;
       remove.addEventListener("click", () => {
         items.splice(index, 1);
         render();
-        ctx.markDirty();
+        changed();
       });
       head.append(remove);
 
       const body = el("div", "lbody");
+      const rowCtx = { ...ctx, rerender: render, markDirty: changed };
       group.itemFields.forEach((field) => {
-        body.append(fieldRow(item, field, { ...ctx, rerender: render }, { options: ctx.optionsFor(group, field) }));
+        body.append(fieldRow(item, field, rowCtx, { options: ctx.optionsFor(group, field) }));
       });
 
       row.append(head, body);
