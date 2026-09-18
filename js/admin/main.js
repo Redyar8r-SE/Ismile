@@ -74,12 +74,30 @@ function say(text, kind = "info") {
   }
 }
 
+let savedTimer = null;
+
+function showBadge(kind, text) {
+  const badge = $("dirty");
+  badge.dataset.state = kind;           // "dirty" or "saved"
+  badge.querySelector("span:last-child").textContent = text;
+  badge.hidden = false;
+}
+
 function markDirty() {
+  const wasClean = !state.dirty;
   state.dirty =
     LANGS.some(({ code }) => JSON.stringify(state.files[code]) !== state.original[code]) ||
     Object.keys(DATA_FILES).some((name) => JSON.stringify(state.data[name]) !== state.dataOriginal[name]);
   $("saveBtn").disabled = !state.dirty;
-  $("dirty").hidden = !state.dirty;
+
+  if (state.dirty) {
+    clearTimeout(savedTimer);
+    showBadge("dirty", "Unsaved — save now");
+    // A new change makes an old "Saved" message stale.
+    if (wasClean && $("msg").classList.contains("is-ok")) say("");
+  } else if ($("dirty").dataset.state !== "saved") {
+    $("dirty").hidden = true;
+  }
 }
 
 // ---------- text groups ----------
@@ -607,6 +625,13 @@ async function saveToGitHub() {
       state.dataOriginal[name] = JSON.stringify(state.data[name]);
     }
     markDirty();
+    // Say it plainly on the button itself, then let it fade away.
+    showBadge("saved", "Saved ✓");
+    clearTimeout(savedTimer);
+    savedTimer = setTimeout(() => {
+      const badge = $("dirty");
+      if (badge.dataset.state === "saved") { badge.hidden = true; badge.dataset.state = "dirty"; }
+    }, 4000);
     const blanks = state.data.speakers.filter((speaker) => {
       const any = (value) => value && (typeof value === "object" ? Object.values(value).some(Boolean) : Boolean(value));
       return !any(speaker.name) && !any(speaker.role) && !speaker.photo;
