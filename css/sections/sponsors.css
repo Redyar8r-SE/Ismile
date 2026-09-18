@@ -31,3 +31,11 @@
   .tc-silver .tc-slots{grid-template-columns:repeat(2,1fr)}
   .tc-silver .logo-slot:last-child:nth-child(odd){grid-column:span 2}
 }
+
+/* Sponsors already signed, shown beside the open places */
+.tc-slots .p-logo{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:10px;text-align:center;border-radius:var(--r-md);background:var(--surface);border:1px solid color-mix(in srgb,var(--m2) 35%,var(--line));padding:10px;transition:border-color .2s,transform .2s,background .2s}
+.tc-slots .p-logo:hover{border-color:var(--m2);transform:translateY(-2px);background:color-mix(in srgb,var(--m2) 8%,var(--surface))}
+.tc-dia .tc-slots .p-logo{height:140px}
+.tc-gold .tc-slots .p-logo{height:112px}
+.tc-silver .tc-slots .p-logo{height:88px;gap:6px}
+.tc-silver .tc-slots .pl-name{font-size:11.5px}

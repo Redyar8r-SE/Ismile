@@ -86,7 +86,7 @@ function fieldRow(item, field, ctx, extras = {}) {
   const input = el(field.type === "select" ? "select" : "input");
   input.className = "plain";
   if (field.type === "select") {
-    const options = field.options || (extras.options || []).map((o) => [o, o]);
+    const options = field.options || (extras.options || []).map((o) => (Array.isArray(o) ? o : [o, o]));
     options.forEach(([value, text]) => {
       const option = el("option", null, text ?? value);
       option.value = value;

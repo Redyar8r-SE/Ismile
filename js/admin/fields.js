@@ -43,10 +43,10 @@ const PARTS = [
     ],
   },
   {
-    id: "sponsorTiers", title: "Sponsor tiers", kind: "list", file: "sponsors",
-    hint: "The Diamond / Gold / Silver cards and how many open places each one shows.",
+    id: "sponsorTiers", title: "Sponsor tiers", kind: "list", file: "sponsors", listKey: "tiers",
+    hint: "The Diamond / Gold / Silver cards and how many places are still open in each.",
     itemName: "tier",
-    newItem: () => ({ name: { en: "", ar: "", ku: "" }, className: "tc-silver", subtitle: { en: "", ar: "", ku: "" }, spots: 3 }),
+    newItem: () => ({ id: `tier${Date.now().toString(36).slice(-4)}`, name: { en: "", ar: "", ku: "" }, className: "tc-silver", subtitle: { en: "", ar: "", ku: "" }, spots: 3 }),
     itemFields: [
       { key: "name", label: "Tier name", type: "i18n" },
       { key: "subtitle", label: "Tier subtitle", type: "i18n" },
@@ -54,6 +54,19 @@ const PARTS = [
       { key: "className", label: "Colour", type: "select", options: [
         ["tc-dia", "Diamond (light blue)"], ["tc-gold", "Gold"], ["tc-silver", "Silver"], ["tc-bronze", "Bronze"], ["tc-plat", "Platinum"],
       ] },
+    ],
+  },
+  {
+    id: "sponsorList", title: "Sponsors", kind: "list", file: "sponsors", listKey: "sponsors",
+    hint: "Companies that already sponsor iSmile 2026. Each one shows its logo in its tier, in place of an open slot.",
+    itemName: "sponsor",
+    newItem: () => ({ name: "", tier: "gold", logo: null, bg: "#ffffff" }),
+    itemFields: [
+      { key: "name", label: "Company name", type: "text" },
+      { key: "tier", label: "Tier", type: "select", optionsFrom: "sponsorTiers" },
+      { key: "logo", label: "Logo", type: "image" },
+      { key: "bg", label: "Logo background", type: "color" },
+      { key: "round", label: "Round logo", type: "checkbox" },
     ],
   },
   {
@@ -328,7 +341,7 @@ export const GROUPS = [
   },
   {
     id: "sponsors", title: "Sponsors & partners", where: "Sponsor tiers and the trusted partner logos",
-    blocks: [list("sponsorTiers", "Sponsor tiers"), list("partnerList", "Trusted partners"), text("sponsorsText", "Wording")],
+    blocks: [list("sponsorTiers", "Sponsor tiers"), list("sponsorList", "Sponsors with a logo"), list("partnerList", "Trusted partners"), text("sponsorsText", "Wording")],
   },
   {
     id: "companies", title: "For companies", where: "The three cards for companies",

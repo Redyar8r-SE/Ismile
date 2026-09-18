@@ -447,7 +447,10 @@ const listContext = {
   say,
   getItems: (group) => (group.listKey ? state.data[group.file][group.listKey] : state.data[group.file]),
   optionsFor: (group, field) => {
-    if (field.optionsFrom === "tiers") return (state.data[group.file].tiers || []).map((tier) => tier.name);
+    const label = (value) => (value && typeof value === "object" ? value.en || value.ar || value.ku : value) || "";
+    // Partners match their tier by its English name; sponsors match by id.
+    if (field.optionsFrom === "tiers") return (state.data[group.file].tiers || []).map((tier) => [tier.name, label(tier.name)]);
+    if (field.optionsFrom === "sponsorTiers") return (state.data.sponsors.tiers || []).map((tier) => [tier.id, label(tier.name)]);
     return [];
   },
   program: () => state.data.program,

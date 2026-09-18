@@ -1,44 +1,50 @@
-[
-  {
-    "name": {
-      "en": "Diamond",
-      "ar": "ماسي",
-      "ku": "ئەڵماس"
+{
+  "tiers": [
+    {
+      "id": "diamond",
+      "name": {
+        "en": "Diamond",
+        "ar": "ماسي",
+        "ku": "ئەڵماس"
+      },
+      "className": "tc-dia",
+      "subtitle": {
+        "en": "Headline partners",
+        "ar": "الشركاء الرئيسيون",
+        "ku": "هاوبەشە سەرەکییەکان"
+      },
+      "spots": 2
     },
-    "className": "tc-dia",
-    "subtitle": {
-      "en": "Headline partners",
-      "ar": "الشركاء الرئيسيون",
-      "ku": "هاوبەشە سەرەکییەکان"
+    {
+      "id": "gold",
+      "name": {
+        "en": "Gold",
+        "ar": "ذهبي",
+        "ku": "زێڕ"
+      },
+      "className": "tc-gold",
+      "subtitle": {
+        "en": "Main partners",
+        "ar": "شركاء أساسيون",
+        "ku": "هاوبەشە بنەڕەتییەکان"
+      },
+      "spots": 3
     },
-    "spots": 2
-  },
-  {
-    "name": {
-      "en": "Gold",
-      "ar": "ذهبي",
-      "ku": "زێڕ"
-    },
-    "className": "tc-gold",
-    "subtitle": {
-      "en": "Main partners",
-      "ar": "شركاء أساسيون",
-      "ku": "هاوبەشە بنەڕەتییەکان"
-    },
-    "spots": 3
-  },
-  {
-    "name": {
-      "en": "Silver",
-      "ar": "فضي",
-      "ku": "زیو"
-    },
-    "className": "tc-silver",
-    "subtitle": {
-      "en": "Supporting partners",
-      "ar": "شركاء داعمون",
-      "ku": "هاوبەشە پشتیوانەکان"
-    },
-    "spots": 5
-  }
-]
+    {
+      "id": "silver",
+      "name": {
+        "en": "Silver",
+        "ar": "فضي",
+        "ku": "زیو"
+      },
+      "className": "tc-silver",
+      "subtitle": {
+        "en": "Supporting partners",
+        "ar": "شركاء داعمون",
+        "ku": "هاوبەشە پشتیوانەکان"
+      },
+      "spots": 5
+    }
+  ],
+  "sponsors": []
+}
