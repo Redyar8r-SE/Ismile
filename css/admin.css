@@ -190,3 +190,4 @@ input.plain[type="color"]{max-width:64px;height:40px;padding:3px}
 .confirm li{display:flex;align-items:center;gap:9px}
 .confirm li::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--teal);flex:none}
 .confirm-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+.plain-body{padding:0}

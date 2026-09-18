@@ -19,7 +19,7 @@ async function start() {
   initTheme();
 
   try {
-    const [strings, program, workshops, speakers, sponsors, partners, journey, projects, footer] = await Promise.all([
+    const [strings, program, workshops, speakers, sponsors, partners, journey, projects, footer, map] = await Promise.all([
       loadJSON("data/i18n/en.json"),
       loadJSON("data/program.json"),
       loadJSON("data/workshops.json"),
@@ -29,6 +29,7 @@ async function start() {
       loadJSON("data/journey.json"),
       loadJSON("data/projects.json"),
       loadJSON("data/footer.json"),
+      loadJSON("data/map.json"),
     ]);
 
     initI18n(strings);
@@ -49,7 +50,7 @@ async function start() {
     initProjects(projects);
     initFooter(footer);
     initRegistration();
-    initVenue();
+    initVenue(map);
 
     initLangSwitch();
     setLang(preferredLang());

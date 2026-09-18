@@ -136,6 +136,16 @@ const PARTS = [
     ],
   },
 
+  {
+    id: "mapSettings", title: "Map", kind: "single", file: "map",
+    hint: "Where the map points. Write the place as you would type it in Google Maps. For an exact pin, open Google Maps, right-click the spot, copy the two numbers and paste them into Coordinates.",
+    itemFields: [
+      { key: "place", label: "Place", type: "text" },
+      { key: "coordinates", label: "Coordinates (optional)", type: "text" },
+      { key: "zoom", label: "Zoom (1 far — 20 close)", type: "number" },
+    ],
+  },
+
   // ---------- page text ----------
   {
     id: "menu", title: "Menu & buttons",
@@ -336,6 +346,7 @@ const byId = Object.fromEntries(PARTS.map((part) => [part.id, part]));
 const text = (id, title) => ({ ...byId[id], type: "text", title: title ?? null });
 const list = (id, title) => ({ ...byId[id], type: "list", title: title ?? null });
 const special = (id, kind, title) => ({ ...byId[id], type: kind, title: title ?? null });
+const single = (id, title) => ({ ...byId[id], type: "single", title: title ?? null });
 
 export const GROUPS = [
   {
@@ -384,7 +395,7 @@ export const GROUPS = [
   },
   {
     id: "venue", title: "Venue", where: "The hotel card, address and map",
-    blocks: [text("venue")],
+    blocks: [text("venue", "Wording"), single("mapSettings", "Map location")],
   },
   {
     id: "footer", title: "Footer", where: "The bottom of every page",
@@ -403,6 +414,7 @@ export const GROUPS = [
 // Files the list editors read and write.
 export const DATA_FILES = {
   speakers: "data/speakers.json",
+  map: "data/map.json",
   footer: "data/footer.json",
   journey: "data/journey.json",
   projects: "data/projects.json",

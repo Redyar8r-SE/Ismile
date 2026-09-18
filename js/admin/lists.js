@@ -225,6 +225,16 @@ export function buildTypes(section, ctx) {
   render();
 }
 
+// ---------- one object, not a list (the map settings) ----------
+export function buildSingle(group, section, ctx) {
+  const item = ctx.data()[group.file];
+  const body = el("div", "lbody plain-body");
+  group.itemFields.forEach((field) => {
+    body.append(fieldRow(item, field, { ...ctx, rerender: () => {} }, { options: ctx.optionsFor(group, field) }));
+  });
+  section.append(body);
+}
+
 // ---------- a whole list (workshops, tiers, partners) ----------
 export function buildList(group, section, ctx) {
   const list = el("div", "rows");

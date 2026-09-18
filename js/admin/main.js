@@ -3,7 +3,7 @@ import { GROUPS, LANGS, DATA_FILES } from "./fields.js";
 import { REPO } from "./github.js";
 import * as store from "./store.js";
 import { upload, imageFromClipboard } from "./images.js";
-import { buildList, buildProgram, buildTypes } from "./lists.js";
+import { buildList, buildProgram, buildTypes, buildSingle } from "./lists.js";
 import { loadLock, makeLock, check, remember, isRemembered, forget, LOCK_FILE } from "./lock.js";
 
 const $ = (id) => document.getElementById(id);
@@ -547,6 +547,7 @@ function buildForm() {
       else if (block.type === "program") buildProgram(body, listContext);
       else if (block.type === "types") buildTypes(body, listContext);
       else if (block.type === "list") buildList(block, body, listContext);
+      else if (block.type === "single") buildSingle(block, body, listContext);
       else buildTextGroup(block, body);
 
       card.append(body);
