@@ -31,7 +31,8 @@ html[dir="rtl"] .journey::before{background:linear-gradient(270deg,var(--line) 0
 .org-facts li+li{border-inline-start:1px solid var(--line)}
 .org-facts b{font-size:17px}
 .org-facts span{font-size:13px;color:var(--muted)}
-.org-sub{border-inline-start:3px solid var(--teal);padding-inline-start:14px;margin-top:4px}
+.org-projects{display:grid;gap:14px;margin-top:4px}
+.org-sub{border-inline-start:3px solid var(--teal);padding-inline-start:14px}
 .org-sub h4{margin:0;font-size:16px}
 .org-sub p{font-size:14px;color:var(--muted)}
 

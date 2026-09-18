@@ -82,6 +82,16 @@ const PARTS = [
     ],
   },
   {
+    id: "projectList", title: "italk projects", kind: "list", file: "projects",
+    hint: "The small blocks under the italk card, such as italkMedX. Add one for every project you want to show.",
+    itemName: "project",
+    newItem: () => ({ title: { en: "", ar: "", ku: "" }, text: { en: "", ar: "", ku: "" } }),
+    itemFields: [
+      { key: "title", label: "Project name", type: "i18n" },
+      { key: "text", label: "Text under the name", type: "i18n" },
+    ],
+  },
+  {
     id: "photos", title: "Photos", kind: "photos",
     hint: "Paste a picture with Ctrl + V, drop it here, or click to choose a file. Big pictures are made smaller automatically so the site stays fast.",
     fields: [],
@@ -299,7 +309,7 @@ export const GROUPS = [
   },
   {
     id: "about", title: "About iSmile", where: "The story, the years, italk and the partner",
-    blocks: [list("journeyList", "Years on the timeline"), text("about", "Wording of the section")],
+    blocks: [list("journeyList", "Years on the timeline"), list("projectList", "italk projects"), text("about", "Wording of the section")],
   },
   {
     id: "experience", title: "What happens", where: "The eight boxes about the two days",
@@ -359,6 +369,7 @@ export const GROUPS = [
 export const DATA_FILES = {
   speakers: "data/speakers.json",
   journey: "data/journey.json",
+  projects: "data/projects.json",
   workshops: "data/workshops.json",
   sponsors: "data/sponsors.json",
   partners: "data/partners.json",

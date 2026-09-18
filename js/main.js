@@ -8,6 +8,7 @@ import { initSpeakers } from "./sections/speakers.js";
 import { initSponsors } from "./sections/sponsors.js";
 import { initPartners } from "./sections/partners.js";
 import { initJourney } from "./sections/journey.js";
+import { initProjects } from "./sections/projects.js";
 import { initRegistration } from "./sections/registration.js";
 import { initVenue } from "./sections/venue.js";
 
@@ -15,7 +16,7 @@ async function start() {
   initNav();
 
   try {
-    const [strings, program, workshops, speakers, sponsors, partners, journey] = await Promise.all([
+    const [strings, program, workshops, speakers, sponsors, partners, journey, projects] = await Promise.all([
       loadJSON("data/i18n/en.json"),
       loadJSON("data/program.json"),
       loadJSON("data/workshops.json"),
@@ -23,6 +24,7 @@ async function start() {
       loadJSON("data/sponsors.json"),
       loadJSON("data/partners.json"),
       loadJSON("data/journey.json"),
+      loadJSON("data/projects.json"),
     ]);
 
     initI18n(strings);
@@ -40,6 +42,7 @@ async function start() {
     initSponsors(sponsors);
     initPartners(partners);
     initJourney(journey);
+    initProjects(projects);
     initRegistration();
     initVenue();
 
