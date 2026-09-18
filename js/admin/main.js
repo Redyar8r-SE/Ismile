@@ -62,11 +62,16 @@ async function loadAll() {
 }
 
 // ---------- shared ----------
+let msgTimer = null;
+
 function say(text, kind = "info") {
   const box = $("msg");
+  clearTimeout(msgTimer);
   box.textContent = text;
   box.className = `msg is-${kind}`;
   box.hidden = !text;
+  // Notes and confirmations clear themselves; a problem stays until it is fixed.
+  if (text && kind !== "bad") msgTimer = setTimeout(() => { box.hidden = true; }, 5000);
   // The message sits at the top of the page: bring it into view, otherwise a
   // warning can go unnoticed while you are working further down.
   if (text && box.getBoundingClientRect().top < 60) {
