@@ -79,7 +79,7 @@ let savedTimer = null;
 function showBadge(kind, text) {
   const badge = $("dirty");
   badge.dataset.state = kind;           // "dirty" or "saved"
-  badge.querySelector("span:last-child").textContent = text;
+  badge.querySelector(".warn-text").textContent = text;
   badge.hidden = false;
 }
 
@@ -92,7 +92,7 @@ function markDirty() {
 
   if (state.dirty) {
     clearTimeout(savedTimer);
-    showBadge("dirty", "Unsaved");
+    showBadge("dirty", "Not saved yet");
     // A new change makes an old "Saved" message stale.
     if (wasClean && $("msg").classList.contains("is-ok")) say("");
   } else if ($("dirty").dataset.state !== "saved") {
@@ -626,7 +626,7 @@ async function saveToGitHub() {
     }
     markDirty();
     // Say it plainly on the button itself, then let it fade away.
-    showBadge("saved", "Saved");
+    showBadge("saved", "All saved");
     clearTimeout(savedTimer);
     savedTimer = setTimeout(() => {
       const badge = $("dirty");
@@ -727,7 +727,6 @@ async function start() {
     say("Signed out of this browser.", "info");
   });
   $("saveBtn").addEventListener("click", saveToGitHub);
-  $("dirty").addEventListener("click", saveToGitHub);
   $("downloadBtn").addEventListener("click", downloadFiles);
 
   // Ctrl + V anywhere: the picture goes to the speaker row you last clicked,

@@ -20,11 +20,16 @@ body.admin{background:var(--surface)}
 .btn-open:hover svg{transform:translate(2px,-2px)}
 .btn-open:active{transform:translateY(1px)}
 .btn-open:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
-.badge-dirty{border:0;background:none;padding:0;font:inherit;font-size:13px;font-weight:700;color:#F5C451;cursor:pointer}
-.badge-dirty:hover{text-decoration:underline}
-.badge-dirty:focus-visible{outline:2px solid #F5C451;outline-offset:3px;border-radius:4px}
-.badge-dirty[data-state="saved"]{color:#7FD6D2;cursor:default}
-.badge-dirty[data-state="saved"]:hover{text-decoration:none}
+/* A warning that changes are not stored yet — a notice, not a button */
+.warn-save{display:inline-flex;align-items:center;gap:7px;padding:5px 12px;border-radius:999px;background:color-mix(in srgb,#F5C451 16%,transparent);color:#F5C451;font-size:12.5px;font-weight:700;white-space:nowrap;user-select:none}
+.warn-save svg{width:15px;height:15px;flex:none}
+.warn-save .ico-warn{animation:warnBlink 1.8s ease-in-out infinite}
+.warn-save .ico-done{display:none}
+.warn-save[data-state="saved"]{background:color-mix(in srgb,var(--teal) 18%,transparent);color:#7FD6D2}
+.warn-save[data-state="saved"] .ico-warn{display:none}
+.warn-save[data-state="saved"] .ico-done{display:block}
+@keyframes warnBlink{0%,100%{opacity:1}50%{opacity:.45}}
+@media (prefers-reduced-motion: reduce){.warn-save .ico-warn{animation:none}}
 
 /* ---------- Shell ---------- */
 .ashell{display:grid;grid-template-columns:270px minmax(0,1fr);gap:26px;max-width:1500px;margin:0 auto;padding:24px 22px 70px}

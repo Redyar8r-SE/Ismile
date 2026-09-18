@@ -49,7 +49,11 @@
         <span>Open the website</span>
       </a>
       <button type="button" class="btn btn-outline btn-sm" id="downloadBtn">Download files</button>
-      <button type="button" class="badge-dirty" id="dirty" hidden title="Save these changes now"><span>Unsaved</span></button>
+      <span class="warn-save" id="dirty" role="status" aria-live="polite" hidden>
+        <svg class="ico-warn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.6 2.6 20h18.8L12 3.6z"/><path d="M12 10v4.2M12 17.2h.01"/></svg>
+        <svg class="ico-done" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12.5 9.5 17.5 19.5 7"/></svg>
+        <span class="warn-text"></span>
+      </span>
       <button type="button" class="btn btn-primary btn-sm" id="saveBtn" disabled>Save to the website</button>
     </div>
   </div>
