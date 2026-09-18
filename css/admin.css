@@ -180,3 +180,13 @@ input.plain[type="color"]{max-width:64px;height:40px;padding:3px}
 .timebox select.plain{width:auto;min-width:64px;max-width:none;padding-inline:10px 26px}
 .tsep{color:var(--muted);font-weight:700}
 .fcell.time{max-width:none}
+
+/* ---------- Ask before saving ---------- */
+.confirm{width:min(440px,92vw);padding:24px;border:1px solid var(--line);border-radius:16px;background:var(--bg);color:var(--text)}
+.confirm::backdrop{background:rgba(8,30,38,.62);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.confirm h2{font-size:19px;margin-bottom:6px}
+.confirm > p{font-size:14.5px;color:var(--muted)}
+.confirm ul{margin:16px 0 0;padding:12px 14px;list-style:none;display:grid;gap:7px;background:var(--surface);border:1px solid var(--line);border-radius:12px;font-size:14.5px;font-weight:600}
+.confirm li{display:flex;align-items:center;gap:9px}
+.confirm li::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--teal);flex:none}
+.confirm-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}

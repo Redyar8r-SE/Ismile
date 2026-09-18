@@ -609,9 +609,57 @@ async function connect(token) {
 }
 
 // ---------- saving ----------
+// Friendly names for the "are you sure" list.
+const PART_NAMES = {
+  en: "English text", ar: "Arabic text", ku: "Kurdish text",
+  speakers: "Speakers", journey: "Years on the timeline", projects: "italk projects",
+  workshops: "Workshops", sponsors: "Sponsors and tiers", partners: "Trusted partners",
+  program: "Program days and sessions",
+};
+
+function whatChanged() {
+  const changed = [];
+  LANGS.forEach(({ code }) => {
+    if (JSON.stringify(state.files[code]) !== state.original[code]) changed.push(PART_NAMES[code] || code);
+  });
+  Object.keys(DATA_FILES).forEach((name) => {
+    if (JSON.stringify(state.data[name]) !== state.dataOriginal[name]) changed.push(PART_NAMES[name] || name);
+  });
+  return changed;
+}
+
+// Ask first, so nothing reaches the website by accident.
+function askBeforeSaving() {
+  const box = $("confirmSave");
+  const list = $("confirmList");
+  list.replaceChildren(...whatChanged().map((name) => {
+    const item = document.createElement("li");
+    item.textContent = name;
+    return item;
+  }));
+
+  return new Promise((resolve) => {
+    const done = (answer) => {
+      box.close();
+      $("confirmYes").removeEventListener("click", yes);
+      $("confirmNo").removeEventListener("click", no);
+      box.removeEventListener("cancel", no);
+      resolve(answer);
+    };
+    const yes = () => done(true);
+    const no = (event) => { event?.preventDefault?.(); done(false); };
+    $("confirmYes").addEventListener("click", yes);
+    $("confirmNo").addEventListener("click", no);
+    box.addEventListener("cancel", no);
+    box.showModal();
+    $("confirmYes").focus();
+  });
+}
+
 async function saveToGitHub() {
   if (!state.dirty) return;
   if (!store.ready()) return say("Sign in first, or use “Download files” instead.", "bad");
+  if (!(await askBeforeSaving())) return say("Nothing was saved. Your changes are still here.", "info");
 
   $("saveBtn").disabled = true;
   say("Saving…");
