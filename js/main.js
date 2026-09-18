@@ -2,6 +2,7 @@
 import { loadJSON } from "./utils/load-json.js";
 import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from "./i18n.js";
 import { initNav } from "./components/nav.js";
+import { initTheme } from "./components/theme.js";
 import { initProgram } from "./sections/program.js";
 import { initWorkshops } from "./sections/workshops.js";
 import { initSpeakers } from "./sections/speakers.js";
@@ -14,6 +15,7 @@ import { initVenue } from "./sections/venue.js";
 
 async function start() {
   initNav();
+  initTheme();
 
   try {
     const [strings, program, workshops, speakers, sponsors, partners, journey, projects] = await Promise.all([

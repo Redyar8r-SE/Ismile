@@ -101,7 +101,7 @@ const PARTS = [
       ["nav_speakers", "Menu: Speakers"], ["nav_sponsors", "Menu: Sponsors"], ["nav_companies", "Menu: Companies"],
       ["nav_venue", "Menu: Venue"], ["nav_register", "Register button"],
       ["cta_register", "Big button 1"], ["cta_program", "Big button 2"],
-      ["a_menu", "Menu button (for screen readers)"], ["a_lang", "Language buttons (for screen readers)"],
+      ["a_theme", "Light/dark button (for screen readers)"], ["a_menu", "Menu button (for screen readers)"], ["a_lang", "Language buttons (for screen readers)"],
       ["a_days", "Program days (for screen readers)"], ["a_copy", "Copy address (for screen readers)"],
       ["page_title", "Browser tab title"],
     ]),
