@@ -1,12 +1,14 @@
 // Venue: "Copy address" and "Get directions" (uses the visitor's location when allowed).
 import { t } from "../i18n.js";
+import { mapTarget } from "../utils/maps.js";
 
 // Where the map points. Set in the admin (data/map.json): a place name, or
 // exact coordinates when the name is not precise enough.
 let destination = "Grand Millennium Sulaimani, Sulaymaniyah";
 
 export function initVenue(map = {}) {
-  destination = (map.coordinates || map.place || destination).trim();
+  const { target } = mapTarget(map);
+  if (target) destination = target;
   showMap(map);
   initCopyAddress();
   initDirections();
@@ -18,7 +20,7 @@ function showMap(map) {
   const directions = document.getElementById("directionsBtn");
   const openMaps = document.querySelector(".venue-actions .btn-outline");
   const query = encodeURIComponent(destination);
-  const zoom = Number(map.zoom) || 15;
+  const { zoom } = mapTarget(map);
 
   if (frame) {
     frame.src = `https://www.google.com/maps?q=${query}&z=${zoom}&output=embed`;
