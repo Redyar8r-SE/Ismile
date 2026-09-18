@@ -474,7 +474,7 @@ function buildForm() {
     tab.type = "button";
     tab.className = "gnav" + (index === 0 ? " is-active" : "");
     tab.dataset.for = group.id;
-    tab.innerHTML = `<span class="n">${index + 1}</span><span class="t"></span><span class="hits" hidden></span>`;
+    tab.innerHTML = `<span class="n">${index + 1}</span><span class="t"></span>`;
     tab.querySelector(".t").textContent = group.title;
     tab.addEventListener("click", () => showGroup(group.id));
     nav.append(tab);
@@ -538,41 +538,6 @@ function showGroup(id) {
   document.querySelectorAll(".group").forEach((s) => { s.hidden = s.id !== `group-${id}`; });
   document.querySelectorAll(".gnav").forEach((b) => b.classList.toggle("is-active", b.dataset.for === id));
   window.scrollTo({ top: 0, behavior: "smooth" });
-}
-
-// Search: hide the fields that do not match, and show how many each step has.
-function runSearch(query) {
-  const needle = query.trim().toLowerCase();
-  let firstHit = null;
-
-  GROUPS.forEach((group) => {
-    const section = document.getElementById(`group-${group.id}`);
-    const tab = document.querySelector(`.gnav[data-for="${group.id}"]`);
-    const hits = tab.querySelector(".hits");
-    const fields = [...section.querySelectorAll(".field")];
-    let found = 0;
-
-    fields.forEach((field) => {
-      if (!needle) { field.hidden = false; return; }
-      const text = field.textContent.toLowerCase();
-      const values = [...field.querySelectorAll("input, textarea")].map((i) => i.value.toLowerCase()).join(" ");
-      const match = text.includes(needle) || values.includes(needle);
-      field.hidden = !match;
-      if (match) found += 1;
-    });
-
-    section.querySelectorAll(".block").forEach((block) => {
-      const own = [...block.querySelectorAll(".field")];
-      block.hidden = Boolean(needle) && own.length > 0 && own.every((f) => f.hidden);
-    });
-
-    hits.hidden = !needle || !found;
-    hits.textContent = found ? String(found) : "";
-    tab.classList.toggle("is-empty", Boolean(needle) && !found);
-    if (needle && found && !firstHit) firstHit = group.id;
-  });
-
-  if (needle && firstHit) showGroup(firstHit);
 }
 
 // ---------- signing in ----------
@@ -737,8 +702,8 @@ async function start() {
     say("Signed out of this browser.", "info");
   });
   $("saveBtn").addEventListener("click", saveToGitHub);
+  $("dirty").addEventListener("click", saveToGitHub);
   $("downloadBtn").addEventListener("click", downloadFiles);
-  $("search").addEventListener("input", (event) => runSearch(event.target.value));
 
   // Ctrl + V anywhere: the picture goes to the speaker row you last clicked,
   // otherwise into the photo list.
