@@ -140,8 +140,8 @@ const PARTS = [
     id: "mapSettings", title: "Map", kind: "single", file: "map",
     hint: "Easiest way: open Google Maps, find the place, press Share → Copy link, and paste it below. A short maps.app.goo.gl link does not work — open it first, then copy the long address from the browser bar.",
     itemFields: [
-      { key: "url", label: "Google Maps link", type: "text" },
-      { key: "place", label: "Or a place name", type: "text" },
+      { key: "url", label: "Google Maps link (most exact)", type: "text" },
+      { key: "place", label: "Place name", type: "text" },
       { key: "coordinates", label: "Coordinates (optional)", type: "text" },
       { key: "zoom", label: "Zoom (1 far — 20 close)", type: "number" },
     ],
