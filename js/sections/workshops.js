@@ -1,5 +1,5 @@
 // Workshops: cards with remaining seats, from data/workshops.json.
-import { t, tr, onLangChange } from "../i18n.js?v=15";
+import { t, tr, onLangChange } from "../i18n.js?v=16";
 
 export function initWorkshops(workshops) {
   const grid = document.getElementById("wsGrid");
