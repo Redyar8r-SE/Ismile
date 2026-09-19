@@ -1,12 +1,15 @@
-// Where the admin saves its changes.
+// Where the admin saves its changes. Two ways, picked automatically:
 //
-// There is one way in: the small server in netlify/functions/api.mjs. It checks
-// your email and password, then writes to GitHub with a token that never
-// reaches this browser. Nothing secret is kept here — only a signed sign-in
-// ticket that expires on its own.
+//   "server" — a server (server/admin.php on your own hosting, or the Netlify
+//              function) checks your email and password and writes the files.
+//              Nothing secret is kept in this browser.
+//   "key"    — no server answers, so the browser talks to GitHub itself with a
+//              key you paste once. Quicker to set up; the key lives in this
+//              browser, so whoever uses this computer can save to the site.
+import * as gh from "./github.js?v=14";
 
 const SESSION_KEY = "ismile-admin-session";
-const state = { api: "", token: "", email: "", repo: "", problem: "" };
+const state = { mode: "key", api: "", token: "", email: "", repo: "", problem: "" };
 
 const saved = () => {
   try { return JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); } catch { return null; }
@@ -33,19 +36,22 @@ async function findServer() {
 // Returns "" when the server is ready, or a sentence saying what is wrong.
 export async function init() {
   state.api = await findServer();
-  // 401 means the server is there and simply wants a sign-in.
+  // 401 means a server is there and simply wants a sign-in.
   // 503 means it is there but its settings are not finished.
   try {
     const response = await fetch(`${state.api}/me`, { headers: { Authorization: "Bearer none" } });
     const data = await response.json();
+    state.mode = "server";
     if (response.status >= 500) state.problem = data.error || `The server answered ${response.status}.`;
     else if (data.repo) state.repo = data.repo;
   } catch {
-    state.problem = "Saving is not set up yet, so changes cannot be written to the website from here. Everything else works: edit what you like, then use “Download files”. To switch saving on, set up the Netlify server described in the README.";
+    // No server here, so save through GitHub with a key instead.
+    state.mode = "key";
+    state.repo = `${gh.REPO.owner}/${gh.REPO.name}`;
   }
 
   const session = saved();
-  if (!state.problem && session?.token && session.exp * 1000 > Date.now()) {
+  if (state.mode === "server" && !state.problem && session?.token && session.exp * 1000 > Date.now()) {
     state.token = session.token;
     state.email = session.email;
     state.repo = session.repo || state.repo;
@@ -53,8 +59,9 @@ export async function init() {
   return state.problem;
 }
 
-export const ready = () => Boolean(state.token);
-export const who = () => state.email;
+export const mode = () => state.mode;
+export const ready = () => (state.mode === "server" ? Boolean(state.token) : Boolean(gh.getToken()));
+export const who = () => (state.mode === "server" ? state.email : "GitHub key");
 export const repo = () => state.repo;
 export const problem = () => state.problem;
 
@@ -91,6 +98,18 @@ export function signOut() {
   state.token = "";
   state.email = "";
   keep(null);
+  if (state.mode === "key") gh.setToken("");
+}
+
+// Key mode only: prove the key works and remember it in this browser.
+export async function connectKey(token) {
+  gh.setToken(token);
+  try {
+    return await gh.whoAmI();
+  } catch (error) {
+    gh.setToken("");
+    throw error;
+  }
 }
 
 // ---------- files ----------
@@ -103,20 +122,35 @@ const encode = (text) => {
 };
 
 export async function readFile(path) {
+  if (state.mode === "key") return gh.readFile(path);
   const data = await call(`file?path=${encodeURIComponent(path)}`);
   return { sha: data.sha, text: decode(data.content) };
 }
 
 export async function writeText(path, text, message) {
+  if (state.mode === "key") {
+    let sha;
+    try { sha = (await gh.readFile(path)).sha; } catch { /* a file that is not there yet */ }
+    return gh.writeFile(path, text, message, sha);
+  }
   return call("save", { method: "POST", body: JSON.stringify({ path, contentBase64: encode(text), message }) });
 }
 
 export async function writeBinary(path, bytes, message) {
+  if (state.mode === "key") return gh.writeFileBinary(path, bytes, message);
   let binary = "";
   bytes.forEach((byte) => { binary += String.fromCharCode(byte); });
   return call("save", { method: "POST", body: JSON.stringify({ path, contentBase64: btoa(binary), message }) });
 }
 
 export async function listPhotos() {
+  if (state.mode === "key") {
+    const items = await gh.listFolder("assets/uploads");
+    return items
+      .filter((item) => item.type === "file" && /\.(webp|png|jpe?g|gif)$/i.test(item.name))
+      .map((item) => item.path)
+      .sort()
+      .reverse();
+  }
   return (await call("photos")).photos || [];
 }

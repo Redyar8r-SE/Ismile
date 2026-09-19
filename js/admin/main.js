@@ -1,9 +1,9 @@
 // iSmile admin: edit every text, list and photo on the site, and save to GitHub.
-import { GROUPS, LANGS, DATA_FILES } from "./fields.js?v=13";
-import * as store from "./store.js?v=13";
-import { upload, imageFromClipboard } from "./images.js?v=13";
-import { buildList, buildProgram, buildTypes, buildSingle } from "./lists.js?v=13";
-import { loadAccounts, makeAccount, check, forget, fileText, ACCOUNTS_FILE } from "./accounts.js?v=13";
+import { GROUPS, LANGS, DATA_FILES } from "./fields.js?v=14";
+import * as store from "./store.js?v=14";
+import { upload, imageFromClipboard } from "./images.js?v=14";
+import { buildList, buildProgram, buildTypes, buildSingle } from "./lists.js?v=14";
+import { loadAccounts, makeAccount, check, forget, fileText, ACCOUNTS_FILE } from "./accounts.js?v=14";
 
 // Tells the small script in admin.html that the admin code did load, so it
 // does not offer to reload the page.
@@ -295,7 +295,9 @@ function buildSpeakers(section) {
 // One upload path for every picture on the page.
 async function uploadImage(file, apply, redraw) {
   if (!store.ready()) {
-    say("Pictures cannot be added yet: saving to the website is not set up. See “Saving changes” in the README.", "bad");
+    say(store.mode() === "key"
+      ? "Paste your GitHub key at the top of this page first, then add the picture again."
+      : "Pictures cannot be added yet: saving to the website is not set up. See “Saving changes” in the README.", "bad");
     return null;
   }
   say(`Uploading ${file.name || "picture"}…`);
@@ -557,6 +559,7 @@ function showSignedIn(name) {
   $("who").textContent = name;
   $("connected").hidden = false;
   $("signinForm").hidden = true;
+  $("connectForm").hidden = true;
   $("connState").dataset.state = "on";
   $("connText").textContent = `Signed in as ${name}`;
   if (store.repo()) $("repo").textContent = store.repo();
@@ -574,7 +577,8 @@ function showNoServer(problem) {
 
 function showSignedOut() {
   $("connected").hidden = true;
-  $("signinForm").hidden = false;
+  $("signinForm").hidden = store.mode() !== "server";
+  $("connectForm").hidden = store.mode() !== "key";
   $("connState").dataset.state = "off";
   $("connText").textContent = "Not signed in";
 }
@@ -584,6 +588,20 @@ async function signIn(email, password) {
     const name = await store.signIn(email, password);
     showSignedIn(name);
     say("Signed in. Your changes save straight to the website.", "ok");
+    return true;
+  } catch (error) {
+    showSignedOut();
+    say(error.message, "bad");
+    return false;
+  }
+}
+
+// Key mode: the browser talks to GitHub itself.
+async function connect(token) {
+  try {
+    const name = await store.connectKey(token);
+    showSignedIn(name);
+    say(`Connected as ${name}. What you save now goes straight to the website.`, "ok");
     return true;
   } catch (error) {
     showSignedOut();
@@ -645,7 +663,9 @@ async function saveToGitHub() {
   // Nothing can be written to the website until a server is set up. Your admin
   // password is a different thing: it guards this page, it cannot save.
   if (!store.ready()) {
-    return say("Saving to the website is not set up yet, so nothing was sent. Press “Download files” to get your changes as files, then put them in the data folder on github.com.", "bad");
+    return say(store.mode() === "key"
+      ? "Paste your GitHub key at the top of this page first, then press Save again."
+      : "Saving to the website is not set up yet, so nothing was sent. Press “Download files” to get your changes as files, then put them in the data folder on github.com.", "bad");
   }
   if (!(await askBeforeSaving())) return say("Nothing was saved. Your changes are still here.", "info");
 
@@ -766,6 +786,12 @@ async function start() {
   uncover();                                  // everything is ready to use
 
   showSignedOut();
+  $("connectBtn").addEventListener("click", async () => {
+    const token = $("token").value.trim();
+    if (!token) return say("Paste your GitHub key first.", "bad");
+    if (await connect(token)) $("token").value = "";
+  });
+  $("token").addEventListener("keydown", (event) => { if (event.key === "Enter") $("connectBtn").click(); });
   $("signinBtn").addEventListener("click", async () => {
     const email = $("email").value.trim();
     const password = $("password").value;

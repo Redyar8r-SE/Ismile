@@ -14,9 +14,9 @@
 <link rel="stylesheet" href="css/base/tokens.css">
 <link rel="stylesheet" href="css/base/base.css">
 <link rel="stylesheet" href="css/components/buttons.css">
-<link rel="stylesheet" href="css/admin.css?v=13">
+<link rel="stylesheet" href="css/admin.css?v=14">
 
-<script type="module" src="js/admin/main.js?v=13"></script>
+<script type="module" src="js/admin/main.js?v=14"></script>
 </head>
 <body class="admin checking">
 
@@ -101,7 +101,7 @@ setTimeout(function () {
     <p class="msg is-info" id="msg" hidden></p>
 
     <section class="card connect" id="connectCard">
-      <div id="signinForm">
+      <div id="signinForm" hidden>
         <h2>Sign in</h2>
         <p>Use the email and password for this website. The password is checked on the server, and nothing secret is kept in this browser.</p>
         <div class="row">
@@ -109,6 +109,21 @@ setTimeout(function () {
           <input id="password" type="password" placeholder="Password" autocomplete="current-password">
           <button type="button" class="btn btn-primary" id="signinBtn">Sign in</button>
         </div>
+      </div>
+      <div id="connectForm" hidden>
+        <h2>Connect to GitHub</h2>
+        <p>Paste a GitHub key once. It stays in this browser and lets this page save changes and photos straight to the website.</p>
+        <ol>
+          <li>Open <code>github.com/settings/personal-access-tokens/new</code></li>
+          <li>Repository access &rarr; <b>Only select repositories</b> &rarr; choose <b>Ismile</b></li>
+          <li>Permissions &rarr; Repository permissions &rarr; <b>Contents</b> &rarr; <b>Read and write</b></li>
+          <li>Generate the token and copy it (it starts with <code>github_pat_</code>)</li>
+        </ol>
+        <div class="row">
+          <input id="token" type="password" placeholder="Paste your GitHub key here" autocomplete="off" spellcheck="false">
+          <button type="button" class="btn btn-primary" id="connectBtn">Connect</button>
+        </div>
+        <p class="ghint">Anyone who uses this computer could save to the site while the key is here. Press <b>Sign out</b> to remove it.</p>
       </div>
       <div class="who" id="connected" hidden>
         <span>Signed in as <b id="who"></b> — changes save straight to the website.</span>

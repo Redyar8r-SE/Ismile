@@ -151,6 +151,19 @@ Language files are **merged**, never replaced, exactly as the admin's own save
 does. A download carries only the words the admin knows about, so replacing
 would delete keys that only the code uses, such as `am`, `pm` and `a_theme`.
 
+### Saving with a GitHub key (until the hosting is ready)
+
+When no server answers, the admin offers a **Connect to GitHub** box instead.
+Paste a fine-grained token once (Repository access: only `Ismile`, Repository
+permissions: Contents read and write) and Save writes to GitHub directly. The
+site updates a minute or two later, once GitHub Pages rebuilds.
+
+Be clear about the trade: the key lives in this browser, so whoever uses this
+computer can save to the site, and the password screen in front of it can be
+clicked past by someone who knows how. It is a stopgap. Once the site is on its
+own hosting, `server/admin.php` replaces it and the key is no longer needed —
+press **Sign out** in the admin to remove it.
+
 ### Saving changes
 
 Saving needs an **email and password**. A Netlify function
