@@ -41,7 +41,7 @@ export async function init() {
     if (response.status >= 500) state.problem = data.error || `The server answered ${response.status}.`;
     else if (data.repo) state.repo = data.repo;
   } catch {
-    state.problem = "This address only hands out files, so signing in cannot work here. Open the admin at your Netlify address instead (for example ismile-2026.netlify.app/admin.html), or write that address in data/admin-server.json.";
+    state.problem = "Saving is not set up yet, so changes cannot be written to the website from here. Everything else works: edit what you like, then use “Download files”. To switch saving on, set up the Netlify server described in the README.";
   }
 
   const session = saved();
