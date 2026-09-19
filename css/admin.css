@@ -153,7 +153,9 @@ input.plain[type="color"]{max-width:64px;height:40px;padding:3px}
 }
 
 /* Nothing of the admin shows until we know whether to ask for a password. */
-.bootmsg{display:none;position:fixed;inset:0;place-items:center;margin:0;font-size:15px;color:var(--muted);background:var(--hero-bg);z-index:60}
+.bootmsg{display:none;position:fixed;inset:0;place-items:center;background:var(--hero-bg);z-index:60}
+.bootbox{display:grid;gap:14px;justify-items:center;text-align:center;padding:0 24px;max-width:420px}
+.bootbox p{margin:0;font-size:15px;line-height:1.5;color:var(--muted)}
 .checking .bootmsg{display:grid}
 .checking .abar,.checking .ashell{display:none}
 

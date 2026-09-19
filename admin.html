@@ -14,15 +14,39 @@
 <link rel="stylesheet" href="css/base/tokens.css">
 <link rel="stylesheet" href="css/base/base.css">
 <link rel="stylesheet" href="css/components/buttons.css">
-<link rel="stylesheet" href="css/admin.css?v=8">
+<link rel="stylesheet" href="css/admin.css?v=9">
 
-<script type="module" src="js/admin/main.js?v=8"></script>
+<script type="module" src="js/admin/main.js?v=9"></script>
 </head>
 <body class="admin checking">
 
 <!-- Shown while the page works out whether a password is needed. Hiding the
      admin until then stops it flashing on screen before the login appears. -->
-<p class="bootmsg" id="boot">Loading the admin…</p>
+<div class="bootmsg" id="boot">
+  <div class="bootbox">
+    <p id="bootText">Loading the admin…</p>
+    <button type="button" class="btn btn-primary btn-sm" id="bootReload" hidden>Reload the page</button>
+  </div>
+</div>
+
+<script>
+// Deliberately an ordinary script, not a module: it still runs when the admin
+// code below fails to load (an old copy kept by the browser, no connection, a
+// file that has moved). Without it the page underneath would show through
+// empty and look broken. main.js sets adminLoaded the moment it starts.
+setTimeout(function () {
+  if (window.adminLoaded) return;
+  var text = document.getElementById("bootText");
+  var again = document.getElementById("bootReload");
+  if (!text || !again) return;
+  text.textContent = "The admin could not load. This is usually an old copy kept by the browser.";
+  again.hidden = false;
+  again.addEventListener("click", function () {
+    // A new address, so the browser has to fetch the page afresh.
+    location.replace(location.pathname + "?r=" + Date.now());
+  });
+}, 6000);
+</script>
 
 <!-- Login screen: shown when data/admin-accounts.json has at least one account -->
 <div class="lockwrap" id="lock" hidden>
