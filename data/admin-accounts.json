@@ -1,3 +1,9 @@
 {
-  "accounts": []
+  "accounts": [
+    {
+      "email": "redyar8r@gmail.com",
+      "salt": "N6ljWa3SE+9GOTNjNh1f/w==",
+      "hash": "P2PT1AOoGkNkGw3onWid3rNvtzLgfJubgU8EZcRAKCM="
+    }
+  ]
 }
