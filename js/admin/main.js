@@ -3,7 +3,6 @@ import { GROUPS, LANGS, DATA_FILES } from "./fields.js";
 import * as store from "./store.js";
 import { upload, imageFromClipboard } from "./images.js";
 import { buildList, buildProgram, buildTypes, buildSingle } from "./lists.js";
-import { makeSettings } from "./password.js";
 import { loadAccounts, makeAccount, check, remember, isRemembered, forget, fileText, ACCOUNTS_FILE } from "./accounts.js";
 
 const $ = (id) => document.getElementById(id);
@@ -313,59 +312,6 @@ async function uploadImage(file, apply, redraw) {
   }
 }
 
-// ---------- password ----------
-// Makes the ADMIN_PASSWORD_HASH line for the server settings. The password
-// itself never leaves this page.
-function buildPasswordTool(body) {
-  const box = document.createElement("div");
-  box.className = "pw-grid";
-  box.innerHTML = `
-    <label>Email for signing in<input type="email" id="srvEmail" autocomplete="username"></label>
-    <label>Password (at least 8 characters)<input type="password" id="srvPass" autocomplete="new-password"></label>`;
-
-  const actions = document.createElement("div");
-  actions.className = "pw-actions";
-  const make = document.createElement("button");
-  make.type = "button";
-  make.className = "btn btn-primary btn-sm";
-  make.textContent = "Make the two settings";
-  actions.append(make);
-
-  const out = document.createElement("pre");
-  out.className = "pw-out";
-  out.hidden = true;
-
-  const copy = document.createElement("button");
-  copy.type = "button";
-  copy.className = "btn btn-outline btn-sm";
-  copy.textContent = "Copy";
-  copy.hidden = true;
-  actions.append(copy);
-
-  make.addEventListener("click", async () => {
-    const email = box.querySelector("#srvEmail").value.trim();
-    const password = box.querySelector("#srvPass").value;
-    if (!email.includes("@")) return say("Write a real email address.", "bad");
-    if (password.length < 8) return say("Use a password of at least 8 characters.", "bad");
-    const settings = await makeSettings(email, password);
-    out.textContent = `ADMIN_EMAIL = ${settings.email}
-ADMIN_PASSWORD_HASH = ${settings.line}`;
-    out.hidden = false;
-    copy.hidden = false;
-    box.querySelector("#srvPass").value = "";
-    say("Put these two lines in the server settings (Netlify → Site settings → Environment variables).", "ok");
-  });
-  copy.addEventListener("click", async () => {
-    try { await navigator.clipboard.writeText(out.textContent); say("Copied.", "ok"); }
-    catch { say("Select the text and copy it.", "info"); }
-  });
-
-  const note = document.createElement("p");
-  note.className = "ghint";
-  note.textContent = "Use this when you set up the server, or whenever you want to change the password: paste the two lines into the server settings, then sign in with the new password.";
-  body.append(note, box, actions, out);
-}
-
 // Who may open the admin page. The list is saved in data/admin-accounts.json.
 function buildAccounts(body) {
   const head = document.createElement("h3");
@@ -503,19 +449,6 @@ function buildAccounts(body) {
   state.renderers.security = refresh;
 }
 
-function buildSecurity(body) {
-  // The helper is always here: you need it to set the server up the first time,
-  // and later whenever you want to change the email or the password.
-  buildAccounts(body);
-
-  const divider = document.createElement("h3");
-  divider.className = "flabel";
-  divider.style.marginTop = "26px";
-  divider.textContent = "For the Netlify server (only if you set one up)";
-  body.append(divider);
-  buildPasswordTool(body);
-}
-
 // ---------- building the page ----------
 const listContext = {
   markDirty,
@@ -594,7 +527,7 @@ function buildForm() {
         body.append(hint);
       }
 
-      if (block.type === "security") buildSecurity(body);
+      if (block.type === "security") buildAccounts(body);
       else if (block.type === "speakers") buildSpeakers(body);
       else if (block.type === "program") buildProgram(body, listContext);
       else if (block.type === "types") buildTypes(body, listContext);

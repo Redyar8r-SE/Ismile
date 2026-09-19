@@ -104,10 +104,15 @@ settings are not finished, the admin says so at the bottom of the page.
 
 ### Setting up the email and password (free)
 
-1. In the admin, open **16. Password** and press **Make the two settings**.
-   It prints `ADMIN_EMAIL` and `ADMIN_PASSWORD_HASH`; the password itself is
-   never stored anywhere. This step works before the server exists — the admin
-   will say it cannot save, which is expected at this point.
+1. Make the `ADMIN_PASSWORD_HASH` value. In a terminal in this folder, with
+   your own password in place of `your-password`:
+
+   ```
+   node -e "const c=require('crypto'),s=c.randomBytes(16);console.log('pbkdf2$150000$'+s.toString('base64')+'$'+c.pbkdf2Sync('your-password',s,150000,32,'sha256').toString('base64'))"
+   ```
+
+   `ADMIN_EMAIL` is simply the address you want to sign in with. The password
+   itself is never stored, only the hash this prints.
 2. Create a free Netlify site from this repository
    (Add new site → Import an existing project → GitHub → Ismile).
 3. Netlify → Site configuration → Environment variables, add:
