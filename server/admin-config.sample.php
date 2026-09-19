@@ -10,6 +10,9 @@ return [
 
     // Everyone who may sign in to the admin. Add or remove people here.
     // The password itself is never written down, only this hash of it.
+    // Keep the hash in SINGLE quotes. It contains $ signs, and PHP reads those
+    // as variables inside double quotes, which quietly breaks the password.
+    //
     // Make a hash with node, putting your own password in place of the one
     // shown (the README has the same line):
     //

@@ -24,7 +24,18 @@ $configFile = __DIR__ . '/admin-config.php';
 if (!is_file($configFile)) {
     out(503, ['error' => 'The server settings are not finished: admin-config.php is missing.']);
 }
+// Loaded with the output held back. A settings file with a stray warning or a
+// blank line before "<?php" would otherwise print before the status code is
+// set, and a refused sign-in would go out as 200 OK.
+ob_start();
 $config = require $configFile;
+$noise = (string) ob_get_clean();
+if ($noise !== '') {
+    out(503, ['error' => 'admin-config.php printed something before the settings were read. Check for a space or a blank line before <?php, and that the hash is in single quotes.']);
+}
+if (!is_array($config)) {
+    out(503, ['error' => 'admin-config.php did not return the settings array.']);
+}
 
 foreach (['secret', 'accounts'] as $needed) {
     if (empty($config[$needed])) {
