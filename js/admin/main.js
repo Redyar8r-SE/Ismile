@@ -1,9 +1,9 @@
 // iSmile admin: edit every text, list and photo on the site, and save to GitHub.
-import { GROUPS, LANGS, DATA_FILES } from "./fields.js?v=12";
-import * as store from "./store.js?v=12";
-import { upload, imageFromClipboard } from "./images.js?v=12";
-import { buildList, buildProgram, buildTypes, buildSingle } from "./lists.js?v=12";
-import { loadAccounts, makeAccount, check, forget, fileText, ACCOUNTS_FILE } from "./accounts.js?v=12";
+import { GROUPS, LANGS, DATA_FILES } from "./fields.js?v=13";
+import * as store from "./store.js?v=13";
+import { upload, imageFromClipboard } from "./images.js?v=13";
+import { buildList, buildProgram, buildTypes, buildSingle } from "./lists.js?v=13";
+import { loadAccounts, makeAccount, check, forget, fileText, ACCOUNTS_FILE } from "./accounts.js?v=13";
 
 // Tells the small script in admin.html that the admin code did load, so it
 // does not offer to reload the page.
@@ -295,7 +295,7 @@ function buildSpeakers(section) {
 // One upload path for every picture on the page.
 async function uploadImage(file, apply, redraw) {
   if (!store.ready()) {
-    say("Sign in first — pictures are saved straight to the website.", "bad");
+    say("Pictures cannot be added yet: saving to the website is not set up. See “Saving changes” in the README.", "bad");
     return null;
   }
   say(`Uploading ${file.name || "picture"}…`);
@@ -642,7 +642,11 @@ function askBeforeSaving() {
 
 async function saveToGitHub() {
   if (!state.dirty) return;
-  if (!store.ready()) return say("Sign in first, or use “Download files” instead.", "bad");
+  // Nothing can be written to the website until a server is set up. Your admin
+  // password is a different thing: it guards this page, it cannot save.
+  if (!store.ready()) {
+    return say("Saving to the website is not set up yet, so nothing was sent. Press “Download files” to get your changes as files, then put them in the data folder on github.com.", "bad");
+  }
   if (!(await askBeforeSaving())) return say("Nothing was saved. Your changes are still here.", "info");
 
   $("saveBtn").disabled = true;
