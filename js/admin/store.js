@@ -26,7 +26,8 @@ async function findServer() {
     const response = await fetch(`data/admin-server.json?t=${Date.now()}`);
     if (response.ok) base = (await response.json()).api || "";
   } catch { /* the file is optional */ }
-  return (base || `${location.origin}/api`).replace(/\/+$/, "");
+  if (!base) base = new URL("api", location.href.replace(/[^/]*$/, "")).href;
+  return base.replace(/\/+$/, "");
 }
 
 // Returns "" when the server is ready, or a sentence saying what is wrong.
@@ -40,7 +41,7 @@ export async function init() {
     if (response.status >= 500) state.problem = data.error || `The server answered ${response.status}.`;
     else if (data.repo) state.repo = data.repo;
   } catch {
-    state.problem = "There is no admin server at this address. Open the admin at your Netlify address instead (for example ismile-2026.netlify.app/admin.html), or write that address in data/admin-server.json.";
+    state.problem = "This address only hands out files, so signing in cannot work here. Open the admin at your Netlify address instead (for example ismile-2026.netlify.app/admin.html), or write that address in data/admin-server.json.";
   }
 
   const session = saved();

@@ -484,6 +484,16 @@ function showSignedIn(name) {
   if (store.repo()) $("repo").textContent = store.repo();
 }
 
+// With no server there is nothing to sign in to. Say so in the card itself
+// rather than letting the sign-in fail with a puzzling error such as 405.
+function showNoServer(problem) {
+  const form = $("signinForm");
+  form.querySelector("h2").textContent = "Signing in is not possible on this address";
+  form.querySelector("p").textContent = problem;
+  form.querySelector(".row").hidden = true;
+  $("connText").textContent = "No server here";
+}
+
 function showSignedOut() {
   $("connected").hidden = true;
   $("signinForm").hidden = false;
@@ -661,7 +671,10 @@ async function start() {
   if (store.ready()) showSignedIn(store.who());
   // Said last so it stays on screen: without the server nothing can be saved,
   // but every text is still editable and "Download files" still works.
-  if (problem) say(`${problem} You can still edit and use “Download files”, but nothing can be saved to the website.`, "bad");
+  if (problem) {
+    showNoServer(problem);
+    say(`${problem} You can still edit and use “Download files”, but nothing can be saved to the website from here.`, "bad");
+  }
 }
 
 start();
