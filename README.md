@@ -107,9 +107,23 @@ keeps ordinary visitors out of the admin screen; it is not a safe for secrets,
 and the file is readable by anyone since the repository is public. Use a
 password you do not use anywhere else.
 
+### After changing anything in css/ or js/
+
+```
+node tools/bump-version.mjs        # raise the number by one
+```
+
+Both pages load their stylesheets and scripts with `?v=N`, and the modules
+import each other the same way. Browsers hold on to CSS and JavaScript, and
+GitHub Pages tells them to, so without a new number a visitor can get new
+markup with an old stylesheet — which looks broken rather than merely out of
+date — or a script importing a file that has since been deleted, which shows
+nothing at all. A new number is a new address, which the browser cannot answer
+from what it already has. Commit the stamped files together.
+
 ### When the admin code changes
 
-`admin.html` loads its code as `main.js?v=12`, and the modules import each other
+`admin.html` loads its code as `main.js?v=15`, and the modules import each other
 the same way. Browsers cache these files hard, and a browser holding an old
 `main.js` that imports a file since deleted loads nothing at all: the admin
 appears as an empty page. **After changing anything in `js/admin/`, raise the
