@@ -14,11 +14,15 @@
 <link rel="stylesheet" href="css/base/tokens.css">
 <link rel="stylesheet" href="css/base/base.css">
 <link rel="stylesheet" href="css/components/buttons.css">
-<link rel="stylesheet" href="css/admin.css">
+<link rel="stylesheet" href="css/admin.css?v=8">
 
-<script type="module" src="js/admin/main.js"></script>
+<script type="module" src="js/admin/main.js?v=8"></script>
 </head>
-<body class="admin">
+<body class="admin checking">
+
+<!-- Shown while the page works out whether a password is needed. Hiding the
+     admin until then stops it flashing on screen before the login appears. -->
+<p class="bootmsg" id="boot">Loading the admin…</p>
 
 <!-- Login screen: shown when data/admin-accounts.json has at least one account -->
 <div class="lockwrap" id="lock" hidden>

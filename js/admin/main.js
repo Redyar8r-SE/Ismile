@@ -1,9 +1,9 @@
 // iSmile admin: edit every text, list and photo on the site, and save to GitHub.
-import { GROUPS, LANGS, DATA_FILES } from "./fields.js";
-import * as store from "./store.js";
-import { upload, imageFromClipboard } from "./images.js";
-import { buildList, buildProgram, buildTypes, buildSingle } from "./lists.js";
-import { loadAccounts, makeAccount, check, forget, fileText, ACCOUNTS_FILE } from "./accounts.js";
+import { GROUPS, LANGS, DATA_FILES } from "./fields.js?v=8";
+import * as store from "./store.js?v=8";
+import { upload, imageFromClipboard } from "./images.js?v=8";
+import { buildList, buildProgram, buildTypes, buildSingle } from "./lists.js?v=8";
+import { loadAccounts, makeAccount, check, forget, fileText, ACCOUNTS_FILE } from "./accounts.js?v=8";
 
 const $ = (id) => document.getElementById(id);
 const langPath = (lang) => `data/i18n/${lang}.json`;
@@ -727,6 +727,10 @@ async function askForPassword() {
 async function start() {
   forget();                                   // clear the old "remembered" mark
   state.accounts = await loadAccounts();
+  // Decide first, reveal second: the admin must never flash up before the
+  // login screen covers it.
+  if (state.accounts.length) document.body.classList.add("lock-on");
+  document.body.classList.remove("checking");
   if (state.accounts.length) await askForPassword();
 
   // Says what is wrong when the server is not reachable or not set up yet.

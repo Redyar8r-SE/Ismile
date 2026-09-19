@@ -152,6 +152,11 @@ input.plain[type="color"]{max-width:64px;height:40px;padding:3px}
   .abar-actions{width:100%;margin-inline-start:0;justify-content:flex-end}
 }
 
+/* Nothing of the admin shows until we know whether to ask for a password. */
+.bootmsg{display:none;position:fixed;inset:0;place-items:center;margin:0;font-size:15px;color:var(--muted);background:var(--hero-bg);z-index:60}
+.checking .bootmsg{display:grid}
+.checking .abar,.checking .ashell{display:none}
+
 /* ---------- Login screen ---------- */
 .lockwrap{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:20px;background:var(--hero-bg)}
 .lockcard{display:grid;gap:12px;justify-items:center;width:min(380px,100%);padding:30px 26px;border-radius:18px;background:var(--bg);border:1px solid var(--line);box-shadow:0 30px 70px -40px rgba(0,0,0,.8);text-align:center}

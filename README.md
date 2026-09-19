@@ -95,6 +95,15 @@ keeps ordinary visitors out of the admin screen; it is not a safe for secrets,
 and the file is readable by anyone since the repository is public. Use a
 password you do not use anywhere else.
 
+### When the admin code changes
+
+`admin.html` loads its code as `main.js?v=8`, and the modules import each other
+the same way. Browsers cache these files hard, and a browser holding an old
+`main.js` that imports a file since deleted loads nothing at all: the admin
+appears as an empty page. **After changing anything in `js/admin/`, raise the
+number in every `?v=` in `admin.html` and `js/admin/*.js`** so every visitor
+gets the new code instead of a broken mixture of old and new.
+
 ### Saving changes
 
 Saving needs an **email and password**. A Netlify function
