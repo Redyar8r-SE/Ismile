@@ -9,8 +9,7 @@
 // visitors out of the admin screen. It is not a safe for secrets.
 
 const FILE = "data/admin-accounts.json";
-const UNLOCK_KEY = "ismile-admin-unlocked";
-const DAYS = 7;
+const UNLOCK_KEY = "ismile-admin-unlocked";   // only to clear the old one
 const ITERATIONS = 150000;
 
 const toB64 = (bytes) => btoa(String.fromCharCode(...new Uint8Array(bytes)));
@@ -55,25 +54,9 @@ export async function check(accounts, email, password) {
 // What the file should look like on disk.
 export const fileText = (accounts) => `${JSON.stringify({ accounts }, null, 2)}\n`;
 
-// "Stay signed in on this browser" for a week. The mark is tied to the list of
-// accounts, so changing or removing a password asks everyone again.
-const mark = (accounts) => accounts.map((one) => one.hash.slice(0, 8)).sort().join("");
-
-export function remember(accounts) {
-  try {
-    localStorage.setItem(UNLOCK_KEY, JSON.stringify({ until: Date.now() + DAYS * 864e5, mark: mark(accounts) }));
-  } catch { /* private browsing */ }
-}
-
-export function isRemembered(accounts) {
-  try {
-    const saved = JSON.parse(localStorage.getItem(UNLOCK_KEY) || "null");
-    return Boolean(saved && saved.until > Date.now() && saved.mark === mark(accounts));
-  } catch {
-    return false;
-  }
-}
-
+// Nothing is remembered between visits on purpose: every time the admin page
+// is opened or refreshed it asks again. An old key from when it did remember
+// is cleared away here.
 export function forget() {
   try { localStorage.removeItem(UNLOCK_KEY); } catch { /* private browsing */ }
 }

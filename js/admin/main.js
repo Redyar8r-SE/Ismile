@@ -3,7 +3,7 @@ import { GROUPS, LANGS, DATA_FILES } from "./fields.js";
 import * as store from "./store.js";
 import { upload, imageFromClipboard } from "./images.js";
 import { buildList, buildProgram, buildTypes, buildSingle } from "./lists.js";
-import { loadAccounts, makeAccount, check, remember, isRemembered, forget, fileText, ACCOUNTS_FILE } from "./accounts.js";
+import { loadAccounts, makeAccount, check, forget, fileText, ACCOUNTS_FILE } from "./accounts.js";
 
 const $ = (id) => document.getElementById(id);
 const langPath = (lang) => `data/i18n/${lang}.json`;
@@ -347,7 +347,7 @@ function buildAccounts(body) {
   const out = document.createElement("button");
   out.type = "button";
   out.className = "btn btn-outline btn-sm";
-  out.textContent = "Sign out of this browser";
+  out.textContent = "Lock the admin now";
   actions.append(add, save, copy, out);
 
   const text = document.createElement("pre");
@@ -429,7 +429,6 @@ function buildAccounts(body) {
     try {
       await store.writeText(ACCOUNTS_FILE, fileText(state.accounts), "Admin: update who can open the admin");
       pending = false;
-      if (state.accounts.length) remember(state.accounts); else forget();
       refresh();
       say("Saved. The admin will ask for one of these passwords from now on.", "ok");
     } catch (error) {
@@ -442,7 +441,7 @@ function buildAccounts(body) {
     catch { say("Select the text below and copy it.", "info"); }
   });
 
-  out.addEventListener("click", () => { forget(); location.reload(); });
+  out.addEventListener("click", () => location.reload());
 
   body.append(head, warn, list, form, actions, text, hint);
   refresh();
@@ -718,7 +717,6 @@ async function askForPassword() {
         $("lockPass").select();
         return;
       }
-      remember(state.accounts);
       lockBox.hidden = true;
       document.body.classList.remove("lock-on");
       resolve();
@@ -727,8 +725,9 @@ async function askForPassword() {
 }
 
 async function start() {
+  forget();                                   // clear the old "remembered" mark
   state.accounts = await loadAccounts();
-  if (state.accounts.length && !isRemembered(state.accounts)) await askForPassword();
+  if (state.accounts.length) await askForPassword();
 
   // Says what is wrong when the server is not reachable or not set up yet.
   const problem = await store.init();

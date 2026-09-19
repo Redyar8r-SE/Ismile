@@ -79,6 +79,10 @@ in `data/admin-server.json` (step 4 below).
 the list is empty the admin opens without asking, so you cannot lock yourself
 out. Add somebody and the page asks for an email and password first.
 
+The password is asked for every time the admin page is opened or refreshed —
+nothing is remembered between visits, so walking away from the computer leaves
+the admin locked.
+
 Manage the list in the admin under **16. Password**: add a person, change a
 password by adding the same email again, or press **Remove**. Then either press
 **Save to the website** (needs saving to be working) or **Copy the file** and
