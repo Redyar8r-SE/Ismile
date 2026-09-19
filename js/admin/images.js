@@ -1,5 +1,5 @@
 // Photos: shrink what the visitor pastes, then put it in assets/uploads/ on GitHub.
-import { writeBinary } from "./store.js?v=10";
+import { writeBinary } from "./store.js?v=11";
 
 export const UPLOAD_DIR = "assets/uploads";
 const MAX_SIDE = 1600;      // big enough for a full-width photo, small enough to load fast
