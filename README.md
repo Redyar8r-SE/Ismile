@@ -73,6 +73,26 @@ opens the GitHub Pages copy of the page, which has no server behind it — it wi
 say so and refuse to save. To make that link work too, put the Netlify address
 in `data/admin-server.json` (step 4 below).
 
+### Who can open the admin
+
+`data/admin-accounts.json` lists the people who may open the admin page. While
+the list is empty the admin opens without asking, so you cannot lock yourself
+out. Add somebody and the page asks for an email and password first.
+
+Manage the list in the admin under **16. Password**: add a person, change a
+password by adding the same email again, or press **Remove**. Then either press
+**Save to the website** (needs saving to be working) or **Copy the file** and
+paste it into `data/admin-accounts.json` on github.com yourself.
+
+Passwords are never stored — only a salted PBKDF2 hash, which cannot be turned
+back into the password. Be clear about what this is, though: the check happens
+in the browser, so somebody who knows how a web page works can get past it. It
+keeps ordinary visitors out of the admin screen; it is not a safe for secrets,
+and the file is readable by anyone since the repository is public. Use a
+password you do not use anywhere else.
+
+### Saving changes
+
 Saving needs an **email and password**. A Netlify function
 (`netlify/functions/api.mjs`) checks the sign-in against settings kept on the
 server, then writes to GitHub with a token the browser never sees. The function

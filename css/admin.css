@@ -152,6 +152,28 @@ input.plain[type="color"]{max-width:64px;height:40px;padding:3px}
   .abar-actions{width:100%;margin-inline-start:0;justify-content:flex-end}
 }
 
+/* ---------- Login screen ---------- */
+.lockwrap{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:20px;background:var(--hero-bg)}
+.lockcard{display:grid;gap:12px;justify-items:center;width:min(380px,100%);padding:30px 26px;border-radius:18px;background:var(--bg);border:1px solid var(--line);box-shadow:0 30px 70px -40px rgba(0,0,0,.8);text-align:center}
+.lockcard svg{color:var(--teal)}
+.lockcard h1{font-size:20px}
+.lockcard > p{font-size:14.5px;color:var(--muted);margin-bottom:4px}
+.lockfield{display:grid;gap:6px;width:100%;text-align:start}
+.lockfield span{font-size:13px;font-weight:600;color:var(--muted)}
+.lockfield input{width:100%;height:44px;padding:0 13px;font:inherit;font-size:15px;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.lockfield input:focus{outline:none;border-color:var(--teal);background:var(--bg);box-shadow:0 0 0 3px color-mix(in srgb,var(--teal) 18%,transparent)}
+.lockcard .btn{width:100%;margin-top:4px}
+.lockmsg{width:100%;margin:0;padding:9px 12px;border-radius:9px;font-size:13.5px;background:color-mix(in srgb,var(--danger) 14%,transparent);color:var(--danger);text-align:start}
+.lockback{font-size:13px;color:var(--muted);text-decoration:none}
+.lockback:hover{color:var(--teal-ink)}
+.lock-on .abar,.lock-on .ashell{display:none}
+
+/* People who may open the admin */
+.acct{display:flex;align-items:center;gap:10px;justify-content:space-between;padding:10px 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.acct + .acct{margin-top:8px}
+.acct b{font-weight:600}
+.acct .btn{flex:none}
+
 /* Security step */
 .pw-grid{display:grid;gap:12px;max-width:420px}
 .pw-grid label{display:grid;gap:6px;font-size:13.5px;font-weight:600;color:var(--muted)}

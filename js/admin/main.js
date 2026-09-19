@@ -4,6 +4,7 @@ import * as store from "./store.js";
 import { upload, imageFromClipboard } from "./images.js";
 import { buildList, buildProgram, buildTypes, buildSingle } from "./lists.js";
 import { makeSettings } from "./password.js";
+import { loadAccounts, makeAccount, check, remember, isRemembered, forget, fileText, ACCOUNTS_FILE } from "./accounts.js";
 
 const $ = (id) => document.getElementById(id);
 const langPath = (lang) => `data/i18n/${lang}.json`;
@@ -16,6 +17,7 @@ const state = {
   dirty: false,
   pasteTarget: null, // { apply(path) } waiting for a pasted picture
   renderers: {},     // group id -> redraw function
+  accounts: [],      // who may open the admin page
 };
 
 // ---------- loading ----------
@@ -364,13 +366,153 @@ ADMIN_PASSWORD_HASH = ${settings.line}`;
   body.append(note, box, actions, out);
 }
 
+// Who may open the admin page. The list is saved in data/admin-accounts.json.
+function buildAccounts(body) {
+  const head = document.createElement("h3");
+  head.className = "flabel";
+  head.textContent = "People who can open the admin";
+
+  const list = document.createElement("div");
+
+  const form = document.createElement("div");
+  form.className = "pw-grid";
+  form.style.marginTop = "16px";
+  form.innerHTML = `
+    <label>Email<input type="email" id="acEmail" autocomplete="username"></label>
+    <label>Password (at least 8 characters)<input type="password" id="acOne" autocomplete="new-password"></label>
+    <label>Repeat the password<input type="password" id="acTwo" autocomplete="new-password"></label>`;
+
+  const actions = document.createElement("div");
+  actions.className = "pw-actions";
+  const add = document.createElement("button");
+  add.type = "button";
+  add.className = "btn btn-primary btn-sm";
+  add.textContent = "Add this person";
+  const save = document.createElement("button");
+  save.type = "button";
+  save.className = "btn btn-primary btn-sm";
+  save.textContent = "Save to the website";
+  save.hidden = true;
+  const copy = document.createElement("button");
+  copy.type = "button";
+  copy.className = "btn btn-outline btn-sm";
+  copy.textContent = "Copy the file";
+  copy.hidden = true;
+  const out = document.createElement("button");
+  out.type = "button";
+  out.className = "btn btn-outline btn-sm";
+  out.textContent = "Sign out of this browser";
+  actions.append(add, save, copy, out);
+
+  const text = document.createElement("pre");
+  text.className = "pw-out";
+  text.hidden = true;
+
+  const hint = document.createElement("p");
+  hint.className = "ghint";
+  hint.style.marginTop = "12px";
+
+  const warn = document.createElement("p");
+  warn.className = "ghint";
+  warn.textContent = "This asks for a password before the admin opens. It keeps ordinary visitors out — it is not a safe for secrets, because the check happens in the browser.";
+
+  // Nothing is written until you save or paste the file, so show what changed.
+  let pending = false;
+
+  function refresh() {
+    list.replaceChildren();
+    if (!state.accounts.length) {
+      const none = document.createElement("p");
+      none.className = "ghint";
+      none.textContent = "Nobody is set yet, so the admin opens without asking. Add yourself below.";
+      list.append(none);
+    }
+    state.accounts.forEach((account, index) => {
+      const row = document.createElement("div");
+      row.className = "acct";
+      const who = document.createElement("span");
+      who.innerHTML = `<b></b>`;
+      who.querySelector("b").textContent = account.email;
+      const drop = document.createElement("button");
+      drop.type = "button";
+      drop.className = "btn btn-outline btn-sm";
+      drop.textContent = "Remove";
+      drop.addEventListener("click", () => {
+        if (!confirm(`Remove ${account.email}?`)) return;
+        state.accounts.splice(index, 1);
+        mark();
+      });
+      row.append(who, drop);
+      list.append(row);
+    });
+    save.hidden = !(pending && store.ready());
+    copy.hidden = !pending;
+    text.hidden = !pending;
+    text.textContent = pending ? fileText(state.accounts) : "";
+    hint.hidden = !pending;
+    hint.textContent = store.ready()
+      ? "Press “Save to the website” to keep this list."
+      : `Not saved yet. Press “Copy the file”, then open ${ACCOUNTS_FILE} on github.com, press the pencil, replace everything with what you copied and commit.`;
+  }
+
+  function mark() {
+    pending = true;
+    refresh();
+  }
+
+  add.addEventListener("click", async () => {
+    const email = form.querySelector("#acEmail").value.trim();
+    const one = form.querySelector("#acOne").value;
+    const two = form.querySelector("#acTwo").value;
+    if (!email.includes("@")) return say("Write a real email address.", "bad");
+    if (one.length < 8) return say("Use a password of at least 8 characters.", "bad");
+    if (one !== two) return say("The two passwords are not the same.", "bad");
+    const account = await makeAccount(email, one);
+    const at = state.accounts.findIndex((existing) => existing.email === account.email);
+    if (at >= 0) state.accounts[at] = account;      // same email: change the password
+    else state.accounts.push(account);
+    form.querySelector("#acOne").value = "";
+    form.querySelector("#acTwo").value = "";
+    form.querySelector("#acEmail").value = "";
+    mark();
+    say(at >= 0 ? `Password changed for ${account.email}.` : `${account.email} added.`, "ok");
+  });
+
+  save.addEventListener("click", async () => {
+    say("Saving the list…");
+    try {
+      await store.writeText(ACCOUNTS_FILE, fileText(state.accounts), "Admin: update who can open the admin");
+      pending = false;
+      if (state.accounts.length) remember(state.accounts); else forget();
+      refresh();
+      say("Saved. The admin will ask for one of these passwords from now on.", "ok");
+    } catch (error) {
+      say(`Not saved: ${error.message}`, "bad");
+    }
+  });
+
+  copy.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(text.textContent); say(`Copied. Paste it into ${ACCOUNTS_FILE} on github.com.`, "ok"); }
+    catch { say("Select the text below and copy it.", "info"); }
+  });
+
+  out.addEventListener("click", () => { forget(); location.reload(); });
+
+  body.append(head, warn, list, form, actions, text, hint);
+  refresh();
+  state.renderers.security = refresh;
+}
+
 function buildSecurity(body) {
   // The helper is always here: you need it to set the server up the first time,
   // and later whenever you want to change the email or the password.
-  const head = document.createElement("h3");
-  head.className = "flabel";
-  head.textContent = "Change the email or password";
-  body.append(head);
+  buildAccounts(body);
+
+  const divider = document.createElement("h3");
+  divider.className = "flabel";
+  divider.style.marginTop = "26px";
+  divider.textContent = "For the Netlify server (only if you set one up)";
+  body.append(divider);
   buildPasswordTool(body);
 }
 
@@ -620,7 +762,41 @@ function downloadFiles() {
 }
 
 // ---------- start ----------
+// Asks for a password before the admin appears. Only shown when someone is
+// listed in data/admin-accounts.json, so an empty list can never lock you out.
+async function askForPassword() {
+  const lockBox = $("lock");
+  const form = $("lockForm");
+  const message = $("lockMsg");
+  lockBox.hidden = false;
+  document.body.classList.add("lock-on");
+  $("lockEmail").focus();
+
+  await new Promise((resolve) => {
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const button = $("lockBtn");
+      button.disabled = true;
+      const ok = await check(state.accounts, $("lockEmail").value, $("lockPass").value);
+      button.disabled = false;
+      if (!ok) {
+        message.hidden = false;
+        message.textContent = "Wrong email or password.";
+        $("lockPass").select();
+        return;
+      }
+      remember(state.accounts);
+      lockBox.hidden = true;
+      document.body.classList.remove("lock-on");
+      resolve();
+    });
+  });
+}
+
 async function start() {
+  state.accounts = await loadAccounts();
+  if (state.accounts.length && !isRemembered(state.accounts)) await askForPassword();
+
   // Says what is wrong when the server is not reachable or not set up yet.
   const problem = await store.init();
   if (store.repo()) $("repo").textContent = store.repo();
