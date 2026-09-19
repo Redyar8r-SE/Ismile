@@ -158,7 +158,9 @@ input.plain[type="color"]{max-width:64px;height:40px;padding:3px}
 .checking .bootbox{display:grid;gap:6px;justify-items:center;text-align:center;padding:0 24px;max-width:430px;animation:bootin .3s ease .2s backwards}
 .bootmark{position:relative;width:76px;height:76px;display:grid;place-items:center;margin-bottom:10px}
 .bootring{position:absolute;inset:0;width:76px;height:76px;animation:bootspin 1.15s linear infinite}
-.bootring circle{fill:none;stroke:var(--teal);stroke-width:3;stroke-linecap:round;stroke-dasharray:54 165}
+.bootring circle{fill:none;stroke:var(--teal);stroke-width:3;stroke-linecap:round}
+.bootrail{opacity:.15}
+.bootarc{stroke-dasharray:54 165}
 .bootlogo{width:42px;height:42px;animation:bootbeat 2.4s ease-in-out infinite}
 .boottitle{margin:0;font-size:17px;font-weight:500;letter-spacing:.2px;color:var(--hero-text)}
 .boottitle b{font-weight:800}
@@ -170,7 +172,8 @@ input.plain[type="color"]{max-width:64px;height:40px;padding:3px}
 /* Someone who asked for less movement gets a still ring, not a spinning one. */
 @media (prefers-reduced-motion:reduce){
   .bootring,.bootlogo,.checking .bootbox{animation:none}
-  .bootring circle{stroke-dasharray:none;opacity:.35}
+  .bootrail{display:none}
+  .bootarc{stroke-dasharray:none;opacity:.4}
 }
 .checking .bootmsg{display:grid}
 .checking .abar,.checking .ashell{display:none}

@@ -97,7 +97,7 @@ password you do not use anywhere else.
 
 ### When the admin code changes
 
-`admin.html` loads its code as `main.js?v=11`, and the modules import each other
+`admin.html` loads its code as `main.js?v=12`, and the modules import each other
 the same way. Browsers cache these files hard, and a browser holding an old
 `main.js` that imports a file since deleted loads nothing at all: the admin
 appears as an empty page. **After changing anything in `js/admin/`, raise the
