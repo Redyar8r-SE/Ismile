@@ -45,5 +45,7 @@
   "tp_company": "company",
   "am": "AM",
   "pm": "PM",
-  "a_theme": "Light or dark"
+  "a_theme": "Light or dark",
+  "credit_by": "Developed by",
+  "credit_aria": "Message Redyar Nawzad on WhatsApp"
 }

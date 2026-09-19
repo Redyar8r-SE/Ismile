@@ -15,6 +15,14 @@ footer .legal{border-top:1px solid rgba(255,255,255,.12);margin-top:40px;padding
 
 .admin-link{margin-inline-start:14px;color:#7FD6D2;font-size:13px}
 
+/* Who built it. The name opens WhatsApp. */
+footer .credit{margin:10px 0 0;font-size:13px;color:rgba(255,255,255,.62);display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.credit-link{display:inline-flex;align-items:center;gap:6px;color:#7FD6D2;text-decoration:none;border-bottom:1px solid transparent;transition:color .18s ease,border-color .18s ease}
+.credit-link b{font-weight:600}
+.credit-link svg{width:15px;height:15px;fill:currentColor;flex:none}
+.credit-link:hover,.credit-link:focus-visible{color:#25D366;border-bottom-color:currentColor}
+.credit-link:focus-visible{outline:2px solid #25D366;outline-offset:3px;border-radius:3px}
+
 @media (max-width:860px){
   footer .cols{grid-template-columns:1fr}
 }
