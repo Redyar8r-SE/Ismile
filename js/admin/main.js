@@ -1,10 +1,9 @@
 // iSmile admin: edit every text, list and photo on the site, and save to GitHub.
 import { GROUPS, LANGS, DATA_FILES } from "./fields.js";
-import { REPO } from "./github.js";
 import * as store from "./store.js";
 import { upload, imageFromClipboard } from "./images.js";
 import { buildList, buildProgram, buildTypes, buildSingle } from "./lists.js";
-import { loadLock, makeLock, check, remember, isRemembered, forget, LOCK_FILE } from "./lock.js";
+import { makeSettings } from "./password.js";
 
 const $ = (id) => document.getElementById(id);
 const langPath = (lang) => `data/i18n/${lang}.json`;
@@ -17,7 +16,6 @@ const state = {
   dirty: false,
   pasteTarget: null, // { apply(path) } waiting for a pasted picture
   renderers: {},     // group id -> redraw function
-  lock: null,        // { email, salt, hash } when a password is set
 };
 
 // ---------- loading ----------
@@ -347,9 +345,9 @@ function buildPasswordTool(body) {
     const password = box.querySelector("#srvPass").value;
     if (!email.includes("@")) return say("Write a real email address.", "bad");
     if (password.length < 8) return say("Use a password of at least 8 characters.", "bad");
-    const lock = await makeLock(email, password);
-    out.textContent = `ADMIN_EMAIL = ${lock.email}
-ADMIN_PASSWORD_HASH = pbkdf2$150000$${lock.salt}$${lock.hash}`;
+    const settings = await makeSettings(email, password);
+    out.textContent = `ADMIN_EMAIL = ${settings.email}
+ADMIN_PASSWORD_HASH = ${settings.line}`;
     out.hidden = false;
     copy.hidden = false;
     box.querySelector("#srvPass").value = "";
@@ -367,101 +365,13 @@ ADMIN_PASSWORD_HASH = pbkdf2$150000$${lock.salt}$${lock.hash}`;
 }
 
 function buildSecurity(body) {
-  // The helper is always available: you need it to set the server up, and
-  // later whenever you want to change the password.
+  // The helper is always here: you need it to set the server up the first time,
+  // and later whenever you want to change the email or the password.
   const head = document.createElement("h3");
   head.className = "flabel";
-  head.textContent = store.mode() === "server"
-    ? "Change the email or password"
-    : "Set up signing in with an email and password";
+  head.textContent = "Change the email or password";
   body.append(head);
   buildPasswordTool(body);
-  if (store.mode() === "server") return;
-
-  const divider = document.createElement("h3");
-  divider.className = "flabel";
-  divider.style.marginTop = "22px";
-  divider.textContent = "Or: a simple lock for this browser only";
-  body.append(divider);
-  const status = document.createElement("p");
-  status.className = "ghint";
-
-  const form = document.createElement("div");
-  form.className = "pw-grid";
-  form.innerHTML = `
-    <label>Email<input type="email" id="pwEmail" autocomplete="username"></label>
-    <label>New password<input type="password" id="pwOne" autocomplete="new-password"></label>
-    <label>Repeat the password<input type="password" id="pwTwo" autocomplete="new-password"></label>`;
-
-  const actions = document.createElement("div");
-  actions.className = "pw-actions";
-  const save = document.createElement("button");
-  save.type = "button";
-  save.className = "btn btn-primary btn-sm";
-  save.textContent = "Save the password";
-  const drop = document.createElement("button");
-  drop.type = "button";
-  drop.className = "btn btn-outline btn-sm";
-  drop.textContent = "Remove the lock";
-  const out = document.createElement("button");
-  out.type = "button";
-  out.className = "btn btn-outline btn-sm";
-  out.textContent = "Sign out of this browser";
-  actions.append(save, drop, out);
-
-  const note = document.createElement("p");
-  note.className = "ghint";
-  note.textContent = "This lock keeps other people out of the admin screen. It is not strong security: the real protection is your GitHub key, which stays in your own browser.";
-
-  function refresh() {
-    status.textContent = state.lock
-      ? `A password is set for ${state.lock.email}. Everyone is asked for it before the admin opens.`
-      : "No password yet. Anyone who opens this page can use the admin (they still cannot save without a GitHub key).";
-    drop.hidden = !state.lock;
-    out.hidden = !state.lock;
-    form.querySelector("#pwEmail").value = state.lock?.email || "";
-  }
-
-  async function writeLock(lock) {
-    if (!store.ready()) return say("Sign in first — the password is saved with the website.", "bad");
-    say("Saving the password…");
-    try {
-      await store.writeText(LOCK_FILE, `${JSON.stringify(lock, null, 2)}
-`, "Admin: update the admin password");
-      state.lock = lock?.hash ? lock : null;
-      if (state.lock) remember(state.lock); else forget();
-      refresh();
-      say(lock?.hash ? "Password saved. From now on the admin asks for it." : "Lock removed.", "ok");
-    } catch (error) {
-      say(`Not saved: ${error.message}`, "bad");
-    }
-  }
-
-  save.addEventListener("click", async () => {
-    const email = form.querySelector("#pwEmail").value.trim();
-    const one = form.querySelector("#pwOne").value;
-    const two = form.querySelector("#pwTwo").value;
-    if (!email.includes("@")) return say("Write a real email address.", "bad");
-    if (one.length < 8) return say("Use a password of at least 8 characters.", "bad");
-    if (one !== two) return say("The two passwords are not the same.", "bad");
-    await writeLock(await makeLock(email, one));
-    form.querySelector("#pwOne").value = "";
-    form.querySelector("#pwTwo").value = "";
-  });
-
-  drop.addEventListener("click", async () => {
-    if (!confirm("Remove the password? Anyone who opens the admin page will see it.")) return;
-    await writeLock({});
-  });
-
-  out.addEventListener("click", () => {
-    forget();
-    location.reload();
-  });
-
-  body.append(status, form, actions, note);
-  refresh();
-  state.renderers.security = refresh;
 }
 
 // ---------- building the page ----------
@@ -568,16 +478,15 @@ function showGroup(id) {
 function showSignedIn(name) {
   $("who").textContent = name;
   $("connected").hidden = false;
-  $("connectForm").hidden = true;
   $("signinForm").hidden = true;
   $("connState").dataset.state = "on";
   $("connText").textContent = `Signed in as ${name}`;
+  if (store.repo()) $("repo").textContent = store.repo();
 }
 
 function showSignedOut() {
   $("connected").hidden = true;
-  $("connectForm").hidden = store.mode() === "server";
-  $("signinForm").hidden = store.mode() !== "server";
+  $("signinForm").hidden = false;
   $("connState").dataset.state = "off";
   $("connText").textContent = "Not signed in";
 }
@@ -589,20 +498,6 @@ async function signIn(email, password) {
     say("Signed in. Your changes save straight to the website.", "ok");
     return true;
   } catch (error) {
-    showSignedOut();
-    say(error.message, "bad");
-    return false;
-  }
-}
-
-async function connect(token) {
-  try {
-    const name = await store.connectKey(token);
-    showSignedIn(name);
-    say(`Connected as ${name}. Changes you save go straight to the website.`, "ok");
-    return true;
-  } catch (error) {
-    store.signOut();
     showSignedOut();
     say(error.message, "bad");
     return false;
@@ -711,48 +606,15 @@ function downloadFiles() {
   };
   LANGS.forEach(({ code }) => download(`${code}.json`, `${JSON.stringify(state.files[code], null, 2)}\n`));
   Object.keys(DATA_FILES).forEach((name) => download(`${name}.json`, `${JSON.stringify(state.data[name], null, 2)}\n`));
-  say("Files downloaded: the three language files go in data/i18n/, the rest in data/. Pictures need a GitHub key.", "ok");
+  say("Files downloaded: the three language files go in data/i18n/, the rest in data/. Pictures are only saved when you are signed in.", "ok");
 }
 
 // ---------- start ----------
-async function askForPassword() {
-  const lockBox = $("lock");
-  const form = $("lockForm");
-  const message = $("lockMsg");
-  lockBox.hidden = false;
-  document.body.classList.add("lock-on");
-  $("lockEmail").focus();
-
-  await new Promise((resolve) => {
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      const button = $("lockBtn");
-      button.disabled = true;
-      const ok = await check(state.lock, $("lockEmail").value, $("lockPass").value);
-      button.disabled = false;
-      if (!ok) {
-        message.hidden = false;
-        message.textContent = "Wrong email or password.";
-        $("lockPass").select();
-        return;
-      }
-      remember(state.lock);
-      lockBox.hidden = true;
-      document.body.classList.remove("lock-on");
-      resolve();
-    });
-  });
-}
-
 async function start() {
-  const mode = await store.init();
-  // The browser-only lock is a fallback for when there is no server.
-  if (mode === "key") {
-    state.lock = await loadLock();
-    if (state.lock && !isRemembered(state.lock)) await askForPassword();
-  }
+  // Says what is wrong when the server is not reachable or not set up yet.
+  const problem = await store.init();
+  if (store.repo()) $("repo").textContent = store.repo();
 
-  $("repo").textContent = `${REPO.owner}/${REPO.name}`;
   try {
     await loadAll();
   } catch (error) {
@@ -763,11 +625,6 @@ async function start() {
   markDirty();
 
   showSignedOut();
-  $("connectBtn").addEventListener("click", async () => {
-    const token = $("token").value.trim();
-    if (!token) return say("Paste your GitHub key first.", "bad");
-    if (await connect(token)) $("token").value = "";
-  });
   $("signinBtn").addEventListener("click", async () => {
     const email = $("email").value.trim();
     const password = $("password").value;
@@ -802,6 +659,9 @@ async function start() {
   });
 
   if (store.ready()) showSignedIn(store.who());
+  // Said last so it stays on screen: without the server nothing can be saved,
+  // but every text is still editable and "Download files" still works.
+  if (problem) say(`${problem} You can still edit and use “Download files”, but nothing can be saved to the website.`, "bad");
 }
 
 start();

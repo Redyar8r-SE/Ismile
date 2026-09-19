@@ -101,9 +101,13 @@ export async function handler(event) {
 
   if (event.httpMethod === "OPTIONS") return { statusCode: 204, headers: cors(origin), body: "" };
 
+  // 503 and a plain sentence, so the admin page can say exactly what is missing
+  // instead of looking like no server is there at all.
   const missing = ["ADMIN_EMAIL", "ADMIN_PASSWORD_HASH", "SESSION_SECRET", "GITHUB_TOKEN", "GITHUB_REPO"]
     .filter((name) => !process.env[name]);
-  if (missing.length) return json(500, { error: `The server is missing: ${missing.join(", ")}` }, origin);
+  if (missing.length) {
+    return json(503, { error: `The server settings are not finished: ${missing.join(", ")}.` }, origin);
+  }
 
   // --- sign in ---
   if (route === "login" && event.httpMethod === "POST") {
@@ -115,13 +119,13 @@ export async function handler(event) {
       return json(401, { error: "Wrong email or password." }, origin);
     }
     const exp = Math.floor(Date.now() / 1000) + SESSION_HOURS * 3600;
-    return json(200, { token: await sign({ email: email.trim().toLowerCase(), exp }), email, exp }, origin);
+    return json(200, { token: await sign({ email: email.trim().toLowerCase(), exp }), email, exp, repo: repo() }, origin);
   }
 
   const session = await verify((event.headers.authorization || "").replace(/^Bearer /, ""));
   if (!session) return json(401, { error: "Please sign in again." }, origin);
 
-  if (route === "me") return json(200, { email: session.email, exp: session.exp }, origin);
+  if (route === "me") return json(200, { email: session.email, exp: session.exp, repo: repo() }, origin);
 
   // --- read a file (to get its id before writing) ---
   if (route === "file" && event.httpMethod === "GET") {

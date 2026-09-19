@@ -407,7 +407,7 @@ export const GROUPS = [
     blocks: [text("menu")],
   },
   {
-    id: "security", title: "Password", where: "Who can open this admin page",
+    id: "security", title: "Password", where: "The email and password that open this admin",
     blocks: [{ type: "security", title: "Sign-in for the admin page", fields: [] }],
   },
 ];

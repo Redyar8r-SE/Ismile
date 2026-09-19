@@ -64,34 +64,45 @@ visitor's choice is remembered in their browser.
 
 ## Admin page
 
-`admin.html` edits every text, list and photo on the site. Open it at
-`<site>/admin.html` (there is a small **Admin** link in the footer).
+`admin.html` edits every text, list and photo on the site. **Open it at the
+Netlify address**, for example `https://ismile-2026.netlify.app/admin.html`,
+because that is where the server lives. Worth a bookmark.
 
-It saves in one of two ways, chosen automatically:
+The public site on GitHub Pages has a small **Admin** link in its footer, but it
+opens the GitHub Pages copy of the page, which has no server behind it — it will
+say so and refuse to save. To make that link work too, put the Netlify address
+in `data/admin-server.json` (step 4 below).
 
-1. **Email and password** (preferred) — a Netlify function
-   (`netlify/functions/api.mjs`) checks the sign-in against server settings and
-   writes to GitHub with a token the browser never sees. The function only
-   accepts writes under `data/` and `assets/uploads/`.
-2. **GitHub key** — no server found, so the browser talks to GitHub with a
-   fine-grained token pasted once and kept in that browser.
+Saving needs an **email and password**. A Netlify function
+(`netlify/functions/api.mjs`) checks the sign-in against settings kept on the
+server, then writes to GitHub with a token the browser never sees. The function
+only accepts writes under `data/` and `assets/uploads/`.
+
+Until you are signed in you can still edit every text and use **Download
+files**, but nothing reaches the website. If the server is missing or its
+settings are not finished, the admin says so at the bottom of the page.
 
 ### Setting up the email and password (free)
 
 1. In the admin, open **16. Password** and press **Make the two settings**.
    It prints `ADMIN_EMAIL` and `ADMIN_PASSWORD_HASH`; the password itself is
-   never stored anywhere.
+   never stored anywhere. This step works before the server exists — the admin
+   will say it cannot save, which is expected at this point.
 2. Create a free Netlify site from this repository
    (Add new site → Import an existing project → GitHub → Ismile).
 3. Netlify → Site configuration → Environment variables, add:
    `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH`, `SESSION_SECRET` (any long random
    text), `GITHUB_TOKEN` (Contents: read and write on this repository),
    `GITHUB_REPO` (`Redyar8r-SE/Ismile`). Then redeploy.
-4. Put the Netlify address in `data/admin-server.json`, for example
-   `{ "api": "https://ismile-2026.netlify.app/api" }`, so the admin served from
-   GitHub Pages uses the server too.
+4. Optional: put the Netlify address in `data/admin-server.json`, for example
+   `{ "api": "https://ismile-2026.netlify.app/api" }`. You do not need this when
+   you open the admin at the Netlify address — it finds its own server. Fill it
+   in only if you also want the footer **Admin** link on the GitHub Pages site
+   to work.
 
-To change the password later, repeat step 1 and update the two settings.
+To change the password later, repeat step 1 and update the two settings. The
+password itself is never stored — only a PBKDF2 hash of it, which lives in the
+Netlify settings and never in this repository.
 
 
 ## Common edits

@@ -20,20 +20,6 @@
 </head>
 <body class="admin">
 
-<!-- Lock screen: shown when an email + password have been set -->
-<div class="lockwrap" id="lock" hidden>
-  <form class="lockcard" id="lockForm">
-    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>
-    <h1>iSmile admin</h1>
-    <p>Sign in to change the website.</p>
-    <label class="lockfield"><span>Email</span><input type="email" id="lockEmail" autocomplete="username" required></label>
-    <label class="lockfield"><span>Password</span><input type="password" id="lockPass" autocomplete="current-password" required></label>
-    <p class="lockmsg" id="lockMsg" hidden></p>
-    <button type="submit" class="btn btn-primary" id="lockBtn">Sign in</button>
-    <a class="lockback" href="index.html">← Back to the website</a>
-  </form>
-</div>
-
 <header class="abar">
   <div class="abar-in">
     <a class="abrand" href="index.html">
@@ -68,27 +54,13 @@
     <p class="msg is-info" id="msg" hidden></p>
 
     <section class="card connect" id="connectCard">
-      <div id="signinForm" hidden>
+      <div id="signinForm">
         <h2>Sign in</h2>
-        <p>Use the email and password for this website. Your password is checked on the server; nothing secret is kept in this browser.</p>
+        <p>Use the email and password for this website. The password is checked on the server, and nothing secret is kept in this browser.</p>
         <div class="row">
           <input id="email" type="email" placeholder="Email" autocomplete="username">
           <input id="password" type="password" placeholder="Password" autocomplete="current-password">
           <button type="button" class="btn btn-primary" id="signinBtn">Sign in</button>
-        </div>
-      </div>
-      <div id="connectForm">
-        <h2>Connect to GitHub</h2>
-        <p>Paste your GitHub key once. It stays in this browser only, and it lets this page save changes and photos straight to the website.</p>
-        <ol>
-          <li>Open <code>github.com/settings/personal-access-tokens/new</code></li>
-          <li>Repository access → <b>Only select repositories</b> → choose <b>Ismile</b></li>
-          <li>Permissions → Repository permissions → <b>Contents</b> → <b>Read and write</b></li>
-          <li>Generate the token and copy it (it starts with <code>github_pat_</code>)</li>
-        </ol>
-        <div class="row">
-          <input id="token" type="password" placeholder="Paste your GitHub key here" autocomplete="off" spellcheck="false">
-          <button type="button" class="btn btn-primary" id="connectBtn">Connect</button>
         </div>
       </div>
       <div class="who" id="connected" hidden>
