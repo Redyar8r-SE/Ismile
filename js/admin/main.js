@@ -1,9 +1,9 @@
 // iSmile admin: edit every text, list and photo on the site, and save to GitHub.
-import { GROUPS, LANGS, DATA_FILES } from "./fields.js?v=9";
-import * as store from "./store.js?v=9";
-import { upload, imageFromClipboard } from "./images.js?v=9";
-import { buildList, buildProgram, buildTypes, buildSingle } from "./lists.js?v=9";
-import { loadAccounts, makeAccount, check, forget, fileText, ACCOUNTS_FILE } from "./accounts.js?v=9";
+import { GROUPS, LANGS, DATA_FILES } from "./fields.js?v=10";
+import * as store from "./store.js?v=10";
+import { upload, imageFromClipboard } from "./images.js?v=10";
+import { buildList, buildProgram, buildTypes, buildSingle } from "./lists.js?v=10";
+import { loadAccounts, makeAccount, check, forget, fileText, ACCOUNTS_FILE } from "./accounts.js?v=10";
 
 // Tells the small script in admin.html that the admin code did load, so it
 // does not offer to reload the page.
@@ -730,12 +730,21 @@ async function askForPassword() {
 
 async function start() {
   forget();                                   // clear the old "remembered" mark
+  const cover = (text) => {
+    if (text) $("bootText").textContent = text;
+    document.body.classList.add("checking");
+  };
+  const uncover = () => document.body.classList.remove("checking");
+
   state.accounts = await loadAccounts();
   // Decide first, reveal second: the admin must never flash up before the
   // login screen covers it.
-  if (state.accounts.length) document.body.classList.add("lock-on");
-  document.body.classList.remove("checking");
-  if (state.accounts.length) await askForPassword();
+  if (state.accounts.length) {
+    document.body.classList.add("lock-on");
+    uncover();                                // let the login screen through
+    await askForPassword();
+    cover("Opening the admin…");          // and cover it again while it is built
+  }
 
   // Says what is wrong when the server is not reachable or not set up yet.
   const problem = await store.init();
@@ -744,11 +753,13 @@ async function start() {
   try {
     await loadAll();
   } catch (error) {
+    uncover();                                // the message must be readable
     say(`${error.message}. Open this page through the website, not by double-clicking the file.`, "bad");
     return;
   }
   buildForm();
   markDirty();
+  uncover();                                  // everything is ready to use
 
   showSignedOut();
   $("signinBtn").addEventListener("click", async () => {
