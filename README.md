@@ -108,6 +108,30 @@ A short ordinary script in `admin.html` guards against this anyway: if the
 admin code has not started within six seconds it keeps the page covered and
 offers a reload, rather than letting the bare, useless page show through.
 
+### On your own domain and hosting (the simplest way)
+
+Once the site is on ordinary hosting rather than GitHub Pages, the admin can
+write to it directly: no key, no GitHub, and the change is live the moment you
+press Save instead of a minute or two later. `server/admin.php` answers exactly
+what the admin already asks for, so nothing in `js/` changes.
+
+1. Upload the whole site, including the `server/` folder.
+2. Copy `server/admin-config.sample.php` to `server/admin-config.php` and fill
+   in `secret` and at least one account. Add or remove people in `accounts`.
+3. Make each password hash with node (your own password in place of the one
+   shown):
+
+   ```
+   node -e "const c=require('crypto'),s=c.randomBytes(16);console.log('pbkdf2$150000$'+s.toString('base64')+'$'+c.pbkdf2Sync('your-password',s,150000,32,'sha256').toString('base64'))"
+   ```
+
+4. Put `{ "api": "/server/admin.php" }` in `data/admin-server.json`.
+5. `data/` and `assets/uploads/` must be writable by the web server.
+
+Needs PHP 7.4 or newer. The admin may only write inside `data/` and
+`assets/uploads/`; anything else is refused. `admin-config.php` is in
+`.gitignore`, so the secrets are never committed.
+
 ### Publishing what the admin downloaded
 
 The admin cannot write to GitHub by itself. `tools/publish.mjs` does that last

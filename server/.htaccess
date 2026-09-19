@@ -1,0 +1,17 @@
+# Apache needs telling to pass the sign-in header through to PHP. Without this
+# every request after signing in comes back "Please sign in again."
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTP:Authorization} .
+  RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+</IfModule>
+SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
+
+# The settings file holds the sign-in secrets. PHP is never served as text, but
+# say so plainly in case PHP is ever switched off on this hosting.
+<Files "admin-config.php">
+  Require all denied
+</Files>
+<Files "admin-config.sample.php">
+  Require all denied
+</Files>

@@ -1,0 +1,2 @@
+# The admin server settings hold sign-in secrets: never commit them.
+server/admin-config.php
