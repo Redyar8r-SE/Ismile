@@ -11,17 +11,66 @@ footer .foot-about{margin-top:12px;max-width:36ch}
 /* Email and phone stay left-to-right, but follow the page side. */
 footer .ltr{text-align:start}
 html[dir="rtl"] footer .ltr{text-align:right}
-footer .legal{border-top:1px solid rgba(255,255,255,.12);margin-top:40px;padding-top:20px;font-size:13px}
+/* The bottom bar: copyright on one side, who built it on the other. They sit
+   on one line on a laptop and stack, centred, on a phone. */
+.footbar{
+  display:flex;align-items:center;justify-content:space-between;gap:14px 20px;flex-wrap:wrap;
+  border-top:1px solid rgba(255,255,255,.12);margin-top:40px;padding-top:20px;
+}
+footer .legal{margin:0;font-size:13px}
+@media (max-width:640px){
+  .footbar{justify-content:center;text-align:center}
+}
 
 .admin-link{margin-inline-start:14px;color:#7FD6D2;font-size:13px}
 
-/* Who built it. The name opens WhatsApp. */
-footer .credit{margin:10px 0 0;font-size:13px;color:rgba(255,255,255,.62);display:flex;align-items:center;gap:7px;flex-wrap:wrap}
-.credit-link{display:inline-flex;align-items:center;gap:6px;color:#7FD6D2;text-decoration:none;border-bottom:1px solid transparent;transition:color .18s ease,border-color .18s ease}
-.credit-link b{font-weight:600}
-.credit-link svg{width:15px;height:15px;fill:currentColor;flex:none}
-.credit-link:hover,.credit-link:focus-visible{color:#25D366;border-bottom-color:currentColor}
-.credit-link:focus-visible{outline:2px solid #25D366;outline-offset:3px;border-radius:3px}
+/* Who built it. A quiet chip under the copyright; the name opens WhatsApp. */
+footer .credit{
+  margin:0;
+  display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+  font-size:12.5px;letter-spacing:.25px;
+  color:rgba(255,255,255,.5);
+}
+.credit-by{text-transform:uppercase;font-size:11px;letter-spacing:.9px;font-weight:500}
+
+.credit-link{
+  display:inline-flex;align-items:center;gap:9px;
+  padding:6px 15px 6px 7px;
+  border-radius:999px;
+  background:rgba(255,255,255,.055);
+  border:1px solid rgba(255,255,255,.13);
+  color:#E8F6F5;text-decoration:none;font-size:13.5px;
+  transition:background .2s ease,border-color .2s ease,color .2s ease,transform .2s ease,box-shadow .2s ease;
+}
+.credit-link b{font-weight:600;letter-spacing:.2px}
+
+/* The WhatsApp green belongs to WhatsApp, so it stays on the mark only and
+   does not fight the teal the rest of the site uses. */
+.credit-badge{
+  display:grid;place-items:center;width:23px;height:23px;border-radius:50%;
+  background:#25D366;flex:none;
+  transition:transform .2s ease,box-shadow .2s ease;
+}
+.credit-badge svg{width:14px;height:14px;fill:#0B1F27}
+
+.credit-link:hover,.credit-link:focus-visible{
+  background:rgba(37,211,102,.13);
+  border-color:rgba(37,211,102,.5);
+  color:#fff;
+  transform:translateY(-1px);
+  box-shadow:0 6px 18px -10px rgba(37,211,102,.8);
+}
+.credit-link:hover .credit-badge,.credit-link:focus-visible .credit-badge{
+  transform:scale(1.07);
+  box-shadow:0 0 0 4px rgba(37,211,102,.18);
+}
+.credit-link:focus-visible{outline:2px solid #25D366;outline-offset:3px}
+
+@media (prefers-reduced-motion:reduce){
+  .credit-link,.credit-badge{transition:none}
+  .credit-link:hover,.credit-link:focus-visible{transform:none}
+  .credit-link:hover .credit-badge,.credit-link:focus-visible .credit-badge{transform:none}
+}
 
 @media (max-width:860px){
   footer .cols{grid-template-columns:1fr}
