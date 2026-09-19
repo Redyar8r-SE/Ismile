@@ -1,0 +1,54 @@
+/* ==========================================================
+   The first moment of the page: the mark, a turning ring.
+   The sections below are drawn from the data files, so without
+   this the page shows its empty frame for a beat.
+
+   It is a cover, not a gate: it always lifts. See the small
+   script in index.html, which lifts it even when nothing else
+   runs, and the noscript rule that removes it outright.
+   ========================================================== */
+
+/* Set by the script below the cover and removed the moment it lifts, so the
+   page can never be left unscrollable. */
+.siteboot-on, .siteboot-on body { overflow: hidden }
+
+.siteboot {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  background: var(--hero-bg);
+  transition: opacity .5s ease, visibility .5s;
+}
+
+/* Visible is the resting state, so nothing can leave it stuck hidden,
+   and gone is a class: a page that never loads still lifts the cover. */
+.siteboot.is-gone {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.siteboot-box { display: grid; justify-items: center; gap: 16px }
+
+.siteboot-mark { position: relative; width: 88px; height: 88px; display: grid; place-items: center }
+.siteboot-ring { position: absolute; inset: 0; width: 88px; height: 88px; animation: sitespin 1.15s linear infinite }
+.siteboot-ring circle { fill: none; stroke: var(--teal); stroke-width: 3; stroke-linecap: round }
+.siteboot-rail { opacity: .15 }
+.siteboot-arc { stroke-dasharray: 62 190 }
+.siteboot-logo { width: 48px; height: 48px; animation: sitebeat 2.4s ease-in-out infinite }
+
+.siteboot-name { margin: 0; font-size: 18px; font-weight: 500; letter-spacing: .3px; color: var(--hero-text) }
+.siteboot-name b { font-weight: 800 }
+
+@keyframes sitespin { to { transform: rotate(360deg) } }
+@keyframes sitebeat { 0%, 100% { transform: scale(1) } 50% { transform: scale(1.07) } }
+
+/* A still ring for anyone who has asked their computer for less movement. */
+@media (prefers-reduced-motion: reduce) {
+  .siteboot { transition: none }
+  .siteboot-ring, .siteboot-logo { animation: none }
+  .siteboot-rail { display: none }
+  .siteboot-arc { stroke-dasharray: none; opacity: .4 }
+}

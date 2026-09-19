@@ -60,6 +60,10 @@ async function start() {
     notice.className = "load-error";
     notice.textContent = "Could not load the site data. Open the site through a local server (see README.md).";
     document.body.prepend(notice);
+  } finally {
+    // The page is as ready as it is going to get, so take the cover off. Also
+    // on failure: a visitor should see the message, not a ring turning forever.
+    if (typeof window.siteReady === "function") window.siteReady();
   }
 }
 

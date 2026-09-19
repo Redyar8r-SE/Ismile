@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="css/base/tokens.css">
 <link rel="stylesheet" href="css/base/base.css">
 <!-- Components -->
+<link rel="stylesheet" href="css/components/boot.css">
 <link rel="stylesheet" href="css/components/buttons.css">
 <link rel="stylesheet" href="css/components/brand.css">
 <link rel="stylesheet" href="css/components/tier-card.css">
@@ -38,6 +39,37 @@
 <script type="module" src="js/main.js"></script>
 </head>
 <body>
+
+<!-- The first moment of the page. It is a cover, never a gate: the script
+     below lifts it even if nothing else on the page runs, and a browser with
+     JavaScript switched off never sees it at all. -->
+<div class="siteboot" id="siteboot" aria-hidden="true">
+  <div class="siteboot-box">
+    <div class="siteboot-mark">
+      <svg class="siteboot-ring" viewBox="0 0 88 88"><circle class="siteboot-rail" cx="44" cy="44" r="40"/><circle class="siteboot-arc" cx="44" cy="44" r="40"/></svg>
+      <svg class="siteboot-logo" viewBox="0 0 30 30"><circle cx="15" cy="15" r="15" fill="#16A6A1"/><path d="M8 14c2.5 5 11.5 5 14 0" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round"/></svg>
+    </div>
+    <p class="siteboot-name">iSmile <b>2026</b></p>
+  </div>
+</div>
+<noscript><style>#siteboot{display:none}</style></noscript>
+<script>
+// An ordinary script, not a module: it still runs when the page code does not.
+// Whatever happens, the cover comes off - a visitor must never be shut out.
+(function () {
+  var page = document.documentElement;
+  page.classList.add("siteboot-on");    // no scrolling behind the cover
+  var lift = function () {
+    page.classList.remove("siteboot-on");
+    var cover = document.getElementById("siteboot");
+    if (cover) cover.classList.add("is-gone");
+  };
+  window.siteReady = lift;              // the page code calls this when it is done
+  window.addEventListener("load", function () { setTimeout(lift, 2500); });
+  setTimeout(lift, 6000);               // last resort, come what may
+})();
+</script>
+
 
 <!-- ============ HEADER ============ -->
 <header class="top" id="top">

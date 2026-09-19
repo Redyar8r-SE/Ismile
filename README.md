@@ -62,6 +62,18 @@ visitor's choice is remembered in their browser.
   `js/main.js` the way Arabic and Kurdish are loaded, and add a button next to
   the others. Right-to-left languages are listed in `RTL` in `js/i18n.js`.
 
+## The first moment of the page
+
+`index.html` draws its sections from the data files, so for a beat the page is
+an empty frame. `css/components/boot.css` covers that with the mark and a
+turning ring.
+
+It is a **cover, never a gate**. Three separate things lift it: `js/main.js`
+when it has finished, whether it succeeded or failed; the small script in
+`index.html` after the page loads; and the same script again after six seconds,
+come what may. A browser with JavaScript switched off never sees it, through a
+`noscript` rule. A visitor must never be shut out by it.
+
 ## Admin page
 
 `admin.html` edits every text, list and photo on the site. **Open it at the
