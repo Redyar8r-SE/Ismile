@@ -108,6 +108,25 @@ A short ordinary script in `admin.html` guards against this anyway: if the
 admin code has not started within six seconds it keeps the page covered and
 offers a reload, rather than letting the bare, useless page show through.
 
+### Publishing what the admin downloaded
+
+The admin cannot write to GitHub by itself. `tools/publish.mjs` does that last
+step from this computer:
+
+```
+node tools/publish.mjs --dry    # show what would change, touch nothing
+node tools/publish.mjs          # copy, check, commit and push
+```
+
+It takes the newest matching file out of your Downloads folder — Chrome names
+repeats `en (1).json`, and the newest wins — checks it is valid JSON, puts it
+where it belongs, then commits and pushes. Used downloads are renamed
+`.published.json` so an old one cannot undo newer work.
+
+Language files are **merged**, never replaced, exactly as the admin's own save
+does. A download carries only the words the admin knows about, so replacing
+would delete keys that only the code uses, such as `am`, `pm` and `a_theme`.
+
 ### Saving changes
 
 Saving needs an **email and password**. A Netlify function
