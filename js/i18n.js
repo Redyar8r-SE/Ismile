@@ -40,7 +40,10 @@ export function initI18n(extraEnglish) {
     const key = el.dataset.i18nLabel;
     if (!(key in dictionaries.en)) dictionaries.en[key] = el.getAttribute("aria-label");
   });
-  if (!("page_title" in dictionaries.en)) dictionaries.en.page_title = document.title;
+  // Each page names its own title key (data-title-key on <html>), so a second
+  // page does not inherit the home page's title when the language changes.
+  const titleKey = document.documentElement.dataset.titleKey || "page_title";
+  if (!(titleKey in dictionaries.en)) dictionaries.en[titleKey] = document.title;
   Object.assign(dictionaries.en, extraEnglish);
 }
 
@@ -58,7 +61,7 @@ export function setLang(code) {
   const html = document.documentElement;
   html.lang = currentLang === "ku" ? "ckb" : currentLang;
   html.dir = RTL.includes(currentLang) ? "rtl" : "ltr";
-  document.title = t("page_title");
+  document.title = t(document.documentElement.dataset.titleKey || "page_title");
 
   document.querySelectorAll("[data-i18n]").forEach((el) => {
     el.textContent = t(el.dataset.i18n);

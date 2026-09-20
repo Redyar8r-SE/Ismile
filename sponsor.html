@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-title-key="spf_page_title">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<script>try{var t=localStorage.getItem("ismile-theme");document.documentElement.dataset.theme=(t==="light"||t==="dark")?t:(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")}catch(e){}</script>
+<title>Become a sponsor · iSmile 2026</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=Noto+Kufi+Arabic:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<!-- Base -->
+<link rel="stylesheet" href="css/base/tokens.css?v=21">
+<link rel="stylesheet" href="css/base/base.css?v=21">
+<!-- Components -->
+<link rel="stylesheet" href="css/components/boot.css?v=21">
+<link rel="stylesheet" href="css/components/buttons.css?v=21">
+<link rel="stylesheet" href="css/components/brand.css?v=21">
+<link rel="stylesheet" href="css/components/tier-card.css?v=21">
+<!-- Layout -->
+<link rel="stylesheet" href="css/layout/header.css?v=21">
+<link rel="stylesheet" href="css/layout/footer.css?v=21">
+<!-- The form borrows the registration card, stepper and fields. -->
+<link rel="stylesheet" href="css/sections/register.css?v=21">
+<link rel="stylesheet" href="css/sections/sponsor-form.css?v=21">
+
+<script type="module" src="js/sponsor.js?v=21"></script>
+</head>
+<body>
+
+<div class="siteboot" id="siteboot" aria-hidden="true">
+  <div class="siteboot-box">
+    <div class="siteboot-mark">
+      <svg class="siteboot-ring" viewBox="0 0 88 88"><circle class="siteboot-rail" cx="44" cy="44" r="40"/><circle class="siteboot-arc" cx="44" cy="44" r="40"/></svg>
+      <svg class="siteboot-logo" viewBox="0 0 30 30"><circle cx="15" cy="15" r="15" fill="#16A6A1"/><path d="M8 14c2.5 5 11.5 5 14 0" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round"/></svg>
+    </div>
+    <p class="siteboot-name">iSmile <b>2026</b></p>
+  </div>
+</div>
+<noscript><style>#siteboot{display:none}</style></noscript>
+<script>
+(function () {
+  var page = document.documentElement;
+  page.classList.add("siteboot-on");
+  var lift = function () {
+    page.classList.remove("siteboot-on");
+    var cover = document.getElementById("siteboot");
+    if (cover) cover.classList.add("is-gone");
+  };
+  window.siteReady = lift;
+  window.addEventListener("load", function () { setTimeout(lift, 2500); });
+  setTimeout(lift, 6000);
+})();
+</script>
+
+<!-- ============ HEADER ============ -->
+<header class="top" id="top">
+  <div class="wrap">
+    <a class="brand" href="index.html" aria-label="iSmile 2026 home">
+      <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="15" fill="#16A6A1"/><path d="M8 14c2.5 5 11.5 5 14 0" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round"/></svg>
+      <span>i<b>Smile</b></span>
+    </a>
+    <a class="btn btn-outline spf-back-btn" href="index.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+      <span data-i18n="spf_back_site">Back to the summit</span>
+    </a>
+    <div class="lang" id="langSwitch" role="group" aria-label="Language" data-i18n-label="a_lang">
+      <button type="button" data-lang="en" aria-pressed="true" lang="en">EN</button>
+      <button type="button" data-lang="ar" aria-pressed="false" lang="ar">العربية</button>
+      <button type="button" data-lang="ku" aria-pressed="false" lang="ckb">کوردی</button>
+    </div>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Light or dark" aria-pressed="false" data-i18n-label="a_theme">
+      <svg class="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/></svg>
+      <svg class="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8.2 8.2 0 019.5 4 8.3 8.3 0 1020 14.5z"/></svg>
+    </button>
+  </div>
+</header>
+
+<main>
+<section class="block spf">
+  <div class="wrap">
+    <div class="spf-head">
+      <p class="section-kicker" data-i18n="spf_kicker">Partnership</p>
+      <h1 data-i18n="spf_title">Become a sponsor of iSmile 2026</h1>
+      <p class="lead" data-i18n="spf_sub">Tell us which package interests you and who to talk to. We send you the full packages, what each one includes and the prices, and answer any question you have.</p>
+    </div>
+
+    <div class="reg">
+      <!-- Side column -->
+      <aside class="reg-aside">
+        <div class="reg-panel">
+          <h3 data-i18n="spf_why">Why sponsor iSmile</h3>
+          <ul class="spf-points">
+            <li>
+              <span class="spf-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></span>
+              <div><b data-i18n="spf_p1">Dentists from across Iraq</b><small data-i18n="spf_p1_d">Two days in front of the people who decide what your products are used for.</small></div>
+            </li>
+            <li>
+              <span class="spf-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.5-5h15L21 9"/><path d="M4 9h16v11H4z"/><path d="M3 9a3 3 0 006 0 3 3 0 006 0 3 3 0 006 0"/></svg></span>
+              <div><b data-i18n="spf_p2">Exhibition space</b><small data-i18n="spf_p2_d">A booth beside the sessions, where the conversations actually happen.</small></div>
+            </li>
+            <li>
+              <span class="spf-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M8.2 13.5L7 22l5-3 5 3-1.2-8.5"/></svg></span>
+              <div><b data-i18n="spf_p3">Your name on the summit</b><small data-i18n="spf_p3_d">Logo placement on the website, the programme and the venue, by package level.</small></div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="reg-help">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 11-4.2-7.6L21 3l-1.2 4.1A9 9 0 0121 12z"/><path d="M9.5 9.5a2.5 2.5 0 114 2c-.9.6-1.5 1.1-1.5 2M12 17h.01"/></svg>
+          <div><b data-i18n="spf_talk">Rather talk to a person?</b><a id="spfDirect" href="mailto:info@ismile.krd" dir="ltr">info@ismile.krd</a></div>
+        </div>
+        <p class="reg-policy">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
+          <span data-i18n="spf_privacy">Your details are used only to send you the packages and to answer you. Nothing is shared with anyone else.</span>
+        </p>
+      </aside>
+
+      <!-- Form card -->
+      <div class="reg-card" id="spfCard">
+        <div class="reg-progress" id="spfProgress">
+          <ol class="stepper" id="spfStepper">
+            <li class="is-active"><span class="st-dot">1</span><span class="st-label" data-i18n="spf_st1">What interests you</span></li>
+            <li><span class="st-dot">2</span><span class="st-label" data-i18n="spf_st2">Your company</span></li>
+          </ol>
+          <div class="st-bar" aria-hidden="true"><i id="spfBar"></i></div>
+        </div>
+
+        <form id="spfForm" novalidate>
+          <!-- Step 1: sponsorship or booth, and which package -->
+          <div class="reg-step" data-step="1">
+            <div class="step-head">
+              <h2 tabindex="-1" data-i18n="spf_s1_title">What are you interested in?</h2>
+              <p data-i18n="spf_s1_sub">Choose one. You can ask about the other in the message at the end.</p>
+            </div>
+            <div class="type-options">
+              <label class="type-card is-checked">
+                <input type="radio" name="spfKind" value="sponsor" checked>
+                <span class="tc-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5L2.6 9.3l6.5-.9z"/></svg></span>
+                <span class="tc-text"><b data-i18n="spf_kind_spon">Sponsorship package</b><small data-i18n="spf_kind_spon_d">Diamond, Platinum, Gold or Silver: logo placement, visibility and a place in the programme.</small></span>
+                <span class="tc-check" aria-hidden="true"></span>
+              </label>
+              <label class="type-card">
+                <input type="radio" name="spfKind" value="booth">
+                <span class="tc-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.5-5h15L21 9"/><path d="M4 9h16v11H4z"/><path d="M3 9a3 3 0 006 0 3 3 0 006 0 3 3 0 006 0"/></svg></span>
+                <span class="tc-text"><b data-i18n="spf_kind_booth">Exhibition booth</b><small data-i18n="spf_kind_booth_d">A stand in the exhibition area, to show your products to dentists.</small></span>
+                <span class="tc-check" aria-hidden="true"></span>
+              </label>
+            </div>
+
+            <div id="spfPackWrap">
+              <div class="step-head spf-subhead">
+                <h3 id="spfPackLabel" data-i18n="spf_pack_title">Which package?</h3>
+                <p data-i18n="spf_pack_sub">"Not sure yet" is a fine answer. We will send you all of them.</p>
+              </div>
+              <div class="spf-packs" id="spfPacks" role="radiogroup" aria-labelledby="spfPackLabel"></div>
+            </div>
+          </div>
+
+          <!-- Step 2: who you are -->
+          <div class="reg-step" data-step="2" hidden>
+            <div class="step-head">
+              <h2 tabindex="-1" data-i18n="spf_s2_title">Your company</h2>
+              <p data-i18n="spf_s2_sub">Enough to send you the packages and to call you back.</p>
+            </div>
+            <div class="fields">
+              <div class="f full">
+                <label for="s_company" data-i18n="spf_f_company">Company name</label>
+                <input id="s_company" autocomplete="organization" data-rule="name" placeholder="As it should appear with your logo" data-i18n-ph="spf_ph_company">
+              </div>
+              <div class="f">
+                <label for="s_contact" data-i18n="spf_f_contact">Contact person</label>
+                <input id="s_contact" autocomplete="name" data-rule="name">
+              </div>
+              <div class="f">
+                <label for="s_role"><span data-i18n="spf_f_role">Position</span> <span class="f-opt" data-i18n="spf_optional">optional</span></label>
+                <input id="s_role" autocomplete="organization-title" placeholder="Marketing manager" data-i18n-ph="spf_ph_role">
+              </div>
+              <div class="f">
+                <label for="s_phone" data-i18n="f_phone">WhatsApp number</label>
+                <input id="s_phone" type="tel" inputmode="tel" dir="ltr" autocomplete="tel" placeholder="0750 123 4567" data-rule="phone">
+              </div>
+              <div class="f">
+                <label for="s_email" data-i18n="f_email">Email</label>
+                <input id="s_email" type="email" inputmode="email" dir="ltr" autocomplete="email" placeholder="name@example.com" data-rule="email">
+              </div>
+              <div class="f">
+                <label for="s_website"><span data-i18n="spf_f_website">Website or social page</span> <span class="f-opt" data-i18n="spf_optional">optional</span></label>
+                <input id="s_website" dir="ltr" autocomplete="url" placeholder="example.com" data-i18n-ph="spf_ph_website">
+              </div>
+              <div class="f">
+                <label for="s_city"><span data-i18n="spf_f_city">City</span> <span class="f-opt" data-i18n="spf_optional">optional</span></label>
+                <input id="s_city" autocomplete="address-level2" placeholder="Sulaymaniyah" data-i18n-ph="spf_ph_city">
+              </div>
+              <div class="f full">
+                <label for="s_note"><span data-i18n="spf_f_note">Anything you want to ask</span> <span class="f-opt" data-i18n="spf_optional">optional</span></label>
+                <textarea id="s_note" rows="3" placeholder="Booth size, what the package includes, prices…" data-i18n-ph="spf_ph_note"></textarea>
+              </div>
+            </div>
+
+            <div class="review">
+              <div class="review-head">
+                <h4 data-i18n="spf_review">Your request</h4>
+                <button type="button" class="link-btn" id="spfEdit" data-i18n="edit">Edit</button>
+              </div>
+              <dl id="spfReview"></dl>
+            </div>
+          </div>
+
+          <div class="reg-nav">
+            <button type="button" class="btn btn-outline reg-back is-hidden" id="spfBack">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+              <span data-i18n="back">Back</span>
+            </button>
+            <span class="reg-count" id="spfCount"></span>
+            <button type="button" class="btn btn-primary reg-next" id="spfNext">
+              <span data-i18n="continue">Continue</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </button>
+            <button type="submit" class="btn btn-primary reg-next" id="spfSubmit" hidden>
+              <span data-i18n="spf_submit">Send my request</span>
+            </button>
+          </div>
+        </form>
+
+        <!-- Success -->
+        <div class="reg-success" id="spfSuccess" tabindex="-1" hidden>
+          <div class="success-ic" aria-hidden="true"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+          <h2 data-i18n="spf_ok_title">Thank you — we have your request</h2>
+          <p id="spfOkText"></p>
+          <div class="success-ref"><small data-i18n="spf_ok_ref">Your reference</small><b id="spfOkRef" dir="ltr"></b></div>
+
+          <!-- Until the website has a server of its own, the request reaches the
+               team the way people here already talk: WhatsApp, or email. -->
+          <div class="spf-send" id="spfSend">
+            <p class="spf-send-note" data-i18n="spf_send_note">One last tap, so it reaches the team straight away:</p>
+            <div class="spf-send-row">
+              <a class="btn btn-primary" id="spfWhats" href="#" target="_blank" rel="noopener noreferrer" hidden>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.87 9.87 0 0 0 4.79 1.22c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm4.52 12.13c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.13-.16.24-.64.8-.79.97-.14.16-.29.18-.54.06-.25-.13-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.5.11-.11.25-.29.37-.43.13-.15.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.22.25-.87.85-.87 2.07s.89 2.4 1.02 2.56c.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.47-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.11-.22-.17-.47-.29z"/></svg>
+                <span data-i18n="spf_send_whats">Send on WhatsApp</span>
+              </a>
+              <a class="btn btn-outline" id="spfMail" href="#">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
+                <span data-i18n="spf_send_mail">Send by email</span>
+              </a>
+            </div>
+          </div>
+
+          <a class="btn btn-ghost" href="index.html" data-i18n="spf_back_site">Back to the summit</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="wrap">
+    <div class="cols">
+      <div>
+        <a class="brand" href="index.html"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="15" fill="#16A6A1"/><path d="M8 14c2.5 5 11.5 5 14 0" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round"/></svg><span>i<b>Smile</b></span></a>
+        <p class="foot-about" data-i18n="foot_org">Organized by italk Foundation, in collaboration with the Kurdistan Dental Association.</p>
+      </div>
+      <div>
+        <h3 data-i18n="foot_links">Summit</h3>
+        <div id="footLinks"></div>
+      </div>
+      <div>
+        <h3 data-i18n="foot_contact">Contact</h3>
+        <div id="footContact"></div>
+      </div>
+    </div>
+    <div class="footbar">
+      <p class="legal"><span data-i18n="legal">© 2026 iSmile. All rights reserved.</span></p>
+      <!-- Always left to right: the credit stays in English on every language. -->
+      <p class="credit" dir="ltr">
+        <span class="credit-by" data-i18n="credit_by">Developed by</span>
+        <a class="credit-link" href="https://wa.me/9647708444142" target="_blank" rel="noopener noreferrer"
+           data-i18n-label="credit_aria" aria-label="Message Redyar Nawzad on WhatsApp">
+          <span class="credit-badge" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.87 9.87 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm0 18.13h-.01a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.21 8.21 0 0 1-1.26-4.36c0-4.54 3.7-8.24 8.25-8.24 2.2 0 4.27.86 5.83 2.42a8.19 8.19 0 0 1 2.41 5.83c0 4.54-3.7 8.21-8.24 8.21zm4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.13-.16.24-.64.8-.79.97-.14.16-.29.18-.54.06-.25-.13-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.5.11-.11.25-.29.37-.43.13-.15.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.22.25-.87.85-.87 2.07s.89 2.4 1.02 2.56c.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.47-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.11-.22-.17-.47-.29z"/></svg>
+          </span>
+        <b>Redyar Nawzad</b>
+        </a>
+      </p>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

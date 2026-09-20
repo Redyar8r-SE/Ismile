@@ -16,6 +16,21 @@
       "spots": 2
     },
     {
+      "id": "platinum",
+      "name": {
+        "en": "Platinum",
+        "ar": "بلاتيني",
+        "ku": "پلاتینیۆم"
+      },
+      "className": "tc-plat",
+      "subtitle": {
+        "en": "Leading partners",
+        "ar": "شركاء رياديون",
+        "ku": "هاوبەشە پێشەنگەکان"
+      },
+      "spots": 2
+    },
+    {
       "id": "gold",
       "name": {
         "en": "Gold",
@@ -46,5 +61,9 @@
       "spots": 5
     }
   ],
-  "sponsors": []
+  "sponsors": [],
+  "enquiry": {
+    "whatsapp": "",
+    "email": "info@ismile.krd"
+  }
 }

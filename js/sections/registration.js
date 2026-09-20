@@ -1,6 +1,6 @@
 // Registration: 3-step form with validation, review and success screen.
 // Demo only: nothing is sent to a server yet. Connect submitRegistration() to your backend.
-import { t, onLangChange } from "../i18n.js?v=18";
+import { t, onLangChange } from "../i18n.js?v=21";
 
 const TOTAL_STEPS = 3;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;

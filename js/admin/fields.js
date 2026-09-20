@@ -137,6 +137,15 @@ const PARTS = [
   },
 
   {
+    id: "sponsorEnquiry", title: "Where sponsor requests go", kind: "single", file: "sponsors", objectKey: "enquiry",
+    hint: "When a company finishes the form on the sponsor page, these are offered as the way to send it. Write the WhatsApp number with its country code and no spaces, like 9647701234567. Leave it empty to offer email only.",
+    itemFields: [
+      { key: "whatsapp", label: "WhatsApp number (country code, no +)", type: "text" },
+      { key: "email", label: "Email address", type: "text" },
+    ],
+  },
+
+  {
     id: "mapSettings", title: "Map", kind: "single", file: "map",
     hint: "Easiest way: open Google Maps, find the place, press Share → Copy link, and paste it below. A short maps.app.goo.gl link does not work. Open it first, then copy the long address from the browser bar.",
     itemFields: [
@@ -329,6 +338,40 @@ const PARTS = [
     ]),
   },
   {
+    id: "sponsorPage", title: "Sponsor page",
+    hint: "The separate page a company reaches from “Become a sponsor” or “Ask about booths”.",
+    fields: many([
+      ["spf_page_title", "Browser tab title"], ["spf_back_site", "Back to the site button"],
+      ["spf_kicker", "Small label above the title"], ["spf_title", "Page title"], ["spf_sub", "Text under the title"],
+      ["spf_why", "Side panel title"],
+      ["spf_p1", "Reason 1"], ["spf_p1_d", "Reason 1 text"],
+      ["spf_p2", "Reason 2"], ["spf_p2_d", "Reason 2 text"],
+      ["spf_p3", "Reason 3"], ["spf_p3_d", "Reason 3 text"],
+      ["spf_talk", "Help box title"], ["spf_privacy", "Note about their details"],
+      ["spf_st1", "Stepper 1"], ["spf_st2", "Stepper 2"],
+      ["spf_s1_title", "Step 1 title"], ["spf_s1_sub", "Step 1 text"],
+      ["spf_kind_spon", "Choice 1: sponsorship"], ["spf_kind_spon_d", "Choice 1 text"],
+      ["spf_kind_booth", "Choice 2: booth"], ["spf_kind_booth_d", "Choice 2 text"],
+      ["spf_pack_title", "Packages title"], ["spf_pack_sub", "Packages text"],
+      ["spf_pack_unsure", "Package card: not sure yet"], ["spf_pack_unsure_d", "Package card: not sure yet — text"],
+      ["spf_s2_title", "Step 2 title"], ["spf_s2_sub", "Step 2 text"],
+      ["spf_f_company", "Field: company name"], ["spf_ph_company", "Field: company name — grey hint"],
+      ["spf_f_contact", "Field: contact person"],
+      ["spf_f_role", "Field: position"], ["spf_ph_role", "Field: position — grey hint"],
+      ["spf_f_website", "Field: website"], ["spf_ph_website", "Field: website — grey hint"],
+      ["spf_f_city", "Field: city"], ["spf_ph_city", "Field: city — grey hint"],
+      ["spf_f_note", "Field: their question"], ["spf_ph_note", "Field: their question — grey hint"],
+      ["spf_optional", "Word shown on optional fields"],
+      ["spf_review", "Review box title"], ["spf_rv_kind", "Review row: request"], ["spf_rv_pack", "Review row: package"],
+      ["spf_submit", "Send button"],
+      ["spf_ok_title", "Thank-you title"], ["spf_ok_text", "Thank-you text (keep {email})"],
+      ["spf_ok_ref", "Reference label"],
+      ["spf_send_note", "Note above the send buttons"],
+      ["spf_send_whats", "WhatsApp button"], ["spf_send_mail", "Email button"],
+      ["spf_msg_head", "First line of the message that is sent"],
+    ]),
+  },
+  {
     id: "footer", title: "Footer",
     hint: "The bottom of the page.",
     fields: many([
@@ -385,7 +428,11 @@ export const GROUPS = [
   },
   {
     id: "sponsors", title: "Sponsors & partners", where: "Sponsor tiers and the trusted partner logos",
-    blocks: [list("sponsorTiers", "Sponsor tiers"), list("sponsorList", "Sponsors with a logo"), list("partnerList", "Trusted partners"), text("sponsorsText", "Wording")],
+    blocks: [
+      list("sponsorTiers", "Sponsor tiers"), list("sponsorList", "Sponsors with a logo"),
+      list("partnerList", "Trusted partners"), text("sponsorsText", "Wording"),
+      single("sponsorEnquiry", "Where sponsor requests go"), text("sponsorPage", "The sponsor page"),
+    ],
   },
   {
     id: "companies", title: "For companies", where: "The three cards for companies",

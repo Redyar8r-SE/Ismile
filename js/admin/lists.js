@@ -1,6 +1,6 @@
 // The list editors: workshops, sponsor tiers, partners, and the program.
 // main.js passes a small context so this file does not import it back.
-import { LANGS } from "./fields.js?v=18";
+import { LANGS } from "./fields.js?v=21";
 
 const el = (tag, className, text) => {
   const node = document.createElement(tag);
@@ -226,8 +226,11 @@ export function buildTypes(section, ctx) {
 }
 
 // ---------- one object, not a list (the map settings) ----------
+// objectKey edits one key inside the file instead of the file itself, for a
+// settings block that shares a data file with a list.
 export function buildSingle(group, section, ctx) {
-  const item = ctx.data()[group.file];
+  const file = ctx.data()[group.file];
+  const item = group.objectKey ? (file[group.objectKey] ??= {}) : file;
   const body = el("div", "lbody plain-body");
   group.itemFields.forEach((field) => {
     body.append(fieldRow(item, field, { ...ctx, rerender: () => {} }, { options: ctx.optionsFor(group, field) }));

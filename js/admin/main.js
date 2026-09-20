@@ -1,9 +1,9 @@
 // iSmile admin: edit every text, list and photo on the site, and save to GitHub.
-import { GROUPS, LANGS, DATA_FILES } from "./fields.js?v=18";
-import * as store from "./store.js?v=18";
-import { upload, imageFromClipboard } from "./images.js?v=18";
-import { buildList, buildProgram, buildTypes, buildSingle } from "./lists.js?v=18";
-import { loadAccounts, makeAccount, check, forget, fileText, ACCOUNTS_FILE } from "./accounts.js?v=18";
+import { GROUPS, LANGS, DATA_FILES } from "./fields.js?v=21";
+import * as store from "./store.js?v=21";
+import { upload, imageFromClipboard } from "./images.js?v=21";
+import { buildList, buildProgram, buildTypes, buildSingle } from "./lists.js?v=21";
+import { loadAccounts, makeAccount, check, forget, fileText, ACCOUNTS_FILE } from "./accounts.js?v=21";
 
 // Tells the small script in admin.html that the admin code did load, so it
 // does not offer to reload the page.
@@ -30,19 +30,27 @@ async function loadJSON(path) {
   return response.json();
 }
 
-// The English text written in index.html is the default for every key.
+// The English text written in the pages is the default for every key.
+// Every page the site has, so text that lives only on the sponsor page can be
+// translated here too.
+const PAGES = ["index.html", "sponsor.html"];
+
 async function englishFromPage() {
-  const response = await fetch(`index.html?t=${Date.now()}`);
-  if (!response.ok) return {};
-  const page = new DOMParser().parseFromString(await response.text(), "text/html");
   const english = {};
-  page.querySelectorAll("[data-i18n]").forEach((node) => {
-    const key = node.dataset.i18n;
-    if (!(key in english)) english[key] = node.textContent.trim();
-  });
-  page.querySelectorAll("[data-i18n-ph]").forEach((node) => { english[node.dataset.i18nPh] ??= node.getAttribute("placeholder") || ""; });
-  page.querySelectorAll("[data-i18n-label]").forEach((node) => { english[node.dataset.i18nLabel] ??= node.getAttribute("aria-label") || ""; });
-  english.page_title ??= page.querySelector("title")?.textContent.trim() || "";
+  for (const path of PAGES) {
+    const response = await fetch(`${path}?t=${Date.now()}`);
+    if (!response.ok) continue;
+    const page = new DOMParser().parseFromString(await response.text(), "text/html");
+    page.querySelectorAll("[data-i18n]").forEach((node) => {
+      const key = node.dataset.i18n;
+      if (!(key in english)) english[key] = node.textContent.trim();
+    });
+    page.querySelectorAll("[data-i18n-ph]").forEach((node) => { english[node.dataset.i18nPh] ??= node.getAttribute("placeholder") || ""; });
+    page.querySelectorAll("[data-i18n-label]").forEach((node) => { english[node.dataset.i18nLabel] ??= node.getAttribute("aria-label") || ""; });
+    // Each page names its own title key, the same way i18n.js reads it.
+    const titleKey = page.documentElement.dataset.titleKey || "page_title";
+    english[titleKey] ??= page.querySelector("title")?.textContent.trim() || "";
+  }
   return english;
 }
 

@@ -47,5 +47,11 @@
   "pm": "PM",
   "a_theme": "Light or dark",
   "credit_by": "Developed by",
-  "credit_aria": "Message Redyar Nawzad on WhatsApp"
+  "credit_aria": "Message Redyar Nawzad on WhatsApp",
+  "spf_pack_unsure": "Not sure yet",
+  "spf_pack_unsure_d": "Send me all of them",
+  "spf_rv_kind": "Request",
+  "spf_rv_pack": "Package",
+  "spf_msg_head": "iSmile 2026 sponsorship request",
+  "spf_ok_text": "We have your request and will reply to {email}. Keep your reference for any question."
 }

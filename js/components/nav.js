@@ -5,17 +5,21 @@ export function initNav() {
   const nav = document.getElementById("nav");
   const button = document.getElementById("menuBtn");
   const progress = document.getElementById("scrollProgress");
+  if (!header) return;
 
   // Scrolled look + reading progress
   function onScroll() {
     header.classList.toggle("scrolled", window.scrollY > 8);
+    if (!progress) return;
     const max = document.documentElement.scrollHeight - window.innerHeight;
     progress.style.setProperty("--progress", max > 0 ? Math.min(window.scrollY / max, 1) : 0);
   }
   window.addEventListener("scroll", onScroll, { passive: true });
   onScroll();
 
-  // Mobile menu
+  // Mobile menu - only on a page that has one.
+  if (!nav || !button) return;
+
   function setMenu(open) {
     nav.classList.toggle("open", open);
     button.setAttribute("aria-expanded", String(open));
