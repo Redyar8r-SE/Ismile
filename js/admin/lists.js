@@ -1,6 +1,6 @@
 // The list editors: workshops, sponsor tiers, partners, and the program.
 // main.js passes a small context so this file does not import it back.
-import { LANGS } from "./fields.js?v=17";
+import { LANGS } from "./fields.js?v=18";
 
 const el = (tag, className, text) => {
   const node = document.createElement(tag);

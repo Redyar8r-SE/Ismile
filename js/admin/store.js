@@ -6,7 +6,7 @@
 //   "key"    — no server answers, so the browser talks to GitHub itself with a
 //              key you paste once. Quicker to set up; the key lives in this
 //              browser, so whoever uses this computer can save to the site.
-import * as gh from "./github.js?v=17";
+import * as gh from "./github.js?v=18";
 
 const SESSION_KEY = "ismile-admin-session";
 const state = { mode: "key", api: "", token: "", email: "", repo: "", problem: "" };

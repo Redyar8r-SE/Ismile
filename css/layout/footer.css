@@ -11,6 +11,17 @@ footer .foot-about{margin-top:12px;max-width:36ch}
 /* Email and phone stay left-to-right, but follow the page side. */
 footer .ltr{text-align:start}
 html[dir="rtl"] footer .ltr{text-align:right}
+/* A contact line that leads somewhere should look like it does: the email and
+   the website address carry the teal and an underline, so they do not read as
+   plain text sitting next to the phone number. */
+#footContact a{
+  color:#7FD6D2;
+  text-decoration:underline;
+  text-decoration-color:rgba(127,214,210,.5);
+  text-underline-offset:3px;
+  font-weight:600;
+}
+#footContact a:hover,#footContact a:focus-visible{color:#fff;text-decoration-color:currentColor}
 /* The bottom bar: copyright on one side, who built it on the other. They sit
    on one line on a laptop and stack, centred, on a phone. */
 .footbar{
