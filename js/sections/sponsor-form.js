@@ -6,8 +6,8 @@
 // Where the request goes: there is no server yet, so the last screen hands the
 // filled-in request to WhatsApp or email, already written out. When the site
 // has its own server, send() below gains one fetch and everything else stays.
-import { t, tr, onLangChange } from "../i18n.js?v=22";
-import { isValidPhone } from "./registration.js?v=22";
+import { t, tr, onLangChange } from "../i18n.js?v=24";
+import { isValidPhone } from "./registration.js?v=24";
 
 const TOTAL_STEPS = 2;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -155,7 +155,7 @@ export function initSponsorForm({ tiers = [], enquiry = {} } = {}) {
       [t("spf_rv_kind"), a.kind],
       [t("spf_rv_pack"), a.pack],
       [t("spf_f_company"), a.company],
-      [t("spf_f_contact"), a.role ? `${a.contact} — ${a.role}` : a.contact],
+      [t("spf_f_contact"), a.role ? `${a.contact}, ${a.role}` : a.contact],
       [t("f_phone"), a.phone],
       [t("f_email"), a.email],
       [t("spf_f_website"), a.website],
@@ -183,7 +183,7 @@ export function initSponsorForm({ tiers = [], enquiry = {} } = {}) {
 
   // The whole request as plain text, for WhatsApp and for email.
   function asMessage(ref) {
-    const lines = [`${t("spf_msg_head")} — ${ref}`, ""];
+    const lines = [`${t("spf_msg_head")}: ${ref}`, ""];
     reviewRows().forEach(([label, value]) => lines.push(`${label}: ${value}`));
     return lines.join("\n");
   }
@@ -207,7 +207,7 @@ export function initSponsorForm({ tiers = [], enquiry = {} } = {}) {
     const whats = $("spfWhats");
     whats.hidden = !phone;
     if (phone) whats.href = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-    $("spfMail").href = `mailto:${email}?subject=${encodeURIComponent(`${t("spf_msg_head")} — ${ref}`)}&body=${encodeURIComponent(message)}`;
+    $("spfMail").href = `mailto:${email}?subject=${encodeURIComponent(`${t("spf_msg_head")}: ${ref}`)}&body=${encodeURIComponent(message)}`;
 
     form.hidden = true;
     progress.hidden = true;

@@ -1,6 +1,6 @@
 // The small blocks under the italk card ("italkMedX" and any others),
 // from data/projects.json.
-import { tr, onLangChange } from "../i18n.js?v=22";
+import { tr, onLangChange } from "../i18n.js?v=24";
 
 export function initProjects(items) {
   const holder = document.getElementById("orgProjects");
