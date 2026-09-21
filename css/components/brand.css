@@ -2,5 +2,18 @@
    iSmile logo (header + footer)
    ========================================================== */
 .brand{display:flex;align-items:center;gap:10px;text-decoration:none;font-weight:800;font-size:22px;color:var(--text);font-family:var(--font)}
-.brand svg{flex:none}
+.brand svg{display:block;flex:none}
 .brand b{color:var(--teal)}
+
+/* Transparent marks share the surface beneath them. A little extra light
+   keeps the original blue visible against the dark header and footer. */
+.top:not(.scrolled) .brand-mark,
+footer .brand-mark,
+.siteboot-logo,
+.t-logo,
+.abrand .brand-mark,
+.bootlogo{filter:brightness(1.4)}
+:root[data-theme="dark"] .top.scrolled .brand-mark{filter:brightness(1.4)}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) .top.scrolled .brand-mark{filter:brightness(1.4)}
+}

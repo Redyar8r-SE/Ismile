@@ -36,7 +36,7 @@ html[dir="rtl"] .smile{transform:scaleX(-1)}
 .t-orgs{display:grid;gap:10px}
 .t-orgs small{display:block;font-size:12px;color:#A9C9CD}
 .t-orgs b{font-size:14px}
-.t-logo{width:56px;height:56px;flex:none;filter:drop-shadow(0 6px 14px rgba(22,166,161,.35))}
+.t-logo{width:56px;height:56px;flex:none;filter:brightness(1.4)}
 
 @media (max-width:860px){
   .hero .wrap{grid-template-columns:1fr;padding-block:56px 64px;gap:40px}

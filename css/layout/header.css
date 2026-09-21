@@ -90,7 +90,7 @@ html[dir="rtl"] .scroll-progress{transform-origin:right}
 /* Three languages plus the menu button are tight on a small phone. */
 @media (max-width:420px){
   .brand{font-size:19px;gap:8px}
-  .brand svg{width:26px;height:26px}
+  .brand svg{width:30px;height:34px}
   .lang button{padding:6px 7px;font-size:12px}
   .menu-btn{width:40px;height:40px}
 }
