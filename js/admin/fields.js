@@ -360,7 +360,7 @@ const PARTS = [
       ["spf_f_role", "Field: position"], ["spf_ph_role", "Field: position — grey hint"],
       ["spf_f_website", "Field: website"], ["spf_ph_website", "Field: website — grey hint"],
       ["spf_f_city", "Field: city"], ["spf_ph_city", "Field: city — grey hint"],
-      ["spf_f_note", "Field: their question"], ["spf_ph_note", "Field: their question — grey hint"],
+      ["spf_f_note", "Field: their question"],
       ["spf_optional", "Word shown on optional fields"],
       ["spf_review", "Review box title"], ["spf_rv_kind", "Review row: request"], ["spf_rv_pack", "Review row: package"],
       ["spf_submit", "Send button"],

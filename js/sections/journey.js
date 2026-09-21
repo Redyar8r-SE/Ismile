@@ -1,5 +1,5 @@
 // The years under "About iSmile", from data/journey.json.
-import { tr, onLangChange } from "../i18n.js?v=21";
+import { tr, onLangChange } from "../i18n.js?v=22";
 
 export function initJourney(items) {
   const list = document.getElementById("journey");
