@@ -42,7 +42,7 @@ export function initRegistration() {
   // ---------- Field validation ----------
   function showError(input, key) {
     const wrap = input.closest(".f");
-    let message = wrap.querySelector(":scope > .f-error");
+    let message = wrap.querySelector(".f-error");
     if (!key) {
       input.removeAttribute("aria-invalid");
       input.removeAttribute("aria-describedby");
@@ -62,6 +62,7 @@ export function initRegistration() {
   }
 
   function checkField(input) {
+    if (input.dataset.rule === "student-id") return checkStudentId(input);
     const value = input.value.trim();
     const rule = input.dataset.rule;
     let error = "";
@@ -78,6 +79,37 @@ export function initRegistration() {
     }
     showError(input, error);
     return !error;
+  }
+
+  function checkStudentId(input) {
+    const file = input.files?.[0];
+    let error = "";
+    if (!file) error = "err_student_id";
+    else if (!/^image\/(jpeg|png|webp)$/i.test(file.type)) error = "err_student_id_type";
+    else if (file.size > 8 * 1024 * 1024) error = "err_student_id_size";
+    showError(input, error);
+    return !error;
+  }
+
+  let studentIdPreviewUrl = "";
+  function renderStudentIdPreview() {
+    const input = $("p_student_id");
+    const preview = $("studentIdPreview");
+    const image = $("studentIdImage");
+    const name = $("studentIdFileName");
+    const file = input.files?.[0];
+    if (studentIdPreviewUrl) URL.revokeObjectURL(studentIdPreviewUrl);
+    studentIdPreviewUrl = "";
+    if (!file) {
+      preview.hidden = true;
+      image.removeAttribute("src");
+      name.textContent = "";
+      return;
+    }
+    studentIdPreviewUrl = URL.createObjectURL(file);
+    image.src = studentIdPreviewUrl;
+    name.textContent = file.name;
+    preview.hidden = false;
   }
 
   function validateStep(number) {
@@ -143,6 +175,10 @@ export function initRegistration() {
 
   form.addEventListener("change", (event) => {
     const input = event.target;
+    if (input.id === "p_student_id") {
+      renderStudentIdPreview();
+      if (input.getAttribute("aria-invalid") === "true") checkField(input);
+    }
     if (input.name === "pay") {
       syncChecked("pay");
       renderReview();
@@ -163,10 +199,15 @@ export function initRegistration() {
     const isStudent = checkedValue("ticket") === "student";
     $("uniWrap").hidden = !isStudent;
     $("ambassadorWrap").hidden = !isStudent;
+    $("studentIdWrap").hidden = !isStudent;
     $("p_ambassador").disabled = !isStudent;
+    $("p_student_id").disabled = !isStudent;
     if (!isStudent) {
       showError($("p_uni"), "");
       showError($("p_ambassador"), "");
+      showError($("p_student_id"), "");
+      $("p_student_id").value = "";
+      renderStudentIdPreview();
     }
   }
 
@@ -185,6 +226,7 @@ export function initRegistration() {
     if (checkedValue("ticket") === "student") {
       rows.push([t("f_uni"), $("p_uni").value.trim()]);
       if ($("p_ambassador").value.trim()) rows.push([t("f_ambassador"), $("p_ambassador").value.trim()]);
+      if ($("p_student_id").files?.[0]) rows.push([t("f_student_id"), $("p_student_id").files[0].name]);
     }
     rows.push([t("pay_legend"), t(checkedValue("pay") === "fastpay" ? "pay_fastpay_t" : "pay_fib_t")]);
 

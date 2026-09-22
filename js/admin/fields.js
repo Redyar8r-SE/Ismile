@@ -305,6 +305,7 @@ const PARTS = [
       ["f_ticket", "Field: ticket type"], ["ticket_prof", "Ticket toggle 1"], ["ticket_student", "Ticket toggle 2"],
       ["f_uni", "Field: university"], ["ph_uni", "Field: university — grey hint"],
       ["f_ambassador", "Field: student ambassador code"], ["ph_ambassador", "Field: ambassador code — grey hint"], ["f_optional", "Optional field label"],
+      ["f_student_id", "Field: student ID photo"], ["f_student_id_required", "Student ID required note"], ["student_id_hint", "Student ID upload hint"],
       ["f_cname", "Field: company name"], ["f_contact", "Field: contact person"],
       ["f_dentists", "Field: dentists attending"], ["add_dentist", "Add dentist button"],
       ["d_name", "Dentist row: name"], ["d_phone", "Dentist row: WhatsApp"],

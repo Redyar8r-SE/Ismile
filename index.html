@@ -33,10 +33,10 @@
 <link rel="stylesheet" href="css/sections/sponsors.css?v=29">
 <link rel="stylesheet" href="css/sections/partners.css?v=29">
 <link rel="stylesheet" href="css/sections/companies.css?v=24">
-<link rel="stylesheet" href="css/sections/register.css?v=29">
+<link rel="stylesheet" href="css/sections/register.css?v=30">
 <link rel="stylesheet" href="css/sections/venue.css?v=26">
 
-<script type="module" src="js/main.js?v=30"></script>
+<script type="module" src="js/main.js?v=31"></script>
 </head>
 <body>
 
@@ -452,6 +452,17 @@
               <div class="f full" id="ambassadorWrap" hidden>
                 <label for="p_ambassador"><span data-i18n="f_ambassador">Ambassador code</span><small data-i18n="f_optional">(optional)</small></label>
                 <input id="p_ambassador" autocomplete="off" data-rule="code" data-optional placeholder="Enter a code if you have one" data-i18n-ph="ph_ambassador" disabled>
+              </div>
+              <div class="f full" id="studentIdWrap" hidden>
+                <label for="p_student_id"><span data-i18n="f_student_id">Student ID photo</span><small data-i18n="f_student_id_required">(required for students)</small></label>
+                <div class="student-id-upload">
+                  <input id="p_student_id" type="file" accept="image/jpeg,image/png,image/webp" data-rule="student-id" disabled>
+                  <p class="student-id-hint" data-i18n="student_id_hint">Upload a clear photo of your current student ID. JPG, PNG or WebP, up to 8 MB.</p>
+                  <div class="student-id-preview" id="studentIdPreview" hidden>
+                    <img id="studentIdImage" alt="">
+                    <span id="studentIdFileName"></span>
+                  </div>
+                </div>
               </div>
             </div>
 

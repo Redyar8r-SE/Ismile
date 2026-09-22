@@ -11,7 +11,7 @@ import { initPartners } from "./sections/partners.js?v=25";
 import { initJourney } from "./sections/journey.js?v=24";
 import { initProjects } from "./sections/projects.js?v=24";
 import { initFooter } from "./sections/footer.js?v=24";
-import { initRegistration } from "./sections/registration.js?v=30";
+import { initRegistration } from "./sections/registration.js?v=31";
 import { initVenue } from "./sections/venue.js?v=24";
 
 async function start() {
