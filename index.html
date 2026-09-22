@@ -33,10 +33,10 @@
 <link rel="stylesheet" href="css/sections/sponsors.css?v=29">
 <link rel="stylesheet" href="css/sections/partners.css?v=29">
 <link rel="stylesheet" href="css/sections/companies.css?v=24">
-<link rel="stylesheet" href="css/sections/register.css?v=30">
+<link rel="stylesheet" href="css/sections/register.css?v=31">
 <link rel="stylesheet" href="css/sections/venue.css?v=26">
 
-<script type="module" src="js/main.js?v=31"></script>
+<script type="module" src="js/main.js?v=32"></script>
 </head>
 <body>
 
@@ -313,11 +313,10 @@
 <section class="block" id="companies">
   <div class="wrap">
     <h2 data-i18n="co_title">For companies</h2>
-    <p class="lead" data-i18n="co_sub">Sponsor the summit, exhibit your products, or register your whole team.</p>
+    <p class="lead" data-i18n="co_sub">Sponsor the summit or exhibit your products.</p>
     <div class="co-grid">
       <div class="co"><h3 data-i18n="co1">Become a sponsor</h3><p data-i18n="co1p">Diamond, Platinum, Gold, Silver and Exhibitor packages.</p><a class="btn btn-primary btn-sm" href="sponsor.html" data-i18n="co1b">Request the packages</a></div>
       <div class="co"><h3 data-i18n="co2">Book an exhibition booth</h3><p data-i18n="co2p">Show your products to dentists from across Iraq.</p><a class="btn btn-ghost btn-sm" href="sponsor.html#booth" data-i18n="co2b">Ask about booths</a></div>
-      <div class="co"><h3 data-i18n="co3">Register your team</h3><p data-i18n="co3p">Contact us to arrange registration for several dentists.</p><a class="btn btn-primary btn-sm" href="mailto:info@ismile.krd?subject=iSmile%202026%20team%20registration" data-i18n="co3">Register your team</a></div>
     </div>
   </div>
 </section>
@@ -455,12 +454,17 @@
               </div>
               <div class="f full" id="studentIdWrap" hidden>
                 <label for="p_student_id"><span data-i18n="f_student_id">Student ID photo</span><small data-i18n="f_student_id_required">(required for students)</small></label>
-                <div class="student-id-upload">
-                  <input id="p_student_id" type="file" accept="image/jpeg,image/png,image/webp" data-rule="student-id" disabled>
-                  <p class="student-id-hint" data-i18n="student_id_hint">Upload a clear photo of your current student ID. JPG, PNG or WebP, up to 8 MB.</p>
+                <div class="student-id-upload" id="studentIdDropzone">
+                  <div class="student-id-prompt">
+                    <span class="student-id-upload-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="8.5" cy="11" r="2"/><path d="M5.5 16c.8-1.7 2-2.5 3.6-2.5s2.8.8 3.6 2.5M15 10h3M15 14h3"/></svg></span>
+                    <div class="student-id-upload-copy"><strong data-i18n="student_id_upload_title">Upload your student ID</strong><span data-i18n="student_id_upload_copy">Use a clear photo so we can verify your student registration.</span></div>
+                    <label class="student-id-browse" for="p_student_id"><span data-i18n="student_id_upload_action">Choose a photo</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></label>
+                  </div>
+                  <input id="p_student_id" class="student-id-file" type="file" accept="image/jpeg,image/png,image/webp" data-rule="student-id" disabled>
+                  <p class="student-id-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l7 3v5.1c0 4.2-2.8 7.7-7 8.9-4.2-1.2-7-4.7-7-8.9V6.5l7-3z"/><path d="m9 12 2 2 4-4"/></svg><span data-i18n="student_id_hint">JPG, PNG or WebP, up to 8 MB.</span></p>
                   <div class="student-id-preview" id="studentIdPreview" hidden>
                     <img id="studentIdImage" alt="">
-                    <span id="studentIdFileName"></span>
+                    <div class="student-id-preview-meta"><strong data-i18n="student_id_selected">Photo selected</strong><span id="studentIdFileName"></span></div>
                   </div>
                 </div>
               </div>

@@ -271,12 +271,11 @@ const PARTS = [
   },
   {
     id: "companies", title: "For companies",
-    hint: "The three cards for sponsors, exhibition booths and team registration.",
+    hint: "The two cards for sponsors and exhibition booths.",
     fields: many([
       ["co_title", "Section title"], ["co_sub", "Section text"],
       ["co1", "Card 1 title"], ["co1p", "Card 1 text"], ["co1b", "Card 1 button"],
       ["co2", "Card 2 title"], ["co2p", "Card 2 text"], ["co2b", "Card 2 button"],
-      ["co3", "Card 3 title and button"], ["co3p", "Card 3 text"],
     ]),
   },
   {

@@ -112,6 +112,37 @@ export function initRegistration() {
     preview.hidden = false;
   }
 
+  // The upload card also accepts a dropped image, while the visible button
+  // keeps the same file picker available on touch devices.
+  const studentIdDropzone = $("studentIdDropzone");
+  ["dragenter", "dragover"].forEach((eventName) => {
+    studentIdDropzone.addEventListener(eventName, (event) => {
+      if ($("p_student_id").disabled) return;
+      event.preventDefault();
+      studentIdDropzone.classList.add("is-dragging");
+    });
+  });
+  ["dragleave", "drop"].forEach((eventName) => {
+    studentIdDropzone.addEventListener(eventName, (event) => {
+      event.preventDefault();
+      studentIdDropzone.classList.remove("is-dragging");
+    });
+  });
+  studentIdDropzone.addEventListener("drop", (event) => {
+    const input = $("p_student_id");
+    if (input.disabled) return;
+    const file = event.dataTransfer?.files?.[0];
+    if (!file) return;
+    try {
+      const transfer = new DataTransfer();
+      transfer.items.add(file);
+      input.files = transfer.files;
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    } catch {
+      // Browsers without writable FileList still have the picker button.
+    }
+  });
+
   function validateStep(number) {
     if (number === 1) {
       const inputs = [...form.querySelectorAll('.reg-step[data-step="1"] [data-rule]')].filter((input) => !isHidden(input));
