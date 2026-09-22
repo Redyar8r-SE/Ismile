@@ -22,6 +22,11 @@
 .vf-body{flex:1 1 190px;min-width:0}
 .vf-body small{display:block;font-size:12.5px;color:var(--muted)}
 .vf-body b{display:block;font-size:15.5px;font-weight:600;line-height:1.4}
+.venue-date{display:flex!important;align-items:baseline;gap:8px;flex-wrap:wrap}
+.venue-date-main{display:inline-flex;align-items:baseline;gap:7px;padding:5px 10px;border-radius:9px;background:color-mix(in srgb,var(--teal) 12%,transparent);color:var(--text)}
+.venue-date-range{font-size:19px;font-weight:800;letter-spacing:-.02em;color:var(--teal-ink)}
+.venue-date-month{font-size:14px;font-weight:700}
+.venue-date-duration{font-size:13px;font-weight:600;color:var(--muted)}
 
 .vf-copy{flex:none;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--bg);color:var(--text);font:inherit;font-size:13px;font-weight:600;padding:7px 11px;border-radius:999px;cursor:pointer;transition:border-color .2s,color .2s,background .2s}
 .vf-copy svg{width:14px;height:14px}
