@@ -1,5 +1,5 @@
 // Trusted partners grouped by tier, from data/partners.json.
-import { ICONS } from "../config/icons.js?v=24";
+import { ICONS } from "../config/icons.js?v=25";
 import { initials } from "../utils/initials.js?v=24";
 import { t, tr, onLangChange } from "../i18n.js?v=24";
 
@@ -16,7 +16,7 @@ export function initPartners({ tiers, partners }) {
         return `
           <div class="tierc ${tier.className} ptier">
             <div class="tc-top">
-              <span class="medal">${ICONS.gem}</span>
+              <span class="medal">${tierIcon(tier)}</span>
               <div><h3>${tr(tier.label) || tier.name}</h3><p>${tr(tier.subtitle)}</p></div>
               <span class="tc-count">${list.length} ${t(list.length > 1 ? "tp_companies_brands" : "tp_company")}</span>
             </div>
@@ -35,6 +35,12 @@ export function initPartners({ tiers, partners }) {
 
   render();
   onLangChange(render);
+}
+
+function tierIcon(tier) {
+  if (tier.className === "tc-plat") return ICONS.crown;
+  if (tier.className === "tc-silver") return ICONS.medal;
+  return ICONS.gem;
 }
 
 function renderLogo(p, tier) {
