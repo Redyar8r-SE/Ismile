@@ -86,6 +86,22 @@
   transition:border-color .2s,box-shadow .2s;
 }
 .f input::placeholder,.f textarea::placeholder{color:color-mix(in srgb,var(--muted) 65%,transparent)}
+.age-control{direction:ltr;display:grid;grid-template-columns:48px minmax(0,1fr) 48px;height:50px;overflow:hidden;border:1.5px solid var(--line);border-radius:10px;background:var(--bg);transition:border-color .2s,box-shadow .2s}
+.age-control:hover{border-color:color-mix(in srgb,var(--teal) 40%,var(--line))}
+.age-control:focus-within{border-color:var(--teal);box-shadow:0 0 0 4px color-mix(in srgb,var(--teal) 18%,transparent)}
+.age-control:has(input[aria-invalid="true"]){border-color:var(--danger)}
+.age-control:has(input[aria-invalid="true"]):focus-within{box-shadow:0 0 0 4px color-mix(in srgb,var(--danger) 16%,transparent)}
+.f .age-control input{height:47px;padding:0 6px;border:0;border-radius:0;background:transparent;text-align:center;font-size:16px;font-weight:700;box-shadow:none;appearance:textfield;-moz-appearance:textfield}
+.f .age-control input:focus{border:0;box-shadow:none}
+.f .age-control input::-webkit-inner-spin-button,.f .age-control input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.age-step{display:grid;place-items:center;width:48px;height:48px;padding:0;border:0;background:color-mix(in srgb,var(--teal) 10%,var(--bg));color:var(--teal-ink);cursor:pointer;transition:color .2s,background .2s,box-shadow .2s}
+.age-step:first-child{border-inline-end:1px solid var(--line)}
+.age-step:last-child{border-inline-start:1px solid var(--line)}
+.age-step svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.age-step:hover:not(:disabled){background:color-mix(in srgb,var(--teal) 22%,var(--bg));color:var(--text)}
+.age-step:focus-visible{position:relative;z-index:1;outline:2px solid var(--teal);outline-offset:-3px}
+.age-step:active:not(:disabled){background:color-mix(in srgb,var(--teal) 30%,var(--bg))}
+.age-step:disabled{opacity:.38;cursor:not-allowed}
 .student-id-upload{position:relative;display:grid;gap:13px;padding:16px;border:1.5px dashed color-mix(in srgb,var(--teal) 62%,var(--line));border-radius:16px;background:linear-gradient(135deg,color-mix(in srgb,var(--teal) 7%,var(--bg)),var(--bg));transition:border-color .2s,background .2s,box-shadow .2s}
 .student-id-upload:hover,.student-id-upload:focus-within,.student-id-upload.is-dragging{border-color:var(--teal);background:color-mix(in srgb,var(--teal) 10%,var(--bg));box-shadow:0 8px 24px color-mix(in srgb,var(--teal) 12%,transparent)}
 .student-id-prompt{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;min-width:0}

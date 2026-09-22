@@ -23,6 +23,7 @@ export function initRegistration() {
   const nextBtn = $("regNext");
   const submitBtn = $("regSubmit");
   const specialty = $("p_spec");
+  const age = $("p_age");
   const success = $("regSuccess");
 
   let step = 1;
@@ -53,7 +54,7 @@ export function initRegistration() {
       message = document.createElement("p");
       message.className = "f-error";
       message.id = `${input.id}-error`;
-      input.insertAdjacentElement("afterend", message);
+      (input.closest(".age-control") || input).insertAdjacentElement("afterend", message);
     }
     message.dataset.key = key;
     message.textContent = t(key);
@@ -172,6 +173,28 @@ export function initRegistration() {
     if (input.matches("[data-rule]") && input.value.trim()) checkField(input);
   });
 
+  // Replace the browser's bright native number arrows with controls that
+  // match the registration form and keep the value inside the allowed range.
+  const ageButtons = [...form.querySelectorAll("[data-age-step]")];
+  function updateAgeButtons() {
+    const value = age.value === "" ? null : Number(age.value);
+    ageButtons[0].disabled = value !== null && value <= Number(age.min);
+    ageButtons[1].disabled = value !== null && value >= Number(age.max);
+  }
+  ageButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const direction = Number(button.dataset.ageStep);
+      const min = Number(age.min);
+      const max = Number(age.max);
+      const current = age.value === "" ? min : Number(age.value);
+      age.value = String(Math.min(max, Math.max(min, age.value === "" ? min : current + direction)));
+      age.dispatchEvent(new Event("input", { bubbles: true }));
+      age.focus();
+      updateAgeButtons();
+    });
+  });
+  age.addEventListener("input", updateAgeButtons);
+
   // ---------- Steps ----------
   function goTo(number, { scroll = true } = {}) {
     step = number;
@@ -250,6 +273,7 @@ export function initRegistration() {
     rows.push([t("f_third"), $("p_third").value.trim()]);
     rows.push([t("f_phone_number"), $("p_phone").value.trim()]);
     rows.push([t("f_email"), $("p_email").value.trim()]);
+    rows.push([t("f_city"), $("p_city").value.trim()]);
     rows.push([t("f_gender"), optionText($("p_gender"))]);
     rows.push([t("f_age"), $("p_age").value.trim()]);
     rows.push([t("f_spec"), optionText(specialty)]);
@@ -317,6 +341,7 @@ export function initRegistration() {
 
   $("regAgain").addEventListener("click", () => {
     form.reset();
+    updateAgeButtons();
     form.querySelectorAll('[aria-invalid="true"]').forEach((input) => showError(input, ""));
     $("termsError").hidden = true;
     ["pay", "ticket"].forEach(syncChecked);
@@ -335,5 +360,6 @@ export function initRegistration() {
   });
 
   // ---------- Start ----------
+  updateAgeButtons();
   goTo(1, { scroll: false });
 }

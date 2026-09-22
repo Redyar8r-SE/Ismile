@@ -17,9 +17,9 @@
 <link rel="stylesheet" href="css/layout/header.css?v=25">
 <link rel="stylesheet" href="css/layout/footer.css?v=24">
 <link rel="stylesheet" href="css/sections/hero.css?v=43">
-<link rel="stylesheet" href="css/sections/register.css?v=31">
+<link rel="stylesheet" href="css/sections/register.css?v=32">
 <link rel="stylesheet" href="css/sections/register-page.css?v=5">
-<script type="module" src="js/register.js?v=1"></script>
+<script type="module" src="js/register.js?v=2"></script>
 </head>
 <body>
 <div class="siteboot" id="siteboot" aria-hidden="true">
@@ -184,6 +184,10 @@
                 <input id="p_email" type="email" inputmode="email" dir="ltr" autocomplete="email" placeholder="name@example.com" data-rule="email">
               </div>
               <div class="f">
+                <label for="p_city" data-i18n="f_city">City</label>
+                <input id="p_city" autocomplete="address-level2" data-rule="required" placeholder="e.g. Sulaimani" data-i18n-ph="ph_city">
+              </div>
+              <div class="f">
                 <label for="p_gender" data-i18n="f_gender">Gender</label>
                 <select id="p_gender" data-rule="required">
                   <option value="" data-i18n="o_gender">Choose your gender</option>
@@ -195,7 +199,11 @@
               </div>
               <div class="f">
                 <label for="p_age" data-i18n="f_age">Age</label>
-                <input id="p_age" type="number" min="16" max="120" inputmode="numeric" data-rule="age" placeholder="e.g. 28" data-i18n-ph="ph_age">
+                <div class="age-control">
+                  <button type="button" class="age-step" data-age-step="-1" aria-label="Decrease age" data-i18n-label="age_decrease"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10h10"/></svg></button>
+                  <input id="p_age" type="number" min="16" max="120" inputmode="numeric" data-rule="age" placeholder="28" data-i18n-ph="ph_age">
+                  <button type="button" class="age-step" data-age-step="1" aria-label="Increase age" data-i18n-label="age_increase"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 5v10M5 10h10"/></svg></button>
+                </div>
               </div>
               <div class="f">
                 <label for="p_spec" data-i18n="f_spec">Specialty</label>
@@ -209,7 +217,7 @@
                   <option value="student" data-i18n="o_student">Dental student</option>
                 </select>
               </div>
-              <div class="f">
+              <div class="f full">
                 <span class="f-label" id="ticketLabel" data-i18n="f_ticket">Ticket type</span>
                 <div class="ticket-toggle" role="radiogroup" aria-labelledby="ticketLabel">
                   <label class="is-checked"><input type="radio" name="ticket" value="professional" checked><span data-i18n="ticket_prof">Professional</span></label>
