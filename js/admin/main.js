@@ -1,5 +1,5 @@
 // iSmile admin: edit every text, list and photo on the site, and save to GitHub.
-import { GROUPS, LANGS, DATA_FILES } from "./fields.js?v=31";
+import { GROUPS, LANGS, DATA_FILES } from "./fields.js?v=32";
 import * as store from "./store.js?v=24";
 import { upload, imageFromClipboard } from "./images.js?v=24";
 import { buildList, buildProgram, buildTypes, buildSingle } from "./lists.js?v=24";
@@ -33,7 +33,7 @@ async function loadJSON(path) {
 // The English text written in the pages is the default for every key.
 // Every page the site has, so text that lives only on the sponsor page can be
 // translated here too.
-const PAGES = ["index.html", "sponsor.html"];
+const PAGES = ["index.html", "sponsor.html", "register.html"];
 
 async function englishFromPage() {
   const english = {};

@@ -4,6 +4,7 @@
 
 ```
 index.html                 Page markup only (no inline CSS or JS)
+register.html              Dedicated registration page
 
 css/
   base/tokens.css          Colors, fonts, radii, dark theme
@@ -14,6 +15,7 @@ css/
 
 js/
   main.js                  Entry point: loads data, starts every section
+  register.js              Registration page entry point
   i18n.js                  Translation helper (t, setLang)
   config/icons.js          SVG icons used by JS-rendered sections
   utils/                   Small helpers (JSON loading, initials)
@@ -33,7 +35,7 @@ assets/logos/              Partner logo images (.webp)
 
 ## Running locally
 
-The page loads JSON with `fetch` and uses JavaScript modules, so browsers block it
+The pages load JSON with `fetch` and use JavaScript modules, so browsers block them
 when you double-click `index.html`. Serve the folder instead, for example:
 
 - VS Code: install **Live Server**, right-click `index.html` → *Open with Live Server*
@@ -46,7 +48,7 @@ The header has an **EN / العربية / کوردی** switch. Arabic and Kurdis
 turn the whole page right-to-left and use the Noto Kufi Arabic font. The
 visitor's choice is remembered in their browser.
 
-- **Page text:** every text in `index.html` carries `data-i18n="key"`
+- **Page text:** text in `index.html`, `register.html`, and `sponsor.html` carries `data-i18n="key"`
   (`data-i18n-ph` for a field placeholder, `data-i18n-label` for an aria-label).
   The English text stays in the HTML; the Arabic lives in `data/i18n/ar.json`
   and the Kurdish in `data/i18n/ku.json`, under the same key.

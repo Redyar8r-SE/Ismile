@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-title-key="reg_page_title">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="assets/favicon.svg?v=26" type="image/svg+xml">
+<script>try{var t=localStorage.getItem("ismile-theme");document.documentElement.dataset.theme=(t==="light"||t==="dark")?t:(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")}catch(e){}</script>
+<title>Register for iSmile 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=Noto+Kufi+Arabic:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/base/tokens.css?v=24">
+<link rel="stylesheet" href="css/base/base.css?v=24">
+<link rel="stylesheet" href="css/components/boot.css?v=24">
+<link rel="stylesheet" href="css/components/buttons.css?v=24">
+<link rel="stylesheet" href="css/components/brand.css?v=26">
+<link rel="stylesheet" href="css/layout/header.css?v=25">
+<link rel="stylesheet" href="css/layout/footer.css?v=24">
+<link rel="stylesheet" href="css/sections/register.css?v=31">
+<link rel="stylesheet" href="css/sections/register-page.css?v=2">
+<script type="module" src="js/register.js?v=1"></script>
+</head>
+<body>
+<div class="siteboot" id="siteboot" aria-hidden="true">
+  <div class="siteboot-box">
+    <div class="siteboot-mark">
+      <svg class="siteboot-ring" viewBox="0 0 88 88"><circle class="siteboot-rail" cx="44" cy="44" r="40"/><circle class="siteboot-arc" cx="44" cy="44" r="40"/></svg>
+      <svg class="siteboot-logo" width="34" height="40" viewBox="0 0 1080 1155" aria-hidden="true"><svg x="0" y="0" width="1080" height="1155" viewBox="0 0 1080 1155" overflow="hidden"><image href="assets/brand/ismile-logo.png" width="2481" height="1155"/></svg></svg>
+    </div>
+  </div>
+</div>
+<noscript><style>#siteboot{display:none}</style></noscript>
+<script>
+(function () {
+  var page = document.documentElement;
+  page.classList.add("siteboot-on");
+  var lift = function () {
+    page.classList.remove("siteboot-on");
+    var cover = document.getElementById("siteboot");
+    if (cover) cover.classList.add("is-gone");
+  };
+  window.siteReady = lift;
+  window.addEventListener("load", function () { setTimeout(lift, 2500); });
+  setTimeout(lift, 6000);
+})();
+</script>
+
+<!-- ============ HEADER ============ -->
+<header class="top reg-top" id="top">
+  <div class="wrap">
+    <a class="brand" href="index.html" aria-label="iSmile 2026 home">
+      <svg class="brand-mark" width="34" height="40" viewBox="0 0 1080 1155" aria-hidden="true"><svg x="0" y="0" width="1080" height="1155" viewBox="0 0 1080 1155" overflow="hidden"><image href="assets/brand/ismile-logo.png" width="2481" height="1155"/></svg></svg>
+      <span>i<b>Smile</b></span>
+    </a>
+    <div class="lang" id="langSwitch" role="group" aria-label="Language" data-i18n-label="a_lang">
+      <button type="button" data-lang="en" aria-pressed="true" lang="en">EN</button>
+      <button type="button" data-lang="ar" aria-pressed="false" lang="ar">العربية</button>
+      <button type="button" data-lang="ku" aria-pressed="false" lang="ckb">کوردی</button>
+    </div>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Light or dark" aria-pressed="false" data-i18n-label="a_theme">
+      <svg class="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/></svg>
+      <svg class="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8.2 8.2 0 019.5 4 8.3 8.3 0 1020 14.5z"/></svg>
+    </button>
+  </div>
+</header>
+
+<main>
+<section class="reg-page-intro">
+  <div class="wrap">
+    <a class="reg-page-back" href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg><span data-i18n="spf_back_site">Back to the summit</span></a>
+    <div class="reg-page-hero">
+      <div class="reg-page-hero-copy">
+        <p class="section-kicker" data-i18n="reg_kicker">Registration</p>
+        <h1 data-i18n="reg_title">Secure your place at iSmile 2026</h1>
+        <p data-i18n="reg_sub">Register in two short steps. Your payment link and ticket are sent to you by WhatsApp and email.</p>
+        <div class="reg-page-meta"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><b data-i18n="t_date_full">20 &amp; 21 November 2026</b></span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg><b data-i18n="t_venue">Grand Millennium Sulaimani</b></span></div>
+      </div>
+      <div class="reg-page-hero-art" aria-hidden="true"><span>i<b>Smile</b></span><svg viewBox="0 0 160 160" fill="none"><circle cx="80" cy="80" r="64" stroke="currentColor" stroke-width="1"/><circle cx="80" cy="80" r="47" stroke="currentColor" stroke-width="1"/><path d="M80 0v160M0 80h160" stroke="currentColor" stroke-width="1"/></svg></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ REGISTRATION ============ -->
+<section class="block reg-page-section" id="register">
+  <div class="wrap">
+    <div class="reg">
+      <!-- Side column: tickets, how it works, help -->
+      <aside class="reg-aside">
+        <div class="reg-panel">
+          <h3 data-i18n="reg_tickets">Ticket options</h3>
+          <ul class="ticket-list">
+            <li>
+              <span class="tk-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c.8-4 3.8-6 7.5-6s6.7 2 7.5 6"/></svg></span>
+              <div><b data-i18n="tk_prof">Professional</b><small data-i18n="tk_prof_d">Dentists, specialists, technicians and researchers</small></div>
+              <span class="tk-price" data-i18n="tk_soon">Price soon</span>
+            </li>
+            <li>
+              <span class="tk-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"/></svg></span>
+              <div><b data-i18n="tk_student">Student</b><small data-i18n="tk_student_d">For currently enrolled dental students</small></div>
+              <span class="tk-price" data-i18n="tk_soon">Price soon</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="reg-panel">
+          <h3 data-i18n="how_title">How it works</h3>
+          <ol class="how-steps">
+            <li><span>1</span><div><b data-i18n="how1">Fill in your details</b><small data-i18n="how1_d">It takes about two minutes.</small></div></li>
+            <li><span>2</span><div><b data-i18n="how2">Pay with FIB or FastPay</b><small data-i18n="how2_d">We send your payment link by WhatsApp and email.</small></div></li>
+            <li><span>3</span><div><b data-i18n="how3">Receive your ticket</b><small data-i18n="how3_d">Your ticket and certificate are kept in your account.</small></div></li>
+          </ol>
+        </div>
+
+        <div class="reg-help">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 11-4.2-7.6L21 3l-1.2 4.1A9 9 0 0121 12z"/><path d="M9.5 9.5a2.5 2.5 0 114 2c-.9.6-1.5 1.1-1.5 2M12 17h.01"/></svg>
+          <div><b data-i18n="help_title">Need help registering?</b><a href="mailto:info@ismile.krd" dir="ltr">info@ismile.krd</a></div>
+        </div>
+        <p class="reg-policy">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
+          <span data-i18n="reg_b4">Tickets are non-refundable.</span>
+        </p>
+      </aside>
+
+      <!-- Form card -->
+      <div class="reg-card" id="regCard">
+        <div class="reg-progress" id="regProgress">
+          <ol class="stepper" id="regStepper">
+            <li class="is-active"><span class="st-dot">1</span><span class="st-label" data-i18n="st2">Your details</span></li>
+            <li><span class="st-dot">2</span><span class="st-label" data-i18n="st3">Payment &amp; review</span></li>
+          </ol>
+          <div class="st-bar" aria-hidden="true"><i id="regBar"></i></div>
+        </div>
+
+        <form id="regForm" novalidate>
+          <!-- Step 1: individual details -->
+          <div class="reg-step" data-step="1">
+            <div class="reg-person-intro">
+              <span class="tc-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c.8-4 3.8-6 7.5-6s6.7 2 7.5 6"/></svg></span>
+              <span class="tc-text"><b data-i18n="mode_person">Dental professional</b><small data-i18n="mode_person_d">Register yourself as a dentist, specialist, technician, researcher or student.</small></span>
+            </div>
+            <div class="step-head">
+              <h3 tabindex="-1" data-i18n="s2_title_p">Your details</h3>
+              <p data-i18n="s2_sub">We use these details to send your payment link and ticket.</p>
+            </div>
+
+            <div class="fields">
+              <div class="f">
+                <label for="p_first" data-i18n="f_first">First name</label>
+                <input id="p_first" autocomplete="given-name" data-rule="name-part" placeholder="First name" data-i18n-ph="ph_first">
+              </div>
+              <div class="f">
+                <label for="p_second" data-i18n="f_second">Second name</label>
+                <input id="p_second" data-rule="name-part" placeholder="Second name" data-i18n-ph="ph_second">
+              </div>
+              <div class="f full">
+                <label for="p_third" data-i18n="f_third">Third name</label>
+                <input id="p_third" autocomplete="family-name" data-rule="name-part" placeholder="Third name" data-i18n-ph="ph_third">
+              </div>
+              <div class="f">
+                <label for="p_phone" data-i18n="f_phone_number">Phone number</label>
+                <input id="p_phone" type="tel" inputmode="tel" dir="ltr" autocomplete="tel" placeholder="0750 123 4567" data-rule="phone">
+              </div>
+              <div class="f">
+                <label for="p_email" data-i18n="f_email">Email</label>
+                <input id="p_email" type="email" inputmode="email" dir="ltr" autocomplete="email" placeholder="name@example.com" data-rule="email">
+              </div>
+              <div class="f">
+                <label for="p_gender" data-i18n="f_gender">Gender</label>
+                <select id="p_gender" data-rule="required">
+                  <option value="" data-i18n="o_gender">Choose your gender</option>
+                  <option value="female" data-i18n="o_female">Female</option>
+                  <option value="male" data-i18n="o_male">Male</option>
+                  <option value="other" data-i18n="o_other">Other</option>
+                  <option value="prefer-not" data-i18n="o_prefer_not">Prefer not to say</option>
+                </select>
+              </div>
+              <div class="f">
+                <label for="p_age" data-i18n="f_age">Age</label>
+                <input id="p_age" type="number" min="16" max="120" inputmode="numeric" data-rule="age" placeholder="e.g. 28" data-i18n-ph="ph_age">
+              </div>
+              <div class="f">
+                <label for="p_spec" data-i18n="f_spec">Specialty</label>
+                <select id="p_spec" data-rule="required">
+                  <option value="" data-i18n="o_choose">Choose your specialty</option>
+                  <option value="gp" data-i18n="o_gp">General dentist</option>
+                  <option value="spec" data-i18n="o_spec">Specialist</option>
+                  <option value="omfs" data-i18n="o_omfs">Oral and maxillofacial surgeon</option>
+                  <option value="lab" data-i18n="o_lab">Dental technician</option>
+                  <option value="acad" data-i18n="o_acad">Academic or researcher</option>
+                  <option value="student" data-i18n="o_student">Dental student</option>
+                </select>
+              </div>
+              <div class="f">
+                <span class="f-label" id="ticketLabel" data-i18n="f_ticket">Ticket type</span>
+                <div class="ticket-toggle" role="radiogroup" aria-labelledby="ticketLabel">
+                  <label class="is-checked"><input type="radio" name="ticket" value="professional" checked><span data-i18n="ticket_prof">Professional</span></label>
+                  <label><input type="radio" name="ticket" value="student"><span data-i18n="ticket_student">Student</span></label>
+                </div>
+              </div>
+              <div class="f full" id="uniWrap" hidden>
+                <label for="p_uni" data-i18n="f_uni">University and department</label>
+                <input id="p_uni" autocomplete="organization" data-rule="required" placeholder="e.g. College of Dentistry, University of Sulaimani" data-i18n-ph="ph_uni">
+              </div>
+              <div class="f full" id="ambassadorWrap" hidden>
+                <label for="p_ambassador"><span data-i18n="f_ambassador">Ambassador code</span><small data-i18n="f_optional">(optional)</small></label>
+                <input id="p_ambassador" autocomplete="off" data-rule="code" data-optional placeholder="Enter a code if you have one" data-i18n-ph="ph_ambassador" disabled>
+              </div>
+              <div class="f full" id="studentIdWrap" hidden>
+                <label for="p_student_id"><span data-i18n="f_student_id">Student ID photo</span><small data-i18n="f_student_id_required">(required for students)</small></label>
+                <div class="student-id-upload" id="studentIdDropzone">
+                  <div class="student-id-prompt">
+                    <span class="student-id-upload-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="8.5" cy="11" r="2"/><path d="M5.5 16c.8-1.7 2-2.5 3.6-2.5s2.8.8 3.6 2.5M15 10h3M15 14h3"/></svg></span>
+                    <div class="student-id-upload-copy"><strong data-i18n="student_id_upload_title">Upload your student ID</strong><span data-i18n="student_id_upload_copy">Use a clear photo so we can verify your student registration.</span></div>
+                    <label class="student-id-browse" for="p_student_id"><span data-i18n="student_id_upload_action">Choose a photo</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></label>
+                  </div>
+                  <input id="p_student_id" class="student-id-file" type="file" accept="image/jpeg,image/png,image/webp" data-rule="student-id" disabled>
+                  <p class="student-id-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l7 3v5.1c0 4.2-2.8 7.7-7 8.9-4.2-1.2-7-4.7-7-8.9V6.5l7-3z"/><path d="m9 12 2 2 4-4"/></svg><span data-i18n="student_id_hint">JPG, PNG or WebP, up to 8 MB.</span></p>
+                  <div class="student-id-preview" id="studentIdPreview" hidden>
+                    <img id="studentIdImage" alt="">
+                    <div class="student-id-preview-meta"><strong data-i18n="student_id_selected">Photo selected</strong><span id="studentIdFileName"></span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Step 2: payment and review -->
+          <div class="reg-step" data-step="2" hidden>
+            <div class="step-head">
+              <h3 tabindex="-1" data-i18n="s3_title">Payment &amp; review</h3>
+              <p data-i18n="s3_sub">Choose how you'll pay, then check your details.</p>
+            </div>
+
+            <fieldset class="pay-options">
+              <legend data-i18n="pay_legend">Payment method</legend>
+              <label class="pay-card is-checked">
+                <input type="radio" name="pay" value="fib" checked>
+                <span class="pay-logo" aria-hidden="true">FIB</span>
+                <span class="tc-text"><b data-i18n="pay_fib_t">FIB</b><small data-i18n="pay_fib_d">Pay in the First Iraqi Bank app</small></span>
+                <span class="tc-check" aria-hidden="true"></span>
+              </label>
+              <label class="pay-card">
+                <input type="radio" name="pay" value="fastpay">
+                <span class="pay-logo alt" aria-hidden="true">FP</span>
+                <span class="tc-text"><b data-i18n="pay_fastpay_t">FastPay</b><small data-i18n="pay_fastpay_d">Pay with your FastPay wallet</small></span>
+                <span class="tc-check" aria-hidden="true"></span>
+              </label>
+            </fieldset>
+
+            <div class="review">
+              <div class="review-head">
+                <h4 data-i18n="review_title">Review your registration</h4>
+                <button type="button" class="link-btn" id="editDetails" data-i18n="edit">Edit</button>
+              </div>
+              <dl id="reviewList"></dl>
+            </div>
+
+            <label class="terms">
+              <input type="checkbox" id="terms">
+              <span data-i18n="terms">I understand that tickets are non-refundable, and I agree to receive my payment link and ticket by WhatsApp and email.</span>
+            </label>
+            <p class="f-error terms-error" id="termsError" hidden></p>
+          </div>
+
+          <div class="reg-nav">
+            <button type="button" class="btn btn-outline reg-back is-hidden" id="regBack">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+              <span data-i18n="back">Back</span>
+            </button>
+            <span class="reg-count" id="regCount"></span>
+            <button type="button" class="btn btn-primary reg-next" id="regNext">
+              <span data-i18n="continue">Continue</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </button>
+            <button type="submit" class="btn btn-primary reg-next" id="regSubmit" hidden>
+              <span data-i18n="submit">Complete registration</span>
+            </button>
+          </div>
+        </form>
+
+        <!-- Success -->
+        <div class="reg-success" id="regSuccess" tabindex="-1" hidden>
+          <div class="success-ic" aria-hidden="true"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+          <h3 data-i18n="success_title">You're registered!</h3>
+          <p id="successText"></p>
+          <div class="success-ref"><small data-i18n="success_ref">Your reference number</small><b id="successRef" dir="ltr"></b></div>
+          <button type="button" class="btn btn-outline" id="regAgain" data-i18n="register_again">Register someone else</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="wrap">
+    <div class="cols">
+      <div>
+        <a class="brand" href="index.html"><svg class="brand-mark" width="34" height="40" viewBox="0 0 1080 1155" aria-hidden="true"><svg x="0" y="0" width="1080" height="1155" viewBox="0 0 1080 1155" overflow="hidden"><image href="assets/brand/ismile-logo.png" width="2481" height="1155"/></svg></svg><span>i<b>Smile</b></span></a>
+        <p class="foot-about" data-i18n="foot_org">Organized by italk Foundation, in collaboration with the Kurdistan Dental Association.</p>
+      </div>
+      <div>
+        <h3 data-i18n="foot_links">Summit</h3>
+        <div id="footLinks"></div>
+      </div>
+      <div>
+        <h3 data-i18n="foot_contact">Contact</h3>
+        <div id="footContact"></div>
+      </div>
+    </div>
+    <div class="footbar">
+      <p class="legal"><span data-i18n="legal">© 2026 iSmile. All rights reserved.</span></p>
+      <!-- Always left to right: the credit stays in English on every language. -->
+      <p class="credit" dir="ltr">
+        <span class="credit-by" data-i18n="credit_by">Developed by</span>
+        <a class="credit-link" href="https://wa.me/9647708444142" target="_blank" rel="noopener noreferrer"
+           data-i18n-label="credit_aria" aria-label="Message Redyar Nawzad on WhatsApp">
+          <span class="credit-badge" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.87 9.87 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm0 18.13h-.01a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.21 8.21 0 0 1-1.26-4.36c0-4.54 3.7-8.24 8.25-8.24 2.2 0 4.27.86 5.83 2.42a8.19 8.19 0 0 1 2.41 5.83c0 4.54-3.7 8.21-8.24 8.21zm4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.13-.16.24-.64.8-.79.97-.14.16-.29.18-.54.06-.25-.13-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.5.11-.11.25-.29.37-.43.13-.15.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.22.25-.87.85-.87 2.07s.89 2.4 1.02 2.56c.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.47-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.11-.22-.17-.47-.29z"/></svg>
+          </span>
+        <b>Redyar Nawzad</b>
+        </a>
+      </p>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -280,8 +280,9 @@ const PARTS = [
   },
   {
     id: "registration", title: "Registration form",
-    hint: "Everything inside the three-step form, including the error messages.",
+    hint: "Text on the registration page, including the form and error messages.",
     fields: many([
+      ["reg_page_title", "Browser tab title"], ["reg_invite_title", "Homepage invitation title"], ["reg_invite_text", "Homepage invitation text"],
       ["reg_kicker", "Small label"], ["reg_title", "Section title"], ["reg_sub", "Section text"],
       ["reg_tickets", "Ticket options title"],
       ["tk_prof", "Ticket 1 name"], ["tk_prof_d", "Ticket 1 text"],

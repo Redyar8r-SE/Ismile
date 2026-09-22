@@ -1,0 +1,69 @@
+/* Homepage invitation and dedicated registration page. */
+.reg-invite{padding-block:76px!important}
+.reg-invite-card{position:relative;overflow:hidden;display:grid;grid-template-columns:minmax(0,1fr) 32%;align-items:center;min-height:330px;padding:clamp(28px,5vw,58px);border-radius:28px;background:linear-gradient(120deg,var(--navy-2),var(--navy) 65%,#126C70);color:#fff;box-shadow:0 30px 55px -40px rgba(8,30,38,.7)}
+.reg-invite-card::before{content:"";position:absolute;inset:0 auto 0 0;width:5px;background:var(--teal)}
+.reg-invite-copy{position:relative;z-index:1;max-width:650px}
+.reg-invite .section-kicker{color:#91DEDA}
+.reg-invite h2{max-width:15ch;font-size:clamp(30px,4vw,48px)}
+.reg-invite-copy>p:not(.section-kicker){max-width:53ch;margin-top:14px;color:#CBE2E4;line-height:1.6}
+.reg-invite-facts{display:flex;flex-wrap:wrap;gap:9px;margin:22px 0 28px}
+.reg-invite-facts span{padding:7px 12px;border:1px solid rgba(255,255,255,.17);border-radius:999px;background:rgba(255,255,255,.07);color:#E5F4F4;font-size:13px;font-weight:600}
+.reg-invite .btn{min-height:48px;padding-inline:22px}
+.reg-invite .btn svg{transition:transform .2s}
+.reg-invite .btn:hover svg{transform:translateX(3px)}
+.reg-invite-art{display:grid;place-items:center;align-self:stretch;min-height:220px}
+.reg-invite-ring{display:grid;place-items:center;width:min(22vw,250px);aspect-ratio:1;border:1px solid rgba(159,230,225,.3);border-radius:50%;background:radial-gradient(circle at 35% 25%,rgba(159,230,225,.23),rgba(22,166,161,.05) 64%);box-shadow:0 0 0 24px rgba(159,230,225,.045),0 0 0 48px rgba(159,230,225,.025)}
+.reg-invite-ring svg{width:44%;color:#B4ECE8}
+
+.reg-top .lang{margin-inline-start:auto}
+.reg-page-intro{position:relative;overflow:hidden;padding-block:26px 56px;background:linear-gradient(125deg,var(--navy-2),var(--navy) 62%,#0B6265);color:#fff}
+.reg-page-intro::before{content:"";position:absolute;inset:auto -12% -55% auto;width:55vw;aspect-ratio:1;border:1px solid rgba(174,240,236,.1);border-radius:50%;pointer-events:none}
+.reg-page-back{display:inline-flex;align-items:center;gap:8px;color:#C5DFE1;text-decoration:none;font-size:13px;font-weight:650}
+.reg-page-back:hover{color:#fff}
+.reg-page-back svg{width:16px;height:16px}
+.reg-page-hero{display:grid;grid-template-columns:minmax(0,1fr) 220px;align-items:center;gap:36px;padding-top:34px}
+.reg-page-hero-copy{min-width:0}
+.reg-page-hero .section-kicker{color:#91DEDA}
+.reg-page-hero h1{max-width:18ch;font-size:clamp(38px,5vw,66px);line-height:1.08;letter-spacing:-.035em}
+.reg-page-hero-copy>p:not(.section-kicker){max-width:55ch;margin-top:18px;color:#C8E2E3;font-size:17px;line-height:1.6}
+.reg-page-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+.reg-page-meta span{display:inline-flex;align-items:center;gap:9px;min-height:42px;padding:8px 13px;border:1px solid rgba(255,255,255,.16);border-radius:11px;background:rgba(255,255,255,.07);font-size:13px;line-height:1.35}
+.reg-page-meta svg{flex:none;width:18px;height:18px;color:#8DE0DC}
+.reg-page-hero-art{position:relative;display:grid;place-items:center;width:220px;aspect-ratio:1;border:1px solid rgba(172,236,233,.2);border-radius:50%;background:radial-gradient(circle,rgba(35,178,170,.2),transparent 68%);box-shadow:0 0 0 30px rgba(173,235,231,.035)}
+.reg-page-hero-art span{z-index:1;font-size:39px;font-weight:700;letter-spacing:-.055em}
+.reg-page-hero-art span b{color:#7CDBD6}
+.reg-page-hero-art svg{position:absolute;inset:0;width:100%;height:100%;color:rgba(157,231,226,.17)}
+.reg-page-section{padding-block:52px 92px!important;background:linear-gradient(180deg,var(--surface),var(--bg) 460px)}
+.reg-page-section .reg{grid-template-columns:minmax(270px,330px) minmax(0,1fr);gap:26px}
+.reg-page-section .reg-card{box-shadow:0 30px 70px -45px rgba(8,30,38,.52)}
+.reg-page-section .reg-panel{background:var(--bg)}
+
+html[dir="rtl"] .reg-page-back svg,html[dir="rtl"] .reg-invite .btn svg{transform:scaleX(-1)}
+html[dir="rtl"] .reg-invite-card::before{left:auto;right:0}
+
+@media (max-width:1060px){
+  .reg-page-section .reg{grid-template-columns:1fr 1fr;gap:16px}
+}
+@media (max-width:720px){
+  .reg-page-section .reg{grid-template-columns:minmax(0,1fr)}
+  .reg-page-section .reg-panel,.reg-page-section .reg-card{min-width:0}
+  .reg-page-hero{grid-template-columns:minmax(0,1fr)}
+  .reg-page-hero-art{display:none}
+  .reg-invite-card{grid-template-columns:1fr}
+  .reg-invite-art{display:none}
+}
+@media (max-width:560px){
+  .reg-top .wrap{gap:7px;padding-inline:16px}
+  .reg-top .brand span{display:none}
+  .reg-top .lang button{padding-inline:6px;font-size:11.5px}
+  .reg-invite{padding-block:58px!important}
+  .reg-invite-card{padding:28px 24px;min-height:0;border-radius:20px}
+  .reg-invite-facts{margin:19px 0 24px}
+  .reg-page-intro{padding-block:20px 42px}
+  .reg-page-hero{padding-top:28px}
+  .reg-page-hero h1{font-size:clamp(34px,10vw,44px)}
+  .reg-page-hero-copy>p:not(.section-kicker){font-size:15px}
+  .reg-page-meta{margin-top:22px}
+  .reg-page-section{padding-block:32px 64px!important}
+}
+@media (prefers-reduced-motion:reduce){.reg-invite .btn svg{transition:none}}
