@@ -354,7 +354,7 @@ const PARTS = [
     id: "registrationMessages", title: "Success and error messages",
     hint: "What visitors see after submitting and when a form field needs correction.",
     fields: many([
-      ["success_title", "Success title"], ["success_text", "Success text (keep {method} {phone} {email})"],
+      ["success_title", "Success title"], ["success_text", "Success text (keep {method}, {phone} and {email}; ticket delivery is email only)"],
       ["success_ref", "Reference number label"], ["register_again", "Register someone else button"],
       ["err_required", "Error: required field"], ["err_name", "Error: short name"], ["err_age", "Error: age"],
       ["err_email", "Error: email"], ["err_phone", "Error: phone"], ["err_student_id", "Error: missing student ID"],

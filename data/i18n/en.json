@@ -49,7 +49,7 @@
   "student_id_upload_action": "Choose a photo",
   "student_id_selected": "Photo selected",
   "err_terms": "Please confirm this to complete your registration.",
-  "success_text": "Your {method} payment link will be sent to {phone} on WhatsApp and to {email}. Keep your reference number for any questions.",
+  "success_text": "Your {method} payment link will be sent to {phone} on WhatsApp and to {email}. After payment is confirmed, your ticket will be sent to {email}. Keep your reference number for any questions.",
   "pg_sessions": "sessions",
   "pg_schedule": "schedule",
   "pg_locations": "locations",
