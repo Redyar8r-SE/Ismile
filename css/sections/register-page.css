@@ -21,7 +21,7 @@
 .reg-page-back{display:inline-flex;align-items:center;gap:8px;color:#C5DFE1;text-decoration:none;font-size:13px;font-weight:650}
 .reg-page-back:hover{color:#fff}
 .reg-page-back svg{width:16px;height:16px}
-.reg-page-hero{display:grid;grid-template-columns:minmax(0,1fr) 220px;align-items:center;gap:36px;padding-top:34px}
+.reg-page-hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,420px);align-items:center;gap:44px;padding-top:34px}
 .reg-page-hero-copy{min-width:0}
 .reg-page-hero .section-kicker{color:#91DEDA}
 .reg-page-hero h1{max-width:18ch;font-size:clamp(38px,5vw,66px);line-height:1.08;letter-spacing:-.035em}
@@ -29,10 +29,12 @@
 .reg-page-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
 .reg-page-meta span{display:inline-flex;align-items:center;gap:9px;min-height:42px;padding:8px 13px;border:1px solid rgba(255,255,255,.16);border-radius:11px;background:rgba(255,255,255,.07);font-size:13px;line-height:1.35}
 .reg-page-meta svg{flex:none;width:18px;height:18px;color:#8DE0DC}
-.reg-page-hero-art{position:relative;display:grid;place-items:center;width:220px;aspect-ratio:1;border:1px solid rgba(172,236,233,.2);border-radius:50%;background:radial-gradient(circle,rgba(35,178,170,.2),transparent 68%);box-shadow:0 0 0 30px rgba(173,235,231,.035)}
-.reg-page-hero-art span{z-index:1;font-size:39px;font-weight:700;letter-spacing:-.055em}
-.reg-page-hero-art span b{color:#7CDBD6}
-.reg-page-hero-art svg{position:absolute;inset:0;width:100%;height:100%;color:rgba(157,231,226,.17)}
+.reg-animated-brand{position:relative;display:grid;place-items:center;min-width:0;min-height:240px}
+.reg-animated-brand::before{content:"";position:absolute;width:250px;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,rgba(40,187,179,.18),transparent 68%);filter:blur(4px)}
+.reg-animated-brand .hero-brand{--mark-width:clamp(54px,5.2vw,72px);--mark-gap:8px;z-index:1}
+.reg-animated-brand .wordmark{font-size:clamp(72px,7.8vw,106px)}
+.reg-animated-brand .hero-mark{--mark-scale:2.2;--mark-final-scale:1.25;--mark-nudge:4px}
+.reg-animated-brand .hero-edition{top:auto;right:0;bottom:-20px}
 .reg-page-section{padding-block:52px 92px!important;background:linear-gradient(180deg,var(--surface),var(--bg) 460px)}
 .reg-page-section .reg{grid-template-columns:minmax(270px,330px) minmax(0,1fr);gap:26px}
 .reg-page-section .reg-card{box-shadow:0 30px 70px -45px rgba(8,30,38,.52)}
@@ -48,7 +50,10 @@ html[dir="rtl"] .reg-invite-card::before{left:auto;right:0}
   .reg-page-section .reg{grid-template-columns:minmax(0,1fr)}
   .reg-page-section .reg-panel,.reg-page-section .reg-card{min-width:0}
   .reg-page-hero{grid-template-columns:minmax(0,1fr)}
-  .reg-page-hero-art{display:none}
+  .reg-animated-brand{place-items:center start;min-height:150px;margin-top:4px}
+  .reg-animated-brand::before{width:190px;inset-inline-start:35px}
+  .reg-animated-brand .hero-brand{--mark-width:clamp(46px,13vw,56px);--mark-gap:8px}
+  .reg-animated-brand .wordmark{font-size:clamp(62px,21vw,86px)}
   .reg-invite-card{grid-template-columns:1fr}
   .reg-invite-art{display:none}
 }
