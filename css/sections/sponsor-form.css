@@ -37,6 +37,8 @@ html[dir="rtl"] .spf-back-btn:hover svg{transform:scaleX(-1) translateX(-3px)}
 .spf{padding-block:52px 80px}
 .spf-head{max-width:60ch;margin-bottom:38px}
 .spf-head h1{font-size:clamp(28px,4.2vw,42px);line-height:1.14;margin:8px 0 14px;letter-spacing:-.01em}
+.sponsor-edition-en .edition-sup{font-size:.62em;line-height:0;vertical-align:.48em;letter-spacing:0}
+html[lang="en"] .sponsor-edition-translated,html:not([lang="en"]) .sponsor-edition-en{display:none}
 .spf-head .lead{font-size:clamp(15.5px,1.5vw,17px);line-height:1.6;color:var(--muted)}
 
 /* ---------- Two columns: the form leads, the reasons support it ---------- */
