@@ -9,6 +9,8 @@
 .co-top{display:flex;align-items:center;justify-content:space-between;width:100%;gap:16px}
 .co-icon{display:grid;place-items:center;width:52px;height:52px;border:1px solid color-mix(in srgb,#fff 22%,transparent);border-radius:15px;background:color-mix(in srgb,#fff 10%,transparent);color:#9DE5E1}
 .co-icon svg{width:27px;height:27px}
+.co-sponsor .co-icon{width:56px;height:56px;border-color:color-mix(in srgb,var(--teal) 55%,transparent);background:linear-gradient(145deg,color-mix(in srgb,var(--teal) 24%,transparent),color-mix(in srgb,#fff 8%,transparent));color:#B7F1ED;box-shadow:0 12px 24px -17px var(--teal)}
+.co-sponsor .co-icon svg{width:31px;height:31px}
 .co-index{font-size:12px;font-weight:800;letter-spacing:.12em;color:color-mix(in srgb,#fff 58%,transparent)}
 .co h3{max-width:18ch;margin:24px 0 8px;font-size:24px;line-height:1.15;letter-spacing:-.02em}
 .co p{max-width:36ch;margin:0;color:#A9C9CD;line-height:1.55}
