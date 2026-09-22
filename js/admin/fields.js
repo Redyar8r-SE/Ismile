@@ -180,7 +180,7 @@ const PARTS = [
     hint: "The card beside the title that looks like an event pass.",
     fields: many([
       ["t_pass", "Small label above the name"], ["t_edition", "Badge (edition)"],
-      ["t_when", "Row 1 label"], ["t_date_range", "Date range (days)"], ["t_date_month", "Date month and year"],
+      ["t_when", "Row 1 label"], ["t_date_full", "Full event date"],
       ["t_len", "Row 2 label"], ["t_len_v", "Row 2 value (length)"],
       ["t_where", "Row 3 label"], ["t_venue", "Venue name"],
       ["org_by", "Organised by (label)"], ["org_italk", "Organiser name"],
@@ -328,7 +328,7 @@ const PARTS = [
       ["venue_type", "Under the hotel name"],
       ["venue_addr_label", "Address label"], ["venue_addr", "Address"],
       ["copy", "Copy button"], ["copied", "Copy button after pressing"],
-      ["venue_when_label", "Date label"], ["venue_date_range", "Date range (days)"], ["venue_date_month", "Date month and year"], ["venue_duration", "Event duration"],
+      ["venue_when_label", "Date label"], ["venue_date_full", "Full event date"], ["venue_duration", "Event duration"],
       ["venue_air_label", "Airport label"], ["venue_air", "Airport"],
       ["venue_spaces", "Spaces label"],
       ["vs1", "Space 1"], ["vs2", "Space 2"], ["vs3", "Space 3"], ["vs4", "Space 4"],

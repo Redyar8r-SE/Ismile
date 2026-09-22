@@ -44,11 +44,7 @@ html[lang="en"] .edition-translated,html:not([lang="en"]) .edition-en{display:no
 .t-rows small{display:block;font-size:12px;color:#A9C9CD}
 .t-rows b{display:block;font-size:19px;line-height:1.25}
 .t-date-row{margin-inline:-10px;padding:10px;border-radius:16px;background:linear-gradient(100deg,rgba(22,166,161,.16),rgba(22,166,161,.04))}
-.event-date{display:flex!important;align-items:center;gap:9px;flex-wrap:wrap}
-.event-date-days{display:inline-flex;align-items:center;gap:4px;direction:ltr;unicode-bidi:isolate}
-.event-date-day{display:grid;place-items:center;min-width:31px;height:29px;padding-inline:5px;border-radius:8px;background:#16A6A1;color:#06242B;font-size:18px;font-weight:800;line-height:1}
-.event-date-joiner{font-size:16px;font-weight:800;color:#7FD6D2}
-.event-date-month{font-size:15px;font-weight:600;color:#BCEAE8;white-space:nowrap}
+.event-date{display:inline-block!important;white-space:nowrap;padding:7px 11px;border-inline-start:3px solid #16A6A1;border-radius:0 8px 8px 0;background:rgba(22,166,161,.12);color:#fff;font-size:17px!important;font-weight:800!important;line-height:1.2!important;letter-spacing:-.01em}
 .t-ic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:rgba(22,166,161,.16);color:#3CC4BF;flex:none}
 .t-ic svg{width:22px;height:22px}
 .ticket .tear{position:relative;border-top:2px dashed rgba(22,166,161,.45);margin:20px 0 18px}
@@ -78,8 +74,7 @@ html[lang="en"] .edition-translated,html:not([lang="en"]) .edition-en{display:no
 @media (max-width:420px){
   .t-logo{width:44px;height:44px}
   .t-rows b{font-size:17px}
-  .event-date-day{min-width:28px;height:27px;font-size:16px}
-  .event-date-month{font-size:14px}
+  .event-date{font-size:15px!important;padding:6px 9px}
 }
 @media (prefers-reduced-motion: reduce){
   .wordmark span,.hero-mark img,.hero-edition{animation:none;opacity:1;transform:none}
