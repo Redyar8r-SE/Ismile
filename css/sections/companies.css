@@ -12,7 +12,7 @@
 .co-index{font-size:12px;font-weight:800;letter-spacing:.12em;color:color-mix(in srgb,#fff 58%,transparent)}
 .co h3{max-width:18ch;margin:24px 0 8px;font-size:24px;line-height:1.15;letter-spacing:-.02em}
 .co p{max-width:36ch;margin:0;color:#A9C9CD;line-height:1.55}
-.co .btn{margin-top:auto;align-self:flex-start}
+.co .btn{width:100%;max-width:210px;min-height:44px;margin-top:auto;align-self:flex-start;justify-content:center}
 .co .btn svg{width:15px;height:15px}
 .co-exhibition{background:linear-gradient(145deg,var(--teal-ink),#0B615F)}
 .co-exhibition::before{background:linear-gradient(90deg,#B5F2EC,#5FD3CE)}
