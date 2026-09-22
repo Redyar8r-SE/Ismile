@@ -32,7 +32,7 @@
   "step_of": "Step {n} of {total}",
   "rv_type": "Registration",
   "d_name": "Dentist's full name",
-  "d_phone": "WhatsApp (optional)",
+  "d_phone": "WhatsApp",
   "dentist": "dentist",
   "dentists": "dentists",
   "remove": "Remove dentist",

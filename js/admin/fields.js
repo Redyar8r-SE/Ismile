@@ -333,8 +333,7 @@ const PARTS = [
     fields: many([
       ["f_uni", "University and department label"], ["ph_uni", "University hint"],
       ["f_ambassador", "Ambassador code label"], ["ph_ambassador", "Ambassador code hint"],
-      ["f_optional", "Optional note"], ["f_student_id", "Student ID photo label"],
-      ["f_student_id_required", "Required note"], ["student_id_upload_title", "Upload box title"],
+      ["f_student_id", "Student ID photo label"], ["student_id_upload_title", "Upload box title"],
       ["student_id_upload_copy", "Upload box explanation"], ["student_id_upload_action", "Choose photo button"],
       ["student_id_hint", "File type and size note"], ["student_id_selected", "Selected photo label"],
     ]),
@@ -420,7 +419,7 @@ const PARTS = [
   },
   {
     id: "spStep2", title: "Step 2: the company",
-    hint: "Every label on the form. The word beside an optional field, and the review box at the bottom.",
+    hint: "Every company field label and the review box at the bottom.",
     fields: many([
       ["spf_s2_title", "Step 2 title"], ["spf_s2_sub", "Step 2 text"],
       ["spf_f_company", "Field: company name"], ["spf_ph_company", "Field: company name — grey hint"],
@@ -429,7 +428,6 @@ const PARTS = [
       ["spf_f_website", "Field: website"], ["spf_ph_website", "Field: website — grey hint"],
       ["spf_f_city", "Field: city"], ["spf_ph_city", "Field: city — grey hint"],
       ["spf_f_note", "Field: their question"],
-      ["spf_optional", "Word shown on optional fields"],
       ["spf_review", "Review box title"],
       ["spf_rv_kind", "Review row: request"], ["spf_rv_pack", "Review row: package"],
       ["spf_submit", "Send button"],
