@@ -18,7 +18,7 @@ export function initPartners({ tiers, partners }) {
             <div class="tc-top">
               <span class="medal">${ICONS.gem}</span>
               <div><h3>${tr(tier.label) || tier.name}</h3><p>${tr(tier.subtitle)}</p></div>
-              <span class="tc-count">${list.length} ${t(list.length > 1 ? "tp_companies" : "tp_company")}</span>
+              <span class="tc-count">${list.length} ${t(list.length > 1 ? "tp_companies_brands" : "tp_company")}</span>
             </div>
             <div class="p-slots">${list.map(renderLogo).join("")}</div>
           </div>`;

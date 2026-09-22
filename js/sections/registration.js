@@ -158,11 +158,16 @@ export function initRegistration() {
     }
   });
 
-  // Students add their university
+  // Students add their university and optional ambassador code.
   function toggleUniversity() {
     const isStudent = checkedValue("ticket") === "student";
     $("uniWrap").hidden = !isStudent;
-    if (!isStudent) showError($("p_uni"), "");
+    $("ambassadorWrap").hidden = !isStudent;
+    $("p_ambassador").disabled = !isStudent;
+    if (!isStudent) {
+      showError($("p_uni"), "");
+      showError($("p_ambassador"), "");
+    }
   }
 
   // ---------- Review ----------
@@ -175,10 +180,12 @@ export function initRegistration() {
     rows.push([t("f_email"), $("p_email").value.trim()]);
     rows.push([t("f_gender"), optionText($("p_gender"))]);
     rows.push([t("f_age"), $("p_age").value.trim()]);
-    if ($("p_ambassador").value.trim()) rows.push([t("f_ambassador"), $("p_ambassador").value.trim()]);
     rows.push([t("f_spec"), optionText(specialty)]);
     rows.push([t("f_ticket"), t(checkedValue("ticket") === "student" ? "ticket_student" : "ticket_prof")]);
-    if (checkedValue("ticket") === "student") rows.push([t("f_uni"), $("p_uni").value.trim()]);
+    if (checkedValue("ticket") === "student") {
+      rows.push([t("f_uni"), $("p_uni").value.trim()]);
+      if ($("p_ambassador").value.trim()) rows.push([t("f_ambassador"), $("p_ambassador").value.trim()]);
+    }
     rows.push([t("pay_legend"), t(checkedValue("pay") === "fastpay" ? "pay_fastpay_t" : "pay_fib_t")]);
 
     const list = $("reviewList");

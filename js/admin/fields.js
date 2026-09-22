@@ -266,7 +266,7 @@ const PARTS = [
       ["spon_title", "Section title"], ["spon_sub", "Section text"], ["spon_cta", "Become a sponsor button"],
       ["spon_slot", "Empty logo place"], ["spon_spots", "After the number of places"],
       ["tp_title", "Partners title"], ["tp_sub", "Partners text"],
-      ["tp_company", "“company” (one)"], ["tp_companies", "“companies” (many)"], ["tp_cta", "Line above the sponsor link"],
+      ["tp_company", "“company” (one)"], ["tp_companies_brands", "“companies & brands” (many)"], ["tp_cta", "Line above the sponsor link"],
     ]),
   },
   {
@@ -304,6 +304,7 @@ const PARTS = [
       ["o_student", "Specialty: student"],
       ["f_ticket", "Field: ticket type"], ["ticket_prof", "Ticket toggle 1"], ["ticket_student", "Ticket toggle 2"],
       ["f_uni", "Field: university"], ["ph_uni", "Field: university — grey hint"],
+      ["f_ambassador", "Field: student ambassador code"], ["ph_ambassador", "Field: ambassador code — grey hint"], ["f_optional", "Optional field label"],
       ["f_cname", "Field: company name"], ["f_contact", "Field: contact person"],
       ["f_dentists", "Field: dentists attending"], ["add_dentist", "Add dentist button"],
       ["d_name", "Dentist row: name"], ["d_phone", "Dentist row: WhatsApp"],

@@ -36,7 +36,7 @@
 <link rel="stylesheet" href="css/sections/register.css?v=29">
 <link rel="stylesheet" href="css/sections/venue.css?v=24">
 
-<script type="module" src="js/main.js?v=29"></script>
+<script type="module" src="js/main.js?v=30"></script>
 </head>
 <body>
 
@@ -136,7 +136,7 @@
         <span class="t-badge" data-i18n="t_edition">2nd edition</span>
       </div>
       <ul class="t-rows">
-        <li><span class="t-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></span><div><small data-i18n="t_when">When</small><b data-i18n="t_when_v">November 2026</b></div></li>
+        <li><span class="t-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></span><div><small data-i18n="t_when">When</small><b data-i18n="t_when_v">20–21 November 2026</b></div></li>
         <li><span class="t-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg></span><div><small data-i18n="t_len">Length</small><b data-i18n="t_len_v">2 full days</b></div></li>
         <li><span class="t-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 21s7-6.2 7-11.5a7 7 0 10-14 0C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></span><div><small data-i18n="t_where">Where</small><b data-i18n="t_venue">Grand Millennium Sulaimani</b></div></li>
       </ul>
@@ -426,10 +426,6 @@
                 <label for="p_age" data-i18n="f_age">Age</label>
                 <input id="p_age" type="number" min="16" max="120" inputmode="numeric" data-rule="age" placeholder="e.g. 28" data-i18n-ph="ph_age">
               </div>
-              <div class="f full">
-                <label for="p_ambassador"><span data-i18n="f_ambassador">Ambassador code</span><small data-i18n="f_optional">(optional)</small></label>
-                <input id="p_ambassador" autocomplete="off" data-rule="code" data-optional placeholder="Enter a code if you have one" data-i18n-ph="ph_ambassador">
-              </div>
               <div class="f">
                 <label for="p_spec" data-i18n="f_spec">Specialty</label>
                 <select id="p_spec" data-rule="required">
@@ -452,6 +448,10 @@
               <div class="f full" id="uniWrap" hidden>
                 <label for="p_uni" data-i18n="f_uni">University and department</label>
                 <input id="p_uni" autocomplete="organization" data-rule="required" placeholder="e.g. College of Dentistry, University of Sulaimani" data-i18n-ph="ph_uni">
+              </div>
+              <div class="f full" id="ambassadorWrap" hidden>
+                <label for="p_ambassador"><span data-i18n="f_ambassador">Ambassador code</span><small data-i18n="f_optional">(optional)</small></label>
+                <input id="p_ambassador" autocomplete="off" data-rule="code" data-optional placeholder="Enter a code if you have one" data-i18n-ph="ph_ambassador" disabled>
               </div>
             </div>
 
@@ -564,7 +564,7 @@
             <span class="vf-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></span>
             <div class="vf-body">
               <small data-i18n="venue_when_label">When</small>
-              <b data-i18n="venue_when">November 2026 &middot; 2 full days</b>
+              <b data-i18n="venue_when">20–21 November 2026 &middot; 2 full days</b>
             </div>
           </li>
           <li>

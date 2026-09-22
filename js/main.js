@@ -7,11 +7,11 @@ import { initProgram } from "./sections/program.js?v=24";
 import { initWorkshops } from "./sections/workshops.js?v=24";
 import { initSpeakers } from "./sections/speakers.js?v=24";
 import { initSponsors } from "./sections/sponsors.js?v=24";
-import { initPartners } from "./sections/partners.js?v=24";
+import { initPartners } from "./sections/partners.js?v=25";
 import { initJourney } from "./sections/journey.js?v=24";
 import { initProjects } from "./sections/projects.js?v=24";
 import { initFooter } from "./sections/footer.js?v=24";
-import { initRegistration } from "./sections/registration.js?v=29";
+import { initRegistration } from "./sections/registration.js?v=30";
 import { initVenue } from "./sections/venue.js?v=24";
 
 async function start() {
