@@ -4,7 +4,7 @@
 .hero{background:var(--hero-bg);color:var(--hero-text);position:relative;overflow:hidden}
 .hero .wrap{display:grid;grid-template-columns:1.35fr 1fr;gap:56px;align-items:center;padding-block:84px 96px}
 
-.hero-brand{position:relative;width:max-content;max-width:100%;display:flex;flex-direction:column;align-items:center;direction:ltr}
+.hero-brand{--mark-width:clamp(64px,7vw,98px);--mark-gap:clamp(9px,1.4vw,18px);position:relative;width:max-content;max-width:100%;padding-left:calc(var(--mark-width) + var(--mark-gap));direction:ltr}
 .wordmark{font-family:var(--font);font-weight:800;font-size:clamp(58px,13vw,176px);line-height:.9;letter-spacing:-0.045em;margin:0;white-space:nowrap}
 .wordmark span{display:inline-block;opacity:0;animation:letterEnter .55s both cubic-bezier(.2,.8,.2,1)}
 .wordmark span:not(.word-i){color:var(--teal)}
@@ -17,12 +17,12 @@
 .hero-edition{position:absolute;top:-22px;right:4px;color:#BCEAE8;font-size:13px;font-weight:700;letter-spacing:.025em;line-height:1;white-space:nowrap;opacity:0;animation:editionEnter .55s 3s both cubic-bezier(.2,.8,.2,1)}
 .hero-edition sup{font-size:.7em;line-height:0}
 html[lang="en"] .edition-translated,html:not([lang="en"]) .edition-en{display:none}
-.hero-mark{--mark-lift:clamp(-168px,-13vw,-50px);--mark-scale:1.65;position:relative;width:clamp(110px,14vw,186px);height:clamp(52px,7vw,94px);margin-top:10px;align-self:center;pointer-events:none}
-.mark-stage{position:absolute;top:0;left:0;width:100%;aspect-ratio:1080/1155;clip-path:inset(0 0 50%);transform-origin:center top;animation:markSettle 1.6s both cubic-bezier(.25,.8,.25,1)}
+.hero-mark{--mark-scale:2.8;position:absolute;top:50%;left:0;width:var(--mark-width);aspect-ratio:1080/1155;pointer-events:none;transform:translateY(-50%);animation:markSettle 1.6s both cubic-bezier(.25,.8,.25,1)}
+.mark-stage{position:relative;width:100%;height:100%}
 .hero-mark img{position:absolute;top:0;left:0;display:block;width:100%;height:auto}
 .hero-mark .mark-navy{animation:markJoinLeft .55s both cubic-bezier(.22,.75,.3,1)}
 .hero-mark .mark-cyan{animation:markJoinRight .55s both cubic-bezier(.22,.75,.3,1)}
-@keyframes markSettle{0%,52%{transform:translateY(var(--mark-lift)) scale(var(--mark-scale));clip-path:inset(0)}100%{transform:none;clip-path:inset(0 0 50%)}}
+@keyframes markSettle{0%,52%{left:50%;transform:translate(-50%,-50%) scale(var(--mark-scale))}100%{left:0;transform:translateY(-50%)}}
 @keyframes markJoinLeft{from{transform:translateX(-100%)}to{transform:none}}
 @keyframes markJoinRight{from{transform:translateX(100%)}to{transform:none}}
 @keyframes editionEnter{from{opacity:0;transform:translate(-48px,16px)}to{opacity:1;transform:none}}
@@ -57,12 +57,13 @@ html[lang="en"] .edition-translated,html:not([lang="en"]) .edition-en{display:no
 @media (max-width:860px){
   .hero .wrap{grid-template-columns:minmax(0,1fr);padding-block:56px 64px;gap:40px}
   .hero .wrap > *{min-width:0}
-  .hero-mark{--mark-scale:1.25}
+  .hero-mark{--mark-scale:2}
 }
 @media (max-width:420px){
   .t-logo{width:44px;height:44px}
   .t-rows b{font-size:17px}
 }
 @media (prefers-reduced-motion: reduce){
-  .wordmark span,.mark-stage,.hero-mark img,.hero-edition{animation:none;opacity:1;transform:none}
+  .wordmark span,.hero-mark img,.hero-edition{animation:none;opacity:1;transform:none}
+  .hero-mark{animation:none;left:0;transform:translateY(-50%)}
 }
