@@ -7,8 +7,8 @@
 .tp-head{display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap}
 .tp-head h3{max-width:24ch;font-size:clamp(25px,2.8vw,34px);line-height:1.15;letter-spacing:-.025em}
 .tp-head .lead{margin-top:6px}
-.tp-count{display:inline-grid;grid-template-columns:auto auto;align-items:center;gap:10px;min-height:66px;padding:9px 18px 9px 15px;border:1px solid color-mix(in srgb,var(--teal) 48%,var(--line));border-radius:18px;background:linear-gradient(135deg,color-mix(in srgb,var(--teal) 14%,var(--bg)),color-mix(in srgb,var(--teal) 5%,var(--bg)));box-shadow:0 14px 28px -24px color-mix(in srgb,var(--teal) 80%,transparent);color:var(--text);font-size:15.5px;font-weight:700;line-height:1.15;white-space:nowrap}
-.tp-count b{font-size:clamp(32px,3.2vw,40px);line-height:.9;letter-spacing:-.04em;color:var(--teal-ink);font-variant-numeric:tabular-nums}
+.tp-count{display:inline-grid;grid-template-columns:auto auto;align-items:center;gap:9px;min-height:60px;padding:8px 15px 8px 13px;border:1px solid color-mix(in srgb,var(--teal) 48%,var(--line));border-radius:16px;background:linear-gradient(135deg,color-mix(in srgb,var(--teal) 14%,var(--bg)),color-mix(in srgb,var(--teal) 5%,var(--bg)));box-shadow:0 14px 28px -24px color-mix(in srgb,var(--teal) 80%,transparent);color:var(--text);font-size:14.5px;font-weight:700;line-height:1.15;white-space:nowrap}
+.tp-count b{font-size:clamp(29px,3vw,35px);line-height:.9;letter-spacing:-.04em;color:var(--teal-ink);font-variant-numeric:tabular-nums}
 
 /* Layout: Platinum and Bronze full width, Gold + Silver side by side */
 .ptiers{display:grid;grid-template-columns:3fr 1fr;gap:18px;margin-top:28px}
@@ -64,8 +64,8 @@
 @media (max-width:560px){
   .partners{margin-top:52px;padding-top:38px}
   .tp-head{align-items:flex-start}
-  .tp-count{min-height:58px;padding:8px 14px;border-radius:15px;font-size:14px}
-  .tp-count b{font-size:31px}
+  .tp-count{min-height:54px;padding:7px 12px;border-radius:14px;font-size:13.5px}
+  .tp-count b{font-size:28px}
   .ptier .tc-top{display:grid;grid-template-columns:44px minmax(0,1fr);align-items:center;gap:5px 12px}
   .ptier .medal{grid-row:1/span 2}
   .ptier .tc-count{grid-column:2;margin-inline-start:0;justify-self:start;max-width:100%;padding:4px 10px;font-size:11px;white-space:normal}
