@@ -55,15 +55,19 @@ html[lang="en"] .edition-translated,html:not([lang="en"]) .edition-en{display:no
 .t-orgs b{font-size:14px}
 .t-logo{width:56px;height:56px;flex:none;filter:brightness(1.4)}
 
+@media (max-width:1060px){
+  .hero-brand{padding-bottom:20px}
+  .hero-mark{top:calc((100% - 20px)/2)}
+  .hero-edition{top:auto;right:0;bottom:2px}
+}
 @media (max-width:860px){
   .hero .wrap{grid-template-columns:minmax(0,1fr);padding-block:56px 64px;gap:40px}
   .hero .wrap > *{min-width:0}
   .hero-mark{--mark-scale:2.2}
 }
 @media (max-width:600px){
-  .hero-brand{--mark-width:clamp(44px,12vw,54px);--mark-gap:8px;padding-bottom:20px}
-  .hero-mark{--mark-scale:1.55;--mark-nudge:4px;top:calc((100% - 20px)/2)}
-  .hero-edition{top:auto;right:0;bottom:2px}
+  .hero-brand{--mark-width:clamp(44px,12vw,54px);--mark-gap:8px}
+  .hero-mark{--mark-scale:1.55;--mark-nudge:4px}
 }
 @media (max-width:420px){
   .t-logo{width:44px;height:44px}
