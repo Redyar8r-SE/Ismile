@@ -1,5 +1,5 @@
 // iSmile admin: edit every text, list and photo on the site, and save to GitHub.
-import { GROUPS, LANGS, DATA_FILES } from "./fields.js?v=32";
+import { GROUPS, LANGS, DATA_FILES } from "./fields.js?v=33";
 import * as store from "./store.js?v=24";
 import { upload, imageFromClipboard } from "./images.js?v=24";
 import { buildList, buildProgram, buildTypes, buildSingle } from "./lists.js?v=24";
@@ -512,20 +512,27 @@ function buildForm() {
     head.querySelector("p").textContent = group.where || "";
     section.append(head);
 
-    group.blocks.forEach((block) => {
+    group.blocks.forEach((block, blockIndex) => {
       const card = document.createElement("div");
       card.className = "block";
+      const collapsible = group.blocks.length > 1 && Boolean(block.title);
+      let bhead = null;
 
       if (block.title) {
-        const bhead = document.createElement("div");
+        bhead = document.createElement(collapsible ? "button" : "div");
         bhead.className = "bhead";
-        const h3 = document.createElement("h3");
-        h3.textContent = block.title;
-        bhead.append(h3);
+        if (collapsible) {
+          bhead.type = "button";
+          bhead.setAttribute("aria-expanded", String(blockIndex === 0));
+        }
+        const heading = document.createElement(collapsible ? "span" : "h3");
+        if (collapsible) heading.className = "btitle";
+        heading.textContent = block.title;
+        bhead.append(heading);
         if (block.type === "text") {
           const count = document.createElement("span");
           count.className = "count";
-          count.textContent = `${block.fields.length} texts`;
+          count.textContent = `${block.fields.length} ${block.fields.length === 1 ? "text" : "texts"}`;
           bhead.append(count);
         }
         card.append(bhead);
@@ -549,6 +556,16 @@ function buildForm() {
       else buildTextGroup(block, body);
 
       card.append(body);
+      if (collapsible) {
+        card.classList.add("is-collapsible");
+        const setOpen = (open) => {
+          body.hidden = !open;
+          card.classList.toggle("is-collapsed", !open);
+          bhead.setAttribute("aria-expanded", String(open));
+        };
+        setOpen(blockIndex === 0);
+        bhead.addEventListener("click", () => setOpen(bhead.getAttribute("aria-expanded") !== "true"));
+      }
       section.append(card);
     });
 

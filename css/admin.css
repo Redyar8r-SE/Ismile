@@ -69,8 +69,13 @@ body.admin{background:var(--surface)}
 .ghead p{font-size:14.5px;color:var(--muted)}
 .block{background:var(--bg);border:1px solid var(--line);border-radius:16px;overflow:hidden}
 .bhead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 20px;border-bottom:1px solid var(--line);background:var(--surface)}
-.bhead h3{font-size:15px}
+.bhead h3,.bhead .btitle{margin-inline-end:auto;font-size:15px;font-weight:600}
 .bhead .count{font-size:12px;font-weight:700;color:var(--muted)}
+.block.is-collapsible .bhead{width:100%;border:0;border-bottom:1px solid var(--line);color:var(--text);font:inherit;text-align:start;cursor:pointer;transition:background .2s}
+.block.is-collapsible .bhead:hover{background:color-mix(in srgb,var(--teal) 9%,var(--surface))}
+.block.is-collapsible .bhead::after{content:"";flex:none;width:8px;height:8px;margin-inline-start:3px;border-inline-end:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg) translateY(-2px);transition:transform .2s}
+.block.is-collapsible.is-collapsed .bhead{border-bottom-color:transparent}
+.block.is-collapsible.is-collapsed .bhead::after{transform:rotate(-45deg)}
 .bbody{padding:18px 20px}
 .ghint{margin:0;font-size:14px;color:var(--muted)}
 .bbody > .ghint{margin-bottom:14px}
