@@ -184,7 +184,7 @@ const PARTS = [
       ["t_len", "Row 2 label"], ["t_len_v", "Row 2 value (length)"],
       ["t_where", "Row 3 label"], ["t_venue", "Venue name"],
       ["org_by", "Organised by (label)"], ["org_italk", "Organiser name"],
-      ["org_with", "In collaboration with (label)"], ["org_kda", "Partner name"],
+      ["org_with", "In collaboration with (label)"], ["ticket_org_kda", "Ticket partner name"], ["org_kda", "Partner name"],
     ]),
   },
   {
