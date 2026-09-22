@@ -20,9 +20,9 @@ html[lang="en"] .edition-translated,html:not([lang="en"]) .edition-en{display:no
 .hero-mark{--mark-scale:2.3;--mark-nudge:clamp(8px,1.65vw,21px);position:absolute;top:50%;left:calc(0px - var(--mark-nudge));width:var(--mark-width);aspect-ratio:1080/1155;pointer-events:none;transform:translateY(-50%) scale(1.45);animation:markSettle 1.6s both cubic-bezier(.25,.8,.25,1)}
 .mark-stage{position:relative;width:100%;height:100%}
 .hero-mark img{position:absolute;top:0;left:0;display:block;width:100%;height:auto}
-.hero-mark .mark-navy{animation:markJoinLeft .55s both cubic-bezier(.22,.75,.3,1)}
-.hero-mark .mark-cyan{animation:markJoinRight .55s both cubic-bezier(.22,.75,.3,1)}
-@keyframes markSettle{0%,52%{left:50%;transform:translate(-50%,-50%) scale(var(--mark-scale))}100%{left:calc(0px - var(--mark-nudge));transform:translateY(-50%) scale(1.45)}}
+.hero-mark .mark-navy{animation:markJoinLeft .7s both cubic-bezier(.22,.75,.3,1)}
+.hero-mark .mark-cyan{animation:markJoinRight .7s both cubic-bezier(.22,.75,.3,1)}
+@keyframes markSettle{0%,44%{left:50%;transform:translate(-50%,-50%) scale(var(--mark-scale))}100%{left:calc(0px - var(--mark-nudge));transform:translateY(-50%) scale(1.45)}}
 @keyframes markJoinLeft{from{transform:translateX(-100%)}to{transform:none}}
 @keyframes markJoinRight{from{transform:translateX(100%)}to{transform:none}}
 @keyframes editionEnter{from{opacity:0;transform:translate(-48px,16px)}to{opacity:1;transform:none}}
