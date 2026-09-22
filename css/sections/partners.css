@@ -2,16 +2,21 @@
    Trusted partners: logos grouped by tier
    (card frame comes from components/tier-card.css)
    ========================================================== */
-.partners{margin-top:64px}
-.tp-head{display:flex;justify-content:space-between;align-items:end;gap:16px;flex-wrap:wrap}
-.tp-head h3{font-size:clamp(24px,2.6vw,30px)}
+.partners{position:relative;margin-top:68px;padding-top:48px;border-top:1px solid color-mix(in srgb,var(--teal) 25%,var(--line))}
+.partners::before{content:"";position:absolute;inset:0 auto auto 0;width:96px;height:3px;border-radius:999px;background:linear-gradient(90deg,var(--teal),#7FD6D2)}
+.tp-head{display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap}
+.tp-head h3{max-width:24ch;font-size:clamp(25px,2.8vw,34px);line-height:1.15;letter-spacing:-.025em}
 .tp-head .lead{margin-top:6px}
-.tp-count{display:inline-flex;align-items:baseline;gap:5px;font-size:17px;font-weight:600;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:9px 18px;white-space:nowrap}
-.tp-count b{font-size:23px;line-height:1;color:var(--text);font-variant-numeric:tabular-nums}
+.tp-count{display:inline-grid;grid-template-columns:auto auto;align-items:center;gap:10px;min-height:66px;padding:9px 18px 9px 15px;border:1px solid color-mix(in srgb,var(--teal) 48%,var(--line));border-radius:18px;background:linear-gradient(135deg,color-mix(in srgb,var(--teal) 14%,var(--bg)),color-mix(in srgb,var(--teal) 5%,var(--bg)));box-shadow:0 14px 28px -24px color-mix(in srgb,var(--teal) 80%,transparent);color:var(--text);font-size:15.5px;font-weight:700;line-height:1.15;white-space:nowrap}
+.tp-count b{font-size:clamp(32px,3.2vw,40px);line-height:.9;letter-spacing:-.04em;color:var(--teal-ink);font-variant-numeric:tabular-nums}
 
 /* Layout: Platinum and Bronze full width, Gold + Silver side by side */
 .ptiers{display:grid;grid-template-columns:3fr 1fr;gap:18px;margin-top:28px}
 .ptier.tc-plat,.ptier.tc-bronze{grid-column:1/-1}
+.ptier{border:1.5px solid color-mix(in srgb,var(--m2) 72%,var(--line));box-shadow:0 18px 40px -36px var(--m2)}
+.ptier::before{height:4px}
+.ptier .medal{box-shadow:0 9px 22px -10px var(--m2),0 0 0 1px color-mix(in srgb,var(--m2) 45%,transparent)}
+.ptier .tc-count{color:color-mix(in srgb,var(--m2) 78%,var(--text));border-color:color-mix(in srgb,var(--m2) 55%,var(--line));background:color-mix(in srgb,var(--m2) 10%,var(--bg))}
 
 .p-slots{display:grid;gap:12px}
 .tc-plat .p-slots{grid-template-columns:repeat(5,1fr)}
@@ -20,8 +25,8 @@
 .tc-bronze .p-slots{grid-template-columns:repeat(9,1fr)}
 
 /* Logo tile */
-.p-logo{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:10px;text-align:center;border-radius:var(--r-md);background:var(--surface);border:1px solid color-mix(in srgb,var(--m2) 35%,var(--line));padding:10px;transition:border-color .2s,transform .2s,background .2s}
-.p-logo:hover{border-color:var(--m2);transform:translateY(-2px);background:color-mix(in srgb,var(--m2) 8%,var(--surface))}
+.p-logo{position:relative;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:10px;text-align:center;border-radius:var(--r-md);background:linear-gradient(180deg,color-mix(in srgb,var(--m2) 7%,var(--surface)),var(--surface) 42%);border:1.5px solid color-mix(in srgb,var(--m2) 70%,var(--line));padding:10px;box-shadow:inset 0 3px color-mix(in srgb,var(--m1) 75%,transparent);transition:border-color .2s,transform .2s,background .2s,box-shadow .2s}
+.p-logo:hover{border-color:var(--m2);transform:translateY(-3px);background:color-mix(in srgb,var(--m2) 10%,var(--surface));box-shadow:inset 0 3px var(--m2),0 14px 24px -20px var(--m2)}
 .tc-plat .p-logo{height:176px}
 .ptier.tc-gold .p-logo,.ptier.tc-silver .p-logo{height:156px}
 .tc-bronze .p-logo{height:124px;padding:8px;gap:6px}
@@ -38,7 +43,7 @@
 .tc-silver .pl-mono{color:#123B4A;text-shadow:none}
 .tc-bronze .pl-mono{width:32px;height:32px;font-size:11px}
 
-.pl-name{font-family:var(--font);font-weight:700;font-size:13.5px;line-height:1.25;color:var(--text)}
+.pl-name{max-width:100%;overflow-wrap:anywhere;font-family:var(--font);font-weight:700;font-size:13.5px;line-height:1.25;color:var(--text)}
 .tc-plat .pl-name{font-size:14.5px}
 .tc-bronze .pl-name{font-size:12px}
 
@@ -51,14 +56,21 @@
   .ptier.tc-silver .tc-count{display:none}
 }
 @media (max-width:1060px){
-  .ptiers{grid-template-columns:1fr}
+  .ptiers{grid-template-columns:minmax(0,1fr)}
   .tc-plat .p-slots{grid-template-columns:repeat(3,1fr)}
   .ptier.tc-silver .p-slots{grid-template-columns:repeat(3,1fr)}
   .tc-bronze .p-slots{grid-template-columns:repeat(5,1fr)}
 }
 @media (max-width:560px){
-  .tc-plat .p-slots,.ptier.tc-gold .p-slots,.ptier.tc-silver .p-slots{grid-template-columns:repeat(2,1fr)}
-  .tc-bronze .p-slots{grid-template-columns:repeat(3,1fr);gap:8px}
+  .partners{margin-top:52px;padding-top:38px}
+  .tp-head{align-items:flex-start}
+  .tp-count{min-height:58px;padding:8px 14px;border-radius:15px;font-size:14px}
+  .tp-count b{font-size:31px}
+  .ptier .tc-top{display:grid;grid-template-columns:44px minmax(0,1fr);align-items:center;gap:5px 12px}
+  .ptier .medal{grid-row:1/span 2}
+  .ptier .tc-count{grid-column:2;margin-inline-start:0;justify-self:start;max-width:100%;padding:4px 10px;font-size:11px;white-space:normal}
+  .tc-plat .p-slots,.ptier.tc-gold .p-slots,.ptier.tc-silver .p-slots{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tc-bronze .p-slots{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
   .p-slots .p-logo:last-child:nth-child(odd){grid-column:span 2}
   .tc-bronze .p-slots .p-logo:last-child:nth-child(odd){grid-column:auto}
   .tc-plat .p-logo{height:150px}

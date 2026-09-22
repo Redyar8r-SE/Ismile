@@ -20,7 +20,7 @@ export function initPartners({ tiers, partners }) {
               <div><h3>${tr(tier.label) || tier.name}</h3><p>${tr(tier.subtitle)}</p></div>
               <span class="tc-count">${list.length} ${t(list.length > 1 ? "tp_companies_brands" : "tp_company")}</span>
             </div>
-            <div class="p-slots">${list.map(renderLogo).join("")}</div>
+            <div class="p-slots">${list.map((partner) => renderLogo(partner, tier)).join("")}</div>
           </div>`;
       })
       .join("");
@@ -37,12 +37,12 @@ export function initPartners({ tiers, partners }) {
   onLangChange(render);
 }
 
-function renderLogo(p) {
+function renderLogo(p, tier) {
   const mark = p.logo
     ? `<img src="${p.logo}" alt="${p.name} logo" loading="lazy" data-initials="${initials(p.name)}"${p.round ? ' class="round"' : ""}>`
     : `<span class="pl-mono">${initials(p.name)}</span>`;
   return `
-    <div class="p-logo">
+    <div class="p-logo" data-tier="${tier.name}" aria-label="${p.name}, ${tr(tier.label) || tier.name}">
       <div class="pl-frame" style="background:${p.bg || "#fff"}">${mark}</div>
       <span class="pl-name">${p.name}</span>
     </div>`;
