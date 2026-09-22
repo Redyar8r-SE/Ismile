@@ -1,6 +1,6 @@
 // Sponsor tiers: the sponsors already signed, then the open places left,
 // from data/sponsors.json.
-import { ICONS } from "../config/icons.js?v=24";
+import { ICONS } from "../config/icons.js?v=27";
 import { initials } from "../utils/initials.js?v=24";
 import { t, tr, onLangChange } from "../i18n.js?v=24";
 
@@ -27,7 +27,7 @@ export function initSponsors({ tiers, sponsors = [] }) {
         return `
           <div class="tierc ${tier.className}">
             <div class="tc-top">
-              <span class="medal">${ICONS.gem}</span>
+              <span class="medal">${tierIcon(tier)}</span>
               <div><h3>${tr(tier.name)}</h3><p>${tr(tier.subtitle)}</p></div>
               ${free ? `<span class="tc-count">${free} ${t("spon_spots")}</span>` : ""}
             </div>
@@ -46,4 +46,13 @@ export function initSponsors({ tiers, sponsors = [] }) {
 
   render();
   onLangChange(render);
+}
+
+function tierIcon(tier) {
+  if (tier.className === "tc-plat") return ICONS.crown;
+  if (tier.className === "tc-gold") return ICONS.trophy;
+  if (tier.className === "tc-silver") return ICONS.medal;
+  if (tier.className === "tc-bronze") return ICONS.award;
+  if (tier.className === "tc-exhibitor") return ICONS.storefront;
+  return ICONS.gem;
 }

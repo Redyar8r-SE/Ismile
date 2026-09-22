@@ -4,16 +4,21 @@
    ========================================================== */
 .spon-head{display:flex;justify-content:space-between;align-items:end;gap:24px;flex-wrap:wrap}
 .tiers{display:grid;gap:18px;margin-top:36px}
+.tiers .tierc{border:1.5px solid color-mix(in srgb,var(--m2) 72%,var(--line));box-shadow:0 18px 40px -36px var(--m2)}
+.tiers .tierc::before{height:4px}
+.tiers .medal{box-shadow:0 9px 22px -10px var(--m2),0 0 0 1px color-mix(in srgb,var(--m2) 45%,transparent)}
+.tiers .tc-count{color:color-mix(in srgb,var(--m2) 78%,var(--text));border-color:color-mix(in srgb,var(--m2) 55%,var(--line));background:color-mix(in srgb,var(--m2) 10%,var(--bg))}
 
 .tc-slots{display:grid;gap:12px}
-.tc-dia .tc-slots{grid-template-columns:repeat(2,1fr)}
-.tc-gold .tc-slots{grid-template-columns:repeat(3,1fr)}
-.tc-silver .tc-slots{grid-template-columns:repeat(5,1fr)}
-.tc-exhibitor .tc-slots{grid-template-columns:repeat(5,1fr)}
+.tc-dia .tc-slots,.tc-plat .tc-slots{grid-template-columns:repeat(2,minmax(0,1fr))}
+.tc-gold .tc-slots{grid-template-columns:repeat(3,minmax(0,1fr))}
+.tc-silver .tc-slots{grid-template-columns:repeat(5,minmax(0,1fr))}
+.tc-exhibitor .tc-slots{grid-template-columns:repeat(5,minmax(0,1fr))}
 
-.logo-slot{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border-radius:var(--r-md);background:var(--surface);border:1.5px dashed color-mix(in srgb,var(--m2) 45%,var(--line));color:var(--muted);text-decoration:none;font-size:13px;font-weight:500;transition:border-color .2s,background .2s,color .2s}
+.logo-slot{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border-radius:var(--r-md);background:linear-gradient(180deg,color-mix(in srgb,var(--m2) 7%,var(--surface)),var(--surface));border:1.5px dashed color-mix(in srgb,var(--m2) 68%,var(--line));color:var(--muted);text-decoration:none;font-size:13px;font-weight:500;transition:border-color .2s,background .2s,color .2s,transform .2s}
 .logo-slot:hover{border-style:solid;border-color:var(--m2);color:var(--text);background:color-mix(in srgb,var(--m2) 8%,var(--surface))}
 .tc-dia .logo-slot{height:140px;font-size:14px}
+.tc-plat .logo-slot{height:124px;font-size:14px}
 .tc-gold .logo-slot{height:112px}
 .tc-silver .logo-slot{height:88px}
 .tc-exhibitor .logo-slot{height:88px}
@@ -24,24 +29,28 @@
 .tc-exhibitor .slot-plus{width:26px;height:26px}
 
 @media (max-width:860px){
-  .tc-gold .tc-slots{grid-template-columns:repeat(2,1fr)}
-  .tc-silver .tc-slots{grid-template-columns:repeat(3,1fr)}
-  .tc-exhibitor .tc-slots{grid-template-columns:repeat(3,1fr)}
+  .tc-gold .tc-slots{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tc-silver .tc-slots{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .tc-exhibitor .tc-slots{grid-template-columns:repeat(3,minmax(0,1fr))}
   .tc-gold .logo-slot:last-child:nth-child(odd){grid-column:span 2}
 }
 @media (max-width:560px){
-  .tc-dia .tc-slots{grid-template-columns:1fr}
-  .tc-dia .logo-slot{height:110px}
-  .tc-silver .tc-slots{grid-template-columns:repeat(2,1fr)}
-  .tc-exhibitor .tc-slots{grid-template-columns:repeat(2,1fr)}
+  .tiers .tc-top{display:grid;grid-template-columns:44px minmax(0,1fr);align-items:center;gap:5px 12px}
+  .tiers .medal{grid-row:1/span 2}
+  .tiers .tc-count{grid-column:2;margin-inline-start:0;justify-self:start;max-width:100%;padding:4px 10px;font-size:11px;white-space:normal}
+  .tc-dia .tc-slots,.tc-plat .tc-slots{grid-template-columns:minmax(0,1fr)}
+  .tc-dia .logo-slot,.tc-plat .logo-slot{height:110px}
+  .tc-silver .tc-slots{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tc-exhibitor .tc-slots{grid-template-columns:repeat(2,minmax(0,1fr))}
   .tc-silver .logo-slot:last-child:nth-child(odd){grid-column:span 2}
   .tc-exhibitor .logo-slot:last-child:nth-child(odd){grid-column:span 2}
 }
 
 /* Sponsors already signed, shown beside the open places */
-.tc-slots .p-logo{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:10px;text-align:center;border-radius:var(--r-md);background:var(--surface);border:1px solid color-mix(in srgb,var(--m2) 35%,var(--line));padding:10px;transition:border-color .2s,transform .2s,background .2s}
-.tc-slots .p-logo:hover{border-color:var(--m2);transform:translateY(-2px);background:color-mix(in srgb,var(--m2) 8%,var(--surface))}
+.tc-slots .p-logo{min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:10px;text-align:center;border-radius:var(--r-md);background:linear-gradient(180deg,color-mix(in srgb,var(--m2) 7%,var(--surface)),var(--surface) 42%);border:1.5px solid color-mix(in srgb,var(--m2) 70%,var(--line));padding:10px;box-shadow:inset 0 3px color-mix(in srgb,var(--m1) 75%,transparent);transition:border-color .2s,transform .2s,background .2s,box-shadow .2s}
+.tc-slots .p-logo:hover{border-color:var(--m2);transform:translateY(-3px);background:color-mix(in srgb,var(--m2) 10%,var(--surface));box-shadow:inset 0 3px var(--m2),0 14px 24px -20px var(--m2)}
 .tc-dia .tc-slots .p-logo{height:140px}
+.tc-plat .tc-slots .p-logo{height:124px}
 .tc-gold .tc-slots .p-logo{height:112px}
 .tc-silver .tc-slots .p-logo{height:88px;gap:6px}
 .tc-silver .tc-slots .pl-name{font-size:11.5px}
