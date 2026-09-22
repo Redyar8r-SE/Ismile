@@ -1,5 +1,5 @@
 // Trusted partners grouped by tier, from data/partners.json.
-import { ICONS } from "../config/icons.js?v=25";
+import { ICONS } from "../config/icons.js?v=26";
 import { initials } from "../utils/initials.js?v=24";
 import { t, tr, onLangChange } from "../i18n.js?v=24";
 
@@ -39,7 +39,9 @@ export function initPartners({ tiers, partners }) {
 
 function tierIcon(tier) {
   if (tier.className === "tc-plat") return ICONS.crown;
+  if (tier.className === "tc-gold") return ICONS.trophy;
   if (tier.className === "tc-silver") return ICONS.medal;
+  if (tier.className === "tc-bronze") return ICONS.award;
   return ICONS.gem;
 }
 
