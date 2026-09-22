@@ -44,8 +44,10 @@ html[lang="en"] .edition-translated,html:not([lang="en"]) .edition-en{display:no
 .t-rows small{display:block;font-size:12px;color:#A9C9CD}
 .t-rows b{display:block;font-size:19px;line-height:1.25}
 .t-date-row{margin-inline:-10px;padding:10px;border-radius:16px;background:linear-gradient(100deg,rgba(22,166,161,.16),rgba(22,166,161,.04))}
-.event-date{display:flex!important;align-items:baseline;gap:8px;flex-wrap:wrap}
-.event-date-range{font-size:24px;font-weight:800;letter-spacing:-.03em;color:#fff}
+.event-date{display:flex!important;align-items:center;gap:9px;flex-wrap:wrap}
+.event-date-days{display:inline-flex;align-items:center;gap:4px;direction:ltr;unicode-bidi:isolate}
+.event-date-day{display:grid;place-items:center;min-width:31px;height:29px;padding-inline:5px;border-radius:8px;background:#16A6A1;color:#06242B;font-size:18px;font-weight:800;line-height:1}
+.event-date-joiner{font-size:16px;font-weight:800;color:#7FD6D2}
 .event-date-month{font-size:15px;font-weight:600;color:#BCEAE8;white-space:nowrap}
 .t-ic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:rgba(22,166,161,.16);color:#3CC4BF;flex:none}
 .t-ic svg{width:22px;height:22px}
@@ -76,7 +78,7 @@ html[lang="en"] .edition-translated,html:not([lang="en"]) .edition-en{display:no
 @media (max-width:420px){
   .t-logo{width:44px;height:44px}
   .t-rows b{font-size:17px}
-  .event-date-range{font-size:21px}
+  .event-date-day{min-width:28px;height:27px;font-size:16px}
   .event-date-month{font-size:14px}
 }
 @media (prefers-reduced-motion: reduce){
