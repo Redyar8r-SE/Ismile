@@ -16,7 +16,7 @@
 <link rel="stylesheet" href="css/components/brand.css?v=26">
 <link rel="stylesheet" href="css/layout/header.css?v=25">
 <link rel="stylesheet" href="css/layout/footer.css?v=24">
-<link rel="stylesheet" href="css/sections/hero.css?v=42">
+<link rel="stylesheet" href="css/sections/hero.css?v=43">
 <link rel="stylesheet" href="css/sections/register.css?v=31">
 <link rel="stylesheet" href="css/sections/register-page.css?v=5">
 <script type="module" src="js/register.js?v=1"></script>
@@ -34,11 +34,18 @@
 <script>
 (function () {
   var page = document.documentElement;
-  page.classList.add("siteboot-on");
+  var lifted = false;
+  page.classList.add("siteboot-on", "site-animations-pending");
   var lift = function () {
+    if (lifted) return;
+    lifted = true;
     page.classList.remove("siteboot-on");
     var cover = document.getElementById("siteboot");
     if (cover) cover.classList.add("is-gone");
+    setTimeout(function () {
+      page.classList.remove("site-animations-pending");
+      page.classList.add("site-ready");
+    }, cover ? 500 : 0);
   };
   window.siteReady = lift;
   window.addEventListener("load", function () { setTimeout(lift, 2500); });

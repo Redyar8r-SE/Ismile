@@ -22,6 +22,11 @@ html[lang="en"] .edition-translated,html:not([lang="en"]) .edition-en{display:no
 .hero-mark img{position:absolute;top:0;left:0;display:block;width:100%;height:auto}
 .hero-mark .mark-navy{animation:markJoinLeft 1s both cubic-bezier(.22,.75,.3,1)}
 .hero-mark .mark-cyan{animation:markJoinRight 1s both cubic-bezier(.22,.75,.3,1)}
+/* Keep the entrance at its first frame while the loading cover is visible. */
+html.site-animations-pending .wordmark span,
+html.site-animations-pending .hero-edition,
+html.site-animations-pending .hero-mark,
+html.site-animations-pending .hero-mark img{animation-play-state:paused}
 /* Reach the left slot before the unchanged wordmark entrance, then settle gently. */
 @keyframes markSettle{0%,43%{left:50%;transform:translate(-50%,-50%) scale(var(--mark-scale))}70%{left:calc(0px - var(--mark-nudge));transform:translateY(-50%) scale(calc(var(--mark-final-scale) + .1))}100%{left:calc(0px - var(--mark-nudge));transform:translateY(-50%) scale(var(--mark-final-scale))}}
 @keyframes markJoinLeft{from{transform:translateX(-100%)}to{transform:none}}

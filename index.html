@@ -23,7 +23,7 @@
 <link rel="stylesheet" href="css/layout/header.css?v=25">
 <link rel="stylesheet" href="css/layout/footer.css?v=24">
 <!-- Sections (in page order) -->
-<link rel="stylesheet" href="css/sections/hero.css?v=42">
+<link rel="stylesheet" href="css/sections/hero.css?v=43">
 <link rel="stylesheet" href="css/sections/stats.css?v=24">
 <link rel="stylesheet" href="css/sections/about.css?v=24">
 <link rel="stylesheet" href="css/sections/experience.css?v=24">
@@ -57,11 +57,18 @@
 // Whatever happens, the cover comes off - a visitor must never be shut out.
 (function () {
   var page = document.documentElement;
-  page.classList.add("siteboot-on");    // no scrolling behind the cover
+  var lifted = false;
+  page.classList.add("siteboot-on", "site-animations-pending");
   var lift = function () {
+    if (lifted) return;
+    lifted = true;
     page.classList.remove("siteboot-on");
     var cover = document.getElementById("siteboot");
     if (cover) cover.classList.add("is-gone");
+    setTimeout(function () {
+      page.classList.remove("site-animations-pending");
+      page.classList.add("site-ready");
+    }, cover ? 500 : 0);
   };
   window.siteReady = lift;              // the page code calls this when it is done
   window.addEventListener("load", function () { setTimeout(lift, 2500); });
