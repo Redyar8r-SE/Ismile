@@ -18,8 +18,10 @@
 .reg-top .lang{margin-inline-start:auto}
 .reg-page-intro{position:relative;overflow:hidden;padding-block:26px 56px;background:linear-gradient(125deg,var(--navy-2),var(--navy) 62%,#0B6265);color:#fff}
 .reg-page-intro::before{content:"";position:absolute;inset:auto -12% -55% auto;width:55vw;aspect-ratio:1;border:1px solid rgba(174,240,236,.1);border-radius:50%;pointer-events:none}
-.reg-page-back{display:inline-flex;align-items:center;gap:8px;color:#C5DFE1;text-decoration:none;font-size:13px;font-weight:650}
-.reg-page-back:hover{color:#fff}
+.reg-page-back{display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:5px 16px 5px 6px;border:1px solid rgba(181,234,231,.24);border-radius:999px;background:rgba(255,255,255,.07);color:#E1F0F1;text-decoration:none;font-size:13.5px;font-weight:700;box-shadow:0 10px 24px -18px rgba(0,0,0,.8),inset 0 1px rgba(255,255,255,.05);transition:color .2s,border-color .2s,background .2s,transform .2s,box-shadow .2s}
+.reg-page-back:hover{color:#fff;border-color:rgba(126,222,216,.58);background:rgba(22,166,161,.18);transform:translateY(-1px);box-shadow:0 14px 26px -18px rgba(0,0,0,.9),inset 0 1px rgba(255,255,255,.08)}
+.reg-page-back-icon{display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:var(--teal);color:#fff;box-shadow:0 7px 16px -9px rgba(22,166,161,.9);transition:transform .2s,background .2s}
+.reg-page-back:hover .reg-page-back-icon{background:#20B9B3;transform:translateX(-2px)}
 .reg-page-back svg{width:16px;height:16px}
 .reg-page-hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,420px);align-items:center;gap:44px;padding-top:34px}
 .reg-page-hero-copy{min-width:0}
@@ -40,7 +42,9 @@
 .reg-page-section .reg-card{box-shadow:0 30px 70px -45px rgba(8,30,38,.52)}
 .reg-page-section .reg-panel{background:var(--bg)}
 
+html[dir="rtl"] .reg-page-back{padding:5px 6px 5px 16px}
 html[dir="rtl"] .reg-page-back svg,html[dir="rtl"] .reg-invite .btn svg{transform:scaleX(-1)}
+html[dir="rtl"] .reg-page-back:hover .reg-page-back-icon{transform:translateX(2px)}
 html[dir="rtl"] .reg-invite-card::before{left:auto;right:0}
 
 @media (max-width:1060px){
