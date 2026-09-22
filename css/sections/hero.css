@@ -1,16 +1,32 @@
 /* ==========================================================
-   Hero: wordmark, animated smile, event "ticket"
+   Hero: animated wordmark and tooth mark, event "ticket"
    ========================================================== */
 .hero{background:var(--hero-bg);color:var(--hero-text);position:relative;overflow:hidden}
 .hero .wrap{display:grid;grid-template-columns:1.35fr 1fr;gap:56px;align-items:center;padding-block:84px 96px}
 
-.wordmark{font-family:var(--font);font-weight:800;font-size:clamp(84px,13vw,176px);line-height:.9;letter-spacing:-0.045em;margin:0}
-.wordmark span{color:var(--teal)}
-
-.smile{display:block;width:min(100%,520px);height:auto;margin-top:6px}
-.smile path{stroke-dasharray:640;stroke-dashoffset:640;animation:draw 1.4s .25s cubic-bezier(.65,0,.35,1) forwards}
-html[dir="rtl"] .smile{transform:scaleX(-1)}
-@keyframes draw{to{stroke-dashoffset:0}}
+.hero-brand{position:relative;width:max-content;max-width:100%;display:flex;flex-direction:column;align-items:center;direction:ltr}
+.wordmark{font-family:var(--font);font-weight:800;font-size:clamp(58px,13vw,176px);line-height:.9;letter-spacing:-0.045em;margin:0;white-space:nowrap}
+.wordmark span{display:inline-block;opacity:0;animation:letterEnter .55s both cubic-bezier(.2,.8,.2,1)}
+.wordmark span:not(.word-i){color:var(--teal)}
+.wordmark .word-i{animation-delay:1.65s}
+.wordmark .word-s{animation-delay:1.79s}
+.wordmark .word-m{animation-delay:1.93s}
+.wordmark .word-i2{animation-delay:2.07s}
+.wordmark .word-l{animation-delay:2.21s}
+.wordmark .word-e{animation-delay:2.35s}
+.hero-edition{position:absolute;top:-22px;right:4px;color:#BCEAE8;font-size:13px;font-weight:700;letter-spacing:.025em;line-height:1;white-space:nowrap;opacity:0;animation:editionEnter .55s 3s both cubic-bezier(.2,.8,.2,1)}
+.hero-edition sup{font-size:.7em;line-height:0}
+html[lang="en"] .edition-translated,html:not([lang="en"]) .edition-en{display:none}
+.hero-mark{--mark-lift:clamp(-168px,-13vw,-50px);--mark-scale:1.65;position:relative;width:clamp(110px,14vw,186px);height:clamp(52px,7vw,94px);margin-top:10px;align-self:center;pointer-events:none}
+.mark-stage{position:absolute;top:0;left:0;width:100%;aspect-ratio:1080/1155;clip-path:inset(0 0 50%);transform-origin:center top;animation:markSettle 1.6s both cubic-bezier(.25,.8,.25,1)}
+.hero-mark img{position:absolute;top:0;left:0;display:block;width:100%;height:auto}
+.hero-mark .mark-navy{animation:markJoinLeft .55s both cubic-bezier(.22,.75,.3,1)}
+.hero-mark .mark-cyan{animation:markJoinRight .55s both cubic-bezier(.22,.75,.3,1)}
+@keyframes markSettle{0%,52%{transform:translateY(var(--mark-lift)) scale(var(--mark-scale));clip-path:inset(0)}100%{transform:none;clip-path:inset(0 0 50%)}}
+@keyframes markJoinLeft{from{transform:translateX(-100%)}to{transform:none}}
+@keyframes markJoinRight{from{transform:translateX(100%)}to{transform:none}}
+@keyframes editionEnter{from{opacity:0;transform:translate(-48px,16px)}to{opacity:1;transform:none}}
+@keyframes letterEnter{from{opacity:0;transform:translateX(-34px)}to{opacity:1;transform:none}}
 
 .hero h1{font-size:clamp(24px,2.8vw,34px);font-weight:600;margin-top:18px;max-width:22ch}
 .hero .sub{color:var(--hero-muted);margin-top:10px;max-width:48ch}
@@ -39,12 +55,14 @@ html[dir="rtl"] .smile{transform:scaleX(-1)}
 .t-logo{width:56px;height:56px;flex:none;filter:brightness(1.4)}
 
 @media (max-width:860px){
-  .hero .wrap{grid-template-columns:1fr;padding-block:56px 64px;gap:40px}
+  .hero .wrap{grid-template-columns:minmax(0,1fr);padding-block:56px 64px;gap:40px}
+  .hero .wrap > *{min-width:0}
+  .hero-mark{--mark-scale:1.25}
 }
 @media (max-width:420px){
   .t-logo{width:44px;height:44px}
   .t-rows b{font-size:17px}
 }
 @media (prefers-reduced-motion: reduce){
-  .smile path{animation:none;stroke-dashoffset:0}
+  .wordmark span,.mark-stage,.hero-mark img,.hero-edition{animation:none;opacity:1;transform:none}
 }

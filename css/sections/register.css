@@ -1,5 +1,5 @@
 /* ==========================================================
-   Registration: side info + 3-step form
+   Registration: side info + 2-step form
    ========================================================== */
 .reg-head{max-width:720px;margin-bottom:40px}
 .reg{display:grid;grid-template-columns:minmax(300px,370px) 1fr;gap:28px;align-items:start}
@@ -39,6 +39,7 @@
 /* Stepper */
 .reg-progress{padding:24px 32px 0}
 .stepper{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+#regCard .stepper{grid-template-columns:repeat(2,1fr)}
 .stepper li{display:flex;align-items:center;gap:10px;min-width:0;font-size:14px;font-weight:600;color:var(--muted);transition:color .25s}
 .st-dot{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700;border:2px solid var(--line);background:var(--bg);color:var(--muted);transition:background .25s,border-color .25s,color .25s,box-shadow .25s}
 .st-label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -47,6 +48,7 @@
 .stepper li.is-done .st-dot{border-color:var(--teal);background:var(--teal);color:#fff}
 .st-bar{height:3px;margin-top:20px;border-radius:3px;overflow:hidden;background:var(--surface-2)}
 .st-bar i{display:block;height:100%;width:33.33%;border-radius:3px;background:linear-gradient(90deg,var(--teal),#7FD6D2);transition:width .35s ease}
+#regCard .st-bar i{width:50%}
 
 #regForm{padding:28px 32px 30px}
 .reg-step{animation:stepIn .3s ease}
@@ -54,6 +56,7 @@
 .step-head{margin-bottom:22px}
 .step-head h3{font-size:22px;outline:none}
 .step-head p{margin-top:4px;font-size:15px;color:var(--muted)}
+.reg-person-intro{display:flex;align-items:center;gap:14px;margin-bottom:24px;padding:16px 18px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface)}
 
 /* Selectable cards: registration type + payment method */
 .type-options{display:grid;gap:12px}
@@ -93,9 +96,10 @@ html[dir="rtl"] .f select{background-position:left 14px center}
 .f-error::before{content:"!";flex:none;width:16px;height:16px;margin-top:1px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:800;color:#fff;background:var(--danger)}
 
 /* Ticket type toggle */
-.ticket-toggle{display:grid;grid-template-columns:1fr 1fr;gap:4px;height:50px;padding:4px;border-radius:12px;background:var(--surface-2)}
-.ticket-toggle label{position:relative;display:grid;place-items:center;border-radius:9px;font-size:14.5px;font-weight:600;color:var(--muted);cursor:pointer;transition:background .2s,color .2s,box-shadow .2s}
-.ticket-toggle label.is-checked{background:var(--bg);color:var(--text);box-shadow:0 1px 3px rgba(18,59,74,.18)}
+.ticket-toggle{display:grid;grid-template-columns:1fr 1fr;gap:8px;min-height:50px}
+.ticket-toggle label{position:relative;display:grid;place-items:center;min-height:50px;padding:8px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--bg);font-size:14.5px;font-weight:700;color:var(--muted);text-align:center;cursor:pointer;transition:border-color .2s,background .2s,color .2s,box-shadow .2s,transform .2s}
+.ticket-toggle label:hover{border-color:var(--teal);color:var(--text)}
+.ticket-toggle label.is-checked{border-color:var(--teal);background:color-mix(in srgb,var(--teal) 14%,var(--bg));color:var(--teal-ink);box-shadow:inset 0 0 0 1px var(--teal),0 3px 10px color-mix(in srgb,var(--teal) 12%,transparent)}
 
 /* Company: dentists list */
 .dent-block{gap:12px}
@@ -168,6 +172,7 @@ html[dir="rtl"] .reg-nav svg{transform:scaleX(-1)}
 @media (max-width:720px){
   .reg{grid-template-columns:1fr}
   .stepper{grid-template-columns:auto auto auto;justify-content:space-between}
+  #regCard .stepper{grid-template-columns:auto auto}
   .stepper li:not(.is-active) .st-label{display:none}
   .dentist{grid-template-columns:1fr 1fr;gap:10px}
   .dent-num{grid-row:1;grid-column:1;margin-top:0}

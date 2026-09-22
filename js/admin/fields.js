@@ -44,7 +44,7 @@ const PARTS = [
   },
   {
     id: "sponsorTiers", title: "Sponsor tiers", kind: "list", file: "sponsors", listKey: "tiers",
-    hint: "The Diamond / Gold / Silver cards and how many places are still open in each.",
+    hint: "The Diamond / Platinum / Gold / Silver / Exhibitor cards and how many places are still open in each.",
     itemName: "tier",
     refreshes: ["sponsorList"],
     rowInfo: (tier, data) => {
@@ -61,7 +61,7 @@ const PARTS = [
       { key: "subtitle", label: "Tier subtitle", type: "i18n" },
       { key: "spots", label: "Open places", type: "number" },
       { key: "className", label: "Colour", type: "select", options: [
-        ["tc-dia", "Diamond (light blue)"], ["tc-gold", "Gold"], ["tc-silver", "Silver"], ["tc-bronze", "Bronze"], ["tc-plat", "Platinum"],
+        ["tc-dia", "Diamond (light blue)"], ["tc-gold", "Gold"], ["tc-silver", "Silver"], ["tc-exhibitor", "Exhibitor"], ["tc-bronze", "Bronze"], ["tc-plat", "Platinum"],
       ] },
     ],
   },

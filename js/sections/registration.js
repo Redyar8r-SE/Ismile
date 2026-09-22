@@ -1,8 +1,8 @@
-// Registration: 3-step form with validation, review and success screen.
+// Registration: individual details, payment review, and success screen.
 // Demo only: nothing is sent to a server yet. Connect submitRegistration() to your backend.
 import { t, onLangChange } from "../i18n.js?v=24";
 
-const TOTAL_STEPS = 3;
+const TOTAL_STEPS = 2;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 // Iraqi mobiles (0750 123 4567 / +964 750 123 4567) or any international number starting with +
@@ -23,17 +23,14 @@ export function initRegistration() {
   const nextBtn = $("regNext");
   const submitBtn = $("regSubmit");
   const specialty = $("p_spec");
-  const dentistList = $("dentists");
   const success = $("regSuccess");
 
   let step = 1;
-  let type = "person";
-  let dentistId = 0;
 
   // ---------- Helpers ----------
   const checkedValue = (name) => form.querySelector(`input[name="${name}"]:checked`)?.value;
   const optionText = (select) => select.options[select.selectedIndex]?.textContent.trim() || "";
-  const isHidden = (el) => Boolean(el.closest("[hidden]"));
+  const isHidden = (el) => Boolean(el.closest("[hidden]:not(.reg-step)"));
 
   // Keep the "selected" style of radio cards in sync
   function syncChecked(name) {
@@ -74,22 +71,23 @@ export function initRegistration() {
       error = "err_email";
     } else if (rule === "phone" && !isValidPhone(value)) {
       error = "err_phone";
-    } else if (rule === "name" && value.length < 3) {
+    } else if (rule === "name-part" && value.length < 2) {
       error = "err_name";
+    } else if (rule === "age" && (!Number.isInteger(Number(value)) || Number(value) < 16 || Number(value) > 120)) {
+      error = "err_age";
     }
     showError(input, error);
     return !error;
   }
 
   function validateStep(number) {
-    if (number === 2) {
-      const panel = form.querySelector(`[data-panel="${type}"]`);
-      const inputs = [...panel.querySelectorAll("[data-rule]")].filter((input) => !isHidden(input));
+    if (number === 1) {
+      const inputs = [...form.querySelectorAll('.reg-step[data-step="1"] [data-rule]')].filter((input) => !isHidden(input));
       const invalid = inputs.filter((input) => !checkField(input));
       invalid[0]?.focus();
       return invalid.length === 0;
     }
-    if (number === 3) {
+    if (number === 2) {
       const terms = $("terms");
       const error = $("termsError");
       error.hidden = terms.checked;
@@ -124,7 +122,7 @@ export function initRegistration() {
     nextBtn.hidden = step === TOTAL_STEPS;
     submitBtn.hidden = step !== TOTAL_STEPS;
     updateCount();
-    if (step === 3) renderReview();
+    if (step === 2) renderReview();
 
     if (scroll) {
       const top = card.getBoundingClientRect().top;
@@ -141,20 +139,10 @@ export function initRegistration() {
     if (validateStep(step)) goTo(step + 1);
   });
   backBtn.addEventListener("click", () => goTo(step - 1));
-  $("editDetails").addEventListener("click", () => goTo(2));
-
-  // ---------- Registration type ----------
-  function setType(newType) {
-    type = newType;
-    form.querySelector(`input[name="regType"][value="${type}"]`).checked = true;
-    syncChecked("regType");
-    form.querySelectorAll("[data-panel]").forEach((panel) => { panel.hidden = panel.dataset.panel !== type; });
-    form.querySelectorAll("[data-type-show]").forEach((el) => { el.hidden = el.dataset.typeShow !== type; });
-  }
+  $("editDetails").addEventListener("click", () => goTo(1));
 
   form.addEventListener("change", (event) => {
     const input = event.target;
-    if (input.name === "regType") setType(input.value);
     if (input.name === "pay") {
       syncChecked("pay");
       renderReview();
@@ -170,12 +158,6 @@ export function initRegistration() {
     }
   });
 
-  // "Register your team" button in the Companies section
-  document.querySelector("[data-go-company]")?.addEventListener("click", () => {
-    setType("company");
-    goTo(2, { scroll: false });
-  });
-
   // Students add their university
   function toggleUniversity() {
     const isStudent = checkedValue("ticket") === "student";
@@ -183,63 +165,20 @@ export function initRegistration() {
     if (!isStudent) showError($("p_uni"), "");
   }
 
-  // ---------- Dentists (company) ----------
-  function addDentist() {
-    dentistId++;
-    const id = dentistId;
-    const row = document.createElement("div");
-    row.className = "dentist";
-    // The specialty options are copied from the person form so the list lives in one place.
-    row.innerHTML = `
-      <span class="dent-num" aria-hidden="true"></span>
-      <div class="f"><label for="dn${id}" data-i18n="d_name">${t("d_name")}</label><input id="dn${id}" autocomplete="off" data-rule="name"></div>
-      <div class="f"><label for="dp${id}" data-i18n="d_phone">${t("d_phone")}</label><input id="dp${id}" type="tel" inputmode="tel" dir="ltr" placeholder="07xx xxx xxxx" data-rule="phone" data-optional></div>
-      <div class="f"><label for="ds${id}" data-i18n="f_spec">${t("f_spec")}</label><select id="ds${id}">${specialty.innerHTML}</select></div>
-      <button type="button" class="rm" aria-label="${t("remove")}">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>
-      </button>`;
-    row.querySelector(".rm").addEventListener("click", () => {
-      if (dentistList.children.length > 1) {
-        row.remove();
-        refreshDentists();
-      }
-    });
-    dentistList.appendChild(row);
-    refreshDentists();
-    return row;
-  }
-
-  function refreshDentists() {
-    const rows = [...dentistList.children];
-    rows.forEach((row, index) => {
-      row.querySelector(".dent-num").textContent = index + 1;
-      const remove = row.querySelector(".rm");
-      remove.disabled = rows.length === 1;
-      remove.setAttribute("aria-label", t("remove"));
-    });
-    $("dentCount").textContent = `${rows.length} ${t(rows.length === 1 ? "dentist" : "dentists")}`;
-  }
-
-  $("addDentist").addEventListener("click", () => addDentist().querySelector("input").focus());
-
   // ---------- Review ----------
   function renderReview() {
-    const rows = [[t("rv_type"), t(type === "person" ? "mode_person" : "mode_company")]];
-    if (type === "person") {
-      rows.push([t("f_name"), $("p_name").value.trim()]);
-      rows.push([t("f_spec"), optionText(specialty)]);
-      rows.push([t("f_ticket"), t(checkedValue("ticket") === "student" ? "ticket_student" : "ticket_prof")]);
-      if (checkedValue("ticket") === "student") rows.push([t("f_uni"), $("p_uni").value.trim()]);
-      rows.push([t("f_phone"), $("p_phone").value.trim()]);
-      rows.push([t("f_email"), $("p_email").value.trim()]);
-    } else {
-      const names = [...dentistList.querySelectorAll('input[id^="dn"]')].map((input) => input.value.trim()).filter(Boolean);
-      rows.push([t("f_cname"), $("c_name").value.trim()]);
-      rows.push([t("f_contact"), $("c_contact").value.trim()]);
-      rows.push([t("f_phone"), $("c_phone").value.trim()]);
-      rows.push([t("f_email"), $("c_email").value.trim()]);
-      rows.push([t("f_dentists"), `${names.length} · ${names.join(", ")}`]);
-    }
+    const rows = [[t("rv_type"), t("mode_person")]];
+    rows.push([t("f_first"), $("p_first").value.trim()]);
+    rows.push([t("f_second"), $("p_second").value.trim()]);
+    rows.push([t("f_third"), $("p_third").value.trim()]);
+    rows.push([t("f_phone_number"), $("p_phone").value.trim()]);
+    rows.push([t("f_email"), $("p_email").value.trim()]);
+    rows.push([t("f_gender"), optionText($("p_gender"))]);
+    rows.push([t("f_age"), $("p_age").value.trim()]);
+    if ($("p_ambassador").value.trim()) rows.push([t("f_ambassador"), $("p_ambassador").value.trim()]);
+    rows.push([t("f_spec"), optionText(specialty)]);
+    rows.push([t("f_ticket"), t(checkedValue("ticket") === "student" ? "ticket_student" : "ticket_prof")]);
+    if (checkedValue("ticket") === "student") rows.push([t("f_uni"), $("p_uni").value.trim()]);
     rows.push([t("pay_legend"), t(checkedValue("pay") === "fastpay" ? "pay_fastpay_t" : "pay_fib_t")]);
 
     const list = $("reviewList");
@@ -262,19 +201,19 @@ export function initRegistration() {
       nextBtn.click();
       return;
     }
-    if (!validateStep(2)) {
-      goTo(2);
-      validateStep(2);
+    if (!validateStep(1)) {
+      goTo(1);
+      validateStep(1);
       return;
     }
-    if (!validateStep(3)) return;
+    if (!validateStep(2)) return;
     submitRegistration();
   });
 
   function submitRegistration() {
     // TODO: send the registration to your server here.
-    const phone = $(type === "person" ? "p_phone" : "c_phone").value.trim();
-    const email = $(type === "person" ? "p_email" : "c_email").value.trim();
+    const phone = $("p_phone").value.trim();
+    const email = $("p_email").value.trim();
     const method = t(checkedValue("pay") === "fastpay" ? "pay_fastpay_t" : "pay_fib_t");
 
     $("successText").textContent = t("success_text")
@@ -300,9 +239,6 @@ export function initRegistration() {
     form.reset();
     form.querySelectorAll('[aria-invalid="true"]').forEach((input) => showError(input, ""));
     $("termsError").hidden = true;
-    dentistList.replaceChildren();
-    addDentist();
-    setType("person");
     ["pay", "ticket"].forEach(syncChecked);
     toggleUniversity();
     success.hidden = true;
@@ -314,13 +250,10 @@ export function initRegistration() {
   // ---------- Language changes ----------
   onLangChange(() => {
     updateCount();
-    refreshDentists();
     form.querySelectorAll(".f-error[data-key]").forEach((message) => { message.textContent = t(message.dataset.key); });
-    if (step === 3) renderReview();
+    if (step === 2) renderReview();
   });
 
   // ---------- Start ----------
-  addDentist();
-  setType("person");
   goTo(1, { scroll: false });
 }

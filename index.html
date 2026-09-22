@@ -18,25 +18,25 @@
 <link rel="stylesheet" href="css/components/boot.css?v=24">
 <link rel="stylesheet" href="css/components/buttons.css?v=24">
 <link rel="stylesheet" href="css/components/brand.css?v=26">
-<link rel="stylesheet" href="css/components/tier-card.css?v=24">
+<link rel="stylesheet" href="css/components/tier-card.css?v=29">
 <!-- Layout -->
 <link rel="stylesheet" href="css/layout/header.css?v=25">
 <link rel="stylesheet" href="css/layout/footer.css?v=24">
 <!-- Sections (in page order) -->
-<link rel="stylesheet" href="css/sections/hero.css?v=28">
+<link rel="stylesheet" href="css/sections/hero.css?v=31">
 <link rel="stylesheet" href="css/sections/stats.css?v=24">
 <link rel="stylesheet" href="css/sections/about.css?v=24">
 <link rel="stylesheet" href="css/sections/experience.css?v=24">
 <link rel="stylesheet" href="css/sections/program.css?v=24">
 <link rel="stylesheet" href="css/sections/workshops.css?v=24">
 <link rel="stylesheet" href="css/sections/speakers.css?v=24">
-<link rel="stylesheet" href="css/sections/sponsors.css?v=24">
-<link rel="stylesheet" href="css/sections/partners.css?v=24">
+<link rel="stylesheet" href="css/sections/sponsors.css?v=29">
+<link rel="stylesheet" href="css/sections/partners.css?v=29">
 <link rel="stylesheet" href="css/sections/companies.css?v=24">
-<link rel="stylesheet" href="css/sections/register.css?v=24">
+<link rel="stylesheet" href="css/sections/register.css?v=29">
 <link rel="stylesheet" href="css/sections/venue.css?v=24">
 
-<script type="module" src="js/main.js?v=24"></script>
+<script type="module" src="js/main.js?v=29"></script>
 </head>
 <body>
 
@@ -113,8 +113,16 @@
 <section class="hero">
   <div class="wrap">
     <div>
-      <p class="wordmark" aria-label="iSmile">i<span>Smile</span></p>
-      <svg class="smile" viewBox="0 0 520 60" aria-hidden="true"><path d="M8 10 C 140 70, 380 70, 512 10" stroke="#16A6A1" stroke-width="9" fill="none" stroke-linecap="round"/></svg>
+      <div class="hero-brand">
+        <p class="wordmark" role="img" aria-label="iSmile"><span class="word-i">i</span><span class="word-s">S</span><span class="word-m">m</span><span class="word-i2">i</span><span class="word-l">l</span><span class="word-e">e</span></p>
+        <span class="hero-edition"><span class="edition-en">2<sup>nd</sup> version</span><span class="edition-translated" data-i18n="hero_edition">2nd version</span></span>
+        <div class="hero-mark" aria-hidden="true">
+          <div class="mark-stage">
+            <img class="mark-navy" src="assets/brand/ismile-mark-navy.png" alt="" width="1080" height="1155">
+            <img class="mark-cyan" src="assets/brand/ismile-mark-cyan.png" alt="" width="1080" height="1155">
+          </div>
+        </div>
+      </div>
       <h1 data-i18n="hero_title">International Dental Summit 2026</h1>
       <p class="sub" data-i18n="hero_sub">The 2nd International iSmile Summit for Dental Science &amp; Oral Healthcare</p>
       <div class="cta">
@@ -293,7 +301,7 @@
     <div class="partners">
       <div class="tp-head">
         <div><h3 data-i18n="tp_title">Trusted partners</h3><p class="lead" data-i18n="tp_sub">Companies that supported iSmile before.</p></div>
-        <span class="tp-count"><b id="partnerCount">0</b> <span data-i18n="tp_companies">companies</span></span>
+        <span class="tp-count"><b id="partnerCount">0</b> <span data-i18n="tp_companies_brands">companies &amp; brands</span></span>
       </div>
       <div class="ptiers" id="ptiers"></div>
       <div class="p-cta"><span data-i18n="tp_cta">Want your company here in 2026?</span><a href="#companies"><span data-i18n="spon_cta">Become a sponsor</span> <span aria-hidden="true">→</span></a></div>
@@ -307,9 +315,9 @@
     <h2 data-i18n="co_title">For companies</h2>
     <p class="lead" data-i18n="co_sub">Sponsor the summit, exhibit your products, or register your whole team.</p>
     <div class="co-grid">
-      <div class="co"><h3 data-i18n="co1">Become a sponsor</h3><p data-i18n="co1p">Diamond, Platinum, Gold and Silver packages.</p><a class="btn btn-primary btn-sm" href="sponsor.html" data-i18n="co1b">Request the packages</a></div>
+      <div class="co"><h3 data-i18n="co1">Become a sponsor</h3><p data-i18n="co1p">Diamond, Platinum, Gold, Silver and Exhibitor packages.</p><a class="btn btn-primary btn-sm" href="sponsor.html" data-i18n="co1b">Request the packages</a></div>
       <div class="co"><h3 data-i18n="co2">Book an exhibition booth</h3><p data-i18n="co2p">Show your products to dentists from across Iraq.</p><a class="btn btn-ghost btn-sm" href="sponsor.html#booth" data-i18n="co2b">Ask about booths</a></div>
-      <div class="co"><h3 data-i18n="co3">Register your team</h3><p data-i18n="co3p">Clinics and companies can register all their dentists at once.</p><a class="btn btn-primary btn-sm" href="#register" data-go-company data-i18n="co3">Register your team</a></div>
+      <div class="co"><h3 data-i18n="co3">Register your team</h3><p data-i18n="co3p">Contact us to arrange registration for several dentists.</p><a class="btn btn-primary btn-sm" href="mailto:info@ismile.krd?subject=iSmile%202026%20team%20registration" data-i18n="co3">Register your team</a></div>
     </div>
   </div>
 </section>
@@ -320,7 +328,7 @@
     <div class="reg-head">
       <p class="section-kicker" data-i18n="reg_kicker">Registration</p>
       <h2 data-i18n="reg_title">Secure your place at iSmile 2026</h2>
-      <p class="lead" data-i18n="reg_sub">Register in three short steps. Your payment link and ticket are sent to you by WhatsApp and email.</p>
+      <p class="lead" data-i18n="reg_sub">Register in two short steps. Your payment link and ticket are sent to you by WhatsApp and email.</p>
     </div>
 
     <div class="reg">
@@ -337,11 +345,6 @@
             <li>
               <span class="tk-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"/></svg></span>
               <div><b data-i18n="tk_student">Student</b><small data-i18n="tk_student_d">For currently enrolled dental students</small></div>
-              <span class="tk-price" data-i18n="tk_soon">Price soon</span>
-            </li>
-            <li>
-              <span class="tk-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-6h6v6"/></svg></span>
-              <div><b data-i18n="tk_team">Team registration</b><small data-i18n="tk_team_d">Clinics and companies registering several dentists</small></div>
               <span class="tk-price" data-i18n="tk_soon">Price soon</span>
             </li>
           </ul>
@@ -370,55 +373,62 @@
       <div class="reg-card" id="regCard">
         <div class="reg-progress" id="regProgress">
           <ol class="stepper" id="regStepper">
-            <li class="is-active"><span class="st-dot">1</span><span class="st-label" data-i18n="st1">Registration type</span></li>
-            <li><span class="st-dot">2</span><span class="st-label" data-i18n="st2">Your details</span></li>
-            <li><span class="st-dot">3</span><span class="st-label" data-i18n="st3">Payment &amp; review</span></li>
+            <li class="is-active"><span class="st-dot">1</span><span class="st-label" data-i18n="st2">Your details</span></li>
+            <li><span class="st-dot">2</span><span class="st-label" data-i18n="st3">Payment &amp; review</span></li>
           </ol>
           <div class="st-bar" aria-hidden="true"><i id="regBar"></i></div>
         </div>
 
         <form id="regForm" novalidate>
-          <!-- Step 1: type -->
+          <!-- Step 1: individual details -->
           <div class="reg-step" data-step="1">
-            <div class="step-head">
-              <h3 tabindex="-1" data-i18n="s1_title">Who is registering?</h3>
-              <p data-i18n="s1_sub">Choose the option that fits you.</p>
+            <div class="reg-person-intro">
+              <span class="tc-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c.8-4 3.8-6 7.5-6s6.7 2 7.5 6"/></svg></span>
+              <span class="tc-text"><b data-i18n="mode_person">Dental professional</b><small data-i18n="mode_person_d">Register yourself as a dentist, specialist, technician, researcher or student.</small></span>
             </div>
-            <div class="type-options">
-              <label class="type-card is-checked">
-                <input type="radio" name="regType" value="person" checked>
-                <span class="tc-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c.8-4 3.8-6 7.5-6s6.7 2 7.5 6"/></svg></span>
-                <span class="tc-text"><b data-i18n="mode_person">Dental professional</b><small data-i18n="mode_person_d">Register yourself as a dentist, specialist, technician, researcher or student.</small></span>
-                <span class="tc-check" aria-hidden="true"></span>
-              </label>
-              <label class="type-card">
-                <input type="radio" name="regType" value="company">
-                <span class="tc-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-6h6v6"/></svg></span>
-                <span class="tc-text"><b data-i18n="mode_company">Company or clinic</b><small data-i18n="mode_company_d">Register several dentists from your clinic or company in one form.</small></span>
-                <span class="tc-check" aria-hidden="true"></span>
-              </label>
-            </div>
-          </div>
-
-          <!-- Step 2: details -->
-          <div class="reg-step" data-step="2" hidden>
             <div class="step-head">
-              <h3 tabindex="-1"><span data-type-show="person" data-i18n="s2_title_p">Your details</span><span data-type-show="company" data-i18n="s2_title_c" hidden>Team details</span></h3>
+              <h3 tabindex="-1" data-i18n="s2_title_p">Your details</h3>
               <p data-i18n="s2_sub">We use these details to send your payment link and ticket.</p>
             </div>
 
-            <div class="fields" data-panel="person">
-              <div class="f full">
-                <label for="p_name" data-i18n="f_name">Full name</label>
-                <input id="p_name" autocomplete="name" data-rule="name" placeholder="As it should appear on your certificate" data-i18n-ph="ph_name">
+            <div class="fields">
+              <div class="f">
+                <label for="p_first" data-i18n="f_first">First name</label>
+                <input id="p_first" autocomplete="given-name" data-rule="name-part" placeholder="First name" data-i18n-ph="ph_first">
               </div>
               <div class="f">
-                <label for="p_phone" data-i18n="f_phone">WhatsApp number</label>
+                <label for="p_second" data-i18n="f_second">Second name</label>
+                <input id="p_second" data-rule="name-part" placeholder="Second name" data-i18n-ph="ph_second">
+              </div>
+              <div class="f full">
+                <label for="p_third" data-i18n="f_third">Third name</label>
+                <input id="p_third" autocomplete="family-name" data-rule="name-part" placeholder="Third name" data-i18n-ph="ph_third">
+              </div>
+              <div class="f">
+                <label for="p_phone" data-i18n="f_phone_number">Phone number</label>
                 <input id="p_phone" type="tel" inputmode="tel" dir="ltr" autocomplete="tel" placeholder="0750 123 4567" data-rule="phone">
               </div>
               <div class="f">
                 <label for="p_email" data-i18n="f_email">Email</label>
                 <input id="p_email" type="email" inputmode="email" dir="ltr" autocomplete="email" placeholder="name@example.com" data-rule="email">
+              </div>
+              <div class="f">
+                <label for="p_gender" data-i18n="f_gender">Gender</label>
+                <select id="p_gender" data-rule="required">
+                  <option value="" data-i18n="o_gender">Choose your gender</option>
+                  <option value="female" data-i18n="o_female">Female</option>
+                  <option value="male" data-i18n="o_male">Male</option>
+                  <option value="other" data-i18n="o_other">Other</option>
+                  <option value="prefer-not" data-i18n="o_prefer_not">Prefer not to say</option>
+                </select>
+              </div>
+              <div class="f">
+                <label for="p_age" data-i18n="f_age">Age</label>
+                <input id="p_age" type="number" min="16" max="120" inputmode="numeric" data-rule="age" placeholder="e.g. 28" data-i18n-ph="ph_age">
+              </div>
+              <div class="f full">
+                <label for="p_ambassador"><span data-i18n="f_ambassador">Ambassador code</span><small data-i18n="f_optional">(optional)</small></label>
+                <input id="p_ambassador" autocomplete="off" data-rule="code" data-optional placeholder="Enter a code if you have one" data-i18n-ph="ph_ambassador">
               </div>
               <div class="f">
                 <label for="p_spec" data-i18n="f_spec">Specialty</label>
@@ -445,39 +455,10 @@
               </div>
             </div>
 
-            <div class="fields" data-panel="company" hidden>
-              <div class="f full">
-                <label for="c_name" data-i18n="f_cname">Company or clinic name</label>
-                <input id="c_name" autocomplete="organization" data-rule="name">
-              </div>
-              <div class="f full">
-                <label for="c_contact" data-i18n="f_contact">Contact person</label>
-                <input id="c_contact" autocomplete="name" data-rule="name">
-              </div>
-              <div class="f">
-                <label for="c_phone" data-i18n="f_phone">WhatsApp number</label>
-                <input id="c_phone" type="tel" inputmode="tel" dir="ltr" autocomplete="tel" placeholder="0750 123 4567" data-rule="phone">
-              </div>
-              <div class="f">
-                <label for="c_email" data-i18n="f_email">Email</label>
-                <input id="c_email" type="email" inputmode="email" dir="ltr" autocomplete="email" placeholder="name@example.com" data-rule="email">
-              </div>
-              <div class="f full dent-block">
-                <div class="dent-head">
-                  <span class="f-label" data-i18n="f_dentists">Dentists attending</span>
-                  <span class="dent-count" id="dentCount"></span>
-                </div>
-                <div class="dentists" id="dentists"></div>
-                <button type="button" class="add" id="addDentist">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-                  <span data-i18n="add_dentist">Add another dentist</span>
-                </button>
-              </div>
-            </div>
           </div>
 
-          <!-- Step 3: payment and review -->
-          <div class="reg-step" data-step="3" hidden>
+          <!-- Step 2: payment and review -->
+          <div class="reg-step" data-step="2" hidden>
             <div class="step-head">
               <h3 tabindex="-1" data-i18n="s3_title">Payment &amp; review</h3>
               <p data-i18n="s3_sub">Choose how you'll pay, then check your details.</p>
