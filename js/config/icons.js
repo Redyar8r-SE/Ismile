@@ -21,3 +21,16 @@ export const ICONS = {
 
   person: '<svg viewBox="0 0 40 40" fill="currentColor" aria-hidden="true"><circle cx="20" cy="14" r="8"/><path d="M4 40c1-10 8-15 16-15s15 5 16 15z"/></svg>',
 };
+
+// Icons a workshop can pick in the admin ("icon" in data/workshops.json).
+const ws = (paths) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
+export const WORKSHOP_ICONS = {
+  tools: ws('<path d="M6 18L18 6M15 4l5 5M4 15l5 5"/><circle cx="18" cy="18" r="2.5"/>'),
+  tooth: ws('<path d="M12 3.5c-3 0-5 1.6-5 4.5 0 2 .7 3.3 1 5.5.4 3 .6 7.5 2 7.5 1.2 0 1-4 2-4s.8 4 2 4c1.4 0 1.6-4.5 2-7.5.3-2.2 1-3.5 1-5.5 0-2.9-2-4.5-5-4.5z"/>'),
+  implant: ws('<path d="M8.5 3h7l-1 3h-5z"/><path d="M9.5 6h5v3l-1 1v2l1 1v2l-1 1v1.5L12 21l-1.5-3.5V16l-1-1v-2l1-1v-2l-1-1z"/>'),
+  smile: ws('<circle cx="12" cy="12" r="8.5"/><path d="M8 13.5c1 1.8 2.4 2.7 4 2.7s3-.9 4-2.7"/><path d="M9.2 9.3h.01M14.8 9.3h.01"/>'),
+  root: ws('<path d="M12 3v18"/><path d="M8.5 7.5 12 5l3.5 2.5M8.5 11.5 12 9l3.5 2.5M8.5 15.5 12 13l3.5 2.5"/>'),
+  scan: ws('<path d="M4 8V6.5A2.5 2.5 0 0 1 6.5 4H8M16 4h1.5A2.5 2.5 0 0 1 20 6.5V8M20 16v1.5a2.5 2.5 0 0 1-2.5 2.5H16M8 20H6.5A2.5 2.5 0 0 1 4 17.5V16"/><path d="M7 12h10"/><path d="M9 9.5c1.5-1.4 4.5-1.4 6 0M9 14.5c1.5 1.4 4.5 1.4 6 0"/>'),
+  braces: ws('<path d="M4 12c2-4 5-5.5 8-5.5S18 8 20 12c-2 4-5 5.5-8 5.5S6 16 4 12z"/><path d="M7.5 12h9M9.5 10.5v3M14.5 10.5v3"/>'),
+  drill: ws('<path d="M4 20l5-5"/><path d="M8 14l2 2 7-7a1.4 1.4 0 0 0-2-2l-7 7z"/><path d="M15 4l5 5"/><path d="M18 3l3 3"/>'),
+};

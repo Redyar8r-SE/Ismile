@@ -17,9 +17,9 @@
 <link rel="stylesheet" href="css/layout/header.css?v=25">
 <link rel="stylesheet" href="css/layout/footer.css?v=24">
 <link rel="stylesheet" href="css/sections/hero.css?v=43">
-<link rel="stylesheet" href="css/sections/register.css?v=32">
+<link rel="stylesheet" href="css/sections/register.css?v=36">
 <link rel="stylesheet" href="css/sections/register-page.css?v=5">
-<script type="module" src="js/register.js?v=2"></script>
+<script type="module" src="js/register.js?v=3"></script>
 </head>
 <body>
 <div class="siteboot" id="siteboot" aria-hidden="true">
@@ -80,7 +80,7 @@
       <div class="reg-page-hero-copy">
         <p class="section-kicker" data-i18n="reg_kicker">Registration</p>
         <h1 data-i18n="reg_title">Secure your place at iSmile 2026</h1>
-        <p data-i18n="reg_sub">Register in two short steps. We send your payment link and ticket by email.</p>
+        <p data-i18n="reg_sub">Register in three short steps. Add workshops if you like, then we send your payment link and ticket by email.</p>
         <div class="reg-page-meta"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><b data-i18n="t_date_full">20 &amp; 21 November 2026</b></span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg><b data-i18n="t_venue">Grand Millennium Sulaimani</b></span></div>
       </div>
       <div class="reg-animated-brand" aria-hidden="true">
@@ -111,12 +111,12 @@
             <li>
               <span class="tk-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c.8-4 3.8-6 7.5-6s6.7 2 7.5 6"/></svg></span>
               <div><b data-i18n="tk_prof">Professional</b><small data-i18n="tk_prof_d">Dentists, specialists, technicians and researchers</small></div>
-              <span class="tk-price" data-i18n="tk_soon">Price soon</span>
+              <span class="tk-price" id="tkPriceProf">Price soon</span>
             </li>
             <li>
               <span class="tk-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"/></svg></span>
               <div><b data-i18n="tk_student">Student</b><small data-i18n="tk_student_d">For currently enrolled dental students</small></div>
-              <span class="tk-price" data-i18n="tk_soon">Price soon</span>
+              <span class="tk-price" id="tkPriceStudent">Price soon</span>
             </li>
           </ul>
         </div>
@@ -125,8 +125,9 @@
           <h3 data-i18n="how_title">How it works</h3>
           <ol class="how-steps">
             <li><span>1</span><div><b data-i18n="how1">Fill in your details</b><small data-i18n="how1_d">It takes about two minutes.</small></div></li>
-            <li><span>2</span><div><b data-i18n="how2">Pay with FIB or FastPay</b><small data-i18n="how2_d">We send your payment link by email.</small></div></li>
-            <li><span>3</span><div><b data-i18n="how3">Receive your ticket</b><small data-i18n="how3_d">Your ticket is sent to your email and kept in your account with your certificate.</small></div></li>
+            <li><span>2</span><div><b data-i18n="how_ws">Choose workshops</b><small data-i18n="how_ws_d">Optional. Hands-on sessions are paid separately.</small></div></li>
+            <li><span>3</span><div><b data-i18n="how2">Pay with FIB or FastPay</b><small data-i18n="how2_d">We send your payment link by email.</small></div></li>
+            <li><span>4</span><div><b data-i18n="how3">Receive your ticket</b><small data-i18n="how3_d">Your ticket is sent to your email and kept in your account with your certificate.</small></div></li>
           </ol>
         </div>
 
@@ -142,10 +143,22 @@
 
       <!-- Form card -->
       <div class="reg-card" id="regCard">
+        <!-- Shown when this browser already holds a registration -->
+        <div class="reg-attendee" id="regAttendee" hidden>
+          <span class="reg-attendee-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+          <div class="reg-attendee-text">
+            <b><span data-i18n="reg_addon_as">Registered as</span> <span id="regAttendeeName"></span> <span class="reg-attendee-ref" id="regAttendeeRef" dir="ltr"></span></b>
+            <small id="regAttendeeNote"></small>
+          </div>
+          <a class="btn btn-outline btn-sm" id="regAttendeeAdd" href="register.html?mode=workshops" data-i18n="reg_addon_link">Add workshops</a>
+          <button type="button" class="link-btn" id="regAttendeeReset" data-i18n="reg_addon_not_you">Not you? Start a new registration</button>
+        </div>
+
         <div class="reg-progress" id="regProgress">
           <ol class="stepper" id="regStepper">
             <li class="is-active"><span class="st-dot">1</span><span class="st-label" data-i18n="st2">Your details</span></li>
-            <li><span class="st-dot">2</span><span class="st-label" data-i18n="st3">Payment &amp; review</span></li>
+            <li><span class="st-dot">2</span><span class="st-label" data-i18n="st_ws">Workshops</span></li>
+            <li><span class="st-dot">3</span><span class="st-label" data-i18n="st3">Payment &amp; review</span></li>
           </ol>
           <div class="st-bar" aria-hidden="true"><i id="regBar"></i></div>
         </div>
@@ -252,8 +265,33 @@
 
           </div>
 
-          <!-- Step 2: payment and review -->
+          <!-- Step 2: workshops (optional, rendered from data/workshops.json) -->
           <div class="reg-step" data-step="2" hidden>
+            <div class="step-head step-head-ws">
+              <div>
+                <h3 tabindex="-1" data-i18n="s_ws_title">Add workshops</h3>
+                <p data-i18n="s_ws_sub">Hands-on sessions are paid separately and seats are limited. Pick any you'd like to join, or skip this step.</p>
+              </div>
+              <span class="ws-optional" id="wsOptional" data-i18n="ws_optional">Optional</span>
+            </div>
+
+            <div class="ws-picker" id="wsPicker" role="group" aria-labelledby="wsPickerLabel">
+              <span id="wsPickerLabel" class="sr-only" data-i18n="st_ws">Workshops</span>
+            </div>
+            <p class="f-error ws-error" id="wsError" hidden></p>
+
+            <div class="ws-summary" id="wsSummary">
+              <span class="ws-summary-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4.5" width="14" height="16.5" rx="2.5"/><path d="M9 4.5V3h6v1.5"/><path d="M8.5 11.5l2 2 4-4"/><path d="M8.5 16.5h7"/></svg><b class="ws-summary-badge" id="wsSummaryBadge" hidden></b></span>
+              <span class="ws-summary-text">
+                <b class="ws-summary-count" id="wsSummaryCount"></b>
+                <small id="wsSummaryHint"></small>
+              </span>
+              <b class="ws-summary-total" id="wsSummaryTotal"></b>
+            </div>
+          </div>
+
+          <!-- Step 3: payment and review -->
+          <div class="reg-step" data-step="3" hidden>
             <div class="step-head">
               <h3 tabindex="-1" data-i18n="s3_title">Payment &amp; review</h3>
               <p data-i18n="s3_sub">Choose how you'll pay, then check your details.</p>
@@ -283,6 +321,15 @@
               <dl id="reviewList"></dl>
             </div>
 
+            <div class="order">
+              <div class="review-head">
+                <h4 data-i18n="order_title">Order summary</h4>
+                <button type="button" class="link-btn" id="editWorkshops" data-i18n="edit">Edit</button>
+              </div>
+              <dl id="orderList"></dl>
+              <div class="order-total"><span data-i18n="order_total">Total</span><b id="orderTotal"></b></div>
+            </div>
+
             <label class="terms">
               <input type="checkbox" id="terms">
               <span data-i18n="terms">I understand that tickets are non-refundable, and I agree to receive my payment link and ticket by email.</span>
@@ -309,10 +356,14 @@
         <!-- Success -->
         <div class="reg-success" id="regSuccess" tabindex="-1" hidden>
           <div class="success-ic" aria-hidden="true"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
-          <h3 data-i18n="success_title">You're registered!</h3>
+          <h3 id="successTitle">You're registered!</h3>
           <p id="successText"></p>
+          <ul class="success-ws" id="successWorkshops" hidden></ul>
           <div class="success-ref"><small data-i18n="success_ref">Your reference number</small><b id="successRef" dir="ltr"></b></div>
-          <button type="button" class="btn btn-outline" id="regAgain" data-i18n="register_again">Register someone else</button>
+          <div class="success-actions">
+            <a class="btn btn-outline" id="regBackWs" href="index.html#workshops" data-i18n="success_back_ws" hidden>Back to the workshops</a>
+            <button type="button" class="btn btn-outline" id="regAgain" data-i18n="register_again">Register someone else</button>
+          </div>
         </div>
       </div>
     </div>

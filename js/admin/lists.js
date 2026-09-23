@@ -1,6 +1,7 @@
 // The list editors: workshops, sponsor tiers, partners, and the program.
 // main.js passes a small context so this file does not import it back.
 import { LANGS } from "./fields.js?v=24";
+import { WORKSHOP_ICONS } from "../config/icons.js?v=28";
 
 const el = (tag, className, text) => {
   const node = document.createElement(tag);
@@ -80,6 +81,36 @@ function fieldRow(item, field, ctx, extras = {}) {
     }
     wrap.append(preview, buttons);
     row.append(wrap);
+    return row;
+  }
+
+  // A picker showing the icons themselves: choosing "Root canal file" from a
+  // list of words means guessing what it looks like on the website.
+  if (field.type === "icons") {
+    const choices = el("div", "iconpick");
+    const paint = () => {
+      const current = item[field.key] || field.fallback;
+      choices.querySelectorAll("button").forEach((button) => {
+        button.classList.toggle("is-on", button.dataset.icon === current);
+        button.setAttribute("aria-pressed", String(button.dataset.icon === current));
+      });
+    };
+    field.options.forEach(([value, label]) => {
+      const button = el("button", "iconpick-btn");
+      button.type = "button";
+      button.dataset.icon = value;
+      button.title = label;
+      button.setAttribute("aria-label", label);
+      button.innerHTML = `${WORKSHOP_ICONS[value] || ""}<span>${label}</span>`;
+      button.addEventListener("click", () => {
+        item[field.key] = value;
+        paint();
+        ctx.markDirty();
+      });
+      choices.append(button);
+    });
+    paint();
+    row.append(choices);
     return row;
   }
 

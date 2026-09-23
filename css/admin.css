@@ -95,6 +95,15 @@ input.plain,select.plain{max-width:340px;background:var(--bg)}
 input.plain[type="checkbox"]{width:20px;height:20px;accent-color:var(--teal)}
 input.plain[type="color"]{max-width:64px;height:40px;padding:3px}
 
+/* Icon picker: the real icons, so you choose by sight, not by name. */
+.iconpick{display:flex;flex-wrap:wrap;gap:9px}
+.iconpick-btn{display:grid;justify-items:center;gap:5px;width:78px;padding:10px 6px 8px;border:1.5px solid var(--line);border-radius:12px;background:var(--bg);color:var(--muted);font:inherit;font-size:11px;font-weight:600;text-align:center;cursor:pointer;transition:border-color .15s,background .15s,color .15s,transform .15s}
+.iconpick-btn svg{width:26px;height:26px}
+.iconpick-btn span{line-height:1.2;overflow-wrap:anywhere}
+.iconpick-btn:hover{border-color:var(--teal);color:var(--text);transform:translateY(-1px)}
+.iconpick-btn:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+.iconpick-btn.is-on{border-color:var(--teal);color:var(--teal-ink);background:color-mix(in srgb,var(--teal) 12%,var(--bg));box-shadow:inset 0 0 0 1px var(--teal)}
+
 /* ---------- Rows: speakers, workshops, tiers, partners, days ---------- */
 .rows{display:grid;gap:12px}
 .lrow{border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}

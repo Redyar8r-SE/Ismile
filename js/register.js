@@ -4,15 +4,17 @@ import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from ".
 import { initNav } from "./components/nav.js?v=24";
 import { initTheme } from "./components/theme.js?v=24";
 import { initFooter } from "./sections/footer.js?v=24";
-import { initRegistration } from "./sections/registration.js?v=33";
+import { initRegistration } from "./sections/registration.js?v=37";
 
 async function start() {
   initNav();
   initTheme();
   try {
-    const [english, footer] = await Promise.all([
+    const [english, footer, workshops, tickets] = await Promise.all([
       loadJSON("data/i18n/en.json"),
       loadJSON("data/footer.json"),
+      loadJSON("data/workshops.json"),
+      loadJSON("data/tickets.json").catch(() => ({})),
     ]);
     initI18n(english);
     const [arabic, kurdish] = await Promise.all([
@@ -22,7 +24,7 @@ async function start() {
     if (arabic) addLanguage("ar", arabic);
     if (kurdish) addLanguage("ku", kurdish);
     initFooter(footer);
-    initRegistration();
+    initRegistration({ workshops, tickets });
     initLangSwitch();
     setLang(preferredLang());
   } catch (error) {

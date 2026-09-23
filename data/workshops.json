@@ -1,5 +1,7 @@
 [
   {
+    "id": "implant",
+    "icon": "implant",
     "title": {
       "en": "Implant placement",
       "ar": "زراعة الأسنان",
@@ -7,10 +9,13 @@
     },
     "company": null,
     "speaker": null,
+    "price": 0,
     "totalSeats": 30,
     "seatsLeft": 12
   },
   {
+    "id": "dsd",
+    "icon": "smile",
     "title": {
       "en": "Digital smile design",
       "ar": "تصميم الابتسامة الرقمي",
@@ -18,10 +23,13 @@
     },
     "company": null,
     "speaker": null,
+    "price": 0,
     "totalSeats": 24,
     "seatsLeft": 5
   },
   {
+    "id": "endo",
+    "icon": "root",
     "title": {
       "en": "Rotary endodontics",
       "ar": "علاج الجذور بالمبارد الدوارة",
@@ -29,10 +37,13 @@
     },
     "company": null,
     "speaker": null,
+    "price": 0,
     "totalSeats": 20,
     "seatsLeft": 0
   },
   {
+    "id": "scan",
+    "icon": "scan",
     "title": {
       "en": "Intraoral scanning workflow",
       "ar": "سير عمل المسح داخل الفم",
@@ -40,6 +51,7 @@
     },
     "company": null,
     "speaker": null,
+    "price": 0,
     "totalSeats": 24,
     "seatsLeft": 17
   }
