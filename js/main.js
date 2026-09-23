@@ -4,7 +4,7 @@ import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from ".
 import { initNav } from "./components/nav.js?v=24";
 import { initTheme } from "./components/theme.js?v=24";
 import { initProgram } from "./sections/program.js?v=24";
-import { initWorkshops } from "./sections/workshops.js?v=25";
+import { initWorkshops } from "./sections/workshops.js?v=29";
 import { initSpeakers } from "./sections/speakers.js?v=24";
 import { initSponsors } from "./sections/sponsors.js?v=25";
 import { initPartners } from "./sections/partners.js?v=29";

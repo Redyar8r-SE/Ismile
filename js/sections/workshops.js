@@ -11,23 +11,20 @@ const registerLink = (id) => `register.html?workshop=${encodeURIComponent(id)}`;
 
 export function initWorkshops(workshops) {
   const grid = document.getElementById("wsGrid");
-  const notified = new Set();
   const gate = buildGate();
 
   function render() {
     const attendee = getAttendee();
-    grid.innerHTML = workshops.map((w, index) => renderCard(w, index, attendee)).join("");
+    grid.innerHTML = workshops.map((w) => renderCard(w, attendee)).join("");
   }
 
-  function renderCard(w, index, attendee) {
+  function renderCard(w, attendee) {
     const isFull = w.seatsLeft === 0;
     const reserved = Boolean(attendee?.workshops.includes(w.id));
     const takenPercent = Math.round((1 - w.seatsLeft / w.totalSeats) * 100);
-    const isNotified = notified.has(index);
 
     const status = isFull
-      ? `<span class="full">${t("w_full")}</span>
-         <button type="button" class="notify" aria-pressed="${isNotified}" data-ws="${index}">${t(isNotified ? "w_notified" : "w_notify")}</button>`
+      ? `<span class="full">${t("w_full")}</span>`
       : `<span class="open">${t("w_open")}</span>
          <span class="seats-left">${w.seatsLeft} ${t("w_left")}</span>`;
 
@@ -55,16 +52,6 @@ export function initWorkshops(workshops) {
   }
 
   grid.addEventListener("click", (event) => {
-    const notify = event.target.closest(".notify");
-    if (notify) {
-      const index = Number(notify.dataset.ws);
-      if (notified.has(index)) notified.delete(index);
-      else notified.add(index);
-      const on = notified.has(index);
-      notify.setAttribute("aria-pressed", String(on));
-      notify.textContent = t(on ? "w_notified" : "w_notify");
-      return;
-    }
     const reserve = event.target.closest(".reserve");
     if (!reserve) return;
     const id = reserve.dataset.wsId;
@@ -88,24 +75,41 @@ function buildGate() {
       <h3 data-i18n="w_gate_title"></h3>
       <p data-i18n="w_gate_text"></p>
       <a class="btn btn-primary ws-gate-go" href="register.html" data-i18n="w_gate_go"></a>
-      <button type="submit" class="btn btn-outline" data-i18n="w_gate_close"></button>
+      <span class="ws-gate-or"><b data-i18n="w_gate_or"></b></span>
       <details class="ws-gate-have">
-        <summary data-i18n="w_gate_have"></summary>
+        <summary class="ws-gate-have-btn">
+          <span class="ws-gate-have-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5.5" width="19" height="13" rx="2.5"/><path d="M2.5 10h19"/><path d="M6 14h4M15 14h3"/></svg></span>
+          <span class="ws-gate-have-text" data-i18n="w_gate_have"></span>
+          <span class="ws-gate-have-arrow" aria-hidden="true"></span>
+        </summary>
         <div class="ws-gate-fields">
-          <label><span data-i18n="w_gate_ref"></span><input class="ws-gate-ref" dir="ltr" placeholder="ISM26-ABC234" autocomplete="off" autocapitalize="characters"></label>
+          <label><span data-i18n="w_gate_name"></span><input class="ws-gate-name" autocomplete="name"></label>
           <label><span data-i18n="w_gate_email"></span><input class="ws-gate-email" type="email" dir="ltr" placeholder="name@example.com" autocomplete="email"></label>
+          <label><span data-i18n="w_gate_ref"></span><input class="ws-gate-ref" dir="ltr" placeholder="ISM26-ABC234" autocomplete="off" autocapitalize="characters"></label>
           <p class="ws-gate-err" hidden></p>
           <button type="button" class="btn btn-primary ws-gate-continue" data-i18n="w_gate_continue"></button>
         </div>
       </details>
+      <button type="submit" class="ws-gate-not" data-i18n="w_gate_close"></button>
     </form>`;
   document.body.append(dialog);
 
   const go = dialog.querySelector(".ws-gate-go");
+  const have = dialog.querySelector(".ws-gate-have");
+  const nameInput = dialog.querySelector(".ws-gate-name");
   const refInput = dialog.querySelector(".ws-gate-ref");
   const emailInput = dialog.querySelector(".ws-gate-email");
   const error = dialog.querySelector(".ws-gate-err");
   let current = "";
+
+  // Opening the reference panel puts the cursor straight in the first box.
+  have.addEventListener("toggle", () => {
+    if (have.open) nameInput.focus();
+  });
+
+  // The message stays until it is answered, otherwise it sits there in red
+  // while the visitor is already typing the correction.
+  have.addEventListener("input", () => { error.hidden = true; });
 
   // setLang() fills data-i18n text on every change; this covers the first paint.
   function translate() {
@@ -114,17 +118,24 @@ function buildGate() {
   }
 
   dialog.querySelector(".ws-gate-continue").addEventListener("click", () => {
-    const ref = refInput.value.trim().toUpperCase();
+    const name = nameInput.value.trim().replace(/\s+/g, " ");
     const email = emailInput.value.trim();
-    if (!REF_PATTERN.test(ref) || !EMAIL_PATTERN.test(email)) {
+    const ref = refInput.value.trim().toUpperCase();
+    // Asked for in the order they are filled: name, then email, then reference.
+    const firstEmpty = [
+      [nameInput, name.length >= 2],
+      [emailInput, EMAIL_PATTERN.test(email)],
+      [refInput, REF_PATTERN.test(ref)],
+    ].find(([, valid]) => !valid);
+    if (firstEmpty) {
       error.textContent = t("w_gate_err");
       error.hidden = false;
-      (REF_PATTERN.test(ref) ? emailInput : refInput).focus();
+      firstEmpty[0].focus();
       return;
     }
     // Front-end only: the format is checked here. Once there is a server it
     // confirms the reference really exists before the seat is booked.
-    saveAttendee({ ref, email, name: "", workshops: [], createdAt: new Date().toISOString(), unverified: true });
+    saveAttendee({ ref, email, name, workshops: [], createdAt: new Date().toISOString(), unverified: true });
     location.href = registerLink(current);
   });
 
@@ -137,6 +148,7 @@ function buildGate() {
       current = id;
       go.href = registerLink(id);
       error.hidden = true;
+      have.open = false;
       translate();
       if (typeof dialog.showModal === "function") dialog.showModal();
       else location.href = go.href;

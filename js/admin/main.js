@@ -1,5 +1,5 @@
 // iSmile admin: edit every text, list and photo on the site, and save to GitHub.
-import { GROUPS, LANGS, DATA_FILES } from "./fields.js?v=42";
+import { GROUPS, LANGS, DATA_FILES } from "./fields.js?v=45";
 import * as store from "./store.js?v=24";
 import { upload, imageFromClipboard } from "./images.js?v=24";
 import { buildList, buildProgram, buildTypes, buildSingle } from "./lists.js?v=25";

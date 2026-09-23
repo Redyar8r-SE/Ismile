@@ -17,9 +17,6 @@
 .ws.full .status .full{color:var(--danger)}
 .ws.full .seats i{background:var(--muted)}
 
-.notify{border:1px solid var(--line);background:none;color:var(--text);border-radius:999px;padding:5px 12px;font:inherit;font-size:13px;cursor:pointer}
-.notify[aria-pressed="true"]{background:var(--teal);border-color:var(--teal);color:#fff}
-
 @media (max-width:1060px){
   .ws-grid{grid-template-columns:repeat(2,1fr)}
 }
@@ -56,13 +53,31 @@
 .ws-gate h3{font-size:22px;line-height:1.2}
 .ws-gate p{font-size:15px;line-height:1.55;color:var(--muted)}
 .ws-gate .btn{width:100%}
-.ws-gate-go{margin-top:6px}
-.ws-gate-have{margin-top:6px;padding-top:14px;border-top:1px solid var(--line);text-align:start}
-.ws-gate-have summary{display:flex;align-items:center;gap:8px;list-style:none;font-size:14px;font-weight:700;color:var(--teal-ink);cursor:pointer}
+.ws-gate-go{margin-top:6px;min-height:52px}
+
+/* "or" rule between the two real choices */
+.ws-gate-or{display:flex;align-items:center;gap:12px;margin:2px 0;color:var(--muted)}
+.ws-gate-or::before,.ws-gate-or::after{content:"";flex:1;height:1px;background:var(--line)}
+.ws-gate-or b{font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+
+/* The reference option is a button of its own: as a plain line of text
+   nobody noticed it was there. */
+.ws-gate-have{text-align:start}
+.ws-gate-have summary{display:flex;align-items:center;gap:12px;width:100%;min-height:52px;padding:10px 14px;border:2px solid color-mix(in srgb,var(--teal) 55%,var(--line));border-radius:999px;background:var(--bg);list-style:none;font-size:14.5px;font-weight:700;color:var(--teal-ink);cursor:pointer;transition:border-color .2s,background .2s,transform .2s,box-shadow .2s}
 .ws-gate-have summary::-webkit-details-marker{display:none}
-.ws-gate-have summary::before{content:"";flex:none;width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg);transition:transform .2s}
-.ws-gate-have[open] summary::before{transform:rotate(45deg)}
-.ws-gate-fields{display:grid;gap:10px;margin-top:12px}
+.ws-gate-have summary:hover{border-color:var(--teal);background:color-mix(in srgb,var(--teal) 9%,var(--bg));transform:translateY(-1px);box-shadow:0 10px 22px -14px rgba(22,166,161,.9)}
+.ws-gate-have summary:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+.ws-gate-have-ic{flex:none;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:color-mix(in srgb,var(--teal) 14%,transparent)}
+.ws-gate-have-ic svg{width:19px;height:19px}
+.ws-gate-have-text{flex:1;min-width:0;line-height:1.25}
+.ws-gate-have-arrow{flex:none;width:9px;height:9px;margin-inline-end:4px;border-right:2.5px solid currentColor;border-bottom:2.5px solid currentColor;transform:rotate(45deg) translate(-2px,-2px);transition:transform .2s}
+.ws-gate-have[open] summary{border-color:var(--teal);background:color-mix(in srgb,var(--teal) 9%,var(--bg));border-end-start-radius:14px;border-end-end-radius:14px}
+.ws-gate-have[open] .ws-gate-have-arrow{transform:rotate(-135deg) translate(-3px,-3px)}
+.ws-gate-fields{display:grid;gap:10px;margin-top:12px;padding:14px;border:1.5px solid color-mix(in srgb,var(--teal) 32%,var(--line));border-radius:14px;background:var(--surface)}
+
+/* "Not now" steps back so the two choices above stand out */
+.ws-gate-not{margin-top:2px;padding:8px;border:0;background:none;color:var(--muted);font:inherit;font-size:13.5px;font-weight:600;text-decoration:underline;cursor:pointer}
+.ws-gate-not:hover{color:var(--text)}
 .ws-gate-fields label{display:grid;gap:5px;font-size:13.5px;font-weight:600}
 .ws-gate-fields input{height:46px;padding:0 13px;font:inherit;font-size:15px;color:var(--text);background:var(--bg);border:1.5px solid var(--line);border-radius:10px}
 .ws-gate-fields input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 4px color-mix(in srgb,var(--teal) 18%,transparent)}
