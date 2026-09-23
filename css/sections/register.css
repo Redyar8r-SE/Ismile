@@ -134,23 +134,6 @@ html[dir="rtl"] .f select{background-position:left 14px center}
 .ticket-toggle label:hover{border-color:var(--teal);color:var(--text)}
 .ticket-toggle label.is-checked{border-color:var(--teal);background:color-mix(in srgb,var(--teal) 14%,var(--bg));color:var(--teal-ink);box-shadow:inset 0 0 0 1px var(--teal),0 3px 10px color-mix(in srgb,var(--teal) 12%,transparent)}
 
-/* Company: dentists list */
-.dent-block{gap:12px}
-.dent-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.dent-count{font-size:12.5px;font-weight:700;color:var(--teal-ink);background:color-mix(in srgb,var(--teal) 12%,transparent);padding:3px 10px;border-radius:999px}
-.dentists{display:grid;gap:10px}
-.dentist{display:grid;grid-template-columns:28px 1.3fr 1fr 1fr 44px;gap:10px;align-items:start;padding:14px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface)}
-.dent-num{margin-top:30px;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:12.5px;font-weight:700;color:#fff;background:var(--navy)}
-.dentist .f{gap:5px}
-.dentist .f label{font-size:12.5px;font-weight:600;color:var(--muted)}
-.dentist .f input,.dentist .f select{height:44px;font-size:15px}
-.rm{margin-top:23px;width:44px;height:44px;display:grid;place-items:center;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--muted);cursor:pointer;transition:color .2s,border-color .2s}
-.rm svg{width:18px;height:18px}
-.rm:hover:not(:disabled){color:var(--danger);border-color:var(--danger)}
-.rm:disabled{opacity:.4;cursor:not-allowed}
-.add{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;border:1.5px dashed color-mix(in srgb,var(--teal) 60%,var(--line));border-radius:var(--r-md);background:none;color:var(--teal-ink);font:inherit;font-weight:600;cursor:pointer;transition:background .2s,border-color .2s}
-.add:hover{border-style:solid;background:color-mix(in srgb,var(--teal) 7%,transparent)}
-
 /* Payment */
 .pay-options{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 24px;padding:0;border:0}
 .pay-options legend{margin-bottom:10px;padding:0;font-size:14px;font-weight:600}
@@ -206,10 +189,6 @@ html[dir="rtl"] .reg-nav svg{transform:scaleX(-1)}
   .reg{grid-template-columns:1fr}
   .stepper{grid-template-columns:auto auto auto;justify-content:space-between}
   .stepper li:not(.is-active) .st-label{display:none}
-  .dentist{grid-template-columns:1fr 1fr;gap:10px}
-  .dent-num{grid-row:1;grid-column:1;margin-top:0}
-  .rm{grid-row:1;grid-column:2;justify-self:end;margin-top:0;width:36px;height:36px}
-  .dentist .f:nth-of-type(1){grid-column:1/-1}
 }
 /* Translated labels are longer than "Price soon": let them wrap on a small phone. */
 @media (max-width:400px){
