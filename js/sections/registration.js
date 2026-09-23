@@ -354,7 +354,11 @@ export function initRegistration({ workshops = [], tickets = {} } = {}) {
   }
 
   nextBtn.addEventListener("click", () => {
-    if (validateStep(step)) goTo(step + 1);
+    if (!validateStep(step)) return;
+    // Leaving the details step is the moment to check the name: it is printed
+    // on the certificate, so ask once before moving on.
+    if (step === 1 && mode === "full") askBeforeLeavingDetails();
+    else goTo(step + 1);
   });
   backBtn.addEventListener("click", () => goTo(step - 1));
   $("editDetails").addEventListener("click", () => goTo(mode === "addon" ? 2 : 1));
@@ -397,6 +401,47 @@ export function initRegistration({ workshops = [], tickets = {} } = {}) {
       renderStudentIdPreview();
     }
   }
+
+  // ---------- "Is everything correct?" ----------
+  const confirmDialog = $("regConfirm");
+
+  function askBeforeLeavingDetails() {
+    const fullName = [$("p_first"), $("p_second"), $("p_third")].map((input) => input.value.trim()).join(" ");
+    const rows = [
+      [t("f_name_full"), fullName, "name"],
+      [t("f_phone_number"), $("p_phone").value.trim(), ""],
+      [t("f_email"), $("p_email").value.trim(), ""],
+    ];
+
+    $("regConfirmList").replaceChildren(...rows.map(([label, value, kind]) => {
+      const row = document.createElement("div");
+      if (kind) row.className = `is-${kind}`;
+      const dt = document.createElement("dt");
+      const dd = document.createElement("dd");
+      dt.textContent = label;
+      dd.textContent = value;
+      row.append(dt, dd);
+      if (kind === "name") {
+        const hint = document.createElement("small");
+        hint.textContent = t("confirm_name_hint");
+        row.append(hint);
+      }
+      return row;
+    }));
+
+    // A browser without <dialog> keeps the old behaviour rather than trapping
+    // the visitor on the details step.
+    if (typeof confirmDialog.showModal !== "function") {
+      goTo(2);
+      return;
+    }
+    confirmDialog.showModal();
+  }
+
+  confirmDialog.addEventListener("close", () => {
+    if (confirmDialog.returnValue === "ok") goTo(2);
+    else $("p_first").focus();
+  });
 
   // ---------- Review ----------
   function fillList(list, rows) {

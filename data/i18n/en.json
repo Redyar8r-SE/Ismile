@@ -49,6 +49,8 @@
   "ws_summary_empty": "Tap a workshop to add it. You can skip this step.",
   "ws_reserved": "Reserved",
   "ws_err_pick": "Pick at least one workshop to continue.",
+  "f_name_full": "Full name",
+  "confirm_name_hint": "This is the name printed on your certificate.",
   "rv_workshops": "Workshops",
   "rv_none": "None",
   "rv_ref": "Reference",

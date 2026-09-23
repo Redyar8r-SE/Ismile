@@ -250,6 +250,45 @@ html[dir="rtl"] .reg-nav svg{transform:scaleX(-1)}
 .reg-attendee .link-btn{grid-column:2;justify-self:start;padding:0;font-size:12.5px}
 .reg-ws-wanted{display:flex;align-items:center;gap:8px;margin:-10px 0 22px;padding:10px 14px;border-radius:10px;background:color-mix(in srgb,var(--teal) 10%,var(--bg));color:var(--teal-ink);font-size:13.5px;font-weight:600}
 
+/* ---------- "This name is on your certificate" notice ---------- */
+.cert-note{display:flex;align-items:center;gap:14px;margin:0 0 22px;padding:15px 18px;border:1.5px solid color-mix(in srgb,var(--teal) 45%,var(--line));border-inline-start:5px solid var(--teal);border-radius:14px;background:linear-gradient(120deg,color-mix(in srgb,var(--teal) 11%,var(--bg)),var(--bg) 75%)}
+.cert-note-ic{flex:none;width:46px;height:46px;border-radius:13px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--teal-ink),var(--teal));box-shadow:0 10px 20px -12px rgba(22,166,161,.95)}
+.cert-note-ic svg{width:25px;height:25px}
+.cert-note-text{display:grid;gap:3px;min-width:0}
+.cert-note-text b{font-size:15px;color:var(--teal-ink)}
+.cert-note-text small{font-size:13.5px;line-height:1.5;color:var(--muted)}
+@media (max-width:560px){
+  .cert-note{gap:12px;padding:13px 14px}
+  .cert-note-ic{width:40px;height:40px;border-radius:11px}
+  .cert-note-ic svg{width:21px;height:21px}
+}
+
+/* ---------- "Is everything correct?" dialog ---------- */
+.confirm{width:min(92vw,460px);margin:auto;padding:0;border:0;border-radius:var(--r-lg);background:var(--bg);color:var(--text);box-shadow:0 40px 80px -30px rgba(8,30,38,.6)}
+.confirm::backdrop{background:rgba(8,30,38,.55);backdrop-filter:blur(3px)}
+.confirm-card{position:relative;display:grid;gap:14px;margin:0;padding:32px 28px 26px;text-align:center}
+.confirm-close{position:absolute;top:12px;inset-inline-end:12px;width:36px;height:36px;display:grid;place-items:center;border:0;border-radius:50%;background:var(--surface-2);color:var(--muted);cursor:pointer}
+.confirm-close:hover{color:var(--text)}
+.confirm-close svg{width:16px;height:16px}
+.confirm-ic{justify-self:center;width:64px;height:64px;border-radius:50%;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--teal-ink),var(--teal));box-shadow:0 0 0 9px color-mix(in srgb,var(--teal) 13%,transparent)}
+.confirm-ic svg{width:32px;height:32px}
+.confirm h3{font-size:22px;line-height:1.2}
+.confirm > .confirm-card > p{font-size:14.5px;line-height:1.55;color:var(--muted)}
+.confirm-list{margin:4px 0 0;padding:0;display:grid;gap:8px;text-align:start}
+.confirm-list div{display:grid;gap:2px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.confirm-list div.is-name{border-color:var(--teal);background:color-mix(in srgb,var(--teal) 9%,var(--bg))}
+.confirm-list dt{font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.confirm-list dd{margin:0;font-size:16px;font-weight:700;overflow-wrap:anywhere}
+.confirm-list div.is-name dd{font-size:18px;color:var(--teal-ink)}
+.confirm-list small{font-size:12.5px;line-height:1.4;color:var(--muted)}
+.confirm-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
+.confirm-actions .btn{width:100%;justify-content:center}
+@media (max-width:420px){
+  .confirm-card{padding:28px 18px 20px}
+  .confirm-actions{grid-template-columns:1fr}
+  .confirm-actions .btn-primary{order:-1}
+}
+
 /* ---------- Step 2: workshop picker ---------- */
 .step-head-ws{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
 .ws-optional{flex:none;margin-top:4px;padding:5px 11px;border-radius:999px;background:var(--surface-2);color:var(--muted);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}

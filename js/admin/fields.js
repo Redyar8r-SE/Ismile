@@ -335,6 +335,7 @@ const PARTS = [
     fields: many([
       ["st2", "Stepper: details"], ["mode_person", "Form introduction title"],
       ["mode_person_d", "Form introduction text"], ["s2_title_p", "Step title"], ["s2_sub", "Step text"],
+      ["cert_note_title", "Certificate notice: title"], ["cert_note_text", "Certificate notice: text"],
       ["f_first", "First name label"], ["ph_first", "First name hint"],
       ["f_second", "Second name label"], ["ph_second", "Second name hint"],
       ["f_third", "Third name label"], ["ph_third", "Third name hint"],
@@ -348,6 +349,9 @@ const PARTS = [
       ["o_omfs", "Specialty: oral surgeon"], ["o_lab", "Specialty: dental technician"],
       ["o_acad", "Specialty: academic"], ["o_student", "Specialty: student"],
       ["f_ticket", "Ticket type label"], ["ticket_prof", "Professional option"], ["ticket_student", "Student option"],
+      ["confirm_title", "Check popup: title"], ["confirm_text", "Check popup: text"],
+      ["f_name_full", "Check popup: full name label"], ["confirm_name_hint", "Check popup: note under the name"],
+      ["confirm_edit", "Check popup: go back button"], ["confirm_ok", "Check popup: continue button"],
     ]),
   },
   {

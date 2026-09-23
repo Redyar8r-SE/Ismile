@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="css/layout/header.css?v=25">
 <link rel="stylesheet" href="css/layout/footer.css?v=24">
 <link rel="stylesheet" href="css/sections/hero.css?v=43">
-<link rel="stylesheet" href="css/sections/register.css?v=36">
+<link rel="stylesheet" href="css/sections/register.css?v=38">
 <link rel="stylesheet" href="css/sections/register-page.css?v=5">
 <script type="module" src="js/register.js?v=3"></script>
 </head>
@@ -173,6 +173,15 @@
             <div class="step-head">
               <h3 tabindex="-1" data-i18n="s2_title_p">Your details</h3>
               <p data-i18n="s2_sub">We use these details to send your payment link and ticket.</p>
+            </div>
+
+            <!-- The names typed below are printed on the attendance certificate. -->
+            <div class="cert-note">
+              <span class="cert-note-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9.5" r="5.5"/><path d="m9 14.5-1 6.5 4-2.2 4 2.2-1-6.5"/><path d="m10 9.5 1.5 1.5L14.5 8"/></svg></span>
+              <span class="cert-note-text">
+                <b data-i18n="cert_note_title">Your name goes on your certificate</b>
+                <small data-i18n="cert_note_text">Write your names exactly as you want them printed. Your attendance certificate is issued with the details you enter here.</small>
+              </span>
             </div>
 
             <div class="fields">
@@ -368,6 +377,22 @@
       </div>
     </div>
   </div>
+
+  <!-- Last check before leaving the details step. Outside #regForm: a form
+       cannot be nested inside another one. -->
+  <dialog class="confirm" id="regConfirm">
+    <form method="dialog" class="confirm-card">
+      <button class="confirm-close" value="edit" aria-label="Close" data-i18n-label="confirm_edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <span class="confirm-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8.2v4.6M12 16h.01"/></svg></span>
+      <h3 data-i18n="confirm_title">Is everything correct?</h3>
+      <p data-i18n="confirm_text">Your ticket and certificate are issued with these details. Please check them before you continue.</p>
+      <dl class="confirm-list" id="regConfirmList"></dl>
+      <div class="confirm-actions">
+        <button class="btn btn-outline" value="edit" data-i18n="confirm_edit">No, let me check</button>
+        <button class="btn btn-primary" value="ok" data-i18n="confirm_ok">Yes, continue</button>
+      </div>
+    </form>
+  </dialog>
 </section>
 
 </main>
