@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>iSmile 2026 — Backend & Launch Plan</title>
+<style>
+@page { size: A4; margin: 17mm 16mm 18mm; }
+* { box-sizing: border-box; }
+body { margin: 0; color: #17263a; font: 10pt/1.46 Arial, sans-serif; }
+h1, h2, h3, p { margin-top: 0; }
+h1 { font-size: 25pt; line-height: 1.12; letter-spacing: -.5px; margin-bottom: 8mm; color: #102e52; }
+h2 { color: #0a4f80; font-size: 15pt; margin: 9mm 0 3mm; padding-bottom: 1.5mm; border-bottom: 1px solid #c7d9e6; break-after: avoid; }
+h3 { color: #183d60; font-size: 11pt; margin: 5mm 0 2mm; break-after: avoid; }
+p { margin-bottom: 3mm; }
+ul, ol { margin: 2mm 0 4mm; padding-left: 6mm; }
+li { margin: 0 0 1.5mm; }
+li::marker { color: #0a6a9a; }
+table { width: 100%; border-collapse: collapse; margin: 2mm 0 5mm; font-size: 9pt; }
+th { background: #e9f3f8; text-align: left; color: #173c5c; }
+th, td { border: 1px solid #d4e1e9; padding: 2.1mm 2.5mm; vertical-align: top; }
+tr { break-inside: avoid; }
+.eyebrow { color: #1184a8; text-transform: uppercase; font-size: 9pt; font-weight: 700; letter-spacing: 1.3px; margin-bottom: 4mm; }
+.lede { color: #40566c; font-size: 12pt; line-height: 1.5; max-width: 160mm; }
+.callout { border-left: 4px solid #15a2ba; background: #eef8fa; padding: 4mm 5mm; margin: 6mm 0; break-inside: avoid; }
+.flow { background: #f3f7fa; border: 1px solid #d4e1e9; padding: 4mm; font-weight: 700; color: #214c69; text-align: center; line-height: 1.8; break-inside: avoid; }
+.small { color: #596e80; font-size: 8.5pt; }
+.cover { padding-top: 28mm; min-height: 225mm; }
+.cover .rule { height: 5px; width: 37mm; background: #13a7bf; margin: 10mm 0; }
+.cover .meta { margin-top: 24mm; padding-top: 6mm; border-top: 1px solid #ccdce6; color: #5b6f80; }
+.page-break { break-before: page; }
+a { color: #096e9d; text-decoration: none; }
+</style>
+</head>
+<body>
+<section class="cover">
+  <p class="eyebrow">iSmile 2026 · Project brief</p>
+  <h1>Backend, database,<br>payments & launch plan</h1>
+  <div class="rule"></div>
+  <p class="lede">A practical build plan for turning the current iSmile website into a secure registration and ticketing system, with Pretix and bank payments.</p>
+  <div class="callout"><strong>Recommended architecture:</strong> keep the current frontend; use Django for the custom backend, PostgreSQL for its database, Pretix for ticket orders and capacity, and a protected dashboard for staff workflows.</div>
+  <p class="meta">Prepared 23 September 2026<br>Planning document · Decisions about banks and Pretix hosting require confirmation before implementation.</p>
+</section>
+
+<h2>1. Current state and target</h2>
+<p>The website already has pages for registration, sponsorship, speakers, workshops, schedules, partners, and content editing. Registration collects personal information, professional or student ticket choice, university details, an optional student-ID image, and a FIB or FastPay choice. It supports English, Arabic, and Kurdish.</p>
+<p><strong>The critical gap:</strong> the registration page currently shows a success message and creates a reference in the browser, but it does not save an attendee, create an order, or collect payment. Sponsor enquiries currently open WhatsApp or email. The current content admin is useful, but its browser-only access fallback cannot protect attendee or payment information.</p>
+<p>The release goal is a complete journey: submit information, review student eligibility where needed, reserve a ticket, pay through a supported bank, verify the result on the server, issue the ticket, and give staff a reliable view of every step.</p>
+
+<h2>2. System design</h2>
+<table>
+  <tr><th>Component</th><th>Responsibility</th></tr>
+  <tr><td>Existing frontend</td><td>Public information, accessible forms, language support, status screens.</td></tr>
+  <tr><td>Django backend</td><td>Server validation, staff access, student review, sponsor workflow, integration, reports.</td></tr>
+  <tr><td>PostgreSQL</td><td>Attendees, custom registrations, review decisions, sponsor records, integration state, audit history.</td></tr>
+  <tr><td>Pretix</td><td>Ticket products, quotas, orders, ticket issuance, check-in, authoritative ticket status.</td></tr>
+  <tr><td>Bank providers</td><td>Charge and refund money through approved APIs or Pretix payment plugins.</td></tr>
+  <tr><td>Private file storage</td><td>Student-ID uploads and other sensitive documents.</td></tr>
+  <tr><td>Background worker + Redis</td><td>Notifications, retries, reconciliation, email and long-running tasks.</td></tr>
+  <tr><td>Email service</td><td>Registration updates, approval notices, and support messages.</td></tr>
+</table>
+<p>Pretix should own ticket inventory and order state. Our database stores the custom information and references to Pretix records. If Pretix is self-hosted, it gets separate database credentials; the custom backend accesses it through its authenticated API.</p>
+
+<h2>3. Database plan</h2>
+<table>
+  <tr><th>Record</th><th>Main fields and purpose</th></tr>
+  <tr><td>Event</td><td>Name, dates, venue, timezone, registration settings.</td></tr>
+  <tr><td>Attendee</td><td>Internal ID, name parts, email, normalized phone, preferred language.</td></tr>
+  <tr><td>Registration</td><td>Attendee, event, specialty, ticket type, submitted answers, status, timestamps.</td></tr>
+  <tr><td>Student review</td><td>University, private file reference, decision, reviewer, reason and dates.</td></tr>
+  <tr><td>Ambassador code</td><td>Code, owner, event, validity, attribution and approved discount policy.</td></tr>
+  <tr><td>Pretix link</td><td>Organizer, event, product, order, position and ticket IDs.</td></tr>
+  <tr><td>Payment attempt</td><td>Provider, exact amount, currency, external reference, state and verified result.</td></tr>
+  <tr><td>Sponsor enquiry</td><td>Company, contact, requested package or booth, assignee, notes and status.</td></tr>
+  <tr><td>Content and staff</td><td>Speakers, schedules, workshops, translations, roles and accounts.</td></tr>
+  <tr><td>Operations</td><td>Received webhook IDs, background jobs, audit events and message delivery.</td></tr>
+</table>
+<p>Use database relationships and unique constraints to prevent duplicate external transactions and broken links. Represent money exactly with currency; use consistent timestamps and display event times in Asia/Baghdad. Store files privately, with only file references in the database. Keep a person separate from their registration so the system can support later events.</p>
+
+<h2>4. Registration and payment flow</h2>
+<div class="flow">Form → server validation → student review (if required) → Pretix order and reservation → bank payment → server verification → Pretix ticket → staff dashboard</div>
+<ol>
+  <li>The browser sends form data and the image to the backend. The backend validates fields, upload type and size, and saves a registration. It returns a server-generated reference.</li>
+  <li>If a student needs approval, staff review the private document. On approval, the student can continue to purchase. The initial policy should avoid charging before approval.</li>
+  <li>The backend creates or starts the Pretix order using current ticket price and availability. The browser never decides the authoritative price or whether an order is paid.</li>
+  <li>The customer completes the provider flow. A browser redirect shows a pending status until the server verifies the payment with the provider or Pretix.</li>
+  <li>Pretix issues the ticket only after verified payment. Webhooks trigger synchronization; the backend fetches current Pretix data through the authenticated API before updating its local view.</li>
+  <li>A scheduled task checks unresolved records and reconciles them with Pretix and the bank. Failed email delivery must not invalidate a paid order.</li>
+</ol>
+<p>Submission and payment operations need idempotency keys: repeating a request must not create another order or charge. The workflow must cover timeouts, repeated or delayed callbacks, expired reservations, cancellations, full or partial refunds where supported, and the customer closing the page.</p>
+
+<h2>5. Pretix and bank integration</h2>
+<p>Pretix manages orders and tickets; a bank or wallet processes money. A bank API alone does not guarantee a ready Pretix integration. For each provider, check whether a compatible Pretix payment plugin already exists. If not, assess whether the chosen Pretix hosting permits a custom plugin. Build and fully test one provider before adding another.</p>
+<p>For every bank we need its current documentation, sandbox credentials, allowed currency, hosted payment or checkout flow, callback and verification rules, refund capabilities, and settlement reports. Keep API secrets on the server. Prefer the provider's hosted payment interface so iSmile does not handle card details or bank credentials.</p>
+<p>Pretix documents both payment-provider plugins and webhooks. Its webhook documentation warns that notifications can be duplicated and their contents should be used only as a trigger to fetch current data through the authenticated API. This is the behavior our integration will implement.</p>
+
+<h2>6. Dashboard and daily operations</h2>
+<p>Use Pretix's own management screens for ticket operations. Build a protected Django staff dashboard for iSmile-specific work. Begin with Django admin for internal records and add focused custom screens for tasks that require a clearer workflow.</p>
+<table>
+  <tr><th>Area</th><th>Staff actions</th></tr>
+  <tr><td>Overview</td><td>See paid orders, pending reviews, failed synchronization and enquiries.</td></tr>
+  <tr><td>Attendees</td><td>Search, filter, inspect, correct permitted details and export when authorized.</td></tr>
+  <tr><td>Student approvals</td><td>Inspect private documents, approve or reject, record reason and reviewer.</td></tr>
+  <tr><td>Finance</td><td>Inspect verified payment state, reconcile issues and make controlled refunds.</td></tr>
+  <tr><td>Sponsors</td><td>Assign enquiries, add notes and follow up on packages or booths.</td></tr>
+  <tr><td>Content</td><td>Edit speakers, program, partners, images and translations.</td></tr>
+</table>
+<p>Define owner, registration, finance, content, and check-in roles. Enforce permissions on the server for every action. Record approvals, exports, refunds and important changes in an audit history. The current browser-only admin fallback must be removed or disconnected from private data in production.</p>
+
+<h2>7. Security, privacy and recovery</h2>
+<ul>
+  <li>Require HTTPS, secure sessions, multi-factor authentication for staff, and rate limits for login and public forms.</li>
+  <li>Validate every field again on the server. Use safe file processing, file-size limits and real file-type checks.</li>
+  <li>Keep student documents private; issue short-lived access links only to authorized reviewers. Set retention and deletion rules.</li>
+  <li>Keep bank credentials, Pretix tokens and application secrets in server-side secret storage; keep them out of browser code and the repository.</li>
+  <li>Protect browser actions from forged requests. Keep logs free of passwords, payment secrets and unnecessary personal details.</li>
+  <li>Back up PostgreSQL and private files off the application server. Test a real restore. Monitor backup failures, payment mismatches and worker failures.</li>
+</ul>
+<p>Collect only information that the event team actually needs. Confirm the purpose of age, gender and student-ID collection before launch. Limit staff access and decide how long each category of data is retained.</p>
+
+<h2>8. Domain and hosting</h2>
+<p>Buy the domain when its name and ownership are settled. Choose server capacity after confirming whether Pretix is hosted or self-hosted. A preferred setup serves the public site through a CDN, runs Django and workers on a Linux application server, uses managed PostgreSQL and private object storage, and keeps a separate staging environment.</p>
+<p>A single VPS can work for a constrained budget, but it is a shared failure point. Keep off-server backups and separate staging. A provisional starting size for the custom backend, with database and Pretix hosted elsewhere, is 2–4 virtual CPUs and 4–8 GB RAM; actual sizing depends on peak demand and testing. Do not expose PostgreSQL or Redis publicly.</p>
+<p>Budget for the domain, hosting, database, private storage, backups, email delivery, monitoring, Pretix costs if applicable, payment fees, and ongoing maintenance.</p>
+
+<h2>9. Build sequence and acceptance criteria</h2>
+<table>
+  <tr><th>Phase</th><th>Work</th><th>Done when</th></tr>
+  <tr><td>1. Rules</td><td>Confirm ticket types, prices, currency, approval policy, refunds, workshop capacities and expected demand.</td><td>Rules and data fields are written down.</td></tr>
+  <tr><td>2. Payment proof</td><td>Inspect Pretix hosting and connect one bank in a sandbox.</td><td>A verified test payment reaches the correct Pretix order.</td></tr>
+  <tr><td>3. Foundation</td><td>Set up Django, PostgreSQL, staff login, staging, deployment and backups.</td><td>Protected backend runs in staging.</td></tr>
+  <tr><td>4. Forms</td><td>Save registrations, private student files and sponsor enquiries; add student review.</td><td>Accepted submissions persist and can be reviewed.</td></tr>
+  <tr><td>5. Ticketing</td><td>Map ticket types and workshops into Pretix; implement reservation and expiry.</td><td>Concurrent bookings do not oversell.</td></tr>
+  <tr><td>6. Payments</td><td>Finish callbacks, verification, retries, reconciliation and refunds; add other banks.</td><td>Success, failure and repeat scenarios pass.</td></tr>
+  <tr><td>7. Staff tools</td><td>Build role-based views, exports, content workflows and audit history.</td><td>Staff can perform daily work with proper access.</td></tr>
+  <tr><td>8. Launch</td><td>Review security, load, backup restore, mobile checkout and event-day support.</td><td>Controlled live transactions and ticket delivery pass.</td></tr>
+</table>
+<p>Before public launch, test simultaneous buyers for the last seat; duplicate callbacks; delayed or missing payment notices; expired and refunded tickets; access to another attendee's record; private student images; and restoration from backup. Train check-in staff and define a connectivity fallback.</p>
+
+<h2>10. Decisions needed to finalize implementation</h2>
+<ol>
+  <li><strong>Pretix:</strong> pretix.eu, another hosted service, or self-hosted? Provide the URL and version without credentials.</li>
+  <li><strong>Payments:</strong> confirm all banks and wallets, starting with FIB and FastPay if these remain the choices. Provide current API documentation links first, not live secrets.</li>
+  <li><strong>Scale:</strong> expected total attendees and expected simultaneous registrations at peak.</li>
+  <li><strong>Budget and deadline:</strong> monthly hosting budget, launch date, and who will maintain the server.</li>
+  <li><strong>Ticket policy:</strong> ticket prices and currency, workshop limits, refunds, and whether students need approval before paying.</li>
+</ol>
+<div class="callout"><strong>First implementation milestone:</strong> complete one sandbox purchase through Pretix and one bank, including a verified order status. That result will settle the payment architecture and inform the final hosting choice.</div>
+
+<h2>References</h2>
+<p class="small">Pretix payment guide: <a href="https://docs.pretix.eu/guides/payment/">docs.pretix.eu/guides/payment/</a><br>
+Pretix payment-provider development: <a href="https://docs.pretix.eu/dev/development/api/payment.html">docs.pretix.eu/dev/development/api/payment.html</a><br>
+Pretix webhooks: <a href="https://docs.pretix.eu/dev/api/webhooks.html">docs.pretix.eu/dev/api/webhooks.html</a><br>
+Django admin: <a href="https://docs.djangoproject.com/en/5.2/ref/contrib/admin/">docs.djangoproject.com/en/5.2/ref/contrib/admin/</a><br>
+Django deployment checklist: <a href="https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/">docs.djangoproject.com/en/6.1/howto/deployment/checklist/</a><br>
+PostgreSQL backups: <a href="https://www.postgresql.org/docs/current/backup.html">postgresql.org/docs/current/backup.html</a></p>
+</body>
+</html>
