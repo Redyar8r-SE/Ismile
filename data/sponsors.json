@@ -59,13 +59,6 @@
         "ku": "هاوبەشە پشتیوانەکان"
       },
       "spots": 5
-    },
-    {
-      "id": "exhibitor",
-      "name": { "en": "Exhibitor", "ar": "عارض", "ku": "پێشانگەر" },
-      "className": "tc-exhibitor",
-      "subtitle": { "en": "Exhibition partners", "ar": "شركاء المعرض", "ku": "هاوبەشەکانی پێشانگا" },
-      "spots": 5
     }
   ],
   "sponsors": [],
