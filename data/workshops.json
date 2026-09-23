@@ -42,5 +42,16 @@
     "speaker": null,
     "totalSeats": 24,
     "seatsLeft": 17
+  },
+  {
+    "title": {
+      "en": "",
+      "ar": "",
+      "ku": ""
+    },
+    "company": null,
+    "speaker": null,
+    "totalSeats": 20,
+    "seatsLeft": 20
   }
 ]
