@@ -1,42 +1,57 @@
-// Workshops: cards with remaining seats, from data/workshops.json.
-// A seat belongs to a registration. "Reserve seat" sends a registered visitor
-// straight to the workshop step of the registration form; a new visitor is
-// asked to register first, with the workshop added in the same form.
+// Workshops: cards with remaining seats, from data/workshops.json, on
+// workshops.html (#wsGrid and #wsCallbar).
+// Seats are not booked on the website: every open workshop has a
+// "Call to book" button that dials the office (the "ws_phone" text).
+// A workshop without a title is not announced yet: like a speaker who is not
+// announced, it shows only "Coming soon" over shaped placeholders, never
+// pretend text, and no price or button (the office number sits above the cards).
 import { t, tr, onLangChange } from "../i18n.js?v=24";
 import { formatPrice } from "../utils/money.js?v=1";
-import { getAttendee, saveAttendee, REF_PATTERN } from "../utils/attendee.js?v=1";
+import { callButton, phoneHref, PHONE_ICON } from "../utils/phone.js?v=1";
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-const registerLink = (id) => `register.html?workshop=${encodeURIComponent(id)}`;
+// A tooth and a dental mirror: hands-on dental training.
+const WORKSHOP_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3.5c-2.8 0-4.6 1.5-4.6 4.2 0 1.8.6 3.1.9 5.1.3 2.8.5 6.7 1.8 6.7 1.1 0 1-3.6 1.9-3.6s.8 3.6 1.9 3.6c1.3 0 1.5-3.9 1.8-6.7.3-2 .9-3.3.9-5.1 0-2.7-1.8-4.2-4.6-4.2z"/><circle cx="17.6" cy="5.4" r="2.6"/><path d="M17.9 8l.5 3"/><path d="M18.4 11l1.4 9.2"/></svg>';
 
 export function initWorkshops(workshops) {
   const grid = document.getElementById("wsGrid");
-  const gate = buildGate();
+  const callbar = document.getElementById("wsCallbar");
 
   function render() {
-    const attendee = getAttendee();
-    grid.innerHTML = workshops.map((w) => renderCard(w, attendee)).join("");
+    grid.innerHTML = workshops.map(renderCard).join("");
+    renderCallbar();
   }
 
-  function renderCard(w, attendee) {
-    const isFull = w.seatsLeft === 0;
-    const reserved = Boolean(attendee?.workshops.includes(w.id));
-    const takenPercent = Math.round((1 - w.seatsLeft / w.totalSeats) * 100);
+  // One clear line above the cards: how to book, and the number to call.
+  function renderCallbar() {
+    const number = t("ws_phone");
+    const href = phoneHref(number);
+    const shown = `<b dir="ltr">${number}</b>`;
+    callbar.innerHTML = `
+      <span class="ws-callbar-ic">${PHONE_ICON}</span>
+      <span class="ws-callbar-text"><small>${t("w_call_how")}</small>${href ? `<a href="${href}">${shown}</a>` : shown}</span>`;
+  }
 
+  function renderCard(w) {
+    if (!tr(w.title)) {
+      return `
+      <article class="ws is-soon">
+        <div class="ws-ph"><em>${t("w_soon")}</em>${WORKSHOP_ICON}</div>
+        <div class="ws-sk">
+          <span class="ws-line"><span class="sr-only">${t("w_tba_title")}</span></span>
+          <span class="ws-line ws-short"></span>
+        </div>
+      </article>`;
+    }
+
+    const isFull = w.seatsLeft === 0;
+    const takenPercent = w.totalSeats ? Math.round((1 - w.seatsLeft / w.totalSeats) * 100) : 0;
     const status = isFull
       ? `<span class="full">${t("w_full")}</span>`
       : `<span class="open">${t("w_open")}</span>
          <span class="seats-left">${w.seatsLeft} ${t("w_left")}</span>`;
 
-    let action = "";
-    if (reserved) {
-      action = `<span class="reserved"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>${t("w_reserved")}</span>`;
-    } else if (!isFull) {
-      action = `<button type="button" class="btn btn-primary reserve" data-ws-id="${w.id}">${t("w_reserve")}</button>`;
-    }
-
     return `
-      <article class="ws${isFull ? " full" : ""}${reserved ? " reserved" : ""}">
+      <article class="ws${isFull ? " full" : ""}">
         <h3>${tr(w.title)}</h3>
         <dl>
           <div><dt>${t("w_by")}</dt><dd>${tr(w.company) || t("w_company")}</dd></div>
@@ -46,112 +61,11 @@ export function initWorkshops(workshops) {
         <div class="status">${status}</div>
         <div class="ws-actions">
           <span class="ws-price">${formatPrice(w.price)}<small>${t("w_price_seat")}</small></span>
-          ${action}
+          ${isFull ? "" : callButton(t("w_call"), t("ws_phone"))}
         </div>
       </article>`;
   }
 
-  grid.addEventListener("click", (event) => {
-    const reserve = event.target.closest(".reserve");
-    if (!reserve) return;
-    const id = reserve.dataset.wsId;
-    if (getAttendee()) location.href = registerLink(id);
-    else gate.open(id);
-  });
-
   render();
   onLangChange(render);
-}
-
-// "Register first" dialog for a visitor this browser does not know. It also
-// takes a reference number from someone who registered on another device.
-function buildGate() {
-  const dialog = document.createElement("dialog");
-  dialog.className = "ws-gate";
-  dialog.innerHTML = `
-    <form method="dialog" class="ws-gate-card">
-      <button type="submit" class="ws-gate-close" aria-label="Not now" data-i18n-label="w_gate_close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-      <span class="ws-gate-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M6.5 15c.5-2 1.3-3 2.5-3s2 1 2.5 3M14 8h3M14 11h3M14 16l1.5 1.5 3-3"/></svg></span>
-      <h3 data-i18n="w_gate_title"></h3>
-      <p data-i18n="w_gate_text"></p>
-      <a class="btn btn-primary ws-gate-go" href="register.html" data-i18n="w_gate_go"></a>
-      <span class="ws-gate-or"><b data-i18n="w_gate_or"></b></span>
-      <details class="ws-gate-have">
-        <summary class="ws-gate-have-btn">
-          <span class="ws-gate-have-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5.5" width="19" height="13" rx="2.5"/><path d="M2.5 10h19"/><path d="M6 14h4M15 14h3"/></svg></span>
-          <span class="ws-gate-have-text" data-i18n="w_gate_have"></span>
-          <span class="ws-gate-have-arrow" aria-hidden="true"></span>
-        </summary>
-        <div class="ws-gate-fields">
-          <label><span data-i18n="w_gate_name"></span><input class="ws-gate-name" autocomplete="name"></label>
-          <label><span data-i18n="w_gate_email"></span><input class="ws-gate-email" type="email" dir="ltr" placeholder="name@example.com" autocomplete="email"></label>
-          <label><span data-i18n="w_gate_ref"></span><input class="ws-gate-ref" dir="ltr" placeholder="ISM26-ABC234" autocomplete="off" autocapitalize="characters"></label>
-          <p class="ws-gate-err" hidden></p>
-          <button type="button" class="btn btn-primary ws-gate-continue" data-i18n="w_gate_continue"></button>
-        </div>
-      </details>
-      <button type="submit" class="ws-gate-not" data-i18n="w_gate_close"></button>
-    </form>`;
-  document.body.append(dialog);
-
-  const go = dialog.querySelector(".ws-gate-go");
-  const have = dialog.querySelector(".ws-gate-have");
-  const nameInput = dialog.querySelector(".ws-gate-name");
-  const refInput = dialog.querySelector(".ws-gate-ref");
-  const emailInput = dialog.querySelector(".ws-gate-email");
-  const error = dialog.querySelector(".ws-gate-err");
-  let current = "";
-
-  // Opening the reference panel puts the cursor straight in the first box.
-  have.addEventListener("toggle", () => {
-    if (have.open) nameInput.focus();
-  });
-
-  // The message stays until it is answered, otherwise it sits there in red
-  // while the visitor is already typing the correction.
-  have.addEventListener("input", () => { error.hidden = true; });
-
-  // setLang() fills data-i18n text on every change; this covers the first paint.
-  function translate() {
-    dialog.querySelectorAll("[data-i18n]").forEach((el) => { el.textContent = t(el.dataset.i18n); });
-    dialog.querySelectorAll("[data-i18n-label]").forEach((el) => { el.setAttribute("aria-label", t(el.dataset.i18nLabel)); });
-  }
-
-  dialog.querySelector(".ws-gate-continue").addEventListener("click", () => {
-    const name = nameInput.value.trim().replace(/\s+/g, " ");
-    const email = emailInput.value.trim();
-    const ref = refInput.value.trim().toUpperCase();
-    // Asked for in the order they are filled: name, then email, then reference.
-    const firstEmpty = [
-      [nameInput, name.length >= 2],
-      [emailInput, EMAIL_PATTERN.test(email)],
-      [refInput, REF_PATTERN.test(ref)],
-    ].find(([, valid]) => !valid);
-    if (firstEmpty) {
-      error.textContent = t("w_gate_err");
-      error.hidden = false;
-      firstEmpty[0].focus();
-      return;
-    }
-    // Front-end only: the format is checked here. Once there is a server it
-    // confirms the reference really exists before the seat is booked.
-    saveAttendee({ ref, email, name, workshops: [], createdAt: new Date().toISOString(), unverified: true });
-    location.href = registerLink(current);
-  });
-
-  dialog.addEventListener("click", (event) => {
-    if (event.target === dialog) dialog.close();
-  });
-
-  return {
-    open(id) {
-      current = id;
-      go.href = registerLink(id);
-      error.hidden = true;
-      have.open = false;
-      translate();
-      if (typeof dialog.showModal === "function") dialog.showModal();
-      else location.href = go.href;
-    },
-  };
 }

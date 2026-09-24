@@ -20,15 +20,15 @@
 <link rel="stylesheet" href="css/components/brand.css?v=26">
 <link rel="stylesheet" href="css/components/tier-card.css?v=30">
 <!-- Layout -->
-<link rel="stylesheet" href="css/layout/header.css?v=25">
+<link rel="stylesheet" href="css/layout/header.css?v=26">
 <link rel="stylesheet" href="css/layout/footer.css?v=24">
 <!-- Sections (in page order) -->
 <link rel="stylesheet" href="css/sections/hero.css?v=43">
 <link rel="stylesheet" href="css/sections/stats.css?v=24">
 <link rel="stylesheet" href="css/sections/about.css?v=25">
+<link rel="stylesheet" href="css/sections/gallery.css?v=1">
 <link rel="stylesheet" href="css/sections/experience.css?v=24">
 <link rel="stylesheet" href="css/sections/program.css?v=24">
-<link rel="stylesheet" href="css/sections/workshops.css?v=27">
 <link rel="stylesheet" href="css/sections/speakers.css?v=24">
 <link rel="stylesheet" href="css/sections/sponsors.css?v=30">
 <link rel="stylesheet" href="css/sections/partners.css?v=32">
@@ -36,7 +36,7 @@
 <link rel="stylesheet" href="css/sections/register-page.css?v=5">
 <link rel="stylesheet" href="css/sections/venue.css?v=26">
 
-<script type="module" src="js/main.js?v=39"></script>
+<script type="module" src="js/main.js?v=44"></script>
 </head>
 <body>
 
@@ -185,6 +185,24 @@
 
     <ol class="journey" id="journey"></ol>
 
+    <div class="gallery" id="gallery">
+      <div class="gal-head">
+        <div>
+          <h3 data-i18n="gal_title">iSmile 2021 in pictures</h3>
+          <p class="lead" data-i18n="gal_lead">Moments from the first summit in Sulaymaniyah.</p>
+        </div>
+        <span class="gal-year" data-i18n="gal_year">2021</span>
+      </div>
+      <ul class="gal-grid" id="galleryGrid"></ul>
+      <dialog class="gal-box" id="galleryBox">
+        <figure>
+          <img src="" alt="" width="1080" height="720">
+          <figcaption></figcaption>
+        </figure>
+        <button class="gal-close" type="button" aria-label="Close" data-i18n-label="gal_close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </dialog>
+    </div>
+
     <div class="ab-grid">
       <article class="org-card">
         <div class="org-top">
@@ -275,12 +293,19 @@
   </div>
 </section>
 
-<!-- ============ WORKSHOPS (rendered from data/workshops.json) ============ -->
-<section class="block alt" id="workshops">
+
+<!-- ============ WORKSHOPS: the way to workshops.html ============ -->
+<section class="block alt reg-invite ws-invite" id="workshops">
   <div class="wrap">
-    <h2 data-i18n="ws_title">Workshops</h2>
-    <p class="lead" data-i18n="ws_sub">Seats are limited and workshops are for registered attendees. Register, then reserve your seat here or during registration.</p>
-    <div class="ws-grid" id="wsGrid"></div>
+    <div class="reg-invite-card">
+      <div class="reg-invite-copy">
+        <p class="section-kicker" data-i18n="ws_inv_kicker">Hands-on training</p>
+        <h2 data-i18n="ws_inv_title">Workshops at iSmile 2026</h2>
+        <p data-i18n="ws_inv_text">Small-group, hands-on sessions alongside the summit. The workshops will be announced soon, and seats are booked by phone with our office.</p>
+        <a class="btn btn-primary" href="workshops.html"><span data-i18n="ws_inv_button">See the workshops</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </div>
+      <div class="reg-invite-art" aria-hidden="true"><div class="reg-invite-ring"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3.5c-2.8 0-4.6 1.5-4.6 4.2 0 1.8.6 3.1.9 5.1.3 2.8.5 6.7 1.8 6.7 1.1 0 1-3.6 1.9-3.6s.8 3.6 1.9 3.6c1.3 0 1.5-3.9 1.8-6.7.3-2 .9-3.3.9-5.1 0-2.7-1.8-4.2-4.6-4.2z"/><circle cx="17.6" cy="5.4" r="2.6"/><path d="M17.9 8l.5 3"/><path d="M18.4 11l1.4 9.2"/></svg></div></div>
+    </div>
   </div>
 </section>
 

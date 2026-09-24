@@ -92,6 +92,17 @@ decided, and this must keep working.
 
 ### R4 · Workshops as paid add-ons
 
+> **Changed on 25 September 2026: workshops are booked by phone, not online.**
+> The organiser decided visitors cannot reserve or buy a workshop on the
+> website; they call the office (+964 770 406 5522). The site now shows each
+> workshop's seats and price with a "Call to book" button, registration is two
+> steps (details, then payment) and the order is the ticket alone. The office
+> lowers "Seats left" in the admin as it takes bookings.
+>
+> R4.4–R4.7 below describe the earlier online flow and **no longer apply to the
+> website**. R4.1–R4.3 still describe the business rule. If workshops are sold
+> online again later, the add-on design in this document is still the right one.
+
 **R4.1** — Workshops are **separate paid items attached to a registration**. A
 workshop seat cannot exist without a registration.
 
@@ -112,6 +123,22 @@ workshops**, as a second, smaller order with no ticket line.
 
 **R4.7** — A workshop already booked by that attendee cannot be booked twice; it
 shows as "Reserved" and is not selectable.
+
+### R4b · Lunch (added 25 September 2026)
+
+**R4b.1** — Lunch is an **optional paid extra, per day**: Day 1 lunch, Day 2
+lunch, or both. It is chosen on the payment step of the registration.
+
+**R4b.2** — Each day has its own price, set by the organiser in the admin
+(`lunchDay1`, `lunchDay2` in `data/tickets.json`). 0 shows "Price soon".
+
+**R4b.3** — Chosen lunch days are separate lines in the **same order** as the
+ticket, and in its one total. The registration record carries
+`lunch: ["day1", "day2"]`.
+
+*In pretix:* two add-on products ("Lunch · Day 1", "Lunch · Day 2") in an add-on
+category on the ticket, minimum 0 and maximum 2 — the same mechanism as the
+workshop add-ons below. Give them a quota if the caterer has a limit.
 
 ### R5 · Seats and the waiting list
 
@@ -233,6 +260,10 @@ places: **Iraqi payment methods**, **Kurdish language**, and **certificates**.
 | 🌍 **Translation work** | R9.1 (Kurdish) |
 
 ### The good news, in detail
+
+*(While workshops are booked by phone — see the note under R4 — the office can
+enter those bookings in pretix by hand, or pretix can hold the conference
+ticket only. The add-on setup below is for when workshops go online again.)*
 
 **Workshops → pretix "add-on products" (R4).** pretix lets a product (the
 conference ticket) offer **add-ons** chosen from a category (the workshops),
@@ -364,7 +395,8 @@ the same product sold across many dates (weekly classes, time slots). It keeps a
 single order, but it does not describe a two-day conference with parallel
 workshops.
 
-**Decision: one event, workshops as add-on products.**
+**Decision: one event, workshops as add-on products** — for when workshops are
+sold online. Today they are booked by phone (see R4).
 
 ### Where pretix will change how things work
 
@@ -390,13 +422,13 @@ These are not problems, but they are decisions, and someone will notice:
    their reference) becomes unnecessary: pretix has real order links and an
    order lookup by code and email. Drop it.
 
-5. **Buying workshops later (R4.6).** pretix does support adding to an existing
+5. **Buying workshops later (R4.6 — only if workshops go online again).** pretix does support adding to an existing
    order. **[verify]** whether the self-service version of this covers our case
    or whether the organiser must do it.
 
 ---
 
-### Appendix — configuring the workshops (no code needed)
+### Appendix — configuring the workshops (no code needed; only if workshops are sold online)
 
 The workshop requirement (R4) is configuration, roughly an hour of admin work.
 

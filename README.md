@@ -5,6 +5,7 @@
 ```
 index.html                 Page markup only (no inline CSS or JS)
 register.html              Dedicated registration page
+workshops.html             Workshops page (booked by phone with the office)
 
 css/
   base/tokens.css          Colors, fonts, radii, dark theme
@@ -16,6 +17,7 @@ css/
 js/
   main.js                  Entry point: loads data, starts every section
   register.js              Registration page entry point
+  workshops-page.js        Workshops page entry point
   i18n.js                  Translation helper (t, setLang)
   config/icons.js          SVG icons used by JS-rendered sections
   utils/                   Small helpers (JSON loading, initials)
@@ -24,13 +26,15 @@ js/
 
 data/                      Content you edit without touching code
   program.json             Days and sessions (add topic / speaker when known)
-  workshops.json           Workshop titles and seat counts
+  workshops.json           Workshop titles and seat counts (no title = "to be announced")
   speakers.json            Speakers (null = "Coming soon" placeholder)
   sponsors.json            Sponsor tiers and open spots
   partners.json            Trusted partners, tier, logo file, logo background
+  gallery.json             Photos under the About timeline, with captions
   i18n/en.json             English strings used by JavaScript
 
 assets/logos/              Partner logo images (.webp)
+assets/photos/             Summit photos shown in About
 ```
 
 ## Running locally

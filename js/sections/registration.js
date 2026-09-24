@@ -1,13 +1,24 @@
-// Registration: individual details, optional workshops, payment review, and success screen.
+// Registration: individual details, optional lunch, payment review, and success screen.
+// Workshops are not sold here: seats are booked by phone with the office,
+// and the side panel carries the number (the "ws_phone" text).
 // Demo only: nothing is sent to a server yet. Connect submitRegistration() to your backend.
-// The finished registration is remembered in this browser (js/utils/attendee.js)
-// so the workshop cards can tell a registered visitor from a new one.
-import { t, tr, onLangChange } from "../i18n.js?v=24";
-import { WORKSHOP_ICONS } from "../config/icons.js?v=28";
+// Nothing about the visitor is kept in the browser.
+import { t, onLangChange } from "../i18n.js?v=24";
 import { formatPrice } from "../utils/money.js?v=1";
-import { getAttendee, saveAttendee, addWorkshops, clearAttendee, makeReference } from "../utils/attendee.js?v=1";
+import { callButton } from "../utils/phone.js?v=1";
 
 const TOTAL_STEPS = 3;
+
+// A reference such as ISM26-7KQ2XM: no 0/O or 1/I, so it is easy to read out.
+function makeReference() {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const bytes = crypto.getRandomValues(new Uint8Array(6));
+  return `ISM26-${[...bytes].map((byte) => alphabet[byte % alphabet.length]).join("")}`;
+}
+
+// Earlier versions kept the visitor's name, email and phone in the browser.
+// Nothing uses them any more, so they are removed from any device that has them.
+try { localStorage.removeItem("ismile-attendee"); } catch { /* storage blocked: nothing kept */ }
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 // Iraqi mobiles (0750 123 4567 / +964 750 123 4567) or any international number starting with +
@@ -17,7 +28,7 @@ export function isValidPhone(value) {
   return /^\+\d{8,15}$/.test(digits) && !digits.startsWith("+964");
 }
 
-export function initRegistration({ workshops = [], tickets = {} } = {}) {
+export function initRegistration({ tickets = {} } = {}) {
   const $ = (id) => document.getElementById(id);
   const card = $("regCard");
   const form = $("regForm");
@@ -30,31 +41,23 @@ export function initRegistration({ workshops = [], tickets = {} } = {}) {
   const specialty = $("p_spec");
   const age = $("p_age");
   const success = $("regSuccess");
-  const picker = $("wsPicker");
 
   let step = 1;
 
-  // ---------- Mode ----------
-  // "full": a new registration. "addon": this browser already holds a
-  // registration and the visitor only wants to add workshops to it, so the
-  // details step is skipped and only the workshops are paid for.
-  const params = new URLSearchParams(location.search);
-  const wantedWorkshop = params.get("workshop");
-  let attendee = getAttendee();
-  const mode = attendee && (params.get("mode") === "workshops" || wantedWorkshop) ? "addon" : "full";
-  const selected = new Set();
   let lastSuccess = null;
 
   // ---------- Helpers ----------
   const checkedValue = (name) => form.querySelector(`input[name="${name}"]:checked`)?.value;
   const optionText = (select) => select.options[select.selectedIndex]?.textContent.trim() || "";
   const isHidden = (el) => Boolean(el.closest("[hidden]:not(.reg-step)"));
-  const workshopById = (id) => workshops.find((w) => w.id === id);
-  const isReserved = (id) => Boolean(attendee?.workshops.includes(id));
-  const isBookable = (w) => Boolean(w) && w.seatsLeft !== 0 && !isReserved(w.id);
   const ticketPrice = () => Number(tickets[checkedValue("ticket") === "student" ? "student" : "professional"]) || 0;
-  const workshopsTotal = () => [...selected].reduce((sum, id) => sum + (Number(workshopById(id)?.price) || 0), 0);
-  const orderTotal = () => (mode === "addon" ? 0 : ticketPrice()) + workshopsTotal();
+  // Lunch is optional and per day: none, one or both.
+  const LUNCH = [
+    { id: "day1", price: () => Number(tickets.lunchDay1) || 0, label: "order_lunch_d1", short: "lunch_d1" },
+    { id: "day2", price: () => Number(tickets.lunchDay2) || 0, label: "order_lunch_d2", short: "lunch_d2" },
+  ];
+  const chosenLunch = () => LUNCH.filter((day) => form.querySelector(`input[name="lunch"][value="${day.id}"]`).checked);
+  const orderTotal = () => ticketPrice() + chosenLunch().reduce((sum, day) => sum + day.price(), 0);
 
   // Keep the "selected" style of radio cards in sync
   function syncChecked(name) {
@@ -169,21 +172,10 @@ export function initRegistration({ workshops = [], tickets = {} } = {}) {
 
   function validateStep(number) {
     if (number === 1) {
-      if (mode === "addon") return true;
       const inputs = [...form.querySelectorAll('.reg-step[data-step="1"] [data-rule]')].filter((input) => !isHidden(input));
       const invalid = inputs.filter((input) => !checkField(input));
       invalid[0]?.focus();
       return invalid.length === 0;
-    }
-    if (number === 2) {
-      // Workshops are optional on a new registration, but an add-on order
-      // with nothing in it makes no sense.
-      const error = $("wsError");
-      const missing = mode === "addon" && selected.size === 0;
-      error.hidden = !missing;
-      error.textContent = t("ws_err_pick");
-      if (missing) picker.querySelector("input:not(:disabled)")?.focus();
-      return !missing;
     }
     if (number === 3) {
       const terms = $("terms");
@@ -229,102 +221,12 @@ export function initRegistration({ workshops = [], tickets = {} } = {}) {
   });
   age.addEventListener("input", updateAgeButtons);
 
-  // ---------- Registered-on-this-device banner ----------
-  function renderAttendee() {
-    const banner = $("regAttendee");
-    if (!attendee) {
-      banner.hidden = true;
-      return;
-    }
-    banner.hidden = false;
-    banner.classList.toggle("is-addon", mode === "addon");
-    $("regAttendeeName").textContent = attendee.name || attendee.email || "";
-    $("regAttendeeRef").textContent = attendee.ref;
-    $("regAttendeeNote").textContent = t(mode === "addon" ? "reg_addon_sub" : "reg_addon_hint");
-    $("regAttendeeAdd").hidden = mode === "addon";
+
+  // ---------- Workshops: booked by phone ----------
+  function renderWorkshopCall() {
+    $("regWsCall").innerHTML = callButton(t("w_call"), t("ws_phone"), "btn btn-primary btn-sm ws-call");
+    $("regWsPhone").textContent = t("ws_phone");
   }
-
-  $("regAttendeeReset").addEventListener("click", () => {
-    clearAttendee();
-    location.href = "register.html";
-  });
-
-  // A workshop card on the home page can send the visitor here with
-  // ?workshop=id: tell them at step 1 that it will be added at step 2.
-  const wantedNote = document.createElement("p");
-  wantedNote.className = "reg-ws-wanted";
-  wantedNote.hidden = true;
-  form.querySelector(".reg-person-intro").insertAdjacentElement("afterend", wantedNote);
-  function renderWantedNote() {
-    const workshop = workshopById(wantedWorkshop);
-    const show = mode === "full" && isBookable(workshop);
-    wantedNote.hidden = !show;
-    if (show) wantedNote.textContent = t("reg_ws_wanted").replace("{title}", tr(workshop.title));
-  }
-
-  // ---------- Step 2: workshops ----------
-  function renderWorkshops() {
-    picker.querySelectorAll(".ws-pick").forEach((el) => el.remove());
-    workshops.forEach((w) => {
-      const full = w.seatsLeft === 0;
-      const reserved = isReserved(w.id);
-      const disabled = full || reserved;
-      const checked = selected.has(w.id);
-      const taken = w.totalSeats ? Math.round((1 - w.seatsLeft / w.totalSeats) * 100) : 0;
-      let status = `<span class="ws-pick-seats">${w.seatsLeft} ${t("w_left")}</span>`;
-      if (reserved) status = `<span class="ws-pick-reserved">${t("ws_reserved")}</span>`;
-      else if (full) status = `<span class="ws-pick-full">${t("w_full")}</span>`;
-      const who = [tr(w.speaker), tr(w.company)].filter(Boolean).join(" · ") || t("w_dr");
-
-      const label = document.createElement("label");
-      label.className = `ws-pick${disabled ? " is-disabled" : ""}${full ? " is-full" : ""}${checked ? " is-checked" : ""}`;
-      label.innerHTML = `
-        <input type="checkbox" name="ws" value="${w.id}"${checked ? " checked" : ""}${disabled ? " disabled" : ""}>
-        <span class="ws-pick-ic" aria-hidden="true">${WORKSHOP_ICONS[w.icon] || WORKSHOP_ICONS.tools}</span>
-        <span class="ws-pick-text">
-          <b>${tr(w.title)}</b>
-          <small>${who}</small>
-        </span>
-        <span class="ws-pick-seatbar" aria-hidden="true"><i style="width:${taken}%"></i></span>
-        <span class="ws-pick-meta">${status}</span>
-        <span class="ws-pick-foot">
-          <span class="ws-pick-price"><b>${formatPrice(w.price)}</b><small>${t("w_price_seat")}</small></span>
-          <span class="ws-pick-btn">${t(checked ? "ws_added" : "ws_add")}</span>
-        </span>`;
-      picker.append(label);
-    });
-    updateWorkshopSummary();
-  }
-
-  function updateWorkshopSummary() {
-    const count = selected.size;
-    $("wsSummaryCount").textContent = count ? t("ws_pick_count").replace("{n}", count) : t("ws_pick_none");
-    $("wsSummaryHint").textContent = t(count ? "ws_summary_hint" : "ws_summary_empty");
-    $("wsSummaryBadge").textContent = count;
-    $("wsSummaryBadge").hidden = count === 0;
-    $("wsSummaryTotal").textContent = count ? formatPrice(workshopsTotal()) : "";
-    $("wsSummary").classList.toggle("has-items", count > 0);
-    updateNextLabel();
-  }
-
-  // With nothing ticked the button says "Skip workshops" so it is clear the
-  // step is optional.
-  function updateNextLabel() {
-    const skipping = step === 2 && mode === "full" && selected.size === 0;
-    nextBtn.querySelector("span").textContent = t(skipping ? "ws_skip" : "continue");
-  }
-
-  picker.addEventListener("change", (event) => {
-    const input = event.target;
-    if (input.name !== "ws") return;
-    if (input.checked) selected.add(input.value);
-    else selected.delete(input.value);
-    const label = input.closest("label");
-    label.classList.toggle("is-checked", input.checked);
-    label.querySelector(".ws-pick-btn").textContent = t(input.checked ? "ws_added" : "ws_add");
-    $("wsError").hidden = true;
-    updateWorkshopSummary();
-  });
 
   // ---------- Steps ----------
   function goTo(number, { scroll = true } = {}) {
@@ -335,7 +237,7 @@ export function initRegistration({ workshops = [], tickets = {} } = {}) {
       item.classList.toggle("is-done", index + 1 < step);
     });
     $("regBar").style.width = `${(step / TOTAL_STEPS) * 100}%`;
-    backBtn.classList.toggle("is-hidden", step === 1 || (mode === "addon" && step === 2));
+    backBtn.classList.toggle("is-hidden", step === 1);
     nextBtn.hidden = step === TOTAL_STEPS;
     submitBtn.hidden = step !== TOTAL_STEPS;
     updateCount();
@@ -349,6 +251,12 @@ export function initRegistration({ workshops = [], tickets = {} } = {}) {
     }
   }
 
+  // Lunch is optional: with no day ticked the button says so.
+  function updateNextLabel() {
+    const skipping = step === 2 && chosenLunch().length === 0;
+    nextBtn.querySelector("span").textContent = t(skipping ? "lunch_skip" : "continue");
+  }
+
   function updateCount() {
     $("regCount").textContent = t("step_of").replace("{n}", step).replace("{total}", TOTAL_STEPS);
   }
@@ -357,12 +265,12 @@ export function initRegistration({ workshops = [], tickets = {} } = {}) {
     if (!validateStep(step)) return;
     // Leaving the details step is the moment to check the name: it is printed
     // on the certificate, so ask once before moving on.
-    if (step === 1 && mode === "full") askBeforeLeavingDetails();
+    if (step === 1) askBeforeLeavingDetails();
     else goTo(step + 1);
   });
   backBtn.addEventListener("click", () => goTo(step - 1));
-  $("editDetails").addEventListener("click", () => goTo(mode === "addon" ? 2 : 1));
-  $("editWorkshops").addEventListener("click", () => goTo(2));
+  $("editDetails").addEventListener("click", () => goTo(1));
+  $("editLunch").addEventListener("click", () => goTo(2));
 
   form.addEventListener("change", (event) => {
     const input = event.target;
@@ -373,6 +281,10 @@ export function initRegistration({ workshops = [], tickets = {} } = {}) {
     if (input.name === "pay") {
       syncChecked("pay");
       renderReview();
+    }
+    if (input.name === "lunch") {
+      syncChecked("lunch");
+      updateNextLabel();
     }
     if (input.name === "ticket") {
       syncChecked("ticket");
@@ -404,6 +316,7 @@ export function initRegistration({ workshops = [], tickets = {} } = {}) {
 
   // ---------- "Is everything correct?" ----------
   const confirmDialog = $("regConfirm");
+  let awaitingConfirm = false;
 
   function askBeforeLeavingDetails() {
     const fullName = [$("p_first"), $("p_second"), $("p_third")].map((input) => input.value.trim()).join(" ");
@@ -435,10 +348,15 @@ export function initRegistration({ workshops = [], tickets = {} } = {}) {
       goTo(2);
       return;
     }
+    awaitingConfirm = true;
     confirmDialog.showModal();
   }
 
+  // One answer per opening: a second or late "close" can never move a form
+  // that has since been sent or started again.
   confirmDialog.addEventListener("close", () => {
+    if (!awaitingConfirm) return;
+    awaitingConfirm = false;
     if (confirmDialog.returnValue === "ok") goTo(2);
     else $("p_first").focus();
   });
@@ -458,46 +376,36 @@ export function initRegistration({ workshops = [], tickets = {} } = {}) {
 
   function renderReview() {
     const rows = [[t("rv_type"), t("mode_person")]];
-    const workshopNames = [...selected].map((id) => tr(workshopById(id)?.title)).filter(Boolean);
-    if (mode === "addon") {
-      if (attendee.name) rows.push([t("f_first"), attendee.name]);
-      rows.push([t("f_email"), attendee.email]);
-      rows.push([t("rv_ref"), attendee.ref]);
-    } else {
-      rows.push([t("f_first"), $("p_first").value.trim()]);
-      rows.push([t("f_second"), $("p_second").value.trim()]);
-      rows.push([t("f_third"), $("p_third").value.trim()]);
-      rows.push([t("f_phone_number"), $("p_phone").value.trim()]);
-      rows.push([t("f_email"), $("p_email").value.trim()]);
-      rows.push([t("f_city"), $("p_city").value.trim()]);
-      rows.push([t("f_gender"), optionText($("p_gender"))]);
-      rows.push([t("f_age"), $("p_age").value.trim()]);
-      rows.push([t("f_spec"), optionText(specialty)]);
-      rows.push([t("f_ticket"), t(checkedValue("ticket") === "student" ? "ticket_student" : "ticket_prof")]);
-      if (checkedValue("ticket") === "student") {
-        rows.push([t("f_uni"), $("p_uni").value.trim()]);
-        if ($("p_ambassador").value.trim()) rows.push([t("f_ambassador"), $("p_ambassador").value.trim()]);
-        if ($("p_student_id").files?.[0]) rows.push([t("f_student_id"), $("p_student_id").files[0].name]);
-      }
+    rows.push([t("f_first"), $("p_first").value.trim()]);
+    rows.push([t("f_second"), $("p_second").value.trim()]);
+    rows.push([t("f_third"), $("p_third").value.trim()]);
+    rows.push([t("f_phone_number"), $("p_phone").value.trim()]);
+    rows.push([t("f_email"), $("p_email").value.trim()]);
+    rows.push([t("f_city"), $("p_city").value.trim()]);
+    rows.push([t("f_gender"), optionText($("p_gender"))]);
+    rows.push([t("f_age"), $("p_age").value.trim()]);
+    rows.push([t("f_spec"), optionText(specialty)]);
+    rows.push([t("f_ticket"), t(checkedValue("ticket") === "student" ? "ticket_student" : "ticket_prof")]);
+    if (checkedValue("ticket") === "student") {
+      rows.push([t("f_uni"), $("p_uni").value.trim()]);
+      if ($("p_ambassador").value.trim()) rows.push([t("f_ambassador"), $("p_ambassador").value.trim()]);
+      if ($("p_student_id").files?.[0]) rows.push([t("f_student_id"), $("p_student_id").files[0].name]);
     }
-    rows.push([t("rv_workshops"), workshopNames.length ? workshopNames.join(", ") : t("rv_none")]);
+    const lunch = chosenLunch().map((day) => t(day.short));
+    rows.push([t("rv_lunch"), lunch.length ? lunch.join(", ") : t("rv_lunch_none")]);
     rows.push([t("pay_legend"), t(checkedValue("pay") === "fastpay" ? "pay_fastpay_t" : "pay_fib_t")]);
     fillList($("reviewList"), rows);
     renderOrder();
   }
 
-  // One order: the ticket (on a new registration) plus every chosen workshop.
+  // The order is the ticket plus any lunch days. Workshops are paid for
+  // through the office.
   function orderLines() {
-    const lines = [];
-    if (mode === "full") {
-      const student = checkedValue("ticket") === "student";
-      lines.push({ id: `ticket-${student ? "student" : "professional"}`, label: t(student ? "order_ticket_student" : "order_ticket_prof"), price: ticketPrice() });
-    }
-    selected.forEach((id) => {
-      const w = workshopById(id);
-      if (w) lines.push({ id: `workshop-${id}`, label: tr(w.title), price: Number(w.price) || 0 });
-    });
-    return lines;
+    const student = checkedValue("ticket") === "student";
+    return [
+      { id: `ticket-${student ? "student" : "professional"}`, label: t(student ? "order_ticket_student" : "order_ticket_prof"), price: ticketPrice() },
+      ...chosenLunch().map((day) => ({ id: `lunch-${day.id}`, label: t(day.label), price: day.price() })),
+    ];
   }
 
   function renderOrder() {
@@ -508,7 +416,7 @@ export function initRegistration({ workshops = [], tickets = {} } = {}) {
   // ---------- Submit ----------
   form.addEventListener("submit", (event) => {
     event.preventDefault();
-    // Pressing Enter on steps 1–2 moves forward instead of submitting
+    // Pressing Enter before the last step moves forward instead of submitting
     if (step < TOTAL_STEPS) {
       nextBtn.click();
       return;
@@ -518,40 +426,29 @@ export function initRegistration({ workshops = [], tickets = {} } = {}) {
       validateStep(1);
       return;
     }
-    if (!validateStep(2)) {
-      goTo(2);
-      return;
-    }
     if (!validateStep(3)) return;
     submitRegistration();
   });
 
   function submitRegistration() {
-    const ids = [...selected];
     const payment = checkedValue("pay") === "fastpay" ? "fastpay" : "fib";
     const order = { lines: orderLines(), total: orderTotal(), payment };
 
-    if (mode === "addon") {
-      attendee = addWorkshops(ids) || attendee;
-    } else {
-      attendee = {
-        ref: makeReference(),
-        createdAt: new Date().toISOString(),
-        name: [$("p_first"), $("p_second"), $("p_third")].map((input) => input.value.trim()).join(" "),
-        email: $("p_email").value.trim(),
-        phone: $("p_phone").value.trim(),
-        ticket: checkedValue("ticket") === "student" ? "student" : "professional",
-        workshops: ids,
-      };
-      saveAttendee(attendee);
-    }
+    const attendee = {
+      ref: makeReference(),
+      createdAt: new Date().toISOString(),
+      name: [$("p_first"), $("p_second"), $("p_third")].map((input) => input.value.trim()).join(" "),
+      email: $("p_email").value.trim(),
+      phone: $("p_phone").value.trim(),
+      ticket: checkedValue("ticket") === "student" ? "student" : "professional",
+      lunch: chosenLunch().map((day) => day.id),
+    };
     // TODO: send { attendee, order } to your server here.
 
-    lastSuccess = { payment, total: order.total, email: attendee.email, workshops: ids };
+    lastSuccess = { payment, total: order.total, email: attendee.email, ref: attendee.ref };
     renderSuccess();
     form.hidden = true;
     progress.hidden = true;
-    $("regAttendee").hidden = true;
     success.hidden = false;
     card.scrollIntoView({ behavior: "smooth", block: "start" });
     success.focus({ preventScroll: true });
@@ -559,30 +456,14 @@ export function initRegistration({ workshops = [], tickets = {} } = {}) {
 
   function renderSuccess() {
     if (!lastSuccess) return;
-    const { payment, total, email, workshops: ids } = lastSuccess;
+    const { payment, total, email, ref } = lastSuccess;
     const method = t(payment === "fastpay" ? "pay_fastpay_t" : "pay_fib_t");
-    const addon = mode === "addon";
-    $("successTitle").textContent = t(addon ? "success_addon_title" : "success_title");
-    $("successText").textContent = t(addon ? "success_addon_text" : "success_text")
+    $("successTitle").textContent = t("success_title");
+    $("successText").textContent = t("success_text")
       .replace("{method}", method)
       .replace("{total}", formatPrice(total))
       .replaceAll("{email}", email);
-    $("successRef").textContent = attendee.ref;
-
-    const list = $("successWorkshops");
-    list.hidden = ids.length === 0;
-    list.replaceChildren(...ids.map((id) => {
-      const w = workshopById(id);
-      const item = document.createElement("li");
-      const name = document.createElement("span");
-      const price = document.createElement("b");
-      name.textContent = tr(w?.title) || id;
-      price.textContent = formatPrice(w?.price);
-      item.append(name, price);
-      return item;
-    }));
-    $("regAgain").hidden = addon;
-    $("regBackWs").hidden = !addon;
+    $("successRef").textContent = ref;
   }
 
   $("regAgain").addEventListener("click", () => {
@@ -590,12 +471,8 @@ export function initRegistration({ workshops = [], tickets = {} } = {}) {
     updateAgeButtons();
     form.querySelectorAll('[aria-invalid="true"]').forEach((input) => showError(input, ""));
     $("termsError").hidden = true;
-    $("wsError").hidden = true;
-    ["pay", "ticket"].forEach(syncChecked);
+    ["pay", "ticket", "lunch"].forEach(syncChecked);
     toggleUniversity();
-    selected.clear();
-    renderWorkshops();
-    renderAttendee();
     lastSuccess = null;
     success.hidden = true;
     form.hidden = false;
@@ -603,10 +480,18 @@ export function initRegistration({ workshops = [], tickets = {} } = {}) {
     goTo(1);
   });
 
-  // ---------- Ticket prices in the side panel ----------
+  // ---------- Prices in the side panel and on the lunch cards ----------
   function renderTicketPrices() {
     $("tkPriceProf").textContent = formatPrice(tickets.professional);
     $("tkPriceStudent").textContent = formatPrice(tickets.student);
+    const [day1, day2] = LUNCH.map((day) => day.price());
+    $("lunchPrice1").textContent = formatPrice(day1);
+    $("lunchPrice2").textContent = formatPrice(day2);
+    // One price when both days cost the same, otherwise the lower one as "from".
+    const prices = [day1, day2].filter(Boolean);
+    $("tkPriceLunch").textContent = new Set(prices).size > 1 || prices.length === 1
+      ? t("lunch_from").replace("{price}", formatPrice(Math.min(...prices)))
+      : formatPrice(day1);
   }
 
   // ---------- Language changes ----------
@@ -614,20 +499,15 @@ export function initRegistration({ workshops = [], tickets = {} } = {}) {
     updateCount();
     form.querySelectorAll(".f-error[data-key]").forEach((message) => { message.textContent = t(message.dataset.key); });
     renderTicketPrices();
-    renderAttendee();
-    renderWantedNote();
-    renderWorkshops();
-    if (!$("wsError").hidden) $("wsError").textContent = t("ws_err_pick");
+    renderWorkshopCall();
+    updateNextLabel();
     if (step === 3) renderReview();
     renderSuccess();
   });
 
   // ---------- Start ----------
-  if (isBookable(workshopById(wantedWorkshop))) selected.add(wantedWorkshop);
   updateAgeButtons();
   renderTicketPrices();
-  renderAttendee();
-  renderWantedNote();
-  renderWorkshops();
-  goTo(mode === "addon" ? 2 : 1, { scroll: false });
+  renderWorkshopCall();
+  goTo(1, { scroll: false });
 }

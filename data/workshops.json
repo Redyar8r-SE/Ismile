@@ -2,57 +2,41 @@
   {
     "id": "implant",
     "icon": "implant",
-    "title": {
-      "en": "Implant placement",
-      "ar": "زراعة الأسنان",
-      "ku": "چاندنی ددان"
-    },
+    "title": null,
     "company": null,
     "speaker": null,
     "price": 0,
     "totalSeats": 30,
-    "seatsLeft": 12
+    "seatsLeft": 30
   },
   {
     "id": "dsd",
     "icon": "smile",
-    "title": {
-      "en": "Digital smile design",
-      "ar": "تصميم الابتسامة الرقمي",
-      "ku": "دیزاینی بزەی دیجیتاڵ"
-    },
+    "title": null,
     "company": null,
     "speaker": null,
     "price": 0,
     "totalSeats": 24,
-    "seatsLeft": 5
+    "seatsLeft": 24
   },
   {
     "id": "endo",
     "icon": "root",
-    "title": {
-      "en": "Rotary endodontics",
-      "ar": "علاج الجذور بالمبارد الدوارة",
-      "ku": "چارەسەری ڕەگ بە ئامێری سووڕاوە"
-    },
+    "title": null,
     "company": null,
     "speaker": null,
     "price": 0,
     "totalSeats": 20,
-    "seatsLeft": 0
+    "seatsLeft": 20
   },
   {
     "id": "scan",
     "icon": "scan",
-    "title": {
-      "en": "Intraoral scanning workflow",
-      "ar": "سير عمل المسح داخل الفم",
-      "ku": "شێوازی کاری سکانی ناو دەم"
-    },
+    "title": null,
     "company": null,
     "speaker": null,
     "price": 0,
     "totalSeats": 24,
-    "seatsLeft": 17
+    "seatsLeft": 24
   }
 ]

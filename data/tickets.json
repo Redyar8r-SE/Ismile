@@ -1,5 +1,7 @@
 {
   "currency": "IQD",
   "professional": 0,
-  "student": 0
+  "student": 0,
+  "lunchDay1": 0,
+  "lunchDay2": 0
 }

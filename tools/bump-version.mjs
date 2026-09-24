@@ -16,7 +16,7 @@ import { readFileSync, writeFileSync, readdirSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 const repo = resolve(new URL("..", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1"));
-const pages = ["index.html", "sponsor.html", "admin.html"];
+const pages = ["index.html", "register.html", "sponsor.html", "workshops.html", "admin.html"];
 
 // Every .js under js/, at any depth.
 function scripts(folder) {

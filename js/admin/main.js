@@ -1,8 +1,8 @@
 // iSmile admin: edit every text, list and photo on the site, and save to GitHub.
-import { GROUPS, LANGS, DATA_FILES } from "./fields.js?v=46";
+import { GROUPS, LANGS, DATA_FILES } from "./fields.js?v=56";
 import * as store from "./store.js?v=24";
 import { upload, imageFromClipboard } from "./images.js?v=24";
-import { buildList, buildProgram, buildTypes, buildSingle } from "./lists.js?v=25";
+import { buildList, buildProgram, buildTypes, buildSingle } from "./lists.js?v=26";
 import { loadAccounts, makeAccount, check, forget, fileText, ACCOUNTS_FILE } from "./accounts.js?v=24";
 
 // Tells the small script in admin.html that the admin code did load, so it
@@ -276,6 +276,26 @@ function buildSpeakers(section) {
         fields.append(block);
       });
 
+      // The speakers show in this order on the site, so they can be moved.
+      const tools = document.createElement("div");
+      tools.className = "lmove sp-tools";
+      const speakers = state.data.speakers;
+      [["↑", -1, "Move up"], ["↓", 1, "Move down"]].forEach(([arrow, step, title]) => {
+        const move = document.createElement("button");
+        move.type = "button";
+        move.className = "srow-x srow-mv";
+        move.textContent = arrow;
+        move.title = title;
+        move.disabled = !speakers[index + step];
+        move.addEventListener("click", () => {
+          [speakers[index], speakers[index + step]] = [speakers[index + step], speakers[index]];
+          state.pasteTarget = null;
+          render();
+          markDirty();
+        });
+        tools.append(move);
+      });
+
       const remove = document.createElement("button");
       remove.type = "button";
       remove.className = "srow-x";
@@ -287,11 +307,12 @@ function buildSpeakers(section) {
         render();
         markDirty();
       });
+      tools.append(remove);
 
       const left = document.createElement("div");
       left.className = "sleft";
       left.append(photo, buttons);
-      row.append(left, fields, remove);
+      row.append(left, fields, tools);
       list.append(row);
     });
   }
@@ -639,7 +660,7 @@ async function connect(token) {
 // Friendly names for the "are you sure" list.
 const PART_NAMES = {
   en: "English text", ar: "Arabic text", ku: "Kurdish text",
-  speakers: "Speakers", journey: "Years on the timeline", projects: "italk projects",
+  speakers: "Speakers", journey: "Years on the timeline", projects: "italk projects", gallery: "Photos from 2021",
   workshops: "Workshops", sponsors: "Sponsors and tiers", partners: "Trusted partners",
   program: "Program days and sessions",
 };

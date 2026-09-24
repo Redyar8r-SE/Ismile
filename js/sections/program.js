@@ -24,7 +24,10 @@ export function initProgram({ types, days }) {
   });
 
   function renderDay() {
-    const { sessions } = days.find((day) => day.id === openDay);
+    // By start time ("09:30" sorts before "13:00"), so a session added later in
+    // the admin still lands in its right place.
+    const sessions = [...days.find((day) => day.id === openDay).sessions]
+      .sort((a, b) => String(a.start).localeCompare(String(b.start)));
     const talks = sessions.filter((s) => s.type !== "break");
     const locations = new Set(talks.map((s) => tr(s.location)));
     const first = sessions[0];

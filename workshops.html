@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-title-key="wsp_page_title">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="assets/favicon.svg?v=26" type="image/svg+xml">
+<script>try{var t=localStorage.getItem("ismile-theme");document.documentElement.dataset.theme=(t==="light"||t==="dark")?t:(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")}catch(e){}</script>
+<title>Workshops · iSmile 2026</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=Noto+Kufi+Arabic:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<!-- Base -->
+<link rel="stylesheet" href="css/base/tokens.css?v=24">
+<link rel="stylesheet" href="css/base/base.css?v=24">
+<!-- Components -->
+<link rel="stylesheet" href="css/components/boot.css?v=24">
+<link rel="stylesheet" href="css/components/buttons.css?v=25">
+<link rel="stylesheet" href="css/components/brand.css?v=26">
+<!-- Layout -->
+<link rel="stylesheet" href="css/layout/header.css?v=26">
+<link rel="stylesheet" href="css/layout/footer.css?v=24">
+<!-- The cards and the phone bar are the same as on the home page. -->
+<link rel="stylesheet" href="css/sections/workshops.css?v=33">
+<!-- The header, back button, intro and animated logo are the registration page's. -->
+<link rel="stylesheet" href="css/sections/hero.css?v=43">
+<link rel="stylesheet" href="css/sections/register-page.css?v=5">
+<link rel="stylesheet" href="css/sections/workshops-page.css?v=5">
+
+<script type="module" src="js/workshops-page.js?v=1"></script>
+</head>
+<body>
+
+<div class="siteboot" id="siteboot" aria-hidden="true">
+  <div class="siteboot-box">
+    <div class="siteboot-mark">
+      <svg class="siteboot-ring" viewBox="0 0 88 88"><circle class="siteboot-rail" cx="44" cy="44" r="40"/><circle class="siteboot-arc" cx="44" cy="44" r="40"/></svg>
+      <svg class="siteboot-logo" width="34" height="40" viewBox="0 0 1080 1155" aria-hidden="true"><svg x="0" y="0" width="1080" height="1155" viewBox="0 0 1080 1155" overflow="hidden"><image href="assets/brand/ismile-logo.png" width="2481" height="1155"/></svg></svg>
+    </div>
+  </div>
+</div>
+<noscript><style>#siteboot{display:none}</style></noscript>
+<script>
+(function () {
+  var page = document.documentElement;
+  var lifted = false;
+  page.classList.add("siteboot-on", "site-animations-pending");
+  var lift = function () {
+    if (lifted) return;
+    lifted = true;
+    page.classList.remove("siteboot-on");
+    var cover = document.getElementById("siteboot");
+    if (cover) cover.classList.add("is-gone");
+    setTimeout(function () {
+      page.classList.remove("site-animations-pending");
+      page.classList.add("site-ready");
+    }, cover ? 500 : 0);
+  };
+  window.siteReady = lift;
+  window.addEventListener("load", function () { setTimeout(lift, 2500); });
+  setTimeout(lift, 6000);
+})();
+</script>
+
+<!-- ============ HEADER ============ -->
+<header class="top reg-top" id="top">
+  <div class="wrap">
+    <a class="brand" href="index.html" aria-label="iSmile 2026 home">
+      <svg class="brand-mark" width="34" height="40" viewBox="0 0 1080 1155" aria-hidden="true"><svg x="0" y="0" width="1080" height="1155" viewBox="0 0 1080 1155" overflow="hidden"><image href="assets/brand/ismile-logo.png" width="2481" height="1155"/></svg></svg>
+      <span>i<b>Smile</b></span>
+    </a>
+    <div class="lang" id="langSwitch" role="group" aria-label="Language" data-i18n-label="a_lang">
+      <button type="button" data-lang="en" aria-pressed="true" lang="en">EN</button>
+      <button type="button" data-lang="ar" aria-pressed="false" lang="ar">العربية</button>
+      <button type="button" data-lang="ku" aria-pressed="false" lang="ckb">کوردی</button>
+    </div>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Light or dark" aria-pressed="false" data-i18n-label="a_theme">
+      <svg class="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/></svg>
+      <svg class="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8.2 8.2 0 019.5 4 8.3 8.3 0 1020 14.5z"/></svg>
+    </button>
+  </div>
+</header>
+
+<main>
+<!-- ============ INTRO ============ -->
+<section class="reg-page-intro wsp-intro">
+  <div class="wrap">
+    <a class="reg-page-back" href="index.html"><span class="reg-page-back-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></span><span data-i18n="reg_back_site">Back to the summit</span></a>
+    <div class="reg-page-hero">
+      <div class="reg-page-hero-copy">
+        <p class="section-kicker" data-i18n="wsp_kicker">Hands-on training</p>
+        <h1 data-i18n="wsp_title">Workshops at iSmile 2026</h1>
+        <p data-i18n="wsp_sub">Small-group, hands-on sessions alongside the summit. The workshops, speakers and prices will be announced soon. Seats are booked by phone with our office.</p>
+        <div class="ws-callbar" id="wsCallbar"></div>
+      </div>
+      <div class="reg-animated-brand" aria-hidden="true">
+        <div class="hero-brand">
+          <div class="hero-mark">
+            <div class="mark-stage">
+              <img class="mark-navy" src="assets/brand/ismile-mark-navy.png" alt="" width="1080" height="1155">
+              <img class="mark-cyan" src="assets/brand/ismile-mark-cyan.png" alt="" width="1080" height="1155">
+            </div>
+          </div>
+          <p class="wordmark"><span class="word-i">i</span><span class="word-s">S</span><span class="word-m">m</span><span class="word-i2">i</span><span class="word-l">l</span><span class="word-e">e</span></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ THE WORKSHOPS (rendered from data/workshops.json) ============ -->
+<section class="block wsp-list">
+  <div class="wrap">
+    <h2 data-i18n="wsp_list_title">The workshops</h2>
+    <div class="ws-grid" id="wsGrid"></div>
+  </div>
+</section>
+
+<!-- ============ HOW BOOKING WORKS ============ -->
+<section class="block alt wsp-how">
+  <div class="wrap">
+    <h2 data-i18n="wsp_how_title">How booking works</h2>
+    <div class="wsp-register">
+      <span class="wsp-register-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M6.5 15c.5-2 1.3-3 2.5-3s2 1 2.5 3M14 8h3M14 11h3"/></svg></span>
+      <div class="wsp-register-text">
+        <h3 data-i18n="wsp_reg_title">Workshops are for summit attendees</h3>
+        <p data-i18n="wsp_reg_text">Register for iSmile 2026 first, then call us to add a workshop.</p>
+      </div>
+      <a class="btn btn-primary" href="register.html" data-i18n="wsp_reg_btn">Register for the summit</a>
+    </div>
+
+    <ol class="wsp-steps">
+      <li>
+        <span class="wsp-num">1</span>
+        <span class="wsp-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.6 3.5h2.6l1.5 4-2 1.3a11 11 0 005.5 5.5l1.3-2 4 1.5v2.6a2 2 0 01-2.2 2A16.5 16.5 0 014.6 5.7a2 2 0 012-2.2z"/></svg></span>
+        <h3 data-i18n="wsp_s1">Call our office</h3>
+        <p data-i18n="wsp_s1_d">Tell us which workshop you would like to join.</p>
+      </li>
+      <li>
+        <span class="wsp-num">2</span>
+        <span class="wsp-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg></span>
+        <h3 data-i18n="wsp_s2">We reserve your seat</h3>
+        <p data-i18n="wsp_s2_d">The office confirms your place and tells you how to pay.</p>
+      </li>
+      <li>
+        <span class="wsp-num">3</span>
+        <span class="wsp-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3.5c-2.8 0-4.6 1.5-4.6 4.2 0 1.8.6 3.1.9 5.1.3 2.8.5 6.7 1.8 6.7 1.1 0 1-3.6 1.9-3.6s.8 3.6 1.9 3.6c1.3 0 1.5-3.9 1.8-6.7.3-2 .9-3.3.9-5.1 0-2.7-1.8-4.2-4.6-4.2z"/><circle cx="17.6" cy="5.4" r="2.6"/><path d="M17.9 8l.5 3"/><path d="M18.4 11l1.4 9.2"/></svg></span>
+        <h3 data-i18n="wsp_s3">Join on the day</h3>
+        <p data-i18n="wsp_s3_d">Workshops run during the summit, 20 &amp; 21 November 2026, at Grand Millennium Sulaimani.</p>
+      </li>
+    </ol>
+  </div>
+</section>
+</main>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="wrap">
+    <div class="cols">
+      <div>
+        <a class="brand" href="index.html"><svg class="brand-mark" width="34" height="40" viewBox="0 0 1080 1155" aria-hidden="true"><svg x="0" y="0" width="1080" height="1155" viewBox="0 0 1080 1155" overflow="hidden"><image href="assets/brand/ismile-logo.png" width="2481" height="1155"/></svg></svg><span>i<b>Smile</b></span></a>
+        <p class="foot-about" data-i18n="foot_org">Organized by italk Foundation, in collaboration with the Kurdistan Dental Association.</p>
+      </div>
+      <div>
+        <h3 data-i18n="foot_links">Summit</h3>
+        <div id="footLinks"></div>
+      </div>
+      <div>
+        <h3 data-i18n="foot_contact">Contact</h3>
+        <div id="footContact"></div>
+      </div>
+    </div>
+    <div class="footbar">
+      <p class="legal"><span data-i18n="legal">© 2026 iSmile. All rights reserved.</span></p>
+      <!-- Always left to right: the credit stays in English on every language. -->
+      <p class="credit" dir="ltr">
+        <span class="credit-by" data-i18n="credit_by">Developed by</span>
+        <a class="credit-link" href="https://wa.me/9647708444142" target="_blank" rel="noopener noreferrer"
+           data-i18n-label="credit_aria" aria-label="Message Redyar Nawzad on WhatsApp">
+          <span class="credit-badge" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.87 9.87 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm0 18.13h-.01a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.21 8.21 0 0 1-1.26-4.36c0-4.54 3.7-8.24 8.25-8.24 2.2 0 4.27.86 5.83 2.42a8.19 8.19 0 0 1 2.41 5.83c0 4.54-3.7 8.21-8.24 8.21zm4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.13-.16.24-.64.8-.79.97-.14.16-.29.18-.54.06-.25-.13-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.5.11-.11.25-.29.37-.43.13-.15.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.22.25-.87.85-.87 2.07s.89 2.4 1.02 2.56c.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.47-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.11-.22-.17-.47-.29z"/></svg>
+          </span>
+        <b>Redyar Nawzad</b>
+        </a>
+      </p>
+    </div>
+  </div>
+</footer>
+
+<button class="to-top" id="toTop" type="button" aria-label="Back to top" data-i18n-label="to_top" title="Back to top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+
+</body>
+</html>

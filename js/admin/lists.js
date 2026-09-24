@@ -305,6 +305,20 @@ export function buildList(group, section, ctx) {
       const head = el("div", "lhead");
       const info = group.rowInfo ? group.rowInfo(item, ctx.data()) : null;
       head.append(el("span", "lnum", info?.label ? `${index + 1} · ${info.label}` : String(index + 1)));
+      // Order matters (the first photo shows big, years run left to right), so rows can move.
+      const tools = el("div", "lmove");
+      [["↑", -1, "Move up"], ["↓", 1, "Move down"]].forEach(([arrow, step, title]) => {
+        const move = el("button", "srow-x srow-mv", arrow);
+        move.type = "button";
+        move.title = title;
+        move.disabled = !items[index + step];
+        move.addEventListener("click", () => {
+          [items[index], items[index + step]] = [items[index + step], items[index]];
+          render();
+          changed();
+        });
+        tools.append(move);
+      });
       const remove = el("button", "srow-x", "✕");
       remove.type = "button";
       remove.disabled = Boolean(info?.lock);
@@ -314,7 +328,8 @@ export function buildList(group, section, ctx) {
         render();
         changed();
       });
-      head.append(remove);
+      tools.append(remove);
+      head.append(tools);
 
       const body = el("div", "lbody");
       const rowCtx = { ...ctx, rerender: render, markDirty: changed };

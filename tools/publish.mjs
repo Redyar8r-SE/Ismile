@@ -17,7 +17,7 @@ const repo = resolve(new URL("..", import.meta.url).pathname.replace(/^\/([A-Za-
 
 // Where each downloaded file belongs.
 const HOME = { en: "data/i18n", ar: "data/i18n", ku: "data/i18n" };
-const DATA = ["speakers", "map", "footer", "journey", "projects", "workshops",
+const DATA = ["speakers", "map", "footer", "journey", "projects", "gallery", "workshops",
               "sponsors", "partners", "program", "admin-accounts"];
 DATA.forEach((name) => { HOME[name] = "data"; });
 

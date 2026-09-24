@@ -14,7 +14,7 @@
         "ar": "الورشات",
         "ku": "وۆرکشۆپ"
       },
-      "href": "#workshops"
+      "href": "workshops.html"
     },
     {
       "label": {
@@ -31,8 +31,8 @@
       "href": "mailto:info@ismile.krd"
     },
     {
-      "text": "+964 7xx xxx xxxx",
-      "href": ""
+      "text": "+964 770 406 5522",
+      "href": "tel:+9647704065522"
     },
     {
       "text": "ismile.krd",

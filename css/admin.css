@@ -110,7 +110,7 @@ input.plain[type="color"]{max-width:64px;height:40px;padding:3px}
 .lhead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 14px;background:var(--surface-2);border-bottom:1px solid var(--line)}
 .lnum{font-size:12.5px;font-weight:700;color:var(--muted)}
 .lbody{display:grid;gap:12px;padding:16px;min-width:0}
-.srow{position:relative;display:grid;grid-template-columns:140px minmax(0,1fr) 32px;gap:16px;padding:16px;align-items:start;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.srow{position:relative;display:grid;grid-template-columns:140px minmax(0,1fr) auto;gap:16px;padding:16px;align-items:start;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
 .sleft{display:grid;gap:8px;justify-items:center}
 .sphoto{width:104px;aspect-ratio:4/5;border-radius:10px;overflow:hidden;background:var(--surface-2);display:grid;place-items:center}
 .sphoto img{width:100%;height:100%;object-fit:cover}
@@ -123,6 +123,12 @@ input.plain[type="color"]{max-width:64px;height:40px;padding:3px}
 .linkish:hover{color:var(--danger)}
 .srow-x{flex:none;align-self:start;width:30px;height:30px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--muted);font-size:13px;cursor:pointer}
 .srow-x:hover{color:var(--danger);border-color:var(--danger)}
+.lmove{display:flex;gap:6px}
+.srow-mv{font-size:15px;font-weight:700}
+.srow-mv:hover{color:var(--teal-ink);border-color:var(--teal)}
+.srow-mv:disabled{opacity:.35;cursor:default;color:var(--muted);border-color:var(--line)}
+/* Speaker rows: the three buttons stack beside the fields */
+.sp-tools{flex-direction:column}
 /* Add buttons need air between them and the rows above. */
 .add-row{display:inline-flex;align-self:start;justify-self:start;margin-top:18px}
 .lbody .add-row{margin-top:10px}
@@ -163,6 +169,8 @@ input.plain[type="color"]{max-width:64px;height:40px;padding:3px}
   .flangs{grid-template-columns:1fr}
   .srow{grid-template-columns:1fr}
   .srow-x{position:absolute;inset-inline-end:12px;inset-block-start:12px}
+  .lmove .srow-x{position:static}
+  .sp-tools{position:absolute;inset-inline-end:12px;inset-block-start:12px;flex-direction:row}
   .abar-actions{width:100%;margin-inline-start:0;justify-content:flex-end}
 }
 

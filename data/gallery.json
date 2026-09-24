@@ -1,0 +1,42 @@
+[
+  {
+    "photo": "assets/photos/2021-hall.jpg",
+    "caption": {
+      "en": "The main hall, opening session",
+      "ar": "القاعة الرئيسية، جلسة الافتتاح",
+      "ku": "هۆڵی سەرەکی، دانیشتنی کردنەوە"
+    }
+  },
+  {
+    "photo": "assets/photos/2021-workshop.jpg",
+    "caption": {
+      "en": "Hands-on microscope workshop",
+      "ar": "ورشة عملية بالمجهر",
+      "ku": "وۆرکشۆپی کرداری بە مایکرۆسکۆپ"
+    }
+  },
+  {
+    "photo": "assets/photos/2021-lecture.jpg",
+    "caption": {
+      "en": "A scientific lecture",
+      "ar": "محاضرة علمية",
+      "ku": "وانەیەکی زانستی"
+    }
+  },
+  {
+    "photo": "assets/photos/2021-panel.jpg",
+    "caption": {
+      "en": "Panel discussion on stage",
+      "ar": "حلقة نقاش على المسرح",
+      "ku": "گفتوگۆی پانێڵ لەسەر سەکۆ"
+    }
+  },
+  {
+    "photo": "assets/photos/2021-exhibition.jpg",
+    "caption": {
+      "en": "The dental exhibition",
+      "ar": "معرض طب الأسنان",
+      "ku": "پێشانگای ددانسازی"
+    }
+  }
+]

@@ -1,0 +1,42 @@
+/* ==========================================================
+   Workshops page (workshops.html)
+
+   The cards and the "book by phone" bar come from workshops.css, and the
+   header, back button, intro and animated logo from register-page.css and
+   hero.css, so both pages look the same. This file is the phone bar in the
+   intro, the booking steps and the "register first" panel.
+   ========================================================== */
+
+/* ---------- Intro ----------
+   The layout, background and animated logo are the register page's
+   (.reg-page-intro, .reg-page-hero). Only the phone bar is ours. */
+.wsp-intro .ws-callbar{margin-top:26px;background:var(--bg);color:var(--text)}
+.wsp-intro .ws-callbar-ic{background:var(--teal);color:#fff}
+.wsp-intro .ws-callbar-text b{color:var(--teal-ink)}
+
+/* The grid below has its own heading, so it needs less room above */
+.wsp-list .ws-grid{margin-top:28px}
+
+/* ---------- How booking works ---------- */
+.wsp-steps{list-style:none;margin:18px 0 0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:18px;counter-reset:none}
+.wsp-steps li{position:relative;display:grid;gap:10px;align-content:start;padding:26px 24px;border-radius:var(--r-lg);background:var(--bg);border:1px solid var(--line);box-shadow:0 18px 34px -28px rgba(8,30,38,.7)}
+.wsp-num{position:absolute;top:18px;inset-inline-end:20px;font-size:40px;font-weight:800;line-height:1;color:color-mix(in srgb,var(--teal) 22%,transparent)}
+.wsp-ic{width:52px;height:52px;border-radius:15px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--teal),var(--teal-ink));box-shadow:0 12px 22px -12px rgba(14,127,123,.9)}
+.wsp-ic svg{width:26px;height:26px}
+.wsp-steps h3{font-size:19px;margin-top:4px}
+.wsp-steps p{color:var(--muted);font-size:15px;line-height:1.55}
+
+/* ---------- Register first ---------- */
+.wsp-register{display:flex;align-items:center;gap:18px;margin-top:28px;padding:22px 26px;border-radius:var(--r-lg);background:linear-gradient(120deg,var(--navy-2),var(--navy) 60%,#126C70);color:#fff}
+.wsp-register-ic{flex:none;width:52px;height:52px;border-radius:15px;display:grid;place-items:center;background:rgba(255,255,255,.14);color:#9FE6E1}
+.wsp-register-ic svg{width:26px;height:26px}
+.wsp-register-text{flex:1;min-width:0}
+.wsp-register-text h3{font-size:19px}
+.wsp-register-text p{margin-top:4px;color:#BFDCDE;font-size:15px}
+.wsp-register .btn{flex:none;white-space:nowrap}
+
+@media (max-width:860px){
+  .wsp-steps{grid-template-columns:1fr}
+  .wsp-register{flex-wrap:wrap}
+  .wsp-register .btn{flex-basis:100%}
+}

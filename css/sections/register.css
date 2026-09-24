@@ -135,6 +135,19 @@ html[dir="rtl"] .f select{background-position:left 14px center}
 .ticket-toggle label.is-checked{border-color:var(--teal);background:color-mix(in srgb,var(--teal) 14%,var(--bg));color:var(--teal-ink);box-shadow:inset 0 0 0 1px var(--teal),0 3px 10px color-mix(in srgb,var(--teal) 12%,transparent)}
 
 /* Payment */
+/* Lunch: optional, one card per day, either or both */
+.lunch-options{margin:0 0 24px;padding:0;border:0}
+.step-head-lunch{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.lunch-optional{flex:none;margin-top:4px;padding:5px 11px;border-radius:999px;background:var(--surface-2);color:var(--muted);font-size:12px;font-weight:700}
+.lunch-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.lunch-ic{flex:none;width:48px;height:48px;border-radius:12px;display:grid;place-items:center;color:var(--teal-ink);background:color-mix(in srgb,var(--teal) 13%,transparent);transition:background .2s,color .2s}
+.lunch-ic svg{width:25px;height:25px}
+.lunch-card.is-checked .lunch-ic{color:#fff;background:linear-gradient(135deg,var(--teal-ink),var(--teal))}
+.lunch-price{display:inline-block;margin-top:6px;padding:3px 9px;border-radius:999px;font-style:normal;font-size:12.5px;font-weight:700;color:var(--teal-ink);background:color-mix(in srgb,var(--teal) 12%,transparent)}
+/* A tick box, not a round radio: both days can be chosen */
+.lunch-card .tc-check{position:relative;border-radius:7px}
+.lunch-card.is-checked .tc-check{background:var(--teal);box-shadow:none}
+.lunch-card.is-checked .tc-check::after{content:"";position:absolute;left:6px;top:2px;width:5px;height:10px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg)}
 .pay-options{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 24px;padding:0;border:0}
 .pay-options legend{margin-bottom:10px;padding:0;font-size:14px;font-weight:600}
 .pay-logo{flex:none;width:48px;height:48px;border-radius:12px;display:grid;place-items:center;font-size:14px;font-weight:800;letter-spacing:.02em;color:#fff;background:var(--navy)}
@@ -197,11 +210,11 @@ html[dir="rtl"] .reg-nav svg{transform:scaleX(-1)}
 @media (max-width:560px){
   .reg-progress{padding:20px 20px 0}
   #regForm{padding:22px 20px 24px}
-  .fields,.pay-options{grid-template-columns:1fr}
+  .fields,.pay-options,.lunch-grid{grid-template-columns:1fr}
   .student-id-prompt{grid-template-columns:auto 1fr}
   .student-id-browse{grid-column:1/-1;justify-self:start}
   .type-card,.pay-card{padding:14px;gap:12px}
-  .tc-ic,.pay-logo{width:42px;height:42px}
+  .tc-ic,.pay-logo,.lunch-ic{width:42px;height:42px}
   .review dl div{grid-template-columns:1fr;gap:2px}
   /* Longer labels (Kurdish "بەردەوامبوون") need their own row on a phone,
      so the step counter moves above the two buttons. */
@@ -218,16 +231,6 @@ html[dir="rtl"] .reg-nav svg{transform:scaleX(-1)}
 }
 
 /* ---------- Registered-on-this-device banner ---------- */
-.reg-attendee{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:6px 14px;padding:16px 32px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--teal) 8%,var(--bg))}
-.reg-attendee-ic{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--teal);color:#fff}
-.reg-attendee-ic svg{width:18px;height:18px}
-.reg-attendee-text{min-width:0}
-.reg-attendee-text b{display:block;font-size:14.5px;overflow-wrap:anywhere}
-.reg-attendee-ref{display:inline-block;margin-inline-start:6px;padding:1px 9px;border-radius:999px;background:var(--navy);color:#fff;font-size:12px;letter-spacing:.06em;font-variant-numeric:tabular-nums}
-.reg-attendee-text small{display:block;font-size:13px;color:var(--muted)}
-.reg-attendee .btn{white-space:nowrap}
-.reg-attendee .link-btn{grid-column:2;justify-self:start;padding:0;font-size:12.5px}
-.reg-ws-wanted{display:flex;align-items:center;gap:8px;margin:-10px 0 22px;padding:10px 14px;border-radius:10px;background:color-mix(in srgb,var(--teal) 10%,var(--bg));color:var(--teal-ink);font-size:13.5px;font-weight:600}
 
 /* ---------- "This name is on your certificate" notice ---------- */
 .cert-note{display:flex;align-items:center;gap:14px;margin:0 0 22px;padding:15px 18px;border:1.5px solid color-mix(in srgb,var(--teal) 45%,var(--line));border-inline-start:5px solid var(--teal);border-radius:14px;background:linear-gradient(120deg,color-mix(in srgb,var(--teal) 11%,var(--bg)),var(--bg) 75%)}
@@ -268,63 +271,7 @@ html[dir="rtl"] .reg-nav svg{transform:scaleX(-1)}
   .confirm-actions .btn-primary{order:-1}
 }
 
-/* ---------- Step 2: workshop picker ---------- */
-.step-head-ws{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
-.ws-optional{flex:none;margin-top:4px;padding:5px 11px;border-radius:999px;background:var(--surface-2);color:var(--muted);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
-.ws-picker{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.ws-pick{position:relative;display:flex;flex-direction:column;gap:12px;min-width:0;padding:20px 18px 16px;border:2px solid var(--line);border-radius:18px;background:var(--bg);cursor:pointer;overflow:hidden;transition:border-color .2s,background .2s,box-shadow .2s,transform .2s}
-/* Coloured top edge: faint until the card is picked */
-.ws-pick::before{content:"";position:absolute;inset:0 0 auto 0;height:5px;background:linear-gradient(90deg,var(--navy),var(--teal));opacity:.28;transition:opacity .2s}
-.ws-pick:hover{border-color:var(--teal);transform:translateY(-2px);box-shadow:0 16px 32px -20px rgba(22,166,161,.75)}
-.ws-pick input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
-.ws-pick:focus-within{outline:3px solid var(--teal);outline-offset:3px}
-.ws-pick.is-checked{border-color:var(--teal);background:linear-gradient(165deg,color-mix(in srgb,var(--teal) 13%,var(--bg)),var(--bg) 62%);box-shadow:0 0 0 4px color-mix(in srgb,var(--teal) 18%,transparent),0 18px 36px -22px rgba(22,166,161,.8)}
-.ws-pick.is-checked::before{opacity:1}
-.ws-pick.is-disabled{cursor:not-allowed;background:var(--surface)}
-.ws-pick.is-disabled > :not(input){opacity:.62}
-.ws-pick.is-disabled:hover{border-color:var(--line);transform:none;box-shadow:none}
-.ws-pick-ic{width:52px;height:52px;border-radius:15px;display:grid;place-items:center;color:var(--teal-ink);background:color-mix(in srgb,var(--teal) 14%,var(--bg));box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--teal) 28%,transparent);transition:background .2s,color .2s,box-shadow .2s,transform .2s}
-.ws-pick-ic svg{width:28px;height:28px}
-.ws-pick:hover .ws-pick-ic{transform:scale(1.05)}
-.ws-pick.is-checked .ws-pick-ic{color:#fff;background:linear-gradient(135deg,var(--teal-ink),var(--teal));box-shadow:0 10px 20px -10px rgba(22,166,161,.9);animation:wsPop .35s cubic-bezier(.2,1.4,.4,1)}
-@keyframes wsPop{from{transform:scale(.7)}to{transform:none}}
-.ws-pick-text{display:grid;gap:4px;min-width:0}
-.ws-pick-text b{font-size:17px;line-height:1.25}
-.ws-pick-text small{font-size:13px;line-height:1.4;color:var(--muted)}
-.ws-pick-seatbar{height:7px;border-radius:99px;background:var(--surface-2);overflow:hidden}
-.ws-pick-seatbar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--teal),#7FD6D2)}
-.ws-pick.is-full .ws-pick-seatbar i{background:var(--muted)}
-.ws-pick-meta{display:flex;align-items:center;gap:6px;margin-top:-4px;font-size:12.5px;font-weight:700}
-.ws-pick-meta > span::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor;display:inline-block;margin-inline-end:6px;vertical-align:middle}
-.ws-pick-seats{color:var(--ok)}
-.ws-pick-full{color:var(--danger)}
-.ws-pick-reserved{color:var(--teal-ink)}
-.ws-pick-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:auto;padding-top:12px;border-top:1px dashed var(--line)}
-.ws-pick-price{display:grid;min-width:0;line-height:1.15}
-.ws-pick-price b{font-size:16px;font-weight:800;color:var(--teal-ink);white-space:nowrap}
-.ws-pick-price small{font-size:11.5px;color:var(--muted)}
-.ws-pick-btn{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:999px;background:var(--navy);color:#fff;font-size:13.5px;font-weight:700;white-space:nowrap;box-shadow:0 8px 18px -10px rgba(18,59,74,.9);transition:background .2s,transform .2s}
-.ws-pick-btn::before{content:"+";font-size:17px;line-height:1;font-weight:800}
-.ws-pick:hover .ws-pick-btn{transform:translateY(-1px)}
-.ws-pick.is-checked .ws-pick-btn{background:var(--teal);box-shadow:0 8px 18px -10px rgba(22,166,161,.9)}
-.ws-pick.is-checked .ws-pick-btn::before{content:"✓";font-size:14px}
-.ws-pick.is-disabled .ws-pick-btn{display:none}
-.ws-error{margin-top:10px}
-.ws-summary{display:flex;align-items:center;gap:14px;margin-top:18px;padding:16px 20px;border:2px dashed var(--line);border-radius:16px;background:var(--surface);color:var(--text);transition:background .25s,color .25s,border-color .25s,box-shadow .25s}
-.ws-summary-ic{position:relative;flex:none;width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:color-mix(in srgb,var(--teal) 13%,transparent);color:var(--teal);transition:background .25s,color .25s}
-.ws-summary-ic svg{width:24px;height:24px}
-.ws-summary-badge{position:absolute;top:-8px;inset-inline-end:-8px;min-width:22px;height:22px;padding:0 6px;border-radius:999px;display:grid;place-items:center;font-size:12px;font-weight:800;color:#fff;background:var(--teal);box-shadow:0 0 0 2.5px var(--bg);animation:wsPop .35s cubic-bezier(.2,1.4,.4,1)}
-.ws-summary.has-items .ws-summary-badge{background:#fff;color:var(--navy);box-shadow:0 0 0 2.5px var(--navy)}
-.ws-summary-text{flex:1;min-width:0;display:grid;gap:2px}
-.ws-summary-count{font-size:15px}
-.ws-summary-text small{font-size:12.5px;color:var(--muted);transition:color .25s}
-.ws-summary-total{flex:none;font-size:22px;font-weight:800;color:var(--teal-ink);white-space:nowrap}
-.ws-summary.has-items{border-color:transparent;border-style:solid;background:linear-gradient(120deg,var(--navy-2),var(--navy) 60%,#126C70);color:#fff;box-shadow:0 20px 40px -26px rgba(8,30,38,.9)}
-.ws-summary.has-items .ws-summary-ic{background:rgba(255,255,255,.14);color:#9FE6E1}
-.ws-summary.has-items small{color:#BFDCDE}
-.ws-summary.has-items .ws-summary-total{color:#fff}
-
-/* ---------- Step 3: order summary ---------- */
+/* ---------- Step 2: order summary ---------- */
 .order{margin-bottom:20px;border:1.5px solid var(--teal);border-radius:var(--r-md);overflow:hidden}
 .order .review-head{background:color-mix(in srgb,var(--teal) 10%,var(--bg))}
 .order dl{margin:0;padding:4px 16px}
@@ -334,24 +281,15 @@ html[dir="rtl"] .reg-nav svg{transform:scaleX(-1)}
 .order-total{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 16px;background:var(--navy);color:#fff;font-weight:700}
 .order-total b{font-size:20px}
 
-/* ---------- Success: reserved workshops ---------- */
-.success-ws{list-style:none;margin:0;padding:0;width:min(100%,380px);display:grid;gap:6px;text-align:start}
-.success-ws li{display:flex;justify-content:space-between;gap:12px;padding:10px 14px;border-radius:10px;background:var(--surface);font-size:14.5px;font-weight:600}
-.success-ws li b{color:var(--teal-ink);white-space:nowrap}
 .success-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
 
-@media (max-width:560px){
-  .reg-attendee{grid-template-columns:auto 1fr;padding:14px 20px}
-  .reg-attendee .btn{grid-column:1/-1;justify-self:start}
-  .ws-picker{grid-template-columns:1fr}
-  .ws-pick{padding:18px 16px 14px}
-  .ws-summary{flex-wrap:wrap;padding:14px 16px}
-  .ws-summary-total{flex-basis:100%;padding-inline-start:56px;font-size:20px}
-}
-@media (max-width:720px) and (min-width:561px){
-  .ws-picker{grid-template-columns:1fr}
-}
-@media (prefers-reduced-motion: reduce){
-  .ws-pick,.ws-pick-btn,.ws-pick-ic{transition:none;animation:none}
-  .ws-pick:hover{transform:none}
-}
+
+/* ---------- Side panel: workshops are booked by phone ---------- */
+.reg-ws-panel{background:linear-gradient(150deg,color-mix(in srgb,var(--teal) 16%,var(--bg)),var(--bg) 70%);border-color:color-mix(in srgb,var(--teal) 45%,var(--line))}
+.reg-ws-panel p{margin:6px 0 0;font-size:14px;line-height:1.5;color:var(--muted)}
+.reg-ws-panel .reg-ws-phone{margin-top:12px;font-size:19px;font-weight:800;color:var(--teal-ink);text-align:start}
+html[dir="rtl"] .reg-ws-panel .reg-ws-phone{text-align:end}
+.reg-ws-panel .ws-call{margin-top:10px;display:inline-flex;align-items:center;gap:8px}
+.reg-ws-panel .ws-call svg{width:16px;height:16px}
+.reg-ws-panel .ws-call.is-pending{cursor:default;opacity:.85}
+.reg-ws-more{display:inline-block;margin-top:12px;margin-inline-start:12px;font-size:14px;font-weight:700;color:var(--teal-ink)}
