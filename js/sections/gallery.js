@@ -11,10 +11,22 @@ export function initGallery(items) {
   // No photos yet: hide the whole block rather than an empty frame.
   if (!list.length) { block.hidden = true; return; }
 
+  // Rows of three from six photos up: a last row of one or two is stretched
+  // to fill the width instead of leaving a gap.
+  function spanFor(index) {
+    const count = list.length;
+    if (count < 6) return "";
+    const left = count % 3;
+    if (left === 1 && index === count - 1) return ' class="span-6"';
+    if (left === 2 && index >= count - 2) return ' class="span-3"';
+    return "";
+  }
+
   function render() {
+    grid.dataset.count = list.length;
     grid.innerHTML = list
       .map((item, i) => `
-        <li>
+        <li${spanFor(i)}>
           <button class="gal-item" type="button" data-index="${i}">
             <img src="${item.photo}" alt="${tr(item.caption)}" loading="lazy" width="1080" height="720">
             <span class="gal-cap">${tr(item.caption)}</span>

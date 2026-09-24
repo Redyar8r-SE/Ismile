@@ -96,6 +96,12 @@ html[dir="rtl"] .scroll-progress{transform-origin:right}
   nav.links{padding-inline:16px}
 }
 /* Three languages plus the menu button are tight on a small phone. */
+/* The smallest phones (under 400px): the tooth alone stands for iSmile, the
+   big title is right below, so every control still fits on one line. */
+@media (max-width:400px){
+  .top .wrap{gap:8px;padding-inline:16px}
+  .top .brand span{display:none}
+}
 @media (max-width:420px){
   .brand{font-size:19px;gap:8px}
   .brand svg{width:30px;height:34px}

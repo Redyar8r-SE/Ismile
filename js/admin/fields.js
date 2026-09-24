@@ -117,7 +117,7 @@ const PARTS = [
   },
   {
     id: "galleryList", title: "Photos from 2021", kind: "list", file: "gallery",
-    hint: "The photos under the timeline in About. The first one shows big and the next four sit beside it, so five photos fill the grid. Use ↑ ↓ to change the order. Add a photo with the photo button, then a short caption.",
+    hint: "The photos under the timeline in About. Any number works: the layout adjusts itself (one wide photo, two halves, one big beside two, a 2×2, one big beside four, or rows of three). Any shape of photo is fine; it is cropped to fit. Put your best photo first. Use ↑ ↓ to change the order. Add a photo with the photo button, then a short caption.",
     itemName: "photo",
     newItem: () => ({ photo: null, caption: { en: "", ar: "", ku: "" } }),
     itemFields: [
