@@ -1,5 +1,6 @@
 // Header behavior: frosted style on scroll, progress line,
-// active link for the section on screen, and the mobile menu.
+// active link for the section on screen, the back-to-top button,
+// and the mobile menu.
 export function initNav() {
   const header = document.getElementById("top");
   const nav = document.getElementById("nav");
@@ -7,9 +8,19 @@ export function initNav() {
   const progress = document.getElementById("scrollProgress");
   if (!header) return;
 
+  // Back-to-top button: shows once the first screen has scrolled away.
+  const toTop = document.getElementById("toTop");
+  if (toTop) {
+    toTop.addEventListener("click", () => {
+      const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      window.scrollTo({ top: 0, behavior: smooth ? "smooth" : "auto" });
+    });
+  }
+
   // Scrolled look + reading progress
   function onScroll() {
     header.classList.toggle("scrolled", window.scrollY > 8);
+    toTop?.classList.toggle("show", window.scrollY > window.innerHeight * 0.6);
     if (!progress) return;
     const max = document.documentElement.scrollHeight - window.innerHeight;
     progress.style.setProperty("--progress", max > 0 ? Math.min(window.scrollY / max, 1) : 0);

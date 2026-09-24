@@ -10,3 +10,12 @@
 .btn-outline{background:var(--bg);color:var(--text);box-shadow:inset 0 0 0 1.5px var(--line)}
 .btn-outline:hover{box-shadow:inset 0 0 0 1.5px var(--teal);color:var(--teal-ink)}
 .btn:disabled{opacity:.55;cursor:not-allowed}
+
+/* Back to top: floats in the corner once the page is scrolled */
+.to-top{position:fixed;bottom:22px;inset-inline-end:22px;z-index:60;width:52px;height:52px;border:0;border-radius:50%;display:grid;place-items:center;cursor:pointer;color:#fff;background:linear-gradient(135deg,var(--teal),var(--teal-ink));box-shadow:0 12px 26px -10px rgba(14,127,123,.85),0 0 0 3px color-mix(in srgb,var(--teal) 25%,transparent);opacity:0;visibility:hidden;transform:translateY(16px) scale(.9);transition:opacity .25s,transform .25s,visibility .25s,box-shadow .15s}
+.to-top.show{opacity:1;visibility:visible;transform:none}
+.to-top:hover{transform:translateY(-3px);box-shadow:0 16px 30px -10px rgba(14,127,123,.95),0 0 0 5px color-mix(in srgb,var(--teal) 30%,transparent)}
+.to-top:focus-visible{outline:3px solid var(--navy);outline-offset:3px}
+.to-top svg{width:24px;height:24px}
+@media (max-width:560px){.to-top{bottom:16px;inset-inline-end:16px;width:46px;height:46px}}
+@media (prefers-reduced-motion: reduce){.to-top{transition:none}}

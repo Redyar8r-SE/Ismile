@@ -14,7 +14,6 @@
 .wordmark .word-i2{animation-delay:2.07s}
 .wordmark .word-l{animation-delay:2.21s}
 .wordmark .word-e{animation-delay:2.35s}
-.hero-edition{position:absolute;top:calc(-22px + 25pt);right:calc(4px - 5pt);color:#BCEAE8;font-size:13px;font-weight:700;letter-spacing:.025em;line-height:1;white-space:nowrap;opacity:0;animation:editionEnter .55s 3s both cubic-bezier(.2,.8,.2,1)}
 .edition-sup{font-size:.62em;line-height:0;vertical-align:.48em;letter-spacing:0}
 html[lang="en"] .edition-translated,html:not([lang="en"]) .edition-en{display:none}
 .hero-mark{--mark-scale:2.3;--mark-final-scale:1.3;--mark-nudge:clamp(8px,1.65vw,21px);position:absolute;top:50%;left:calc(0px - var(--mark-nudge));width:var(--mark-width);aspect-ratio:1080/1155;pointer-events:none;transform:translateY(-50%) scale(var(--mark-final-scale));animation:markSettle 2.3s both cubic-bezier(.25,.8,.25,1)}
@@ -24,14 +23,12 @@ html[lang="en"] .edition-translated,html:not([lang="en"]) .edition-en{display:no
 .hero-mark .mark-cyan{animation:markJoinRight 1s both cubic-bezier(.22,.75,.3,1)}
 /* Keep the entrance at its first frame while the loading cover is visible. */
 html.site-animations-pending .wordmark span,
-html.site-animations-pending .hero-edition,
 html.site-animations-pending .hero-mark,
 html.site-animations-pending .hero-mark img{animation-play-state:paused}
 /* Reach the left slot before the unchanged wordmark entrance, then settle gently. */
 @keyframes markSettle{0%,43%{left:50%;transform:translate(-50%,-50%) scale(var(--mark-scale))}70%{left:calc(0px - var(--mark-nudge));transform:translateY(-50%) scale(calc(var(--mark-final-scale) + .1))}100%{left:calc(0px - var(--mark-nudge));transform:translateY(-50%) scale(var(--mark-final-scale))}}
 @keyframes markJoinLeft{from{transform:translateX(-100%)}to{transform:none}}
 @keyframes markJoinRight{from{transform:translateX(100%)}to{transform:none}}
-@keyframes editionEnter{from{opacity:0;transform:translate(-48px,16px)}to{opacity:1;transform:none}}
 @keyframes letterEnter{from{opacity:0;transform:translateX(-34px)}to{opacity:1;transform:none}}
 
 .hero h1{font-size:clamp(24px,2.8vw,34px);font-weight:600;margin-top:18px;max-width:22ch}
@@ -67,7 +64,6 @@ html.site-animations-pending .hero-mark img{animation-play-state:paused}
 @media (max-width:1060px){
   .hero-brand{padding-bottom:20px}
   .hero-mark{top:calc((100% - 20px)/2)}
-  .hero-edition{top:auto;right:0;bottom:2px}
 }
 @media (max-width:860px){
   .hero .wrap{grid-template-columns:minmax(0,1fr);padding-block:56px 64px;gap:40px}
@@ -84,6 +80,6 @@ html.site-animations-pending .hero-mark img{animation-play-state:paused}
   .event-date{font-size:15px!important;padding:6px 9px}
 }
 @media (prefers-reduced-motion: reduce){
-  .wordmark span,.hero-mark img,.hero-edition{animation:none;opacity:1;transform:none}
+  .wordmark span,.hero-mark img{animation:none;opacity:1;transform:none}
   .hero-mark{animation:none;left:calc(0px - var(--mark-nudge));transform:translateY(-50%) scale(var(--mark-final-scale))}
 }

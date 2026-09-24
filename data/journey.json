@@ -1,15 +1,15 @@
 [
   {
-    "year": "2019",
+    "year": "2021",
     "title": {
-      "en": "italk is founded",
-      "ar": "تأسيس italk",
-      "ku": "دامەزراندنی italk"
+      "en": "italkMedX is founded",
+      "ar": "تأسيس italkMedX",
+      "ku": "دامەزراندنی italkMedX"
     },
     "text": {
-      "en": "A youth-led non-profit starts in Sulaymaniyah.",
-      "ar": "مؤسسة غير ربحية يقودها الشباب تنطلق في السليمانية.",
-      "ku": "ڕێکخراوێکی نا-قازانج کە لەلایەن گەنجانەوە بەڕێوەدەبرێت لە سلێمانی دەست پێدەکات."
+      "en": "The medical branch of italk, registered with the Kurdistan Regional Government.",
+      "ar": "الفرع الطبي لمنظمة italk، مسجّل لدى حكومة إقليم كوردستان.",
+      "ku": "لقی پزیشکیی italk، تۆمارکراو لە حکومەتی هەرێمی کوردستان."
     }
   },
   {

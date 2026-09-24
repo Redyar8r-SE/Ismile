@@ -219,7 +219,9 @@ const PARTS = [
     hint: "The story, the three years, and the italk / Vision / Mission cards.",
     fields: many([
       ["ab_title", "Section title"], ["ab_lead", "Section text"],
-      ["org_visit", "Link to italk.krd"], ["org_p1", "italk paragraph 1"], ["org_p2", "italk paragraph 2"],
+      ["medx_title", "italkMedX card title"],
+      ["medx_p1", "italkMedX paragraph 1"], ["medx_p2", "italkMedX paragraph 2"],
+      ["medx_p3", "italkMedX paragraph 3"], ["medx_p4", "italkMedX paragraph 4"],
       ["org_f1", "Fact 1 label"], ["org_f2b", "Fact 2 value"], ["org_f2", "Fact 2 label"],
       ["org_f3b", "Fact 3 value"], ["org_f3", "Fact 3 label"], ["org_medx", "italkMedX note"],
       ["vis_t", "Vision title"], ["vis_p", "Vision text"],

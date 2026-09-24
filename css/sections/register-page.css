@@ -34,7 +34,6 @@
 .reg-animated-brand .hero-brand{--mark-width:clamp(54px,5.2vw,72px);--mark-gap:8px;z-index:1}
 .reg-animated-brand .wordmark{font-size:clamp(72px,7.8vw,106px)}
 .reg-animated-brand .hero-mark{--mark-scale:2.2;--mark-final-scale:1.25;--mark-nudge:4px}
-.reg-animated-brand .hero-edition{top:auto;right:0;bottom:-20px}
 .reg-page-section{padding-block:52px 92px!important;background:linear-gradient(180deg,var(--surface),var(--bg) 460px)}
 .reg-page-section .reg{grid-template-columns:minmax(270px,330px) minmax(0,1fr);gap:26px}
 .reg-page-section .reg-card{box-shadow:0 30px 70px -45px rgba(8,30,38,.52)}
