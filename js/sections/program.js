@@ -1,6 +1,7 @@
 // Program: day tabs + schedule, from data/program.json.
 import { ICONS } from "../config/icons.js?v=24";
 import { t, tr, onLangChange } from "../i18n.js?v=24";
+import { tCount } from "../utils/count.js?v=1";
 import { show } from "../utils/time.js?v=24";
 
 export function initProgram({ types, days }) {
@@ -34,9 +35,9 @@ export function initProgram({ types, days }) {
     const last = sessions[sessions.length - 1];
 
     meta.innerHTML = `
-      <span><b>${talks.length}</b> ${t("pg_sessions")}</span>
-      <span><b><bdi dir="ltr">${show(first.start, t)}</bdi> ${t("pg_to")} <bdi dir="ltr">${show(last.end, t)}</bdi></b> ${t("pg_schedule")}</span>
-      <span><b>${locations.size}</b> ${t("pg_locations")}</span>`;
+      <span>${tCount("pg_sessions", talks.length, (n) => `<b>${n}</b>`)}</span>
+      <span>${tCount("pg_schedule", `<b><bdi dir="ltr">${show(first.start, t)}</bdi> ${t("pg_to")} <bdi dir="ltr">${show(last.end, t)}</bdi></b>`)}</span>
+      <span>${tCount("pg_locations", locations.size, (n) => `<b>${n}</b>`)}</span>`;
 
     schedule.innerHTML =
       `<div class="sched-head"><span>${t("pg_time")}</span><span></span><span>${t("pg_session")}</span><span>${t("pg_topic_speaker")}</span><span>${t("pg_location")}</span></div>` +

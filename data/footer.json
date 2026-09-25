@@ -4,15 +4,15 @@
       "label": {
         "en": "Program",
         "ar": "البرنامج",
-        "ku": "پرۆگرام"
+        "ku": "بەرنامە"
       },
       "href": "#program"
     },
     {
       "label": {
         "en": "Workshops",
-        "ar": "الورشات",
-        "ku": "وۆرکشۆپ"
+        "ar": "ورش العمل",
+        "ku": "وۆرکشۆپەکان"
       },
       "href": "workshops.html"
     },

@@ -3,6 +3,7 @@
 import { ICONS } from "../config/icons.js?v=27";
 import { initials } from "../utils/initials.js?v=24";
 import { t, tr, onLangChange } from "../i18n.js?v=24";
+import { tCount } from "../utils/count.js?v=1";
 
 export function initSponsors({ tiers, sponsors = [] }) {
   const container = document.getElementById("sponsorTiers");
@@ -29,7 +30,7 @@ export function initSponsors({ tiers, sponsors = [] }) {
             <div class="tc-top">
               <span class="medal">${tierIcon(tier)}</span>
               <div><h3>${tr(tier.name)}</h3><p>${tr(tier.subtitle)}</p></div>
-              ${free ? `<span class="tc-count">${free} ${t("spon_spots")}</span>` : ""}
+              ${free ? `<span class="tc-count">${tCount("spon_spots", free)}</span>` : ""}
             </div>
             <div class="tc-slots">${mine.map(logo).join("")}${slot.repeat(free)}</div>
           </div>`;

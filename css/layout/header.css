@@ -39,7 +39,7 @@ nav.links a[aria-current="true"]:hover{color:#fff;background:var(--teal-ink)}
 .nav-cta{display:none}
 
 /* Register button */
-.top-cta{padding:11px 18px 11px 20px;font-size:14.5px;box-shadow:0 10px 22px -12px rgba(22,166,161,.9)}
+.top-cta{white-space:nowrap;padding:11px 18px 11px 20px;font-size:14.5px;box-shadow:0 10px 22px -12px rgba(22,166,161,.9)}
 .top-cta svg{transition:transform .2s ease}
 .top-cta:hover svg{transform:translateX(3px)}
 html[dir="rtl"] .top-cta svg{transform:scaleX(-1)}

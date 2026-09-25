@@ -11,7 +11,7 @@
     "photo": "assets/photos/2021-workshop.jpg",
     "caption": {
       "en": "Hands-on microscope workshop",
-      "ar": "ورشة عملية بالمجهر",
+      "ar": "ورشة عمل تطبيقية بالمجهر",
       "ku": "وۆرکشۆپی کرداری بە مایکرۆسکۆپ"
     }
   },
@@ -27,8 +27,8 @@
     "photo": "assets/photos/2021-panel.jpg",
     "caption": {
       "en": "Panel discussion on stage",
-      "ar": "حلقة نقاش على المسرح",
-      "ku": "گفتوگۆی پانێڵ لەسەر سەکۆ"
+      "ar": "جلسة حوارية على المنصة",
+      "ku": "گفتوگۆیەکی پانێڵ لەسەر سەکۆ"
     }
   },
   {
@@ -36,7 +36,7 @@
     "caption": {
       "en": "The dental exhibition",
       "ar": "معرض طب الأسنان",
-      "ku": "پێشانگای ددانسازی"
+      "ku": "پێشانگای پزیشکیی ددان"
     }
   }
 ]

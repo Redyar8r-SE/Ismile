@@ -8,6 +8,7 @@
 import { t, tr, onLangChange } from "../i18n.js?v=24";
 import { formatPrice } from "../utils/money.js?v=1";
 import { callButton, phoneHref, PHONE_ICON } from "../utils/phone.js?v=1";
+import { tCount } from "../utils/count.js?v=1";
 
 // A tooth and a dental mirror: hands-on dental training.
 const WORKSHOP_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3.5c-2.8 0-4.6 1.5-4.6 4.2 0 1.8.6 3.1.9 5.1.3 2.8.5 6.7 1.8 6.7 1.1 0 1-3.6 1.9-3.6s.8 3.6 1.9 3.6c1.3 0 1.5-3.9 1.8-6.7.3-2 .9-3.3.9-5.1 0-2.7-1.8-4.2-4.6-4.2z"/><circle cx="17.6" cy="5.4" r="2.6"/><path d="M17.9 8l.5 3"/><path d="M18.4 11l1.4 9.2"/></svg>';
@@ -48,7 +49,7 @@ export function initWorkshops(workshops) {
     const status = isFull
       ? `<span class="full">${t("w_full")}</span>`
       : `<span class="open">${t("w_open")}</span>
-         <span class="seats-left">${w.seatsLeft} ${t("w_left")}</span>`;
+         <span class="seats-left">${tCount("w_left", w.seatsLeft)}</span>`;
 
     return `
       <article class="ws${isFull ? " full" : ""}">

@@ -4,7 +4,7 @@
       "id": "diamond",
       "name": {
         "en": "Diamond",
-        "ar": "ماسي",
+        "ar": "الماسي",
         "ku": "ئەڵماس"
       },
       "className": "tc-dia",
@@ -19,13 +19,13 @@
       "id": "platinum",
       "name": {
         "en": "Platinum",
-        "ar": "بلاتيني",
-        "ku": "پلاتینیۆم"
+        "ar": "البلاتيني",
+        "ku": "پلاتین"
       },
       "className": "tc-plat",
       "subtitle": {
         "en": "Leading partners",
-        "ar": "شركاء رياديون",
+        "ar": "الشركاء الروّاد",
         "ku": "هاوبەشە پێشەنگەکان"
       },
       "spots": 2
@@ -34,13 +34,13 @@
       "id": "gold",
       "name": {
         "en": "Gold",
-        "ar": "ذهبي",
+        "ar": "الذهبي",
         "ku": "زێڕ"
       },
       "className": "tc-gold",
       "subtitle": {
         "en": "Main partners",
-        "ar": "شركاء أساسيون",
+        "ar": "الشركاء الأساسيون",
         "ku": "هاوبەشە بنەڕەتییەکان"
       },
       "spots": 3
@@ -49,14 +49,14 @@
       "id": "silver",
       "name": {
         "en": "Silver",
-        "ar": "فضي",
+        "ar": "الفضي",
         "ku": "زیو"
       },
       "className": "tc-silver",
       "subtitle": {
         "en": "Supporting partners",
-        "ar": "شركاء داعمون",
-        "ku": "هاوبەشە پشتیوانەکان"
+        "ar": "الشركاء الداعمون",
+        "ku": "هاوبەشە پشتگیرەکان"
       },
       "spots": 5
     }

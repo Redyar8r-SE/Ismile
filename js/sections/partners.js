@@ -2,12 +2,14 @@
 import { ICONS } from "../config/icons.js?v=26";
 import { initials } from "../utils/initials.js?v=24";
 import { t, tr, onLangChange } from "../i18n.js?v=24";
+import { tCount } from "../utils/count.js?v=1";
 
 export function initPartners({ tiers, partners }) {
   const container = document.getElementById("ptiers");
-  document.getElementById("partnerCount").textContent = partners.length;
 
   function render() {
+    // The total in the heading, e.g. "21 companies & brands"
+    document.getElementById("partnerCount").innerHTML = tCount("tp_companies_brands", partners.length, (n) => `<b>${n}</b>`);
     container.innerHTML = tiers
       .map((tier) => {
         // tier.name stays English: it is the id each partner is matched on.
@@ -18,7 +20,7 @@ export function initPartners({ tiers, partners }) {
             <div class="tc-top">
               <span class="medal">${tierIcon(tier)}</span>
               <div><h3>${tr(tier.label) || tier.name}</h3><p>${tr(tier.subtitle)}</p></div>
-              <span class="tc-count">${list.length} ${t(list.length > 1 ? "tp_companies_brands" : "tp_company")}</span>
+              <span class="tc-count">${tCount(list.length > 1 ? "tp_companies_brands" : "tp_company", list.length)}</span>
             </div>
             <div class="p-slots">${list.map((partner) => renderLogo(partner, tier)).join("")}</div>
           </div>`;

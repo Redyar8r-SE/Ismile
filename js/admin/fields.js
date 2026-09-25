@@ -195,7 +195,7 @@ const PARTS = [
   {
     id: "hero", title: "Top of the page",
     hint: "The big title visitors see first.",
-    fields: many([["hero_title", "Main title"], ["hero_sub", "Subtitle"]]),
+    fields: many([["hero_ed_sfx", "Big number: the letters after the 2 (nd)"], ["hero_title", "Main title"], ["hero_sub", "Subtitle"]]),
   },
   {
     id: "ticket", title: "Ticket card",
@@ -257,8 +257,8 @@ const PARTS = [
     hint: "The headings and column names of the program table. The days and sessions are in “Program”.",
     fields: many([
       ["prog_title", "Section title"], ["prog_sub", "Section text"],
-      ["pg_sessions", "“sessions” (after the count)"], ["pg_schedule", "“schedule” (after the times)"],
-      ["pg_locations", "“locations” (after the count)"],
+      ["pg_sessions", "Number of sessions (keep {n})"], ["pg_schedule", "Start and end time of the day (keep {n}: the times go there)"],
+      ["pg_locations", "Number of rooms (keep {n})"],
       ["pg_time", "Column: time"], ["pg_session", "Column: session"],
       ["pg_topic_speaker", "Column: topic and speaker"], ["pg_location", "Column: location"],
       ["pg_to", "Word between start and end time"], ["am", "Morning (AM)"], ["pm", "Afternoon (PM)"], ["pg_topic", "Row: topic"], ["pg_speaker", "Row: speaker"],
@@ -276,7 +276,7 @@ const PARTS = [
       ["w_tba_title", "Not announced yet: read out by screen readers"], ["w_soon", "Badge: coming soon"],
       ["w_by", "Label: run by"], ["w_company", "Shown when no company is set (to be announced)"],
       ["w_speaker", "Label: speaker"], ["w_dr", "Shown when no speaker is set (to be announced)"],
-      ["w_open", "Badge: open"], ["w_full", "Badge: full"], ["w_left", "After the seat count"],
+      ["w_open", "Badge: open"], ["w_full", "Badge: full"], ["w_left", "Seats left (keep {n}: the number goes there)"],
       ["w_price_seat", "Under the price"],
     ]),
   },
@@ -306,9 +306,9 @@ const PARTS = [
     hint: "The headings above the sponsor tiers and the trusted partners.",
     fields: many([
       ["spon_title", "Section title"], ["spon_sub", "Section text"], ["spon_cta", "Become a sponsor button"],
-      ["spon_slot", "Empty logo place"], ["spon_spots", "After the number of places"],
+      ["spon_slot", "Empty logo place"], ["spon_spots", "Open places in a tier (keep {n})"],
       ["tp_title", "Partners title"], ["tp_sub", "Partners text"],
-      ["tp_company", "“company” (one)"], ["tp_companies_brands", "“companies & brands” (many)"], ["tp_cta", "Line above the sponsor link"],
+      ["tp_company", "Company count, one (keep {n})"], ["tp_companies_brands", "Company count, many (keep {n})"], ["tp_cta", "Line above the sponsor link"],
     ]),
   },
   {
