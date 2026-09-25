@@ -1,11 +1,10 @@
 // Registration: individual details, optional lunch, payment review, and success screen.
-// Workshops are not sold here: seats are booked by phone with the office,
-// and the side panel carries the number (the "ws_phone" text).
+// Workshops are not sold here: after registering, the success screen
+// suggests them with a link to the workshops page.
 // Demo only: nothing is sent to a server yet. Connect submitRegistration() to your backend.
 // Nothing about the visitor is kept in the browser.
 import { t, onLangChange } from "../i18n.js?v=24";
 import { formatPrice } from "../utils/money.js?v=1";
-import { callButton } from "../utils/phone.js?v=1";
 
 const TOTAL_STEPS = 3;
 
@@ -222,11 +221,6 @@ export function initRegistration({ tickets = {} } = {}) {
   age.addEventListener("input", updateAgeButtons);
 
 
-  // ---------- Workshops: booked by phone ----------
-  function renderWorkshopCall() {
-    $("regWsCall").innerHTML = callButton(t("w_call"), t("ws_phone"), "btn btn-primary btn-sm ws-call");
-    $("regWsPhone").textContent = t("ws_phone");
-  }
 
   // ---------- Steps ----------
   function goTo(number, { scroll = true } = {}) {
@@ -318,6 +312,10 @@ export function initRegistration({ tickets = {} } = {}) {
   const confirmDialog = $("regConfirm");
   let awaitingConfirm = false;
 
+  // What the visitor typed keeps its own direction inside Arabic and Kurdish
+  // text: "0750 123 4567" must not come out as "4567 123 0750".
+  const isolate = (value) => `⁨${value}⁩`;
+
   function askBeforeLeavingDetails() {
     const fullName = [$("p_first"), $("p_second"), $("p_third")].map((input) => input.value.trim()).join(" ");
     const rows = [
@@ -332,7 +330,7 @@ export function initRegistration({ tickets = {} } = {}) {
       const dt = document.createElement("dt");
       const dd = document.createElement("dd");
       dt.textContent = label;
-      dd.textContent = value;
+      dd.textContent = isolate(value);
       row.append(dt, dd);
       if (kind === "name") {
         const hint = document.createElement("small");
@@ -368,7 +366,7 @@ export function initRegistration({ tickets = {} } = {}) {
       const dt = document.createElement("dt");
       const dd = document.createElement("dd");
       dt.textContent = label;
-      dd.textContent = value;
+      dd.textContent = isolate(value);
       row.append(dt, dd);
       return row;
     }));
@@ -499,7 +497,6 @@ export function initRegistration({ tickets = {} } = {}) {
     updateCount();
     form.querySelectorAll(".f-error[data-key]").forEach((message) => { message.textContent = t(message.dataset.key); });
     renderTicketPrices();
-    renderWorkshopCall();
     updateNextLabel();
     if (step === 3) renderReview();
     renderSuccess();
@@ -508,6 +505,5 @@ export function initRegistration({ tickets = {} } = {}) {
   // ---------- Start ----------
   updateAgeButtons();
   renderTicketPrices();
-  renderWorkshopCall();
   goTo(1, { scroll: false });
 }

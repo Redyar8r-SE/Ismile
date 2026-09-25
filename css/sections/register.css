@@ -185,7 +185,7 @@ html[dir="rtl"] .reg-nav svg{transform:scaleX(-1)}
 .reg-success > p{max-width:46ch;color:var(--muted)}
 .success-ref{margin:8px 0 10px;padding:12px 24px;border:1.5px dashed var(--teal);border-radius:var(--r-md)}
 .success-ref small{display:block;font-size:12.5px;color:var(--muted)}
-.success-ref b{font-size:21px;letter-spacing:.08em;font-variant-numeric:tabular-nums}
+.success-ref b{font-size:clamp(17px,5.4vw,21px);letter-spacing:.06em;font-variant-numeric:tabular-nums;white-space:nowrap}
 
 /* ---------- Responsive ---------- */
 /* Stacked layout order: Ticket options → How it works → form → help → refund note */
@@ -281,15 +281,27 @@ html[dir="rtl"] .reg-nav svg{transform:scaleX(-1)}
 .order-total{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 16px;background:var(--navy);color:#fff;font-weight:700}
 .order-total b{font-size:20px}
 
+/* Suggestion after registering: the workshops page, no phone number */
+.success-ws{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:14px 16px;width:min(100%,520px);margin:6px 0 4px;padding:20px;border-radius:18px;text-align:start;background:linear-gradient(140deg,color-mix(in srgb,var(--teal) 14%,var(--bg)),var(--bg) 75%);border:1.5px solid color-mix(in srgb,var(--teal) 45%,var(--line));box-shadow:0 18px 34px -26px rgba(14,127,123,.8)}
+.success-ws-ic{display:grid;place-items:center;width:52px;height:52px;border-radius:15px;color:#fff;background:linear-gradient(135deg,var(--teal-ink),var(--teal))}
+.success-ws-ic svg{width:28px;height:28px}
+.success-ws-text{display:grid;gap:4px}
+.success-ws-text b{font-size:17px}
+.success-ws-text small{font-size:13.5px;line-height:1.5;color:var(--muted)}
+.success-ws-btn{grid-column:1/-1;justify-self:stretch;width:100%;justify-content:center;min-height:48px;text-align:center}
+@media (max-width:420px){
+  .success-ws{grid-template-columns:minmax(0,1fr);justify-items:center;text-align:center;padding:18px 16px}
+  .success-ws-ic{width:46px;height:46px}
+  .success-ws-btn{padding-inline:14px;font-size:15px;white-space:nowrap}
+}
+@media (max-width:360px){
+  .success-ws{padding:16px 12px}
+  .success-ws-btn{white-space:normal}
+  .success-ws-btn svg{display:none}
+}
+.success-ws-btn svg{transition:transform .2s}
+.success-ws-btn:hover svg{transform:translateX(3px)}
+html[dir="rtl"] .success-ws-btn svg{transform:scaleX(-1)}
 .success-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
 
 
-/* ---------- Side panel: workshops are booked by phone ---------- */
-.reg-ws-panel{background:linear-gradient(150deg,color-mix(in srgb,var(--teal) 16%,var(--bg)),var(--bg) 70%);border-color:color-mix(in srgb,var(--teal) 45%,var(--line))}
-.reg-ws-panel p{margin:6px 0 0;font-size:14px;line-height:1.5;color:var(--muted)}
-.reg-ws-panel .reg-ws-phone{margin-top:12px;font-size:19px;font-weight:800;color:var(--teal-ink);text-align:start}
-html[dir="rtl"] .reg-ws-panel .reg-ws-phone{text-align:end}
-.reg-ws-panel .ws-call{margin-top:10px;display:inline-flex;align-items:center;gap:8px}
-.reg-ws-panel .ws-call svg{width:16px;height:16px}
-.reg-ws-panel .ws-call.is-pending{cursor:default;opacity:.85}
-.reg-ws-more{display:inline-block;margin-top:12px;margin-inline-start:12px;font-size:14px;font-weight:700;color:var(--teal-ink)}
