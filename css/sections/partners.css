@@ -67,7 +67,7 @@
 @media (max-width:560px){
   .partners{margin-top:52px;padding-top:38px}
   .tp-head{align-items:flex-start}
-  .tp-count{min-height:54px;padding:7px 12px;border-radius:14px;font-size:13.5px}
+  .tp-count{min-height:54px;padding:7px 12px;border-radius:14px;font-size:13.5px;max-width:100%;white-space:normal}
   .tp-count b{font-size:28px}
   .ptier .tc-top{display:grid;grid-template-columns:44px minmax(0,1fr);align-items:center;gap:5px 12px}
   .ptier .medal{grid-row:1/span 2}

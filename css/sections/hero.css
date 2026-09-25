@@ -44,6 +44,12 @@ html.site-animations-pending .hero-mark img{animation-play-state:paused}
 /* Arabic: the word comes first ("النسخة 2"); Kurdish: "2یەم" reads right to left */
 html[lang="ar"] .hero-ed-big,html[lang="ckb"] .hero-ed-big{direction:rtl}
 html[lang="ar"] .hero-ed-big sup{order:-1;font-size:.3em;margin-top:.3em;font-weight:700}
+/* Small phones: the 2nd above the title, so the title keeps the full width */
+@media (max-width:380px){
+  .hero-title-row{flex-direction:column;align-items:flex-start;gap:12px}
+  .hero-ed-sep{display:none}
+  .hero-ed-big{font-size:58px}
+}
 @keyframes edPop{0%{opacity:0;transform:scale(.5);filter:blur(8px)}70%{opacity:1;transform:scale(1.06);filter:blur(0)}100%{opacity:1;transform:none;filter:none}}
 @keyframes edLine{from{transform:scaleY(0);opacity:0}to{transform:none;opacity:1}}
 .hero .sub{color:var(--hero-muted);margin-top:10px;max-width:48ch}

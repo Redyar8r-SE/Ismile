@@ -38,5 +38,5 @@
 @media (max-width:860px){
   .wsp-steps{grid-template-columns:1fr}
   .wsp-register{flex-wrap:wrap}
-  .wsp-register .btn{flex-basis:100%}
+  .wsp-register .btn{flex-basis:100%;white-space:normal;text-align:center}
 }
