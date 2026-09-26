@@ -1,4 +1,5 @@
 {
+  "toBeAnnounced": false,
   "types": {
     "ceremony": {
       "en": "Ceremony",
