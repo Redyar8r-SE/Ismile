@@ -51,7 +51,7 @@ a { color: #096e9d; text-decoration: none; }
   <h1>Backend plan:<br>registration, Psoola payments,<br>tickets by email, and the database</h1>
   <div class="rule"></div>
   <p class="lede">A plain-language plan for turning the iSmile website into a working registration system: people register, pay through Psoola (Visa, MasterCard, FIB, FastPay), receive their ticket by email, and every registration lands in a database that you can see inside your own admin.</p>
-  <div class="callout"><strong>Recommendation in one line:</strong> build our own small backend (PHP + MySQL) on the server you are buying, connected to Psoola's single API and webhook. Do <strong>not</strong> use Pretix for the 2026 summit — it can technically take Psoola only through a custom plugin on a self-hosted Pretix server, and it would put the attendee database outside your admin. Section 3 explains.</div>
+  <div class="callout"><strong>Recommendation in one line:</strong> build our own small backend (PHP + MySQL) on the server you are buying, connected to Psoola's single API and webhook. Do <strong>not</strong> use Pretix for the 2026 summit — it can technically take Psoola only through a custom plugin on a self-hosted Pretix server, and it would put the attendee database outside your admin. Section 3 explains. Security is treated as a first-class part of the build, not a finishing touch: section 10 lists every threat with its defence and its alarm, and a two-person sign-off list before launch.</div>
   <p class="meta">Prepared 27 September 2026 · Replaces the plan of 23 September 2026<br>
   Planning document — no code has been written for the items in this plan. Items marked <em>Confirm</em> need an answer from Psoola or from you before building.</p>
 </section>
@@ -299,18 +299,88 @@ a { color: #096e9d; text-decoration: none; }
 </ul>
 <p>The 23 September plan proposed Django + PostgreSQL + Redis + Pretix. That was right for a larger team and a longer runway; with Psoola giving one API, a managed server, and eight weeks, it is more machinery than the job needs. If the summit grows to tens of thousands of attendees, the database designed in section 5 moves to a bigger stack without changing what it stores.</p>
 
-<h2>10. Security essentials</h2>
+<h2 style="break-before:page">10. Security — what could go wrong, and what stops it</h2>
+<p>Nobody can promise that nothing will ever go wrong; anyone who does is selling something. What can be promised is this: every known way of attacking a system like ours is closed off <em>in layers</em>, so one mistake is not enough to cause harm; we find out quickly when something is tried; and nothing is ever lost, because there is always a backup from last night. This section lists each threat in plain words with the defence and the alarm for it.</p>
+
+<h3>10.1 Money</h3>
+<table>
+  <tr><th style="width:26%">What could go wrong</th><th style="width:44%">What stops it</th><th>How we would know</th></tr>
+  <tr><td>Someone gets a ticket without paying</td><td>A ticket is created in exactly one place in the code, and only after our server has asked Psoola's API and been told "paid" for that exact attempt. The browser, the return page and the webhook message alone can never create a ticket.</td><td>The daily total in the admin is compared with Psoola's settlement report; any ticket without a matching paid amount shows in red.</td></tr>
+  <tr><td>A fake webhook ("payment succeeded") sent by an attacker</td><td>Every webhook must carry Psoola's signature or secret; then the status is re-fetched from Psoola's API anyway. An unsigned or unmatched message changes nothing.</td><td>Logged as an attack with the sender's address; more than 3 in an hour triggers the alert email.</td></tr>
+  <tr><td>Paying a smaller amount than the ticket costs</td><td>The amount is set on the server per attempt and stored; Psoola's confirmed amount must equal it to the dinar.</td><td>Mismatches are held for Finance, never auto-approved.</td></tr>
+  <tr><td>The same payment counted twice (replayed webhook)</td><td>Each Psoola payment ID can be confirmed once. A repeat is recorded and ignored.</td><td>Visible in the webhook log.</td></tr>
+  <tr><td>Psoola's live keys leak</td><td>Keys live in one file on the server outside the web folder, readable only by the web process. Never in the website files, never in GitHub, never on the admin screen, never in an email or chat.</td><td>Psoola's dashboard shows unexpected payments; keys can be rotated with them in minutes.</td></tr>
+  <tr><td>Card details stolen from our site</td><td>Impossible by design: cards are typed on Psoola's page, never ours. We never see, store or log a card number.</td><td>—</td></tr>
+</table>
+
+<h3>10.2 People's data (names, phones, ID photos)</h3>
+<table>
+  <tr><th style="width:26%">What could go wrong</th><th style="width:44%">What stops it</th><th>How we would know</th></tr>
+  <tr><td>Student ID photos found at a public address</td><td>Photos are stored <em>outside</em> the web folder, under random file names, and served only through the admin after login. There is no public address for them.</td><td>A monthly automated check tries to reach every photo without logging in and must fail.</td></tr>
+  <tr><td>Someone opening another person's ticket or registration</td><td>Personal pages are reached only by a long random signed link sent to the person's own email, or through the admin. Guessing is not possible (the token is far longer than a password).</td><td>Failed token attempts are rate-limited and logged.</td></tr>
+  <tr><td>The whole database copied by an attacker</td><td>Database accepts connections only from the server itself, with its own password; the website code talks to it only through prepared statements, so typed-in text can never become a database command (the classic "SQL injection").</td><td>Server logs; the uptime monitor; unusual export volume in the audit log.</td></tr>
+  <tr><td>Data leaking through exports</td><td>Exports are made only by Registration and Finance roles, contain only the columns needed, and every export is logged with who and when. Exported files must not be shared over public WhatsApp groups — a rule for the team, not the software.</td><td>Audit log.</td></tr>
+  <tr><td>Keeping data longer than needed</td><td>ID photos deleted 3 months after the summit; the rest kept for the next summit. Written in the privacy notice.</td><td>A scheduled job does it and reports in the alert email.</td></tr>
+  <tr><td>Data lost (disk failure, mistake, ransomware)</td><td>Nightly backup of the database and the photo folder to a place <em>off</em> the server, kept for 30 days; a restore is rehearsed before launch and once more in November.</td><td>A missed backup sends the alert email.</td></tr>
+</table>
+
+<h3>10.3 The admin</h3>
+<table>
+  <tr><th style="width:26%">What could go wrong</th><th style="width:44%">What stops it</th><th>How we would know</th></tr>
+  <tr><td>Password guessed</td><td>Passwords must be 12+ characters and are stored only as slow hashes (as the current admin already does). 5 wrong tries lock the account for 15 minutes. The Owner and Finance accounts need a <strong>second code from a phone app</strong> (two-factor) to log in.</td><td>Lockouts and logins from a new device are emailed to the account owner.</td></tr>
+  <tr><td>Password stolen by a fake login page (phishing)</td><td>Two-factor makes a stolen password useless on its own. The admin lives only at <code>https://ismile.krd/admin</code> — the team is told never to log in from a link in a message.</td><td>Login from a new device email.</td></tr>
+  <tr><td>Someone using a colleague's open laptop</td><td>Sessions end after 30 minutes idle and 12 hours in any case; the browser cookie cannot be read by scripts and only travels over HTTPS.</td><td>Every action is in the audit log under the account that did it.</td></tr>
+  <tr><td>A link in an email that performs an admin action when clicked</td><td>Every admin action needs a one-time form token that a link from outside cannot have (the "CSRF" defence).</td><td>Rejected attempts are logged.</td></tr>
+  <tr><td>A team member doing more than their job</td><td>Roles: Check-in staff cannot see phones or exports; Content cannot see registrations; only the Owner can issue complimentary tickets or override a full workshop. Checked on the server for every request, not just hidden on screen.</td><td>Audit log, reviewed weekly by the Owner during registration.</td></tr>
+  <tr><td>Someone who left still having access</td><td>Accounts are disabled, not deleted, the day someone leaves; their audit history stays.</td><td>The Owner sees the account list on the Settings page.</td></tr>
+  <tr><td>The old browser-only password check</td><td>Removed on launch day. The current admin's check happens in the browser and protects nothing on a real server; the server login replaces it. The GitHub-key saving mode is removed at the same time.</td><td>Part of the go-live checklist.</td></tr>
+</table>
+
+<h3>10.4 The server and the website</h3>
+<table>
+  <tr><th style="width:26%">What could go wrong</th><th style="width:44%">What stops it</th><th>How we would know</th></tr>
+  <tr><td>Traffic read or altered on the way (public Wi-Fi, mobile networks)</td><td>HTTPS everywhere with a free auto-renewing certificate; plain HTTP redirects; the browser is told to never use HTTP again for our domain (HSTS).</td><td>Certificate expiry is monitored (alert 14 days ahead).</td></tr>
+  <tr><td>A virus uploaded as a "student ID"</td><td>The file's real type is checked by content, not name; only JPG, PNG and WebP; 8 MB limit; the file is re-encoded as an image on the server, which strips anything hidden in it; the folder cannot execute anything.</td><td>Rejections are counted in the log.</td></tr>
+  <tr><td>Malicious text typed into a form (name as code)</td><td>Everything shown on any page or email is escaped, so it stays text (the "XSS" defence). Every field is checked again on the server for length, format and allowed values regardless of what the browser did.</td><td>—</td></tr>
+  <tr><td>The site flooded with requests (bots, or an attack)</td><td>Rate limits per address on the form, the Pay-now link and the login; the hosting's own protection in front; the registration form has a silent bot trap. If it is ever serious, the domain can be put behind Cloudflare (free) in an hour.</td><td>Uptime monitor; hosting alerts.</td></tr>
+  <tr><td>Old software with known holes</td><td>PHP and MySQL are updated by the hosting; our own code has no large frameworks to keep patched; the two libraries we use (PDF and QR) are pinned and reviewed monthly during the registration period.</td><td>A monthly reminder on the calendar.</td></tr>
+  <tr><td>Secrets accidentally published in GitHub</td><td>The repository stays public-safe: it holds only sample settings, never real ones, as today. A pre-commit check refuses anything that looks like a key.</td><td>—</td></tr>
+  <tr><td>Test data mixed with real data</td><td>Staging (<code>test.ismile.krd</code>) has its own database and Psoola's test keys; live has live keys; the admin shows a wide orange bar on staging so nobody confuses the two.</td><td>—</td></tr>
+</table>
+
+<h3>10.5 Emails</h3>
+<table>
+  <tr><th style="width:26%">What could go wrong</th><th style="width:44%">What stops it</th><th>How we would know</th></tr>
+  <tr><td>Someone sending fake "iSmile" emails</td><td>Our domain publishes SPF, DKIM and DMARC records, so mail claiming to be from ismile.krd that did not come from our sender is rejected or flagged by Gmail and Outlook.</td><td>DMARC reports arrive weekly.</td></tr>
+  <tr><td>Our tickets treated as spam</td><td>Same records, a real sending service, and no attachments other than the ticket PDF.</td><td>Delivery rate shown by the email service.</td></tr>
+  <tr><td>An email revealing too much</td><td>No email contains a password, a card number, an ID photo or another person's details; links are one-person tokens.</td><td>—</td></tr>
+</table>
+
+<h3>10.6 Security go-live checklist</h3>
+<p>Signed off by two people before the first real registration; repeated after any major change.</p>
+<ol>
+  <li>HTTPS on every page, HTTP redirects, HSTS on; certificate auto-renews.</li>
+  <li>Secrets file outside the web folder; nothing secret in GitHub (checked by script).</li>
+  <li>Browser-only password check and GitHub-key mode removed; server login only.</li>
+  <li>Two-factor on for Owner and Finance; all admin passwords 12+ characters; no shared accounts.</li>
+  <li>Try to fetch an ID photo and a ticket without logging in — must fail. Try another person's token — must fail.</li>
+  <li>Send an unsigned fake webhook — must be rejected and logged. Replay a real one — nothing changes.</li>
+  <li>Pay a wrong amount on staging — must not become paid.</li>
+  <li>Upload a renamed .exe as a photo — must be refused.</li>
+  <li>Rate limits: 50 form submissions in a minute from one address are blocked.</li>
+  <li>Backup taken last night; a restore onto staging done and checked this week.</li>
+  <li>Uptime monitor and alert email tested by switching the site off for one minute.</li>
+  <li>Privacy notice and consent visible in all three languages.</li>
+  <li>Optional but recommended: a one-day external check by an independent security tester before launch (typically a few hundred dollars), with the report kept.</li>
+</ol>
+
+<h3>10.7 If something does go wrong</h3>
 <ul>
-  <li>HTTPS everywhere; the admin refuses plain HTTP.</li>
-  <li>Psoola secrets, database password and email keys live in one file on the server outside the web folder — never in the website files, never in GitHub.</li>
-  <li>Every form field is checked again on the server (length, format, allowed values, file type by content not by name, 8 MB limit).</li>
-  <li>Rate limits on the registration form, the "Pay now" link and the admin login; admin login locks for 15 minutes after 5 wrong tries; the Owner account gets two-factor codes.</li>
-  <li>Webhook: signature verified, then the status re-fetched from Psoola's API; unknown or unsigned calls are logged and ignored.</li>
-  <li>ID photos and exports are never at a public address; they are served through the admin's login.</li>
-  <li>The usual web protections, in plain words: the database is only ever queried with prepared statements (no typed-in text can become a command); every admin action carries a one-time form token so a link in an email cannot trigger it; everything shown on screen is escaped so a name typed as code stays text; admin sessions end after 12 hours or 30 minutes idle and cookies are HTTPS-only.</li>
-  <li>Logs never contain passwords, card details or full ID photos.</li>
-  <li><strong>Monitoring:</strong> a free uptime check (e.g. UptimeRobot) pings the site every 5 minutes and messages you if it is down; the server emails the “something needs attention” alert (section 4) for failed webhooks, failed emails, missed backups and low disk. The goal is that <em>you</em> hear about a problem before a visitor does.</li>
-  <li><strong>Privacy notice and consent:</strong> a short notice on the form says what we collect, why (ticket, certificate, student check), how long we keep it, and who to contact. Students tick a box agreeing to the ID check. The wording is in all three languages and editable in the admin.</li>
+  <li><strong>Who:</strong> one named person on call during the registration period and the summit, with the developer as the second contact. Numbers on a card in the office, not only in a phone.</li>
+  <li><strong>First hour:</strong> put the registration form in "closed" mode (one switch in Settings — payments stop, nothing else changes), keep the admin up, do not delete anything, take a fresh backup.</li>
+  <li><strong>Find out:</strong> the webhook log, the audit log and the server log answer most "what happened" questions in minutes.</li>
+  <li><strong>Tell people:</strong> if personal data was exposed, the affected people are told plainly and quickly by email; the privacy notice says this will happen.</li>
+  <li><strong>Afterwards:</strong> one page written up — what happened, what was changed — so it cannot repeat.</li>
 </ul>
 </section>
 
@@ -399,6 +469,7 @@ a { color: #096e9d; text-decoration: none; }
   <tr><td>6</td><td>Refund policy in words, for the form and the ticket email.</td><td>"Tickets are non-refundable" (as today), plus "duplicate payments are refunded".</td></tr>
   <tr><td>7</td><td>Do you need age and gender?</td><td>If they are not used for anything, remove them. Less data, less risk.</td></tr>
   <tr><td>7b</td><td>The privacy notice wording (what we collect and why) and the student consent line.</td><td>I will draft it in three languages for you to approve.</td></tr>
+  <tr><td>8a</td><td>Who is on call during registration and the summit, and who holds the two-factor codes for the Owner and Finance accounts?</td><td>Two named people; codes on their own phones, with printed backup codes in a sealed envelope in the office.</td></tr>
   <tr><td>8</td><td>Who reviews student IDs, and who handles sponsor requests?</td><td>One named person each, with a backup. They become the first admin accounts with those roles.</td></tr>
   <tr><td>9</td><td>Email service: Brevo or Amazon SES.</td><td><strong>Brevo</strong> — simpler to set up, free tier covers testing.</td></tr>
   <tr><td>10</td><td>Ticket capacity, and lunch capacity per day.</td><td>From the venue and the caterer. Registration closes itself at these numbers.</td></tr>
