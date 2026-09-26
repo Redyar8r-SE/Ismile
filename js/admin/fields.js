@@ -224,7 +224,7 @@ const PARTS = [
     hint: "The story, the three years, and the italk / Vision / Mission cards.",
     fields: many([
       ["ab_title", "Section title"], ["ab_lead", "Section text"],
-      ["gal_title", "Photos title"], ["gal_lead", "Photos text"], ["gal_year", "Photos badge (year)"], ["gal_close", "Photo viewer: close button (for screen readers)"],
+      ["gal_title", "Photos title"], ["gal_lead", "Photos text"], ["gal_year", "Photos badge (year)"],
       ["medx_title", "italkMedX card title"],
       ["medx_p1", "italkMedX paragraph 1"], ["medx_p2", "italkMedX paragraph 2"],
       ["medx_p3", "italkMedX paragraph 3"], ["medx_p4", "Flagship initiatives: heading"], ["medx_here", "Flagship: badge on the iSmile card"],
