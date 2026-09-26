@@ -110,6 +110,11 @@ a { color: #096e9d; text-decoration: none; }
   <li><strong>The webhook arrives late or never.</strong> Every 10 minutes a small scheduled job asks Psoola about payments that are still "waiting" and closes them either way. A visitor whose bank was slow still gets the ticket.</li>
   <li><strong>The visitor closes the page mid-payment.</strong> Nothing is lost; their registration is unpaid and the "Pay now" email covers it.</li>
   <li><strong>Someone tries to pay 1,000 IQD for a 150,000 IQD ticket.</strong> Impossible: the amount is set by our server, and the confirmed amount from Psoola is compared with the expected one before the ticket is issued.</li>
+  <li><strong>Psoola is down or answers with an error.</strong> The registration is already saved as unpaid. The visitor sees “We could not start the payment; we have saved your registration and will email you a payment link”, and the “Pay now” email goes out automatically once Psoola answers again. Nobody fills the form twice.</li>
+  <li><strong>A price is changed in the admin while someone is paying.</strong> The amount is fixed at the moment the payment attempt is created and stored on that attempt. Psoola's confirmed amount must match <em>that</em> attempt, not the current price.</li>
+  <li><strong>The same person registers twice.</strong> A second registration with the same email or phone is allowed (families share phones) but flagged in the admin, and an unpaid earlier one is offered in the “Pay now” email instead of a new charge.</li>
+  <li><strong>The “Pay now” link.</strong> It contains a long random token, shows no personal details, expires after 7 days, and can be regenerated from the admin. A used token cannot start a second payment for a paid registration.</li>
+  <li><strong>Capacity reached.</strong> When paid tickets reach the capacity limit, the form closes with a message; unpaid registrations do not hold a place. Lunch has its own limit per day for the caterer.</li>
   <li><strong>No seat-hold timers</strong> (as decided earlier): an unpaid registration simply stays unpaid.</li>
 </ul>
 
@@ -168,6 +173,18 @@ a { color: #096e9d; text-decoration: none; }
 </table>
 <h3>Which email service</h3>
 <p>Not a personal Gmail account. Gmail caps at roughly 500 emails a day, and a personal account sending tickets to two thousand strangers gets flagged as spam. Use a transactional email service — <strong>Brevo</strong> (free up to 300 emails/day, cheap above that) or <strong>Amazon SES</strong> — sending from <code>tickets@ismile.krd</code> on your own domain, with the domain records (SPF, DKIM) set so the emails land in the inbox, not in spam. The sending code is written as one swappable piece, so changing service later is an afternoon, not a rebuild.</p>
+<h3>Every email the system sends</h3>
+<table>
+  <tr><th style="width:30%">Email</th><th style="width:30%">When</th><th>To</th></tr>
+  <tr><td>We received your registration</td><td>Immediately after the form is saved</td><td>Every registrant (students: “we are checking your student ID”)</td></tr>
+  <tr><td>Approved — pay now</td><td>When an admin approves a student</td><td>The student, with the payment link</td></tr>
+  <tr><td>Not approved</td><td>When an admin rejects, with the reason and a link to upload a better photo</td><td>The student</td></tr>
+  <tr><td>Pay now / reminder</td><td>After a failed or abandoned payment; one reminder after 3 days; none after capacity is reached</td><td>Unpaid registrants</td></tr>
+  <tr><td><strong>Your ticket</strong></td><td>Within a minute of a confirmed payment</td><td>Paid registrants — QR and PDF</td></tr>
+  <tr><td>Sponsor request received</td><td>Immediately</td><td>The company — and a notification to the sponsors team</td></tr>
+  <tr><td>Something needs attention</td><td>Failed webhook check, more than 5 failed emails in an hour, missed backup, disk nearly full</td><td>You and the developer (monitoring, section 10)</td></tr>
+</table>
+<p>All in the registrant's language. Every email carries the reference, the summit dates, and <code>info@ismile.krd</code> plus the office phone for questions. No email ever contains a card number, a password or an ID photo.</p>
 <p class="small">Certificates of attendance (with the same name) are a separate, later feature: generated after the summit from the check-in list. Nothing in this plan blocks it.</p>
 </section>
 
@@ -176,10 +193,11 @@ a { color: #096e9d; text-decoration: none; }
 <p>MySQL on your server. One row per registration, one per payment attempt, one per ticket, one per sponsor request — linked together so that from any registration you can see its payments, ticket and student check, and from any payment you can find the person. Nothing is deleted; things are marked instead, so there is always a history.</p>
 <table>
   <tr><th style="width:24%">Table</th><th style="width:48%">What it holds</th><th>Notes</th></tr>
-  <tr><td><strong>registrations</strong></td><td>Reference (ISM26-…), first / father's / grandfather's name, phone (normalised to +964…), email, city, gender, age, specialty, <strong>ticket type: professional or student</strong>, lunch day 1 / day 2, language used, status (unpaid · paid · cancelled), created and paid times</td><td>Every field on today's form, nothing more. Age and gender: confirm you actually need them; if not, drop them and collect less.</td></tr>
-  <tr><td><strong>student_checks</strong></td><td>University and department, ambassador code, <strong>ID photo file</strong> (private path), review status (waiting · approved · rejected), reviewer, reason, review time</td><td>Only for student registrations. Photos are stored <em>outside</em> the public web folder and served only to a logged-in admin.</td></tr>
+  <tr><td><strong>registrations</strong></td><td>Reference (ISM26-…), first / father's / grandfather's name, phone (normalised to +964…), email, city, gender, age, specialty, <strong>ticket type: professional or student</strong>, lunch day 1 / day 2, language used, status (<em>waiting for approval</em> · unpaid · paid · <em>complimentary</em> · cancelled), created and paid times</td><td>Every field on today's form, nothing more. Age and gender: confirm you actually need them; if not, drop them and collect less.</td></tr>
+  <tr><td><strong>student_checks</strong></td><td>University and department, ambassador code, <strong>ID photo file</strong> (private path), review status (waiting · approved · rejected), reviewer, reason, review time</td><td>Only for student registrations. A student sits at <em>waiting for approval</em> until this is approved, then becomes <em>unpaid</em> and receives the “Pay now” email. Photos are stored <em>outside</em> the public web folder and served only to a logged-in admin.</td></tr>
   <tr><td><strong>payments</strong></td><td>Registration, Psoola payment ID, method used (card / FIB / FastPay), amount expected, amount confirmed, currency, status (created · waiting · paid · failed · refunded), the raw Psoola messages</td><td>One registration can have several attempts (a failed one, then a paid one). Exactly one can be "paid".</td></tr>
-  <tr><td><strong>tickets</strong></td><td>Registration, ticket number, QR payload, email status (pending · sent · failed), send attempts, checked-in time</td><td>Created only from a paid payment. Used by the door scan.</td></tr>
+  <tr><td><strong>tickets</strong></td><td>Registration, ticket number, QR payload, email status (pending · sent · failed), send attempts, checked-in time</td><td>Created only from a paid payment — or by an admin issuing a <em>complimentary</em> ticket, which is logged with who and why. The QR carries a signed token, so a forged or edited QR fails the scan. Used by the door scan.</td></tr>
+  <tr><td><strong>workshop_bookings</strong></td><td>Registration (the person), workshop, price agreed, payment status (unpaid · paid · complimentary), how paid (cash · transfer · Psoola link), who in the office booked it, when, notes</td><td>Workshops are booked by phone, so the office adds them here. Seats left on the website are counted from this table — no more lowering the number by hand.</td></tr>
   <tr><td><strong>sponsor_requests</strong></td><td>Kind (sponsorship / exhibition booth), package or tier, company, contact name, phone, email, message, status, assigned person, notes, created time</td><td>Section 7.</td></tr>
   <tr><td><strong>ambassadors</strong></td><td>Code, owner name, university, count of registrations that used it</td><td>Today a code is free text; here it becomes a real list so you can count per ambassador.</td></tr>
   <tr><td><strong>webhook_log</strong></td><td>Every message Psoola sent us, when, and what we did with it</td><td>The first place to look when someone says "I paid but got nothing".</td></tr>
@@ -198,14 +216,16 @@ a { color: #096e9d; text-decoration: none; }
 <p>Your current admin stays as it is for site content. It gains new pages, in the same style, behind the same login (moved to the server, so it is a real login rather than a browser check):</p>
 <table>
   <tr><th style="width:24%">Page</th><th>What you can do</th></tr>
-  <tr><td><strong>Dashboard</strong></td><td>Big numbers: registered, paid, professionals vs students, students waiting for approval, lunch counts per day, money confirmed, tickets sent / failed, open sponsor requests.</td></tr>
-  <tr><td><strong>Registrations</strong></td><td>The list. Search by name, phone, email or reference. Filter: professional / student, paid / unpaid, approved / waiting, lunch, city, language. Open one to see every detail, the payment history and the ticket. Buttons: <em>Resend ticket</em>, <em>Send "Pay now" link</em>, <em>Edit email or phone</em> (logged), <em>Cancel</em>. <em>Export to Excel</em> with the current filter.</td></tr>
+  <tr><td><strong>Dashboard</strong></td><td>Big numbers: registered, paid, professionals vs students, students waiting for approval, lunch counts per day against the catering limit, tickets sold against the capacity limit, money confirmed, tickets sent / failed, open sponsor requests, and a red line for anything needing attention (failed webhooks, failed emails, backup missed).</td></tr>
+  <tr><td><strong>Registrations</strong></td><td>The list. Search by name, phone, email or reference. Filter: professional / student, paid / unpaid, approved / waiting, lunch, city, language. Open one to see every detail, the payment history and the ticket. Buttons: <em>Resend ticket</em>, <em>Send "Pay now" link</em>, <em>Edit name, email or phone</em> (logged; a name change reissues the ticket, since the name goes on the certificate), <em>Issue complimentary ticket</em> (Owner only, with a reason), <em>Cancel</em>. Possible duplicates (same email or phone) are flagged in the list. <strong>Workshops booked by phone:</strong> on the person's page an <em>Add workshop</em> button — pick the workshop from a list, tick paid or unpaid, save; it appears next to their name at once, the seat count drops, and it can be removed or changed just as easily (logged). If the caller is not registered yet, the office creates the registration from the same screen and the “Pay now” email goes out for the ticket. <em>Export to Excel</em> with the current filter.</td></tr>
   <tr><td><strong>Student approvals</strong></td><td>Students waiting, oldest first. See the ID photo large, the university typed, the name. <em>Approve</em> or <em>Reject with a reason</em> (the reason goes to the student by email).</td></tr>
   <tr><td><strong>Payments</strong></td><td>Every attempt with its Psoola ID, method, amount and status. A daily total to compare with Psoola's settlement report. Refund marking.</td></tr>
+  <tr><td><strong>Workshops</strong></td><td>One row per workshop: seats total, booked, paid, left; the list of people in it with phone and payment status; <em>Export</em> per workshop for the trainer's sign-in sheet. Seats left on the website update from here automatically.</td></tr>
   <tr><td><strong>Sponsors &amp; booths</strong></td><td>Section 7.</td></tr>
   <tr><td><strong>Check-in (summit days)</strong></td><td>A simple phone-friendly page: scan the QR or type a name, mark as arrived, see "already checked in" if scanned twice. Works on the venue Wi-Fi from any phone; a printed list as the fallback.</td></tr>
-  <tr><td><strong>Settings</strong></td><td>Ticket and lunch prices (already exist), registration open / closed, test mode on / off for emails, Psoola live / test switch (the secrets themselves stay in a file on the server, not on this page).</td></tr>
+  <tr><td><strong>Settings</strong></td><td>Ticket and lunch prices (already exist), <strong>ticket capacity</strong> and <strong>lunch capacity per day</strong> (registration closes itself when reached), registration open / closed with a message, test mode on / off for emails, Psoola live / test switch (the secrets themselves stay in a file on the server, not on this page).</td></tr>
 </table>
+<div class="callout"><strong>Workshops by phone, step by step for the office:</strong> the caller gives their name or phone → the admin finds them (or creates them) → <em>Add workshop</em> → choose the workshop → mark paid if the money is taken, or unpaid to be collected at the door → save. Two minutes. The person's ticket page and the check-in screen both show their workshops, and the workshop certificate later comes from this list.</div>
 <h3>Roles</h3>
 <p>Owner (everything), Registration (registrations, approvals, resend, export), Finance (payments, refunds, exports), Content (the existing site editing), Check-in (only the scan page). Every action is checked on the server, not just hidden on screen.</p>
 </section>
@@ -287,24 +307,27 @@ a { color: #096e9d; text-decoration: none; }
   <li>Rate limits on the registration form, the "Pay now" link and the admin login; admin login locks for 15 minutes after 5 wrong tries; the Owner account gets two-factor codes.</li>
   <li>Webhook: signature verified, then the status re-fetched from Psoola's API; unknown or unsigned calls are logged and ignored.</li>
   <li>ID photos and exports are never at a public address; they are served through the admin's login.</li>
+  <li>The usual web protections, in plain words: the database is only ever queried with prepared statements (no typed-in text can become a command); every admin action carries a one-time form token so a link in an email cannot trigger it; everything shown on screen is escaped so a name typed as code stays text; admin sessions end after 12 hours or 30 minutes idle and cookies are HTTPS-only.</li>
   <li>Logs never contain passwords, card details or full ID photos.</li>
+  <li><strong>Monitoring:</strong> a free uptime check (e.g. UptimeRobot) pings the site every 5 minutes and messages you if it is down; the server emails the “something needs attention” alert (section 4) for failed webhooks, failed emails, missed backups and low disk. The goal is that <em>you</em> hear about a problem before a visitor does.</li>
+  <li><strong>Privacy notice and consent:</strong> a short notice on the form says what we collect, why (ticket, certificate, student check), how long we keep it, and who to contact. Students tick a box agreeing to the ID check. The wording is in all three languages and editable in the admin.</li>
 </ul>
 </section>
 
 <section>
 <h2>11. Build order and timing</h2>
-<p>The summit is <strong>20–21 November 2026</strong>. Working back: registration should be open with payments by <strong>mid-October</strong> to give people five weeks. That is realistic <em>only</em> if Psoola's test credentials arrive in the first two weeks — everything in the payment column below waits on them. Start that conversation today.</p>
+<p>The summit is <strong>20–21 November 2026</strong>. Working back: the ideal is registration open with payments by mid-October; the <strong>realistic target is Monday 27 October</strong>, giving people three and a half weeks. Even that holds <em>only</em> if Psoola's test credentials arrive by 6 October — everything on the payment side waits on them. Start that conversation today.</p>
 <table>
   <tr><th style="width:12%">Week</th><th style="width:44%">Work</th><th>Done when</th></tr>
-  <tr><td>1 <br><span class="small">29 Sep – 5 Oct</span></td><td>Buy domain and hosting. Move the site. Admin saves through the server. Database created. Ask Psoola for the merchant account, documentation and test credentials.</td><td>Site is live at ismile.krd with HTTPS; you can edit and save from the admin; the Psoola request is sent in writing.</td></tr>
+  <tr><td>1 <br><span class="small">29 Sep – 5 Oct</span></td><td>Buy domain and hosting. Move the site; the old GitHub Pages address redirects to the new domain. Admin saves through the server. Database created. Ask Psoola for the merchant account, documentation and test credentials.</td><td>Site is live at ismile.krd with HTTPS; you can edit and save from the admin; the Psoola request is sent in writing.</td></tr>
   <tr><td>2 <br><span class="small">6 – 12 Oct</span></td><td>Registration saves to the database, with the reference made by the server. Student ID upload to the private folder. Admin: Registrations list and Student approvals page. Sponsor form saves to the database; Sponsors &amp; booths page.</td><td>A test registration on the staging site appears in the admin with its photo; you can approve it; a sponsor request appears in its list.</td></tr>
   <tr><td>3 <br><span class="small">13 – 19 Oct</span></td><td>Psoola payment: create, redirect, return page, webhook, status check job, "Pay now" link. Payments page in the admin.</td><td>On staging: a test card payment turns a registration paid; a failed one does not; a webhook sent twice changes nothing; a "missed" webhook is caught by the check job.</td></tr>
   <tr><td>4 <br><span class="small">20 – 26 Oct</span></td><td>Ticket email with QR and PDF, in three languages. Send status, retries, Resend button, test mode. Email domain records so mail reaches the inbox.</td><td>A paid test registration receives its ticket within a minute; a resend works; a wrong address shows as failed in the admin.</td></tr>
-  <tr><td>5 <br><span class="small">27 Oct – 2 Nov</span></td><td>Dashboard, exports, roles, audit log, check-in page. Go-live checklist: real Psoola credentials, one real payment of a small amount refunded, backups tested.</td><td><strong>Registration opens to the public.</strong> (Later than mid-October — see the note below.)</td></tr>
+  <tr><td>5 <br><span class="small">27 Oct – 2 Nov</span></td><td>Dashboard, exports, roles, audit log, check-in page. Go-live checklist: real Psoola credentials, one real payment of a small amount refunded, backups tested, a second person independently checks the prices and the amount charged, test mode switched off and confirmed off.</td><td><strong>Registration opens to the public on 27 October.</strong></td></tr>
   <tr><td>6–7 <br><span class="small">3 – 16 Nov</span></td><td>Watch the first real registrations daily. Fix what real people find. Prepare the check-in devices and the printed fallback list. Train two people on approvals and check-in.</td><td>No failed tickets outstanding; every student reviewed within 24 hours; check-in rehearsed with 20 test tickets.</td></tr>
   <tr><td>Summit <br><span class="small">20 – 21 Nov</span></td><td>Check-in at the door; registrations page for questions at the desk; one person on call for the system.</td><td>Certificates generated from the check-in list afterwards.</td></tr>
 </table>
-<div class="callout warn"><strong>About the dates:</strong> this order puts payments before emails on purpose — if Psoola is late, weeks 2 and 4 still happen and registration can open with "pay by link" as a temporary fallback, exactly as the site says today, and switch to automatic payment the day Psoola is ready. Opening registration around <strong>25 October</strong> is the honest target; mid-October needs Psoola credentials by 6 October.</div>
+<div class="callout warn"><strong>About the dates:</strong> this order puts payments before emails on purpose — if Psoola is late, weeks 2 and 4 still happen and registration can open with "pay by link" as a temporary fallback, exactly as the site says today, and switch to automatic payment the day Psoola is ready. Opening registration on <strong>27 October</strong> is the honest target; mid-October would need Psoola credentials in hand by 6 October <em>and</em> no surprises in their documentation.</div>
 
 <h3>Tests before anyone real pays</h3>
 <ul>
@@ -320,7 +343,52 @@ a { color: #096e9d; text-decoration: none; }
 </section>
 
 <section class="page-break">
-<h2>12. Decisions I need from you</h2>
+<h2>12. Every situation, and what the system does</h2>
+<p>A checklist to hold the build against. Each line is a real thing that will happen to real people; if any line is not true on the staging site, we do not go live.</p>
+<table>
+  <tr><th style="width:38%">Situation</th><th>What happens</th></tr>
+  <tr><td>Professional registers and pays with a card</td><td>Saved as unpaid → Psoola page → webhook → paid → ticket emailed within a minute → visible in the admin as paid with ticket sent.</td></tr>
+  <tr><td>Professional pays with FIB or FastPay</td><td>Identical; the method is recorded on the payment.</td></tr>
+  <tr><td>Student registers with an ID photo</td><td>Saved as <em>waiting for approval</em>; “we are checking” email; appears in Student approvals; no payment yet.</td></tr>
+  <tr><td>Student approved</td><td>Becomes unpaid; “Approved — pay now” email with the link; pays; ticket.</td></tr>
+  <tr><td>Student rejected</td><td>Reason emailed with a link to upload a better photo; stays waiting; second review; nothing charged.</td></tr>
+  <tr><td>Student picks “Professional” to skip the check</td><td>Allowed — they pay the professional price. The specialty “dental student” still forces the student ticket on the form, as today.</td></tr>
+  <tr><td>Payment fails, is cancelled, or the page is closed</td><td>Stays unpaid; “Pay now” email; one reminder after 3 days; no ticket.</td></tr>
+  <tr><td>Bank is slow and the webhook comes 20 minutes late</td><td>The 10-minute status job or the late webhook confirms it; ticket goes out; the visitor was told “we will email you”.</td></tr>
+  <tr><td>Webhook arrives twice</td><td>Second one ignored; one payment, one ticket.</td></tr>
+  <tr><td>Webhook never arrives</td><td>Status job asks Psoola and closes the attempt either way; if Psoola says paid, ticket goes out.</td></tr>
+  <tr><td>Fake webhook from someone who guessed the address</td><td>Signature check fails, or the status re-fetched from Psoola says unpaid; logged as an attack; nothing changes.</td></tr>
+  <tr><td>Confirmed amount differs from the expected amount</td><td>Not marked paid; flagged for Finance to look at; nothing sent to the visitor until resolved.</td></tr>
+  <tr><td>Someone pays twice for one registration</td><td>Second payment is recorded as a duplicate, not a second ticket; Finance refunds it through Psoola or by transfer; the admin shows it in red until refunded.</td></tr>
+  <tr><td>Price changed while someone is on the payment page</td><td>They pay the price fixed at the start of their attempt; new registrations pay the new price.</td></tr>
+  <tr><td>Capacity reached</td><td>Form closes with a message; unpaid registrations are told by email that the summit is full (they never held a place).</td></tr>
+  <tr><td>Lunch limit reached for one day</td><td>That day disappears from the lunch step; the other day still works.</td></tr>
+  <tr><td>Wrong email typed</td><td>Ticket email fails or goes astray; admin edits the address (logged) and presses Resend.</td></tr>
+  <tr><td>Wrong name typed (it goes on the certificate)</td><td>Admin edits the name (logged); ticket reissued and resent.</td></tr>
+  <tr><td>Ticket email lands in spam</td><td>Reduced by sending from our own domain with SPF/DKIM; the check-in page finds anyone by name or phone regardless.</td></tr>
+  <tr><td>Registrant lost the email</td><td>Resend from the admin; or they look up their reference on the site with email + phone.</td></tr>
+  <tr><td>Two people, one phone number</td><td>Allowed; flagged as a possible duplicate for a human to glance at; both get tickets if both paid.</td></tr>
+  <tr><td>Same person registers twice by mistake</td><td>Flagged; if both paid, one is refunded as a duplicate; if one is unpaid, it is cancelled.</td></tr>
+  <tr><td>Registrant wants to cancel</td><td>Tickets are non-refundable (stated on the form and the ticket); admin can cancel the ticket on request, logged; no automatic refund.</td></tr>
+  <tr><td>Psoola is down</td><td>Registration saved; friendly message; “Pay now” email once Psoola answers.</td></tr>
+  <tr><td>Our server is down</td><td>Uptime monitor alerts you within 5 minutes; hosting support; nothing is lost because Psoola keeps its own record and the status job reconciles when we are back.</td></tr>
+  <tr><td>Someone tries to open another person's ticket or photo</td><td>Tickets and photos are only reachable through the admin login or the person's own signed link; a guessed address gets nothing.</td></tr>
+  <tr><td>Someone uploads a non-image or a huge file as the ID</td><td>Refused on the server by content type and size (8 MB); a clear message on the form.</td></tr>
+  <tr><td>Someone submits the form 500 times a minute</td><td>Rate limit blocks the address; the admin is not flooded.</td></tr>
+  <tr><td>Office books a workshop for someone by phone</td><td>Added to their registration in the admin in two minutes; seat count on the website drops by one; shows next to their name, on their ticket page and at check-in.</td></tr>
+  <tr><td>Caller books a workshop but has not registered</td><td>The office creates the registration from the admin; ticket “Pay now” email goes out; the workshop is attached at the same time.</td></tr>
+  <tr><td>Workshop is full</td><td>“Full” on the website (as today); the admin can still add one more only with an Owner override, logged — for a trainer's guest, say.</td></tr>
+  <tr><td>Workshop booking cancelled by phone</td><td>Removed from the person (logged); the seat frees up on the website immediately.</td></tr>
+  <tr><td>Sponsor asks for a booth when all spots are taken</td><td>Request saved and marked “waiting list”; the admin refuses to confirm beyond the spot count.</td></tr>
+  <tr><td>Sponsor's staff want to attend</td><td>They register as normal attendees, or the Owner issues complimentary tickets (logged with the reason).</td></tr>
+  <tr><td>Check-in: ticket scanned a second time</td><td>“Already checked in at 09:12” — the door staff decide.</td></tr>
+  <tr><td>Check-in: internet down at the venue</td><td>Printed list exported the night before, sorted by name; entries marked on paper and typed in afterwards.</td></tr>
+  <tr><td>After the summit</td><td>Certificates from the check-in list; ID photos deleted after 3 months; database and exports kept for next year.</td></tr>
+</table>
+</section>
+
+<section class="page-break">
+<h2>13. Decisions I need from you</h2>
 <table>
   <tr><th style="width:5%">#</th><th style="width:42%">Decision</th><th>Suggestion</th></tr>
   <tr><td>1</td><td>Psoola: send the request for merchant account, documentation and test credentials.</td><td>This week. Ask for the written answer to the "open to private organisers?" question at the same time.</td></tr>
@@ -330,12 +398,14 @@ a { color: #096e9d; text-decoration: none; }
   <tr><td>5</td><td>Students: approve the ID <em>before</em> they pay, or let them pay first and refund if rejected?</td><td><strong>Approve first.</strong> A student registers, you approve (usually same day), they get the "Pay now" email, they pay, ticket goes out. Professionals pay immediately. Refunds are the messiest part of any payment system; this avoids most of them.</td></tr>
   <tr><td>6</td><td>Refund policy in words, for the form and the ticket email.</td><td>"Tickets are non-refundable" (as today), plus "duplicate payments are refunded".</td></tr>
   <tr><td>7</td><td>Do you need age and gender?</td><td>If they are not used for anything, remove them. Less data, less risk.</td></tr>
+  <tr><td>7b</td><td>The privacy notice wording (what we collect and why) and the student consent line.</td><td>I will draft it in three languages for you to approve.</td></tr>
   <tr><td>8</td><td>Who reviews student IDs, and who handles sponsor requests?</td><td>One named person each, with a backup. They become the first admin accounts with those roles.</td></tr>
   <tr><td>9</td><td>Email service: Brevo or Amazon SES.</td><td><strong>Brevo</strong> — simpler to set up, free tier covers testing.</td></tr>
-  <tr><td>10</td><td>Booth spots per tier, and whether sponsors may ever pay through Psoola.</td><td>Spots are already in the admin; confirm the numbers. Sponsor payment by bank transfer unless Psoola's limits clearly allow it.</td></tr>
+  <tr><td>10</td><td>Ticket capacity, and lunch capacity per day.</td><td>From the venue and the caterer. Registration closes itself at these numbers.</td></tr>
+  <tr><td>11</td><td>Booth spots per tier, and whether sponsors may ever pay through Psoola.</td><td>Spots are already in the admin; confirm the numbers. Sponsor payment by bank transfer unless Psoola's limits clearly allow it.</td></tr>
 </table>
 
-<h2 style="break-before:page">13. Running costs</h2>
+<h2 style="break-before:page">14. Running costs</h2>
 <table style="break-inside:avoid">
   <tr><th style="width:34%">Item</th><th style="width:26%">Cost</th><th>Note</th></tr>
   <tr><td>Domain</td><td>$10–40 per year</td><td>.krd and .iq vary; .com about $12.</td></tr>
