@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>iSmile 2026 — Questions for Psoola</title>
+<style>
+@page { size: A4; margin: 16mm 16mm 17mm; }
+* { box-sizing: border-box; }
+body { margin: 0; color: #17263a; font: 10.2pt/1.5 Arial, Helvetica, sans-serif; }
+h1 { font-size: 21pt; margin: 0 0 2mm; color: #102e52; }
+h2 { color: #0a4f80; font-size: 13pt; margin: 7mm 0 2.5mm; padding-bottom: 1.3mm; border-bottom: 1px solid #c7d9e6; break-after: avoid; }
+p { margin: 0 0 2.5mm; }
+.eyebrow { color: #1184a8; text-transform: uppercase; font-size: 9pt; font-weight: 700; letter-spacing: 1.3px; margin-bottom: 2mm; }
+.lede { color: #40566c; font-size: 10.8pt; }
+table { width: 100%; border-collapse: collapse; margin: 1mm 0 3mm; font-size: 9.4pt; }
+th, td { border: 1px solid #d4e1e9; padding: 2mm 2.4mm; vertical-align: top; }
+th { background: #e9f3f8; text-align: left; color: #173c5c; }
+tr { break-inside: avoid; }
+td.n { width: 7%; font-weight: 700; color: #0a6a9a; }
+td.q { width: 53%; }
+td.a { color: #9aabbb; }
+.why { display: block; color: #596e80; font-size: 8.4pt; margin-top: .8mm; }
+.must { display: inline-block; background: #fbe3e0; color: #9c2f22; border-radius: 999px; padding: 0 2mm; font-size: 7.8pt; font-weight: 700; margin-left: 1mm; }
+.about td:first-child { width: 34%; color: #40566c; }
+.callout { border-left: 4px solid #15a2ba; background: #eef8fa; padding: 3.5mm 4.5mm; margin: 4mm 0; break-inside: avoid; }
+.callout.warn { border-left-color: #d9822b; background: #fdf4ea; }
+.small { color: #596e80; font-size: 8.6pt; }
+</style>
+</head>
+<body>
+
+<p class="eyebrow">iSmile 2026 · Payments</p>
+<h1>Questions for Psoola</h1>
+<p class="lede">To send to Psoola before we connect the website. Questions marked <span class="must">Must</span> block the build; everything else is needed before launch. Write their answers in the right-hand column.</p>
+
+<div class="callout"><strong>Who we are:</strong> iSmile 2026, International Dental Summit · 20–21 November 2026 · Grand Millennium Sulaimani. We want to take registration payments online through Psoola using <strong>Visa, MasterCard, FIB and FastPay</strong>, connected to our website through your API and webhook. We would like test access by <strong>6 October 2026</strong>.</div>
+
+<h2>About us (fill in before sending)</h2>
+<table class="about">
+  <tr><td>Organiser (legal name)</td><td>&nbsp;</td></tr>
+  <tr><td>Contact person, phone, email</td><td>&nbsp;</td></tr>
+  <tr><td>Technical contact (developer)</td><td>&nbsp;</td></tr>
+  <tr><td>Website</td><td>ismile.krd (to be confirmed)</td></tr>
+  <tr><td>Currency</td><td>Iraqi dinar (IQD)</td></tr>
+  <tr><td>Expected payments</td><td>about ______ payments, mostly late October to 20 November 2026</td></tr>
+  <tr><td>Typical amount per payment</td><td>about ______ IQD (ticket + optional lunch)</td></tr>
+</table>
+
+<h2>1. Account and contract</h2>
+<table>
+  <tr><th>#</th><th>Question</th><th>Their answer</th></tr>
+  <tr><td class="n">1.1</td><td class="q">What documents do you need from us to open the merchant account, and how long does approval take? <span class="must">Must</span><span class="why">Usually the slowest step. We want to start it immediately.</span></td><td class="a"></td></tr>
+  <tr><td class="n">1.2</td><td class="q">Will <strong>Visa, MasterCard, FIB and FastPay</strong> all be active on our account? From what date? <span class="must">Must</span><span class="why">The website shows exactly these four.</span></td><td class="a"></td></tr>
+  <tr><td class="n">1.3</td><td class="q">What are your fees for each method (percentage and/or fixed amount)? Any monthly or setup fee?<span class="why">Fees go into the ticket price.</span></td><td class="a"></td></tr>
+  <tr><td class="n">1.4</td><td class="q">Minimum and maximum amount per payment? Daily or monthly limits on our account?</td><td class="a"></td></tr>
+  <tr><td class="n">1.5</td><td class="q">Is the currency IQD only, or also USD?</td><td class="a"></td></tr>
+  <tr><td class="n">1.6</td><td class="q">Who is our contact for technical problems, and how fast do you answer — especially on 20–21 November?</td><td class="a"></td></tr>
+</table>
+
+<h2>2. Test access and documentation</h2>
+<table>
+  <tr><th>#</th><th>Question</th><th>Their answer</th></tr>
+  <tr><td class="n">2.1</td><td class="q">Please send the <strong>API documentation</strong>. <span class="must">Must</span></td><td class="a"></td></tr>
+  <tr><td class="n">2.2</td><td class="q">Please send <strong>test (sandbox) credentials</strong>. <span class="must">Must</span><span class="why">So we can test hundreds of payments without real money.</span></td><td class="a"></td></tr>
+  <tr><td class="n">2.3</td><td class="q">Test cards (successful, declined, 3-D Secure) and test FIB / FastPay accounts — what are they?</td><td class="a"></td></tr>
+  <tr><td class="n">2.4</td><td class="q">Is there a merchant dashboard where we can see every payment, in test and live?</td><td class="a"></td></tr>
+  <tr><td class="n">2.5</td><td class="q">Is there an example integration or a library (PHP preferred)?</td><td class="a"></td></tr>
+</table>
+
+<h2>3. How a payment works</h2>
+<table>
+  <tr><th>#</th><th>Question</th><th>Their answer</th></tr>
+  <tr><td class="n">3.1</td><td class="q">To create a payment, what do we send (amount, currency, our reference, customer email/phone, return addresses)? What do you return (payment ID, payment page address)? <span class="must">Must</span></td><td class="a"></td></tr>
+  <tr><td class="n">3.2</td><td class="q">For Visa / MasterCard: does the customer type the card on <strong>your hosted page</strong>? We do not want card details on our website. <span class="must">Must</span></td><td class="a"></td></tr>
+  <tr><td class="n">3.3</td><td class="q">For FIB and FastPay: how does it work on a phone — does the app open automatically, is there a QR code on a computer, and how does the customer come back to our site?</td><td class="a"></td></tr>
+  <tr><td class="n">3.4</td><td class="q">Can we choose the method in advance (the customer already picked Visa on our site), or does the customer choose again on your page?</td><td class="a"></td></tr>
+  <tr><td class="n">3.5</td><td class="q">How long is a payment link valid? What happens if the customer pays after it expires?</td><td class="a"></td></tr>
+  <tr><td class="n">3.6</td><td class="q">Can we start a <strong>new payment</strong> for the same reference if the first one failed?</td><td class="a"></td></tr>
+  <tr><td class="n">3.7</td><td class="q">Is 3-D Secure (one-time code from the bank) used for cards?</td><td class="a"></td></tr>
+  <tr><td class="n">3.8</td><td class="q">Is your payment page available in <strong>Arabic and Kurdish</strong>? Can we choose the language?</td><td class="a"></td></tr>
+</table>
+
+<h2>4. Webhook and security</h2>
+<table>
+  <tr><th>#</th><th>Question</th><th>Their answer</th></tr>
+  <tr><td class="n">4.1</td><td class="q">How is the webhook <strong>secured</strong>: signature (which algorithm), shared secret, or your IP addresses? <span class="must">Must</span><span class="why">Otherwise someone could fake a “payment succeeded” message.</span></td><td class="a"></td></tr>
+  <tr><td class="n">4.2</td><td class="q">Which events do you send (paid, failed, cancelled, expired, refunded)? Please send an example message for each. <span class="must">Must</span></td><td class="a"></td></tr>
+  <tr><td class="n">4.3</td><td class="q">If our server does not answer, do you <strong>retry</strong>? How many times and for how long?</td><td class="a"></td></tr>
+  <tr><td class="n">4.4</td><td class="q">Is there an API call to <strong>check a payment's status</strong> by its ID? <span class="must">Must</span><span class="why">We confirm every payment with you before issuing a ticket.</span></td><td class="a"></td></tr>
+  <tr><td class="n">4.5</td><td class="q">Can the same event be sent twice? Is there an event ID we can use to ignore duplicates?</td><td class="a"></td></tr>
+  <tr><td class="n">4.6</td><td class="q">Does the confirmed payment include the <strong>amount and currency</strong> actually paid?</td><td class="a"></td></tr>
+  <tr><td class="n">4.7</td><td class="q">How do we keep keys safe: separate test and live keys? Can we rotate (change) them ourselves if needed?</td><td class="a"></td></tr>
+  <tr><td class="n">4.8</td><td class="q">Is your service PCI DSS certified? Please share the certificate or confirmation.</td><td class="a"></td></tr>
+</table>
+
+<h2>5. Refunds and money</h2>
+<table>
+  <tr><th>#</th><th>Question</th><th>Their answer</th></tr>
+  <tr><td class="n">5.1</td><td class="q">Can we make a <strong>refund</strong> through the API or the dashboard? Full and partial? For all four methods? <span class="why">Tickets are non-refundable, but a duplicate payment must be refunded.</span></td><td class="a"></td></tr>
+  <tr><td class="n">5.2</td><td class="q">How long does a refund take to reach the customer? Is the fee returned?</td><td class="a"></td></tr>
+  <tr><td class="n">5.3</td><td class="q">When and how does the money arrive in our bank account (daily, weekly)? Which bank(s)?</td><td class="a"></td></tr>
+  <tr><td class="n">5.4</td><td class="q">Can we download a <strong>report</strong> of payments and settlements (Excel/CSV)?</td><td class="a"></td></tr>
+  <tr><td class="n">5.5</td><td class="q">What happens with chargebacks (a card holder disputes a payment)?</td><td class="a"></td></tr>
+</table>
+
+<h2>6. Service and availability</h2>
+<table>
+  <tr><th>#</th><th>Question</th><th>Their answer</th></tr>
+  <tr><td class="n">6.1</td><td class="q">Is there planned maintenance we should know about? Do you announce downtime?</td><td class="a"></td></tr>
+  <tr><td class="n">6.2</td><td class="q">Any request limits on the API (requests per minute)?</td><td class="a"></td></tr>
+  <tr><td class="n">6.3</td><td class="q">Do you need our <strong>webhook address</strong> and <strong>return addresses</strong> registered in advance, or do we send them with each payment?</td><td class="a"></td></tr>
+  <tr><td class="n">6.4</td><td class="q">Can sponsors pay larger amounts (for example several million IQD) through the same account?</td><td class="a"></td></tr>
+  <tr><td class="n">6.5</td><td class="q">Do we need to show your logo or any wording on our payment page? Do you provide official Visa / MasterCard / FIB / FastPay logos?</td><td class="a"></td></tr>
+</table>
+
+<div class="callout warn"><strong>Do not send to Psoola:</strong> any password, or access to our website, admin or server. They never need it. Later we give them only our webhook address. <strong>When they reply:</strong> send the documentation to the developer; send the test keys privately (never in a group chat or email thread with many people).</div>
+
+<p class="small">Prepared 27 September 2026 for iSmile 2026. Companion to the backend plan, section 2.</p>
+</body>
+</html>
