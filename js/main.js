@@ -13,6 +13,7 @@ import { initGallery } from "./sections/gallery.js?v=3";
 import { initFooter } from "./sections/footer.js?v=24";
 import { initVenue } from "./sections/venue.js?v=24";
 import { initReveal } from "./utils/reveal.js?v=3";
+import { initReadMore } from "./sections/read-more.js?v=1";
 
 async function start() {
   initNav();
@@ -51,7 +52,8 @@ async function start() {
     // About: the italkMedX card, its paragraphs and facts, then Vision,
     // Mission and the partner card appear one after another while scrolling.
     const all = (s) => document.querySelectorAll(s);
-    initReveal([all(".org-card"), all(".org-top, .org-card > p"), all(".medx-card"), all(".org-facts li"), all(".vm2 > .vm-card")]);
+    initReveal([all(".org-card"), all(".org-top, .org-card > p, .medx-rest, .medx-toggle"), all(".medx-card"), all(".org-facts li"), all(".vm2 > .vm-card")]);
+    initReadMore();
     initFooter(footer);
     initVenue(map);
 

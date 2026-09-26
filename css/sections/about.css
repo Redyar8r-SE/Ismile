@@ -19,7 +19,18 @@ html[dir="rtl"] .journey::before{background:linear-gradient(270deg,var(--line) 0
 
 /* Organizer card */
 .org-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:26px;display:flex;flex-direction:column;gap:14px}
-.org-card>p{color:var(--muted);font-size:16px}
+.org-card>p,.medx-rest p{color:var(--muted);font-size:16px}
+/* Read more: the rest of the text folded to about three fading lines */
+.medx-rest{display:grid;gap:14px;overflow:hidden;max-height:5.1em;transition:max-height .5s cubic-bezier(.2,.8,.2,1);-webkit-mask-image:linear-gradient(#000 30%,transparent);mask-image:linear-gradient(#000 30%,transparent)}
+.medx-rest.is-open{max-height:none;-webkit-mask-image:none;mask-image:none}
+.medx-toggle{align-self:flex-start;display:inline-flex;align-items:center;gap:8px;min-height:42px;margin-top:-4px;padding:8px 18px;border-radius:999px;border:1.5px solid color-mix(in srgb,var(--teal) 55%,var(--line));background:color-mix(in srgb,var(--teal) 10%,transparent);color:var(--teal-ink);font:inherit;font-size:14.5px;font-weight:700;cursor:pointer;transition:background .2s,color .2s,border-color .2s}
+.medx-toggle:hover{background:var(--teal);border-color:var(--teal);color:#fff}
+.medx-toggle:focus-visible{outline:3px solid var(--teal);outline-offset:3px}
+.medx-toggle svg{width:17px;height:17px;transition:transform .3s}
+.medx-toggle[aria-expanded="true"] svg{transform:rotate(180deg)}
+.medx-toggle .rm-less,.medx-toggle[aria-expanded="true"] .rm-more{display:none}
+.medx-toggle[aria-expanded="true"] .rm-less{display:inline}
+@media (prefers-reduced-motion: reduce){.medx-rest{transition:none}}
 .org-top{display:flex;align-items:center;gap:14px}
 .org-top h3{font-size:22px}
 .org-mark{flex:none;width:44px;height:49px;object-fit:contain;display:block;filter:drop-shadow(0 2px 6px rgba(18,59,74,.25))}

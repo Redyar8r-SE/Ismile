@@ -26,7 +26,7 @@
 <!-- Sections (in page order) -->
 <link rel="stylesheet" href="css/sections/hero.css?v=53">
 <link rel="stylesheet" href="css/sections/stats.css?v=24">
-<link rel="stylesheet" href="css/sections/about.css?v=32">
+<link rel="stylesheet" href="css/sections/about.css?v=33">
 <link rel="stylesheet" href="css/sections/gallery.css?v=3">
 <link rel="stylesheet" href="css/sections/experience.css?v=24">
 <link rel="stylesheet" href="css/sections/program.css?v=24">
@@ -37,7 +37,7 @@
 <link rel="stylesheet" href="css/sections/register-page.css?v=5">
 <link rel="stylesheet" href="css/sections/venue.css?v=27">
 
-<script type="module" src="js/main.js?v=52"></script>
+<script type="module" src="js/main.js?v=53"></script>
 </head>
 <body>
 
@@ -208,8 +208,11 @@
           <h3 data-i18n="medx_title">italkMedX</h3>
         </div>
         <p data-i18n="medx_p1">italkMedX is the medical branch of italk Organization, established in 2021 and officially registered under the Directorate of NGOs of the Kurdistan Regional Government.</p>
-        <p data-i18n="medx_p2">Building on italk’s experience in education, leadership development, civic engagement, and professional capacity building, italkMedX is dedicated to advancing medical education, healthcare innovation, and professional collaboration. We create high-impact platforms that connect healthcare professionals, academic institutions, experts, students, and organizations to exchange knowledge, develop skills, and foster meaningful collaboration.</p>
-        <p data-i18n="medx_p3">Through international summits, scientific conferences, advanced courses, specialized masterclasses, workshops, and professional forums, italkMedX provides opportunities for continuous learning, practical development, and knowledge exchange. Our work is driven by a commitment to empowering healthcare professionals, encouraging innovation, and creating meaningful connections that contribute to the advancement of healthcare and professional practice.</p>
+        <div class="medx-rest" id="medxRest">
+          <p data-i18n="medx_p2">Building on italk’s experience in education, leadership development, civic engagement, and professional capacity building, italkMedX is dedicated to advancing medical education, healthcare innovation, and professional collaboration. We create high-impact platforms that connect healthcare professionals, academic institutions, experts, students, and organizations to exchange knowledge, develop skills, and foster meaningful collaboration.</p>
+          <p data-i18n="medx_p3">Through international summits, scientific conferences, advanced courses, specialized masterclasses, workshops, and professional forums, italkMedX provides opportunities for continuous learning, practical development, and knowledge exchange. Our work is driven by a commitment to empowering healthcare professionals, encouraging innovation, and creating meaningful connections that contribute to the advancement of healthcare and professional practice.</p>
+        </div>
+        <button class="medx-toggle" type="button" aria-expanded="false" aria-controls="medxRest" data-read-more><span class="rm-more" data-i18n="medx_more">Read more</span><span class="rm-less" data-i18n="medx_less">Show less</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
         <ul class="org-facts">
           <li><span class="fact-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="M8.5 14.5h3"/></svg></span><b>2021</b><span data-i18n="org_f1">Year founded</span></li>
           <li><span class="fact-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c.6-3.4 3-5.4 6-5.4s5.4 2 6 5.4"/><circle cx="17.2" cy="9.2" r="2.4"/><path d="M16 14.7c2.6.2 4.4 2 5 4.8"/></svg></span><b data-i18n="org_f2b">Youth-led</b><span data-i18n="org_f2">Non-profit organization</span></li>

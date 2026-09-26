@@ -227,7 +227,7 @@ const PARTS = [
       ["gal_title", "Photos title"], ["gal_lead", "Photos text"], ["gal_year", "Photos badge (year)"],
       ["medx_title", "italkMedX card title"],
       ["medx_p1", "italkMedX paragraph 1"], ["medx_p2", "italkMedX paragraph 2"],
-      ["medx_p3", "italkMedX paragraph 3"], ["medx_p4", "Flagship initiatives: heading"], ["medx_here", "Flagship: badge on the iSmile card"],
+      ["medx_p3", "italkMedX paragraph 3"], ["medx_more", "italkMedX: Read more button"], ["medx_less", "italkMedX: Show less button"], ["medx_p4", "Flagship initiatives: heading"], ["medx_here", "Flagship: badge on the iSmile card"],
       ["medx_i1", "Flagship initiative 1"], ["medx_i2", "Flagship initiative 2"],
       ["medx_i3", "Flagship initiative 3"], ["medx_i4", "Flagship initiative 4"],
       ["medx_p5", "italkMedX: line after the initiatives"],
