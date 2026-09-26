@@ -150,8 +150,10 @@ html[dir="rtl"] .f select{background-position:left 14px center}
 .lunch-card.is-checked .tc-check::after{content:"";position:absolute;left:6px;top:2px;width:5px;height:10px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg)}
 .pay-options{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 24px;padding:0;border:0}
 .pay-options legend{margin-bottom:10px;padding:0;font-size:14px;font-weight:600}
-.pay-logo{flex:none;width:48px;height:48px;border-radius:12px;display:grid;place-items:center;font-size:14px;font-weight:800;letter-spacing:.02em;color:#fff;background:var(--navy)}
-.pay-logo.alt{background:var(--teal-ink)}
+.pay-logo{flex:none;width:56px;height:48px;border-radius:12px;display:grid;place-items:center;background:#fff;border:1px solid color-mix(in srgb,var(--line) 80%,#fff);overflow:hidden}
+.pay-logo svg{display:block;width:40px;height:auto;max-height:34px}
+.pay-note{grid-column:1/-1;margin:2px 0 0;font-size:13px;line-height:1.45;color:var(--muted);display:flex;gap:8px;align-items:flex-start}
+.pay-note::before{content:"";flex:none;width:14px;height:16px;margin-top:1px;background:var(--teal);-webkit-mask:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5z"/></svg>') center/contain no-repeat;mask:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5z"/></svg>') center/contain no-repeat}
 
 /* Review */
 .review{margin-bottom:20px;border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden}
@@ -214,7 +216,8 @@ html[dir="rtl"] .reg-nav svg{transform:scaleX(-1)}
   .student-id-prompt{grid-template-columns:auto 1fr}
   .student-id-browse{grid-column:1/-1;justify-self:start}
   .type-card,.pay-card{padding:14px;gap:12px}
-  .tc-ic,.pay-logo,.lunch-ic{width:42px;height:42px}
+  .tc-ic,.lunch-ic{width:42px;height:42px}
+  .pay-logo{width:50px;height:42px}
   .review dl div{grid-template-columns:1fr;gap:2px}
   /* Longer labels (Kurdish "بەردەوامبوون") need their own row on a phone,
      so the step counter moves above the two buttons. */

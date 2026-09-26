@@ -12,17 +12,17 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=Noto+Kufi+Arabic:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/base/tokens.css?v=71">
-<link rel="stylesheet" href="css/base/base.css?v=71">
-<link rel="stylesheet" href="css/components/boot.css?v=71">
-<link rel="stylesheet" href="css/components/buttons.css?v=71">
-<link rel="stylesheet" href="css/components/brand.css?v=71">
-<link rel="stylesheet" href="css/layout/header.css?v=71">
-<link rel="stylesheet" href="css/layout/footer.css?v=71">
-<link rel="stylesheet" href="css/sections/hero.css?v=71">
-<link rel="stylesheet" href="css/sections/register.css?v=71">
-<link rel="stylesheet" href="css/sections/register-page.css?v=71">
-<script type="module" src="js/register.js?v=71"></script>
+<link rel="stylesheet" href="css/base/tokens.css?v=72">
+<link rel="stylesheet" href="css/base/base.css?v=72">
+<link rel="stylesheet" href="css/components/boot.css?v=72">
+<link rel="stylesheet" href="css/components/buttons.css?v=72">
+<link rel="stylesheet" href="css/components/brand.css?v=72">
+<link rel="stylesheet" href="css/layout/header.css?v=72">
+<link rel="stylesheet" href="css/layout/footer.css?v=72">
+<link rel="stylesheet" href="css/sections/hero.css?v=72">
+<link rel="stylesheet" href="css/sections/register.css?v=72">
+<link rel="stylesheet" href="css/sections/register-page.css?v=72">
+<script type="module" src="js/register.js?v=72"></script>
 </head>
 <body>
 <div class="siteboot" id="siteboot" aria-hidden="true">
@@ -133,7 +133,7 @@
           <ol class="how-steps">
             <li><span>1</span><div><b data-i18n="how1">Fill in your details</b><small data-i18n="how1_d">It takes about two minutes.</small></div></li>
             <li><span>2</span><div><b data-i18n="how_lunch">Add lunch if you like</b><small data-i18n="how_lunch_d">Optional. Day 1, Day 2 or both.</small></div></li>
-            <li><span>3</span><div><b data-i18n="how2">Pay with FIB or FastPay</b><small data-i18n="how2_d">We send your payment link by email.</small></div></li>
+            <li><span>3</span><div><b data-i18n="how2">Pay with Visa, MasterCard, FIB or FastPay</b><small data-i18n="how2_d">We send your payment link by email.</small></div></li>
             <li><span>4</span><div><b data-i18n="how3">Receive your ticket</b><small data-i18n="how3_d">Your ticket is sent to your email and kept in your account with your certificate.</small></div></li>
           </ol>
         </div>
@@ -311,17 +311,30 @@
             <fieldset class="pay-options">
               <legend data-i18n="pay_legend">Payment method</legend>
               <label class="pay-card is-checked">
-                <input type="radio" name="pay" value="fib" checked>
-                <span class="pay-logo" aria-hidden="true">FIB</span>
+                <input type="radio" name="pay" value="visa" checked>
+                <span class="pay-logo" aria-hidden="true"><svg viewBox="0 0 48 16" aria-hidden="true"><text x="1" y="14" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-style="italic" font-size="17" fill="#1A1F71" letter-spacing="-0.5">VISA</text></svg></span>
+                <span class="tc-text"><b data-i18n="pay_visa_t">Visa</b><small data-i18n="pay_visa_d">Pay with your Visa card</small></span>
+                <span class="tc-check" aria-hidden="true"></span>
+              </label>
+              <label class="pay-card">
+                <input type="radio" name="pay" value="mastercard">
+                <span class="pay-logo" aria-hidden="true"><svg viewBox="0 0 40 24" aria-hidden="true"><circle cx="14" cy="12" r="11" fill="#EB001B"/><circle cx="26" cy="12" r="11" fill="#F79E1B"/><path d="M20 3.2a11 11 0 0 1 0 17.6 11 11 0 0 1 0-17.6z" fill="#FF5F00"/></svg></span>
+                <span class="tc-text"><b data-i18n="pay_mastercard_t">MasterCard</b><small data-i18n="pay_mastercard_d">Pay with your MasterCard</small></span>
+                <span class="tc-check" aria-hidden="true"></span>
+              </label>
+              <label class="pay-card">
+                <input type="radio" name="pay" value="fib">
+                <span class="pay-logo" aria-hidden="true"><svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="9" fill="#0B3B5C"/><text x="20" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-weight="800" font-size="14" fill="#fff" letter-spacing="0.5">FIB</text></svg></span>
                 <span class="tc-text"><b data-i18n="pay_fib_t">FIB</b><small data-i18n="pay_fib_d">Pay in the First Iraqi Bank app</small></span>
                 <span class="tc-check" aria-hidden="true"></span>
               </label>
               <label class="pay-card">
                 <input type="radio" name="pay" value="fastpay">
-                <span class="pay-logo alt" aria-hidden="true">FP</span>
+                <span class="pay-logo" aria-hidden="true"><svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="9" fill="#1E9E5A"/><path d="M22.5 6 12 22h7l-1.5 12L28 17h-7z" fill="#fff"/></svg></span>
                 <span class="tc-text"><b data-i18n="pay_fastpay_t">FastPay</b><small data-i18n="pay_fastpay_d">Pay with your FastPay wallet</small></span>
                 <span class="tc-check" aria-hidden="true"></span>
               </label>
+              <p class="pay-note" data-i18n="pay_note">All payments are processed securely by Psoola. Your card or bank details are never entered on this website.</p>
             </fieldset>
 
             <div class="review">

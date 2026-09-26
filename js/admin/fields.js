@@ -408,8 +408,10 @@ const PARTS = [
     fields: many([
       ["st3", "Stepper: payment and review"], ["step_of", "Step counter (keep {n} and {total})"],
       ["s3_title", "Step title"], ["s3_sub", "Step text"], ["pay_legend", "Payment method label"],
+      ["pay_visa_t", "Visa title"], ["pay_visa_d", "Visa description"],
+      ["pay_mastercard_t", "MasterCard title"], ["pay_mastercard_d", "MasterCard description"],
       ["pay_fib_t", "FIB title"], ["pay_fib_d", "FIB description"],
-      ["pay_fastpay_t", "FastPay title"], ["pay_fastpay_d", "FastPay description"],
+      ["pay_fastpay_t", "FastPay title"], ["pay_fastpay_d", "FastPay description"], ["pay_note", "Note under the payment methods (secure payment)"],
       ["review_title", "Review box title"], ["rv_type", "Review row: registration"], ["edit", "Edit button"],
       ["st_lunch", "Stepper: lunch"], ["s_lunch_title", "Lunch step: title"], ["lunch_optional", "Lunch step: optional badge"],
       ["lunch_legend", "Lunch: name of the choice (for screen readers)"], ["lunch_hint", "Lunch step: text under the title"],

@@ -3,10 +3,15 @@
 // suggests them with a link to the workshops page.
 // Demo only: nothing is sent to a server yet. Connect submitRegistration() to your backend.
 // Nothing about the visitor is kept in the browser.
-import { t, onLangChange } from "../i18n.js?v=71";
-import { formatPrice } from "../utils/money.js?v=71";
+import { t, onLangChange } from "../i18n.js?v=72";
+import { formatPrice } from "../utils/money.js?v=72";
 
 const TOTAL_STEPS = 3;
+
+// The four payment methods Psoola will take. The key is what the server
+// receives; the value is the translation key of the name shown to the visitor.
+const PAY_METHODS = { visa: "pay_visa_t", mastercard: "pay_mastercard_t", fib: "pay_fib_t", fastpay: "pay_fastpay_t" };
+const payMethod = (value) => (value in PAY_METHODS ? value : "visa");
 
 // A reference such as ISM26-7KQ2XM: no 0/O or 1/I, so it is easy to read out.
 function makeReference() {
@@ -391,7 +396,7 @@ export function initRegistration({ tickets = {} } = {}) {
     }
     const lunch = chosenLunch().map((day) => t(day.short));
     rows.push([t("rv_lunch"), lunch.length ? lunch.join(", ") : t("rv_lunch_none")]);
-    rows.push([t("pay_legend"), t(checkedValue("pay") === "fastpay" ? "pay_fastpay_t" : "pay_fib_t")]);
+    rows.push([t("pay_legend"), t(PAY_METHODS[payMethod(checkedValue("pay"))])]);
     fillList($("reviewList"), rows);
     renderOrder();
   }
@@ -429,7 +434,7 @@ export function initRegistration({ tickets = {} } = {}) {
   });
 
   function submitRegistration() {
-    const payment = checkedValue("pay") === "fastpay" ? "fastpay" : "fib";
+    const payment = payMethod(checkedValue("pay"));
     const order = { lines: orderLines(), total: orderTotal(), payment };
 
     const attendee = {
@@ -455,7 +460,7 @@ export function initRegistration({ tickets = {} } = {}) {
   function renderSuccess() {
     if (!lastSuccess) return;
     const { payment, total, email, ref } = lastSuccess;
-    const method = t(payment === "fastpay" ? "pay_fastpay_t" : "pay_fib_t");
+    const method = t(PAY_METHODS[payMethod(payment)]);
     $("successTitle").textContent = t("success_title");
     $("successText").textContent = t("success_text")
       .replace("{method}", method)
