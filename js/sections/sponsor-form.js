@@ -6,8 +6,8 @@
 // Where the request goes: there is no server yet, so the last screen hands the
 // filled-in request to WhatsApp or email, already written out. When the site
 // has its own server, send() below gains one fetch and everything else stays.
-import { t, tr, onLangChange } from "../i18n.js?v=72";
-import { isValidPhone } from "./registration.js?v=72";
+import { t, tr, onLangChange } from "../i18n.js?v=74";
+import { isValidPhone } from "./registration.js?v=74";
 
 const TOTAL_STEPS = 2;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;

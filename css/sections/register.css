@@ -152,6 +152,7 @@ html[dir="rtl"] .f select{background-position:left 14px center}
 .pay-options legend{margin-bottom:10px;padding:0;font-size:14px;font-weight:600}
 .pay-logo{flex:none;width:56px;height:48px;border-radius:12px;display:grid;place-items:center;background:#fff;border:1px solid color-mix(in srgb,var(--line) 80%,#fff);overflow:hidden}
 .pay-logo svg{display:block;width:40px;height:auto;max-height:34px}
+.pay-logo img{display:block;width:100%;height:100%;object-fit:contain}
 .pay-note{grid-column:1/-1;margin:2px 0 0;font-size:13px;line-height:1.45;color:var(--muted);display:flex;gap:8px;align-items:flex-start}
 .pay-note::before{content:"";flex:none;width:14px;height:16px;margin-top:1px;background:var(--teal);-webkit-mask:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5z"/></svg>') center/contain no-repeat;mask:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5z"/></svg>') center/contain no-repeat}
 
