@@ -59,13 +59,6 @@
   ],
   "partners": [
     {
-      "name": "Hakim",
-      "tier": "Platinum",
-      "logo": "assets/logos/hakim.webp",
-      "bg": "#ffffff",
-      "round": true
-    },
-    {
       "name": "VANEST",
       "tier": "Platinum",
       "logo": "assets/logos/vanest.webp",
