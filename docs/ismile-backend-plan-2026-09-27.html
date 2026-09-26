@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>iSmile 2026 — Backend Plan: registration, e-Psûle payments, tickets and database</title>
+<title>iSmile 2026 — Backend Plan: registration, Psoola payments, tickets and database</title>
 <style>
 @page { size: A4; margin: 17mm 16mm 18mm; }
 * { box-sizing: border-box; }
@@ -48,12 +48,12 @@ a { color: #096e9d; text-decoration: none; }
 
 <section class="cover">
   <p class="eyebrow">iSmile 2026 · Project plan</p>
-  <h1>Backend plan:<br>registration, e-Psûle payments,<br>tickets by email, and the database</h1>
+  <h1>Backend plan:<br>registration, Psoola payments,<br>tickets by email, and the database</h1>
   <div class="rule"></div>
-  <p class="lede">A plain-language plan for turning the iSmile website into a working registration system: people register, pay through e-Psûle (Visa, MasterCard, FIB, FastPay), receive their ticket by email, and every registration lands in a database that you can see inside your own admin.</p>
-  <div class="callout"><strong>Recommendation in one line:</strong> build our own small backend (PHP + MySQL) on the server you are buying, connected to e-Psûle's single API and webhook. Do <strong>not</strong> use Pretix for the 2026 summit — it can technically take e-Psûle only through a custom plugin on a self-hosted Pretix server, and it would put the attendee database outside your admin. Section 3 explains.</div>
+  <p class="lede">A plain-language plan for turning the iSmile website into a working registration system: people register, pay through Psoola (Visa, MasterCard, FIB, FastPay), receive their ticket by email, and every registration lands in a database that you can see inside your own admin.</p>
+  <div class="callout"><strong>Recommendation in one line:</strong> build our own small backend (PHP + MySQL) on the server you are buying, connected to Psoola's single API and webhook. Do <strong>not</strong> use Pretix for the 2026 summit — it can technically take Psoola only through a custom plugin on a self-hosted Pretix server, and it would put the attendee database outside your admin. Section 3 explains.</div>
   <p class="meta">Prepared 27 September 2026 · Replaces the plan of 23 September 2026<br>
-  Planning document — no code has been written for the items in this plan. Items marked <em>Confirm</em> need an answer from e-Psûle or from you before building.</p>
+  Planning document — no code has been written for the items in this plan. Items marked <em>Confirm</em> need an answer from Psoola or from you before building.</p>
 </section>
 
 <section class="page-break">
@@ -61,11 +61,11 @@ a { color: #096e9d; text-decoration: none; }
 <p>Today the website has the whole visitor journey on screen — registration form, lunch options, payment choice, success page, sponsor form — but <strong>nothing behind it</strong>. The registration page shows a reference number that is made up in the browser, no money is taken, no email is sent, and no one's details are saved anywhere. Sponsor requests open WhatsApp or email.</p>
 <p>The finished system does this, automatically, in all three languages:</p>
 <div class="flow">
-  <span>1 · Visitor fills the form</span> → <span>2 · Saved in the database</span> → <span>3 · Pays on e-Psûle's page</span> → <span>4 · e-Psûle tells our server (webhook)</span> → <span>5 · Server confirms the payment</span> → <span>6 · Ticket emailed with QR code</span> → <span>7 · You see it all in the admin</span>
+  <span>1 · Visitor fills the form</span> → <span>2 · Saved in the database</span> → <span>3 · Pays on Psoola's page</span> → <span>4 · Psoola tells our server (webhook)</span> → <span>5 · Server confirms the payment</span> → <span>6 · Ticket emailed with QR code</span> → <span>7 · You see it all in the admin</span>
 </div>
 <p>Three rules run through every part of this plan:</p>
 <ul>
-  <li><strong>No successful payment, no ticket.</strong> A ticket is created only after our server has confirmed with e-Psûle that the money arrived. Not when the visitor says so, not when the browser comes back from the payment page.</li>
+  <li><strong>No successful payment, no ticket.</strong> A ticket is created only after our server has confirmed with Psoola that the money arrived. Not when the visitor says so, not when the browser comes back from the payment page.</li>
   <li><strong>The server decides prices and status.</strong> The browser only shows them. Nobody can register for 0 IQD by editing the page.</li>
   <li><strong>Everything is in your admin.</strong> Registrations, student ID photos, payments, tickets, sponsor and booth requests — one login, one place, exportable to Excel.</li>
 </ul>
@@ -73,9 +73,9 @@ a { color: #096e9d; text-decoration: none; }
 <h3>What exists today and what changes</h3>
 <table>
   <tr><th style="width:30%">Part</th><th style="width:35%">Today</th><th>After this plan</th></tr>
-  <tr><td>Registration form (3 steps, EN/AR/KU)</td><td>Works on screen; sends nothing</td><td>Same screens; the last step sends everything to our server and goes to e-Psûle</td></tr>
+  <tr><td>Registration form (3 steps, EN/AR/KU)</td><td>Works on screen; sends nothing</td><td>Same screens; the last step sends everything to our server and goes to Psoola</td></tr>
   <tr><td>Student ID photo</td><td>Chosen in the form, then thrown away</td><td>Uploaded to a private folder; shown to you in the admin for approval</td></tr>
-  <tr><td>Payment</td><td>"We send your payment link by email" (by hand)</td><td>Automatic, on e-Psûle's hosted page; card, FIB or FastPay</td></tr>
+  <tr><td>Payment</td><td>"We send your payment link by email" (by hand)</td><td>Automatic, on Psoola's hosted page; card, FIB or FastPay</td></tr>
   <tr><td>Ticket</td><td>None</td><td>Emailed automatically after payment: ticket number, QR code, PDF attached</td></tr>
   <tr><td>Reference number</td><td>Made in the browser (ISM26-XXXXXX), cannot be looked up</td><td>Made by the server, same format, stored, searchable in the admin</td></tr>
   <tr><td>Admin</td><td>Edits site text and lists; saves through a GitHub key</td><td>Same admin, plus: Registrations, Payments, Sponsors &amp; booths, Dashboard; saves directly on the server</td></tr>
@@ -85,21 +85,21 @@ a { color: #096e9d; text-decoration: none; }
 </section>
 
 <section>
-<h2>2. Payments with e-Psûle</h2>
-<p><strong>Who they are.</strong> e-Psûle is the digital payment platform owned by the Kurdistan Regional Government, launched in February 2026 and approved by the Central Bank of Iraq. For iSmile it will take exactly four payment methods: <strong>Visa, MasterCard, FIB and FastPay</strong> — nothing else. For us this is the best possible shape: <strong>one contract, one API, one webhook</strong>, and the four methods our visitors actually use.</p>
+<h2>2. Payments with Psoola</h2>
+<p><strong>Who they are.</strong> Psoola is the payment company the organiser already works with. They combine several payment methods behind one merchant API and will give us that API together with a webhook. For iSmile it will take exactly four payment methods: <strong>Visa, MasterCard, FIB and FastPay</strong> — nothing else. For us this is the best possible shape: <strong>one contract, one API, one webhook</strong>, and the four methods our visitors actually use.</p>
 <p><strong>Two words you will hear a lot:</strong></p>
 <ul>
   <li><strong>API</strong> — the address our server calls to say "create a payment of 150,000 IQD for reference ISM26-K7P2QX" and to ask "is payment 12345 paid?".</li>
-  <li><strong>Webhook</strong> — the opposite direction: an address on <em>our</em> server that e-Psûle calls to say "payment 12345 succeeded" (or failed). This is how the ticket goes out without anyone watching a screen.</li>
+  <li><strong>Webhook</strong> — the opposite direction: an address on <em>our</em> server that Psoola calls to say "payment 12345 succeeded" (or failed). This is how the ticket goes out without anyone watching a screen.</li>
 </ul>
 
 <h3>How one payment will work</h3>
 <table>
   <tr><th style="width:5%">#</th><th style="width:38%">Step</th><th>Detail</th></tr>
-  <tr><td>1</td><td>Visitor finishes the form and presses Pay</td><td>Our server saves the registration as <span class="pill p-maybe">unpaid</span>, works out the total itself (ticket + lunch days, from the prices in the admin), and asks e-Psûle to create a payment for that amount.</td></tr>
-  <tr><td>2</td><td>Visitor is sent to e-Psûle's payment page</td><td>They choose Visa or MasterCard, FIB, or FastPay <em>there</em>. Our site never sees card numbers or bank logins — e-Psûle handles that, which keeps us out of card-security rules.</td></tr>
+  <tr><td>1</td><td>Visitor finishes the form and presses Pay</td><td>Our server saves the registration as <span class="pill p-maybe">unpaid</span>, works out the total itself (ticket + lunch days, from the prices in the admin), and asks Psoola to create a payment for that amount.</td></tr>
+  <tr><td>2</td><td>Visitor is sent to Psoola's payment page</td><td>They choose Visa or MasterCard, FIB, or FastPay <em>there</em>. Our site never sees card numbers or bank logins — Psoola handles that, which keeps us out of card-security rules.</td></tr>
   <tr><td>3</td><td>Visitor comes back to our site</td><td>They see "Checking your payment…". This page <strong>never</strong> decides anything; it only waits for step 4.</td></tr>
-  <tr><td>4</td><td>e-Psûle calls our webhook</td><td>Our server checks the message really came from e-Psûle (signature or secret), then <strong>asks e-Psûle's API directly</strong> for the payment status rather than trusting the message alone.</td></tr>
+  <tr><td>4</td><td>Psoola calls our webhook</td><td>Our server checks the message really came from Psoola (signature or secret), then <strong>asks Psoola's API directly</strong> for the payment status rather than trusting the message alone.</td></tr>
   <tr><td>5</td><td>Paid</td><td>Registration becomes <span class="pill p-yes">paid</span>, a ticket number and QR code are created, the ticket email is queued. The waiting page turns into "You're in — check your email".</td></tr>
   <tr><td>6</td><td>Failed, cancelled or abandoned</td><td>Registration stays <span class="pill p-no">unpaid</span>. No ticket. The visitor gets a "Pay now" link by email that starts a fresh payment for the same registration — they do not fill the form again.</td></tr>
 </table>
@@ -107,13 +107,13 @@ a { color: #096e9d; text-decoration: none; }
 <h3>Things that go wrong in real life, and what we do</h3>
 <ul>
   <li><strong>The webhook arrives twice</strong> (this is normal for every payment provider). The second one is ignored: a payment can only be confirmed once, and a ticket is never made twice for the same registration.</li>
-  <li><strong>The webhook arrives late or never.</strong> Every 10 minutes a small scheduled job asks e-Psûle about payments that are still "waiting" and closes them either way. A visitor whose bank was slow still gets the ticket.</li>
+  <li><strong>The webhook arrives late or never.</strong> Every 10 minutes a small scheduled job asks Psoola about payments that are still "waiting" and closes them either way. A visitor whose bank was slow still gets the ticket.</li>
   <li><strong>The visitor closes the page mid-payment.</strong> Nothing is lost; their registration is unpaid and the "Pay now" email covers it.</li>
-  <li><strong>Someone tries to pay 1,000 IQD for a 150,000 IQD ticket.</strong> Impossible: the amount is set by our server, and the confirmed amount from e-Psûle is compared with the expected one before the ticket is issued.</li>
+  <li><strong>Someone tries to pay 1,000 IQD for a 150,000 IQD ticket.</strong> Impossible: the amount is set by our server, and the confirmed amount from Psoola is compared with the expected one before the ticket is issued.</li>
   <li><strong>No seat-hold timers</strong> (as decided earlier): an unpaid registration simply stays unpaid.</li>
 </ul>
 
-<h3>What we need from e-Psûle — ask for all of it now</h3>
+<h3>What we need from Psoola — ask for all of it now</h3>
 <p>This list is the <strong>critical path</strong> of the whole project. Nothing in section 2 can be tested until it arrives, and merchant onboarding with any payment company usually takes weeks, not days.</p>
 <table>
   <tr><th style="width:38%">Item</th><th>Why</th></tr>
@@ -128,17 +128,17 @@ a { color: #096e9d; text-decoration: none; }
   <tr><td>Settlement: when and how the money reaches the bank account; a statement or report we can download</td><td>Needed to reconcile with the admin's payment list.</td></tr>
   <tr><td>Whether the payment page supports Arabic and Kurdish</td><td>Most visitors register in Arabic or Kurdish. If the page is English-only, we tell them beforehand.</td></tr>
 </table>
-<div class="callout warn"><strong>Confirm:</strong> ask e-Psûle whether their merchant service is open to a private organiser now, or still limited to government bills. Their public material so far describes government bill payment; you have been told directly that they will give you an API — get that in writing with a date.</div>
+<div class="callout warn"><strong>Confirm:</strong> Psoola has said they will generate the API for us and hand it over. Get that in writing with a date, together with the documentation and the test credentials — the build cannot start on the payment side until they arrive, and every week they slip moves the registration opening by a week.</div>
 </section>
 
 <section class="page-break">
 <h2>3. Can Pretix help? — the answer</h2>
-<p class="verdict">Pretix can be made to work with e-Psûle, but only on our own Pretix server with a plugin we write ourselves — and it does not give you the database inside your admin. For the 2026 summit it adds more work than it removes. Recommendation: not now.</p>
+<p class="verdict">Pretix can be made to work with Psoola, but only on our own Pretix server with a plugin we write ourselves — and it does not give you the database inside your admin. For the 2026 summit it adds more work than it removes. Recommendation: not now.</p>
 <p>The question was: can Pretix handle "one API plus a webhook, no ticket without a successful payment"? Here is the honest picture.</p>
 <table>
   <tr><th style="width:36%">Point</th><th>What we found</th></tr>
-  <tr><td>Does Pretix already support e-Psûle, FIB or FastPay?</td><td><span class="pill p-no">No</span> Pretix ships Stripe, PayPal, SEPA, bank transfer and others — no Iraqi provider.</td></tr>
-  <tr><td>Can a new provider be added?</td><td><span class="pill p-yes">Yes, as a plugin</span> Pretix documents a "payment provider plugin" (a Python class that redirects to the gateway and confirms the payment). e-Psûle's redirect-and-webhook style fits that model.</td></tr>
+  <tr><td>Does Pretix already support Psoola, FIB or FastPay?</td><td><span class="pill p-no">No</span> Pretix ships Stripe, PayPal, SEPA, bank transfer and others — no Iraqi provider.</td></tr>
+  <tr><td>Can a new provider be added?</td><td><span class="pill p-yes">Yes, as a plugin</span> Pretix documents a "payment provider plugin" (a Python class that redirects to the gateway and confirms the payment). Psoola's redirect-and-webhook style fits that model.</td></tr>
   <tr><td>Can we use that plugin on pretix.eu (their hosted service)?</td><td><span class="pill p-maybe">Not on the standard hosted plan</span> pretix.eu's hosted service does not let customers upload their own plugins. A custom plugin means <strong>running Pretix on our own server</strong> (Python, PostgreSQL, Redis, a worker — a second, heavier system next to the website) or paying for their Enterprise arrangement. <em>Confirm with sales@pretix.eu before ever choosing this route.</em></td></tr>
   <tr><td>Kurdish language and right-to-left layout</td><td><span class="pill p-no">Kurdish is not available</span> We would translate Pretix ourselves. Arabic exists; full right-to-left layout is uncertain. Our own site already does all three properly.</td></tr>
   <tr><td>"The database inside my admin"</td><td><span class="pill p-no">No</span> With Pretix, attendees live in Pretix's own admin. We would build screens that copy them into ours — extra work to end up where the custom backend starts.</td></tr>
@@ -146,7 +146,7 @@ a { color: #096e9d; text-decoration: none; }
   <tr><td>Time until 20 November</td><td><span class="pill p-no">Eight weeks</span> Setting up a self-hosted Pretix, writing and testing a payment plugin, translating to Kurdish, then still building the admin screens does not fit.</td></tr>
   <tr><td>What Pretix would give us for free</td><td><span class="pill p-yes">Real things</span> A check-in phone app with QR scanning, a waiting list, invoices, and a battle-tested order system. Worth revisiting for iSmile 2027 if you want the check-in app — the database we build now can be exported into it.</td></tr>
 </table>
-<div class="callout good"><strong>Decision:</strong> our own backend, described in the rest of this plan. It is smaller than Pretix, it speaks e-Psûle directly, it keeps the three languages we already have, and it lives inside the admin you already use.</div>
+<div class="callout good"><strong>Decision:</strong> our own backend, described in the rest of this plan. It is smaller than Pretix, it speaks Psoola directly, it keeps the three languages we already have, and it lives inside the admin you already use.</div>
 </section>
 
 <section>
@@ -178,11 +178,11 @@ a { color: #096e9d; text-decoration: none; }
   <tr><th style="width:24%">Table</th><th style="width:48%">What it holds</th><th>Notes</th></tr>
   <tr><td><strong>registrations</strong></td><td>Reference (ISM26-…), first / father's / grandfather's name, phone (normalised to +964…), email, city, gender, age, specialty, <strong>ticket type: professional or student</strong>, lunch day 1 / day 2, language used, status (unpaid · paid · cancelled), created and paid times</td><td>Every field on today's form, nothing more. Age and gender: confirm you actually need them; if not, drop them and collect less.</td></tr>
   <tr><td><strong>student_checks</strong></td><td>University and department, ambassador code, <strong>ID photo file</strong> (private path), review status (waiting · approved · rejected), reviewer, reason, review time</td><td>Only for student registrations. Photos are stored <em>outside</em> the public web folder and served only to a logged-in admin.</td></tr>
-  <tr><td><strong>payments</strong></td><td>Registration, e-Psûle payment ID, method used (card / FIB / FastPay), amount expected, amount confirmed, currency, status (created · waiting · paid · failed · refunded), the raw e-Psûle messages</td><td>One registration can have several attempts (a failed one, then a paid one). Exactly one can be "paid".</td></tr>
+  <tr><td><strong>payments</strong></td><td>Registration, Psoola payment ID, method used (card / FIB / FastPay), amount expected, amount confirmed, currency, status (created · waiting · paid · failed · refunded), the raw Psoola messages</td><td>One registration can have several attempts (a failed one, then a paid one). Exactly one can be "paid".</td></tr>
   <tr><td><strong>tickets</strong></td><td>Registration, ticket number, QR payload, email status (pending · sent · failed), send attempts, checked-in time</td><td>Created only from a paid payment. Used by the door scan.</td></tr>
   <tr><td><strong>sponsor_requests</strong></td><td>Kind (sponsorship / exhibition booth), package or tier, company, contact name, phone, email, message, status, assigned person, notes, created time</td><td>Section 7.</td></tr>
   <tr><td><strong>ambassadors</strong></td><td>Code, owner name, university, count of registrations that used it</td><td>Today a code is free text; here it becomes a real list so you can count per ambassador.</td></tr>
-  <tr><td><strong>webhook_log</strong></td><td>Every message e-Psûle sent us, when, and what we did with it</td><td>The first place to look when someone says "I paid but got nothing".</td></tr>
+  <tr><td><strong>webhook_log</strong></td><td>Every message Psoola sent us, when, and what we did with it</td><td>The first place to look when someone says "I paid but got nothing".</td></tr>
   <tr><td><strong>admin_users</strong> and <strong>audit_log</strong></td><td>Who can log in and with which role; who approved, rejected, resent, exported or refunded what, and when</td><td>The existing admin accounts move here from the JSON file.</td></tr>
 </table>
 <h3>Privacy and keeping</h3>
@@ -201,10 +201,10 @@ a { color: #096e9d; text-decoration: none; }
   <tr><td><strong>Dashboard</strong></td><td>Big numbers: registered, paid, professionals vs students, students waiting for approval, lunch counts per day, money confirmed, tickets sent / failed, open sponsor requests.</td></tr>
   <tr><td><strong>Registrations</strong></td><td>The list. Search by name, phone, email or reference. Filter: professional / student, paid / unpaid, approved / waiting, lunch, city, language. Open one to see every detail, the payment history and the ticket. Buttons: <em>Resend ticket</em>, <em>Send "Pay now" link</em>, <em>Edit email or phone</em> (logged), <em>Cancel</em>. <em>Export to Excel</em> with the current filter.</td></tr>
   <tr><td><strong>Student approvals</strong></td><td>Students waiting, oldest first. See the ID photo large, the university typed, the name. <em>Approve</em> or <em>Reject with a reason</em> (the reason goes to the student by email).</td></tr>
-  <tr><td><strong>Payments</strong></td><td>Every attempt with its e-Psûle ID, method, amount and status. A daily total to compare with e-Psûle's settlement report. Refund marking.</td></tr>
+  <tr><td><strong>Payments</strong></td><td>Every attempt with its Psoola ID, method, amount and status. A daily total to compare with Psoola's settlement report. Refund marking.</td></tr>
   <tr><td><strong>Sponsors &amp; booths</strong></td><td>Section 7.</td></tr>
   <tr><td><strong>Check-in (summit days)</strong></td><td>A simple phone-friendly page: scan the QR or type a name, mark as arrived, see "already checked in" if scanned twice. Works on the venue Wi-Fi from any phone; a printed list as the fallback.</td></tr>
-  <tr><td><strong>Settings</strong></td><td>Ticket and lunch prices (already exist), registration open / closed, test mode on / off for emails, e-Psûle live / test switch (the secrets themselves stay in a file on the server, not on this page).</td></tr>
+  <tr><td><strong>Settings</strong></td><td>Ticket and lunch prices (already exist), registration open / closed, test mode on / off for emails, Psoola live / test switch (the secrets themselves stay in a file on the server, not on this page).</td></tr>
 </table>
 <h3>Roles</h3>
 <p>Owner (everything), Registration (registrations, approvals, resend, export), Finance (payments, refunds, exports), Content (the existing site editing), Check-in (only the scan page). Every action is checked on the server, not just hidden on screen.</p>
@@ -218,7 +218,7 @@ a { color: #096e9d; text-decoration: none; }
   <tr><td><span class="pill p-maybe">New</span></td><td>The sponsor form (already on the site) saves the request to the database instead of opening WhatsApp. The company gets an automatic "we received your request" email; you get a notification email.</td></tr>
   <tr><td><span class="pill p-maybe">Contacted</span></td><td>Someone on the team calls or emails. Notes are kept on the request. Assigned to a person so two people do not both call.</td></tr>
   <tr><td><span class="pill p-maybe">Agreed</span></td><td>Package, booth position and price agreed. An invoice is sent from the admin (a PDF with the iSmile details, a number and a due date).</td></tr>
-  <tr><td><span class="pill p-yes">Paid</span></td><td>Marked by Finance when the money arrives (bank transfer, or an e-Psûle payment link if e-Psûle's limits allow the amount — <em>confirm</em>).</td></tr>
+  <tr><td><span class="pill p-yes">Paid</span></td><td>Marked by Finance when the money arrives (bank transfer, or an Psoola payment link if Psoola's limits allow the amount — <em>confirm</em>).</td></tr>
   <tr><td><span class="pill p-yes">Confirmed</span></td><td>Only now does the sponsor's logo appear on the website, from the existing sponsors list in the admin, and the booth spot is counted as taken.</td></tr>
   <tr><td><span class="pill p-no">Declined / withdrawn</span></td><td>Kept with a reason, so next year you know the history.</td></tr>
 </table>
@@ -233,7 +233,7 @@ a { color: #096e9d; text-decoration: none; }
 
 <section>
 <h2>8. The server and the domain you are buying</h2>
-<p>You will buy these yourself. Here is exactly what to buy, and what to check before paying. The website today is plain files; the backend in this plan needs a place that can run code, hold a database, keep files private, and be reachable by e-Psûle's webhook at a fixed address.</p>
+<p>You will buy these yourself. Here is exactly what to buy, and what to check before paying. The website today is plain files; the backend in this plan needs a place that can run code, hold a database, keep files private, and be reachable by Psoola's webhook at a fixed address.</p>
 
 <h3>Domain</h3>
 <ul>
@@ -263,8 +263,8 @@ a { color: #096e9d; text-decoration: none; }
   <li>Point the domain at the server; turn on HTTPS (free certificate). The address becomes <code>https://ismile.krd</code>.</li>
   <li>Upload the website. The existing <code>server/admin.php</code> replaces the GitHub-key saving, so the admin saves instantly on the server (this was already planned and is written; it has never run on real hosting, so expect one round of small fixes).</li>
   <li>Create the MySQL database and the private folder for ID photos (outside the public web folder).</li>
-  <li>Set up a <strong>staging copy</strong> at <code>test.ismile.krd</code> with e-Psûle's test credentials, so every feature is tried there before it touches the real site.</li>
-  <li>Give e-Psûle the webhook address (<code>https://ismile.krd/api/psool-webhook</code>) — they need it to send confirmations.</li>
+  <li>Set up a <strong>staging copy</strong> at <code>test.ismile.krd</code> with Psoola's test credentials, so every feature is tried there before it touches the real site.</li>
+  <li>Give Psoola the webhook address (<code>https://ismile.krd/api/psoola-webhook</code>) — they need it to send confirmations.</li>
 </ol>
 </section>
 
@@ -277,15 +277,15 @@ a { color: #096e9d; text-decoration: none; }
   <li>The front end (forms, three languages, right-to-left, light/dark themes) stays. Each form gains one "send to server" call; nothing is rebuilt.</li>
   <li>Any local developer can maintain PHP + MySQL later.</li>
 </ul>
-<p>The 23 September plan proposed Django + PostgreSQL + Redis + Pretix. That was right for a larger team and a longer runway; with e-Psûle giving one API, a managed server, and eight weeks, it is more machinery than the job needs. If the summit grows to tens of thousands of attendees, the database designed in section 5 moves to a bigger stack without changing what it stores.</p>
+<p>The 23 September plan proposed Django + PostgreSQL + Redis + Pretix. That was right for a larger team and a longer runway; with Psoola giving one API, a managed server, and eight weeks, it is more machinery than the job needs. If the summit grows to tens of thousands of attendees, the database designed in section 5 moves to a bigger stack without changing what it stores.</p>
 
 <h2>10. Security essentials</h2>
 <ul>
   <li>HTTPS everywhere; the admin refuses plain HTTP.</li>
-  <li>e-Psûle secrets, database password and email keys live in one file on the server outside the web folder — never in the website files, never in GitHub.</li>
+  <li>Psoola secrets, database password and email keys live in one file on the server outside the web folder — never in the website files, never in GitHub.</li>
   <li>Every form field is checked again on the server (length, format, allowed values, file type by content not by name, 8 MB limit).</li>
   <li>Rate limits on the registration form, the "Pay now" link and the admin login; admin login locks for 15 minutes after 5 wrong tries; the Owner account gets two-factor codes.</li>
-  <li>Webhook: signature verified, then the status re-fetched from e-Psûle's API; unknown or unsigned calls are logged and ignored.</li>
+  <li>Webhook: signature verified, then the status re-fetched from Psoola's API; unknown or unsigned calls are logged and ignored.</li>
   <li>ID photos and exports are never at a public address; they are served through the admin's login.</li>
   <li>Logs never contain passwords, card details or full ID photos.</li>
 </ul>
@@ -293,18 +293,18 @@ a { color: #096e9d; text-decoration: none; }
 
 <section>
 <h2>11. Build order and timing</h2>
-<p>The summit is <strong>20–21 November 2026</strong>. Working back: registration should be open with payments by <strong>mid-October</strong> to give people five weeks. That is realistic <em>only</em> if e-Psûle's test credentials arrive in the first two weeks — everything in the payment column below waits on them. Start that conversation today.</p>
+<p>The summit is <strong>20–21 November 2026</strong>. Working back: registration should be open with payments by <strong>mid-October</strong> to give people five weeks. That is realistic <em>only</em> if Psoola's test credentials arrive in the first two weeks — everything in the payment column below waits on them. Start that conversation today.</p>
 <table>
   <tr><th style="width:12%">Week</th><th style="width:44%">Work</th><th>Done when</th></tr>
-  <tr><td>1 <br><span class="small">29 Sep – 5 Oct</span></td><td>Buy domain and hosting. Move the site. Admin saves through the server. Database created. Ask e-Psûle for the merchant account, documentation and test credentials.</td><td>Site is live at ismile.krd with HTTPS; you can edit and save from the admin; the e-Psûle request is sent in writing.</td></tr>
+  <tr><td>1 <br><span class="small">29 Sep – 5 Oct</span></td><td>Buy domain and hosting. Move the site. Admin saves through the server. Database created. Ask Psoola for the merchant account, documentation and test credentials.</td><td>Site is live at ismile.krd with HTTPS; you can edit and save from the admin; the Psoola request is sent in writing.</td></tr>
   <tr><td>2 <br><span class="small">6 – 12 Oct</span></td><td>Registration saves to the database, with the reference made by the server. Student ID upload to the private folder. Admin: Registrations list and Student approvals page. Sponsor form saves to the database; Sponsors &amp; booths page.</td><td>A test registration on the staging site appears in the admin with its photo; you can approve it; a sponsor request appears in its list.</td></tr>
-  <tr><td>3 <br><span class="small">13 – 19 Oct</span></td><td>e-Psûle payment: create, redirect, return page, webhook, status check job, "Pay now" link. Payments page in the admin.</td><td>On staging: a test card payment turns a registration paid; a failed one does not; a webhook sent twice changes nothing; a "missed" webhook is caught by the check job.</td></tr>
+  <tr><td>3 <br><span class="small">13 – 19 Oct</span></td><td>Psoola payment: create, redirect, return page, webhook, status check job, "Pay now" link. Payments page in the admin.</td><td>On staging: a test card payment turns a registration paid; a failed one does not; a webhook sent twice changes nothing; a "missed" webhook is caught by the check job.</td></tr>
   <tr><td>4 <br><span class="small">20 – 26 Oct</span></td><td>Ticket email with QR and PDF, in three languages. Send status, retries, Resend button, test mode. Email domain records so mail reaches the inbox.</td><td>A paid test registration receives its ticket within a minute; a resend works; a wrong address shows as failed in the admin.</td></tr>
-  <tr><td>5 <br><span class="small">27 Oct – 2 Nov</span></td><td>Dashboard, exports, roles, audit log, check-in page. Go-live checklist: real e-Psûle credentials, one real payment of a small amount refunded, backups tested.</td><td><strong>Registration opens to the public.</strong> (Later than mid-October — see the note below.)</td></tr>
+  <tr><td>5 <br><span class="small">27 Oct – 2 Nov</span></td><td>Dashboard, exports, roles, audit log, check-in page. Go-live checklist: real Psoola credentials, one real payment of a small amount refunded, backups tested.</td><td><strong>Registration opens to the public.</strong> (Later than mid-October — see the note below.)</td></tr>
   <tr><td>6–7 <br><span class="small">3 – 16 Nov</span></td><td>Watch the first real registrations daily. Fix what real people find. Prepare the check-in devices and the printed fallback list. Train two people on approvals and check-in.</td><td>No failed tickets outstanding; every student reviewed within 24 hours; check-in rehearsed with 20 test tickets.</td></tr>
   <tr><td>Summit <br><span class="small">20 – 21 Nov</span></td><td>Check-in at the door; registrations page for questions at the desk; one person on call for the system.</td><td>Certificates generated from the check-in list afterwards.</td></tr>
 </table>
-<div class="callout warn"><strong>About the dates:</strong> this order puts payments before emails on purpose — if e-Psûle is late, weeks 2 and 4 still happen and registration can open with "pay by link" as a temporary fallback, exactly as the site says today, and switch to automatic payment the day e-Psûle is ready. Opening registration around <strong>25 October</strong> is the honest target; mid-October needs e-Psûle credentials by 6 October.</div>
+<div class="callout warn"><strong>About the dates:</strong> this order puts payments before emails on purpose — if Psoola is late, weeks 2 and 4 still happen and registration can open with "pay by link" as a temporary fallback, exactly as the site says today, and switch to automatic payment the day Psoola is ready. Opening registration around <strong>25 October</strong> is the honest target; mid-October needs Psoola credentials by 6 October.</div>
 
 <h3>Tests before anyone real pays</h3>
 <ul>
@@ -323,7 +323,7 @@ a { color: #096e9d; text-decoration: none; }
 <h2>12. Decisions I need from you</h2>
 <table>
   <tr><th style="width:5%">#</th><th style="width:42%">Decision</th><th>Suggestion</th></tr>
-  <tr><td>1</td><td>e-Psûle: send the request for merchant account, documentation and test credentials.</td><td>This week. Ask for the written answer to the "open to private organisers?" question at the same time.</td></tr>
+  <tr><td>1</td><td>Psoola: send the request for merchant account, documentation and test credentials.</td><td>This week. Ask for the written answer to the "open to private organisers?" question at the same time.</td></tr>
   <tr><td>2</td><td>Domain name.</td><td><strong>ismile.krd</strong> if available.</td></tr>
   <tr><td>3</td><td>Hosting: A (managed cPanel hosting) or B (VPS).</td><td><strong>A</strong>, unless someone on the team will maintain a server.</td></tr>
   <tr><td>4</td><td>Ticket prices and lunch prices in IQD.</td><td>Needed before registration opens; the admin already has the fields.</td></tr>
@@ -332,7 +332,7 @@ a { color: #096e9d; text-decoration: none; }
   <tr><td>7</td><td>Do you need age and gender?</td><td>If they are not used for anything, remove them. Less data, less risk.</td></tr>
   <tr><td>8</td><td>Who reviews student IDs, and who handles sponsor requests?</td><td>One named person each, with a backup. They become the first admin accounts with those roles.</td></tr>
   <tr><td>9</td><td>Email service: Brevo or Amazon SES.</td><td><strong>Brevo</strong> — simpler to set up, free tier covers testing.</td></tr>
-  <tr><td>10</td><td>Booth spots per tier, and whether sponsors may ever pay through e-Psûle.</td><td>Spots are already in the admin; confirm the numbers. Sponsor payment by bank transfer unless e-Psûle's limits clearly allow it.</td></tr>
+  <tr><td>10</td><td>Booth spots per tier, and whether sponsors may ever pay through Psoola.</td><td>Spots are already in the admin; confirm the numbers. Sponsor payment by bank transfer unless Psoola's limits clearly allow it.</td></tr>
 </table>
 
 <h2 style="break-before:page">13. Running costs</h2>
@@ -341,15 +341,14 @@ a { color: #096e9d; text-decoration: none; }
   <tr><td>Domain</td><td>$10–40 per year</td><td>.krd and .iq vary; .com about $12.</td></tr>
   <tr><td>Hosting (option A)</td><td>$5–20 per month</td><td>Includes SSL, email boxes, backups.</td></tr>
   <tr><td>Email sending (Brevo)</td><td>$0–25 per month</td><td>Free up to 300/day; 2,000 tickets in a launch week may need one paid month.</td></tr>
-  <tr><td>e-Psûle fees</td><td><em>Confirm</em></td><td>Usually a percentage per payment. Build it into the ticket price.</td></tr>
+  <tr><td>Psoola fees</td><td><em>Confirm</em></td><td>Usually a percentage per payment. Build it into the ticket price.</td></tr>
   <tr><td>Backups off-server</td><td>$0–5 per month</td><td>Often included with hosting; a cloud bucket otherwise.</td></tr>
   <tr><td>Pretix</td><td>$0</td><td>Not used this year.</td></tr>
 </table>
 
 <h2>References</h2>
 <ul class="small">
-  <li>e-Psûle launch and partners: <a href="https://www.kurdistan24.net/en/story/893062/">kurdistan24.net — Kurdistan Region launches e-Psûle</a> · <a href="https://www.kurdistan24.net/en/story/920101/">kurdistan24.net — e-Psûle billing expands</a> · official site <a href="https://epsule.gov.krd/en/">epsule.gov.krd</a></li>
-  <li>Pretix payment-provider plugins: <a href="https://docs.pretix.eu/dev/development/api/payment.html">docs.pretix.eu — Writing a payment provider plugin</a> · Pretix hosted pricing: <a href="https://pretix.eu/about/en/pricing">pretix.eu/about/en/pricing</a> · self-hosted: <a href="https://pretix.eu/about/en/pricing/selfhosted">pretix.eu — self-hosted</a></li>
+    <li>Pretix payment-provider plugins: <a href="https://docs.pretix.eu/dev/development/api/payment.html">docs.pretix.eu — Writing a payment provider plugin</a> · Pretix hosted pricing: <a href="https://pretix.eu/about/en/pricing">pretix.eu/about/en/pricing</a> · self-hosted: <a href="https://pretix.eu/about/en/pricing/selfhosted">pretix.eu — self-hosted</a></li>
   <li>Earlier documents in this repository: <code>docs/ismile-backend-plan.pdf</code> (23 Sep 2026, Django + Pretix proposal) and <code>docs/pretix-requirements.md</code> (24 Sep 2026, requirements R1–R12 — still the definitive list of what the forms collect).</li>
 </ul>
 </section>
