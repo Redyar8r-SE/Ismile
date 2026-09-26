@@ -86,7 +86,7 @@ a { color: #096e9d; text-decoration: none; }
 
 <section>
 <h2>2. Payments with e-Psûle</h2>
-<p><strong>Who they are.</strong> e-Psûle is the digital payment platform owned by the Kurdistan Regional Government, launched in February 2026 and approved by the Central Bank of Iraq. Its partner list already includes FIB, FastPay, AsiaPay, NassWallet, ZainCash, Cihan Bank and the Iraqi Islamic Bank; you have been told it also takes Visa and MasterCard. For us this is the best possible shape: <strong>one contract, one API, one webhook</strong>, and every payment method our visitors use.</p>
+<p><strong>Who they are.</strong> e-Psûle is the digital payment platform owned by the Kurdistan Regional Government, launched in February 2026 and approved by the Central Bank of Iraq. For iSmile it will take exactly four payment methods: <strong>Visa, MasterCard, FIB and FastPay</strong> — nothing else. For us this is the best possible shape: <strong>one contract, one API, one webhook</strong>, and the four methods our visitors actually use.</p>
 <p><strong>Two words you will hear a lot:</strong></p>
 <ul>
   <li><strong>API</strong> — the address our server calls to say "create a payment of 150,000 IQD for reference ISM26-K7P2QX" and to ask "is payment 12345 paid?".</li>
@@ -97,7 +97,7 @@ a { color: #096e9d; text-decoration: none; }
 <table>
   <tr><th style="width:5%">#</th><th style="width:38%">Step</th><th>Detail</th></tr>
   <tr><td>1</td><td>Visitor finishes the form and presses Pay</td><td>Our server saves the registration as <span class="pill p-maybe">unpaid</span>, works out the total itself (ticket + lunch days, from the prices in the admin), and asks e-Psûle to create a payment for that amount.</td></tr>
-  <tr><td>2</td><td>Visitor is sent to e-Psûle's payment page</td><td>They choose card, FIB or FastPay <em>there</em>. Our site never sees card numbers or bank logins — e-Psûle handles that, which keeps us out of card-security rules.</td></tr>
+  <tr><td>2</td><td>Visitor is sent to e-Psûle's payment page</td><td>They choose Visa or MasterCard, FIB, or FastPay <em>there</em>. Our site never sees card numbers or bank logins — e-Psûle handles that, which keeps us out of card-security rules.</td></tr>
   <tr><td>3</td><td>Visitor comes back to our site</td><td>They see "Checking your payment…". This page <strong>never</strong> decides anything; it only waits for step 4.</td></tr>
   <tr><td>4</td><td>e-Psûle calls our webhook</td><td>Our server checks the message really came from e-Psûle (signature or secret), then <strong>asks e-Psûle's API directly</strong> for the payment status rather than trusting the message alone.</td></tr>
   <tr><td>5</td><td>Paid</td><td>Registration becomes <span class="pill p-yes">paid</span>, a ticket number and QR code are created, the ticket email is queued. The waiting page turns into "You're in — check your email".</td></tr>
@@ -122,7 +122,7 @@ a { color: #096e9d; text-decoration: none; }
   <tr><td><strong>Test ("sandbox") credentials</strong> and test cards / test wallets</td><td>So we can make hundreds of fake payments while building, without real money.</td></tr>
   <tr><td>Live credentials — later, only when we go live</td><td>Kept on the server only, never in the website files.</td></tr>
   <tr><td>How they secure the webhook (signature, secret, or IP list)</td><td>Otherwise anyone who guesses the address could pretend a payment succeeded.</td></tr>
-  <tr><td>Which methods are live for us: Visa, MasterCard, FIB, FastPay — and any others</td><td>The payment step on our site should list exactly what works.</td></tr>
+  <tr><td>Confirmation that all four methods — Visa, MasterCard, FIB, FastPay — are live on our account from day one</td><td>The payment step on our site will list exactly these four. If one is delayed, we hide it until it works.</td></tr>
   <tr><td>Currency (IQD), minimum and maximum amounts, and their fees</td><td>Fees decide the ticket price; maximums matter for sponsors if they ever pay online.</td></tr>
   <tr><td>Refund: possible through the API, by request, or not at all?</td><td>Tickets are non-refundable, but a duplicate payment must be refundable.</td></tr>
   <tr><td>Settlement: when and how the money reaches the bank account; a statement or report we can download</td><td>Needed to reconcile with the admin's payment list.</td></tr>
@@ -348,7 +348,7 @@ a { color: #096e9d; text-decoration: none; }
 
 <h2>References</h2>
 <ul class="small">
-  <li>e-Psûle launch and partners: <a href="https://www.kurdistan24.net/en/story/893062/">kurdistan24.net — Kurdistan Region launches e-Psûle</a> · <a href="https://www.kurdistan24.net/en/story/920101/">kurdistan24.net — e-Psûle billing expands; partner banks and wallets</a> · official site <a href="https://epsule.gov.krd/en/">epsule.gov.krd</a></li>
+  <li>e-Psûle launch and partners: <a href="https://www.kurdistan24.net/en/story/893062/">kurdistan24.net — Kurdistan Region launches e-Psûle</a> · <a href="https://www.kurdistan24.net/en/story/920101/">kurdistan24.net — e-Psûle billing expands</a> · official site <a href="https://epsule.gov.krd/en/">epsule.gov.krd</a></li>
   <li>Pretix payment-provider plugins: <a href="https://docs.pretix.eu/dev/development/api/payment.html">docs.pretix.eu — Writing a payment provider plugin</a> · Pretix hosted pricing: <a href="https://pretix.eu/about/en/pricing">pretix.eu/about/en/pricing</a> · self-hosted: <a href="https://pretix.eu/about/en/pricing/selfhosted">pretix.eu — self-hosted</a></li>
   <li>Earlier documents in this repository: <code>docs/ismile-backend-plan.pdf</code> (23 Sep 2026, Django + Pretix proposal) and <code>docs/pretix-requirements.md</code> (24 Sep 2026, requirements R1–R12 — still the definitive list of what the forms collect).</li>
 </ul>
