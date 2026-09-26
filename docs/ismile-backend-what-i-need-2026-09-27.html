@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>iSmile 2026 — What I need from you and from Psoola</title>
+<style>
+@page { size: A4; margin: 17mm 16mm 18mm; }
+* { box-sizing: border-box; }
+body { margin: 0; color: #17263a; font: 10.4pt/1.5 Arial, Helvetica, sans-serif; }
+h1, h2, h3, p { margin-top: 0; }
+h1 { font-size: 24pt; line-height: 1.12; letter-spacing: -.5px; margin-bottom: 4mm; color: #102e52; }
+h2 { color: #0a4f80; font-size: 14.5pt; margin: 8mm 0 3mm; padding-bottom: 1.5mm; border-bottom: 1px solid #c7d9e6; break-after: avoid; }
+p { margin-bottom: 3mm; }
+ul, ol { margin: 2mm 0 4mm; padding-left: 6mm; }
+li { margin: 0 0 1.8mm; }
+li::marker { color: #0a6a9a; }
+table { width: 100%; border-collapse: collapse; margin: 2mm 0 5mm; font-size: 9.4pt; }
+th { background: #e9f3f8; text-align: left; color: #173c5c; }
+th, td { border: 1px solid #d4e1e9; padding: 2.2mm 2.6mm; vertical-align: top; }
+tr { break-inside: avoid; }
+code { font-family: Consolas, "Courier New", monospace; font-size: 9pt; background: #f1f5f8; padding: 0 1.2mm; border-radius: 2px; }
+.eyebrow { color: #1184a8; text-transform: uppercase; font-size: 9pt; font-weight: 700; letter-spacing: 1.3px; margin-bottom: 3mm; }
+.lede { color: #40566c; font-size: 11.5pt; line-height: 1.5; }
+.callout { border-left: 4px solid #15a2ba; background: #eef8fa; padding: 4mm 5mm; margin: 5mm 0; break-inside: avoid; }
+.callout.warn { border-left-color: #d9822b; background: #fdf4ea; }
+.small { color: #596e80; font-size: 8.8pt; }
+.box { width: 5mm; height: 5mm; border: 1.5px solid #6b8399; border-radius: 1mm; display: inline-block; vertical-align: middle; margin-right: 2mm; }
+.pri { display: inline-block; border-radius: 999px; padding: .3mm 2.6mm; font-size: 8.4pt; font-weight: 700; white-space: nowrap; }
+.p1 { background: #fbe3e0; color: #9c2f22; }
+.p2 { background: #fcefd9; color: #8a5a10; }
+.p3 { background: #dff3e9; color: #1d6b45; }
+.ans { color: #7c8da0; }
+</style>
+</head>
+<body>
+
+<p class="eyebrow">iSmile 2026 · Backend project</p>
+<h1>What I need from you, and from Psoola</h1>
+<p class="lede">The short companion to the backend plan of 27 September 2026. Everything below is a question, a decision, or something to hand over. Where I have a suggestion it is in the right-hand column — a simple “yes” is enough. Tick the box when it is done.</p>
+
+<div class="callout warn"><strong>The one thing that decides the whole timeline:</strong> Psoola's test credentials. Registration can open on <strong>27 October</strong> only if they are in hand by <strong>6 October</strong>. Every week they are late, the opening slips a week. Please start that conversation tomorrow, not next week.</div>
+
+<p><span class="pri p1">Now</span> needed to start building &nbsp; <span class="pri p2">Before launch</span> needed before registration opens &nbsp; <span class="pri p3">Later</span> can wait until the site is live</p>
+
+<h2>1. From Psoola</h2>
+<table>
+  <tr><th style="width:6%"></th><th style="width:44%">Item</th><th style="width:14%">When</th><th>Why it matters</th></tr>
+  <tr><td><span class="box"></span></td><td>Their <strong>API documentation</strong> — the file or web page developers read</td><td><span class="pri p1">Now</span></td><td>Tells us how to create a payment, how the redirect works and what the webhook sends. Nothing on the payment side can be designed in detail without it.</td></tr>
+  <tr><td><span class="box"></span></td><td><strong>Test (sandbox) credentials</strong>, plus test cards or test wallets</td><td><span class="pri p1">Now</span></td><td>So we can make hundreds of fake payments while building, with no real money.</td></tr>
+  <tr><td><span class="box"></span></td><td>How they <strong>secure the webhook</strong> — signature, shared secret, or a list of their addresses</td><td><span class="pri p1">Now</span></td><td>Otherwise anyone who guesses our webhook address could pretend a payment succeeded.</td></tr>
+  <tr><td><span class="box"></span></td><td>Written confirmation that <strong>Visa, MasterCard, FIB and FastPay</strong> will all be live on our account, and by what date</td><td><span class="pri p1">Now</span></td><td>The payment step on the site will list exactly these four.</td></tr>
+  <tr><td><span class="box"></span></td><td>What company documents they need for the <strong>merchant account</strong></td><td><span class="pri p1">Now</span></td><td>Usually the slowest part with any payment company. Start the paperwork immediately.</td></tr>
+  <tr><td><span class="box"></span></td><td>Their <strong>fees</strong>, the minimum and maximum amount per payment, and the currency (IQD)</td><td><span class="pri p2">Before launch</span></td><td>Fees go into the ticket price. The maximum matters if a sponsor ever pays through them.</td></tr>
+  <tr><td><span class="box"></span></td><td>Whether <strong>refunds</strong> can be done through the API, by request, or not at all</td><td><span class="pri p2">Before launch</span></td><td>Tickets are non-refundable, but a duplicate payment must be refundable.</td></tr>
+  <tr><td><span class="box"></span></td><td>How and when the money is <strong>settled</strong> to the bank account, and a report we can download</td><td><span class="pri p2">Before launch</span></td><td>To check the admin's daily total against what actually arrived.</td></tr>
+  <tr><td><span class="box"></span></td><td>Whether their payment page is available in <strong>Arabic and Kurdish</strong></td><td><span class="pri p2">Before launch</span></td><td>Most visitors register in Arabic or Kurdish. If it is English-only, we warn them on the step before.</td></tr>
+  <tr><td><span class="box"></span></td><td><strong>Live credentials</strong></td><td><span class="pri p3">Later</span></td><td>Only when we go live. They go into one file on the server — never in an email, a chat or the website files.</td></tr>
+</table>
+
+<h2>2. Decisions — a “yes” is enough</h2>
+<table>
+  <tr><th style="width:6%"></th><th style="width:44%">Question</th><th style="width:14%">When</th><th>My suggestion</th></tr>
+  <tr><td><span class="box"></span></td><td>Domain name</td><td><span class="pri p1">Now</span></td><td><strong>ismile.krd</strong> if available (the site already uses info@ismile.krd). Otherwise ismile.iq or ismile-summit.com. Buy for two years, auto-renew on.</td></tr>
+  <tr><td><span class="box"></span></td><td>Hosting: A — managed hosting with cPanel, or B — a VPS</td><td><span class="pri p1">Now</span></td><td><strong>A.</strong> PHP, MySQL, email, SSL and backups come ready; nobody has to maintain Linux. Pick B only if someone on the team will look after a server.</td></tr>
+  <tr><td><span class="box"></span></td><td>Students: approve the ID photo <em>before</em> they pay, or let them pay first and refund if rejected?</td><td><span class="pri p1">Now</span></td><td><strong>Approve first.</strong> Student registers → you approve (usually the same day) → they get the “Pay now” email → they pay → ticket. Professionals pay immediately. This avoids most refunds.</td></tr>
+  <tr><td><span class="box"></span></td><td>Do you need <strong>age</strong> and <strong>gender</strong> on the form?</td><td><span class="pri p2">Before launch</span></td><td>If they are not used for anything, remove them. Less data, less risk.</td></tr>
+  <tr><td><span class="box"></span></td><td>Email sending service</td><td><span class="pri p2">Before launch</span></td><td><strong>Brevo</strong> — simple, free tier covers testing, tickets sent from tickets@ismile.krd. Not a personal Gmail.</td></tr>
+  <tr><td><span class="box"></span></td><td>Refund wording for the form and the ticket email</td><td><span class="pri p2">Before launch</span></td><td>“Tickets are non-refundable. Duplicate payments are refunded.”</td></tr>
+  <tr><td><span class="box"></span></td><td>Privacy notice and student consent wording</td><td><span class="pri p2">Before launch</span></td><td>I draft it in English, Arabic and Kurdish; you approve.</td></tr>
+  <tr><td><span class="box"></span></td><td>May a sponsor ever pay through Psoola, or always by bank transfer?</td><td><span class="pri p3">Later</span></td><td>Bank transfer, unless Psoola's maximum clearly allows the amounts.</td></tr>
+  <tr><td><span class="box"></span></td><td>A one-day external security test before launch (a few hundred dollars)?</td><td><span class="pri p3">Later</span></td><td>Recommended for something this sensitive. Not required to build.</td></tr>
+</table>
+
+<h2>3. Numbers and names</h2>
+<table>
+  <tr><th style="width:6%"></th><th style="width:44%">Item</th><th style="width:14%">When</th><th>Your answer</th></tr>
+  <tr><td><span class="box"></span></td><td>Professional ticket price (IQD)</td><td><span class="pri p2">Before launch</span></td><td class="ans">________________</td></tr>
+  <tr><td><span class="box"></span></td><td>Student ticket price (IQD)</td><td><span class="pri p2">Before launch</span></td><td class="ans">________________</td></tr>
+  <tr><td><span class="box"></span></td><td>Lunch price, Day 1 and Day 2 (IQD)</td><td><span class="pri p2">Before launch</span></td><td class="ans">________________</td></tr>
+  <tr><td><span class="box"></span></td><td>Ticket capacity — the most people the venue can take</td><td><span class="pri p2">Before launch</span></td><td class="ans">________________</td></tr>
+  <tr><td><span class="box"></span></td><td>Lunch capacity per day — from the caterer</td><td><span class="pri p2">Before launch</span></td><td class="ans">________________</td></tr>
+  <tr><td><span class="box"></span></td><td>Booth spots per sponsor tier (Diamond / Platinum / Gold / Silver)</td><td><span class="pri p2">Before launch</span></td><td class="ans">________________</td></tr>
+  <tr><td><span class="box"></span></td><td>Office phone for workshop bookings (the site still says “Will be announced soon”)</td><td><span class="pri p2">Before launch</span></td><td class="ans">________________</td></tr>
+  <tr><td><span class="box"></span></td><td>Who <strong>reviews student IDs</strong> (one person plus a backup)</td><td><span class="pri p2">Before launch</span></td><td class="ans">________________</td></tr>
+  <tr><td><span class="box"></span></td><td>Who <strong>handles sponsor and booth requests</strong></td><td><span class="pri p2">Before launch</span></td><td class="ans">________________</td></tr>
+  <tr><td><span class="box"></span></td><td>Who is <strong>on call</strong> during registration and on the summit days</td><td><span class="pri p2">Before launch</span></td><td class="ans">________________</td></tr>
+  <tr><td><span class="box"></span></td><td>Who holds the <strong>two-factor codes</strong> for the Owner and Finance accounts</td><td><span class="pri p2">Before launch</span></td><td class="ans">________________</td></tr>
+  <tr><td><span class="box"></span></td><td>Who works the <strong>check-in desk</strong> (they get the scan-only login)</td><td><span class="pri p3">Later</span></td><td class="ans">________________</td></tr>
+</table>
+
+<h2>4. Once you have bought the domain and hosting</h2>
+<ul>
+  <li><span class="box"></span>The login for the <strong>hosting control panel</strong> and for the <strong>domain registrar</strong>. Send them privately (a password manager share, or written down and handed over) — <strong>never in this chat</strong>.</li>
+  <li><span class="box"></span>Tell me whether the panel puts the site at the <strong>domain root</strong> or in a subfolder — it will show this.</li>
+  <li><span class="box"></span>Confirm the plan includes: PHP 8.1 or newer, MySQL 8 / MariaDB 10.6+, free SSL, cron jobs, at least 10 GB, daily backups, SSH. If the order page does not say, ask their support before paying.</li>
+  <li><span class="box"></span>Two email addresses on the domain: <code>info@</code> and <code>tickets@</code> (the panel creates them in a minute).</li>
+</ul>
+
+<h2>5. Two questions I have for you</h2>
+<table>
+  <tr><th style="width:6%"></th><th style="width:44%">Question</th><th>Why I ask</th></tr>
+  <tr><td><span class="box"></span></td><td><strong>Timing.</strong> Are you happy with registration opening on <strong>27 October</strong>? Or is there a date the team has already announced?</td><td>The plan is built around 27 October. If an earlier date has been promised publicly, we need to know now — the only lever is Psoola's speed.</td></tr>
+  <tr><td><span class="box"></span></td><td><strong>Existing registrations.</strong> Has anyone already registered or paid by hand — by WhatsApp, bank transfer or phone — before the system exists?</td><td>If yes, I plan an import so they end up in the database with tickets like everyone else, instead of being handled separately at the door.</td></tr>
+</table>
+
+<div class="callout"><strong>What does not wait for any of this:</strong> buying the domain and hosting, moving the website, and creating the database — week 1 of the plan — can start the moment the hosting exists. The Psoola items unblock weeks 3 onward.</div>
+
+<p class="small">Companion to <em>iSmile 2026 — Backend Plan (Psoola payments, tickets, database)</em>, 27 September 2026. Section numbers there: Psoola items → section 2; decisions → section 13; hosting → section 8; security roles → section 10.</p>
+
+</body>
+</html>
