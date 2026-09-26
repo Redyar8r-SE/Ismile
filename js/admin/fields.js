@@ -272,7 +272,7 @@ const PARTS = [
     id: "workshopsText", title: "Workshops — words",
     hint: "The labels on the workshop cards (on the workshops page), and the office number people call to book. The workshops themselves are in “Workshop list”.",
     fields: many([
-      ["ws_phone", "Office phone for workshop bookings (e.g. +964 750 123 4567)"],
+      ["ws_phone", "Workshop booking phone: the number (e.g. +964 750 123 4567), or \"Will be announced soon\" until you have it"],
       ["w_call", "Call to book button"], ["w_call_how", "Text above the phone number"],
       ["ws_inv_kicker", "Home page card: small label"], ["ws_inv_title", "Home page card: title"],
       ["ws_inv_text", "Home page card: text"], ["ws_inv_button", "Home page card: button to the workshops page"],

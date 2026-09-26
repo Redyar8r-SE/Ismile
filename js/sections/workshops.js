@@ -26,7 +26,9 @@ export function initWorkshops(workshops) {
   function renderCallbar() {
     const number = t("ws_phone");
     const href = phoneHref(number);
-    const shown = `<b dir="ltr">${number}</b>`;
+    // A real number reads left to right and dials; until then the words
+    // ("Will be announced soon") read in the page language.
+    const shown = href ? `<b dir="ltr">${number}</b>` : `<b>${number}</b>`;
     callbar.innerHTML = `
       <span class="ws-callbar-ic">${PHONE_ICON}</span>
       <span class="ws-callbar-text"><small>${t("w_call_how")}</small>${href ? `<a href="${href}">${shown}</a>` : shown}</span>`;
