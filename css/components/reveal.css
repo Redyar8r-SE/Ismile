@@ -1,0 +1,5 @@
+/* Scroll reveal (js/utils/reveal.js): blocks are hidden only once the script
+   switches it on, hidden at once (no fade-out on load), and only the way in
+   is animated. The script removes these classes when the block is in place. */
+.reveal-on .rv{opacity:0;transform:translateY(24px)}
+.reveal-on .rv.is-in{opacity:1;transform:none;transition:opacity .7s ease,transform .7s cubic-bezier(.2,.8,.2,1);transition-delay:var(--rv-delay,0ms)}

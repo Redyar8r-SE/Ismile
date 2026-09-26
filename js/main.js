@@ -12,7 +12,7 @@ import { initProjects } from "./sections/projects.js?v=24";
 import { initGallery } from "./sections/gallery.js?v=3";
 import { initFooter } from "./sections/footer.js?v=24";
 import { initVenue } from "./sections/venue.js?v=24";
-import { initReveal } from "./utils/reveal.js?v=3";
+import { initReveal } from "./utils/reveal.js?v=4";
 import { initReadMore } from "./sections/read-more.js?v=1";
 
 async function start() {
@@ -49,16 +49,28 @@ async function start() {
     initJourney(journey);
     initProjects(projects);
     initGallery(gallery);
-    // About: the italkMedX card, its paragraphs and facts, then Vision,
-    // Mission and the partner card appear one after another while scrolling.
-    const all = (s) => document.querySelectorAll(s);
-    initReveal([all(".org-card"), all(".org-top, .org-card > p, .medx-rest, .medx-toggle"), all(".medx-card"), all(".org-facts li"), all(".vm2 > .vm-card")]);
     initReadMore();
     initFooter(footer);
     initVenue(map);
 
     initLangSwitch();
     setLang(preferredLang());
+
+    // Scroll reveal, once per block: section titles, then the cards of each
+    // section one after another. Plain paragraphs are never animated on
+    // their own. Started after the language is set, because that redraws
+    // the lists.
+    const all = (s) => document.querySelectorAll(s);
+    initReveal([
+      all(".ab-head, .gal-head, .exp-head, .areas-head, .prog-head, #speakers .wrap > h2, #speakers .wrap > .lead, .spon-head, .tp-head, #companies .wrap > h2, #companies .wrap > .lead, .venue-head"),
+      all("#journey > li"), all("#galleryGrid > li"),
+      all(".org-card"), all(".org-top, .org-card > p, .medx-rest, .medx-toggle"), all(".medx-card"), all(".org-facts li"), all(".vm2 > .vm-card"),
+      all(".bento > .bx"), all(".areas > .area"),
+      all("#dayTabs, #dayMeta, #sched"),
+      all(".reg-invite-card"),
+      all("#spGrid > *"), all("#sponsorTiers > *"), all("#ptiers > *, .p-cta"),
+      all(".co-grid > .co"), all(".venue-card"),
+    ]);
   } catch (error) {
     console.error(error);
     const notice = document.createElement("div");
