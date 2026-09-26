@@ -2,7 +2,7 @@
 import { ICONS } from "../config/icons.js?v=24";
 import { t, tr, onLangChange } from "../i18n.js?v=24";
 import { tCount } from "../utils/count.js?v=1";
-import { show } from "../utils/time.js?v=24";
+import { show } from "../utils/time.js?v=25";
 
 export function initProgram({ types, days }) {
   const tabs = document.getElementById("dayTabs");
@@ -36,7 +36,7 @@ export function initProgram({ types, days }) {
 
     meta.innerHTML = `
       <span>${tCount("pg_sessions", talks.length, (n) => `<b>${n}</b>`)}</span>
-      <span>${tCount("pg_schedule", `<b><bdi dir="ltr">${show(first.start, t)}</bdi> ${t("pg_to")} <bdi dir="ltr">${show(last.end, t)}</bdi></b>`)}</span>
+      <span>${tCount("pg_schedule", `<b><bdi>${show(first.start, t)}</bdi> ${t("pg_to")} <bdi>${show(last.end, t)}</bdi></b>`)}</span>
       <span>${tCount("pg_locations", locations.size, (n) => `<b>${n}</b>`)}</span>`;
 
     schedule.innerHTML =
@@ -46,11 +46,11 @@ export function initProgram({ types, days }) {
 
   function renderSession(s) {
     if (s.type === "break") {
-      return `<div class="slot brk"><div class="tm"><b><bdi dir="ltr">${show(s.start, t)}</bdi></b></div><div class="rail"><i></i></div><h3>${ICONS.cup}${tr(s.title)}</h3></div>`;
+      return `<div class="slot brk"><div class="tm"><b><bdi>${show(s.start, t)}</bdi></b></div><div class="rail"><i></i></div><h3>${ICONS.cup}${tr(s.title)}</h3></div>`;
     }
     return `
       <div class="slot t-${s.type}">
-        <div class="tm"><b><bdi dir="ltr">${show(s.start, t)}</bdi></b><small>${t("pg_to")} <bdi dir="ltr">${show(s.end, t)}</bdi></small></div>
+        <div class="tm"><b><bdi>${show(s.start, t)}</bdi></b><small>${t("pg_to")} <bdi>${show(s.end, t)}</bdi></small></div>
         <div class="rail"><i></i></div>
         <div><span class="badge">${tr(types[s.type])}</span><h3>${tr(s.title)}</h3></div>
         <dl class="who">

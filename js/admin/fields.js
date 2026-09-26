@@ -31,7 +31,7 @@ const PARTS = [
   },
   {
     id: "ticketPrices", title: "Ticket prices", kind: "single", file: "tickets",
-    hint: "In Iraqi dinars, whole numbers. Leave 0 to show “Price soon”. Lunch is optional and priced per day: visitors can add Day 1, Day 2 or both, and it is added to their total. Workshop prices are set on each workshop in “Workshop list”.",
+    hint: "In Iraqi dinars, whole numbers. Leave 0 to show “Price soon”. Lunch is optional and priced per day: visitors can add Day 1, Day 2 or both, and it is added to their total. Workshop prices are set on each workshop: Workshops page › Workshops › The workshops.",
     itemFields: [
       { key: "professional", label: "Professional ticket (IQD)", type: "number" },
       { key: "student", label: "Student ticket (IQD)", type: "number" },
@@ -41,7 +41,7 @@ const PARTS = [
   },
   {
     id: "workshopList", title: "Workshop list", kind: "list", file: "workshops",
-    hint: "Each workshop card, with its price and how many seats are left. Leave the title empty and the card shows “Workshop to be announced” with no seat numbers; fill it in when the workshop is announced. Seats are booked by phone: update “Seats left” as the office takes bookings, and set it to 0 to show the workshop as full. The office number is in “Workshops — words”.",
+    hint: "Each workshop card, with its price and how many seats are left. Leave the title empty and the card shows “Coming soon” with no seat numbers; fill it in when the workshop is announced. Seats are booked by phone: update “Seats left” as the office takes bookings, and set it to 0 to show the workshop as full. The booking phone is in “Wording on the cards and booking phone” below.",
     itemName: "workshop",
     newItem: () => ({ id: `ws${Date.now().toString(36).slice(-4)}`, icon: "tools", title: { en: "", ar: "", ku: "" }, company: null, speaker: null, price: 0, totalSeats: 20, seatsLeft: 20 }),
     itemFields: [
@@ -264,18 +264,24 @@ const PARTS = [
       ["pg_locations", "Number of rooms (keep {n})"],
       ["pg_time", "Column: time"], ["pg_session", "Column: session"],
       ["pg_topic_speaker", "Column: topic and speaker"], ["pg_location", "Column: location"],
-      ["pg_to", "Word between start and end time"], ["am", "Morning (AM)"], ["pm", "Afternoon (PM)"], ["pg_topic", "Row: topic"], ["pg_speaker", "Row: speaker"],
+      ["pg_to", "Word between start and end time"], ["time_morning", "Time word before 12:00 (English: AM)"], ["time_afternoon", "Time word from 12:00 to 3:59 (English: PM)"], ["time_evening", "Time word from 4:00 on (English: PM)"], ["pg_topic", "Row: topic"], ["pg_speaker", "Row: speaker"],
       ["pg_tba", "Shown when the topic is not known yet"],
     ]),
   },
   {
+    id: "workshopsInvite", title: "Home page workshops card",
+    hint: "The teal card on the home page that sends people to the workshops page.",
+    fields: many([
+      ["ws_inv_kicker", "Small label"], ["ws_inv_title", "Title"],
+      ["ws_inv_text", "Text"], ["ws_inv_button", "Button to the workshops page"],
+    ]),
+  },
+  {
     id: "workshopsText", title: "Workshops — words",
-    hint: "The labels on the workshop cards (on the workshops page), and the office number people call to book. The workshops themselves are in “Workshop list”.",
+    hint: "The labels on the workshop cards and the booking phone. The workshops themselves are in “The workshops” above.",
     fields: many([
       ["ws_phone", "Workshop booking phone: the number (e.g. +964 750 123 4567), or \"Will be announced soon\" until you have it"],
       ["w_call", "Call to book button"], ["w_call_how", "Text above the phone number"],
-      ["ws_inv_kicker", "Home page card: small label"], ["ws_inv_title", "Home page card: title"],
-      ["ws_inv_text", "Home page card: text"], ["ws_inv_button", "Home page card: button to the workshops page"],
       ["w_tba_title", "Not announced yet: read out by screen readers"], ["w_soon", "Badge: coming soon"],
       ["w_by", "Label: run by"], ["w_company", "Shown when no company is set (to be announced)"],
       ["w_speaker", "Label: speaker"], ["w_dr", "Shown when no speaker is set (to be announced)"],
@@ -285,7 +291,7 @@ const PARTS = [
   },
   {
     id: "workshopsPage", title: "Workshops page — words",
-    hint: "The separate workshops page (workshops.html): the intro, the three booking steps and the register-first panel. The cards on it are the same as on the home page; the “Back to the summit” button shares its words with the registration page.",
+    hint: "The separate workshops page: the intro, the three booking steps and the register panel.",
     fields: many([
       ["wsp_page_title", "Browser tab title"],
       ["wsp_kicker", "Small label above the title"], ["wsp_title", "Page title"], ["wsp_sub", "Intro text"],
@@ -534,48 +540,88 @@ const list = (id, title) => ({ ...byId[id], type: "list", title: title ?? null }
 const special = (id, kind, title) => ({ ...byId[id], type: kind, title: title ?? null });
 const single = (id, title) => ({ ...byId[id], type: "single", title: title ?? null });
 
+// The sections of the admin, in the order they appear on the website, each
+// under the page it belongs to ("page" is the heading in the side menu).
+export const PAGE_TITLES = {
+  home: "Home page",
+  workshops: "Workshops page",
+  register: "Registration page",
+  sponsor: "Sponsor page",
+  every: "On every page",
+  admin: "This admin",
+};
+
 export const GROUPS = [
   {
-    id: "hero", title: "Top of the page", where: "The first screen visitors see",
+    id: "hero", page: "home", title: "Top of the page", where: "The first screen visitors see",
     blocks: [text("hero", "Title and subtitle"), text("ticket", "Ticket card")],
   },
   {
-    id: "stats", title: "Proven reach", where: "The dark panel with the three numbers",
+    id: "stats", page: "home", title: "Proven reach", where: "The dark panel with the three numbers",
     blocks: [text("stats")],
   },
   {
-    id: "about", title: "About iSmile", where: "The story, the years, italk and the partner",
+    id: "about", page: "home", title: "About iSmile", where: "The story, the years, the 2021 photos, italkMedX and the partner",
     blocks: [list("journeyList", "Years on the timeline"), list("galleryList", "Photos from 2021"), list("projectList", "italk projects"), text("about", "Wording of the section")],
   },
   {
-    id: "experience", title: "What happens", where: "The eight boxes about the two days",
+    id: "experience", page: "home", title: "What happens", where: "The eight boxes about the two days",
     blocks: [text("experience")],
   },
   {
-    id: "areas", title: "Scientific areas", where: "The eight numbered subject cards",
+    id: "areas", page: "home", title: "Scientific areas", where: "The eight numbered subject cards",
     blocks: [text("areas")],
   },
   {
-    id: "program", title: "Program", where: "The day tabs and the schedule table",
+    id: "program", page: "home", title: "Program", where: "The day tabs and the schedule table",
     blocks: [special("program", "program", "Days and sessions"), special("program", "types", "Session types"), text("programText", "Wording around the table")],
   },
   {
-    id: "workshops", title: "Workshops", where: "The workshops page: cards, office number and wording",
-    blocks: [list("workshopList", "The workshops"), text("workshopsText", "Wording on the cards"), text("workshopsPage", "The workshops page")],
+    id: "workshopsCard", page: "home", title: "Workshops card", where: "The card that sends people to the workshops page",
+    blocks: [text("workshopsInvite")],
   },
   {
-    id: "speakers", title: "Speakers", where: "The speaker photos grid",
+    id: "speakers", page: "home", title: "Speakers", where: "The speaker photos grid",
     blocks: [special("speakers", "speakers", "The speakers"), text("speakersText", "Wording and placeholders")],
   },
   {
-    id: "sponsors", title: "Sponsors & partners", where: "Sponsor tiers and the trusted partner logos",
+    id: "sponsors", page: "home", title: "Sponsors & partners", where: "Sponsor tiers and the trusted partner logos",
     blocks: [
       list("sponsorTiers", "Sponsor tiers"), list("sponsorList", "Sponsors with a logo"),
       list("partnerList", "Trusted partners"), text("sponsorsText", "Wording"),
     ],
   },
   {
-    id: "becomeSponsor", title: "Become a sponsor", where: "The separate page companies reach from the sponsor and booth buttons",
+    id: "companies", page: "home", title: "For companies", where: "The two sponsor and exhibition cards",
+    blocks: [text("companies")],
+  },
+  {
+    id: "registrationCard", page: "home", title: "Registration card", where: "The ‘Join Iraq’s largest dental summit’ card",
+    blocks: [text("registrationInvite", "Card wording")],
+  },
+  {
+    id: "venue", page: "home", title: "Venue", where: "The hotel card, address and map",
+    blocks: [text("venue", "Wording"), single("mapSettings", "Map location")],
+  },
+  {
+    id: "workshops", page: "workshops", title: "Workshops", where: "The workshops page: the cards, the booking phone and the wording",
+    blocks: [list("workshopList", "The workshops"), text("workshopsText", "Wording on the cards and booking phone"), text("workshopsPage", "The rest of the page")],
+  },
+  {
+    id: "registration", page: "register", title: "Registration", where: "The three-step registration page",
+    blocks: [
+      single("ticketPrices", "Ticket and lunch prices"),
+      text("registrationTop", "Top of the page"),
+      text("registrationTickets", "Tickets and instructions"),
+      text("registrationDetails", "Step 1: personal details"),
+      text("registrationStudent", "Student verification"),
+      text("registrationPayment", "Steps 2 and 3: lunch, payment and review"),
+      text("registrationMessages", "Success and errors"),
+      text("registrationWorkshops", "Workshop suggestion after registering"),
+    ],
+  },
+  {
+    id: "becomeSponsor", page: "sponsor", title: "Become a sponsor", where: "The page companies reach from the sponsor and booth buttons",
     blocks: [
       single("sponsorEnquiry", "Where a request goes"),
       text("spTop", "Top of the page"),
@@ -586,40 +632,15 @@ export const GROUPS = [
     ],
   },
   {
-    id: "companies", title: "For companies", where: "The two sponsor and exhibition cards",
-    blocks: [text("companies")],
-  },
-  {
-    id: "registrationCard", title: "Homepage registration card", where: "The ‘Join us at iSmile 2026’ card",
-    blocks: [text("registrationInvite", "Card wording")],
-  },
-  {
-    id: "registration", title: "Registration page", where: "The separate three-step registration page",
-    blocks: [
-      single("ticketPrices", "Ticket prices"),
-      text("registrationTop", "Top of the page"),
-      text("registrationTickets", "Tickets and instructions"),
-      text("registrationDetails", "Step 1: personal details"),
-      text("registrationStudent", "Student verification"),
-      text("registrationWorkshops", "Workshop suggestion after registering"),
-      text("registrationPayment", "Steps 2 and 3: lunch, payment and review"),
-      text("registrationMessages", "Success and errors"),
-    ],
-  },
-  {
-    id: "venue", title: "Venue", where: "The hotel card, address and map",
-    blocks: [text("venue", "Wording"), single("mapSettings", "Map location")],
-  },
-  {
-    id: "footer", title: "Footer", where: "The bottom of every page",
-    blocks: [text("footer", "Wording"), list("footerLinks", "Links"), list("footerContact", "Contact lines")],
-  },
-  {
-    id: "menu", title: "Menu & buttons", where: "The top bar links, used on every screen",
+    id: "menu", page: "every", title: "Menu & buttons", where: "The top bar links and buttons, on every page",
     blocks: [text("menu")],
   },
   {
-    id: "security", title: "Password", where: "The email and password that open this admin",
+    id: "footer", page: "every", title: "Footer", where: "The bottom of every page",
+    blocks: [text("footer", "Wording"), list("footerLinks", "Links"), list("footerContact", "Contact lines")],
+  },
+  {
+    id: "security", page: "admin", title: "Password", where: "The email and password that open this admin",
     blocks: [{ type: "security", title: "Sign-in for the admin page", fields: [] }],
   },
 ];

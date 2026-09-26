@@ -1,5 +1,5 @@
 // iSmile admin: edit every text, list and photo on the site, and save to GitHub.
-import { GROUPS, LANGS, DATA_FILES } from "./fields.js?v=66";
+import { GROUPS, PAGE_TITLES, LANGS, DATA_FILES } from "./fields.js?v=67";
 import * as store from "./store.js?v=24";
 import { upload, imageFromClipboard } from "./images.js?v=24";
 import { buildList, buildProgram, buildTypes, buildSingle } from "./lists.js?v=26";
@@ -14,6 +14,7 @@ const langPath = (lang) => `data/i18n/${lang}.json`;
 
 const state = {
   files: {},        // language code -> whole dictionary
+  pageEnglish: {},  // the English written in the pages themselves
   original: {},     // same, as text, to see what changed
   data: {},         // speakers / workshops / sponsors / partners / program
   dataOriginal: {},
@@ -33,7 +34,18 @@ async function loadJSON(path) {
 // The English text written in the pages is the default for every key.
 // Every page the site has, so text that lives only on the sponsor page can be
 // translated here too.
-const PAGES = ["index.html", "sponsor.html", "register.html"];
+const PAGES = ["index.html", "workshops.html", "register.html", "sponsor.html"];
+
+// English that is the same as the page's own wording is not written to
+// en.json: that file only keeps what was really changed here, so the pages
+// stay the source of their own English.
+function englishToSave(dictionary) {
+  const out = { ...dictionary };
+  for (const [key, value] of Object.entries(state.pageEnglish)) {
+    if (out[key] === value) delete out[key];
+  }
+  return out;
+}
 
 async function englishFromPage() {
   const english = {};
@@ -56,6 +68,7 @@ async function englishFromPage() {
 
 async function loadAll() {
   const fallback = await englishFromPage();
+  state.pageEnglish = fallback;
   for (const { code } of LANGS) {
     const data = await loadJSON(langPath(code));
     if (code === "en") {
@@ -133,11 +146,16 @@ function buildTextGroup(group, section) {
       const input = long ? document.createElement("textarea") : document.createElement("input");
       if (long) input.rows = 3;
       input.id = `f-${field.key}-${code}`;
+      input.dataset.key = field.key;
+      input.dataset.lang = code;
       input.value = state.files[code]?.[field.key] ?? "";
       input.dir = dir;
       input.lang = code === "ku" ? "ckb" : code;
       input.addEventListener("input", () => {
         state.files[code][field.key] = input.value;
+        document.querySelectorAll(`[data-key="${field.key}"][data-lang="${code}"]`).forEach((twin) => {
+          if (twin !== input) twin.value = input.value;
+        });
         markDirty();
       });
       cell.innerHTML = `<span class="fcode">${label}</span>`;
@@ -511,7 +529,27 @@ function buildForm() {
   nav.replaceChildren();
   main.replaceChildren();
 
+  const picker = $("groupPick");
+  picker.replaceChildren();
+  let lastPage = null;
+  let optgroup = null;
+
   GROUPS.forEach((group, index) => {
+    if (group.page !== lastPage) {
+      lastPage = group.page;
+      const heading = document.createElement("p");
+      heading.className = "gpage";
+      heading.textContent = PAGE_TITLES[group.page] || "";
+      nav.append(heading);
+      optgroup = document.createElement("optgroup");
+      optgroup.label = PAGE_TITLES[group.page] || "";
+      picker.append(optgroup);
+    }
+    const option = document.createElement("option");
+    option.value = group.id;
+    option.textContent = `${index + 1}. ${group.title}`;
+    optgroup.append(option);
+
     const tab = document.createElement("button");
     tab.type = "button";
     tab.className = "gnav" + (index === 0 ? " is-active" : "");
@@ -530,7 +568,7 @@ function buildForm() {
     head.className = "ghead";
     head.innerHTML = `<h2></h2><p></p>`;
     head.querySelector("h2").textContent = `${index + 1}. ${group.title}`;
-    head.querySelector("p").textContent = group.where || "";
+    head.querySelector("p").textContent = [PAGE_TITLES[group.page], group.where].filter(Boolean).join(" · ");
     section.append(head);
 
     group.blocks.forEach((block, blockIndex) => {
@@ -594,10 +632,119 @@ function buildForm() {
   });
 }
 
-function showGroup(id) {
+function showGroup(id, { scroll = true } = {}) {
   document.querySelectorAll(".group").forEach((s) => { s.hidden = s.id !== `group-${id}`; });
   document.querySelectorAll(".gnav").forEach((b) => b.classList.toggle("is-active", b.dataset.for === id));
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  $("groupPick").value = id;
+  if (scroll) window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+// ---------- search ----------
+// Type any word, in any of the three languages, and every box that holds it
+// (or whose name matches) is listed; choosing one opens its section, unfolds
+// its part and puts the cursor in it.
+function setUpSearch() {
+  const input = $("findText");
+  const results = $("findResults");
+  const clear = $("findClear");
+  // Lower case, Arabic vowel marks and extra spaces ignored.
+  const plain = (text) => String(text || "").toLowerCase().replace(/[ً-ٰٟ]/g, "").replace(/\s+/g, " ").trim();
+
+  // Every editable box, with the section and part it lives in and its name.
+  function boxes() {
+    const found = [];
+    document.querySelectorAll(".group").forEach((section) => {
+      const group = GROUPS.find((g) => `group-${g.id}` === section.id);
+      section.querySelectorAll("input:not([type=file]):not([type=checkbox]):not([type=radio]), textarea, select").forEach((box) => {
+        const card = box.closest(".block");
+        const part = card?.querySelector(".btitle, .bhead h3")?.textContent || "";
+        const row = box.closest(".field");
+        const name = row?.querySelector(".flabel")?.textContent
+          || box.closest("label")?.querySelector("span")?.textContent
+          || box.getAttribute("placeholder") || box.getAttribute("aria-label") || "";
+        found.push({ box, group, card, part, name: name.trim() });
+      });
+    });
+    return found;
+  }
+
+  function show(list, query) {
+    results.replaceChildren();
+    results.hidden = !query;
+    if (!query) return;
+    if (!list.length) {
+      const none = document.createElement("p");
+      none.className = "find-none";
+      none.textContent = "Nothing found. Try another word, or the same word in Arabic or Kurdish.";
+      results.append(none);
+      return;
+    }
+    const seen = new Set();
+    for (const hit of list) {
+      // One result per text: its three language boxes count once.
+      const rowKey = hit.box.dataset.key ? `${hit.group.id}:${hit.box.dataset.key}` : hit.box;
+      if (seen.has(rowKey)) continue;
+      seen.add(rowKey);
+      if (seen.size > 30) break;
+      const item = document.createElement("button");
+      item.type = "button";
+      item.className = "find-hit";
+      item.innerHTML = "<small></small><b></b><span></span>";
+      item.querySelector("small").textContent = [PAGE_TITLES[hit.group.page], hit.group.title, hit.part].filter(Boolean).join(" › ");
+      item.querySelector("b").textContent = hit.name || "Text";
+      const span = item.querySelector("span");
+      span.textContent = hit.value.slice(0, 90);
+      span.dir = "auto";
+      item.addEventListener("click", () => go(hit));
+      results.append(item);
+    }
+  }
+
+  function go(hit) {
+    showGroup(hit.group.id, { scroll: false });
+    const head = hit.card?.querySelector(".bhead[aria-expanded='false']");
+    if (head) head.click();
+    results.hidden = true;
+    setTimeout(() => {
+      hit.box.scrollIntoView({ behavior: "smooth", block: "center" });
+      hit.box.focus({ preventScroll: true });
+      const row = hit.box.closest(".field") || hit.box.parentElement;
+      row.classList.remove("is-found");
+      void row.offsetWidth;
+      row.classList.add("is-found");
+    }, 60);
+  }
+
+  function run() {
+    const query = plain(input.value);
+    clear.hidden = !input.value;
+    if (query.length < 2) return show([], "");
+    const hits = boxes()
+      .map((hit) => ({ ...hit, value: hit.box.tagName === "SELECT" ? hit.box.selectedOptions[0]?.textContent || "" : hit.box.value }))
+      .filter((hit) => plain(hit.value).includes(query) || plain(hit.name).includes(query) || plain(hit.part).includes(query));
+    // Best first: the whole text, then a whole word, then part of a word,
+    // then only the name of the box.
+    const rank = (hit) => {
+      const value = plain(hit.value);
+      if (value === query) return 0;
+      if (value.startsWith(query) || value.split(/[\s,.:;!?()“”"'/·-]+/).includes(query)) return 1;
+      if (value.includes(query)) return 2;
+      return plain(hit.name) === query ? 3 : 4;
+    };
+    hits.sort((a, b) => rank(a) - rank(b));
+    show(hits, query);
+  }
+
+  input.addEventListener("input", run);
+  input.addEventListener("focus", () => { if (input.value) run(); });
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") results.querySelector(".find-hit")?.click();
+    if (event.key === "Escape") { input.value = ""; run(); }
+  });
+  clear.addEventListener("click", () => { input.value = ""; run(); input.focus(); });
+  document.addEventListener("click", (event) => {
+    if (!event.target.closest(".find")) results.hidden = true;
+  });
 }
 
 // ---------- signing in ----------
@@ -722,7 +869,8 @@ async function saveToGitHub() {
       if (JSON.stringify(state.files[code]) === state.original[code]) continue;
       const current = await store.readFile(langPath(code));
       const merged = { ...JSON.parse(current.text), ...state.files[code] };
-      await store.writeText(langPath(code), `${JSON.stringify(merged, null, 2)}\n`, `Admin: update ${label} text`);
+      const toWrite = code === "en" ? englishToSave(merged) : merged;
+      await store.writeText(langPath(code), `${JSON.stringify(toWrite, null, 2)}\n`, `Admin: update ${label} text`);
       state.files[code] = merged;
       state.original[code] = JSON.stringify(merged);
     }
@@ -762,7 +910,7 @@ function downloadFiles() {
     link.click();
     URL.revokeObjectURL(url);
   };
-  LANGS.forEach(({ code }) => download(`${code}.json`, `${JSON.stringify(state.files[code], null, 2)}\n`));
+  LANGS.forEach(({ code }) => download(`${code}.json`, `${JSON.stringify(code === "en" ? englishToSave(state.files[code]) : state.files[code], null, 2)}\n`));
   Object.keys(DATA_FILES).forEach((name) => download(`${name}.json`, `${JSON.stringify(state.data[name], null, 2)}\n`));
   say("Files downloaded: the three language files go in data/i18n/, the rest in data/. Pictures are only saved when you are signed in.", "ok");
 }
@@ -828,6 +976,8 @@ async function start() {
     return;
   }
   buildForm();
+  setUpSearch();
+  $("groupPick").addEventListener("change", (event) => showGroup(event.target.value));
   markDirty();
   uncover();                                  // everything is ready to use
 

@@ -15,9 +15,9 @@
 <link rel="stylesheet" href="css/base/base.css?v=24">
 <link rel="stylesheet" href="css/components/buttons.css?v=24">
 <link rel="stylesheet" href="css/components/brand.css?v=26">
-<link rel="stylesheet" href="css/admin.css?v=29">
+<link rel="stylesheet" href="css/admin.css?v=30">
 
-<script type="module" src="js/admin/main.js?v=67"></script>
+<script type="module" src="js/admin/main.js?v=68"></script>
 </head>
 <body class="admin checking">
 
@@ -95,6 +95,20 @@ setTimeout(function () {
 
 <div class="ashell">
   <aside class="aside">
+    <!-- Find any text by typing a word from it, in any language -->
+    <div class="find">
+      <label class="find-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input type="search" id="findText" placeholder="Find a text… e.g. Register" aria-label="Find a text on the website" autocomplete="off" spellcheck="false">
+        <button type="button" class="find-clear" id="findClear" aria-label="Clear" hidden>&times;</button>
+      </label>
+      <div class="find-results" id="findResults" hidden></div>
+    </div>
+    <!-- On a phone: one list of every part of the website -->
+    <label class="gpick">
+      <span>Part of the website</span>
+      <select id="groupPick" aria-label="Part of the website"></select>
+    </label>
     <nav class="steps" id="groupNav" aria-label="Sections of the website"></nav>
   </aside>
 
