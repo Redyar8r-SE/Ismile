@@ -1,7 +1,7 @@
 // The list editors: workshops, sponsor tiers, partners, and the program.
 // main.js passes a small context so this file does not import it back.
-import { LANGS } from "./fields.js?v=24";
-import { WORKSHOP_ICONS } from "../config/icons.js?v=28";
+import { LANGS } from "./fields.js?v=69";
+import { WORKSHOP_ICONS } from "../config/icons.js?v=69";
 
 const el = (tag, className, text) => {
   const node = document.createElement(tag);
@@ -348,8 +348,34 @@ export function buildList(group, section, ctx) {
 
 // ---------- the program: days, each with sessions ----------
 export function buildProgram(section, ctx) {
+  // One press hides the whole program (both days) behind "To be announced";
+  // the sessions stay saved, so pressing again brings them back unchanged.
+  const tba = el("button", "tba-switch");
+  tba.type = "button";
+  tba.setAttribute("role", "switch");
+  tba.append(el("span", "tba-knob"));
+  const tbaText = el("span", "tba-words");
+  tba.append(tbaText);
+  tba.addEventListener("click", () => {
+    const program = ctx.program();
+    program.toBeAnnounced = !program.toBeAnnounced;
+    render();
+    ctx.markDirty();
+  });
+  function renderSwitch() {
+    const on = Boolean(ctx.program().toBeAnnounced);
+    tba.classList.toggle("is-on", on);
+    tba.setAttribute("aria-checked", String(on));
+    tbaText.replaceChildren(
+      el("b", null, on ? "Program is hidden: “To be announced”" : "Program is showing"),
+      el("small", null, on
+        ? "The website shows “To be announced” for Day 1 and Day 2. Press to show the sessions again, then Save."
+        : "Visitors see every session below. Press to hide the whole program behind “To be announced”, then Save."),
+    );
+  }
+
   const wrap = el("div", "rows");
-  section.append(wrap);
+  section.append(tba, wrap);
 
   const addDay = el("button", "btn btn-outline add-row", "+ Add a day");
   addDay.type = "button";
@@ -378,6 +404,8 @@ export function buildProgram(section, ctx) {
 
   function render() {
     const program = ctx.program();
+    renderSwitch();
+    wrap.classList.toggle("is-parked", Boolean(program.toBeAnnounced));
     wrap.replaceChildren();
 
     program.days.forEach((day, dayIndex) => {

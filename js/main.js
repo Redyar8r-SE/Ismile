@@ -1,19 +1,19 @@
 // Entry point: loads the data files, then starts each page section.
-import { loadJSON } from "./utils/load-json.js?v=24";
-import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from "./i18n.js?v=24";
-import { initNav } from "./components/nav.js?v=25";
-import { initTheme } from "./components/theme.js?v=24";
-import { initProgram } from "./sections/program.js?v=27";
-import { initSpeakers } from "./sections/speakers.js?v=24";
-import { initSponsors } from "./sections/sponsors.js?v=26";
-import { initPartners } from "./sections/partners.js?v=30";
-import { initJourney } from "./sections/journey.js?v=24";
-import { initProjects } from "./sections/projects.js?v=24";
-import { initGallery } from "./sections/gallery.js?v=3";
-import { initFooter } from "./sections/footer.js?v=24";
-import { initVenue } from "./sections/venue.js?v=24";
-import { initReveal } from "./utils/reveal.js?v=4";
-import { initReadMore } from "./sections/read-more.js?v=1";
+import { loadJSON } from "./utils/load-json.js?v=69";
+import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from "./i18n.js?v=69";
+import { initNav } from "./components/nav.js?v=69";
+import { initTheme } from "./components/theme.js?v=69";
+import { initProgram } from "./sections/program.js?v=69";
+import { initSpeakers } from "./sections/speakers.js?v=69";
+import { initSponsors } from "./sections/sponsors.js?v=69";
+import { initPartners } from "./sections/partners.js?v=69";
+import { initJourney } from "./sections/journey.js?v=69";
+import { initProjects } from "./sections/projects.js?v=69";
+import { initGallery } from "./sections/gallery.js?v=69";
+import { initFooter } from "./sections/footer.js?v=69";
+import { initVenue } from "./sections/venue.js?v=69";
+import { initReveal } from "./utils/reveal.js?v=69";
+import { initReadMore } from "./sections/read-more.js?v=69";
 
 async function start() {
   initNav();

@@ -26,7 +26,7 @@ const PARTS = [
   },
   {
     id: "program", title: "Program", kind: "program",
-    hint: "Every day and its sessions. Pick the time with the hour, minutes and AM / PM boxes.",
+    hint: "Every day and its sessions. Pick the time with the hour, minutes and AM / PM boxes. The big switch at the top hides the whole program (both days) behind “To be announced”; switch it off and everything comes back as it was.",
     fields: [],
   },
   {
@@ -225,6 +225,7 @@ const PARTS = [
     fields: many([
       ["ab_title", "Section title"], ["ab_lead", "Section text"],
       ["gal_title", "Photos title"], ["gal_lead", "Photos text"], ["gal_year", "Photos badge (year)"],
+      ["gv_kicker", "Video: small label"], ["gv_title", "Video: title on the play button"], ["gv_play", "Video: play button name for screen readers"],
       ["medx_title", "italkMedX card title"],
       ["medx_p1", "italkMedX paragraph 1"], ["medx_p2", "italkMedX paragraph 2"],
       ["medx_p3", "italkMedX paragraph 3"], ["medx_more", "italkMedX: Read more button"], ["medx_less", "italkMedX: Show less button"], ["medx_p4", "Flagship initiatives: heading"], ["medx_here", "Flagship: badge on the iSmile card"],
@@ -266,6 +267,7 @@ const PARTS = [
       ["pg_topic_speaker", "Column: topic and speaker"], ["pg_location", "Column: location"],
       ["pg_to", "Word between start and end time"], ["time_morning", "Time word before 12:00 (English: AM)"], ["time_afternoon", "Time word from 12:00 to 3:59 (English: PM)"], ["time_evening", "Time word from 4:00 on (English: PM)"], ["pg_topic", "Row: topic"], ["pg_speaker", "Row: speaker"],
       ["pg_tba", "Shown when the topic is not known yet"],
+      ["pg_soon_kicker", "“To be announced” switch on: small label"], ["pg_soon_title", "“To be announced” switch on: title"], ["pg_soon_text", "“To be announced” switch on: text"],
     ]),
   },
   {

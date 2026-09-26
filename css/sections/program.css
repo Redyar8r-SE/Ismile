@@ -74,3 +74,17 @@
   .slot.brk .rail{grid-row:auto}
   .slot.brk .tm{grid-row:auto;align-self:center}
 }
+
+/* "To be announced": the admin switch hides the sessions and shows this card */
+.sched.sched-tba{border:0;background:linear-gradient(135deg,var(--navy) 0%,#0F5560 55%,var(--teal) 130%);color:#fff;padding:clamp(28px,5vw,56px);text-align:center;box-shadow:0 30px 60px -40px rgba(8,30,38,.9)}
+.tba-top{display:flex;flex-direction:column;align-items:center;gap:12px;max-width:640px;margin-inline:auto}
+.tba-ic{width:64px;height:64px;border-radius:18px;display:grid;place-items:center;background:rgba(255,255,255,.14);color:#fff}
+.tba-ic svg{width:32px;height:32px}
+.tba-kicker{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--navy);background:#8FE3DF;border-radius:999px;padding:6px 14px}
+.tba-top h3{font-size:clamp(22px,3vw,32px);font-weight:800;line-height:1.2;color:#fff}
+.tba-top p{margin:0;font-size:16px;line-height:1.55;color:rgba(255,255,255,.82)}
+.tba-days{list-style:none;padding:0;margin:32px auto 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;max-width:720px}
+.tba-day{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:14px;align-items:center;text-align:start;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.22);border-radius:var(--r-md);padding:16px 18px}
+.tba-n{grid-row:span 2;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--teal);color:#fff;font-weight:800;font-size:17px}
+.tba-day b{font-size:17px}
+.tba-day small{font-size:14px;color:#8FE3DF;font-weight:600}

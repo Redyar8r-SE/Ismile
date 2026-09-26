@@ -1,14 +1,38 @@
 // Program: day tabs + schedule, from data/program.json.
-import { ICONS } from "../config/icons.js?v=24";
-import { t, tr, onLangChange } from "../i18n.js?v=24";
-import { tCount } from "../utils/count.js?v=1";
-import { show } from "../utils/time.js?v=25";
+import { ICONS } from "../config/icons.js?v=69";
+import { t, tr, onLangChange } from "../i18n.js?v=69";
+import { tCount } from "../utils/count.js?v=69";
+import { show } from "../utils/time.js?v=69";
 
-export function initProgram({ types, days }) {
+export function initProgram({ types, days, toBeAnnounced }) {
   const tabs = document.getElementById("dayTabs");
   const meta = document.getElementById("dayMeta");
   const schedule = document.getElementById("sched");
   let openDay = days[0].id;
+
+  // The admin's "To be announced" switch: every day shows one card saying the
+  // program is coming, and the sessions stay saved for when it is switched off.
+  if (toBeAnnounced) {
+    tabs.hidden = true;
+    meta.hidden = true;
+    schedule.classList.add("sched-tba");
+    schedule.removeAttribute("role");
+    const renderSoon = () => {
+      schedule.innerHTML = `
+        <div class="tba-top">
+          <span class="tba-ic">${ICONS.calendar}</span>
+          <span class="tba-kicker">${t("pg_soon_kicker")}</span>
+          <h3>${t("pg_soon_title")}</h3>
+          <p>${t("pg_soon_text")}</p>
+        </div>
+        <ul class="tba-days">${days
+          .map((day, i) => `<li class="tba-day"><span class="tba-n">${i + 1}</span><b>${tr(day.label)}</b><small>${t("pg_tba")}</small></li>`)
+          .join("")}</ul>`;
+    };
+    renderSoon();
+    onLangChange(renderSoon);
+    return;
+  }
 
   function renderTabs() {
     tabs.innerHTML = days

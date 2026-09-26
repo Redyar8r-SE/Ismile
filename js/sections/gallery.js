@@ -1,6 +1,6 @@
 // Photos under the timeline in "About iSmile", from data/gallery.json.
 // Pictures only: they do not open larger when tapped.
-import { tr, onLangChange } from "../i18n.js?v=24";
+import { tr, onLangChange } from "../i18n.js?v=69";
 
 export function initGallery(items) {
   const block = document.getElementById("gallery");
@@ -36,4 +36,26 @@ export function initGallery(items) {
 
   render();
   onLangChange(render);
+  initVideo();
+}
+
+// The highlights video: the big play button starts it with sound, then gets
+// out of the way; it comes back when the video ends.
+function initVideo() {
+  const box = document.getElementById("galVideo");
+  if (!box) return;
+  const video = box.querySelector("video");
+  const cover = box.querySelector(".gv-cover");
+  cover.addEventListener("click", () => {
+    box.classList.add("is-playing");
+    video.controls = true;
+    video.play().catch(() => {});
+    video.focus();
+  });
+  video.addEventListener("play", () => { box.classList.add("is-playing"); video.controls = true; });
+  video.addEventListener("ended", () => {
+    box.classList.remove("is-playing");
+    video.controls = false;
+    video.load(); // back to the poster
+  });
 }

@@ -8,11 +8,11 @@
     }
   },
   {
-    "photo": "assets/photos/2021-workshop.jpg",
+    "photo": "assets/photos/2021-paradigm-lecture.jpg",
     "caption": {
-      "en": "Hands-on microscope workshop",
-      "ar": "ورشة عمل تطبيقية بالمجهر",
-      "ku": "وۆرکشۆپی کرداری بە مایکرۆسکۆپ"
+      "en": "Lecture: The paradigm shift",
+      "ar": "محاضرة: التحوّل الجذري",
+      "ku": "وانە: گۆڕانی بنەڕەتی"
     }
   },
   {
@@ -32,11 +32,11 @@
     }
   },
   {
-    "photo": "assets/photos/2021-exhibition.jpg",
+    "photo": "assets/photos/2021-digital-keynote.jpg",
     "caption": {
-      "en": "The dental exhibition",
-      "ar": "معرض طب الأسنان",
-      "ku": "پێشانگای پزیشکیی ددان"
+      "en": "Keynote on digital dentistry",
+      "ar": "محاضرة رئيسية عن طب الأسنان الرقمي",
+      "ku": "وتاری سەرەکی دەربارەی پزیشکیی ددانی دیجیتاڵ"
     }
   }
 ]

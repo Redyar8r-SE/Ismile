@@ -68,5 +68,8 @@
   "order_lunch_d2": "Lunch · Day 2",
   "lunch_from": "from {price}",
   "lunch_skip": "Continue without lunch",
-  "tp_companies_brands": "{n} companies & brands"
+  "tp_companies_brands": "{n} companies & brands",
+  "pg_soon_kicker": "Coming soon",
+  "pg_soon_title": "The full program will be announced soon",
+  "pg_soon_text": "Sessions, topics, speakers and rooms for both days are being finalised. Check back soon."
 }
