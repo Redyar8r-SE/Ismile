@@ -225,7 +225,7 @@ const PARTS = [
     fields: many([
       ["ab_title", "Section title"], ["ab_lead", "Section text"],
       ["gal_title", "Photos title"], ["gal_lead", "Photos text"], ["gal_year", "Photos badge (year)"],
-      ["gv_kicker", "Video: small label"], ["gv_title", "Video: title on the play button"], ["gv_play", "Video: play button name for screen readers"],
+      ["gv_kicker", "Video: small label"], ["gv_title", "Video: title on the play button"], ["gv_play", "Video: play button name for screen readers"], ["gv_sound", "Video: sound button while it plays muted"],
       ["medx_title", "italkMedX card title"],
       ["medx_p1", "italkMedX paragraph 1"], ["medx_p2", "italkMedX paragraph 2"],
       ["medx_p3", "italkMedX paragraph 3"], ["medx_more", "italkMedX: Read more button"], ["medx_less", "italkMedX: Show less button"], ["medx_p4", "Flagship initiatives: heading"], ["medx_here", "Flagship: badge on the iSmile card"],

@@ -1,6 +1,6 @@
 // Photos under the timeline in "About iSmile", from data/gallery.json.
 // Pictures only: they do not open larger when tapped.
-import { tr, onLangChange } from "../i18n.js?v=69";
+import { tr, onLangChange } from "../i18n.js?v=71";
 
 export function initGallery(items) {
   const block = document.getElementById("gallery");
@@ -39,23 +39,57 @@ export function initGallery(items) {
   initVideo();
 }
 
-// The highlights video: the big play button starts it with sound, then gets
-// out of the way; it comes back when the video ends.
+// The highlights video plays by itself, muted and looping, while it is on
+// screen (browsers only allow a video to start on its own without sound).
+// "Tap for sound" starts it again from the beginning with sound and controls;
+// when that ends it goes back to playing muted. With reduced motion, or if the
+// browser still refuses, the big play button is shown instead.
 function initVideo() {
   const box = document.getElementById("galVideo");
   if (!box) return;
   const video = box.querySelector("video");
   const cover = box.querySelector(".gv-cover");
-  cover.addEventListener("click", () => {
+  const sound = box.querySelector(".gv-sound");
+  let withSound = false;
+  let visible = false;
+
+  function playMuted() {
+    if (withSound || !visible) return;
+    video.muted = true;
+    video.loop = true;
+    video.controls = false;
+    video.play().then(() => {
+      box.classList.add("is-auto");
+      sound.hidden = false;
+    }).catch(() => {});
+  }
+
+  function playWithSound() {
+    withSound = true;
+    box.classList.remove("is-auto");
     box.classList.add("is-playing");
+    sound.hidden = true;
+    video.muted = false;
+    video.loop = false;
     video.controls = true;
+    video.currentTime = 0;
     video.play().catch(() => {});
     video.focus();
-  });
-  video.addEventListener("play", () => { box.classList.add("is-playing"); video.controls = true; });
+  }
+
+  cover.addEventListener("click", playWithSound);
+  sound.addEventListener("click", playWithSound);
+  video.addEventListener("click", () => { if (!withSound) playWithSound(); });
   video.addEventListener("ended", () => {
+    withSound = false;
     box.classList.remove("is-playing");
-    video.controls = false;
-    video.load(); // back to the poster
+    playMuted();
   });
+
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window)) return;
+  new IntersectionObserver(([entry]) => {
+    visible = entry.isIntersecting;
+    if (visible) playMuted();
+    else if (!withSound) video.pause();
+  }, { threshold: 0.35 }).observe(box);
 }

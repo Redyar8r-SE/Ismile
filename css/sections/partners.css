@@ -19,7 +19,10 @@
 .ptier .tc-count{color:color-mix(in srgb,var(--m2) 78%,var(--text));border-color:color-mix(in srgb,var(--m2) 55%,var(--line));background:color-mix(in srgb,var(--m2) 10%,var(--bg))}
 
 .p-slots{display:grid;gap:12px}
-.tc-plat .p-slots{grid-template-columns:repeat(5,1fr)}
+/* Platinum stretches to fill the row whatever the number of partners:
+   4 logos make 4 wide tiles, no empty slot is left at the end */
+.tc-plat .p-slots{display:flex;flex-wrap:wrap}
+.tc-plat .p-logo{flex:1 1 190px}
 .ptier.tc-gold .p-slots{grid-template-columns:repeat(3,1fr)}
 .ptier.tc-silver .p-slots{grid-template-columns:1fr}
 .tc-bronze .p-slots{grid-template-columns:repeat(9,1fr)}
@@ -60,7 +63,6 @@
 }
 @media (max-width:1060px){
   .ptiers{grid-template-columns:minmax(0,1fr)}
-  .tc-plat .p-slots{grid-template-columns:repeat(3,1fr)}
   .ptier.tc-silver .p-slots{grid-template-columns:repeat(3,1fr)}
   .tc-bronze .p-slots{grid-template-columns:repeat(5,1fr)}
 }
@@ -72,7 +74,8 @@
   .ptier .tc-top{display:grid;grid-template-columns:44px minmax(0,1fr);align-items:center;gap:5px 12px}
   .ptier .medal{grid-row:1/span 2}
   .ptier .tc-count{grid-column:2;margin-inline-start:0;justify-self:start;max-width:100%;padding:4px 10px;font-size:11px;white-space:normal}
-  .tc-plat .p-slots,.ptier.tc-gold .p-slots,.ptier.tc-silver .p-slots{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tc-plat .p-logo{flex-basis:140px}
+  .ptier.tc-gold .p-slots,.ptier.tc-silver .p-slots{grid-template-columns:repeat(2,minmax(0,1fr))}
   .tc-bronze .p-slots{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
   .p-slots .p-logo:last-child:nth-child(odd){grid-column:span 2}
   .tc-bronze .p-slots .p-logo:last-child:nth-child(odd){grid-column:auto}

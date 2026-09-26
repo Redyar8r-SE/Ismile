@@ -23,9 +23,17 @@
 .gv-kicker{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;background:rgba(255,255,255,.18);backdrop-filter:blur(6px);border-radius:999px;padding:6px 12px}
 .gv-text b{font-size:clamp(20px,2.6vw,30px);font-weight:800;line-height:1.2;text-shadow:0 2px 14px rgba(0,0,0,.4)}
 .gv-text small{font-size:14px;font-weight:600;opacity:.85}
-.gal-video.is-playing .gv-cover{display:none}
+.gal-video.is-playing .gv-cover,.gal-video.is-auto .gv-cover{display:none}
+.gal-video.is-auto video{cursor:pointer}
+/* While it plays muted on its own: a big "Tap for sound" button */
+.gv-sound{position:absolute;inset-inline-end:16px;bottom:16px;display:inline-flex;align-items:center;gap:10px;border:0;border-radius:999px;padding:12px 20px 12px 16px;background:var(--teal);color:#fff;font:inherit;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 12px 28px -10px rgba(8,30,38,.8);transition:transform .15s,background .15s;animation:gv-nudge 2.6s ease-in-out infinite}
+.gv-sound svg{width:22px;height:22px;flex:none}
+.gv-sound:hover,.gv-sound:focus-visible{background:var(--teal-ink);transform:scale(1.05)}
+.gv-sound:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.gv-sound[hidden]{display:none}
+@keyframes gv-nudge{0%,80%,100%{transform:scale(1)}90%{transform:scale(1.07)}}
 @keyframes gv-pulse{0%{transform:scale(.9);opacity:1}100%{transform:scale(1.3);opacity:0}}
-@media (prefers-reduced-motion:reduce){.gv-play::before{animation:none}}
+@media (prefers-reduced-motion:reduce){.gv-play::before,.gv-sound{animation:none}}
 
 /* The layout follows the number of photos (data-count, set by gallery.js), so
    any number looks planned: 1 a wide banner, 2 halves, 3 one big beside two,
@@ -63,6 +71,8 @@
 }
 @media (max-width:520px){
   .gv-kicker{display:none}
+  .gv-sound{inset-inline-end:10px;bottom:10px;padding:9px 14px 9px 12px;font-size:13px}
+  .gv-sound svg{width:18px;height:18px}
   .gv-play{width:60px;height:60px}
   .gv-play::before{inset:-7px}
   .gv-play svg{width:26px;height:26px}
