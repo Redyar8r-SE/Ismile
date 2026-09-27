@@ -52,11 +52,48 @@ export function safeJoin(root, requestPath) {
 }
 
 /**
+ * Only the website itself is public. Everything else in the deploy folder
+ * (the .env secrets, server and function code, docs, package files) must
+ * never be served, so this is an allow-list, not a block-list.
+ */
+export const PUBLIC_FILES = new Set([
+  "index.html",
+  "admin.html",
+  "register.html",
+  "sponsor.html",
+  "workshops.html",
+  "payment.html",
+  "favicon.ico",
+  "robots.txt",
+]);
+export const PUBLIC_DIRS = new Set(["assets", "css", "js", "data"]);
+
+/**
+ * @param {string} pathname
+ * @returns {boolean}
+ */
+export function isPublicPath(pathname) {
+  let decoded;
+  try {
+    decoded = decodeURIComponent(pathname.split("?")[0] || "");
+  } catch {
+    return false;
+  }
+  const segments = decoded.split(/[/\\]+/).filter(Boolean);
+  if (segments.length === 0) return true;
+  // No hidden files or folders anywhere (.env, .git, .github, ...).
+  if (segments.some((segment) => segment.startsWith("."))) return false;
+  if (segments.length === 1) return PUBLIC_FILES.has(segments[0]);
+  return PUBLIC_DIRS.has(segments[0]);
+}
+
+/**
  * @param {string} root
  * @param {string} pathname
  * @returns {{ status: number, filePath?: string, message?: string }}
  */
 export function resolveStaticFile(root, pathname) {
+  if (!isPublicPath(pathname)) return { status: 404, message: "Not found" };
   let filePath = safeJoin(root, pathname === "/" ? "/index.html" : pathname);
   if (!filePath) return { status: 400, message: "Bad path" };
   if (existsSync(filePath) && statSync(filePath).isDirectory()) {

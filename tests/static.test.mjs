@@ -2,7 +2,13 @@ import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { contentType, loadEnvFile, resolveStaticFile, safeJoin } from "../server/static.mjs";
+import {
+  contentType,
+  isPublicPath,
+  loadEnvFile,
+  resolveStaticFile,
+  safeJoin,
+} from "../server/static.mjs";
 
 describe("static helpers", () => {
   /** @type {string[]} */
@@ -26,16 +32,57 @@ describe("static helpers", () => {
     expect(safeJoin(root, "/%2e%2e/etc/passwd")).toBeNull();
   });
 
-  it("resolves existing files and 404s missing ones", () => {
+  it("resolves existing public files and 404s missing ones", () => {
     const root = mkdtempSync(path.join(tmpdir(), "ismile-static-"));
     writeFileSync(path.join(root, "index.html"), "<h1>ok</h1>");
-    mkdirSync(path.join(root, "docs"));
-    writeFileSync(path.join(root, "docs", "index.html"), "<h1>docs</h1>");
+    mkdirSync(path.join(root, "css"));
+    writeFileSync(path.join(root, "css", "main.css"), "body{}");
 
     expect(resolveStaticFile(root, "/").status).toBe(200);
-    expect(resolveStaticFile(root, "/docs").filePath).toBe(path.join(root, "docs", "index.html"));
+    expect(resolveStaticFile(root, "/css/main.css").filePath).toBe(
+      path.join(root, "css", "main.css"),
+    );
     expect(resolveStaticFile(root, "/missing.html").status).toBe(404);
-    expect(resolveStaticFile(root, "/../outside").status).toBe(400);
+    expect(resolveStaticFile(root, "/../outside").status).toBe(404);
+  });
+
+  it("never serves secrets, code or internal documents", () => {
+    const root = mkdtempSync(path.join(tmpdir(), "ismile-static-"));
+    writeFileSync(path.join(root, ".env"), "GITHUB_TOKEN=secret");
+    writeFileSync(path.join(root, "package.json"), "{}");
+    writeFileSync(path.join(root, "ecosystem.config.cjs"), "");
+    for (const dir of ["docs", "server", "netlify", "css"]) mkdirSync(path.join(root, dir));
+    writeFileSync(path.join(root, "docs", "plan.html"), "private");
+    writeFileSync(path.join(root, "server", "node-server.mjs"), "code");
+    writeFileSync(path.join(root, "css", ".env"), "secret");
+
+    for (const bad of [
+      "/.env",
+      "/%2eenv",
+      "/.git/config",
+      "/package.json",
+      "/ecosystem.config.cjs",
+      "/docs/plan.html",
+      "/docs",
+      "/server/node-server.mjs",
+      "/netlify/functions/api.mjs",
+      "/css/.env",
+      "/%2e%2e/%2e%2e/etc/passwd",
+    ]) {
+      expect(resolveStaticFile(root, bad).status, bad).toBe(404);
+      expect(isPublicPath(bad), bad).toBe(false);
+    }
+    for (const good of [
+      "/",
+      "/index.html",
+      "/register.html",
+      "/css/main.css",
+      "/js/main.js",
+      "/data/i18n/ku.json",
+      "/assets/logo.png",
+    ]) {
+      expect(isPublicPath(good), good).toBe(true);
+    }
   });
 
   it("loads env without overwriting existing values", () => {
