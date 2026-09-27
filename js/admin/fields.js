@@ -31,26 +31,12 @@ const PARTS = [
   },
   {
     id: "ticketPrices", title: "Ticket prices", kind: "single", file: "tickets",
-    hint: "In Iraqi dinars, whole numbers. Leave 0 to show “Price soon”. Lunch is optional and priced per day: visitors can add Day 1, Day 2 or both, and it is added to their total. Workshop prices are set on each workshop: Workshops page › Workshops › The workshops.",
+    hint: "In Iraqi dinars, whole numbers. Leave 0 to show “Price soon”. Lunch is optional and priced per day: visitors can add Day 1, Day 2 or both, and it is added to their total. Workshop names, prices and seats are managed in the registrations admin (/admin/ → Workshops).",
     itemFields: [
       { key: "professional", label: "Professional ticket (IQD)", type: "number" },
       { key: "student", label: "Student ticket (IQD)", type: "number" },
       { key: "lunchDay1", label: "Lunch · Day 1 (IQD)", type: "number" },
       { key: "lunchDay2", label: "Lunch · Day 2 (IQD)", type: "number" },
-    ],
-  },
-  {
-    id: "workshopList", title: "Workshop list", kind: "list", file: "workshops",
-    hint: "Each workshop card, with its price and how many seats are left. Leave the title empty and the card shows “Coming soon” with no seat numbers; fill it in when the workshop is announced. Seats are booked by phone: update “Seats left” as the office takes bookings, and set it to 0 to show the workshop as full. The booking phone is in “Wording on the cards and booking phone” below.",
-    itemName: "workshop",
-    newItem: () => ({ id: `ws${Date.now().toString(36).slice(-4)}`, icon: "tools", title: { en: "", ar: "", ku: "" }, company: null, speaker: null, price: 0, totalSeats: 20, seatsLeft: 20 }),
-    itemFields: [
-      { key: "title", label: "Workshop title", type: "i18n" },
-      { key: "company", label: "Company (optional)", type: "i18n" },
-      { key: "speaker", label: "Speaker (optional)", type: "i18n" },
-      { key: "price", label: "Price per seat (IQD)", type: "number" },
-      { key: "totalSeats", label: "Total seats", type: "number" },
-      { key: "seatsLeft", label: "Seats left", type: "number" },
     ],
   },
   {
@@ -280,7 +266,7 @@ const PARTS = [
   },
   {
     id: "workshopsText", title: "Workshops — words",
-    hint: "The labels on the workshop cards and the booking phone. The workshops themselves are in “The workshops” above.",
+    hint: "The labels on the workshop cards and the booking phone. The workshops themselves (names, prices, seats) are managed in the registrations admin: /admin/ → Workshops.",
     fields: many([
       ["ws_phone", "Workshop booking phone: the number (e.g. +964 750 123 4567), or \"Will be announced soon\" until you have it"],
       ["w_call", "Call to book button"], ["w_call_how", "Text above the phone number"],
@@ -609,7 +595,7 @@ export const GROUPS = [
   },
   {
     id: "workshops", page: "workshops", title: "Workshops", where: "The workshops page: the cards, the booking phone and the wording",
-    blocks: [list("workshopList", "The workshops"), text("workshopsText", "Wording on the cards and booking phone"), text("workshopsPage", "The rest of the page")],
+    blocks: [text("workshopsText", "Wording on the cards and booking phone"), text("workshopsPage", "The rest of the page")],
   },
   {
     id: "registration", page: "register", title: "Registration", where: "The three-step registration page",

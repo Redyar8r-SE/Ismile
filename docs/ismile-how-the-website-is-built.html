@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>iSmile 2026 — How the website is built</title>
+<style>
+@page { size: A4; margin: 14mm 14mm 15mm; }
+* { box-sizing: border-box; }
+body { margin: 0; color: #12302F; font: 10.2pt/1.5 Arial, Helvetica, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+h1 { font-size: 25pt; margin: 0 0 2mm; line-height: 1.1; }
+h2 { font-size: 15pt; margin: 0 0 3mm; display: flex; align-items: center; gap: 3mm; break-after: avoid; }
+h2 .n { width: 8.5mm; height: 8.5mm; border-radius: 50%; background: #12302F; color: #fff; display: inline-grid; place-items: center; font-size: 11pt; flex: none; }
+h3 { font-size: 11pt; margin: 0 0 1.5mm; }
+p { margin: 0 0 2.5mm; }
+.page { break-after: page; }
+.page:last-child { break-after: auto; }
+.eyebrow { display: inline-block; font-size: 8.5pt; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; background: #D5F1EF; color: #0C6F6B; padding: 1mm 3mm; border-radius: 99px; margin-bottom: 3mm; }
+.lede { color: #4A6467; font-size: 11pt; }
+.small { font-size: 8.6pt; color: #5B7477; }
+.mono, code { font-family: Consolas, "Courier New", monospace; font-size: 9pt; }
+code { background: #EEF6F6; padding: .2mm 1.2mm; border-radius: 1mm; }
+.callout { border-radius: 3mm; padding: 3.5mm 4.5mm; margin: 3mm 0; break-inside: avoid; }
+.c-red { background: #FBE1DC; color: #7E2A1C; border-left: 4px solid #E0604A; }
+.c-teal { background: #E4F6F5; color: #0C5F5B; border-left: 4px solid #16A6A1; }
+.c-gold { background: #FCEFD3; color: #6E480C; border-left: 4px solid #E0A33A; }
+.c-violet { background: #EDEAFC; color: #3F33A0; border-left: 4px solid #6A5BD8; }
+svg { display: block; width: 100%; height: auto; }
+svg text { font-family: Arial, Helvetica, sans-serif; }
+svg text:not([fill]) { fill: #12302F; }
+table { width: 100%; border-collapse: collapse; font-size: 9.2pt; }
+th, td { border: 1px solid #D4E4E4; padding: 1.7mm 2.4mm; vertical-align: top; text-align: left; }
+th { background: #EEF6F6; }
+tr { break-inside: avoid; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; }
+.card { border-radius: 3.5mm; padding: 3.5mm; break-inside: avoid; }
+.card h3 { margin-bottom: 1mm; }
+.card p { margin: 0; font-size: 9.3pt; }
+.lang td:first-child { width: 20%; font-weight: 700; }
+.sw { display: inline-block; width: 3mm; height: 3mm; border-radius: .8mm; margin-right: 1.5mm; vertical-align: -.2mm; }
+.pill { display: inline-block; padding: .2mm 2.2mm; border-radius: 99px; font-size: 8pt; font-weight: 700; white-space: nowrap; }
+.now { background: #DDF3E5; color: #1D6B3C; }
+.soon { background: #FCEFD3; color: #8A5A0F; }
+.tree { font-family: Consolas, "Courier New", monospace; font-size: 8.8pt; line-height: 1.6; white-space: pre; margin: 0; background: #F6FAFA; border: 1px solid #D4E4E4; border-radius: 3mm; padding: 3mm 4mm; }
+.tree .d { color: #0C6F6B; font-weight: 700; }
+.tree .x { color: #6B8285; }
+.rtl { direction: rtl; font-family: "Noto Kufi Arabic", Tahoma, Arial, sans-serif; }
+footer { margin-top: 4mm; font-size: 8.4pt; color: #5B7477; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <marker id="k" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#12302F"/></marker>
+    <marker id="t" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#16A6A1"/></marker>
+    <marker id="v" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#6A5BD8"/></marker>
+    <marker id="g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#C98A1E"/></marker>
+  </defs>
+</svg>
+
+<!-- PAGE 1 -->
+<div class="page">
+  <span class="eyebrow">iSmile 2026 · The website · 27 September 2026</span>
+  <h1>How the iSmile website is built</h1>
+  <p class="lede">Everything in one place: the programming languages, the pages, the folders, how English, Arabic and Kurdish work, how the admin saves, and what the backend will add. Written from the real project files.</p>
+
+  <h2 style="margin-top:5mm"><span class="n">1</span>The whole picture today</h2>
+  <svg viewBox="0 0 1000 430" role="img" aria-label="How the site works today">
+    <g font-size="13">
+      <!-- visitor -->
+      <rect x="10" y="30" width="200" height="130" rx="12" fill="#FCEFD3" stroke="#E0A33A" stroke-width="1.5"/>
+      <text x="110" y="62" text-anchor="middle" font-size="17" font-weight="700" fill="#8A5A0F">Visitor</text>
+      <text x="110" y="86" text-anchor="middle">phone or laptop browser</text>
+      <text x="110" y="106" text-anchor="middle" fill="#5B7477">EN · العربية · کوردی</text>
+      <text x="110" y="126" text-anchor="middle" fill="#5B7477">light or dark</text>
+
+      <!-- github pages -->
+      <rect x="330" y="10" width="340" height="190" rx="14" fill="#D5F1EF" stroke="#16A6A1" stroke-width="2"/>
+      <text x="500" y="40" text-anchor="middle" font-size="17" font-weight="700" fill="#0C6F6B">GitHub Pages (free hosting)</text>
+      <text x="350" y="68" font-weight="700">Pages</text><text x="420" y="68" fill="#5B7477">index · register · workshops · sponsor</text>
+      <text x="350" y="92" font-weight="700">Design</text><text x="420" y="92" fill="#5B7477">27 CSS files</text>
+      <text x="350" y="116" font-weight="700">Code</text><text x="420" y="116" fill="#5B7477">JavaScript modules</text>
+      <text x="350" y="140" font-weight="700">Content</text><text x="420" y="140" fill="#5B7477">JSON files in data/</text>
+      <text x="350" y="164" font-weight="700">Media</text><text x="420" y="164" fill="#5B7477">logos, photos, video</text>
+      <text x="350" y="188" fill="#0C6F6B" font-weight="700">No server, no database</text>
+
+      <line x1="210" y1="80" x2="328" y2="80" stroke="#C98A1E" stroke-width="2" marker-end="url(#g)"/>
+      <text x="268" y="72" text-anchor="middle" fill="#8A5A0F" font-weight="700">opens</text>
+      <line x1="328" y1="130" x2="212" y2="130" stroke="#16A6A1" stroke-width="2" marker-end="url(#t)"/>
+      <text x="268" y="150" text-anchor="middle" fill="#0C6F6B" font-weight="700">files</text>
+
+      <!-- GitHub repo -->
+      <rect x="790" y="30" width="200" height="130" rx="12" fill="#E6E2FB" stroke="#6A5BD8" stroke-width="1.5"/>
+      <text x="890" y="62" text-anchor="middle" font-size="17" font-weight="700" fill="#3F33A0">GitHub</text>
+      <text x="890" y="86" text-anchor="middle">Redyar8r-SE/Ismile</text>
+      <text x="890" y="106" text-anchor="middle" fill="#5B7477">every change saved</text>
+      <text x="890" y="126" text-anchor="middle" fill="#5B7477">with history (194 saves)</text>
+      <line x1="788" y1="95" x2="672" y2="95" stroke="#6A5BD8" stroke-width="2" marker-end="url(#v)"/>
+      <text x="730" y="87" text-anchor="middle" fill="#3F33A0" font-weight="700">publish</text>
+
+      <!-- admin -->
+      <rect x="10" y="260" width="200" height="140" rx="12" fill="#DDF3E5" stroke="#2E9E5B" stroke-width="2"/>
+      <text x="110" y="292" text-anchor="middle" font-size="17" font-weight="700" fill="#1D6B3C">You in admin.html</text>
+      <text x="110" y="316" text-anchor="middle">edit texts, lists,</text>
+      <text x="110" y="336" text-anchor="middle">photos, prices</text>
+      <text x="110" y="360" text-anchor="middle" fill="#5B7477">in 3 languages</text>
+
+      <rect x="330" y="250" width="340" height="160" rx="14" fill="#fff" stroke="#6A5BD8" stroke-width="2" stroke-dasharray="6 4"/>
+      <text x="500" y="278" text-anchor="middle" font-size="15" font-weight="700" fill="#3F33A0">How a save reaches GitHub</text>
+      <text x="350" y="304"><tspan font-weight="700">a.</tspan> Netlify function <tspan fill="#5B7477">(api.mjs, checks sign-in)</tspan></text>
+      <text x="350" y="328"><tspan font-weight="700">b.</tspan> GitHub key in the browser <tspan fill="#5B7477">(stopgap)</tspan></text>
+      <text x="350" y="352"><tspan font-weight="700">c.</tspan> Download + <tspan font-family="Consolas,monospace">tools/publish.mjs</tspan></text>
+      <text x="350" y="386" fill="#8A5A0F" font-weight="700">Later: server/admin.php saves directly</text>
+      <line x1="210" y1="330" x2="328" y2="330" stroke="#2E9E5B" stroke-width="2" marker-end="url(#k)"/>
+      <path d="M670 330 H890 V162" fill="none" stroke="#6A5BD8" stroke-width="2" marker-end="url(#v)"/>
+      <text x="780" y="322" text-anchor="middle" fill="#3F33A0" font-weight="700">writes to data/</text>
+    </g>
+  </svg>
+  <div class="callout c-teal">Today the site is <b>plain files</b>. It shows content, but it cannot store anything a visitor sends. Registrations and sponsor requests go out by WhatsApp or email. The backend (sections 10 and 11) adds a server and a database.</div>
+</div>
+
+<!-- PAGE 2 -->
+<div class="page">
+  <h2><span class="n">2</span>The programming languages, and what each one does</h2>
+  <p>Lines of code counted in the project on 27 Sep 2026 (without the docs folder).</p>
+  <svg viewBox="0 0 1000 330" role="img" aria-label="Lines of code by language">
+    <g font-size="14">
+      <text x="10" y="34" font-weight="700">JavaScript</text><rect x="190" y="16" width="620" height="26" rx="5" fill="#E0A33A"/><text x="822" y="35" font-weight="700">4,630</text>
+      <text x="10" y="74" font-weight="700">CSS</text><rect x="190" y="56" width="300" height="26" rx="5" fill="#2F7BD8"/><text x="502" y="75" font-weight="700">2,239</text>
+      <text x="10" y="114" font-weight="700">HTML</text><rect x="190" y="96" width="226" height="26" rx="5" fill="#E0604A"/><text x="428" y="115" font-weight="700">1,688</text>
+      <text x="10" y="154" font-weight="700">JSON (data)</text><rect x="190" y="136" width="216" height="26" rx="5" fill="#16A6A1"/><text x="418" y="155" font-weight="700">1,611</text>
+      <text x="10" y="194" font-weight="700">Node.js scripts</text><rect x="190" y="176" width="49" height="26" rx="5" fill="#2E9E5B"/><text x="251" y="195" font-weight="700">365</text>
+      <text x="10" y="234" font-weight="700">PHP</text><rect x="190" y="216" width="35" height="26" rx="5" fill="#6A5BD8"/><text x="237" y="235" font-weight="700">263</text>
+      <text x="10" y="274" font-weight="700">PowerShell</text><rect x="190" y="256" width="4" height="26" rx="2" fill="#5B7477"/><text x="206" y="275" font-weight="700">33</text>
+      <line x1="190" y1="8" x2="190" y2="290" stroke="#CFE3E3" stroke-width="2"/>
+      <text x="10" y="318" font-size="12.5" fill="#5B7477">Bars drawn to scale. Coming with the backend: more PHP, and SQL for the MySQL database.</text>
+    </g>
+  </svg>
+
+  <table class="lang" style="margin-top:3mm">
+    <tr><th>Language</th><th>What it does in iSmile</th><th>Where</th><th>Status</th></tr>
+    <tr><td><span class="sw" style="background:#E0604A"></span>HTML</td><td>The skeleton of each page: headings, sections, the forms. English text lives here.</td><td><code>index.html</code>, <code>register.html</code>, <code>workshops.html</code>, <code>sponsor.html</code>, <code>admin.html</code></td><td><span class="pill now">in use</span></td></tr>
+    <tr><td><span class="sw" style="background:#2F7BD8"></span>CSS</td><td>How it looks: colours, fonts, layout, phone sizes, dark mode, right-to-left for Arabic and Kurdish.</td><td><code>css/</code>: tokens, base, components, layout, one file per section</td><td><span class="pill now">in use</span></td></tr>
+    <tr><td><span class="sw" style="background:#E0A33A"></span>JavaScript</td><td>What moves: loads the data, draws the program, speakers and sponsors, switches language and theme, runs the 3-step registration and the sponsor form, the whole admin.</td><td><code>js/</code>: entry files, <code>sections/</code>, <code>utils/</code>, <code>admin/</code></td><td><span class="pill now">in use</span></td></tr>
+    <tr><td><span class="sw" style="background:#16A6A1"></span>JSON</td><td>The content, kept apart from code: program, workshops, speakers, sponsors, partners, prices, footer, map, and the Arabic and Kurdish translations. The admin edits these.</td><td><code>data/</code>, <code>data/i18n/</code></td><td><span class="pill now">in use</span></td></tr>
+    <tr><td><span class="sw" style="background:#2E9E5B"></span>Node.js</td><td>Helpers that run on a computer, not in the visitor's browser: the Netlify save function, the version stamp, the publish script.</td><td><code>netlify/functions/api.mjs</code>, <code>tools/*.mjs</code></td><td><span class="pill now">in use</span></td></tr>
+    <tr><td><span class="sw" style="background:#6A5BD8"></span>PHP</td><td>Runs on the server. Today: <code>admin.php</code>, which lets the admin save straight to your own hosting. Next: the whole backend.</td><td><code>server/</code></td><td><span class="pill soon">written, waits for hosting</span></td></tr>
+    <tr><td><span class="sw" style="background:#12302F"></span>SQL</td><td>The language of the MySQL database: creating the tables and reading/writing registrations and payments.</td><td><code>database/schema.sql</code> (planned)</td><td><span class="pill soon">planned</span></td></tr>
+    <tr><td><span class="sw" style="background:#5B7477"></span>PowerShell</td><td>One small Windows tool that cut the iSmile logo mark out of the full logo.</td><td><code>tools/split-ismile-mark.ps1</code></td><td><span class="pill now">used once</span></td></tr>
+  </table>
+  <div class="callout c-gold"><b>No framework.</b> The site uses no React, no WordPress, no build step. The files you see are the files the browser gets. That keeps it fast, cheap and easy for any web developer to pick up. Fonts: <b>Schibsted Grotesk</b> for Latin letters and <b>Noto Kufi Arabic</b> for Arabic and Kurdish, from Google Fonts.</div>
+</div>
+
+<!-- PAGE 3 -->
+<div class="page">
+  <h2><span class="n">3</span>The pages</h2>
+  <div class="grid3">
+    <div class="card" style="background:#D5F1EF"><h3>index.html · home</h3><p>Top of page, About, Program, Workshops, Speakers, Sponsors, For companies, Registration card, Venue with map, footer. Sections are drawn from the data files.</p></div>
+    <div class="card" style="background:#FCEFD3"><h3>register.html</h3><p>3 steps: personal details → ticket, lunch and payment method (Visa, MasterCard, FIB, FastPay) → review. Student ID photo for students. Makes a reference like ISM26-XXXXXX.</p></div>
+    <div class="card" style="background:#E6E2FB"><h3>workshops.html</h3><p>Workshop list with seats left. Booked by phone only; the phone number is "will be announced soon".</p></div>
+    <div class="card" style="background:#DDEBFB"><h3>sponsor.html</h3><p>Sponsorship or booth request in steps. The finished request opens in WhatsApp or email, already written.</p></div>
+    <div class="card" style="background:#DDF3E5"><h3>admin.html</h3><p>Edits every text, list, photo and price in three languages, grouped by page. Sign-in with email and password.</p></div>
+    <div class="card" style="background:#FBE1DC"><h3>Every page</h3><p>Language switch EN / العربية / کوردی, light / dark switch, phone-friendly menu, a loading cover that never blocks the page.</p></div>
+  </div>
+
+  <h2 style="margin-top:6mm"><span class="n">4</span>The folders</h2>
+  <div class="grid2">
+<pre class="tree"><span class="x">Ismile/</span>
+├─ index.html  register.html
+├─ workshops.html  sponsor.html
+├─ admin.html
+├─ <span class="d">css/</span>
+│  ├─ <span class="d">base/</span>        tokens.css <span class="x">colours, fonts</span>
+│  ├─ <span class="d">components/</span>  buttons, cards…
+│  ├─ <span class="d">layout/</span>      header, footer
+│  ├─ <span class="d">sections/</span>    one per section
+│  └─ admin.css
+├─ <span class="d">js/</span>
+│  ├─ main.js  register.js  sponsor.js
+│  ├─ i18n.js  <span class="x">languages</span>
+│  ├─ <span class="d">sections/</span>  <span class="x">one per section</span>
+│  ├─ <span class="d">components/</span>  nav, theme
+│  ├─ <span class="d">utils/</span>  phone, money, time…
+│  └─ <span class="d">admin/</span>  <span class="x">the admin's code</span>
+├─ <span class="d">data/</span>  <span class="x">content (JSON)</span>
+│  └─ <span class="d">i18n/</span>  en · ar · ku
+├─ <span class="d">assets/</span>  brand, logos, photos,
+│          video, pay, uploads
+├─ <span class="d">server/</span>  admin.php  <span class="x">(PHP)</span>
+├─ <span class="d">netlify/</span>  functions/api.mjs
+├─ <span class="d">tools/</span>  bump-version, publish
+└─ <span class="d">docs/</span>  plans and these PDFs</pre>
+    <div style="display:grid;gap:3mm;align-content:start">
+      <div class="callout c-teal" style="margin:0"><b>Rule 1: content is apart from code.</b> Changing a speaker, a price or a sentence means changing a JSON file, which the admin does for you. Nobody touches the code for that.</div>
+      <div class="callout c-violet" style="margin:0"><b>Rule 2: one file per job.</b> Each page section has its own CSS file and its own JS file with the same name, e.g. <code>css/sections/program.css</code> and <code>js/sections/program.js</code>.</div>
+      <div class="callout c-gold" style="margin:0"><b>Rule 3: colours in one place.</b> Every colour and font is a token in <code>css/base/tokens.css</code>, with a second set for dark mode.</div>
+    </div>
+  </div>
+
+  <h2 style="margin-top:6mm"><span class="n">5</span>What happens when someone opens the site</h2>
+  <svg viewBox="0 0 1000 150" role="img" aria-label="Page load steps">
+    <g font-size="13">
+      <rect x="0" y="20" width="185" height="110" rx="12" fill="#FBE1DC"/><text x="92" y="50" text-anchor="middle" font-size="15" font-weight="700" fill="#9A3222">1 · HTML</text><text x="92" y="74" text-anchor="middle">page frame arrives,</text><text x="92" y="92" text-anchor="middle">loading cover shows</text>
+      <line x1="185" y1="75" x2="203" y2="75" stroke="#12302F" stroke-width="2" marker-end="url(#k)"/>
+      <rect x="204" y="20" width="185" height="110" rx="12" fill="#DDEBFB"/><text x="296" y="50" text-anchor="middle" font-size="15" font-weight="700" fill="#1B4F91">2 · CSS</text><text x="296" y="74" text-anchor="middle">colours, layout,</text><text x="296" y="92" text-anchor="middle">light or dark</text>
+      <line x1="389" y1="75" x2="407" y2="75" stroke="#12302F" stroke-width="2" marker-end="url(#k)"/>
+      <rect x="408" y="20" width="185" height="110" rx="12" fill="#FCEFD3"/><text x="500" y="50" text-anchor="middle" font-size="15" font-weight="700" fill="#8A5A0F">3 · main.js</text><text x="500" y="74" text-anchor="middle">loads the JSON files</text><text x="500" y="92" text-anchor="middle">and the language file</text>
+      <line x1="593" y1="75" x2="611" y2="75" stroke="#12302F" stroke-width="2" marker-end="url(#k)"/>
+      <rect x="612" y="20" width="185" height="110" rx="12" fill="#D5F1EF"/><text x="704" y="50" text-anchor="middle" font-size="15" font-weight="700" fill="#0C6F6B">4 · Sections</text><text x="704" y="74" text-anchor="middle">program, speakers,</text><text x="704" y="92" text-anchor="middle">sponsors are drawn</text>
+      <line x1="797" y1="75" x2="815" y2="75" stroke="#12302F" stroke-width="2" marker-end="url(#k)"/>
+      <rect x="816" y="20" width="184" height="110" rx="12" fill="#2E9E5B"/><text x="908" y="50" text-anchor="middle" font-size="15" font-weight="700" fill="#fff">5 · Ready</text><text x="908" y="74" text-anchor="middle" fill="#fff">cover lifts (at most</text><text x="908" y="92" text-anchor="middle" fill="#fff">6 seconds, always)</text>
+    </g>
+  </svg>
+</div>
+
+<!-- PAGE 4 -->
+<div class="page">
+  <h2><span class="n">6</span>The three languages: English, Arabic, Kurdish</h2>
+  <svg viewBox="0 0 1000 400" role="img" aria-label="How translation works">
+    <g font-size="13">
+      <rect x="10" y="20" width="290" height="160" rx="12" fill="#FBE1DC" stroke="#E0604A" stroke-width="1.5"/>
+      <text x="26" y="48" font-size="15" font-weight="700" fill="#9A3222">English: in the HTML</text>
+      <text x="26" y="76" font-family="Consolas,monospace" font-size="12">&lt;h2 data-i18n="prog_title"&gt;</text>
+      <text x="40" y="96" font-family="Consolas,monospace" font-size="12">Program</text>
+      <text x="26" y="116" font-family="Consolas,monospace" font-size="12">&lt;/h2&gt;</text>
+      <text x="26" y="146" fill="#5B7477">each text has a key name</text>
+      <text x="26" y="166" fill="#5B7477">JS-only English: en.json</text>
+
+      <rect x="355" y="20" width="290" height="160" rx="12" fill="#D5F1EF" stroke="#16A6A1" stroke-width="1.5"/>
+      <text x="371" y="48" font-size="15" font-weight="700" fill="#0C6F6B">Arabic: data/i18n/ar.json</text>
+      <text x="371" y="80" font-family="Consolas,monospace" font-size="12">"prog_title": "البرنامج"</text>
+      <text x="371" y="116" fill="#5B7477">same key, Arabic text</text>
+      <text x="371" y="136" fill="#5B7477">about 400 texts</text>
+
+      <rect x="700" y="20" width="290" height="160" rx="12" fill="#E6E2FB" stroke="#6A5BD8" stroke-width="1.5"/>
+      <text x="716" y="48" font-size="15" font-weight="700" fill="#3F33A0">Kurdish: data/i18n/ku.json</text>
+      <text x="716" y="80" font-family="Consolas,monospace" font-size="12">"prog_title": "بەرنامە"</text>
+      <text x="716" y="116" fill="#5B7477">same key, Sorani text</text>
+      <text x="716" y="136" fill="#5B7477">about 400 texts</text>
+
+      <path d="M155 180 V215 H500" fill="none" stroke="#12302F" stroke-width="2"/>
+      <path d="M845 180 V215 H500" fill="none" stroke="#12302F" stroke-width="2"/>
+      <line x1="500" y1="180" x2="500" y2="243" stroke="#12302F" stroke-width="2" marker-end="url(#k)"/>
+
+      <rect x="290" y="245" width="420" height="140" rx="14" fill="#FCEFD3" stroke="#E0A33A" stroke-width="2"/>
+      <text x="500" y="274" text-anchor="middle" font-size="16" font-weight="700" fill="#8A5A0F">js/i18n.js · the switch</text>
+      <text x="310" y="300">1. visitor presses EN / العربية / کوردی</text>
+      <text x="310" y="322">2. every key is swapped to that language</text>
+      <text x="310" y="344">3. Arabic, Kurdish: page turns right-to-left</text>
+      <text x="310" y="366">4. choice remembered in the browser</text>
+    </g>
+  </svg>
+  <div class="grid2" style="margin-top:3mm">
+    <div class="callout c-teal" style="margin:0"><b>Content files</b> hold all three languages side by side:<br><code>"en": "Opening ceremony"</code><br><code>"ar": "<bdi>حفل الافتتاح</bdi>"</code><br><code>"ku": "<bdi>ئاهەنگی کردنەوە</bdi>"</code><br>A plain text shows the same in every language.</div>
+    <div class="callout c-gold" style="margin:0"><b>Nothing breaks if a translation is missing.</b> A key without Arabic or Kurdish falls back to English. To add a new text: English with a key in the HTML, then the same key in <code>ar.json</code> and <code>ku.json</code>, or type it in the admin.</div>
+  </div>
+  <div class="callout c-violet"><b>Right-to-left.</b> Arabic and Kurdish flip the whole layout (menu, arrows, form steps) and switch to the Noto Kufi Arabic font. Phone numbers, prices and the ISM26 reference stay left-to-right so they read correctly. A fourth language would need one new JSON file and one button.</div>
+
+  <h2 style="margin-top:5mm"><span class="n">7</span>Light and dark</h2>
+  <p>The site follows the visitor's phone setting until they press the switch; then their choice is remembered in their browser (<code>js/components/theme.js</code>). All colours come from the tokens in <code>css/base/tokens.css</code>, so dark mode is a second set of the same names, not a second design.</p>
+</div>
+
+<!-- PAGE 5 -->
+<div class="page">
+  <h2><span class="n">8</span>The admin: how your edits reach the website</h2>
+  <svg viewBox="0 0 1000 400" role="img" aria-label="Admin save paths">
+    <g font-size="13">
+      <rect x="10" y="130" width="200" height="130" rx="12" fill="#DDF3E5" stroke="#2E9E5B" stroke-width="2"/>
+      <text x="110" y="162" text-anchor="middle" font-size="16" font-weight="700" fill="#1D6B3C">admin.html</text>
+      <text x="110" y="186" text-anchor="middle">you edit, then</text>
+      <text x="110" y="206" text-anchor="middle">press Save</text>
+      <text x="110" y="238" text-anchor="middle" fill="#5B7477">js/admin/*.js</text>
+
+      <rect x="330" y="10" width="330" height="100" rx="12" fill="#D5F1EF" stroke="#16A6A1"/>
+      <text x="346" y="38" font-size="15" font-weight="700" fill="#0C6F6B">a · Netlify function (Node.js)</text>
+      <text x="346" y="62">checks email + password, then writes</text>
+      <text x="346" y="82">to GitHub with a hidden key</text>
+
+      <rect x="330" y="140" width="330" height="100" rx="12" fill="#FCEFD3" stroke="#E0A33A"/>
+      <text x="346" y="168" font-size="15" font-weight="700" fill="#8A5A0F">b · GitHub key in this browser</text>
+      <text x="346" y="192">stopgap: saves straight to GitHub</text>
+      <text x="346" y="212">while there is no server</text>
+
+      <rect x="330" y="270" width="330" height="100" rx="12" fill="#EEF6F6" stroke="#CFE3E3"/>
+      <text x="346" y="298" font-size="15" font-weight="700">c · Download + publish.mjs</text>
+      <text x="346" y="322">files go to Downloads; a script copies,</text>
+      <text x="346" y="342">checks and pushes them to GitHub</text>
+
+      <path d="M210 195 H270 V60 H328" fill="none" stroke="#12302F" stroke-width="2" marker-end="url(#k)"/>
+      <line x1="210" y1="195" x2="328" y2="195" stroke="#12302F" stroke-width="2" marker-end="url(#k)"/>
+      <path d="M210 195 H270 V320 H328" fill="none" stroke="#12302F" stroke-width="2" marker-end="url(#k)"/>
+
+      <rect x="770" y="130" width="220" height="130" rx="12" fill="#E6E2FB" stroke="#6A5BD8" stroke-width="1.5"/>
+      <text x="880" y="162" text-anchor="middle" font-size="16" font-weight="700" fill="#3F33A0">GitHub → Pages</text>
+      <text x="880" y="186" text-anchor="middle">site updates in</text>
+      <text x="880" y="206" text-anchor="middle">1–2 minutes</text>
+      <path d="M660 60 H715 V195 H768" fill="none" stroke="#6A5BD8" stroke-width="2" marker-end="url(#v)"/>
+      <line x1="660" y1="195" x2="768" y2="195" stroke="#6A5BD8" stroke-width="2" marker-end="url(#v)"/>
+      <path d="M660 320 H715 V195" fill="none" stroke="#6A5BD8" stroke-width="2"/>
+    </g>
+  </svg>
+  <div class="callout c-green" style="background:#DDF3E5;color:#1D5B36;border-left:4px solid #2E9E5B"><b>After the hosting is bought:</b> <code>server/admin.php</code> (PHP, already written) replaces a, b and c. Save writes straight to the server and the change is live at once. No GitHub key in the browser any more.</div>
+  <table>
+    <tr><th>Safety rule already in the code</th><th>Why</th></tr>
+    <tr><td>The admin may only write inside <code>data/</code> and <code>assets/uploads/</code></td><td>even a stolen login cannot change the code</td></tr>
+    <tr><td>Passwords are stored only as a PBKDF2 hash</td><td>nobody can read a password back, not even from the file</td></tr>
+    <tr><td>Language files are merged, never replaced</td><td>a save cannot delete texts that only the code uses</td></tr>
+    <tr><td>The admin fetches the latest from GitHub before saving</td><td>two people saving cannot wipe out each other's work</td></tr>
+    <tr><td>Secrets (<code>admin-config.php</code>) are never committed</td><td>listed in <code>.gitignore</code></td></tr>
+  </table>
+  <div class="callout c-red"><b>Honest limit today:</b> the password screen on GitHub Pages is checked in the browser, so a skilled person can get past it. That is why the GitHub key is a stopgap, and why moving to your own hosting with <code>admin.php</code> is step one of the backend.</div>
+
+  <h2 style="margin-top:5mm"><span class="n">9</span>Keeping visitors on the newest version</h2>
+  <p>Browsers keep old CSS and JavaScript. Every file is loaded with a version number, for example <code>main.js?v=74</code>. After any change in <code>css/</code> or <code>js/</code>, <code>node tools/bump-version.mjs</code> raises the number everywhere, so every visitor gets the new files together and never a broken mix.</p>
+</div>
+
+<!-- PAGE 6 -->
+<div class="page">
+  <h2><span class="n">10</span>Today and after the backend</h2>
+  <table>
+    <tr><th>Part</th><th>Today</th><th>After the backend</th></tr>
+    <tr><td>Hosting</td><td>GitHub Pages (free) + Netlify for saving</td><td>Your own cPanel hosting at ismile.krd</td></tr>
+    <tr><td>Registration</td><td>3-step form works, but nothing is stored</td><td>Saved in MySQL with a server-made reference</td></tr>
+    <tr><td>Payment</td><td>Four method tiles shown; no real payment</td><td>Psoola: Visa, MasterCard, FIB, FastPay, confirmed by the server</td></tr>
+    <tr><td>Student ID photo</td><td>Chosen, then thrown away</td><td>Kept in a private folder, approved in the admin</td></tr>
+    <tr><td>Ticket</td><td>none</td><td>Email with QR code and PDF, in the visitor's language</td></tr>
+    <tr><td>Sponsor request</td><td>Opens WhatsApp or email</td><td>Saved and tracked in the admin</td></tr>
+    <tr><td>Workshops</td><td>By phone; seats lowered by hand</td><td>Office adds bookings in the admin; seats count themselves</td></tr>
+    <tr><td>Admin</td><td>Edits site content</td><td>Same, plus Registrations, Students, Payments, Workshops, Sponsors, Check-in</td></tr>
+    <tr><td>Languages used</td><td>HTML, CSS, JavaScript, JSON, Node.js</td><td>The same, plus PHP and SQL on the server</td></tr>
+  </table>
+
+  <h2 style="margin-top:6mm"><span class="n">11</span>How the backend is added, in one picture</h2>
+  <svg viewBox="0 0 1000 200" role="img" aria-label="Backend added">
+    <g font-size="13">
+      <rect x="10" y="20" width="230" height="160" rx="12" fill="#FCEFD3" stroke="#E0A33A" stroke-width="1.5"/>
+      <text x="125" y="50" text-anchor="middle" font-size="15" font-weight="700" fill="#8A5A0F">Front end (stays)</text>
+      <text x="125" y="76" text-anchor="middle">HTML · CSS · JavaScript</text>
+      <text x="125" y="96" text-anchor="middle">three languages</text>
+      <text x="125" y="116" text-anchor="middle">register.html now sends</text>
+      <text x="125" y="136" text-anchor="middle">the form to the server</text>
+      <line x1="240" y1="100" x2="298" y2="100" stroke="#12302F" stroke-width="2" marker-end="url(#k)"/>
+
+      <rect x="300" y="20" width="250" height="160" rx="12" fill="#E6E2FB" stroke="#6A5BD8" stroke-width="1.5"/>
+      <text x="425" y="50" text-anchor="middle" font-size="15" font-weight="700" fill="#3F33A0">PHP on your server (new)</text>
+      <text x="425" y="76" text-anchor="middle">api/: register, pay, webhook</text>
+      <text x="425" y="96" text-anchor="middle">admin pages</text>
+      <text x="425" y="116" text-anchor="middle">timed jobs: emails, checks,</text>
+      <text x="425" y="136" text-anchor="middle">backups</text>
+      <line x1="550" y1="100" x2="608" y2="100" stroke="#12302F" stroke-width="2" marker-start="url(#k)" marker-end="url(#k)"/>
+
+      <rect x="610" y="20" width="170" height="160" rx="12" fill="#D5F1EF" stroke="#16A6A1" stroke-width="1.5"/>
+      <text x="695" y="50" text-anchor="middle" font-size="15" font-weight="700" fill="#0C6F6B">MySQL (SQL)</text>
+      <text x="695" y="76" text-anchor="middle">10 tables:</text>
+      <text x="695" y="96" text-anchor="middle">registrations,</text>
+      <text x="695" y="116" text-anchor="middle">payments, tickets…</text>
+
+      <rect x="820" y="20" width="170" height="70" rx="12" fill="#E6E2FB" stroke="#6A5BD8"/>
+      <text x="905" y="50" text-anchor="middle" font-size="15" font-weight="700" fill="#3F33A0">Psoola</text>
+      <text x="905" y="72" text-anchor="middle">payments</text>
+      <rect x="820" y="110" width="170" height="70" rx="12" fill="#DDEBFB" stroke="#2F7BD8"/>
+      <text x="905" y="140" text-anchor="middle" font-size="15" font-weight="700" fill="#1B4F91">Brevo</text>
+      <text x="905" y="162" text-anchor="middle">ticket emails</text>
+      <path d="M550 40 H800 V55 H818" fill="none" stroke="#6A5BD8" stroke-width="2" marker-end="url(#v)"/>
+      <path d="M550 160 H800 V145 H818" fill="none" stroke="#2F7BD8" stroke-width="2" marker-end="url(#k)"/>
+    </g>
+  </svg>
+
+  <h2 style="margin-top:6mm"><span class="n">12</span>For a developer joining the project</h2>
+  <table>
+    <tr><th>Task</th><th>How</th></tr>
+    <tr><td>Run it on your computer</td><td>Serve the folder (VS Code Live Server, or <code>npx serve</code>, or <code>python -m http.server 8000</code>). Double-clicking the HTML does not work: modules and JSON need a server.</td></tr>
+    <tr><td>Change text or content</td><td>Use the admin, or edit the JSON in <code>data/</code>.</td></tr>
+    <tr><td>Change design or code</td><td>Edit <code>css/</code> or <code>js/</code>, then <code>node tools/bump-version.mjs</code>, commit everything together.</td></tr>
+    <tr><td>Add a translation</td><td>Key in the HTML (<code>data-i18n</code>), same key in <code>ar.json</code> and <code>ku.json</code>.</td></tr>
+    <tr><td>Read more</td><td><code>README.md</code>, and in <code>docs/</code>: the backend plan, the Psoola questions, the payment storyboard, the backend + Psoola diagrams, the server guide.</td></tr>
+  </table>
+  <footer>Prepared 27 September 2026 for iSmile 2026 from the project files (194 saves on GitHub since 17 September 2026). Line counts exclude the docs folder. The backend parts are planned, not built.</footer>
+</div>
+
+</body>
+</html>

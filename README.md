@@ -241,3 +241,24 @@ Netlify settings and never in this repository.
 - **Add a partner:** put the logo in `assets/logos/` and add an entry to `data/partners.json`.
 - **Change seats:** edit `seatsLeft` in `data/workshops.json`.
 - **Change colors:** edit `css/base/tokens.css`.
+
+## Backend: registrations, payments, tickets
+
+On the real server the site has a backend: `api/` (what the pages call),
+`admin/` (the registrations admin at `/admin/`: dashboard, registrations,
+lists, payments, workshops, sponsors, check-in, settings, users) and
+`backend/` (the PHP code, which lives outside the public web folder).
+`payment.html` is where people land after paying.
+
+Only people who paid are registered. A filled-in form waits (temporarily,
+outside the registrations) while the person pays, and becomes a registration
+when the payment company confirms the exact amount; if it is not paid in
+time it is deleted automatically. Students send their ID photo with the form
+and pay straight away: there is no approval step, the photo is kept as a
+record on their registration.
+
+Without a server (GitHub Pages), the registration page shows "Registration
+opens soon" instead of the form, and the sponsor form falls back to WhatsApp
+and email, so nobody believes they registered when nothing was saved.
+
+Setup, updates and Psoola: see `backend/README.md`.

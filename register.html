@@ -150,7 +150,16 @@
       </aside>
 
       <!-- Form card -->
-      <div class="reg-card" id="regCard">
+      <div class="reg-card is-checking" id="regCard">
+
+        <!-- Shown instead of the form while registration is closed, full, or
+             there is no server behind the site. -->
+        <div class="reg-closed" id="regClosed" hidden>
+          <div class="reg-closed-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4M12 13.5v2.5l1.5 1"/></svg></div>
+          <h3 id="regClosedTitle">Registration opens soon</h3>
+          <p id="regClosedText"></p>
+          <a class="btn btn-outline" href="mailto:info@ismile.krd" dir="ltr">info@ismile.krd</a>
+        </div>
 
         <div class="reg-progress" id="regProgress">
           <ol class="stepper" id="regStepper">
@@ -162,6 +171,8 @@
         </div>
 
         <form id="regForm" novalidate>
+          <!-- Left empty by people, filled in by bots: the server refuses it. -->
+          <div class="reg-trap" aria-hidden="true"><label>Website <input id="regWebsite" name="website" tabindex="-1" autocomplete="off"></label></div>
           <!-- Step 1: individual details -->
           <div class="reg-step" data-step="1">
             <div class="reg-person-intro">

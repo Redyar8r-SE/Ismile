@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>iSmile 2026 — Backend and Psoola, in diagrams</title>
+<style>
+@page { size: A4; margin: 14mm 14mm 15mm; }
+* { box-sizing: border-box; }
+body { margin: 0; color: #12302F; font: 10.2pt/1.5 Arial, Helvetica, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+h1 { font-size: 24pt; margin: 0 0 2mm; line-height: 1.1; }
+h2 { font-size: 15pt; margin: 0 0 3mm; display: flex; align-items: center; gap: 3mm; break-after: avoid; }
+h2 .n { width: 8.5mm; height: 8.5mm; border-radius: 50%; background: #12302F; color: #fff; display: inline-grid; place-items: center; font-size: 11pt; flex: none; }
+h3 { font-size: 11pt; margin: 0 0 1.5mm; }
+p { margin: 0 0 2.5mm; }
+.page { break-after: page; }
+.page:last-child { break-after: auto; }
+.eyebrow { display: inline-block; font-size: 8.5pt; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; background: #D5F1EF; color: #0C6F6B; padding: 1mm 3mm; border-radius: 99px; margin-bottom: 3mm; }
+.lede { color: #4A6467; font-size: 11pt; }
+.muted { color: #5B7477; }
+.small { font-size: 8.8pt; color: #5B7477; }
+.mono { font-family: Consolas, "Courier New", monospace; font-size: 9pt; }
+.box { border: 1px solid #CFE3E3; border-radius: 4mm; padding: 4mm; background: #fff; }
+.callout { border-radius: 3mm; padding: 3.5mm 4.5mm; margin: 3mm 0; break-inside: avoid; }
+.c-red { background: #FBE1DC; color: #7E2A1C; border-left: 4px solid #E0604A; }
+.c-teal { background: #E4F6F5; color: #0C5F5B; border-left: 4px solid #16A6A1; }
+.c-gold { background: #FCEFD3; color: #6E480C; border-left: 4px solid #E0A33A; }
+svg { display: block; width: 100%; height: auto; }
+svg text { font-family: Arial, Helvetica, sans-serif; }
+svg text:not([fill]) { fill: #12302F; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3.5mm; }
+.conn { border-radius: 4mm; padding: 4mm; break-inside: avoid; }
+.conn .tag { display: inline-block; font-weight: 700; font-size: 9pt; color: #fff; padding: .8mm 2.6mm; border-radius: 99px; margin-bottom: 2mm; }
+.conn dl { margin: 2mm 0 0; display: grid; grid-template-columns: auto 1fr; gap: 1mm 3mm; font-size: 9.2pt; }
+.conn dt { font-weight: 700; }
+.conn dd { margin: 0; }
+.A { background: #DDEBFB; } .A .tag { background: #2F7BD8; }
+.B { background: #E6E2FB; } .B .tag { background: #6A5BD8; }
+.C { background: #DDF3E5; } .C .tag { background: #2E9E5B; }
+table { width: 100%; border-collapse: collapse; font-size: 9.2pt; }
+th, td { border: 1px solid #D4E4E4; padding: 1.8mm 2.4mm; vertical-align: top; text-align: left; }
+th { background: #EEF6F6; }
+tr { break-inside: avoid; }
+.pill { display: inline-block; padding: .3mm 2.2mm; border-radius: 99px; font-size: 8pt; font-weight: 700; white-space: nowrap; }
+.p-you { background: #FCEFD3; color: #8A5A0F; }
+.p-ps { background: #E6E2FB; color: #3F33A0; }
+.p-dev { background: #DDEBFB; color: #1B4F91; }
+.p-both { background: #DDF3E5; color: #1D6B3C; }
+.must { background: #FBE1DC; color: #9A3222; }
+.weeks td:first-child { width: 22%; font-weight: 700; color: #fff; }
+.w1 td:first-child{background:#B25B45}.w2 td:first-child{background:#0E8C87}.w3 td:first-child{background:#3F6FC0}
+.w4 td:first-child{background:#6A5BD8}.w5 td:first-child{background:#2E8A55}.w6 td:first-child{background:#A77414}
+footer { margin-top: 5mm; font-size: 8.5pt; color: #5B7477; }
+</style>
+</head>
+<body>
+
+<!-- PAGE 1 -->
+<div class="page">
+  <span class="eyebrow">iSmile 2026 · Backend · 27 September 2026</span>
+  <h1>How we build the backend and connect it to Psoola</h1>
+  <p class="lede">In diagrams. Based on the backend plan (27 Sep 2026) and the questions for Psoola. Stack: PHP 8 and MySQL on your own cPanel hosting. The website stays as it is.</p>
+
+  <h2 style="margin-top:5mm"><span class="n">1</span>The parts and how they connect</h2>
+  <svg viewBox="0 0 1000 760" role="img" aria-label="Backend parts">
+    <defs>
+      <marker id="k" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#12302F"/></marker>
+      <marker id="v" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#6A5BD8"/></marker>
+      <marker id="g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#C98A1E"/></marker>
+      <marker id="t" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#16A6A1"/></marker>
+      <marker id="b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#2F7BD8"/></marker>
+      <marker id="gr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#2E9E5B"/></marker>
+    </defs>
+
+    <rect x="400" y="8" width="200" height="62" rx="12" fill="#DDF3E5" stroke="#2E9E5B" stroke-width="2"/>
+    <text x="500" y="35" text-anchor="middle" font-size="17" font-weight="700" fill="#1D6B3C">You &amp; the office</text>
+    <text x="500" y="55" text-anchor="middle" font-size="13" fill="#5B7477">log in to the admin</text>
+    <line x1="490" y1="70" x2="490" y2="173" stroke="#12302F" stroke-width="2" marker-end="url(#k)"/>
+
+    <rect x="230" y="98" width="520" height="604" rx="18" fill="#F4FAFA" stroke="#E0604A" stroke-width="2.5"/>
+    <text x="250" y="124" font-size="17" font-weight="700" fill="#9A3222">Your server · cPanel hosting · ismile.krd</text>
+
+    <rect x="248" y="138" width="484" height="202" rx="12" fill="#fff" stroke="#16A6A1" stroke-width="2"/>
+    <text x="262" y="160" font-size="12" font-weight="700" fill="#0C6F6B">PUBLIC FOLDER (public_html) · anyone can reach these</text>
+
+    <rect x="262" y="175" width="145" height="150" rx="10" fill="#FCEFD3" stroke="#E0A33A" stroke-width="1.5"/>
+    <text x="334" y="198" text-anchor="middle" font-size="13" font-weight="700" fill="#8A5A0F">Website pages</text>
+    <text x="274" y="222" font-size="12" font-family="Consolas,monospace">index.html</text>
+    <text x="274" y="242" font-size="12" font-family="Consolas,monospace">register.html</text>
+    <text x="274" y="262" font-size="12" font-family="Consolas,monospace">workshops.html</text>
+    <text x="274" y="282" font-size="12" font-family="Consolas,monospace">sponsor.html</text>
+    <text x="274" y="310" font-size="13" fill="#5B7477">already built</text>
+
+    <rect x="417" y="175" width="145" height="150" rx="10" fill="#DDF3E5" stroke="#2E9E5B" stroke-width="1.5"/>
+    <text x="490" y="198" text-anchor="middle" font-size="13" font-weight="700" fill="#1D6B3C">Admin</text>
+    <text x="429" y="222" font-size="12" font-family="Consolas,monospace">admin.html</text>
+    <text x="429" y="242" font-size="12" font-family="Consolas,monospace">server/admin.php</text>
+    <text x="429" y="266" font-size="13" fill="#5B7477">+ new pages:</text>
+    <text x="429" y="284" font-size="13" fill="#5B7477">Registrations,</text>
+    <text x="429" y="300" font-size="13" fill="#5B7477">Students, Payments,</text>
+    <text x="429" y="316" font-size="13" fill="#5B7477">Workshops, Check-in…</text>
+
+    <rect x="572" y="175" width="145" height="150" rx="10" fill="#DDEBFB" stroke="#2F7BD8" stroke-width="1.5"/>
+    <text x="644" y="198" text-anchor="middle" font-size="13" font-weight="700" fill="#1B4F91">API (new)</text>
+    <text x="584" y="222" font-size="12" font-family="Consolas,monospace">register.php</text>
+    <text x="584" y="242" font-size="12" font-family="Consolas,monospace">pay.php</text>
+    <text x="584" y="262" font-size="12" font-family="Consolas,monospace">return.php</text>
+    <text x="584" y="282" font-size="12" font-family="Consolas,monospace">sponsor.php</text>
+    <text x="584" y="306" font-size="12" font-family="Consolas,monospace">webhook.php</text>
+
+    <rect x="20" y="195" width="180" height="110" rx="12" fill="#FCEFD3" stroke="#E0A33A" stroke-width="1.5"/>
+    <text x="110" y="228" text-anchor="middle" font-size="17" font-weight="700" fill="#8A5A0F">Visitor</text>
+    <text x="110" y="250" text-anchor="middle" font-size="13" fill="#5B7477">phone or laptop</text>
+    <text x="110" y="270" text-anchor="middle" font-size="13" fill="#5B7477">fills the form,</text>
+    <text x="110" y="288" text-anchor="middle" font-size="13" fill="#5B7477">gets the ticket email</text>
+    <line x1="200" y1="250" x2="260" y2="250" stroke="#C98A1E" stroke-width="2" marker-end="url(#g)"/>
+
+    <rect x="790" y="170" width="190" height="130" rx="12" fill="#E6E2FB" stroke="#6A5BD8" stroke-width="1.5"/>
+    <text x="885" y="200" text-anchor="middle" font-size="17" font-weight="700" fill="#3F33A0">Psoola</text>
+    <text x="885" y="222" text-anchor="middle" font-size="13" fill="#5B7477">payment page:</text>
+    <text x="885" y="240" text-anchor="middle" font-size="13" fill="#5B7477">Visa · MasterCard</text>
+    <text x="885" y="258" text-anchor="middle" font-size="13" fill="#5B7477">FIB · FastPay</text>
+    <text x="885" y="284" text-anchor="middle" font-size="13" fill="#5B7477">(their system)</text>
+    <line x1="717" y1="205" x2="788" y2="205" stroke="#2F7BD8" stroke-width="2.2" marker-end="url(#b)"/>
+    <text x="752" y="197" text-anchor="middle" font-size="13" font-weight="700" fill="#1B4F91">A</text>
+    <line x1="790" y1="240" x2="719" y2="240" stroke="#6A5BD8" stroke-width="2.2" stroke-dasharray="6 5" marker-end="url(#v)"/>
+    <text x="752" y="232" text-anchor="middle" font-size="13" font-weight="700" fill="#3F33A0">B</text>
+    <line x1="717" y1="275" x2="788" y2="275" stroke="#2E9E5B" stroke-width="2.2" marker-end="url(#gr)"/>
+    <text x="752" y="267" text-anchor="middle" font-size="13" font-weight="700" fill="#1D6B3C">C</text>
+
+    <line x1="360" y1="340" x2="360" y2="378" stroke="#16A6A1" stroke-width="2" marker-start="url(#t)" marker-end="url(#t)"/>
+    <text x="372" y="364" font-size="12" font-weight="700" fill="#0C6F6B">read / write</text>
+
+    <path d="M262 392 v96 a98 16 0 0 0 196 0 v-96" fill="#D5F1EF" stroke="#16A6A1" stroke-width="1.5"/>
+    <ellipse cx="360" cy="392" rx="98" ry="16" fill="#D5F1EF" stroke="#16A6A1" stroke-width="1.5"/>
+    <text x="360" y="432" text-anchor="middle" font-size="17" font-weight="700" fill="#0C6F6B">MySQL database</text>
+    <text x="360" y="454" text-anchor="middle" font-size="13" fill="#5B7477">registrations, payments,</text>
+    <text x="360" y="472" text-anchor="middle" font-size="13" fill="#5B7477">tickets, workshops, sponsors…</text>
+
+    <rect x="484" y="370" width="246" height="136" rx="12" fill="#fff" stroke="#6A5BD8" stroke-width="2" stroke-dasharray="6 4"/>
+    <text x="498" y="394" font-size="12" font-weight="700" fill="#3F33A0">PRIVATE FOLDER · no web address</text>
+    <text x="498" y="420" font-size="13" font-weight="700">Student ID photos</text>
+    <text x="498" y="438" font-size="13" fill="#5B7477">shown only to a logged-in admin</text>
+    <text x="498" y="466" font-size="13" font-weight="700">secrets.php</text>
+    <text x="498" y="484" font-size="13" fill="#5B7477">Psoola keys, Brevo key,</text>
+    <text x="498" y="500" font-size="13" fill="#5B7477">database password</text>
+    <line x1="620" y1="325" x2="620" y2="368" stroke="#6A5BD8" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#v)"/>
+
+    <rect x="248" y="540" width="484" height="146" rx="12" fill="#FBE1DC" stroke="#E0604A" stroke-width="1.5"/>
+    <text x="262" y="564" font-size="12" font-weight="700" fill="#9A3222">TIMED JOBS (cron) · run by themselves</text>
+    <text x="262" y="592" font-size="13" font-weight="700">Every minute:</text><text x="370" y="592" font-size="13" fill="#5B7477">send ticket emails, retry failed ones</text>
+    <text x="262" y="618" font-size="13" font-weight="700">Every 5 minutes:</text><text x="390" y="618" font-size="13" fill="#5B7477">ask Psoola about unpaid payments (C)</text>
+    <text x="262" y="644" font-size="13" font-weight="700">Every night:</text><text x="358" y="644" font-size="13" fill="#5B7477">back up database and photos</text>
+    <text x="262" y="670" font-size="13" font-weight="700">After the summit:</text><text x="392" y="670" font-size="13" fill="#5B7477">delete ID photos (3 months)</text>
+    <line x1="360" y1="506" x2="360" y2="538" stroke="#16A6A1" stroke-width="2" marker-start="url(#t)" marker-end="url(#t)"/>
+
+    <rect x="790" y="410" width="190" height="110" rx="12" fill="#DDEBFB" stroke="#2F7BD8" stroke-width="1.5"/>
+    <text x="885" y="440" text-anchor="middle" font-size="17" font-weight="700" fill="#1B4F91">Brevo</text>
+    <text x="885" y="462" text-anchor="middle" font-size="13" fill="#5B7477">sends emails from</text>
+    <text x="885" y="480" text-anchor="middle" font-size="13" fill="#5B7477">tickets@ismile.krd</text>
+    <text x="885" y="504" text-anchor="middle" font-size="13" fill="#5B7477">ticket + QR + PDF</text>
+    <path d="M732 596 H760 V465 H788" fill="none" stroke="#12302F" stroke-width="2" marker-end="url(#k)"/>
+
+    <rect x="790" y="580" width="190" height="100" rx="12" fill="#DDF3E5" stroke="#2E9E5B" stroke-width="2"/>
+    <text x="885" y="612" text-anchor="middle" font-size="17" font-weight="700" fill="#1D6B3C">Backup place</text>
+    <text x="885" y="634" text-anchor="middle" font-size="13" fill="#5B7477">off the server,</text>
+    <text x="885" y="652" text-anchor="middle" font-size="13" fill="#5B7477">kept 30 days</text>
+    <line x1="732" y1="644" x2="788" y2="644" stroke="#12302F" stroke-width="2" marker-end="url(#k)"/>
+
+    <path d="M980 465 H992 V718 H110 V307" fill="none" stroke="#C98A1E" stroke-width="2" stroke-dasharray="2 5" marker-end="url(#g)"/>
+    <text x="130" y="742" font-size="12" font-weight="700" fill="#8A5A0F">ticket email arrives in the visitor's inbox</text>
+  </svg>
+  <div class="callout c-teal"><b>A, B and C are the three connections to Psoola.</b> They are explained on the next page. Everything else on this picture we can build before Psoola answers.</div>
+</div>
+
+<!-- PAGE 2 -->
+<div class="page">
+  <h2><span class="n">2</span>How we connect to Psoola: three connections</h2>
+  <p>Our website and Psoola talk in only three ways. The code for all three lives in one file on our server, <span class="mono">app/psoola.php</span>, so if Psoola changes anything we fix it in one place.</p>
+  <div class="grid3">
+    <div class="conn A"><span class="tag">A · Create a payment</span>
+      <h3>Our server → Psoola</h3>
+      <p>When the visitor presses Pay.</p>
+      <dl><dt>We send</dt><dd>amount, IQD, reference ISM26-…, visitor email/phone, return address</dd>
+      <dt>We get</dt><dd>Psoola payment ID + the payment page link</dd>
+      <dt>Secured by</dt><dd>our secret key (kept on the server)</dd></dl>
+    </div>
+    <div class="conn B"><span class="tag">B · Webhook</span>
+      <h3>Psoola → our server</h3>
+      <p>After the visitor pays (or fails).</p>
+      <dl><dt>They send</dt><dd>"payment X is paid / failed" to <span class="mono">ismile.krd/api/webhook.php</span></dd>
+      <dt>We do</dt><dd>check the signature, write it in webhook_log, then run C</dd>
+      <dt>Secured by</dt><dd>signature or shared secret (ask Psoola, Q 4.1)</dd></dl>
+    </div>
+    <div class="conn C"><span class="tag">C · Check status</span>
+      <h3>Our server → Psoola</h3>
+      <p>After every webhook, and every 5 minutes for unpaid ones.</p>
+      <dl><dt>We ask</dt><dd>"what is the status of payment X?"</dd>
+      <dt>We get</dt><dd>paid or not, amount, currency</dd>
+      <dt>Then</dt><dd>only if paid and amount matches → ticket</dd></dl>
+    </div>
+  </div>
+  <div class="callout c-red"><b>Why C exists:</b> a webhook message can be faked or lost. We never believe B alone. We ask Psoola ourselves (C) before making any ticket. If B never arrives, the 5-minute job still finds the payment through C.</div>
+
+  <h2 style="margin-top:5mm"><span class="n">3</span>One payment, message by message</h2>
+  <svg viewBox="0 0 1000 690" role="img" aria-label="Payment sequence">
+    <defs>
+      <marker id="s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#12302F"/></marker>
+      <marker id="sb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#2F7BD8"/></marker>
+      <marker id="sv" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#6A5BD8"/></marker>
+      <marker id="sg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#2E9E5B"/></marker>
+    </defs>
+    <!-- lane heads -->
+    <rect x="30" y="10" width="160" height="44" rx="10" fill="#FCEFD3"/><text x="110" y="38" text-anchor="middle" font-size="16" font-weight="700" fill="#8A5A0F">Visitor</text>
+    <rect x="290" y="10" width="190" height="44" rx="10" fill="#D5F1EF"/><text x="385" y="38" text-anchor="middle" font-size="16" font-weight="700" fill="#0C6F6B">Our server</text>
+    <rect x="560" y="10" width="160" height="44" rx="10" fill="#EEF6F6" stroke="#CFE3E3"/><text x="640" y="38" text-anchor="middle" font-size="16" font-weight="700">Database</text>
+    <rect x="800" y="10" width="170" height="44" rx="10" fill="#E6E2FB"/><text x="885" y="38" text-anchor="middle" font-size="16" font-weight="700" fill="#3F33A0">Psoola</text>
+    <!-- lifelines -->
+    <g stroke="#CFE3E3" stroke-width="2" stroke-dasharray="4 5"><line x1="110" y1="54" x2="110" y2="680"/><line x1="385" y1="54" x2="385" y2="680"/><line x1="640" y1="54" x2="640" y2="680"/><line x1="885" y1="54" x2="885" y2="680"/></g>
+
+    <g font-size="13.5">
+    <!-- 1 -->
+    <line x1="110" y1="95" x2="383" y2="95" stroke="#12302F" stroke-width="2" marker-end="url(#s)"/>
+    <text x="247" y="87" text-anchor="middle"><tspan font-weight="700">1</tspan> presses Pay</text>
+    <!-- 2 -->
+    <line x1="385" y1="140" x2="638" y2="140" stroke="#12302F" stroke-width="2" marker-end="url(#s)"/>
+    <text x="512" y="132" text-anchor="middle"><tspan font-weight="700">2</tspan> save: unpaid, price fixed</text>
+    <!-- 3 A -->
+    <line x1="385" y1="185" x2="883" y2="185" stroke="#2F7BD8" stroke-width="3" marker-end="url(#sb)"/>
+    <text x="635" y="177" text-anchor="middle" fill="#1B4F91"><tspan font-weight="700">3 · A</tspan> create payment: amount, IQD, reference</text>
+    <!-- 4 -->
+    <line x1="885" y1="230" x2="387" y2="230" stroke="#2F7BD8" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#sb)"/>
+    <text x="635" y="222" text-anchor="middle" fill="#1B4F91"><tspan font-weight="700">4</tspan> payment ID + payment page link</text>
+    <!-- 5 -->
+    <line x1="385" y1="275" x2="112" y2="275" stroke="#12302F" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#s)"/>
+    <text x="247" y="267" text-anchor="middle"><tspan font-weight="700">5</tspan> send visitor to Psoola</text>
+    <!-- 6 -->
+    <line x1="110" y1="320" x2="883" y2="320" stroke="#12302F" stroke-width="2" marker-end="url(#s)"/>
+    <text x="500" y="312" text-anchor="middle"><tspan font-weight="700">6</tspan> pays on Psoola's page: card, FIB or FastPay (card never touches our site)</text>
+    <!-- 7 -->
+    <line x1="885" y1="365" x2="112" y2="365" stroke="#12302F" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#s)"/>
+    <text x="500" y="357" text-anchor="middle"><tspan font-weight="700">7</tspan> back to our return page: "Checking your payment…"</text>
+    <!-- 8 B -->
+    <line x1="885" y1="410" x2="387" y2="410" stroke="#6A5BD8" stroke-width="3" stroke-dasharray="7 5" marker-end="url(#sv)"/>
+    <text x="635" y="402" text-anchor="middle" fill="#3F33A0"><tspan font-weight="700">8 · B</tspan> webhook: "payment X is paid" (signed)</text>
+    <!-- 9 C -->
+    <line x1="385" y1="455" x2="883" y2="455" stroke="#2E9E5B" stroke-width="3" marker-end="url(#sg)"/>
+    <text x="635" y="447" text-anchor="middle" fill="#1D6B3C"><tspan font-weight="700">9 · C</tspan> check status of payment X</text>
+    <!-- 10 -->
+    <line x1="885" y1="500" x2="387" y2="500" stroke="#2E9E5B" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#sg)"/>
+    <text x="635" y="492" text-anchor="middle" fill="#1D6B3C"><tspan font-weight="700">10</tspan> paid · amount · IQD</text>
+    <!-- 11 -->
+    <rect x="300" y="520" width="170" height="44" rx="8" fill="#FBE1DC" stroke="#E0604A"/>
+    <text x="385" y="539" text-anchor="middle" font-size="12.5" font-weight="700" fill="#9A3222">11 amount matches</text>
+    <text x="385" y="555" text-anchor="middle" font-size="12.5" font-weight="700" fill="#9A3222">what we saved in 2?</text>
+    <!-- 12 -->
+    <line x1="385" y1="595" x2="638" y2="595" stroke="#12302F" stroke-width="2" marker-end="url(#s)"/>
+    <text x="512" y="587" text-anchor="middle"><tspan font-weight="700">12</tspan> yes → paid + ticket</text>
+    <!-- 13 -->
+    <line x1="385" y1="645" x2="112" y2="645" stroke="#E0A33A" stroke-width="3" marker-end="url(#s)"/>
+    <text x="247" y="637" text-anchor="middle" font-weight="700" fill="#8A5A0F">13 ticket email (via Brevo)</text>
+    </g>
+  </svg>
+  <p class="small">If the answer in 11 is "no" (wrong amount), no ticket is made and the payment shows in red in the admin.</p>
+</div>
+
+<!-- PAGE 3 -->
+<div class="page">
+  <h2><span class="n">4</span>Connecting to Psoola: the steps, and who does each</h2>
+  <svg viewBox="0 0 1000 300" role="img" aria-label="Psoola setup steps">
+    <g font-size="13">
+      <!-- row 1 -->
+      <rect x="10" y="10" width="230" height="120" rx="12" fill="#FCEFD3" stroke="#E0A33A" stroke-width="1.5"/>
+      <text x="26" y="38" font-size="15" font-weight="700" fill="#8A5A0F">1 · Open the account</text>
+      <text x="26" y="62">Send Psoola the documents</text><text x="26" y="80">for a merchant account.</text>
+      <text x="26" y="112" font-weight="700" fill="#8A5A0F">You · now</text>
+      <line x1="240" y1="70" x2="262" y2="70" stroke="#12302F" stroke-width="2" marker-end="url(#s)"/>
+
+      <rect x="264" y="10" width="230" height="120" rx="12" fill="#E6E2FB" stroke="#6A5BD8" stroke-width="1.5"/>
+      <text x="280" y="38" font-size="15" font-weight="700" fill="#3F33A0">2 · Docs + test keys</text>
+      <text x="280" y="62">API documentation, test keys,</text><text x="280" y="80">test cards, webhook secret.</text>
+      <text x="280" y="112" font-weight="700" fill="#3F33A0">Psoola · needed by 6 Oct</text>
+      <line x1="494" y1="70" x2="516" y2="70" stroke="#12302F" stroke-width="2" marker-end="url(#s)"/>
+
+      <rect x="518" y="10" width="230" height="120" rx="12" fill="#DDEBFB" stroke="#2F7BD8" stroke-width="1.5"/>
+      <text x="534" y="38" font-size="15" font-weight="700" fill="#1B4F91">3 · Keys on the server</text>
+      <text x="534" y="62">Test keys go into</text><text x="534" y="80">private/secrets.php only.</text>
+      <text x="534" y="112" font-weight="700" fill="#1B4F91">Developer</text>
+      <line x1="748" y1="70" x2="770" y2="70" stroke="#12302F" stroke-width="2" marker-end="url(#s)"/>
+
+      <rect x="772" y="10" width="218" height="120" rx="12" fill="#DDEBFB" stroke="#2F7BD8" stroke-width="1.5"/>
+      <text x="788" y="38" font-size="15" font-weight="700" fill="#1B4F91">4 · Give addresses</text>
+      <text x="788" y="62">Tell Psoola our webhook</text><text x="788" y="80">and return addresses.</text>
+      <text x="788" y="112" font-weight="700" fill="#1B4F91">Developer</text>
+      <path d="M880 130 V150 H125 V168" fill="none" stroke="#12302F" stroke-width="2" marker-end="url(#s)"/>
+
+      <!-- row 2 -->
+      <rect x="10" y="170" width="230" height="120" rx="12" fill="#DDEBFB" stroke="#2F7BD8" stroke-width="1.5"/>
+      <text x="26" y="198" font-size="15" font-weight="700" fill="#1B4F91">5 · Build A, B, C</text>
+      <text x="26" y="222">Write app/psoola.php,</text><text x="26" y="240">pay.php, webhook.php.</text>
+      <text x="26" y="272" font-weight="700" fill="#1B4F91">Developer · week 3</text>
+      <line x1="240" y1="230" x2="262" y2="230" stroke="#12302F" stroke-width="2" marker-end="url(#s)"/>
+
+      <rect x="264" y="170" width="230" height="120" rx="12" fill="#DDF3E5" stroke="#2E9E5B" stroke-width="1.5"/>
+      <text x="280" y="198" font-size="15" font-weight="700" fill="#1D6B3C">6 · Test with no money</text>
+      <text x="280" y="222">Test cards: paid, declined,</text><text x="280" y="240">webhook twice, lost webhook.</text>
+      <text x="280" y="272" font-weight="700" fill="#1D6B3C">Developer + you</text>
+      <line x1="494" y1="230" x2="516" y2="230" stroke="#12302F" stroke-width="2" marker-end="url(#s)"/>
+
+      <rect x="518" y="170" width="230" height="120" rx="12" fill="#E6E2FB" stroke="#6A5BD8" stroke-width="1.5"/>
+      <text x="534" y="198" font-size="15" font-weight="700" fill="#3F33A0">7 · Live keys</text>
+      <text x="534" y="222">Psoola sends live keys;</text><text x="534" y="240">they replace the test keys.</text>
+      <text x="534" y="272" font-weight="700" fill="#3F33A0">Psoola → developer</text>
+      <line x1="748" y1="230" x2="770" y2="230" stroke="#12302F" stroke-width="2" marker-end="url(#s)"/>
+
+      <rect x="772" y="170" width="218" height="120" rx="12" fill="#2E9E5B"/>
+      <text x="788" y="198" font-size="15" font-weight="700" fill="#fff">8 · Go live 27 Oct</text>
+      <text x="788" y="222" fill="#fff">One real small payment,</text><text x="788" y="240" fill="#fff">then refund it. Open.</text>
+      <text x="788" y="272" font-weight="700" fill="#fff">Everyone</text>
+    </g>
+  </svg>
+
+  <div class="grid2" style="margin-top:4mm">
+    <div class="box">
+      <h3>What we give Psoola</h3>
+      <table>
+        <tr><th>Webhook address</th><td class="mono">https://ismile.krd/api/webhook.php</td></tr>
+        <tr><th>Return address</th><td class="mono">https://ismile.krd/api/return.php</td></tr>
+        <tr><th>Never</th><td>Any password, or access to our website, admin or server</td></tr>
+      </table>
+    </div>
+    <div class="box">
+      <h3>What Psoola gives us</h3>
+      <table>
+        <tr><th>Test</th><td>test key, webhook secret, test cards and test FIB / FastPay accounts</td></tr>
+        <tr><th>Live</th><td>live key, live webhook secret</td></tr>
+        <tr><th>Kept in</th><td><span class="mono">private/secrets.php</span> only. Never in GitHub, email, WhatsApp or the admin screen.</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <h2 style="margin-top:6mm"><span class="n">5</span>What we can build before Psoola answers</h2>
+  <div class="grid2">
+    <div class="callout c-teal" style="margin:0">
+      <h3>Can start now</h3>
+      Everything on page 1 except the three arrows A, B, C: the database, registration saving, student approvals, sponsor requests, the admin pages, the ticket email.<br><br>
+      For payments we build a <b>pretend Psoola</b> on the test site. It answers "paid" or "failed" when we click, so we can test the whole flow without Psoola. When the real documents come, only <span class="mono">app/psoola.php</span> changes.
+    </div>
+    <div class="callout c-red" style="margin:0">
+      <h3>Waits for Psoola's answers</h3>
+      <table>
+        <tr><td><span class="pill must">Must</span></td><td>2.1 API documentation · 2.2 test keys</td></tr>
+        <tr><td><span class="pill must">Must</span></td><td>3.1 what we send and receive (A)</td></tr>
+        <tr><td><span class="pill must">Must</span></td><td>4.1 how the webhook is secured (B)</td></tr>
+        <tr><td><span class="pill must">Must</span></td><td>4.2 example webhook messages (B)</td></tr>
+        <tr><td><span class="pill must">Must</span></td><td>4.4 status-check call exists (C)</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="callout c-gold"><b>Prices do not block the build.</b> Prices are set in the admin, not in the code. While a price is 0, Pay is switched off and the site shows "Price soon". Real prices must be in by 27 October.</div>
+
+  <h2 style="margin-top:5mm"><span class="n">6</span>Build weeks</h2>
+  <table class="weeks">
+    <tr class="w1"><td>Week 1 · 29 Sep – 5 Oct</td><td>Buy domain + hosting, move the site, create the database. <b>Ask Psoola for the account (step 1).</b></td></tr>
+    <tr class="w2"><td>Week 2 · 6 – 12 Oct</td><td>Registrations save, student ID upload, admin lists, sponsor requests. <b>Psoola test keys should arrive (step 2).</b></td></tr>
+    <tr class="w3"><td>Week 3 · 13 – 19 Oct</td><td><b>Psoola A, B, C + testing (steps 3–6).</b> Payments page in the admin.</td></tr>
+    <tr class="w4"><td>Week 4 · 20 – 26 Oct</td><td>Ticket email with QR + PDF in three languages, Resend button.</td></tr>
+    <tr class="w5"><td>Week 5 · 27 Oct – 2 Nov</td><td><b>Live keys, one real payment refunded, registration opens 27 Oct (steps 7–8).</b> Dashboard, exports, check-in page.</td></tr>
+    <tr class="w6"><td>Weeks 6–7 · 3 – 16 Nov</td><td>Watch real payments daily, fix, train the office. Summit 20–21 Nov.</td></tr>
+  </table>
+  <footer>Prepared 27 September 2026 for iSmile 2026. Companion to the backend plan and the questions for Psoola. Psoola has no public documentation, so connection details (field names, signature type) are confirmed only when they answer. File names are proposals.</footer>
+</div>
+
+</body>
+</html>

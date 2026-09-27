@@ -1,0 +1,122 @@
+<?php
+// Payments: every attempt with the company's id, method, amount and status;
+// the flagged ones (wrong amount, paid twice) in red; a daily total to compare
+// with Psoola's settlement report; closing reviewed problems (iSmile does not
+// refund); the webhook log.
+
+declare(strict_types=1);
+
+require __DIR__ . '/_boot.php';
+
+use Ismile\Admin\Page;
+use Ismile\App;
+use Ismile\Audit;
+use Ismile\Db;
+use Ismile\Payments\Payments;
+use Ismile\Registrations;
+use Ismile\UserError;
+
+$user = Page::guard('payments');
+
+Page::action(static function () use ($user): string {
+    $payment = Payments::find((int) ($_POST['id'] ?? 0));
+    if ($payment === null) {
+        throw new UserError('Payment not found.');
+    }
+    if (($_POST['do'] ?? '') === 'check') {
+        $status = Payments::check($payment);
+        return "Asked the payment company about #{$payment['id']}: $status.";
+    }
+    if (($_POST['do'] ?? '') === 'kept') {
+        // iSmile does not refund. Finance looks at a wrong-amount or double
+        // payment, talks to the person, writes what was agreed, and closes it.
+        if (!in_array($payment['status'], ['duplicate', 'mismatch'], true)) {
+            throw new UserError('Only a wrong-amount or double payment needs this.');
+        }
+        $note = Page::post('note');
+        if ($note === '') {
+            throw new UserError('Write what was agreed with the person (no refunds are made).');
+        }
+        Db::update('payments', ['status' => 'kept', 'last_error' => 'Reviewed, no refund: ' . $note, 'updated_at' => App::now()], 'id = ?', [$payment['id']]);
+        Audit::log((int) $user['id'], 'payment.kept', 'payment', (int) $payment['id'], ['note' => $note]);
+        return "Payment #{$payment['id']} reviewed and closed (no refund).";
+    }
+    throw new UserError('Unknown action.');
+}, 'payments.php' . (isset($_GET['status']) ? '?status=' . rawurlencode((string) $_GET['status']) : ''));
+
+$filter = Page::query('status');
+$where = match ($filter) {
+    'flagged' => "p.status IN ('mismatch','duplicate')",
+    'paid', 'waiting', 'failed', 'expired', 'kept' => 'p.status = ' . App::db()->quote($filter),
+    default   => '1 = 1',
+};
+// A payment belongs to a registration once paid; before that, to the form
+// waiting for payment (which is not a registration).
+$rows = Db::all("SELECT p.*, COALESCE(r.ref, c.ref) AS ref, COALESCE(r.first_name, c.first_name) AS first_name, COALESCE(r.father_name, c.father_name) AS father_name,
+                        COALESCE(r.grandfather_name, c.grandfather_name) AS grandfather_name
+                 FROM payments p LEFT JOIN registrations r ON r.id = p.registration_id LEFT JOIN checkouts c ON c.id = p.checkout_id
+                 WHERE $where ORDER BY p.id DESC LIMIT 300");
+$daily = Db::all("SELECT DATE(confirmed_at) AS day, COUNT(*) AS n, SUM(amount_confirmed) AS total, currency FROM payments WHERE status = 'paid' GROUP BY DATE(confirmed_at), currency ORDER BY day DESC LIMIT 60");
+$hooks = Db::all('SELECT * FROM webhook_log ORDER BY id DESC LIMIT 50');
+$flagged = (int) Db::value("SELECT COUNT(*) FROM payments WHERE status IN ('mismatch','duplicate')");
+
+Page::top('Payments', 'payments');
+$e = [Page::class, 'e'];
+?>
+<div class="toolbar tabs">
+  <?php foreach (['' => 'All', 'flagged' => "Needs Finance ($flagged)", 'paid' => 'Paid', 'waiting' => 'Waiting', 'failed' => 'Failed', 'expired' => 'Expired', 'kept' => 'Reviewed (kept)'] as $value => $label): ?>
+    <a class="btn small <?= $filter === $value ? '' : 'ghost' ?><?= $value === 'flagged' && $flagged ? ' red' : '' ?>" href="payments.php<?= $value !== '' ? '?status=' . $value : '' ?>"><?= $e($label) ?></a>
+  <?php endforeach; ?>
+  <a class="btn small green" href="export.php?what=payments">Export to Excel</a>
+</div>
+
+<div class="card table-wrap">
+<table>
+  <tr><th>#</th><th>Person</th><th>Method</th><th>Expected</th><th>Confirmed</th><th>Status</th><th>Company id</th><th>Started</th><th></th></tr>
+  <?php foreach ($rows as $row): ?>
+  <tr class="<?= in_array($row['status'], ['mismatch', 'duplicate'], true) ? 'row-red' : '' ?>">
+    <td><?= (int) $row['id'] ?></td>
+    <td><?php if ($row['registration_id']): ?><a href="registration.php?id=<?= (int) $row['registration_id'] ?>"><code><?= $e($row['ref']) ?></code></a><?php else: ?><code><?= $e($row['ref'] ?? '–') ?></code> <span class="muted small">not registered</span><?php endif; ?>
+      <br><small><?= $row['first_name'] !== null ? $e(Registrations::fullName($row)) : '<span class="muted">form deleted</span>' ?></small></td>
+    <td><?= $e(strtoupper((string) $row['method'])) ?></td>
+    <td><?= Page::money((int) $row['amount_expected'], $row['currency']) ?></td>
+    <td><?= Page::money($row['amount_confirmed'] === null ? null : (int) $row['amount_confirmed'], $row['currency']) ?></td>
+    <td><?= Page::pill($row['status']) ?><?= $row['last_error'] ? '<br><small class="muted">' . $e($row['last_error']) . '</small>' : '' ?></td>
+    <td><code><?= $e($row['provider_payment_id'] ?? '–') ?></code><br><small class="muted"><?= $e($row['gateway']) ?></small></td>
+    <td><?= Page::when($row['created_at']) ?></td>
+    <td>
+      <?php if (in_array($row['status'], ['created', 'waiting'], true)): ?>
+        <form method="post"><?= Page::csrfField() ?><input type="hidden" name="id" value="<?= (int) $row['id'] ?>"><input type="hidden" name="do" value="check"><button class="btn small ghost">Check now</button></form>
+      <?php elseif (in_array($row['status'], ['duplicate', 'mismatch'], true)): ?>
+        <form method="post" class="inline-form"><?= Page::csrfField() ?><input type="hidden" name="id" value="<?= (int) $row['id'] ?>"><input type="hidden" name="do" value="kept">
+          <input name="note" placeholder="What was agreed (no refund)" required><button class="btn small violet">Reviewed, close</button></form>
+      <?php endif; ?>
+    </td>
+  </tr>
+  <?php endforeach; ?>
+  <?php if (!$rows): ?><tr><td colspan="9" class="muted">No payments.</td></tr><?php endif; ?>
+</table>
+</div>
+
+<div class="grid2">
+  <div class="card">
+    <h2>Daily totals (confirmed)</h2>
+    <p class="muted small">Compare each day with Psoola's settlement report. Any difference: look for a red row above.</p>
+    <table><tr><th>Day</th><th>Payments</th><th>Total</th></tr>
+      <?php foreach ($daily as $day): ?><tr><td><?= $e($day['day']) ?></td><td><?= (int) $day['n'] ?></td><td><b><?= Page::money((int) $day['total'], $day['currency']) ?></b></td></tr><?php endforeach; ?>
+      <?php if (!$daily): ?><tr><td colspan="3" class="muted">No confirmed payments yet.</td></tr><?php endif; ?>
+    </table>
+  </div>
+  <div class="card" id="webhooks">
+    <h2>Messages from the payment company</h2>
+    <p class="muted small">The first place to look when someone says "I paid but got nothing".</p>
+    <div class="table-wrap"><table><tr><th>When</th><th>Payment</th><th>Signature</th><th>Result</th></tr>
+      <?php foreach ($hooks as $hook): ?>
+        <tr class="<?= str_starts_with($hook['outcome'], 'REJECTED') ? 'row-red' : '' ?>"><td><?= Page::when($hook['received_at']) ?></td><td><code><?= $e($hook['provider_payment_id'] ?? '–') ?></code></td>
+          <td><?= $hook['signature_ok'] ? Page::pill('confirmed') : Page::pill('failed') ?></td><td><?= $e($hook['outcome']) ?><br><small class="muted"><?= $e($hook['ip']) ?></small></td></tr>
+      <?php endforeach; ?>
+      <?php if (!$hooks): ?><tr><td colspan="4" class="muted">None yet.</td></tr><?php endif; ?>
+    </table></div>
+  </div>
+</div>
+<?php Page::bottom();

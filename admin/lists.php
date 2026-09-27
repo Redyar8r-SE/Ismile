@@ -1,0 +1,132 @@
+<?php
+// Lists: ready-made name lists, each with Excel export and print.
+//   Registered              everyone registered: paid (or a free ticket)
+//   Lunch day 1 / day 2     names for the caterer
+//   Students                registered students and their university
+//   Workshops               each workshop with the people booked on it
+//   Sponsors / Exhibition   the sponsor requests and the booth requests, apart
+//   Cancelled
+// Only paid people are registrations, so every list holds paid people only.
+
+declare(strict_types=1);
+
+require __DIR__ . '/_boot.php';
+
+use Ismile\Admin\Lists;
+use Ismile\Admin\Page;
+use Ismile\Auth;
+use Ismile\Registrations;
+
+$user = Page::guard('registrations');
+$current = Lists::pick(Page::query('list'));
+$rows = Lists::rows($current);
+$counts = Lists::counts();
+$columns = Lists::columns($current);
+
+Page::top('Lists', 'lists');
+$e = [Page::class, 'e'];
+?>
+<div class="toolbar tabs no-print">
+  <?php foreach (Lists::ALL as $key => [$label]): ?>
+    <a class="btn <?= $key === $current ? '' : 'ghost' ?>" href="lists.php?list=<?= $e($key) ?>"><?= $e($label) ?> <span class="count"><?= (int) ($counts[$key] ?? 0) ?></span></a>
+  <?php endforeach; ?>
+</div>
+
+<div class="card">
+  <div class="list-head">
+    <div>
+      <h2><?= $e(Lists::ALL[$current][0]) ?>: <?= $current === 'workshops' ? (int) ($counts['workshops'] ?? 0) . ' bookings' : count($rows) ?></h2>
+      <p class="muted"><?= $e(Lists::ALL[$current][1]) ?></p>
+    </div>
+    <div class="no-print">
+      <?php if (Auth::can($user, 'export')): ?><a class="btn green" href="export.php?what=list&amp;list=<?= $e($current) ?>">Export to Excel</a><?php endif; ?>
+      <button class="btn ghost" type="button" onclick="window.print()">Print</button>
+    </div>
+  </div>
+  <?php if ($current === 'studentids'): ?>
+    <div class="id-grid">
+    <?php foreach ($rows as $row): ?>
+      <div class="id-card">
+        <?php if ($row['id_photo'] === 'stored'): ?>
+          <a href="photo.php?id=<?= (int) $row['id'] ?>" target="_blank" rel="noopener"><img src="photo.php?id=<?= (int) $row['id'] ?>&amp;log=0" alt="ID photo" loading="lazy"></a>
+        <?php else: ?><div class="no-photo"><?= $row['id_photo_deleted_at'] ? 'Photo deleted after the summit' : 'No photo (registered by the office)' ?></div><?php endif; ?>
+        <div class="id-card-text">
+          <a href="registration.php?id=<?= (int) $row['id'] ?>"><b><?= $e(Registrations::fullName($row)) ?></b></a> <?= Page::paidBadge($row['status']) ?><br>
+          <?= $e($row['university'] ?? '') ?><br>
+          <small class="muted" dir="ltr"><?= $e($row['phone']) ?> · <?= $e($row['ref']) ?><?= $row['photo_uploaded'] ? ' · sent ' . Page::when($row['photo_uploaded']) : '' ?></small>
+        </div>
+      </div>
+    <?php endforeach; ?>
+    </div>
+    <?php if (!$rows): ?><p class="muted">No registered students yet.</p><?php endif; ?>
+  <?php elseif ($current === 'workshops'): ?>
+    <?php foreach (Lists::workshopGroups() as ['workshop' => $workshop, 'people' => $people]): ?>
+    <div class="group">
+      <div class="group-head"><h3><?= $e(\Ismile\SiteData::workshopName($workshop)) ?><?= $workshop['status'] === 'hidden' ? ' <small class="muted">(hidden)</small>' : '' ?></h3>
+        <span><b><?= count($people) ?></b> of <?= (int) $workshop['totalSeats'] ?> seats · <?= (int) $workshop['seatsLeft'] ?> left</span></div>
+      <div class="table-wrap"><table class="name-list">
+        <tr><th>#</th><th>Name</th><?php foreach ($columns as $label): ?><th><?= $e($label) ?></th><?php endforeach; ?></tr>
+        <?php foreach ($people as $i => $row): ?>
+        <tr><td><?= $i + 1 ?></td><td><a href="registration.php?id=<?= (int) $row['id'] ?>"><b><?= $e(Registrations::fullName($row)) ?></b></a></td>
+          <?php foreach (array_keys($columns) as $key): ?><td<?= $key === 'phone' ? ' dir="ltr"' : '' ?>><?= match ($key) {
+            'ref', 'ticket_no' => $row[$key] ? '<code>' . $e($row[$key]) . '</code>' : '–',
+            'paid_at', 'created_at' => Page::when($row[$key]),
+            'lunch' => trim(($row['lunch_day1'] ? 'Day 1 ' : '') . ($row['lunch_day2'] ? 'Day 2' : '')) ?: '–',
+            'workshop_paid' => Page::paidBadge((string) $row['workshop_paid']),
+            'amount_paid' => $row['amount_paid'] !== null ? number_format((int) $row['amount_paid']) : '–',
+            'sponsor_status' => Page::pill((string) $row['sponsor_status']),
+            'id_photo' => $row['id_photo'] === 'stored' ? '<a href="photo.php?id=' . (int) $row['id'] . '" target="_blank" rel="noopener">✓ see photo</a>' : '<span class="muted">none</span>',
+            'package' => $e(ucfirst((string) ($row['package'] ?? '–'))),
+            default => $e((string) ($row[$key] ?? '')),
+        } ?></td><?php endforeach; ?></tr>
+        <?php endforeach; ?>
+        <?php if (!$people): ?><tr><td colspan="<?= count($columns) + 2 ?>" class="muted">Nobody booked yet.</td></tr><?php endif; ?>
+      </table></div>
+    </div>
+    <?php endforeach; ?>
+  <?php elseif (isset(Lists::COMPANY_LISTS[$current])): ?>
+  <div class="table-wrap"><table class="name-list">
+    <tr><th>#</th><th>Company</th><?php foreach ($columns as $label): ?><th><?= $e($label) ?></th><?php endforeach; ?></tr>
+    <?php foreach ($rows as $i => $row): ?>
+    <tr><td><?= $i + 1 ?></td><td><a href="sponsors.php?id=<?= (int) $row['id'] ?>"><b><?= $e($row['company']) ?></b></a></td>
+      <?php foreach (array_keys($columns) as $key): ?><td<?= in_array($key, ['phone', 'email'], true) ? ' dir="ltr"' : '' ?>><?= match ($key) {
+            'ref', 'ticket_no' => $row[$key] ? '<code>' . $e($row[$key]) . '</code>' : '–',
+            'paid_at', 'created_at' => Page::when($row[$key]),
+            'lunch' => trim(($row['lunch_day1'] ? 'Day 1 ' : '') . ($row['lunch_day2'] ? 'Day 2' : '')) ?: '–',
+            'workshop_paid' => Page::paidBadge((string) $row['workshop_paid']),
+            'amount_paid' => $row['amount_paid'] !== null ? number_format((int) $row['amount_paid']) : '–',
+            'sponsor_status' => Page::pill((string) $row['sponsor_status']),
+            'id_photo' => $row['id_photo'] === 'stored' ? '<a href="photo.php?id=' . (int) $row['id'] . '" target="_blank" rel="noopener">✓ see photo</a>' : '<span class="muted">none</span>',
+            'package' => $e(ucfirst((string) ($row['package'] ?? '–'))),
+            default => $e((string) ($row[$key] ?? '')),
+        } ?></td><?php endforeach; ?></tr>
+    <?php endforeach; ?>
+    <?php if (!$rows): ?><tr><td colspan="<?= count($columns) + 2 ?>" class="muted">No requests yet.</td></tr><?php endif; ?>
+  </table></div>
+  <?php else: ?>
+  <div class="table-wrap"><table class="name-list">
+    <tr><th>#</th><th>Name</th><?php foreach ($columns as $label): ?><th><?= $e($label) ?></th><?php endforeach; ?></tr>
+    <?php foreach ($rows as $i => $row): ?>
+    <tr>
+      <td><?= $i + 1 ?></td>
+      <td><a href="registration.php?id=<?= (int) $row['id'] ?>"><b><?= $e(Registrations::fullName($row)) ?></b></a> <?= Page::paidBadge($row['status']) ?></td>
+      <?php foreach (array_keys($columns) as $key): ?>
+        <td<?= $key === 'phone' ? ' dir="ltr"' : '' ?>><?= match ($key) {
+            'ref', 'ticket_no' => $row[$key] ? '<code>' . $e($row[$key]) . '</code>' : '–',
+            'paid_at', 'created_at' => Page::when($row[$key]),
+            'lunch' => trim(($row['lunch_day1'] ? 'Day 1 ' : '') . ($row['lunch_day2'] ? 'Day 2' : '')) ?: '–',
+            'workshop_paid' => Page::paidBadge((string) $row['workshop_paid']),
+            'amount_paid' => $row['amount_paid'] !== null ? number_format((int) $row['amount_paid']) : '–',
+            'sponsor_status' => Page::pill((string) $row['sponsor_status']),
+            'id_photo' => $row['id_photo'] === 'stored' ? '<a href="photo.php?id=' . (int) $row['id'] . '" target="_blank" rel="noopener">✓ see photo</a>' : '<span class="muted">none</span>',
+            'package' => $e(ucfirst((string) ($row['package'] ?? '–'))),
+            default => $e((string) ($row[$key] ?? '')),
+        } ?></td>
+      <?php endforeach; ?>
+    </tr>
+    <?php endforeach; ?>
+    <?php if (!$rows): ?><tr><td colspan="<?= count($columns) + 2 ?>" class="muted">Nobody on this list yet.</td></tr><?php endif; ?>
+  </table></div>
+  <?php endif; ?>
+</div>
+<?php Page::bottom();

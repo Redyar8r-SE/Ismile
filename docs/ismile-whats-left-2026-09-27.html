@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>iSmile 2026 — What is left to finish</title>
+<style>
+@page { size: A4; margin: 14mm 14mm 15mm; }
+* { box-sizing: border-box; }
+body { margin: 0; color: #12302F; font: 10.2pt/1.5 Arial, Helvetica, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+h1 { font-size: 25pt; margin: 0 0 2mm; line-height: 1.1; }
+h2 { font-size: 15pt; margin: 6mm 0 3mm; display: flex; align-items: center; gap: 3mm; break-after: avoid; }
+h2 .n { width: 8.5mm; height: 8.5mm; border-radius: 50%; background: #12302F; color: #fff; display: inline-grid; place-items: center; font-size: 11pt; flex: none; }
+h3 { font-size: 11pt; margin: 3mm 0 1.5mm; break-after: avoid; }
+p { margin: 0 0 2.5mm; }
+ul { margin: 0 0 2.5mm; padding-left: 5mm; }
+li { margin-bottom: .8mm; }
+.eyebrow { display: inline-block; font-size: 8.5pt; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; background: #D5F1EF; color: #0C6F6B; padding: 1mm 3mm; border-radius: 99px; margin-bottom: 3mm; }
+.lede { color: #4A6467; font-size: 11pt; }
+.small { font-size: 8.6pt; color: #5B7477; }
+.callout { border-radius: 3mm; padding: 3.5mm 4.5mm; margin: 3mm 0; break-inside: avoid; }
+.c-red { background: #FBE1DC; color: #7E2A1C; border-left: 4px solid #E0604A; }
+.c-teal { background: #E4F6F5; color: #0C5F5B; border-left: 4px solid #16A6A1; }
+.c-gold { background: #FCEFD3; color: #6E480C; border-left: 4px solid #E0A33A; }
+.c-green { background: #DDF3E5; color: #1D5B36; border-left: 4px solid #2E9E5B; }
+table { width: 100%; border-collapse: collapse; font-size: 9.2pt; margin: 1mm 0 3mm; }
+th, td { border: 1px solid #D4E4E4; padding: 1.7mm 2.3mm; vertical-align: top; text-align: left; }
+th { background: #EEF6F6; }
+tr { break-inside: avoid; }
+td.k { font-weight: 700; width: 5%; text-align: center; }
+.pill { display: inline-block; padding: .2mm 2.2mm; border-radius: 99px; font-size: 8pt; font-weight: 700; white-space: nowrap; }
+.you { background: #FCEFD3; color: #8A5A0F; } .ps { background: #E6E2FB; color: #3F33A0; } .me { background: #DDEBFB; color: #1B4F91; }
+.urgent { background: #FBE1DC; color: #9A3222; } .ok { background: #DDF3E5; color: #1D6B3C; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3mm; margin: 4mm 0; }
+.stat { border-radius: 3mm; padding: 3mm 3.5mm; }
+.stat b { display: block; font-size: 19pt; line-height: 1.1; }
+.stat span { font-size: 8.6pt; font-weight: 700; }
+.s1 { background: #DDF3E5; color: #1D6B3C; } .s2 { background: #FCEFD3; color: #8A5A0F; } .s3 { background: #E6E2FB; color: #3F33A0; } .s4 { background: #DDEBFB; color: #1B4F91; }
+.done { columns: 2; column-gap: 7mm; padding: 0; list-style: none; font-size: 9.4pt; }
+.done li { padding-left: 5mm; position: relative; break-inside: avoid; }
+.done li::before { content: "✓"; position: absolute; left: 0; color: #2E9E5B; font-weight: 700; }
+.timeline { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2mm; margin: 3mm 0; }
+.step { border-radius: 3mm; padding: 3mm; font-size: 8.8pt; border-top: 4px solid #16A6A1; background: #F4FAFA; break-inside: avoid; }
+.step b { display: block; font-size: 9.6pt; margin-bottom: 1mm; }
+.step .when { color: #0C6F6B; font-weight: 700; font-size: 8.4pt; }
+.step.hot { border-top-color: #E0604A; background: #FDF1EE; }
+.step.goal { border-top-color: #2E9E5B; background: #EEF8F1; }
+footer { margin-top: 4mm; font-size: 8.4pt; color: #5B7477; }
+</style>
+</head>
+<body>
+
+<span class="eyebrow">iSmile 2026 · Project status · 27 September 2026</span>
+<h1>What is left to finish the website</h1>
+<p class="lede">The website, the registration and payment system, the database and the admin are <b>built and tested</b>. What is left is mostly things only you or Psoola can give, then putting everything on the real server and opening registration.</p>
+
+<div class="stats">
+  <div class="stat s1"><b>147 / 147</b><span>automatic checks pass</span></div>
+  <div class="stat s2"><b>9</b><span>things needed from you</span></div>
+  <div class="stat s3"><b>4</b><span>things needed from Psoola</span></div>
+  <div class="stat s4"><b>~25 Oct</b><span>target: registration opens</span></div>
+</div>
+
+<div class="callout c-red"><b>The two things that block everything:</b> (1) the <b>server and the domain</b>, and (2) <b>Psoola's documents and test keys</b>. Everything else can be done in parallel. Psoola usually takes the longest, so please send them the questions this week.</div>
+
+<h2><span class="n">1</span>What is already done</h2>
+<ul class="done">
+  <li>Website pages in English, Arabic and Kurdish, with the registration form, payment page and ticket page</li>
+  <li><b>Only people who pay are registered</b>; unpaid forms are deleted automatically</li>
+  <li>Students upload their ID photo; it is <b>stored in the database</b> and shown in the admin (no approval step)</li>
+  <li>Payment flow for Visa, MasterCard, FIB and FastPay (tested with a pretend Psoola)</li>
+  <li>Exact amount only; paid twice = one ticket; fake payment messages refused</li>
+  <li>PDF ticket with a signed QR code, and the ticket email in 3 languages</li>
+  <li>Admin: Dashboard, Registrations, Lists, Payments, Workshops, Sponsors &amp; booths, Check-in, Settings, Users</li>
+  <li>Lists: lunch day 1 / day 2, students, student ID photos, workshops with their people, sponsors, exhibition booths (Excel + print)</li>
+  <li><b>Workshops in the database</b>: add, edit, seats +/−, hide; the website updates itself; seat limits enforced</li>
+  <li>Workshop booking by phone, paid / not paid, exact amount, no refunds</li>
+  <li>Phone registration with a "Pay now" link; free tickets by the Owner</li>
+  <li>Event has no seat limit; lunch limits from the caterer</li>
+  <li>Door check-in on a phone, with QR scanning</li>
+  <li>Security: own accounts, 5 roles, phone codes, locks, audit log, private data protected</li>
+  <li>Nightly database backup (including the ID photos); price-change alerts</li>
+  <li>Tools to put it on the server (test site first, then live) and to upgrade the database safely</li>
+  <li>Staff guide PDF (19 pages, with screenshots) and the earlier plan and Psoola documents</li>
+</ul>
+
+<h2><span class="n">2</span>What I need from you</h2>
+<table>
+  <tr><th style="width:5%">#</th><th>What</th><th style="width:32%">Why</th><th style="width:12%">When</th></tr>
+  <tr><td class="k">1</td><td><b>Domain</b> (ismile.krd suggested) and <b>cPanel hosting</b> with PHP 8.1+, MySQL, SSL, Cron Jobs, Terminal and Git. Share the login by phone, not in chat.</td><td>Nothing can go online without it.</td><td><span class="pill urgent">now</span></td></tr>
+  <tr><td class="k">2</td><td><b>Send the Psoola questions</b> (the "Questions for Psoola" PDF on your Desktop) and ask for a merchant account.</td><td>Their answer is the longest wait.</td><td><span class="pill urgent">this week</span></td></tr>
+  <tr><td class="k">3</td><td><b>Ticket prices in IQD</b>: professional, student, lunch day 1, lunch day 2.</td><td>Nobody can pay while a price is 0.</td><td><span class="pill you">before opening</span></td></tr>
+  <tr><td class="k">4</td><td><b>Lunch limits</b> for day 1 and day 2 (from the caterer).</td><td>The lunch days close by themselves when full.</td><td><span class="pill you">before opening</span></td></tr>
+  <tr><td class="k">5</td><td><b>The workshops</b>: names, trainers, prices and seats (you can add them yourself in the admin).</td><td>Shown on the website and booked by phone.</td><td><span class="pill you">when known</span></td></tr>
+  <tr><td class="k">6</td><td><b>The team</b>: who is Owner, Finance, office (Registration), door staff (Check-in); who keeps the phone-code envelope.</td><td>Each person gets their own account.</td><td><span class="pill you">before opening</span></td></tr>
+  <tr><td class="k">7</td><td><b>A free Brevo account</b> (brevo.com) for tickets@ismile.krd.</td><td>Sends the ticket emails; I add its records to the domain so emails do not go to spam.</td><td><span class="pill you">with the server</span></td></tr>
+  <tr><td class="k">8</td><td><b>Short answers</b>: the office phone number for the bottom of emails, the workshop booking phone number, are age and gender still needed on the form, the opening date text.</td><td>These appear on the form, emails and website.</td><td><span class="pill you">before opening</span></td></tr>
+  <tr><td class="k">9</td><td><b>Someone to read the Kurdish and Arabic</b> of the new texts (the "pay now" email, the "not completed" page) and the privacy notice I will write.</td><td>My translations should be checked by a native speaker.</td><td><span class="pill you">before opening</span></td></tr>
+</table>
+
+<h2><span class="n">3</span>What I need from Psoola</h2>
+<table>
+  <tr><td class="k">1</td><td><b>Merchant account, API documentation and test keys</b>. I connect the 3 marked places in the code and test with their test keys (about 2 days).</td><td style="width:14%"><span class="pill urgent">critical</span></td></tr>
+  <tr><td class="k">2</td><td>Register our payment-message (webhook) address: <b>https://ismile.krd/api/webhook.php</b> and the test one on test.ismile.krd.</td><td><span class="pill ps">Psoola</span></td></tr>
+  <tr><td class="k">3</td><td>Their <b>fee per payment</b>, so it can be included in the ticket price.</td><td><span class="pill ps">Psoola</span></td></tr>
+  <tr><td class="k">4</td><td>Whether they can <b>refuse a second payment for the same reference</b> (stops "paid twice" completely), and the <b>live keys</b> before opening.</td><td><span class="pill ps">Psoola</span></td></tr>
+</table>
+
+<h2><span class="n">4</span>What I will do</h2>
+<table>
+  <tr><th style="width:5%">#</th><th>Step</th><th style="width:22%">Needs</th><th style="width:14%">Time</th></tr>
+  <tr><td class="k">1</td><td><b>Save all the work to GitHub.</b> Today it exists only on this laptop.</td><td>your OK</td><td>minutes</td></tr>
+  <tr><td class="k">2</td><td>Set up the <b>test site</b> (test.ismile.krd): database, timed jobs, your Owner account; run the 147 checks on the real server; fix what only a real server shows (permissions, headers).</td><td>server + domain</td><td>1–2 days</td></tr>
+  <tr><td class="k">3</td><td>Connect <b>emails</b> (Brevo) and the domain records; test that tickets arrive and do not go to spam.</td><td>Brevo account</td><td>half a day</td></tr>
+  <tr><td class="k">4</td><td>Connect <b>Psoola</b> and test every case with their test keys: paid, declined, wrong amount, paid twice, lost message.</td><td>Psoola documents</td><td>about 2 days</td></tr>
+  <tr><td class="k">5</td><td>Write the <b>privacy notice</b> (what we collect and why) in 3 languages, for your approval.</td><td>nothing</td><td>half a day</td></tr>
+  <tr><td class="k">6</td><td>Check whether the hosting is behind <b>Cloudflare</b> (so the spam limits count each visitor), and final security check.</td><td>server</td><td>hours</td></tr>
+  <tr><td class="k">7</td><td>Put the <b>live site</b> on ismile.krd; create the staff accounts; enter prices, workshops and lunch limits with you.</td><td>steps 2–4 done</td><td>1 day</td></tr>
+  <tr><td class="k">8</td><td><b>Go-live check</b>: one real small payment, ticket received, email test mode switched off, two-person sign-off. Then <b>open registration</b>.</td><td>live keys</td><td>1 day</td></tr>
+  <tr><td class="k">9</td><td>Update the older backend PDFs (they still describe the student approval step that was removed).</td><td>nothing</td><td>hours</td></tr>
+</table>
+
+<h2><span class="n">5</span>Timeline</h2>
+<div class="timeline">
+  <div class="step hot"><span class="when">Now – early Oct</span><b>Server + Psoola request</b>Buy hosting and domain; send the Psoola questions.</div>
+  <div class="step"><span class="when">+1–2 days after server</span><b>Test site live</b>Everything working on test.ismile.krd, with the pretend payment.</div>
+  <div class="step"><span class="when">+2 days after Psoola docs</span><b>Real payments (test)</b>Psoola connected and tested with test keys.</div>
+  <div class="step"><span class="when">by ~20 Oct</span><b>Live site ready</b>Prices, workshops, team accounts, final checks.</div>
+  <div class="step goal"><span class="when">~25 Oct</span><b>Registration opens</b>Summit 20–21 Nov at the Grand Millennium Sulaimani.</div>
+</div>
+<div class="callout c-gold"><b>If Psoola's documents arrive after about 15 October</b>, the opening date moves later by the same amount. Everything else can be ready and waiting.</div>
+
+<h2><span class="n">6</span>Documents on your Desktop</h2>
+<table>
+  <tr><td style="width:48%"><b>iSmile 2026 - Admin guide for staff (how to use the database).pdf</b></td><td>How to use the admin, step by step with screenshots. Give it to the team.</td></tr>
+  <tr><td><b>iSmile 2026 - Questions for Psoola.pdf</b></td><td>Send this to Psoola.</td></tr>
+  <tr><td><b>iSmile 2026 - Backend Plan…</b> and <b>…What I need from you and from Psoola.pdf</b></td><td>The original plan (some parts have since changed, see section 1).</td></tr>
+  <tr><td><b>iSmile 2026 - Backend, everything I built.pdf</b> and <b>…Backend built (what I did and what I need).pdf</b></td><td>Earlier reports; they still mention student approval, which was removed. I will update them.</td></tr>
+</table>
+<footer>iSmile 2026 · 27 September 2026 · This document: docs/ismile-whats-left-2026-09-27.html in the project.</footer>
+</body>
+</html>

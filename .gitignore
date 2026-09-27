@@ -1,2 +1,9 @@
 # The admin server settings hold sign-in secrets: never commit them.
 server/admin-config.php
+
+# Backend secrets and private data: passwords, keys, student ID photos,
+# backups and logs live only on the server.
+backend/config.php
+backend/storage/
+backend/vendor/
+api/_backend.php

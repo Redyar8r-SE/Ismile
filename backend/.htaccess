@@ -1,0 +1,4 @@
+# The backend belongs OUTSIDE the public web folder. If it is ever uploaded
+# inside it by mistake, nothing in it may be served or run from the web.
+Require all denied
+Options -Indexes -ExecCGI

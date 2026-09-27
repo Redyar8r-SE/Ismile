@@ -1,0 +1,108 @@
+<?php
+// The name lists on the admin's Lists page and in their Excel exports.
+// One definition per list, so the page and the export always agree.
+
+declare(strict_types=1);
+
+namespace Ismile\Admin;
+
+use Ismile\Db;
+
+final class Lists
+{
+    /** key => [tab label, explanation] */
+    public const ALL = [
+        'registered' => ['Registered', 'Everyone registered for the event. Only people who paid (or got a free ticket from the Owner) are here.'],
+        'lunch1'     => ['Lunch day 1', 'Registered people who chose lunch on day 1: the list for the caterer.'],
+        'lunch2'     => ['Lunch day 2', 'Registered people who chose lunch on day 2: the list for the caterer.'],
+        'students'   => ['Students', 'Registered students, with their university and whether their ID photo is stored.'],
+        'studentids' => ['Student IDs', 'Every registered student with the ID photo they sent, side by side. The photos are stored in the database.'],
+        'workshops'  => ['Workshops', 'Each workshop with the people booked on it, and whether they paid the workshop.'],
+        'sponsors'   => ['Sponsors', 'Sponsorship requests: the company, the package they want and where it stands.'],
+        'exhibition' => ['Exhibition (booths)', 'Exhibition booth requests, separate from the sponsors.'],
+        'cancelled'  => ['Cancelled', 'Registrations that were cancelled (no refunds are made).'],
+    ];
+
+    /** Lists of companies (sponsor requests), not of people. */
+    public const COMPANY_LISTS = ['sponsors' => 'sponsor', 'exhibition' => 'booth'];
+
+    public static function pick(string $key): string
+    {
+        return array_key_exists($key, self::ALL) ? $key : 'registered';
+    }
+
+    /** Extra columns after the name: key => heading. */
+    public static function columns(string $list): array
+    {
+        return match ($list) {
+            'workshops'        => ['phone' => 'Phone', 'workshop_paid' => 'Workshop paid?', 'amount_paid' => 'Amount (IQD)', 'ref' => 'Reference'],
+            'sponsors'         => ['package' => 'Package', 'contact_name' => 'Contact', 'phone' => 'Phone', 'email' => 'Email', 'sponsor_status' => 'Status', 'ref' => 'Reference'],
+            'exhibition'       => ['contact_name' => 'Contact', 'phone' => 'Phone', 'email' => 'Email', 'sponsor_status' => 'Status', 'ref' => 'Reference'],
+            'students', 'studentids' => ['phone' => 'Phone', 'university' => 'University', 'ambassador_code' => 'Ambassador', 'id_photo' => 'ID photo', 'ticket_no' => 'Ticket no.', 'ref' => 'Reference'],
+            'lunch1', 'lunch2' => ['phone' => 'Phone', 'ticket_type' => 'Ticket', 'ticket_no' => 'Ticket no.', 'ref' => 'Reference'],
+            default            => ['phone' => 'Phone', 'ticket_type' => 'Ticket', 'lunch' => 'Lunch', 'ticket_no' => 'Ticket no.', 'ref' => 'Reference', 'paid_at' => 'Paid'],
+        };
+    }
+
+    public static function rows(string $list): array
+    {
+        if (isset(self::COMPANY_LISTS[$list])) {
+            return Db::all("SELECT *, status AS sponsor_status FROM sponsor_requests WHERE kind = ? ORDER BY status = 'declined', company", [self::COMPANY_LISTS[$list]]);
+        }
+        if ($list === 'workshops') {
+            return array_merge(...array_column(self::workshopGroups(), 'people') ?: [[]]);
+        }
+        $registered = "r.status IN ('paid','complimentary')";
+        $where = match ($list) {
+            'lunch1'    => "$registered AND r.lunch_day1 = 1",
+            'lunch2'    => "$registered AND r.lunch_day2 = 1",
+            'students', 'studentids' => "$registered AND r.ticket_type = 'student'",
+            'cancelled' => "r.status = 'cancelled'",
+            default     => $registered,
+        };
+        return Db::all("SELECT r.*, t.ticket_no, p.uploaded_at AS photo_uploaded, p.bytes AS photo_bytes, IF(p.id IS NULL, 'missing', 'stored') AS id_photo
+                        FROM registrations r LEFT JOIN tickets t ON t.registration_id = r.id AND t.cancelled_at IS NULL
+                        LEFT JOIN student_id_photos p ON p.id = r.id_photo_id
+                        WHERE $where ORDER BY r.first_name, r.father_name, r.grandfather_name");
+    }
+
+    /**
+     * Every workshop with the people booked on it (removed bookings are not
+     * shown). Workshops nobody booked yet are listed too, empty.
+     */
+    public static function workshopGroups(): array
+    {
+        $groups = [];
+        foreach (\Ismile\Workshops::all(true) as $workshop) {
+            $people = Db::all(
+                "SELECT r.*, wb.payment_status AS workshop_paid, wb.amount_paid, ? AS workshop_name
+                 FROM workshop_bookings wb JOIN registrations r ON r.id = wb.registration_id
+                 WHERE wb.workshop_id = ? AND wb.removed_at IS NULL ORDER BY r.first_name, r.father_name",
+                [\Ismile\Workshops::name($workshop), $workshop['id']]
+            );
+            if ($people || $workshop['status'] === 'active') {
+                $groups[] = ['workshop' => $workshop, 'people' => $people];
+            }
+        }
+        return $groups;
+    }
+
+    /** How many people are on each list (for the tabs). */
+    public static function counts(): array
+    {
+        $row = Db::one(
+            "SELECT
+               COALESCE(SUM(status IN ('paid','complimentary')), 0)                           AS registered,
+               COALESCE(SUM(status IN ('paid','complimentary') AND lunch_day1 = 1), 0)        AS lunch1,
+               COALESCE(SUM(status IN ('paid','complimentary') AND lunch_day2 = 1), 0)        AS lunch2,
+               COALESCE(SUM(status IN ('paid','complimentary') AND ticket_type = 'student'), 0) AS students,
+               COALESCE(SUM(status IN ('paid','complimentary') AND ticket_type = 'student'), 0) AS studentids,
+               COALESCE(SUM(status = 'cancelled'), 0)                                         AS cancelled
+             FROM registrations"
+        ) ?? [];
+        $row['workshops'] = (int) Db::value('SELECT COUNT(*) FROM workshop_bookings WHERE removed_at IS NULL');
+        $row['sponsors'] = (int) Db::value("SELECT COUNT(*) FROM sponsor_requests WHERE kind = 'sponsor'");
+        $row['exhibition'] = (int) Db::value("SELECT COUNT(*) FROM sponsor_requests WHERE kind = 'booth'");
+        return array_map('intval', $row);
+    }
+}
