@@ -7,3 +7,11 @@ server/admin-config.php
 !.env.example
 deploy.env
 .deploy.env
+.admin-password.local
+.admin-login.local
+
+node_modules/
+coverage/
+.DS_Store
+.admin-password.local
+.admin-login.local

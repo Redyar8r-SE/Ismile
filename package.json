@@ -4,9 +4,21 @@
   "type": "module",
   "scripts": {
     "start": "node server/node-server.mjs",
+    "lint": "biome check server netlify tests package.json biome.json",
+    "lint:fix": "biome check --write server netlify tests package.json biome.json",
+    "check-types": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check-errors": "npm run lint && npm run check-types && npm test",
     "deploy:sync-env": "bash scripts/sync-deploy-env-secret.sh"
   },
   "engines": {
     "node": ">=20"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.14",
+    "@types/node": "^22.18.1",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
   }
 }

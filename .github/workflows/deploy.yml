@@ -22,6 +22,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint, typecheck, and unit tests
+        run: npm run check-errors
 
       - name: Load DEPLOY_ENV
         env:
@@ -38,7 +45,7 @@ jobs:
             index.html admin.html register.html sponsor.html workshops.html favicon.ico \
             assets css data docs js netlify server \
             package.json ecosystem.config.cjs .env \
-            -x '*.DS_Store' -x '**/deploy.env' -x '**/.deploy.env' -x '**/.git/*'
+            -x '*.DS_Store' -x '**/deploy.env' -x '**/.deploy.env' -x '**/.git/*' -x '**/node_modules/*' -x '**/tests/*'
           ls -lh deploy-bundle.zip
           unzip -t -q deploy-bundle.zip
           unzip -l deploy-bundle.zip | grep -q 'server/node-server.mjs'

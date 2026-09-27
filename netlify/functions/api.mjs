@@ -13,17 +13,41 @@
 //   GITHUB_BRANCH         optional, defaults to main
 //   ALLOWED_ORIGIN        optional, defaults to allowing the GitHub Pages site
 
-const DAY = 86400;
+/**
+ * @typedef {{
+ *   path?: string,
+ *   httpMethod?: string,
+ *   headers: Record<string, string | undefined>,
+ *   body?: string,
+ *   queryStringParameters?: Record<string, string | undefined>,
+ * }} ApiEvent
+ *
+ * @typedef {{ statusCode: number, headers: Record<string, string>, body: string }} ApiResult
+ *
+ * @typedef {{ email: string, exp: number }} SessionPayload
+ */
+
 const SESSION_HOURS = 12;
 
 const enc = new TextEncoder();
-const b64 = (bytes) => Buffer.from(bytes).toString("base64");
+/** @param {ArrayBuffer | Uint8Array} bytes */
+const b64 = (bytes) =>
+  Buffer.from(bytes instanceof ArrayBuffer ? new Uint8Array(bytes) : bytes).toString("base64");
+/** @param {string} text */
 const unb64 = (text) => Buffer.from(text, "base64");
+/** @param {string} text */
 const b64url = (text) => Buffer.from(text).toString("base64url");
 
+/** @param {string} origin */
 function cors(origin) {
-  const allowed = (process.env.ALLOWED_ORIGIN || "https://ismile.krd,https://www.ismile.krd").split(",").map((o) => o.trim());
-  const ok = origin && (allowed.includes(origin) || origin.endsWith(".netlify.app") || origin.startsWith("http://localhost"));
+  const allowed = (process.env.ALLOWED_ORIGIN || "https://ismile.krd,https://www.ismile.krd")
+    .split(",")
+    .map((o) => o.trim());
+  const ok =
+    origin &&
+    (allowed.includes(origin) ||
+      origin.endsWith(".netlify.app") ||
+      origin.startsWith("http://localhost"));
   return {
     "Access-Control-Allow-Origin": ok ? origin : allowed[0],
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
@@ -32,6 +56,12 @@ function cors(origin) {
   };
 }
 
+/**
+ * @param {number} status
+ * @param {unknown} body
+ * @param {string} origin
+ * @returns {ApiResult}
+ */
 const json = (status, body, origin) => ({
   statusCode: status,
   headers: { "Content-Type": "application/json", ...cors(origin) },
@@ -39,12 +69,24 @@ const json = (status, body, origin) => ({
 });
 
 // ---------- password ----------
+/**
+ * @param {string} password
+ * @param {BufferSource} salt
+ * @param {number} iterations
+ */
 async function pbkdf2(password, salt, iterations) {
-  const key = await crypto.subtle.importKey("raw", enc.encode(password), "PBKDF2", false, ["deriveBits"]);
-  const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", salt, iterations, hash: "SHA-256" }, key, 256);
+  const key = await crypto.subtle.importKey("raw", enc.encode(password), "PBKDF2", false, [
+    "deriveBits",
+  ]);
+  const bits = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", salt, iterations, hash: "SHA-256" },
+    key,
+    256,
+  );
   return b64(new Uint8Array(bits));
 }
 
+/** @param {string} password */
 async function passwordMatches(password) {
   const stored = process.env.ADMIN_PASSWORD_HASH || "";
   const [scheme, iterations, salt, hash] = stored.split("$");
@@ -58,20 +100,43 @@ async function passwordMatches(password) {
 }
 
 // ---------- sign-in tickets ----------
+/** @param {SessionPayload} payload */
 async function sign(payload) {
   const body = b64url(JSON.stringify(payload));
-  const key = await crypto.subtle.importKey("raw", enc.encode(process.env.SESSION_SECRET || ""), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const key = await crypto.subtle.importKey(
+    "raw",
+    enc.encode(process.env.SESSION_SECRET || ""),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
   const mac = await crypto.subtle.sign("HMAC", key, enc.encode(body));
   return `${body}.${Buffer.from(mac).toString("base64url")}`;
 }
 
+/**
+ * @param {string | undefined} ticket
+ * @returns {Promise<SessionPayload | null>}
+ */
 async function verify(ticket) {
   if (!ticket) return null;
   const [body, mac] = ticket.split(".");
   if (!body || !mac) return null;
-  const key = await crypto.subtle.importKey("raw", enc.encode(process.env.SESSION_SECRET || ""), { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
-  const ok = await crypto.subtle.verify("HMAC", key, Buffer.from(mac, "base64url"), enc.encode(body));
+  const key = await crypto.subtle.importKey(
+    "raw",
+    enc.encode(process.env.SESSION_SECRET || ""),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["verify"],
+  );
+  const ok = await crypto.subtle.verify(
+    "HMAC",
+    key,
+    Buffer.from(mac, "base64url"),
+    enc.encode(body),
+  );
   if (!ok) return null;
+  /** @type {SessionPayload} */
   const payload = JSON.parse(Buffer.from(body, "base64url").toString());
   return payload.exp > Math.floor(Date.now() / 1000) ? payload : null;
 }
@@ -80,6 +145,10 @@ async function verify(ticket) {
 const repo = () => process.env.GITHUB_REPO || "";
 const branch = () => process.env.GITHUB_BRANCH || "main";
 
+/**
+ * @param {string} path
+ * @param {RequestInit} [init]
+ */
 async function github(path, init = {}) {
   const response = await fetch(`https://api.github.com/repos/${repo()}/${path}`, {
     ...init,
@@ -88,13 +157,17 @@ async function github(path, init = {}) {
       Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
       "X-GitHub-Api-Version": "2022-11-28",
       ...(init.body ? { "Content-Type": "application/json" } : {}),
-      ...init.headers,
+      .../** @type {Record<string, string>} */ (init.headers || {}),
     },
   });
   return response;
 }
 
 // ---------- routes ----------
+/**
+ * @param {ApiEvent} event
+ * @returns {Promise<ApiResult>}
+ */
 export async function handler(event) {
   const origin = event.headers.origin || event.headers.Origin || "";
   const route = (event.path || "").replace(/^.*\/api\//, "").replace(/^.*\/functions\/api\/?/, "");
@@ -103,29 +176,45 @@ export async function handler(event) {
 
   // 503 and a plain sentence, so the admin page can say exactly what is missing
   // instead of looking like no server is there at all.
-  const missing = ["ADMIN_EMAIL", "ADMIN_PASSWORD_HASH", "SESSION_SECRET", "GITHUB_TOKEN", "GITHUB_REPO"]
-    .filter((name) => !process.env[name]);
+  const missing = [
+    "ADMIN_EMAIL",
+    "ADMIN_PASSWORD_HASH",
+    "SESSION_SECRET",
+    "GITHUB_TOKEN",
+    "GITHUB_REPO",
+  ].filter((name) => !process.env[name]);
   if (missing.length) {
-    return json(503, { error: `The server settings are not finished: ${missing.join(", ")}.` }, origin);
+    return json(
+      503,
+      { error: `The server settings are not finished: ${missing.join(", ")}.` },
+      origin,
+    );
   }
 
   // --- sign in ---
   if (route === "login" && event.httpMethod === "POST") {
     const { email = "", password = "" } = JSON.parse(event.body || "{}");
-    const emailOk = email.trim().toLowerCase() === (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
+    const emailOk =
+      email.trim().toLowerCase() === (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
     const passOk = await passwordMatches(password);
     if (!emailOk || !passOk) {
-      await new Promise((r) => setTimeout(r, 400));   // slow down guessing
+      const delayMs = Number(process.env.ISMILE_LOGIN_DELAY_MS ?? "400");
+      if (delayMs > 0) await new Promise((r) => setTimeout(r, delayMs)); // slow down guessing
       return json(401, { error: "Wrong email or password." }, origin);
     }
     const exp = Math.floor(Date.now() / 1000) + SESSION_HOURS * 3600;
-    return json(200, { token: await sign({ email: email.trim().toLowerCase(), exp }), email, exp, repo: repo() }, origin);
+    return json(
+      200,
+      { token: await sign({ email: email.trim().toLowerCase(), exp }), email, exp, repo: repo() },
+      origin,
+    );
   }
 
   const session = await verify((event.headers.authorization || "").replace(/^Bearer /, ""));
   if (!session) return json(401, { error: "Please sign in again." }, origin);
 
-  if (route === "me") return json(200, { email: session.email, exp: session.exp, repo: repo() }, origin);
+  if (route === "me")
+    return json(200, { email: session.email, exp: session.exp, repo: repo() }, origin);
 
   // --- read a file (to get its id before writing) ---
   if (route === "file" && event.httpMethod === "GET") {
@@ -142,10 +231,12 @@ export async function handler(event) {
   if (route === "save" && event.httpMethod === "POST") {
     const { path, contentBase64, message } = JSON.parse(event.body || "{}");
     if (!path || !contentBase64) return json(400, { error: "Nothing to save." }, origin);
-    if (path.includes("..") || path.startsWith("/")) return json(400, { error: "Bad file name." }, origin);
+    if (path.includes("..") || path.startsWith("/"))
+      return json(400, { error: "Bad file name." }, origin);
     // The admin may only touch content, never the code that runs the site.
     const allowed = /^(data\/|assets\/uploads\/)/.test(path);
-    if (!allowed) return json(403, { error: "That file cannot be changed from the admin." }, origin);
+    if (!allowed)
+      return json(403, { error: "That file cannot be changed from the admin." }, origin);
 
     const head = await github(`contents/${encodeURI(path)}?ref=${branch()}`);
     const sha = head.ok ? (await head.json()).sha : undefined;
