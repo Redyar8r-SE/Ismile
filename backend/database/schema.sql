@@ -25,12 +25,12 @@
 --   2. Waiting for payment     student_id_photos, checkouts (temporary: deleted if not paid)
 --   3. Registrations           registrations (PAID people only), ambassadors
 --   4. Money and tickets       payments, tickets
---   5. Workshops and sponsors  workshops, workshop_bookings, sponsor_requests
+--   5. Workshops and sponsors  workshops, workshop_bookings, sponsor_packages,
+--                              sponsor_requests, sponsor_calls
 --   6. Messages                emails, webhook_log
 --   7. System                  settings, audit_log, rate_limits, schema_migrations
---   8. Read-only views         view_registrations, view_lunch_day1, view_lunch_day2,
---                              view_students, view_payments_by_day, view_workshop_seats,
---                              view_workshop_people, view_sponsors, view_exhibition
+--   8. The simple lists        01_registered_people … 12_money_per_day (numbered,
+--                              plain column names, read-only: for everyone)
 --
 -- The one rule above all: a person is in "registrations" only after the
 -- payment company confirmed the exact amount (or the Owner gave a free
@@ -120,6 +120,7 @@ CREATE TABLE IF NOT EXISTS checkouts (
   university         VARCHAR(160)      NULL,                   -- students
   ambassador_code    VARCHAR(40)       NULL,
   id_photo_id        INT UNSIGNED      NULL,                   -- the student ID photo (student_id_photos)
+  terms_accepted_at  DATETIME          NULL,                   -- ticked "tickets are non-refundable" (website form)
   view_nonce         CHAR(32)          NOT NULL,               -- with the secret: their payment page link
   registration_id    INT UNSIGNED      NULL,                   -- set when paid
   created_by         INT UNSIGNED      NULL,                   -- the staff member, for a phone registration
@@ -168,6 +169,7 @@ CREATE TABLE IF NOT EXISTS registrations (
   ambassador_code    VARCHAR(40)       NULL,                   -- as typed; unknown codes are shown in Settings
   id_photo_id        INT UNSIGNED      NULL,                   -- the student ID photo; NULL after it is deleted (90 days after the summit)
   id_photo_deleted_at DATETIME         NULL,
+  terms_accepted_at  DATETIME          NULL,                   -- when they accepted "tickets are non-refundable" (proof)
   -- where it stands
   status             ENUM('paid','complimentary','cancelled') NOT NULL,
   possible_duplicate TINYINT(1)        NOT NULL DEFAULT 0,     -- same phone or email as another registration
@@ -349,12 +351,41 @@ CREATE TABLE IF NOT EXISTS workshop_bookings (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Workshop bookings (by phone)';
 
+-- The sponsorship packages (Diamond, Platinum, Gold, Silver…) and the
+-- exhibition booth types, each with its price and number of places. Managed
+-- by the Owner on the admin's Sponsors page; the website's tier cards are made
+-- from this table automatically.
+CREATE TABLE IF NOT EXISTS sponsor_packages (
+  id           VARCHAR(40)        NOT NULL,                   -- short name, e.g. "gold", "booth-standard"
+  kind         ENUM('sponsor','booth') NOT NULL,              -- sponsorship, or an exhibition booth
+  name_en      VARCHAR(80)        NOT NULL,
+  name_ar      VARCHAR(80)        NULL,
+  name_ku      VARCHAR(80)        NULL,
+  subtitle_en  VARCHAR(160)       NULL,                       -- e.g. "Headline partners"
+  subtitle_ar  VARCHAR(160)       NULL,
+  subtitle_ku  VARCHAR(160)       NULL,
+  price        INT UNSIGNED       NOT NULL DEFAULT 0,         -- IQD, the list price told on the phone; 0 = not set yet
+  places       SMALLINT UNSIGNED  NOT NULL DEFAULT 0,         -- how many can be sold; 0 = no limit
+  style        VARCHAR(30)        NOT NULL DEFAULT 'tc-silver', -- the colour of the website card
+  status       ENUM('active','hidden') NOT NULL DEFAULT 'active',
+  sort_order   SMALLINT UNSIGNED  NOT NULL DEFAULT 0,
+  created_at   DATETIME           NOT NULL,
+  updated_at   DATETIME           NOT NULL,
+  PRIMARY KEY (id),
+  KEY k_package_kind (kind, status, sort_order),
+  CONSTRAINT ck_package_id CHECK (id REGEXP '^[a-z0-9-]{2,40}$')
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='Sponsor packages and booth types, with prices';
+
 -- Sponsorship and booth requests: handled by a person, never sold like tickets.
+-- The steps: New → Contacted (called) → Agreed (amount agreed) → Paid → Confirmed,
+-- or Declined / Waiting list.
 CREATE TABLE IF NOT EXISTS sponsor_requests (
   id             INT UNSIGNED  NOT NULL AUTO_INCREMENT,
   ref            CHAR(11)      NOT NULL,                       -- SPN26-XXXXX
   kind           ENUM('sponsor','booth') NOT NULL,
-  package        VARCHAR(40)   NULL,                           -- the tier id from the website
+  package_id     VARCHAR(40)   NULL,                           -- the package they want; NULL = not sure yet
+  -- who they are (exactly what the website form collects)
   company        VARCHAR(160)  NOT NULL,
   contact_name   VARCHAR(120)  NOT NULL,
   contact_role   VARCHAR(120)  NULL,
@@ -364,9 +395,17 @@ CREATE TABLE IF NOT EXISTS sponsor_requests (
   city           VARCHAR(80)   NULL,
   message        TEXT          NULL,
   lang           ENUM('en','ar','ku') NOT NULL DEFAULT 'en',
+  -- where it stands
   status         ENUM('new','contacted','agreed','paid','confirmed','declined','waiting_list') NOT NULL DEFAULT 'new',
   assigned_to    INT UNSIGNED  NULL,                           -- the team member handling it
-  amount_agreed  INT UNSIGNED  NULL,
+  price_quoted   INT UNSIGNED  NULL,                           -- IQD, the amount last told on the phone
+  amount_agreed  INT UNSIGNED  NULL,                           -- IQD, the amount they agreed to pay
+  amount_paid    INT UNSIGNED  NULL,                           -- IQD, received
+  paid_how       ENUM('cash','transfer','psoola','other') NULL,
+  paid_at        DATETIME      NULL,
+  booth_number   VARCHAR(20)   NULL,                           -- where their booth is (exhibition)
+  last_call_at   DATETIME      NULL,
+  next_call_at   DATETIME      NULL,                           -- when to call them again
   notes          TEXT          NULL,
   created_ip     VARCHAR(45)   NULL,
   created_at     DATETIME      NOT NULL,
@@ -374,10 +413,34 @@ CREATE TABLE IF NOT EXISTS sponsor_requests (
   PRIMARY KEY (id),
   UNIQUE KEY uq_sponsor_ref (ref),
   KEY k_sponsor_status (status, created_at),
-  KEY k_sponsor_package (kind, package, status),               -- spots taken per tier
-  CONSTRAINT fk_sponsor_assigned FOREIGN KEY (assigned_to) REFERENCES admin_users (id)
+  KEY k_sponsor_package (kind, package_id, status),            -- places taken per package
+  KEY k_sponsor_next_call (next_call_at),                      -- "calls due today"
+  CONSTRAINT fk_sponsor_assigned FOREIGN KEY (assigned_to) REFERENCES admin_users (id),
+  CONSTRAINT fk_sponsor_package  FOREIGN KEY (package_id)  REFERENCES sponsor_packages (id),
+  CONSTRAINT ck_sponsor_paid CHECK (status NOT IN ('paid','confirmed') OR (amount_paid IS NOT NULL AND paid_at IS NOT NULL AND paid_how IS NOT NULL)),
+  CONSTRAINT ck_sponsor_agreed CHECK (status NOT IN ('agreed','paid','confirmed') OR amount_agreed IS NOT NULL)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Sponsor and booth requests';
+
+-- Every phone call with a sponsor or exhibitor: who called, when, what
+-- happened, which amount was told, and when to call again.
+CREATE TABLE IF NOT EXISTS sponsor_calls (
+  id              INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  request_id      INT UNSIGNED  NOT NULL,
+  called_by       INT UNSIGNED  NULL,
+  called_at       DATETIME      NOT NULL,
+  outcome         ENUM('reached','no_answer','call_back','interested','agreed','declined') NOT NULL,
+  amount_quoted   INT UNSIGNED  NULL,                          -- IQD told on this call
+  note            VARCHAR(500)  NULL,
+  next_call_at    DATETIME      NULL,
+  PRIMARY KEY (id),
+  KEY k_call_request (request_id, called_at),
+  CONSTRAINT fk_call_request FOREIGN KEY (request_id) REFERENCES sponsor_requests (id),
+  CONSTRAINT fk_call_by      FOREIGN KEY (called_by)  REFERENCES admin_users (id),
+  CONSTRAINT ck_call_agreed CHECK (outcome <> 'agreed' OR amount_quoted IS NOT NULL)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='Phone calls with sponsors and exhibitors';
+
 
 
 -- ============================================================================
@@ -484,100 +547,193 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 
 
 -- ============================================================================
--- 8. READ-ONLY VIEWS
+-- 8. THE SIMPLE LISTS (for everyone)
 -- ============================================================================
--- Ready-made tables for looking at the data in phpMyAdmin, if ever needed.
--- The admin pages are the normal way to see everything; these change nothing.
--- SQL SECURITY INVOKER: they run with the rights of whoever reads them.
+-- Ready-made, numbered lists with plain column names, for anyone who opens the
+-- database (for example with MySQL Workbench). They only READ; nothing can be
+-- changed through them. A "viewer" login (tools/install.php --viewer) sees
+-- ONLY these lists, never the tables behind them.
+-- SQL SECURITY DEFINER: they read the tables with the installer's rights, so
+-- the viewer login needs no rights on the tables themselves.
 
--- Everyone registered (paid or free ticket), one line each.
-CREATE OR REPLACE SQL SECURITY INVOKER VIEW view_registrations AS
+-- Everyone registered for the event (paid, or a free ticket from the Owner).
+CREATE OR REPLACE SQL SECURITY DEFINER VIEW `01_registered_people` AS
 SELECT
-  r.ref                                                         AS reference,
-  CONCAT_WS(' ', r.first_name, r.father_name, r.grandfather_name) AS full_name,
-  r.phone,
-  r.email,
-  r.city,
-  r.ticket_type,
-  r.university,
-  r.lunch_day1,
-  r.lunch_day2,
-  r.status,
-  t.ticket_no,
-  t.checked_in_at,
-  (SELECT p.amount_confirmed FROM payments p
-    WHERE p.registration_id = r.id AND p.status = 'paid' LIMIT 1) AS amount_paid,
-  r.pay_method,
-  r.lang,
-  r.paid_at
+  r.ref                                                              AS `Reference`,
+  CONCAT_WS(' ', r.first_name, r.father_name, r.grandfather_name)    AS `Full name`,
+  r.phone                                                            AS `Phone`,
+  r.email                                                            AS `Email`,
+  r.city                                                             AS `City`,
+  IF(r.ticket_type = 'student', 'Student', 'Professional')           AS `Ticket`,
+  r.university                                                       AS `University`,
+  IF(r.lunch_day1 = 1, 'Yes', '')                                    AS `Lunch day 1`,
+  IF(r.lunch_day2 = 1, 'Yes', '')                                    AS `Lunch day 2`,
+  CASE r.status WHEN 'paid' THEN 'Paid' WHEN 'complimentary' THEN 'Free ticket' ELSE 'Cancelled' END AS `Status`,
+  (SELECT p.amount_confirmed FROM payments p WHERE p.registration_id = r.id AND p.status = 'paid' LIMIT 1) AS `Paid (IQD)`,
+  UPPER(r.pay_method)                                                AS `Paid by`,
+  r.paid_at                                                          AS `Paid on`,
+  t.ticket_no                                                        AS `Ticket number`,
+  t.checked_in_at                                                    AS `Arrived at the door`,
+  IF(r.terms_accepted_at IS NULL, '', 'Yes')                         AS `Accepted no-refund terms`
 FROM registrations r
 LEFT JOIN tickets t ON t.registration_id = r.id;
 
--- Names for the caterer: registered people (not cancelled) who chose lunch.
-CREATE OR REPLACE SQL SECURITY INVOKER VIEW view_lunch_day1 AS
-SELECT r.ref AS reference, CONCAT_WS(' ', r.first_name, r.father_name, r.grandfather_name) AS full_name, r.phone, r.ticket_type
+-- The caterer's lists.
+CREATE OR REPLACE SQL SECURITY DEFINER VIEW `02_lunch_day_1` AS
+SELECT CONCAT_WS(' ', r.first_name, r.father_name, r.grandfather_name) AS `Full name`, r.phone AS `Phone`,
+       IF(r.ticket_type = 'student', 'Student', 'Professional') AS `Ticket`, r.ref AS `Reference`
 FROM registrations r WHERE r.status IN ('paid','complimentary') AND r.lunch_day1 = 1;
 
-CREATE OR REPLACE SQL SECURITY INVOKER VIEW view_lunch_day2 AS
-SELECT r.ref AS reference, CONCAT_WS(' ', r.first_name, r.father_name, r.grandfather_name) AS full_name, r.phone, r.ticket_type
+CREATE OR REPLACE SQL SECURITY DEFINER VIEW `03_lunch_day_2` AS
+SELECT CONCAT_WS(' ', r.first_name, r.father_name, r.grandfather_name) AS `Full name`, r.phone AS `Phone`,
+       IF(r.ticket_type = 'student', 'Student', 'Professional') AS `Ticket`, r.ref AS `Reference`
 FROM registrations r WHERE r.status IN ('paid','complimentary') AND r.lunch_day2 = 1;
 
--- Registered students with their university (the ID photo is in the admin).
-CREATE OR REPLACE SQL SECURITY INVOKER VIEW view_students AS
-SELECT r.ref AS reference, CONCAT_WS(' ', r.first_name, r.father_name, r.grandfather_name) AS full_name, r.phone, r.university, r.ambassador_code, r.status,
-       p.id IS NOT NULL AS has_id_photo, p.bytes AS photo_bytes, p.uploaded_at AS photo_uploaded
-FROM registrations r LEFT JOIN student_id_photos p ON p.id = r.id_photo_id WHERE r.ticket_type = 'student';
+-- Registered students (the ID photos are seen in the admin).
+CREATE OR REPLACE SQL SECURITY DEFINER VIEW `04_students` AS
+SELECT CONCAT_WS(' ', r.first_name, r.father_name, r.grandfather_name) AS `Full name`, r.phone AS `Phone`,
+       r.university AS `University`, r.ambassador_code AS `Ambassador code`,
+       IF(r.id_photo_id IS NULL, 'No', 'Yes') AS `ID photo stored`, r.ref AS `Reference`
+FROM registrations r WHERE r.ticket_type = 'student' AND r.status IN ('paid','complimentary');
 
--- Confirmed money per day and method, to compare with Psoola's report.
-CREATE OR REPLACE SQL SECURITY INVOKER VIEW view_payments_by_day AS
+-- Every workshop: price, seats, how many booked and paid, the money.
+CREATE OR REPLACE SQL SECURITY DEFINER VIEW `05_workshops` AS
 SELECT
-  DATE(p.confirmed_at)    AS day,
-  p.method,
-  COUNT(*)                AS payments,
-  SUM(p.amount_confirmed) AS total_iqd
-FROM payments p
-WHERE p.status = 'paid'
-GROUP BY DATE(p.confirmed_at), p.method;
-
--- Every workshop: its limit, seats booked and left, and the money.
-CREATE OR REPLACE SQL SECURITY INVOKER VIEW view_workshop_seats AS
-SELECT
-  w.id                                                                AS workshop_id,
-  COALESCE(w.title_en, CONCAT(w.id, ' (title not announced)'))        AS workshop,
-  w.status,
-  w.price,
-  w.total_seats,
-  COUNT(wb.id)                                                        AS booked,
-  w.total_seats - COUNT(wb.id)                                        AS seats_left,
-  COALESCE(SUM(wb.payment_status = 'paid'), 0)                        AS paid,
-  COALESCE(SUM(wb.payment_status = 'complimentary'), 0)               AS free,
-  COALESCE(SUM(wb.payment_status = 'unpaid'), 0)                      AS not_paid,
-  COALESCE(SUM(wb.amount_paid), 0)                                    AS money_iqd
+  COALESCE(w.title_en, CONCAT(w.id, ' (title not announced)'))  AS `Workshop`,
+  w.price                                                       AS `Price (IQD)`,
+  w.total_seats                                                 AS `Seats`,
+  COUNT(wb.id)                                                  AS `Booked`,
+  w.total_seats - COUNT(wb.id)                                  AS `Seats left`,
+  COALESCE(SUM(wb.payment_status = 'paid'), 0)                  AS `Paid`,
+  COALESCE(SUM(wb.payment_status = 'unpaid'), 0)                AS `Not paid yet`,
+  COALESCE(SUM(wb.amount_paid), 0)                              AS `Money received (IQD)`,
+  IF(w.status = 'active', 'Shown', 'Hidden')                    AS `On the website`
 FROM workshops w
 LEFT JOIN workshop_bookings wb ON wb.workshop_id = w.id AND wb.removed_at IS NULL
-GROUP BY w.id, w.title_en, w.status, w.price, w.total_seats;
+GROUP BY w.id, w.title_en, w.price, w.total_seats, w.status, w.sort_order
+ORDER BY w.sort_order;
 
--- Who is booked on which workshop, one line per person and workshop.
-CREATE OR REPLACE SQL SECURITY INVOKER VIEW view_workshop_people AS
+-- Who booked which workshop.
+CREATE OR REPLACE SQL SECURITY DEFINER VIEW `06_workshop_people` AS
 SELECT
-  COALESCE(w.title_en, w.id)                                          AS workshop,
-  CONCAT_WS(' ', r.first_name, r.father_name, r.grandfather_name)     AS full_name,
-  r.phone,
-  r.ref                                                               AS reference,
-  wb.payment_status,
-  wb.amount_paid,
-  wb.paid_how,
-  wb.created_at                                                       AS booked_at
+  COALESCE(w.title_en, w.id)                                         AS `Workshop`,
+  CONCAT_WS(' ', r.first_name, r.father_name, r.grandfather_name)    AS `Full name`,
+  r.phone                                                            AS `Phone`,
+  CASE wb.payment_status WHEN 'paid' THEN 'Paid' WHEN 'complimentary' THEN 'Free' ELSE 'Not paid' END AS `Paid?`,
+  wb.amount_paid                                                     AS `Amount paid (IQD)`,
+  wb.paid_how                                                        AS `Paid how`,
+  wb.created_at                                                      AS `Booked on`,
+  r.ref                                                              AS `Reference`
 FROM workshop_bookings wb
 JOIN workshops w     ON w.id = wb.workshop_id
 JOIN registrations r ON r.id = wb.registration_id
-WHERE wb.removed_at IS NULL;
+WHERE wb.removed_at IS NULL
+ORDER BY w.sort_order, `Full name`;
 
--- Sponsors and exhibition booths, separately.
-CREATE OR REPLACE SQL SECURITY INVOKER VIEW view_sponsors AS
-SELECT ref AS reference, company, package, contact_name, phone, email, status, amount_agreed, created_at
-FROM sponsor_requests WHERE kind = 'sponsor';
+-- Sponsorship requests.
+CREATE OR REPLACE SQL SECURITY DEFINER VIEW `07_sponsors` AS
+SELECT
+  s.ref                                                  AS `Reference`,
+  s.company                                              AS `Company`,
+  COALESCE(p.name_en, 'Not sure yet')                    AS `Package`,
+  s.contact_name                                         AS `Contact person`,
+  s.phone                                                AS `Phone`,
+  s.email                                                AS `Email`,
+  CASE s.status WHEN 'new' THEN 'New' WHEN 'contacted' THEN 'Contacted' WHEN 'agreed' THEN 'Agreed'
+    WHEN 'paid' THEN 'Paid' WHEN 'confirmed' THEN 'Confirmed' WHEN 'declined' THEN 'Declined' ELSE 'Waiting list' END AS `Status`,
+  s.price_quoted                                         AS `Price told (IQD)`,
+  s.amount_agreed                                        AS `Agreed (IQD)`,
+  s.amount_paid                                          AS `Paid (IQD)`,
+  s.last_call_at                                         AS `Last call`,
+  s.next_call_at                                         AS `Next call`,
+  u.name                                                 AS `Handled by`,
+  s.created_at                                           AS `Received on`
+FROM sponsor_requests s
+LEFT JOIN sponsor_packages p ON p.id = s.package_id
+LEFT JOIN admin_users u      ON u.id = s.assigned_to
+WHERE s.kind = 'sponsor';
 
-CREATE OR REPLACE SQL SECURITY INVOKER VIEW view_exhibition AS
-SELECT ref AS reference, company, contact_name, phone, email, status, amount_agreed, created_at
-FROM sponsor_requests WHERE kind = 'booth';
+-- Exhibition booth requests (separate from the sponsors).
+CREATE OR REPLACE SQL SECURITY DEFINER VIEW `08_exhibition` AS
+SELECT
+  s.ref                                                  AS `Reference`,
+  s.company                                              AS `Company`,
+  COALESCE(p.name_en, 'Booth (type not chosen)')         AS `Booth type`,
+  s.booth_number                                         AS `Booth number`,
+  s.contact_name                                         AS `Contact person`,
+  s.phone                                                AS `Phone`,
+  s.email                                                AS `Email`,
+  CASE s.status WHEN 'new' THEN 'New' WHEN 'contacted' THEN 'Contacted' WHEN 'agreed' THEN 'Agreed'
+    WHEN 'paid' THEN 'Paid' WHEN 'confirmed' THEN 'Confirmed' WHEN 'declined' THEN 'Declined' ELSE 'Waiting list' END AS `Status`,
+  s.price_quoted                                         AS `Price told (IQD)`,
+  s.amount_agreed                                        AS `Agreed (IQD)`,
+  s.amount_paid                                          AS `Paid (IQD)`,
+  s.last_call_at                                         AS `Last call`,
+  s.next_call_at                                         AS `Next call`,
+  u.name                                                 AS `Handled by`,
+  s.created_at                                           AS `Received on`
+FROM sponsor_requests s
+LEFT JOIN sponsor_packages p ON p.id = s.package_id
+LEFT JOIN admin_users u      ON u.id = s.assigned_to
+WHERE s.kind = 'booth';
+
+-- Every phone call with a sponsor or exhibitor, newest first.
+CREATE OR REPLACE SQL SECURITY DEFINER VIEW `09_sponsor_calls` AS
+SELECT
+  s.company                                              AS `Company`,
+  IF(s.kind = 'booth', 'Exhibition', 'Sponsor')          AS `Type`,
+  c.called_at                                            AS `Called on`,
+  u.name                                                 AS `Called by`,
+  CASE c.outcome WHEN 'reached' THEN 'Talked' WHEN 'no_answer' THEN 'No answer' WHEN 'call_back' THEN 'Call back later'
+    WHEN 'interested' THEN 'Interested' WHEN 'agreed' THEN 'Agreed' ELSE 'Declined' END AS `Result`,
+  c.amount_quoted                                        AS `Amount told (IQD)`,
+  c.note                                                 AS `Note`,
+  c.next_call_at                                         AS `Next call`
+FROM sponsor_calls c
+JOIN sponsor_requests s ON s.id = c.request_id
+LEFT JOIN admin_users u ON u.id = c.called_by
+ORDER BY c.called_at DESC;
+
+-- The packages and booth types with their prices and places.
+CREATE OR REPLACE SQL SECURITY DEFINER VIEW `10_sponsor_packages` AS
+SELECT
+  IF(p.kind = 'booth', 'Exhibition booth', 'Sponsorship')                AS `Type`,
+  p.name_en                                                              AS `Package`,
+  p.price                                                                AS `Price (IQD)`,
+  IF(p.places = 0, 'No limit', p.places)                                 AS `Places`,
+  (SELECT COUNT(*) FROM sponsor_requests s WHERE s.package_id = p.id AND s.status = 'confirmed') AS `Confirmed`,
+  IF(p.places = 0, '', p.places - (SELECT COUNT(*) FROM sponsor_requests s WHERE s.package_id = p.id AND s.status = 'confirmed')) AS `Places left`,
+  IF(p.status = 'active', 'Shown', 'Hidden')                              AS `On the website`
+FROM sponsor_packages p
+ORDER BY p.kind, p.sort_order;
+
+-- Every payment attempt for event tickets.
+CREATE OR REPLACE SQL SECURITY DEFINER VIEW `11_payments` AS
+SELECT
+  COALESCE(r.ref, c.ref)                                                   AS `Reference`,
+  COALESCE(CONCAT_WS(' ', r.first_name, r.father_name, r.grandfather_name),
+           CONCAT_WS(' ', c.first_name, c.father_name, c.grandfather_name), '(form deleted)') AS `Full name`,
+  UPPER(p.method)                                                          AS `Method`,
+  p.amount_expected                                                        AS `Amount (IQD)`,
+  p.amount_confirmed                                                       AS `Confirmed (IQD)`,
+  CASE p.status WHEN 'paid' THEN 'Paid' WHEN 'waiting' THEN 'Paying now' WHEN 'created' THEN 'Starting'
+    WHEN 'failed' THEN 'Failed' WHEN 'expired' THEN 'Not completed' WHEN 'mismatch' THEN 'Wrong amount (Finance)'
+    WHEN 'duplicate' THEN 'Paid twice (Finance)' ELSE 'Reviewed by Finance' END AS `Status`,
+  p.created_at                                                             AS `Started`,
+  p.confirmed_at                                                           AS `Confirmed on`
+FROM payments p
+LEFT JOIN registrations r ON r.id = p.registration_id
+LEFT JOIN checkouts c     ON c.id = p.checkout_id
+ORDER BY p.id DESC;
+
+-- The money per day, to compare with Psoola's report.
+CREATE OR REPLACE SQL SECURITY DEFINER VIEW `12_money_per_day` AS
+SELECT
+  DATE(p.confirmed_at)                                                   AS `Day`,
+  SUM(p.status = 'paid')                                                 AS `Tickets paid`,
+  COALESCE(SUM(IF(p.status = 'paid', p.amount_confirmed, 0)), 0)         AS `Ticket money (IQD)`,
+  COALESCE(SUM(IF(p.status IN ('mismatch','duplicate','kept'), p.amount_confirmed, 0)), 0) AS `Held for Finance (IQD)`
+FROM payments p
+WHERE p.confirmed_at IS NOT NULL AND p.status IN ('paid','mismatch','duplicate','kept')
+GROUP BY DATE(p.confirmed_at)
+ORDER BY `Day` DESC;

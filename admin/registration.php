@@ -146,6 +146,7 @@ Page::top(Registrations::fullName($registration), 'registrations');
       <dt>Ticket</dt><dd><?= $e($registration['ticket_type']) ?></dd>
       <dt>Lunch</dt><dd><?= $registration['lunch_day1'] ? 'Day 1 ' : '' ?><?= $registration['lunch_day2'] ? 'Day 2' : '' ?><?= !$registration['lunch_day1'] && !$registration['lunch_day2'] ? 'None' : '' ?></dd>
       <dt>Paid</dt><dd><?= Page::paidBadge($registration['status']) ?> <?= $paidAmount !== null ? Page::money($paidAmount, $prices['currency']) : '' ?> <?= $registration['pay_method'] ? $e(strtoupper($registration['pay_method'])) : '' ?> · <?= Page::when($registration['paid_at']) ?></dd>
+      <dt>No-refund terms</dt><dd><?= $registration['terms_accepted_at'] ? 'accepted on the website, ' . Page::when($registration['terms_accepted_at']) : '<span class="muted">registered by the office</span>' ?></dd>
       <dt>Language</dt><dd><?= $e($registration['lang']) ?></dd>
       <dt>Form sent</dt><dd><?= Page::when($registration['created_at']) ?></dd>
     </dl>

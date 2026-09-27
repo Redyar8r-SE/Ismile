@@ -40,33 +40,9 @@ const PARTS = [
     ],
   },
   {
-    id: "sponsorTiers", title: "Sponsor tiers", kind: "list", file: "sponsors", listKey: "tiers",
-    hint: "The Diamond / Platinum / Gold / Silver / Exhibitor cards and how many places are still open in each.",
-    itemName: "tier",
-    refreshes: ["sponsorList"],
-    rowInfo: (tier, data) => {
-      const used = (data.sponsors.sponsors || []).filter((s) => s.tier === tier.id).length;
-      return {
-        label: used ? `${used} sponsor${used === 1 ? "" : "s"}` : "no sponsors yet",
-        lock: used > 0,
-        lockReason: "Sponsors use this tier — move them first",
-      };
-    },
-    newItem: () => ({ id: `tier${Date.now().toString(36).slice(-4)}`, name: { en: "", ar: "", ku: "" }, className: "tc-silver", subtitle: { en: "", ar: "", ku: "" }, spots: 3 }),
-    itemFields: [
-      { key: "name", label: "Tier name", type: "i18n" },
-      { key: "subtitle", label: "Tier subtitle", type: "i18n" },
-      { key: "spots", label: "Open places", type: "number" },
-      { key: "className", label: "Colour", type: "select", options: [
-        ["tc-dia", "Diamond (light blue)"], ["tc-gold", "Gold"], ["tc-silver", "Silver"], ["tc-exhibitor", "Exhibitor"], ["tc-bronze", "Bronze"], ["tc-plat", "Platinum"],
-      ] },
-    ],
-  },
-  {
     id: "sponsorList", title: "Sponsors", kind: "list", file: "sponsors", listKey: "sponsors",
-    hint: "Companies that already sponsor iSmile 2026. Each one shows its logo in its tier, in place of an open slot.",
+    hint: "Companies that already sponsor iSmile 2026. Each one shows its logo in its tier, in place of an open slot. The tiers themselves (names, places, prices) are managed in the database admin: Sponsors & booths.",
     itemName: "sponsor",
-    refreshes: ["sponsorTiers"],
     newItem: () => ({ name: "", tier: "gold", logo: null, bg: "#ffffff" }),
     itemFields: [
       { key: "name", label: "Company name", type: "text" },
@@ -575,9 +551,9 @@ export const GROUPS = [
     blocks: [special("speakers", "speakers", "The speakers"), text("speakersText", "Wording and placeholders")],
   },
   {
-    id: "sponsors", page: "home", title: "Sponsors & partners", where: "Sponsor tiers and the trusted partner logos",
+    id: "sponsors", page: "home", title: "Sponsors & partners", where: "The sponsor logos and the trusted partner logos",
     blocks: [
-      list("sponsorTiers", "Sponsor tiers"), list("sponsorList", "Sponsors with a logo"),
+      list("sponsorList", "Sponsors with a logo"),
       list("partnerList", "Trusted partners"), text("sponsorsText", "Wording"),
     ],
   },

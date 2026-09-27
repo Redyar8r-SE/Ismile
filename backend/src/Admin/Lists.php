@@ -18,8 +18,8 @@ final class Lists
         'students'   => ['Students', 'Registered students, with their university and whether their ID photo is stored.'],
         'studentids' => ['Student IDs', 'Every registered student with the ID photo they sent, side by side. The photos are stored in the database.'],
         'workshops'  => ['Workshops', 'Each workshop with the people booked on it, and whether they paid the workshop.'],
-        'sponsors'   => ['Sponsors', 'Sponsorship requests: the company, the package they want and where it stands.'],
-        'exhibition' => ['Exhibition (booths)', 'Exhibition booth requests, separate from the sponsors.'],
+        'sponsors'   => ['Sponsors', 'Sponsorship requests: the company, the package, where it stands, the money agreed and paid, and the next call.'],
+        'exhibition' => ['Exhibition (booths)', 'Exhibition booth requests, separate from the sponsors: booth type and number, money and the next call.'],
         'cancelled'  => ['Cancelled', 'Registrations that were cancelled (no refunds are made).'],
     ];
 
@@ -36,8 +36,8 @@ final class Lists
     {
         return match ($list) {
             'workshops'        => ['phone' => 'Phone', 'workshop_paid' => 'Workshop paid?', 'amount_paid' => 'Amount (IQD)', 'ref' => 'Reference'],
-            'sponsors'         => ['package' => 'Package', 'contact_name' => 'Contact', 'phone' => 'Phone', 'email' => 'Email', 'sponsor_status' => 'Status', 'ref' => 'Reference'],
-            'exhibition'       => ['contact_name' => 'Contact', 'phone' => 'Phone', 'email' => 'Email', 'sponsor_status' => 'Status', 'ref' => 'Reference'],
+            'sponsors'         => ['package' => 'Package', 'contact_name' => 'Contact', 'phone' => 'Phone', 'sponsor_status' => 'Status', 'amount_agreed' => 'Agreed (IQD)', 'amount_paid' => 'Paid (IQD)', 'next_call_at' => 'Next call', 'ref' => 'Reference'],
+            'exhibition'       => ['package' => 'Booth type', 'booth_number' => 'Booth no.', 'contact_name' => 'Contact', 'phone' => 'Phone', 'sponsor_status' => 'Status', 'amount_agreed' => 'Agreed (IQD)', 'amount_paid' => 'Paid (IQD)', 'next_call_at' => 'Next call', 'ref' => 'Reference'],
             'students', 'studentids' => ['phone' => 'Phone', 'university' => 'University', 'ambassador_code' => 'Ambassador', 'id_photo' => 'ID photo', 'ticket_no' => 'Ticket no.', 'ref' => 'Reference'],
             'lunch1', 'lunch2' => ['phone' => 'Phone', 'ticket_type' => 'Ticket', 'ticket_no' => 'Ticket no.', 'ref' => 'Reference'],
             default            => ['phone' => 'Phone', 'ticket_type' => 'Ticket', 'lunch' => 'Lunch', 'ticket_no' => 'Ticket no.', 'ref' => 'Reference', 'paid_at' => 'Paid'],
@@ -47,7 +47,8 @@ final class Lists
     public static function rows(string $list): array
     {
         if (isset(self::COMPANY_LISTS[$list])) {
-            return Db::all("SELECT *, status AS sponsor_status FROM sponsor_requests WHERE kind = ? ORDER BY status = 'declined', company", [self::COMPANY_LISTS[$list]]);
+            return Db::all("SELECT s.*, s.status AS sponsor_status, p.name_en AS package FROM sponsor_requests s LEFT JOIN sponsor_packages p ON p.id = s.package_id
+                            WHERE s.kind = ? ORDER BY s.status = 'declined', s.company", [self::COMPANY_LISTS[$list]]);
         }
         if ($list === 'workshops') {
             return array_merge(...array_column(self::workshopGroups(), 'people') ?: [[]]);

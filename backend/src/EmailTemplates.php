@@ -123,7 +123,7 @@ final class EmailTemplates
                 "Contact: {$request['contact_name']}" . ($request['contact_role'] ? ", {$request['contact_role']}" : ''),
                 "Phone: {$request['phone']}",
                 "Email: {$request['email']}",
-                'Package: ' . ($request['package'] ?: '-'),
+                'Package: ' . (SponsorPackages::name(SponsorPackages::find($request['package_id'])) ?: 'not sure yet'),
                 'Website: ' . ($request['website'] ?: '-'),
                 'City: ' . ($request['city'] ?: '-'),
                 'Message: ' . ($request['message'] ?: '-'),

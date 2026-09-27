@@ -28,6 +28,8 @@ $emailsSent = $count("SELECT COUNT(*) FROM emails WHERE status = 'sent'");
 $emailsFailed = $count("SELECT COUNT(*) FROM emails WHERE status = 'failed'");
 $openSponsors = $count("SELECT COUNT(*) FROM sponsor_requests WHERE status IN ('new','contacted','agreed','paid')");
 $oldestSponsor = Db::value("SELECT MIN(created_at) FROM sponsor_requests WHERE status = 'new'");
+$sponsorMoney = $count("SELECT COALESCE(SUM(amount_paid), 0) FROM sponsor_requests WHERE status IN ('paid','confirmed')");
+$callsDue = \Ismile\Sponsors::callsDue();
 $taken = Registrations::ticketsTaken();
 $currency = SiteData::prices()['currency'];
 
@@ -36,6 +38,9 @@ $attention = [];
 $flagged = $count("SELECT COUNT(*) FROM payments WHERE status IN ('mismatch','duplicate')");
 if ($flagged) {
     $attention[] = ["$flagged payment(s) need Finance: wrong amount or paid twice. No ticket was made for them.", 'payments.php?status=flagged'];
+}
+if ($callsDue && \Ismile\Auth::can($user, 'sponsors')) {
+    $attention[] = ["$callsDue sponsor / exhibition call(s) are due. Call them and save the call.", 'sponsors.php?due=1'];
 }
 if ($emailsFailed) {
     $attention[] = ["$emailsFailed email(s) failed. Fix the address and press Resend.", 'registrations.php?email=failed'];
@@ -87,6 +92,7 @@ echo '<div class="tiles">'
     . $tile('teal', 'Professionals / students', "$profPaid / $studPaid", 'with a ticket')
     . $tile($emailsFailed ? 'red' : 'green', 'Emails sent / failed', "$emailsSent / $emailsFailed")
     . $tile('gold', 'Open sponsor requests', (string) $openSponsors, $oldestSponsor ? 'oldest new: ' . Page::when((string) $oldestSponsor) : '')
+    . $tile('blue', 'Sponsor & booth money', number_format($sponsorMoney) . " $currency", 'paid by sponsors and exhibitors')
     . '</div>';
 
 $meter = static function (string $label, int $used, int $limit, string $colour): string {

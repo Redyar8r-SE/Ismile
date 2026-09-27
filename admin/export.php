@@ -51,9 +51,10 @@ switch ($what) {
         if (!Auth::can($user, 'sponsors')) {
             Page::redirect('index.php');
         }
-        $rows[] = ['Reference', 'Kind', 'Package', 'Company', 'Contact', 'Role', 'Phone', 'Email', 'Website', 'City', 'Status', 'Amount agreed', 'Received', 'Message', 'Notes'];
-        foreach (Db::all('SELECT * FROM sponsor_requests ORDER BY id') as $row) {
-            $rows[] = [$row['ref'], $row['kind'], $row['package'] ?? '', $row['company'], $row['contact_name'], $row['contact_role'] ?? '', $row['phone'], $row['email'], $row['website'] ?? '', $row['city'] ?? '', $row['status'], $row['amount_agreed'] ?? '', $row['created_at'], $row['message'] ?? '', $row['notes'] ?? ''];
+        $rows[] = ['Reference', 'Kind', 'Package', 'Booth no.', 'Company', 'Contact', 'Role', 'Phone', 'Email', 'Website', 'City', 'Status', 'Price told', 'Amount agreed', 'Amount paid', 'Paid how', 'Paid on', 'Last call', 'Next call', 'Received', 'Message', 'Notes'];
+        foreach (Db::all('SELECT s.*, p.name_en AS package FROM sponsor_requests s LEFT JOIN sponsor_packages p ON p.id = s.package_id ORDER BY s.id') as $row) {
+            $rows[] = [$row['ref'], $row['kind'], $row['package'] ?? '', $row['booth_number'] ?? '', $row['company'], $row['contact_name'], $row['contact_role'] ?? '', $row['phone'], $row['email'], $row['website'] ?? '', $row['city'] ?? '', $row['status'],
+                $row['price_quoted'] ?? '', $row['amount_agreed'] ?? '', $row['amount_paid'] ?? '', $row['paid_how'] ?? '', $row['paid_at'] ?? '', $row['last_call_at'] ?? '', $row['next_call_at'] ?? '', $row['created_at'], $row['message'] ?? '', $row['notes'] ?? ''];
         }
         $name = 'ismile-sponsors';
         break;

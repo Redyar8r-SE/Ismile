@@ -127,7 +127,7 @@ final class Checkouts
             throw new UserError($error->key, 'p_student_id');
         }
         try {
-            return self::insert($row + ['source' => 'website', 'created_ip' => App::clientIp()], self::WEBSITE_HOURS * 3600);
+            return self::insert($row + ['source' => 'website', 'created_ip' => App::clientIp(), 'terms_accepted_at' => App::now()], self::WEBSITE_HOURS * 3600);
         } catch (\Throwable $error) {
             IdPhotos::delete($row['id_photo_id']);
             throw $error;
@@ -234,7 +234,7 @@ final class Checkouts
     {
         $duplicateOf = Db::value("SELECT id FROM registrations WHERE (email = ? OR phone = ?) AND status <> 'cancelled' LIMIT 1", [$checkout['email'], $checkout['phone']]);
         $fields = ['ref', 'first_name', 'father_name', 'grandfather_name', 'phone', 'email', 'city', 'gender', 'age', 'specialty', 'lang',
-            'ticket_type', 'lunch_day1', 'lunch_day2', 'pay_method', 'university', 'ambassador_code', 'id_photo_id', 'view_nonce', 'created_by', 'created_ip', 'created_at'];
+            'ticket_type', 'lunch_day1', 'lunch_day2', 'pay_method', 'university', 'ambassador_code', 'id_photo_id', 'view_nonce', 'created_by', 'created_ip', 'created_at', 'terms_accepted_at'];
         $row = array_intersect_key($checkout, array_flip($fields));
         $id = Db::insert('registrations', $row + [
             'status' => 'paid', 'possible_duplicate' => $duplicateOf ? 1 : 0, 'paid_at' => $paidAt, 'updated_at' => $paidAt,

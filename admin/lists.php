@@ -80,7 +80,9 @@ $e = [Page::class, 'e'];
             'amount_paid' => $row['amount_paid'] !== null ? number_format((int) $row['amount_paid']) : '–',
             'sponsor_status' => Page::pill((string) $row['sponsor_status']),
             'id_photo' => $row['id_photo'] !== 'stored' ? '<span class="muted">none</span>' : ($canPhotos ? '<a href="photo.php?id=' . (int) $row['id'] . '" target="_blank" rel="noopener">✓ see photo</a>' : '✓ stored'),
-            'package' => $e(ucfirst((string) ($row['package'] ?? '–'))),
+            'package' => $row['package'] !== null ? $e((string) $row['package']) : '<span class="muted">not chosen</span>',
+            'amount_agreed' => $row['amount_agreed'] !== null ? number_format((int) $row['amount_agreed']) : '–',
+            'next_call_at' => $row['next_call_at'] ? Page::when($row['next_call_at']) : '–',
             default => $e((string) ($row[$key] ?? '')),
         } ?></td><?php endforeach; ?></tr>
         <?php endforeach; ?>
@@ -101,7 +103,9 @@ $e = [Page::class, 'e'];
             'amount_paid' => $row['amount_paid'] !== null ? number_format((int) $row['amount_paid']) : '–',
             'sponsor_status' => Page::pill((string) $row['sponsor_status']),
             'id_photo' => $row['id_photo'] !== 'stored' ? '<span class="muted">none</span>' : ($canPhotos ? '<a href="photo.php?id=' . (int) $row['id'] . '" target="_blank" rel="noopener">✓ see photo</a>' : '✓ stored'),
-            'package' => $e(ucfirst((string) ($row['package'] ?? '–'))),
+            'package' => $row['package'] !== null ? $e((string) $row['package']) : '<span class="muted">not chosen</span>',
+            'amount_agreed' => $row['amount_agreed'] !== null ? number_format((int) $row['amount_agreed']) : '–',
+            'next_call_at' => $row['next_call_at'] ? Page::when($row['next_call_at']) : '–',
             default => $e((string) ($row[$key] ?? '')),
         } ?></td><?php endforeach; ?></tr>
     <?php endforeach; ?>
@@ -123,7 +127,9 @@ $e = [Page::class, 'e'];
             'amount_paid' => $row['amount_paid'] !== null ? number_format((int) $row['amount_paid']) : '–',
             'sponsor_status' => Page::pill((string) $row['sponsor_status']),
             'id_photo' => $row['id_photo'] !== 'stored' ? '<span class="muted">none</span>' : ($canPhotos ? '<a href="photo.php?id=' . (int) $row['id'] . '" target="_blank" rel="noopener">✓ see photo</a>' : '✓ stored'),
-            'package' => $e(ucfirst((string) ($row['package'] ?? '–'))),
+            'package' => $row['package'] !== null ? $e((string) $row['package']) : '<span class="muted">not chosen</span>',
+            'amount_agreed' => $row['amount_agreed'] !== null ? number_format((int) $row['amount_agreed']) : '–',
+            'next_call_at' => $row['next_call_at'] ? Page::when($row['next_call_at']) : '–',
             default => $e((string) ($row[$key] ?? '')),
         } ?></td>
       <?php endforeach; ?>

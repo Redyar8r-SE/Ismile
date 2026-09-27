@@ -31,6 +31,8 @@ h2{font-size:18px;margin:0 0 10px}
 .card.danger{border-color:var(--red-l)}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:16px}
 .muted{color:var(--muted)}
+.txt-ok{color:var(--green-d);font-weight:700}
+.txt-bad{color:var(--red-d);font-weight:700}
 .small{font-size:13px}
 .flash{border-radius:10px;padding:10px 14px;margin:0 0 14px;font-weight:600}
 .flash.ok{background:var(--green-l);color:var(--green-d);border-left:5px solid var(--green)}

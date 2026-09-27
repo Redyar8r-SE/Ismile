@@ -5,6 +5,10 @@
 //   php backend/tools/install.php --owner you@example.com "Your Name"
 //                                                 also creates the first Owner account
 //                                                 (asks for the password, 12+ characters)
+//   php backend/tools/install.php --viewer ismile_viewer [host]
+//                                                 creates a READ-ONLY database login that
+//                                                 sees only the simple numbered lists
+//                                                 (01_registered_people …), for MySQL Workbench
 //
 // Safe to run again: tables that exist are left as they are.
 
@@ -56,16 +60,29 @@ foreach ($migrations as $file) {
     Db::run('INSERT INTO schema_migrations (name, applied_at) VALUES (?, ?)', [$name, App::now()]);
 }
 
-// 3. The read-only views, always rebuilt from the current design.
+// 3. The simple lists (views), always rebuilt from the current design. Lists
+//    from an older design that are no longer in it are removed.
 $run(array_filter($design, $isView));
+preg_match_all('/VIEW\s+`([^`]+)`/i', implode("\n", array_filter($design, $isView)), $found);
+foreach (Db::all('SELECT table_name AS name FROM information_schema.views WHERE table_schema = DATABASE()') as $view) {
+    if (!in_array($view['name'], $found[1], true) && preg_match('/^[a-z0-9_]+$/', $view['name'])) {
+        App::db()->exec("DROP VIEW `{$view['name']}`");
+    }
+}
 
 // 4. The workshops: on a first install, the ones already on the website become
 //    the starting list; then the website's cards are written from the database.
 $imported = \Ismile\Workshops::importFromWebsite();
 \Ismile\Workshops::syncWebsite();
 if ($imported > 0) {
-    echo "Workshops copied from the website: $imported
-";
+    echo "Workshops copied from the website: $imported\n";
+}
+// 5. The sponsor packages the same way (the tiers on the website, plus one
+//    standard exhibition booth). Their prices are set in the admin.
+$imported = \Ismile\SponsorPackages::importFromWebsite();
+\Ismile\SponsorPackages::syncWebsite();
+if ($imported > 0) {
+    echo "Sponsor packages copied from the website: $imported (set their prices in the admin: Sponsors)\n";
 }
 
 $kinds = ['BASE TABLE' => [], 'VIEW' => []];
@@ -76,16 +93,11 @@ foreach (Db::all('SHOW FULL TABLES') as $row) {
 echo 'Tables ready (' . count($kinds['BASE TABLE']) . '): ' . implode(', ', $kinds['BASE TABLE']) . "\n";
 echo 'Views ready (' . count($kinds['VIEW']) . '): ' . implode(', ', $kinds['VIEW']) . "\n";
 
-$ownerAt = array_search('--owner', $argv, true);
-if ($ownerAt !== false) {
-    $email = (string) ($argv[$ownerAt + 1] ?? '');
-    $name = (string) ($argv[$ownerAt + 2] ?? 'Owner');
-    if (Db::value('SELECT id FROM admin_users WHERE email = ?', [strtolower($email)])) {
-        exit("An account for $email already exists.\n");
-    }
-    $password = getenv('ISMILE_OWNER_PASSWORD') ?: '';
+/** A password from the environment, or typed (not shown). */
+$askPassword = static function (string $env, string $for): string {
+    $password = getenv($env) ?: '';
     if ($password === '') {
-        echo 'Password for ' . $email . ' (12+ characters, not shown): ';
+        echo "Password for $for (12+ characters, not shown): ";
         if (DIRECTORY_SEPARATOR === '/') {
             system('stty -echo');
         }
@@ -95,6 +107,46 @@ if ($ownerAt !== false) {
         }
         echo "\n";
     }
+    return $password;
+};
+
+// The read-only login: SELECT on the numbered lists only, never on the tables.
+$viewerAt = array_search('--viewer', $argv, true);
+if ($viewerAt !== false) {
+    $viewer = (string) ($argv[$viewerAt + 1] ?? 'ismile_viewer');
+    $host = (string) ($argv[$viewerAt + 2] ?? 'localhost');
+    if (!preg_match('/^[a-z0-9_]{3,32}$/', $viewer) || !preg_match('/^[a-zA-Z0-9.%_-]{1,60}$/', $host)) {
+        exit("Viewer name: 3-32 lower-case letters, digits or _. Host: e.g. localhost.\n");
+    }
+    $password = $askPassword('ISMILE_VIEWER_PASSWORD', "the viewer $viewer");
+    if (!Auth::validPassword($password)) {
+        exit("The password must have at least 12 characters.\n");
+    }
+    $account = "'$viewer'@'$host'";
+    $database = (string) Db::value('SELECT DATABASE()');
+    try {
+        App::db()->exec("CREATE USER IF NOT EXISTS $account IDENTIFIED BY " . App::db()->quote($password));
+        App::db()->exec("ALTER USER $account IDENTIFIED BY " . App::db()->quote($password));
+        foreach ($found[1] as $view) {
+            if (preg_match('/^[0-9]{2}_[a-z0-9_]+$/', $view)) {
+                App::db()->exec("GRANT SELECT ON `$database`.`$view` TO $account");
+            }
+        }
+        echo "Read-only login ready: $viewer (sees only the numbered lists, cannot change anything).\n";
+    } catch (\PDOException $error) {
+        echo "The read-only login could not be made: this database account may not create logins.\n"
+            . 'Ask the server administrator to run it with the root account. (' . $error->getMessage() . ")\n";
+    }
+}
+
+$ownerAt = array_search('--owner', $argv, true);
+if ($ownerAt !== false) {
+    $email = (string) ($argv[$ownerAt + 1] ?? '');
+    $name = (string) ($argv[$ownerAt + 2] ?? 'Owner');
+    if (Db::value('SELECT id FROM admin_users WHERE email = ?', [strtolower($email)])) {
+        exit("An account for $email already exists.\n");
+    }
+    $password = $askPassword('ISMILE_OWNER_PASSWORD', $email);
     if (!Auth::validPassword($password)) {
         exit("The password must have at least 12 characters.\n");
     }
