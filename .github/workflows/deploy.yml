@@ -221,14 +221,18 @@ jobs:
             fi
 
             HEALTH_OK=0
-            for i in $(seq 1 20); do
-              CODE="$(curl -s -o /dev/null --max-time 2 -w '%{http_code}' "http://127.0.0.1:${APP_PORT}/" || true)"
-              case "$CODE" in
-                2*|3*) HEALTH_OK=1; break ;;
-              esac
+            for i in $(seq 1 40); do
+              if pm2 show "$PM2_APP_NAME" 2>/dev/null | grep -q "online"; then
+                CODE="$(curl -s -o /dev/null --max-time 2 -w '%{http_code}' "http://127.0.0.1:${APP_PORT}/" || true)"
+                case "$CODE" in
+                  2*|3*) HEALTH_OK=1; break ;;
+                esac
+              fi
               sleep 1
             done
             if [ "$HEALTH_OK" != 1 ]; then
+              echo "Cutover health check failed on :$APP_PORT"
+              pm2 logs "$PM2_APP_NAME" --lines 40 --nostream || true
               restore_previous
               exit 1
             fi

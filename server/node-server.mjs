@@ -82,10 +82,11 @@ export function createAppServer() {
   });
 }
 
-const isMain =
-  process.argv[1] && path.resolve(fileURLToPath(import.meta.url)) === path.resolve(process.argv[1]);
+// PM2 and plain `node server/node-server.mjs` both need to listen.
+// Skip only when Vitest (or an explicit flag) imports this module.
+const shouldListen = process.env.VITEST !== "true" && process.env.ISMILE_NO_LISTEN !== "1";
 
-if (isMain) {
+if (shouldListen) {
   const server = createAppServer();
   server.listen(PORT, "0.0.0.0", () => {
     console.log(`ismile listening on ${PORT} root=${ROOT}`);
