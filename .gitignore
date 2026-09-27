@@ -7,3 +7,16 @@ backend/config.php
 backend/storage/
 backend/vendor/
 api/_backend.php
+
+# Deploy secrets — keep local / in GitHub Actions secret DEPLOY_ENV only.
+.env
+.env.*
+!.env.example
+deploy.env
+.deploy.env
+.admin-password.local
+.admin-login.local
+
+node_modules/
+coverage/
+.DS_Store
