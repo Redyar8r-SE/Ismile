@@ -1,0 +1,254 @@
+# Deploy to VPS — secrets from DEPLOY_ENV (local gitignored deploy.env → npm run deploy:sync-env).
+# The live PM2 process is left running until the new build boots on a side port.
+# A failed pack or boot test does not stop the site.
+name: Deploy to VPS
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+concurrency:
+  group: hz-codeflow-host-167.235.78.33
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Load DEPLOY_ENV
+        env:
+          DEPLOY_ENV: ${{ secrets.DEPLOY_ENV }}
+        run: bash scripts/load-deploy-env.sh
+
+      - name: Create .env file
+        run: bash scripts/create-app-env.sh
+
+      - name: Pack deploy bundle
+        run: |
+          set -euo pipefail
+          zip -r -q deploy-bundle.zip \
+            index.html admin.html register.html sponsor.html workshops.html favicon.ico \
+            assets css data docs js netlify server \
+            package.json ecosystem.config.cjs .env \
+            -x '*.DS_Store' -x '**/deploy.env' -x '**/.deploy.env' -x '**/.git/*'
+          ls -lh deploy-bundle.zip
+          unzip -t -q deploy-bundle.zip
+          unzip -l deploy-bundle.zip | grep -q 'server/node-server.mjs'
+          unzip -l deploy-bundle.zip | grep -q 'ecosystem.config.cjs'
+          unzip -l deploy-bundle.zip | grep -q '\.env'
+
+      - name: Prepare VPS deployment directory
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ env.DEPLOY_HOST }}
+          username: ${{ env.DEPLOY_USER }}
+          password: ${{ env.DEPLOY_PASSWORD }}
+          port: ${{ env.DEPLOY_SSH_PORT }}
+          timeout: 60s
+          command_timeout: 5m
+          script: |
+            set -euo pipefail
+            BASE_DIR="${{ env.TARGET }}"
+            mkdir -p "$BASE_DIR/deployments"
+            DEPLOY_DIR="$BASE_DIR/deployments/$(date +%Y%m%d_%H%M%S)"
+            mkdir -p "$DEPLOY_DIR"
+            umask 077
+            printf 'DEPLOY_DIR=%s\nBASE_DIR=%s\n' "$DEPLOY_DIR" "$BASE_DIR" > "$BASE_DIR/deployments/.github-deploy-env"
+            echo "Prepared $DEPLOY_DIR (live process left running)"
+
+      - name: Upload deploy bundle
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ env.DEPLOY_HOST }}
+          username: ${{ env.DEPLOY_USER }}
+          password: ${{ env.DEPLOY_PASSWORD }}
+          port: ${{ env.DEPLOY_SSH_PORT }}
+          timeout: 60s
+          command_timeout: 10m
+          source: "deploy-bundle.zip"
+          target: ${{ env.TARGET }}/deployments/temp
+          rm: true
+
+      - name: Boot-test then cut over
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ env.DEPLOY_HOST }}
+          username: ${{ env.DEPLOY_USER }}
+          password: ${{ env.DEPLOY_PASSWORD }}
+          port: ${{ env.DEPLOY_SSH_PORT }}
+          timeout: 60s
+          command_timeout: 15m
+          script: |
+            set -euo pipefail
+            PM2_APP_NAME="${{ env.PM2_APP_NAME }}"
+            BASE_DIR="${{ env.TARGET }}"
+            APP_PORT="${{ env.APP_PORT }}"
+            ENV_MARKER="$BASE_DIR/deployments/.github-deploy-env"
+
+            if [ ! -f "$ENV_MARKER" ]; then
+              echo "ERROR: Missing $ENV_MARKER"
+              exit 1
+            fi
+            set -a
+            # shellcheck source=/dev/null
+            source "$ENV_MARKER"
+            set +a
+
+            PREVIOUS=""
+            if command -v pm2 >/dev/null 2>&1; then
+              PREVIOUS="$(pm2 jlist 2>/dev/null | python3 -c 'import json,sys; app=sys.argv[1]; data=json.load(sys.stdin); print(next((p.get("pm2_env",{}).get("pm_cwd") or "" for p in data if p.get("name")==app), ""))' "$PM2_APP_NAME" || true)"
+            fi
+            echo "Deploying to $DEPLOY_DIR. Live app stays on port $APP_PORT until boot test passes. Previous: ${PREVIOUS:-none}"
+
+            if ! command -v unzip >/dev/null 2>&1; then
+              apt-get update && apt-get install -y unzip
+            fi
+            if ! command -v node >/dev/null 2>&1; then
+              echo "ERROR: node is not installed. Live app was not touched."
+              exit 1
+            fi
+            if ! command -v pm2 >/dev/null 2>&1; then
+              npm install -g pm2
+            fi
+            if ! pm2 list 2>/dev/null | grep -q "pm2-logrotate"; then
+              pm2 install pm2-logrotate || true
+            fi
+
+            rm -rf "$DEPLOY_DIR"
+            mkdir -p "$DEPLOY_DIR"
+            ZIP="$BASE_DIR/deployments/temp/deploy-bundle.zip"
+            if [ ! -f "$ZIP" ]; then
+              # scp-action may nest under temp/<name>
+              ZIP="$(find "$BASE_DIR/deployments/temp" -name deploy-bundle.zip -type f | head -1)"
+            fi
+            if [ -z "$ZIP" ] || [ ! -f "$ZIP" ]; then
+              echo "ERROR: deploy-bundle.zip missing. Live app was not touched."
+              exit 1
+            fi
+            unzip -q "$ZIP" -d "$DEPLOY_DIR"
+            rm -rf "$BASE_DIR/deployments/temp"
+            rm -f "$DEPLOY_DIR/deploy.env" "$DEPLOY_DIR/.deploy.env"
+            chmod 600 "$DEPLOY_DIR/.env" 2>/dev/null || true
+
+            cd "$DEPLOY_DIR"
+            mkdir -p logs
+            test -f server/node-server.mjs
+            test -f ecosystem.config.cjs
+            test -f .env
+
+            TEST_PORT=$((APP_PORT + 1000))
+            if ss -ltn 2>/dev/null | grep -q ":${TEST_PORT} " || netstat -ltn 2>/dev/null | grep -q ":${TEST_PORT} "; then
+              echo "ERROR: side port $TEST_PORT is already in use. Live app was not touched."
+              exit 1
+            fi
+
+            echo "Boot-testing on 127.0.0.1:$TEST_PORT..."
+            PORT="$TEST_PORT" APP_PORT="$TEST_PORT" NODE_ENV=production node server/node-server.mjs > logs/boot-test.log 2>&1 &
+            TEST_PID=$!
+            BOOT_OK=0
+            i=0
+            while [ "$i" -lt 20 ]; do
+              CODE="$(curl -s -o /dev/null --max-time 2 -w '%{http_code}' "http://127.0.0.1:${TEST_PORT}/" || true)"
+              case "$CODE" in
+                2*|3*) BOOT_OK=1; break ;;
+              esac
+              if ! kill -0 "$TEST_PID" 2>/dev/null; then
+                break
+              fi
+              i=$((i + 1))
+              sleep 1
+            done
+            kill "$TEST_PID" 2>/dev/null || true
+            wait "$TEST_PID" 2>/dev/null || true
+            if command -v fuser >/dev/null 2>&1; then
+              fuser -k "${TEST_PORT}/tcp" >/dev/null 2>&1 || true
+            fi
+            if [ "$BOOT_OK" != 1 ]; then
+              echo "ERROR: new build did not boot. Live app was not touched."
+              tail -n 80 logs/boot-test.log || true
+              exit 1
+            fi
+            echo "Boot test passed."
+
+            restore_previous() {
+              set +e
+              echo "Cutover failed. Restoring the previous release."
+              pm2 delete "$PM2_APP_NAME" >/dev/null 2>&1 || true
+              if command -v fuser >/dev/null 2>&1; then
+                fuser -k "${APP_PORT}/tcp" >/dev/null 2>&1 || true
+              fi
+              sleep 1
+              if [ -n "$PREVIOUS" ] && [ -d "$PREVIOUS" ] && [ -f "$PREVIOUS/ecosystem.config.cjs" ]; then
+                cd "$PREVIOUS"
+                PORT="$APP_PORT" APP_PORT="$APP_PORT" NODE_ENV=production pm2 start ecosystem.config.cjs --env production --update-env
+                sleep 5
+                if pm2 show "$PM2_APP_NAME" 2>/dev/null | grep -q "online"; then
+                  echo "Previous release restored."
+                else
+                  echo "ERROR: previous release did not come back online."
+                  pm2 logs "$PM2_APP_NAME" --lines 40 --nostream || true
+                fi
+              else
+                echo "ERROR: no previous release to restore."
+              fi
+            }
+
+            echo "Cutting over to $DEPLOY_DIR"
+            ln -sfn "$DEPLOY_DIR" "$BASE_DIR/current"
+            pm2 delete "$PM2_APP_NAME" >/dev/null 2>&1 || true
+            if command -v fuser >/dev/null 2>&1; then
+              fuser -k "${APP_PORT}/tcp" >/dev/null 2>&1 || true
+            fi
+            cd "$DEPLOY_DIR"
+            if ! PORT="$APP_PORT" APP_PORT="$APP_PORT" PM2_APP_NAME="$PM2_APP_NAME" NODE_ENV=production pm2 start ecosystem.config.cjs --env production --update-env; then
+              restore_previous
+              exit 1
+            fi
+
+            HEALTH_OK=0
+            for i in $(seq 1 20); do
+              CODE="$(curl -s -o /dev/null --max-time 2 -w '%{http_code}' "http://127.0.0.1:${APP_PORT}/" || true)"
+              case "$CODE" in
+                2*|3*) HEALTH_OK=1; break ;;
+              esac
+              sleep 1
+            done
+            if [ "$HEALTH_OK" != 1 ]; then
+              restore_previous
+              exit 1
+            fi
+
+            pm2 save || true
+            if [ ! -f "$BASE_DIR/.pm2-startup-configured" ]; then
+              pm2 startup || true
+              pm2 save || true
+              touch "$BASE_DIR/.pm2-startup-configured"
+            fi
+
+            CURRENT_REAL=$(readlink -f "$BASE_DIR/current")
+            cd "$BASE_DIR/deployments/"
+            for dir in */; do
+              dir="${dir%/}"
+              [ -z "$dir" ] && continue
+              [ "$dir" = "temp" ] && rm -rf "$dir" && continue
+              DIR_REAL=$(readlink -f "$BASE_DIR/deployments/$dir")
+              if [ -n "$CURRENT_REAL" ] && [ "$DIR_REAL" = "$CURRENT_REAL" ]; then
+                continue
+              fi
+              # keep one previous release for rollback
+              if [ -n "$PREVIOUS" ] && [ "$DIR_REAL" = "$(readlink -f "$PREVIOUS" 2>/dev/null || true)" ]; then
+                continue
+              fi
+              echo "Deleting old deployment: $dir"
+              rm -rf "$dir"
+            done
+
+            echo "ismile deployed on port $APP_PORT."

@@ -22,7 +22,7 @@ const unb64 = (text) => Buffer.from(text, "base64");
 const b64url = (text) => Buffer.from(text).toString("base64url");
 
 function cors(origin) {
-  const allowed = (process.env.ALLOWED_ORIGIN || "https://redyar8r-se.github.io").split(",").map((o) => o.trim());
+  const allowed = (process.env.ALLOWED_ORIGIN || "https://ismile.krd,https://www.ismile.krd").split(",").map((o) => o.trim());
   const ok = origin && (allowed.includes(origin) || origin.endsWith(".netlify.app") || origin.startsWith("http://localhost"));
   return {
     "Access-Control-Allow-Origin": ok ? origin : allowed[0],

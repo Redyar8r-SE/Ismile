@@ -1,0 +1,12 @@
+{
+  "name": "ismile",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server/node-server.mjs",
+    "deploy:sync-env": "bash scripts/sync-deploy-env-secret.sh"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
