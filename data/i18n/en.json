@@ -109,5 +109,7 @@
   "link": "This link does not work. Use the link in your newest email.",
   "pm_expired_title": "This registration was not completed",
   "pm_expired_text": "The payment was not made in time, so you are not registered and nothing was kept. Please fill in the form again.",
-  "pm_again": "Register again"
+  "pm_again": "Register again",
+  "pm_lunch_title": "That lunch day is now full",
+  "pm_lunch_text": "The lunch you chose was taken while you were registering, so nothing was charged and you are not registered yet. Please register again without that lunch day."
 }

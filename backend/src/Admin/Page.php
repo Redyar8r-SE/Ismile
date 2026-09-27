@@ -220,7 +220,7 @@ final class Page
             . self::csrfField()
             . '<input type="hidden" name="do" value="workshop_add"><input type="hidden" name="rid" value="' . (int) $registration['id'] . '">'
             . '<label>Workshop<select name="workshop" required data-price-source><option value="">Choose…</option>' . $options . '</select></label>'
-            . '<label>Price (IQD)<input name="price" type="number" min="0" step="500" placeholder="workshop price" data-price-target></label>'
+            . ($isOwner ? '<label>Price (IQD, Owner may change)<input name="price" type="number" min="0" step="500" placeholder="workshop price" data-price-target></label>' : '')
             . '<fieldset class="pay-choice"><legend>Paid?</legend>'
             . '<label><input type="radio" name="payment_status" value="unpaid" checked> ✗ Not paid yet</label>'
             . '<label><input type="radio" name="payment_status" value="paid"> ✓ Paid now</label>'

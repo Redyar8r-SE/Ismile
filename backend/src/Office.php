@@ -76,6 +76,10 @@ final class Office
         if ($reason === '') {
             throw new UserError('Write the reason for cancelling.');
         }
+        // A paid workshop is never removed by staff (no refunds): only the Owner.
+        if ($user['role'] !== 'owner' && Db::value("SELECT COUNT(*) FROM workshop_bookings WHERE registration_id = ? AND removed_at IS NULL AND payment_status = 'paid'", [$registration['id']])) {
+            throw new UserError('This person has a PAID workshop. Only the Owner can cancel them (workshop money is not refunded).');
+        }
         Db::transaction(static function () use ($registration, $user): void {
             $now = App::now();
             Db::run("UPDATE registrations SET status = 'cancelled', updated_at = ? WHERE id = ?", [$now, $registration['id']]);
@@ -107,8 +111,8 @@ final class Office
         $now = App::now();
         $id = Db::transaction(static function () use ($row, $user, $reason, $now): int {
             $duplicateOf = Db::value("SELECT id FROM registrations WHERE (email = ? OR phone = ?) AND status <> 'cancelled' LIMIT 1", [$row['email'], $row['phone']]);
-            $id = Db::insert('registrations', $row + [
-                'ref' => Checkouts::newReference(), 'status' => 'complimentary', 'comp_reason' => $reason, 'pay_method' => null,
+            $id = Db::insert('registrations', ['pay_method' => null] + $row + [
+                'ref' => Checkouts::newReference(), 'status' => 'complimentary', 'comp_reason' => $reason,
                 'possible_duplicate' => $duplicateOf ? 1 : 0, 'view_nonce' => Links::nonce(), 'created_by' => (int) $user['id'],
                 'created_ip' => 'office', 'created_at' => $now, 'paid_at' => $now, 'updated_at' => $now,
             ]);
@@ -149,8 +153,16 @@ final class Office
         if ($workshop['status'] !== 'active') {
             throw new UserError('That workshop is hidden (not on offer). The Owner can show it again on the Workshops page.');
         }
+        // The price is the workshop's own. Only the Owner may agree a different one.
         $typedPrice = trim((string) ($in['price'] ?? ''));
-        $price = max(0, $typedPrice !== '' ? (int) $typedPrice : (int) ($workshop['price'] ?? 0));
+        $typedPrice = preg_replace('/\D/', '', $typedPrice) ?? '';
+        $price = $isOwner && $typedPrice !== '' ? (int) $typedPrice : (int) ($workshop['price'] ?? 0);
+        if ($price > 10_000_000) {
+            throw new UserError('That price (' . number_format($price) . ' IQD) looks wrong. Check the number.');
+        }
+        if ($price <= 0 && !$isOwner) {
+            throw new UserError('This workshop has no price yet. The Owner sets it on the Workshops page first.');
+        }
         $payment = self::workshopPayment($in, $price, $user);
         $override = ($in['override'] ?? '') === '1' && $isOwner;
         // The workshop row is locked while the seat is taken, so two people

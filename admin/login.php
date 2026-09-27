@@ -56,8 +56,13 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 }
                 throw new UserError('That code is not right. Use the newest code in the app.');
             }
+            // Claim the code: only one request can move totp_last_step forward.
+            $claimed = Db::run('UPDATE admin_users SET totp_last_step = ? WHERE id = ? AND (totp_last_step IS NULL OR totp_last_step < ?)', [$step, $user['id'], $step]);
+            if ($claimed !== 1) {
+                $askCode = true;
+                throw new UserError('That code was just used. Wait for the next code in the app.');
+            }
             unset($_SESSION['pending_uid'], $_SESSION['pending_at']);
-            Db::update('admin_users', ['totp_last_step' => $step], 'id = ?', [$user['id']]);
             Auth::completeLogin($user);
             Page::redirect($next !== '' ? $next : Page::home($user));
         }

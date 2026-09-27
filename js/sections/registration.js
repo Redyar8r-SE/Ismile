@@ -8,8 +8,8 @@
 // server (GitHub Pages) or registration is closed, the form is not shown at
 // all, so nobody can believe they registered when nothing was saved.
 // Nothing about the visitor is kept in the browser.
-import { t, getLang, onLangChange } from "../i18n.js?v=74";
-import { formatPrice } from "../utils/money.js?v=74";
+import { t, getLang, onLangChange } from "../i18n.js?v=75";
+import { formatPrice } from "../utils/money.js?v=75";
 
 const TOTAL_STEPS = 3;
 
@@ -522,7 +522,7 @@ export function initRegistration({ tickets = {} } = {}) {
     // The payment could not start right now (full, closed, or the payment
     // company did not answer): their own payment page says why and offers
     // "Try again". Never the form a second time.
-    window.location.assign(`${result.statusUrl}&e=${encodeURIComponent(result.payError || "pay_start_failed")}`);
+    window.location.assign(`${result.statusUrl}&e=${encodeURIComponent(result.payError || "pay_start_failed")}`);   // lunch_full, reg_full, reg_closed or pay_start_failed
   }
 
   function renderSuccess() {

@@ -14,6 +14,7 @@ use Ismile\Payments\Payments;
 
 Api::run(static function (): void {
     Api::requireMethod('POST');
+    Api::limit('webhook', 600, 600);   // far above what the payment company sends; stops a flood of junk
     $body = (string) file_get_contents('php://input', false, null, 0, 1_000_000);
     $result = Payments::handleWebhook((string) App::config('payments.gateway', 'fake'), Api::headers(), $body);
     Api::json($result['status'], ['ok' => $result['status'] === 200, 'outcome' => $result['outcome']]);

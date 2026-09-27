@@ -315,11 +315,23 @@ try {
         && Db::value('SELECT id FROM student_id_photos WHERE id = ?', [(int) $gone['id_photo_id']]) === null
         && (int) Db::value('SELECT COUNT(*) FROM payments WHERE checkout_id = ?', [$gone['id']]) === 0, json_encode($cleaned));
     check('…and it never was a registration', Registrations::findByRef($gone['ref']) === null);
-    Db::run('UPDATE checkouts SET expires_at = ? WHERE id = ?', [date('Y-m-d H:i:s', time() - (Checkouts::DELETE_AFTER_HOURS + 1) * 3600), $form['id']]);
+    Db::run('UPDATE checkouts SET expires_at = ?, created_at = ? WHERE id = ?', [date('Y-m-d H:i:s', time() - (Checkouts::DELETE_AFTER_HOURS + 1) * 3600), date('Y-m-d H:i:s', time() - (Checkouts::DELETE_AFTER_HOURS + 1) * 3600), $form['id']]);
     Checkouts::cleanUp();
     check('a PAID form is cleaned up too, the registration stays complete', Checkouts::find((int) $form['id']) === null && (registrationByRef($ref)['status'] ?? '') === 'paid'
         && (int) Db::value("SELECT COUNT(*) FROM payments WHERE registration_id = ? AND status = 'paid'", [$reg['id']]) === 1);
     check('the personal link still shows the ticket after that', (http('GET', "$base/api/status.php?r=$ref&k=" . Links::viewToken($reg))['json']['status'] ?? '') === 'paid');
+    // A paid form with a second attempt still open is not cleaned up; once it is,
+    // a late payment of that attempt is recognised as "paid twice".
+    $answer = register(form());
+    $two = checkoutByRef((string) $answer['json']['ref']);
+    Db::run('UPDATE payments SET created_at = ? WHERE checkout_id = ?', [date('Y-m-d H:i:s', time() - (Payments::REUSE_MINUTES + 1) * 60), $two['id']]);
+    $secondTry = Payments::start($two);
+    fakePay((string) $answer['json']['redirect'], 'pay');
+    Db::run('UPDATE checkouts SET created_at = ? WHERE id = ?', [date('Y-m-d H:i:s', time() - (Checkouts::DELETE_AFTER_HOURS + 1) * 3600), $two['id']]);
+    Checkouts::cleanUp();
+    check('a paid form with another payment still open is kept', Checkouts::find((int) $two['id']) !== null);
+    fakePay((string) $secondTry['redirect'], 'pay');
+    check('…and the late second payment is "paid twice" for Finance, linked to the person', lastPaymentOf($two)['status'] === 'duplicate' && (int) lastPaymentOf($two)['registration_id'] === (int) registrationByRef($two['ref'])['id']);
 
     // ------------------------------------------------------------------
     section('Registered by phone, or a free ticket (Owner)');
@@ -342,7 +354,7 @@ try {
     check('only the Owner can give a free ticket', $fails(fn () => Office::createComplimentary($staff, $guest)));
     check('a free ticket needs a reason', $fails(fn () => Office::createComplimentary($owner, ['comp_reason' => ''] + $guest)));
     $free = Office::createComplimentary($owner, $guest);
-    check('the Owner registers a guest with a free ticket: registered, ticket, logged', $free['status'] === 'complimentary' && Tickets::forRegistration((int) $free['id']) !== null
+    check('the Owner registers a guest with a free ticket: registered, ticket, logged', $free['status'] === 'complimentary' && $free['pay_method'] === null && Tickets::forRegistration((int) $free['id']) !== null
         && (int) Db::value("SELECT COUNT(*) FROM audit_log WHERE action = 'ticket.complimentary' AND target_id = ?", [$free['id']]) === 1);
 
     // ------------------------------------------------------------------
@@ -368,6 +380,13 @@ try {
     $state = http('GET', "$base/api/config.php")['json'];
     check('lunch day 1 full: that day disappears, day 2 still works', ($state['lunch']['day1'] ?? true) === false && ($state['lunch']['day2'] ?? false) === true);
     check('choosing the full lunch day is refused', (register(form(['lunch_day1' => '1']))['json']['error'] ?? '') === 'err_lunch_full');
+    Settings::set('lunch_capacity_day1', '0');
+    $lunchForm = register(form(['lunch_day1' => '1']));
+    $lunchHolder = checkoutByRef((string) $lunchForm['json']['ref']);
+    Settings::set('lunch_capacity_day1', (string) (Registrations::lunchTaken(1) + 1));
+    $lunchLate = register(form(['lunch_day1' => '1']));
+    check('the last lunch is held for the person paying: the next one is told "lunch full" (not "event full")', ($lunchLate['json']['payError'] ?? '') === 'lunch_full');
+    Db::run("UPDATE payments SET status = 'failed' WHERE checkout_id = ?", [$lunchHolder['id']]);
     Settings::set('lunch_capacity_day1', '0');
     Settings::set('ticket_capacity', (string) $taken);
     check('tickets full: the form closes with "full"', (http('GET', "$base/api/config.php")['json']['reason'] ?? '') === 'full');
@@ -521,14 +540,21 @@ try {
             return null;
         };
         $person = registrationByRef($ref);                     // registered: paid the event ticket
+        $originalPrice = (int) Db::value('SELECT price FROM workshops WHERE id = ?', [$workshop['id']]);
+        Db::run('UPDATE workshops SET price = 0 WHERE id = ?', [$workshop['id']]);
+        check('staff cannot book a workshop that has no price yet', $fails(fn () => Office::addWorkshop($person, $staff, ['workshop' => $workshop['id']])));
+        Db::run('UPDATE workshops SET price = 50000 WHERE id = ?', [$workshop['id']]);
+        $workshop = \Ismile\SiteData::workshop($workshop['id']);
         $answer = register(form());
         check('someone who has NOT paid the event ticket cannot even be found to book', Registrations::findByRef((string) $answer['json']['ref']) === null);
         check('"paid" with the wrong amount is refused (must be exact)', $fails(fn () => Office::addWorkshop($person, $staff, ['workshop' => $workshop['id'], 'price' => '50000', 'payment_status' => 'paid', 'amount_paid' => '40000', 'paid_how' => 'cash'])));
         check('"paid" without saying how is refused', $fails(fn () => Office::addWorkshop($person, $staff, ['workshop' => $workshop['id'], 'price' => '50000', 'payment_status' => 'paid', 'amount_paid' => '50000'])));
         check('only the Owner can give a workshop for free', $fails(fn () => Office::addWorkshop($person, $staff, ['workshop' => $workshop['id'], 'price' => '50000', 'payment_status' => 'complimentary'])));
 
-        Office::addWorkshop($person, $staff, ['workshop' => $workshop['id'], 'price' => '50000', 'payment_status' => 'paid', 'amount_paid' => '50,000', 'paid_how' => 'cash']);
+        Office::addWorkshop($person, $staff, ['workshop' => $workshop['id'], 'price' => '1', 'payment_status' => 'paid', 'amount_paid' => '50,000', 'paid_how' => 'cash']);
         $booking = Db::one('SELECT * FROM workshop_bookings WHERE registration_id = ? AND workshop_id = ? AND removed_at IS NULL', [$person['id'], $workshop['id']]);
+        check('staff cannot change the price (typed 1 IQD, the workshop price was used)', $booking && (int) $booking['price_agreed'] === 50000);
+        check('a mistyped huge price is refused, not saved', $fails(fn () => Office::addWorkshop(registrationByRef($ref), $owner, ['workshop' => $workshop['id'], 'price' => '5000025000'])));
         check('a paid caller is booked with the exact amount, how, when and by whom', $booking && $booking['payment_status'] === 'paid' && (int) $booking['amount_paid'] === 50000
             && $booking['paid_how'] === 'cash' && $booking['paid_at'] !== null && (int) $booking['paid_recorded_by'] === $adminId);
         check('adding a workshop lowers "seats left" on the website', $seatsLeftOnWebsite() === (int) $workshop['totalSeats'] - Office::bookedCount($workshop['id']));
@@ -559,8 +585,10 @@ try {
         check('the database itself refuses a second active booking of the same person', $refusesDb(fn () => Db::insert('workshop_bookings', ['registration_id' => $person['id'], 'workshop_id' => $workshop['id'], 'created_at' => App::now(), 'updated_at' => App::now()])));
 
         $seatsBefore = Office::bookedCount($workshop['id']);
+        check('staff cannot cancel someone with a PAID workshop (no refunds; Owner only)', $fails(fn () => Office::cancel(Registrations::find((int) $person['id']), $staff, 'Test')));
         Office::cancel(Registrations::find((int) $person['id']), $owner, 'Test: cancelled by the checks');
         check('cancelling a registration frees their workshop seat', Office::bookedCount($workshop['id']) === $seatsBefore - 1);
+        Db::run('UPDATE workshops SET price = ? WHERE id = ?', [$originalPrice, $workshop['id']]);
     }
 
     // ------------------------------------------------------------------

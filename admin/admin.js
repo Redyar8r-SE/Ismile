@@ -67,3 +67,8 @@ document.addEventListener("DOMContentLoaded", () => {
     sync();
   });
 });
+
+// "Print" buttons (no inline scripts: the page's security policy forbids them).
+document.addEventListener("click", (event) => {
+  if (event.target.closest("[data-print]")) window.print();
+});

@@ -18,7 +18,11 @@ use Ismile\Auth;
 use Ismile\Registrations;
 
 $user = Page::guard('registrations');
+$canPhotos = Auth::can($user, 'photos');
 $current = Lists::pick(Page::query('list'));
+if ($current === 'studentids' && !$canPhotos) {
+    $current = 'students';   // Finance sees the students, not their ID photos
+}
 $rows = Lists::rows($current);
 $counts = Lists::counts();
 $columns = Lists::columns($current);
@@ -27,7 +31,7 @@ Page::top('Lists', 'lists');
 $e = [Page::class, 'e'];
 ?>
 <div class="toolbar tabs no-print">
-  <?php foreach (Lists::ALL as $key => [$label]): ?>
+  <?php foreach (Lists::ALL as $key => [$label]): if ($key === 'studentids' && !$canPhotos) { continue; } ?>
     <a class="btn <?= $key === $current ? '' : 'ghost' ?>" href="lists.php?list=<?= $e($key) ?>"><?= $e($label) ?> <span class="count"><?= (int) ($counts[$key] ?? 0) ?></span></a>
   <?php endforeach; ?>
 </div>
@@ -40,7 +44,7 @@ $e = [Page::class, 'e'];
     </div>
     <div class="no-print">
       <?php if (Auth::can($user, 'export')): ?><a class="btn green" href="export.php?what=list&amp;list=<?= $e($current) ?>">Export to Excel</a><?php endif; ?>
-      <button class="btn ghost" type="button" onclick="window.print()">Print</button>
+      <button class="btn ghost" type="button" data-print>Print</button>
     </div>
   </div>
   <?php if ($current === 'studentids'): ?>
@@ -75,7 +79,7 @@ $e = [Page::class, 'e'];
             'workshop_paid' => Page::paidBadge((string) $row['workshop_paid']),
             'amount_paid' => $row['amount_paid'] !== null ? number_format((int) $row['amount_paid']) : '–',
             'sponsor_status' => Page::pill((string) $row['sponsor_status']),
-            'id_photo' => $row['id_photo'] === 'stored' ? '<a href="photo.php?id=' . (int) $row['id'] . '" target="_blank" rel="noopener">✓ see photo</a>' : '<span class="muted">none</span>',
+            'id_photo' => $row['id_photo'] !== 'stored' ? '<span class="muted">none</span>' : ($canPhotos ? '<a href="photo.php?id=' . (int) $row['id'] . '" target="_blank" rel="noopener">✓ see photo</a>' : '✓ stored'),
             'package' => $e(ucfirst((string) ($row['package'] ?? '–'))),
             default => $e((string) ($row[$key] ?? '')),
         } ?></td><?php endforeach; ?></tr>
@@ -96,7 +100,7 @@ $e = [Page::class, 'e'];
             'workshop_paid' => Page::paidBadge((string) $row['workshop_paid']),
             'amount_paid' => $row['amount_paid'] !== null ? number_format((int) $row['amount_paid']) : '–',
             'sponsor_status' => Page::pill((string) $row['sponsor_status']),
-            'id_photo' => $row['id_photo'] === 'stored' ? '<a href="photo.php?id=' . (int) $row['id'] . '" target="_blank" rel="noopener">✓ see photo</a>' : '<span class="muted">none</span>',
+            'id_photo' => $row['id_photo'] !== 'stored' ? '<span class="muted">none</span>' : ($canPhotos ? '<a href="photo.php?id=' . (int) $row['id'] . '" target="_blank" rel="noopener">✓ see photo</a>' : '✓ stored'),
             'package' => $e(ucfirst((string) ($row['package'] ?? '–'))),
             default => $e((string) ($row[$key] ?? '')),
         } ?></td><?php endforeach; ?></tr>
@@ -118,7 +122,7 @@ $e = [Page::class, 'e'];
             'workshop_paid' => Page::paidBadge((string) $row['workshop_paid']),
             'amount_paid' => $row['amount_paid'] !== null ? number_format((int) $row['amount_paid']) : '–',
             'sponsor_status' => Page::pill((string) $row['sponsor_status']),
-            'id_photo' => $row['id_photo'] === 'stored' ? '<a href="photo.php?id=' . (int) $row['id'] . '" target="_blank" rel="noopener">✓ see photo</a>' : '<span class="muted">none</span>',
+            'id_photo' => $row['id_photo'] !== 'stored' ? '<span class="muted">none</span>' : ($canPhotos ? '<a href="photo.php?id=' . (int) $row['id'] . '" target="_blank" rel="noopener">✓ see photo</a>' : '✓ stored'),
             'package' => $e(ucfirst((string) ($row['package'] ?? '–'))),
             default => $e((string) ($row[$key] ?? '')),
         } ?></td>

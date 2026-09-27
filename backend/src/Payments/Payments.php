@@ -78,8 +78,11 @@ final class Payments
         }
         // Places held by people paying right now count too, so the last seats
         // and lunches are not sold twice.
-        if (Registrations::isFull(true, (int) $checkout['id']) || Registrations::lunchFullFor($checkout, true)) {
+        if (Registrations::isFull(true, (int) $checkout['id'])) {
             throw new UserError('reg_full', null, 409);
+        }
+        if (Registrations::lunchFullFor($checkout, true)) {
+            throw new UserError('lunch_full', null, 409);   // the lunch they chose is full: register again without it
         }
 
         $prices = SiteData::prices();
@@ -180,6 +183,9 @@ final class Payments
             }
 
             $checkout = $payment['checkout_id'] ? Db::one('SELECT * FROM checkouts WHERE id = ? FOR UPDATE', [$payment['checkout_id']]) : null;
+            if ($checkout === null && $payment['registration_id'] !== null) {
+                $checkout = ['registration_id' => $payment['registration_id'], 'ref' => (string) Db::value('SELECT ref FROM registrations WHERE id = ?', [$payment['registration_id']])];
+            }
             if ($checkout === null) {
                 Db::run("UPDATE payments SET status = 'mismatch', amount_confirmed = ?, confirmed_at = ?, updated_at = ?, last_error = ? WHERE id = ?", [
                     $amount, $now, $now, 'Paid, but the form it belonged to no longer exists. Finance: contact Psoola for the payer.', $paymentId,

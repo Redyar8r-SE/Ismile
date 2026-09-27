@@ -43,8 +43,19 @@ final class Backup
                    AND (EXTRA LIKE '%GENERATED%' OR EXTRA LIKE '%PERSISTENT%' OR EXTRA LIKE '%VIRTUAL%')",
                 [$table]
             ), 'COLUMN_NAME'));
-            $statement = $db->query("SELECT * FROM `$table`", \PDO::FETCH_ASSOC);
-            foreach ($statement as $row) {
+            // The photo table is read one row at a time (each can be ~1 MB);
+            // the other tables are small enough to read in one go.
+            $rowsOf = $table === 'student_id_photos'
+                ? (static function () use ($db): \Generator {
+                    foreach (Db::all('SELECT id FROM student_id_photos ORDER BY id') as ['id' => $photoId]) {
+                        $photo = Db::one('SELECT * FROM student_id_photos WHERE id = ?', [$photoId]);
+                        if ($photo !== null) {
+                            yield $photo;
+                        }
+                    }
+                })()
+                : $db->query("SELECT * FROM `$table`", \PDO::FETCH_ASSOC);
+            foreach ($rowsOf as $row) {
                 $row = array_diff_key($row, $generated);
                 // Binary data (the student ID photos) is written as hex, so the
                 // backup file stays plain text and restores byte for byte.

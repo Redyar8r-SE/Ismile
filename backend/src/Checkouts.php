@@ -244,6 +244,9 @@ final class Checkouts
         }
         // The form's personal details now live in the registration only.
         Db::run("UPDATE checkouts SET status = 'paid', registration_id = ?, id_photo_id = NULL WHERE id = ?", [$id, $checkout['id']]);
+        // Other attempts for the same form now belong to this person too, so a
+        // second payment arriving later is recognised as "paid twice".
+        Db::run('UPDATE payments SET registration_id = ? WHERE checkout_id = ? AND registration_id IS NULL', [$id, $checkout['id']]);
         return $id;
     }
 
@@ -257,25 +260,37 @@ final class Checkouts
     public static function cleanUp(): array
     {
         $expired = Db::run("UPDATE checkouts SET status = 'expired' WHERE status = 'open' AND expires_at < ?", [App::now()]);
-        $old = Db::all("SELECT * FROM checkouts WHERE (status = 'expired' AND expires_at < ?) OR status = 'paid' LIMIT 500",
-            [date('Y-m-d H:i:s', time() - self::DELETE_AFTER_HOURS * 3600)]);
+        // Candidates: past their time, with no payment still open and no money
+        // Finance must look at (those forms are kept; the photo goes after the
+        // summit with everyone else's). Oldest first, so the job never stalls.
+        $old = Db::all(
+            "SELECT id FROM checkouts c
+             WHERE ((c.status = 'expired' AND c.expires_at < ?) OR (c.status = 'paid' AND c.created_at < ?))
+               AND NOT EXISTS (SELECT 1 FROM payments p WHERE p.checkout_id = c.id AND p.status IN ('created','waiting','mismatch','duplicate','kept'))
+             ORDER BY c.id LIMIT 500",
+            [date('Y-m-d H:i:s', time() - self::DELETE_AFTER_HOURS * 3600), date('Y-m-d H:i:s', time() - self::DELETE_AFTER_HOURS * 3600)]
+        );
         $deleted = 0;
-        foreach ($old as $checkout) {
-            // Kept while a payment is still open (it is asked about first), or
-            // when money arrived that Finance must look at (wrong amount).
-            if ($checkout['status'] === 'expired' && Db::value("SELECT COUNT(*) FROM payments WHERE checkout_id = ? AND status IN ('created','waiting','mismatch','duplicate','kept')", [$checkout['id']])) {
+        foreach ($old as ['id' => $id]) {
+            $photo = Db::transaction(static function () use ($id): ?int {
+                // Read again under a lock: a late payment may have changed it.
+                $checkout = Db::one('SELECT * FROM checkouts WHERE id = ? FOR UPDATE', [$id]);
+                if ($checkout === null || $checkout['status'] === 'open'
+                    || Db::value("SELECT COUNT(*) FROM payments WHERE checkout_id = ? AND status IN ('created','waiting','mismatch','duplicate','kept')", [$id])) {
+                    return -1;
+                }
+                // Attempts that never reached the payment company are removed.
+                // Attempts the company knows about stay (without the form), so a
+                // late "paid" from the company is still recorded for Finance.
+                Db::run("DELETE FROM payments WHERE checkout_id = ? AND status IN ('failed','expired') AND registration_id IS NULL AND provider_payment_id IS NULL", [$id]);
+                Db::run('DELETE FROM checkouts WHERE id = ?', [$id]);
+                // A paid form's photo belongs to the registration now (its id_photo_id is NULL here).
+                return $checkout['status'] === 'paid' ? null : ($checkout['id_photo_id'] !== null ? (int) $checkout['id_photo_id'] : null);
+            });
+            if ($photo === -1) {
                 continue;
             }
-            Db::transaction(static function () use ($checkout): void {
-                if ($checkout['status'] !== 'paid') {
-                    // Attempts that never became money are not kept either.
-                    Db::run("DELETE FROM payments WHERE checkout_id = ? AND status IN ('failed','expired') AND registration_id IS NULL", [$checkout['id']]);
-                }
-                Db::run('DELETE FROM checkouts WHERE id = ?', [$checkout['id']]);
-            });
-            if ($checkout['status'] !== 'paid') {
-                IdPhotos::delete($checkout['id_photo_id'] !== null ? (int) $checkout['id_photo_id'] : null);   // the photo of an unpaid form goes too
-            }
+            IdPhotos::delete($photo);
             $deleted++;
         }
         return ['expired' => $expired, 'deleted' => $deleted];

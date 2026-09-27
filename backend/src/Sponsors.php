@@ -113,7 +113,7 @@ final class Sponsors
             }
             if ($request['kind'] === 'sponsor' && $request['package']) {
                 $tier = self::spots()[$request['package']] ?? null;
-                $others = (int) $tier['confirmed'] - ($request['status'] === 'confirmed' ? 1 : 0);
+                $others = $tier ? (int) $tier['confirmed'] - ($request['status'] === 'confirmed' ? 1 : 0) : 0;
                 if ($tier && $tier['spots'] > 0 && $others >= $tier['spots'] && !($override && $isOwner)) {
                     throw new UserError("All {$tier['spots']} {$tier['name']} spots are already confirmed. (The Owner can override.)");
                 }

@@ -89,12 +89,17 @@ final class Workshops
     public static function update(string $id, array $in, array $user): void
     {
         self::requireOwner($user);
-        $current = self::find($id) ?? throw new UserError('Workshop not found.');
         $fields = self::fields($in);
-        if ($fields['total_seats'] < $current['booked']) {
-            throw new UserError("{$current['booked']} people are already booked, so the seats cannot be fewer than {$current['booked']}.");
-        }
-        Db::update('workshops', $fields + ['updated_at' => App::now()], 'id = ?', [$id]);
+        Db::transaction(static function () use ($id, $fields): void {
+            if (!Db::value('SELECT id FROM workshops WHERE id = ? FOR UPDATE', [$id])) {
+                throw new UserError('Workshop not found.');
+            }
+            $booked = self::booked($id);
+            if ($fields['total_seats'] < $booked) {
+                throw new UserError("$booked people are already booked, so the seats cannot be fewer than $booked.");
+            }
+            Db::update('workshops', $fields + ['updated_at' => App::now()], 'id = ?', [$id]);
+        });
         Audit::log((int) $user['id'], 'workshop.edit', 'workshop', null, ['id' => $id] + $fields);
         self::syncWebsite();
     }
@@ -103,18 +108,23 @@ final class Workshops
     public static function changeSeats(string $id, int $delta, array $user): int
     {
         self::requireOwner($user);
-        $current = self::find($id) ?? throw new UserError('Workshop not found.');
-        $seats = $current['totalSeats'] + $delta;
-        if ($seats < max(1, $current['booked'])) {
-            throw new UserError($current['booked'] > 0
-                ? "{$current['booked']} people are booked: the seats cannot be fewer than that. Remove a booking first."
-                : 'A workshop needs at least 1 seat.');
-        }
-        if ($seats > 2000) {
-            throw new UserError('That is too many seats.');
-        }
-        Db::update('workshops', ['total_seats' => $seats, 'updated_at' => App::now()], 'id = ?', [$id]);
-        Audit::log((int) $user['id'], 'workshop.seats', 'workshop', null, ['id' => $id, 'from' => $current['totalSeats'], 'to' => $seats]);
+        [$from, $seats] = Db::transaction(static function () use ($id, $delta): array {
+            $from = Db::value('SELECT total_seats FROM workshops WHERE id = ? FOR UPDATE', [$id]);
+            if ($from === null) {
+                throw new UserError('Workshop not found.');
+            }
+            $booked = self::booked($id);
+            $seats = (int) $from + $delta;
+            if ($seats < max(1, $booked)) {
+                throw new UserError($booked > 0 ? "$booked people are booked: the seats cannot be fewer than that. Remove a booking first." : 'A workshop needs at least 1 seat.');
+            }
+            if ($seats > 2000) {
+                throw new UserError('That is too many seats.');
+            }
+            Db::update('workshops', ['total_seats' => $seats, 'updated_at' => App::now()], 'id = ?', [$id]);
+            return [(int) $from, $seats];
+        });
+        Audit::log((int) $user['id'], 'workshop.seats', 'workshop', null, ['id' => $id, 'from' => $from, 'to' => $seats]);
         self::syncWebsite();
         return $seats;
     }

@@ -99,6 +99,11 @@ try {
                 IdPhotos::delete((int) $row['id_photo_id']);
                 $deleted++;
             }
+            foreach (Db::all('SELECT id, id_photo_id FROM checkouts WHERE id_photo_id IS NOT NULL') as $row) {
+                Db::run('UPDATE checkouts SET id_photo_id = NULL WHERE id = ?', [$row['id']]);
+                IdPhotos::delete((int) $row['id_photo_id']);
+                $deleted++;
+            }
             if ($deleted > 0) {
                 Outbox::alert("$deleted student ID photos were deleted, as planned after the summit.");
             }

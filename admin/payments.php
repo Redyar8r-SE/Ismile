@@ -56,7 +56,13 @@ $rows = Db::all("SELECT p.*, COALESCE(r.ref, c.ref) AS ref, COALESCE(r.first_nam
                         COALESCE(r.grandfather_name, c.grandfather_name) AS grandfather_name
                  FROM payments p LEFT JOIN registrations r ON r.id = p.registration_id LEFT JOIN checkouts c ON c.id = p.checkout_id
                  WHERE $where ORDER BY p.id DESC LIMIT 300");
-$daily = Db::all("SELECT DATE(confirmed_at) AS day, COUNT(*) AS n, SUM(amount_confirmed) AS total, currency FROM payments WHERE status = 'paid' GROUP BY DATE(confirmed_at), currency ORDER BY day DESC LIMIT 60");
+// Per day: ticket money, and money that arrived without a ticket (wrong amount,
+// paid twice). Together they should equal Psoola's settlement for the day.
+$daily = Db::all("SELECT DATE(confirmed_at) AS day, currency,
+                         SUM(status = 'paid') AS n, COALESCE(SUM(IF(status = 'paid', amount_confirmed, 0)), 0) AS total,
+                         COALESCE(SUM(IF(status IN ('mismatch','duplicate','kept'), amount_confirmed, 0)), 0) AS held
+                  FROM payments WHERE confirmed_at IS NOT NULL AND status IN ('paid','mismatch','duplicate','kept')
+                  GROUP BY DATE(confirmed_at), currency ORDER BY day DESC LIMIT 60");
 $hooks = Db::all('SELECT * FROM webhook_log ORDER BY id DESC LIMIT 50');
 $flagged = (int) Db::value("SELECT COUNT(*) FROM payments WHERE status IN ('mismatch','duplicate')");
 
@@ -101,10 +107,11 @@ $e = [Page::class, 'e'];
 <div class="grid2">
   <div class="card">
     <h2>Daily totals (confirmed)</h2>
-    <p class="muted small">Compare each day with Psoola's settlement report. Any difference: look for a red row above.</p>
-    <table><tr><th>Day</th><th>Payments</th><th>Total</th></tr>
-      <?php foreach ($daily as $day): ?><tr><td><?= $e($day['day']) ?></td><td><?= (int) $day['n'] ?></td><td><b><?= Page::money((int) $day['total'], $day['currency']) ?></b></td></tr><?php endforeach; ?>
-      <?php if (!$daily): ?><tr><td colspan="3" class="muted">No confirmed payments yet.</td></tr><?php endif; ?>
+    <p class="muted small">Compare each day with Psoola's settlement report: <b>Tickets + Held</b> should equal what Psoola paid. "Held" is money that arrived without a ticket (wrong amount or paid twice), see the red rows.</p>
+    <table><tr><th>Day</th><th>Payments</th><th>Tickets</th><th>Held</th><th>Total received</th></tr>
+      <?php foreach ($daily as $day): ?><tr><td><?= $e($day['day']) ?></td><td><?= (int) $day['n'] ?></td><td><?= Page::money((int) $day['total'], $day['currency']) ?></td>
+        <td><?= (int) $day['held'] ? '<b class="red-text">' . Page::money((int) $day['held'], $day['currency']) . '</b>' : '–' ?></td><td><b><?= Page::money((int) $day['total'] + (int) $day['held'], $day['currency']) ?></b></td></tr><?php endforeach; ?>
+      <?php if (!$daily): ?><tr><td colspan="5" class="muted">No confirmed payments yet.</td></tr><?php endif; ?>
     </table>
   </div>
   <div class="card" id="webhooks">
