@@ -1,0 +1,80 @@
+# Deploy PHP backend to api.ismile.krd (ismile LXC).
+# Re-runs the idempotent VPS setup script: pulls this branch, updates files/DB,
+# leaves the live Node site on ismile.krd alone.
+# Secrets: same GitHub DEPLOY_ENV as the Node deploy (SSH into LXC :2260).
+name: Deploy API (api.ismile.krd)
+
+on:
+  push:
+    branches: ["backend"]
+  workflow_dispatch:
+
+concurrency:
+  group: ismile-api-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Update api.ismile.krd
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Load DEPLOY_ENV (SSH only)
+        env:
+          DEPLOY_ENV: ${{ secrets.DEPLOY_ENV }}
+        run: |
+          set -euo pipefail
+          : "${DEPLOY_ENV:?DEPLOY_ENV secret is required}"
+          printf '%s\n' "$DEPLOY_ENV" >.deploy.env
+          set -a
+          # shellcheck disable=SC1091
+          source .deploy.env
+          set +a
+          for key in DEPLOY_HOST DEPLOY_USER DEPLOY_PASSWORD DEPLOY_SSH_PORT; do
+            if [ -z "${!key:-}" ]; then
+              echo "error: ${key} missing from DEPLOY_ENV" >&2
+              exit 1
+            fi
+          done
+          echo "::add-mask::${DEPLOY_PASSWORD}"
+          {
+            echo "DEPLOY_HOST<<EOF_DEPLOY_HOST"
+            printf '%s\n' "$DEPLOY_HOST"
+            echo "EOF_DEPLOY_HOST"
+            echo "DEPLOY_USER<<EOF_DEPLOY_USER"
+            printf '%s\n' "$DEPLOY_USER"
+            echo "EOF_DEPLOY_USER"
+            echo "DEPLOY_PASSWORD<<EOF_DEPLOY_PASSWORD"
+            printf '%s\n' "$DEPLOY_PASSWORD"
+            echo "EOF_DEPLOY_PASSWORD"
+            echo "DEPLOY_SSH_PORT<<EOF_DEPLOY_SSH_PORT"
+            printf '%s\n' "$DEPLOY_SSH_PORT"
+            echo "EOF_DEPLOY_SSH_PORT"
+          } >>"$GITHUB_ENV"
+
+      - name: Run setup-test-site.sh on the LXC
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ env.DEPLOY_HOST }}
+          username: ${{ env.DEPLOY_USER }}
+          password: ${{ env.DEPLOY_PASSWORD }}
+          port: ${{ env.DEPLOY_SSH_PORT }}
+          timeout: 60s
+          command_timeout: 20m
+          script: |
+            set -euo pipefail
+            cd /root
+            curl -fsSL "https://raw.githubusercontent.com/Redyar8r-SE/Ismile/backend/backend/tools/vps/setup-test-site.sh" \
+              -o /root/ismile-test-setup.sh
+            chmod +x /root/ismile-test-setup.sh
+            DOMAIN=api.ismile.krd BRANCH=backend bash /root/ismile-test-setup.sh
+            # Smoke: PHP admin + config API (basic auth from secrets.env)
+            SP="$(grep '^SITE_PASS=' /opt/ismile-test/secrets.env | cut -d= -f2-)"
+            code="$(curl -s -o /dev/null -w '%{http_code}' -u "ismile:${SP}" -H 'Host: api.ismile.krd' http://127.0.0.1:8081/admin/login.php)"
+            echo "admin_login_http=${code}"
+            test "$code" = "200"
+            curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' -H 'X-Forwarded-Proto: https' \
+              http://127.0.0.1:8081/api/config.php | grep -q '"ok":true'
+            echo "api.ismile.krd update OK"

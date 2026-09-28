@@ -1,5 +1,5 @@
 #!/bin/bash
-# test.ismile.krd on the VPS: the backend (registrations, payments, admin,
+# api.ismile.krd on the VPS: the backend (registrations, payments, admin,
 # database) with the PRETEND payment company, so no Psoola and no webhooks.
 # Runs inside the "ismile" container, next to the live Node site, and never
 # touches it: its own folder, its own database, its own port.
@@ -10,19 +10,22 @@
 #   OWNER_EMAIL=you@example.com bash /root/ismile-test-setup.sh
 #
 # Then, on the HOST: see host-nginx-test.conf (DNS, certificate, proxy).
+# GitHub Actions: .github/workflows/deploy-api.yml re-runs this on push to backend.
 #
 # Safe to run again: it pulls the newest code of the branch and updates the
 # database, and keeps the data, the passwords and the settings.
 #
 # Options (environment):
-#   BRANCH=backend       which Git branch to run
-#   PORT=8081            the port the host's nginx forwards to
-#   OWNER_EMAIL=...      the first Owner account (first run only)
-#   NO_SITE_PASSWORD=1   no browser password in front of the test site
+#   BRANCH=backend           which Git branch to run
+#   DOMAIN=api.ismile.krd    public hostname (site_url + nginx server_name)
+#   PORT=8081                the port the host's nginx forwards to
+#   OWNER_EMAIL=...          the first Owner account (first run only)
+#   NO_SITE_PASSWORD=1       no browser password in front of the site
 
 set -euo pipefail
 
 BRANCH="${BRANCH:-backend}"
+DOMAIN="${DOMAIN:-api.ismile.krd}"
 PORT="${PORT:-8081}"
 REPO_URL="${REPO_URL:-https://github.com/Redyar8r-SE/Ismile.git}"
 BASE=/opt/ismile-test
@@ -114,10 +117,10 @@ mkdir -p "$BACKEND" "$SITE"
 if [ ! -f "$BACKEND/config.php" ]; then
   cat > "$BACKEND/config.php" <<PHP
 <?php
-// test.ismile.krd — made by setup-test-site.sh. Holds passwords: never commit it.
+// $DOMAIN — made by setup-test-site.sh. Holds passwords: never commit it.
 return [
     'env'       => 'test',
-    'site_url'  => 'https://test.ismile.krd',
+    'site_url'  => 'https://$DOMAIN',
     'site_root' => '$SITE',
     'storage'   => __DIR__ . '/storage',
     'db'        => ['host' => 'localhost', 'port' => 3306, 'name' => '$DB', 'user' => '$DB_USER', 'pass' => '$DB_PASS'],
@@ -131,6 +134,14 @@ return [
     'office_phone' => '',
 ];
 PHP
+else
+  # Keep existing secrets; only refresh the public URL if DOMAIN changed.
+  php -r '
+    $path = $argv[1]; $domain = $argv[2];
+    $cfg = include $path;
+    $cfg["site_url"] = "https://" . $domain;
+    file_put_contents($path, "<?php\nreturn " . var_export($cfg, true) . ";\n");
+  ' "$BACKEND/config.php" "$DOMAIN"
 fi
 chown root:www-data "$BACKEND/config.php"
 chmod 640 "$BACKEND/config.php"
@@ -197,7 +208,7 @@ if [ -z "${NO_SITE_PASSWORD:-}" ]; then
 else
   AUTH="auth_basic off;"
 fi
-sed -e "s#__PORT__#$PORT#g" -e "s#__SITE__#$SITE#g" -e "s#__FPM_SOCK__#$FPM_SOCK#g" -e "s#__AUTH__#$AUTH#g" \
+sed -e "s#__PORT__#$PORT#g" -e "s#__SITE__#$SITE#g" -e "s#__FPM_SOCK__#$FPM_SOCK#g" -e "s#__AUTH__#$AUTH#g" -e "s#__DOMAIN__#$DOMAIN#g" \
   "$REPO/backend/tools/vps/container-nginx.conf" > /etc/nginx/sites-available/ismile-test
 ln -sf /etc/nginx/sites-available/ismile-test /etc/nginx/sites-enabled/ismile-test
 rm -f /etc/nginx/sites-enabled/default      # nothing else is served by this nginx
@@ -206,17 +217,17 @@ systemctl reload nginx
 
 # ---------------------------------------------------------------------------
 say "Check"
-code() { curl -s -o /dev/null -w '%{http_code}' -u "ismile:$SITE_PASS" "http://127.0.0.1:$PORT$1"; }
+code() { curl -s -o /dev/null -w '%{http_code}' -u "ismile:$SITE_PASS" -H "Host: $DOMAIN" "http://127.0.0.1:$PORT$1"; }
 printf '  %-28s %s (want 200)\n' "/" "$(code /)" "/register.html" "$(code /register.html)" "/admin/login.php" "$(code /admin/login.php)"
 printf '  %-28s %s (want 404)\n' "/backend/config.php" "$(code /backend/config.php)" "/server/node-server.mjs" "$(code /server/node-server.mjs)" "/api/_backend.php" "$(code /api/_backend.php)" "/.git/config" "$(code /.git/config)"
 
 cat <<DONE
 
-Done. Test site files: $SITE   backend: $BACKEND   (the live Node site was not touched)
+Done. API site files: $SITE   backend: $BACKEND   (the live Node site was not touched)
 
-Open https://test.ismile.krd once the host is set up (host-nginx-test.conf).
+Open https://$DOMAIN once the host is set up (host-nginx-test.conf).
   Browser password : ismile / $([ -z "${NO_SITE_PASSWORD:-}" ] && echo "$SITE_PASS" || echo "(none)")
-  Admin            : https://test.ismile.krd/admin/  ${OWNER_EMAIL:-(no Owner yet: run again with OWNER_EMAIL=you@example.com)} / $OWNER_PASS
+  Admin            : https://$DOMAIN/admin/  ${OWNER_EMAIL:-(no Owner yet: run again with OWNER_EMAIL=you@example.com)} / $OWNER_PASS
                      (the first sign-in asks to set up the phone code)
   Workbench        : user ismile_viewer / $VIEWER_PASS, database $DB, via "Standard TCP/IP over SSH"
 All passwords are in $SECRETS (root only). Give them to people directly, never in a group chat.
