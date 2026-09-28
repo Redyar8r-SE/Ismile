@@ -12,7 +12,8 @@ final class MailerFactory
     public static function make(): Mailer
     {
         return match ((string) App::config('mail.driver', 'log')) {
-            'brevo' => new BrevoMailer(),
+            'brevo'  => new BrevoMailer(),
+            'resend' => new ResendMailer(),
             default => new LogMailer(),
         };
     }

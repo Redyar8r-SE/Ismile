@@ -58,7 +58,7 @@ Page::action(static function () use ($user, $id): string {
             return Sponsors::logCall($id, $_POST, $user);
         case 'pay':
             Sponsors::recordPayment($id, $_POST, $user);
-            return 'Payment recorded. Now press Confirmed.';
+            return 'Payment recorded. Last step: press the green Confirm button.';
         case 'unpay':
             Sponsors::undoPayment($id, $user);
             return 'Payment removed. The request is back to Agreed.';
@@ -89,71 +89,105 @@ if ($id > 0 && ($request = Sponsors::find($id))) {
     Page::top($request['company'], 'sponsors');
     ?>
     <div class="toolbar"><a class="btn ghost" href="sponsors.php?kind=<?= $e($request['kind']) ?>">← All <?= $isBooth ? 'exhibition requests' : 'sponsor requests' ?></a><span><code class="big"><?= $e($request['ref']) ?></code> <?= Page::pill($request['status']) ?></span></div>
-    <?php if ($due): ?><div class="flash error">📞 A call is due since <?= Page::when($request['next_call_at']) ?>. Call them and save the call below.</div><?php endif; ?>
+    <?php
+    // ---- the progress bar: where this company is ----
+    $stepOf = ['new' => 1, 'contacted' => 2, 'waiting_list' => 2, 'agreed' => 3, 'paid' => 4, 'confirmed' => 5, 'declined' => 0];
+    $current = $stepOf[$request['status']] ?? 1;
+    $stepNames = [1 => 'New request', 2 => 'Called', 3 => 'Price agreed', 4 => 'Paid', 5 => 'Confirmed'];
+    $agreed = $request['amount_agreed'] !== null ? Page::money((int) $request['amount_agreed']) : '';
+    $callForm = static function (bool $first) use ($e, $package): string {
+        $choices = $first
+            ? ['agreed' => ['✅', 'They agreed a price'], 'interested' => ['👍', 'Interested, not decided'], 'call_back' => ['⏰', 'Call back later'], 'no_answer' => ['📵', 'No answer'], 'declined' => ['❌', 'Not interested']]
+            : array_map(static fn ($label) => ['', $label], Sponsors::OUTCOMES);
+        $tiles = '';
+        foreach ($choices as $key => [$icon, $label]) {
+            $tiles .= '<label class="choice"><input type="radio" name="outcome" value="' . $key . '" required><span>' . ($icon !== '' ? '<b>' . $icon . '</b>' : '') . $e($label) . '</span></label>';
+        }
+        $hint = $package && $package['price'] > 0 ? ' (list price ' . number_format((int) $package['price']) . ')' : '';
+        return '<form method="post" class="stack">' . Page::csrfField() . '<input type="hidden" name="do" value="call">'
+            . '<div class="choices">' . $tiles . '</div>'
+            . '<div class="row3">'
+            . '<label>Price in IQD' . $e($hint) . '<input name="amount" inputmode="numeric" placeholder="e.g. 6000000"></label>'
+            . '<label>Call again on (optional)<input type="datetime-local" name="next_call_at"></label>'
+            . '<label>Note (optional)<input name="note" maxlength="500" placeholder="what they said"></label>'
+            . '</div><button class="btn green big-btn">Save</button>'
+            . '<p class="muted small">"They agreed a price" needs the price.</p></form>';
+    };
+    ?>
+    <?php if ($current > 0): ?>
+    <ol class="tracker">
+      <?php foreach ($stepNames as $n => $name): ?>
+        <li class="<?= $n < $current || $current === 5 ? 'done' : ($n === $current ? 'now' : '') ?>"><b><?= $n < $current || $current === 5 ? '✓' : $n ?></b><span><?= $e($name) ?></span></li>
+      <?php endforeach; ?>
+    </ol>
+    <?php endif; ?>
+
+    <div class="card next-step">
+      <?php if ($request['status'] === 'new' || $request['status'] === 'contacted' || $request['status'] === 'waiting_list'): ?>
+        <h2>👉 What to do now: call them and agree on a price</h2>
+        <p class="lead-line">Call <b><?= $e($request['contact_name']) ?></b> from <b><?= $e($request['company']) ?></b>
+          <a class="btn green" href="tel:<?= $e($request['phone']) ?>" dir="ltr">📞 <?= $e($request['phone']) ?></a></p>
+        <p>They want: <b><?= $package ? $e(SponsorPackages::name($package)) : 'not sure yet' ?></b><?= $package && $package['price'] > 0 ? ', list price <b>' . Page::money((int) $package['price']) . '</b>' : '' ?>.
+          <?= $request['status'] === 'waiting_list' ? '<span class="pill violet">on the waiting list</span>' : '' ?></p>
+        <h3>After the call, what happened?</h3>
+        <?= $callForm(true) ?>
+      <?php elseif ($request['status'] === 'agreed'): ?>
+        <h2>👉 What to do now: wait for the money, then record it</h2>
+        <p class="lead-line">They agreed to pay <b class="big-money"><?= $agreed ?></b>. When the money arrives, press the button:</p>
+        <form method="post" class="stack"><?= Page::csrfField() ?><input type="hidden" name="do" value="pay">
+          <input type="hidden" name="amount_paid" value="<?= (int) $request['amount_agreed'] ?>">
+          <div class="choices">
+            <?php foreach (Sponsors::PAID_HOW as $key => $label): ?><label class="choice"><input type="radio" name="paid_how" value="<?= $key ?>" required><span><b><?= ['cash' => '💵', 'transfer' => '🏦', 'psoola' => '💳', 'other' => '📝'][$key] ?></b><?= $e($label) ?></span></label><?php endforeach; ?>
+          </div>
+          <button class="btn green big-btn">💰 They paid <?= $agreed ?></button>
+        </form>
+        <details class="more"><summary>They want to pay a different amount?</summary>
+          <p class="muted">Save a new call with "They agreed a price" and the new price. Then record the payment.</p>
+          <?= $callForm(true) ?>
+        </details>
+      <?php elseif ($request['status'] === 'paid'): ?>
+        <h2>👉 Last step: confirm them</h2>
+        <p class="lead-line">They paid <b class="big-money"><?= Page::money((int) $request['amount_paid']) ?></b> (<?= $e(Sponsors::PAID_HOW[$request['paid_how']] ?? '') ?>, <?= Page::when($request['paid_at']) ?>).</p>
+        <form method="post" class="stack"><?= Page::csrfField() ?><input type="hidden" name="do" value="status"><input type="hidden" name="status" value="confirmed">
+          <?php $spot = $package ? (Sponsors::spots()[$package['id']] ?? null) : null; $full = $spot && $spot['spots'] > 0 && $spot['confirmed'] >= $spot['spots']; ?>
+          <?php if ($full): ?><p class="flash warn">All <?= (int) $spot['spots'] ?> <?= $e($spot['name']) ?> places are taken.<?= $isOwner ? ' Tick the box to confirm anyway.' : ' Only the Owner can confirm more.' ?></p>
+            <?php if ($isOwner): ?><label class="inline"><input type="checkbox" name="override" value="1"> Confirm anyway (Owner)</label><?php endif; ?><?php endif; ?>
+          <button class="btn green big-btn">✅ Confirm <?= $e($request['company']) ?></button>
+        </form>
+        <?php if ($isOwner): ?><form method="post" style="margin-top:14px"><?= Page::csrfField() ?><input type="hidden" name="do" value="unpay"><button class="btn small ghost" data-confirm="Remove this payment? Only if it was recorded by mistake.">Payment recorded by mistake? Undo it (Owner)</button></form><?php endif; ?>
+      <?php elseif ($request['status'] === 'confirmed'): ?>
+        <h2>🎉 Done: <?= $e($request['company']) ?> is confirmed</h2>
+        <p class="lead-line">Paid <b><?= Page::money((int) $request['amount_paid']) ?></b>.</p>
+        <ul>
+          <?php if ($isBooth): ?><li><?= $request['booth_number'] ? 'Their booth number is <b>' . $e($request['booth_number']) . '</b>.' : 'Give them a <b>booth number</b> (in "Details" below).' ?></li>
+          <?php else: ?><li>Add their <b>logo</b> to the website: Site content → Sponsors & partners → Sponsors with a logo.</li><?php endif; ?>
+        </ul>
+      <?php else: ?>
+        <h2>❌ Declined</h2>
+        <p class="lead-line">This company said no, or was declined.</p>
+        <form method="post"><?= Page::csrfField() ?><input type="hidden" name="do" value="status"><input type="hidden" name="status" value="new"><button class="btn">They came back: start again</button></form>
+      <?php endif; ?>
+    </div>
+
+    <?php if ($due): ?><div class="flash warn">📞 A call is due since <?= Page::when($request['next_call_at']) ?>.</div><?php endif; ?>
     <div class="grid2">
       <div class="card">
         <h2><?= $isBooth ? '🏪 Exhibition booth' : '🏆 Sponsorship' ?>: <?= $package ? $e(SponsorPackages::name($package)) : '<span class="muted">package not chosen yet</span>' ?></h2>
-        <?php if ($package): ?><p>List price <b><?= $package['price'] > 0 ? Page::money((int) $package['price']) : 'not set yet' ?></b><?= $package['places'] > 0 ? ' · ' . (int) Sponsors::spots()[$package['id']]['confirmed'] . ' of ' . (int) $package['places'] . ' places confirmed' : '' ?></p><?php endif; ?>
         <dl class="facts">
           <dt>Company</dt><dd><b><?= $e($request['company']) ?></b></dd>
           <dt>Contact</dt><dd><?= $e($request['contact_name']) ?><?= $request['contact_role'] ? ', ' . $e($request['contact_role']) : '' ?></dd>
-          <dt>Phone</dt><dd dir="ltr"><a class="btn small green" href="tel:<?= $e($request['phone']) ?>">📞 <?= $e($request['phone']) ?></a></dd>
+          <dt>Phone</dt><dd dir="ltr"><a href="tel:<?= $e($request['phone']) ?>"><?= $e($request['phone']) ?></a></dd>
           <dt>Email</dt><dd dir="ltr"><a href="mailto:<?= $e($request['email']) ?>"><?= $e($request['email']) ?></a></dd>
           <dt>Website</dt><dd dir="ltr"><?= $e($request['website'] ?? '–') ?></dd>
           <dt>City</dt><dd><?= $e($request['city'] ?? '–') ?></dd>
           <dt>Speaks</dt><dd><?= $e(['en' => 'English', 'ar' => 'Arabic', 'ku' => 'Kurdish'][$request['lang']] ?? $request['lang']) ?></dd>
           <?php if ($request['booth_number']): ?><dt>Booth number</dt><dd><b><?= $e($request['booth_number']) ?></b></dd><?php endif; ?>
           <dt>Received</dt><dd><?= Page::when($request['created_at']) ?></dd>
-          <dt>Last call</dt><dd><?= $request['last_call_at'] ? Page::when($request['last_call_at']) : 'not called yet' ?></dd>
-          <dt>Next call</dt><dd><?= $request['next_call_at'] ? Page::when($request['next_call_at']) : '–' ?></dd>
-        </dl>
-        <?php if ($request['message']): ?><h3>Their message</h3><p class="message"><?= nl2br($e($request['message'])) ?></p><?php endif; ?>
-      </div>
-      <div class="card">
-        <h2>📞 Save a call</h2>
-        <form method="post" class="stack"><?= Page::csrfField() ?><input type="hidden" name="do" value="call">
-          <label>What happened?<select name="outcome" required>
-            <option value="">Choose…</option>
-            <?php foreach (Sponsors::OUTCOMES as $key => $label): ?><option value="<?= $key ?>"><?= $e($label) ?></option><?php endforeach; ?>
-          </select></label>
-          <label>Amount you told them, or they agreed to (IQD)<input name="amount" inputmode="numeric" placeholder="<?= $package && $package['price'] > 0 ? (int) $package['price'] : '' ?>"></label>
-          <label>Call again on (optional)<input type="datetime-local" name="next_call_at"></label>
-          <label>Note (optional)<input name="note" maxlength="500" placeholder="e.g. wants a booth near the entrance"></label>
-          <button class="btn green">Save the call</button>
-          <p class="muted small">"Agreed on an amount" needs the amount and makes the request Agreed. "Not interested" makes it Declined.</p>
-        </form>
-        <h2>💰 Money</h2>
-        <dl class="facts">
           <dt>Price told</dt><dd><?= $money($request['price_quoted']) ?></dd>
           <dt>Agreed</dt><dd><b><?= $money($request['amount_agreed']) ?></b></dd>
           <dt>Paid</dt><dd><?= $request['amount_paid'] !== null ? '<b class="txt-ok">' . $money($request['amount_paid']) . '</b> · ' . $e(Sponsors::PAID_HOW[$request['paid_how']] ?? '') . ', ' . Page::when($request['paid_at']) : 'not paid' ?></dd>
         </dl>
-        <?php if ($request['status'] === 'agreed'): ?>
-          <form method="post" class="stack"><?= Page::csrfField() ?><input type="hidden" name="do" value="pay">
-            <div class="row3">
-              <label>Amount received (IQD)<input name="amount_paid" inputmode="numeric" required placeholder="<?= (int) $request['amount_agreed'] ?>"></label>
-              <label>Paid how<select name="paid_how" required><option value="">Choose…</option><?php foreach (Sponsors::PAID_HOW as $key => $label): ?><option value="<?= $key ?>"><?= $e($label) ?></option><?php endforeach; ?></select></label>
-            </div>
-            <button class="btn">Record the payment</button>
-            <p class="muted small">Only exactly the agreed amount is accepted. No refunds.</p>
-          </form>
-        <?php elseif ($request['status'] === 'paid' && $isOwner): ?>
-          <form method="post"><?= Page::csrfField() ?><input type="hidden" name="do" value="unpay"><button class="btn small ghost" data-confirm="Remove this payment? Only if it was recorded by mistake.">Undo the payment (Owner)</button></form>
-        <?php endif; ?>
-      </div>
-    </div>
-    <div class="grid2">
-      <div class="card">
-        <h2>Status</h2>
-        <form method="post" class="stack"><?= Page::csrfField() ?><input type="hidden" name="do" value="status">
-          <div class="status-buttons">
-            <?php foreach (['new', 'contacted', 'waiting_list', 'confirmed', 'declined'] as $status): ?>
-              <button class="btn small <?= $status === $request['status'] ? '' : 'ghost' ?>" name="status" value="<?= $status ?>"><?= $e(str_replace('_', ' ', ucfirst($status))) ?></button>
-            <?php endforeach; ?>
-          </div>
-          <?php if ($isOwner): ?><label class="inline"><input type="checkbox" name="override" value="1"> Owner: confirm even if the package's places are full</label><?php endif; ?>
-          <p class="muted small"><b>Agreed</b> comes from saving a call with the amount, <b>Paid</b> from recording the payment. <b>Confirmed</b> only after Paid; then add their logo in Site content → Sponsors.</p>
-        </form>
+        <?php if ($request['message']): ?><h3>Their message</h3><p class="message"><?= nl2br($e($request['message'])) ?></p><?php endif; ?>
       </div>
       <div class="card">
         <h2>Details</h2>
@@ -171,6 +205,17 @@ if ($id > 0 && ($request = Sponsors::find($id))) {
         </form>
       </div>
     </div>
+    <details class="card more">
+      <summary>More actions: save another call, waiting list, decline…</summary>
+      <?php if (!in_array($request['status'], ['new', 'contacted', 'waiting_list'], true)): ?><h3>Save a call</h3><?= $callForm(false) ?><?php endif; ?>
+      <h3>Move by hand</h3>
+      <form method="post" class="status-buttons"><?= Page::csrfField() ?><input type="hidden" name="do" value="status">
+        <?php foreach (['new' => 'Back to New', 'contacted' => 'Called', 'waiting_list' => 'Waiting list', 'declined' => 'Declined'] as $status => $label): ?>
+          <?php if ($status !== $request['status']): ?><button class="btn small ghost" name="status" value="<?= $status ?>"><?= $e($label) ?></button><?php endif; ?>
+        <?php endforeach; ?>
+      </form>
+      <p class="muted small">Once a company has paid, only the Owner can move it back or decline it (no refunds).</p>
+    </details>
     <div class="card"><h2>📞 Calls (<?= count($calls) ?>)</h2><div class="table-wrap"><table>
       <tr><th>When</th><th>Who called</th><th>Result</th><th>Amount told</th><th>Note</th><th>Call again</th></tr>
       <?php foreach ($calls as $call): ?>

@@ -121,7 +121,9 @@ final class Page
         $test = !App::isLive();
         echo '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">';
         echo '<meta name="robots" content="noindex"><title>' . self::e($title) . ' · iSmile admin</title>';
-        echo '<link rel="stylesheet" href="admin.css?v=1"><script src="admin.js?v=1" defer></script></head><body>';
+        // The version follows the files' date, so a change is never hidden by the browser's cache.
+        $v = static fn (string $file): int => (int) @filemtime(App::siteFile('admin/' . $file)) ?: 1;
+        echo '<link rel="stylesheet" href="admin.css?v=' . $v('admin.css') . '"><script src="admin.js?v=' . $v('admin.js') . '" defer></script></head><body>';
         if ($test) {
             echo '<div class="testbar">TEST SITE: test data, test payments. Nothing here is real.</div>';
         }

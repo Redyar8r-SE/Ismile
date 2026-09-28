@@ -15,21 +15,21 @@
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=Noto+Kufi+Arabic:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <!-- Base -->
-<link rel="stylesheet" href="css/base/tokens.css?v=75">
-<link rel="stylesheet" href="css/base/base.css?v=75">
+<link rel="stylesheet" href="css/base/tokens.css?v=76">
+<link rel="stylesheet" href="css/base/base.css?v=76">
 <!-- Components -->
-<link rel="stylesheet" href="css/components/boot.css?v=75">
-<link rel="stylesheet" href="css/components/buttons.css?v=75">
-<link rel="stylesheet" href="css/components/brand.css?v=75">
-<link rel="stylesheet" href="css/components/tier-card.css?v=75">
+<link rel="stylesheet" href="css/components/boot.css?v=76">
+<link rel="stylesheet" href="css/components/buttons.css?v=76">
+<link rel="stylesheet" href="css/components/brand.css?v=76">
+<link rel="stylesheet" href="css/components/tier-card.css?v=76">
 <!-- Layout -->
-<link rel="stylesheet" href="css/layout/header.css?v=75">
-<link rel="stylesheet" href="css/layout/footer.css?v=75">
+<link rel="stylesheet" href="css/layout/header.css?v=76">
+<link rel="stylesheet" href="css/layout/footer.css?v=76">
 <!-- The form borrows the registration card, stepper and fields. -->
-<link rel="stylesheet" href="css/sections/register.css?v=75">
-<link rel="stylesheet" href="css/sections/sponsor-form.css?v=75">
+<link rel="stylesheet" href="css/sections/register.css?v=76">
+<link rel="stylesheet" href="css/sections/sponsor-form.css?v=76">
 
-<script type="module" src="js/sponsor.js?v=75"></script>
+<script type="module" src="js/sponsor.js?v=76"></script>
 </head>
 <body>
 
@@ -132,7 +132,7 @@
 
         <form id="spfForm" novalidate>
           <!-- Left empty by people, filled in by bots: the server refuses it. -->
-          <div class="reg-trap" aria-hidden="true"><label>Company website <input id="spfHp" tabindex="-1" autocomplete="off"></label></div>
+          <div class="reg-trap" aria-hidden="true"><label>Leave this box empty <input id="spfTrap" type="text" tabindex="-1" autocomplete="nope" data-lpignore="true" data-1p-ignore></label></div>
           <!-- Step 1: sponsorship or booth, and which package -->
           <div class="reg-step" data-step="1">
             <div class="step-head">

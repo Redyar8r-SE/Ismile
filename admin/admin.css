@@ -202,3 +202,28 @@ details.add-new[open] summary{margin-bottom:12px}
 .id-card img{display:block;width:100%;height:170px;object-fit:contain;background:#eef6f6}
 .id-card .no-photo{height:170px;display:grid;place-items:center;background:#fbe1dc;color:#9a3222;font-weight:700;text-align:center;padding:10px}
 .id-card-text{padding:10px 12px;font-size:14px;line-height:1.5}
+
+/* Sponsor page: the step-by-step guide */
+.tracker{list-style:none;display:flex;gap:6px;margin:0 0 14px;padding:0;counter-reset:none}
+.tracker li{flex:1;display:flex;align-items:center;gap:8px;background:#eef3f3;color:var(--muted);border-radius:12px;padding:10px 12px;font-weight:700;font-size:14px}
+.tracker li b{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#fff;color:var(--muted);flex:none}
+.tracker li.done{background:var(--green-l);color:var(--green-d)}
+.tracker li.done b{background:var(--green);color:#fff}
+.tracker li.now{background:var(--gold-l);color:var(--gold-d);box-shadow:0 0 0 3px var(--gold) inset}
+.tracker li.now b{background:var(--gold);color:#fff}
+.next-step{border:3px solid var(--gold);background:linear-gradient(180deg,#fffaf0,#fff)}
+.next-step h2{font-size:22px;margin-top:0}
+.lead-line{font-size:17px;display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.big-money{font-size:22px;color:var(--green-d)}
+.big-btn{font-size:18px;padding:14px 26px}
+.choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.choice{position:relative;cursor:pointer}
+.choice input{position:absolute;opacity:0;inset:0}
+.choice span{display:flex;align-items:center;gap:8px;min-height:56px;border:2px solid #cfe0e0;border-radius:12px;padding:10px 12px;font-weight:700;background:#fff}
+.choice span b{font-size:22px}
+.choice:hover span{border-color:var(--teal,#16a6a1)}
+.choice input:checked+span{border-color:var(--green);background:var(--green-l);color:var(--green-d);box-shadow:0 0 0 2px var(--green) inset}
+.choice input:focus-visible+span{outline:3px solid var(--gold);outline-offset:2px}
+details.more>summary{cursor:pointer;font-weight:700;color:var(--muted);padding:4px 0}
+details.card.more>summary{font-size:16px}
+@media (max-width:760px){.tracker{flex-direction:column}}

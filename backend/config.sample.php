@@ -56,9 +56,12 @@ return [
     // ---- Email ----
     // 'log'   : emails are written to storage/outbox as files (for testing).
     // 'brevo' : sent through Brevo (https://www.brevo.com), from tickets@ismile.krd.
+    // 'resend': sent through Resend (https://resend.com), from tickets@ismile.krd
+    //           (the domain must be verified in Resend first).
     'mail' => [
         'driver'     => 'log',
         'brevo_key'  => '',
+        'resend_key' => '',
         'from_email' => 'tickets@ismile.krd',
         'from_name'  => 'iSmile 2026',
         'reply_to'   => 'info@ismile.krd',

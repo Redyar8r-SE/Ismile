@@ -8,8 +8,8 @@
 // server (GitHub Pages) or registration is closed, the form is not shown at
 // all, so nobody can believe they registered when nothing was saved.
 // Nothing about the visitor is kept in the browser.
-import { t, getLang, onLangChange } from "../i18n.js?v=75";
-import { formatPrice } from "../utils/money.js?v=75";
+import { t, getLang, onLangChange } from "../i18n.js?v=76";
+import { formatPrice } from "../utils/money.js?v=76";
 
 const TOTAL_STEPS = 3;
 
@@ -457,7 +457,7 @@ export function initRegistration({ tickets = {} } = {}) {
     chosenLunch().forEach((day) => data.append(`lunch_${day.id}`, "1"));
     data.append("pay", payMethod(checkedValue("pay")));
     data.append("terms", $("terms").checked ? "1" : "0");
-    data.append("website", $("regWebsite")?.value || "");
+    data.append("website", $("regTrap")?.value || "");   // spam trap: people never fill it
     if (student) {
       data.append("university", $("p_uni").value.trim());
       data.append("ambassador", $("p_ambassador").value.trim());

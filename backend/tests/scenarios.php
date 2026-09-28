@@ -24,6 +24,7 @@ use Ismile\Outbox;
 use Ismile\Payments\FakeGateway;
 use Ismile\Payments\Payments;
 use Ismile\Registrations;
+use Ismile\Security;
 use Ismile\Settings;
 use Ismile\Sponsors;
 use Ismile\Tickets;
@@ -771,6 +772,36 @@ try {
         && (int) Db::value("SELECT COUNT(*) FROM emails WHERE kind = 'alert' AND data LIKE '%prices were changed%' AND created_at > ?", [date('Y-m-d H:i:s', time() - 120)]) >= 1);
 
     // ------------------------------------------------------------------
+    section('The ticket email');
+    $student = Db::one("SELECT * FROM registrations WHERE ticket_type = 'student' AND status = 'paid' ORDER BY id DESC LIMIT 1");
+    Db::run("UPDATE registrations SET lang = 'ku', lunch_day1 = 1, lunch_day2 = 0 WHERE id = ?", [$student['id']]);
+    $build = static fn (): ?array => EmailTemplates::build(['kind' => 'ticket', 'registration_id' => $student['id'], 'data' => null, 'to_email' => '', 'checkout_id' => null, 'sponsor_request_id' => null]);
+    Settings::set('email_language', 'en');
+    Settings::set('ticket_qr_in_email', '0');
+    $mail = $build();
+    check('the ticket email is in English, even for someone who registered in Kurdish', $mail !== null && str_starts_with($mail['subject'], "🎉 You're in!") && str_contains($mail['html'], 'lang="en"'));
+    check('it congratulates them by first name', str_contains($mail['html'], 'Congratulations, ' . Security::e($student['first_name'])));
+    check('it has their reference, ticket number and amount paid', str_contains($mail['html'], $student['ref']) && str_contains($mail['html'], 'T26-') && (bool) preg_match('/[0-9],[0-9]{3} IQD/', $mail['html']));
+    check('it names the lunch day they chose (Day 1 only)', str_contains($mail['html'], '✓ Day 1') && !str_contains($mail['html'], '✓ Day 2'));
+    check('students are asked to bring their student ID', str_contains($mail['html'], 'bring your student ID'));
+    check('it shows the venue and a map link from the website', str_contains($mail['html'], 'Grand Millennium') && str_contains($mail['html'], 'google.com/maps'));
+    check('no QR code and no PDF while that is switched off', $mail['attachments'] === [] && !str_contains($mail['html'], 'api/qr.php'));
+    check('the plain-text version reads "Label: value"', str_contains($mail['text'], 'Your reference: ' . $student['ref']));
+    Settings::set('ticket_qr_in_email', '1');
+    $mail = $build();
+    check('switched on, the QR code and the PDF ticket come back', count($mail['attachments']) === 1 && str_contains($mail['html'], 'api/qr.php'));
+    Settings::set('ticket_qr_in_email', '0');
+    Settings::set('email_language', 'auto');
+    check('email language "auto" sends Kurdish to a Kurdish registrant', str_contains((string) $build()['subject'], 'تۆمار'));
+    Settings::set('email_language', 'en');
+    try {
+        (new \Ismile\Mail\ResendMailer())->send('x@example.com', 'x', 'x', 'x');
+        check('Resend refuses to run without its key', (string) App::config('mail.resend_key', '') !== '');
+    } catch (\RuntimeException $error) {
+        check('Resend refuses to run without its key', str_contains($error->getMessage(), 'not configured'));
+    }
+
+    // ------------------------------------------------------------------
     section('Rate limits');
     $blocked = false;
     for ($i = 0; $i < 70 && !$blocked; $i++) {
@@ -778,7 +809,7 @@ try {
     }
     check('many form submissions from one address are blocked (429)', $blocked);
 } finally {
-    foreach (['registration_open', 'ticket_capacity', 'lunch_capacity_day1', 'lunch_capacity_day2', 'email_test_mode'] as $key) {
+    foreach (['registration_open', 'ticket_capacity', 'lunch_capacity_day1', 'lunch_capacity_day2', 'email_test_mode', 'email_language', 'ticket_qr_in_email'] as $key) {
         Settings::set($key, $saved[$key]);
     }
     Db::run("DELETE FROM rate_limits WHERE bucket LIKE 'register:%'");

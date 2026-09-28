@@ -49,28 +49,130 @@ final class EmailTemplates
         if ($ticket === null || $ticket['cancelled_at'] !== null || !in_array($registration['status'], ['paid', 'complimentary'], true)) {
             return null;
         }
-        $lang = Lang::pick($registration['lang']);
+        $lang = self::emailLang($registration['lang']);
         $w = EmailText::for($lang);
         $name = Registrations::fullName($registration);
         $vars = ['{ref}' => $registration['ref'], '{name}' => $name, '{ticket}' => $ticket['ticket_no']];
-        $qrUrl = App::url('api/qr.php?r=' . rawurlencode($registration['ref']) . '&k=' . Links::viewToken($registration) . '&v=' . $ticket['version']);
-        $blocks = [
-            $w['ticket_body'],
-            '<div style="text-align:center;margin:18px 0">'
-                . '<img src="' . S::e($qrUrl) . '" width="220" height="220" alt="QR" style="display:inline-block;border:1px solid #cfe3e3;border-radius:8px">'
-                . '<div style="font:bold 18px Arial,sans-serif;letter-spacing:1px;margin-top:8px" dir="ltr">' . S::e($ticket['ticket_no']) . '</div></div>',
-            self::detailsTable($registration, $w, [[$w['ticket_no'], $ticket['ticket_no']]]),
-            $w['ticket_name_note'],
-            str_replace('{url}', App::url('workshops.html'), $w['ticket_workshops']),
+        $withQr = Settings::bool('ticket_qr_in_email');   // off until the entrance check is decided
+
+        // ---- Your registration ----
+        $paid = $registration['status'] === 'complimentary' ? null
+            : Db::value("SELECT amount_confirmed FROM payments WHERE registration_id = ? AND status = 'paid' ORDER BY id LIMIT 1", [$registration['id']]);
+        $mine = [
+            [$w['row_name'], $name],
+            [$w['reference'], $registration['ref']],
+            [$w['ticket_no'], $ticket['ticket_no']],
+            [$w['row_ticket'], $registration['ticket_type'] === 'student' ? $w['type_student'] : $w['type_professional']],
         ];
-        $html = self::layout($lang, strtr($w['hello'], ['{name}' => S::e($name)]), $blocks, null, $vars);
+        if ($registration['ticket_type'] === 'student' && $registration['university']) {
+            $mine[] = [$w['row_university'], $registration['university']];
+        }
+        // Lunch with the real day and date: "Day 1 · 20 November", both, or none.
+        $event = self::eventInfo($lang);
+        $lunchDays = [];
+        foreach ([1, 2] as $n) {
+            if ((int) $registration['lunch_day' . $n] === 1) {
+                $lunchDays[] = S::e($event['days'][$n - 1]['title'] ?? EmailText::for($lang)['lunch_day' . $n]);
+            }
+        }
+        $mine[] = [$w['row_days'], $w['days_both']];
+        $mine[] = [$w['pdf_lunch'], $lunchDays ? '✓ ' . implode('<br>✓ ', $lunchDays) : S::e($w['lunch_none']), true];
+        if ($registration['status'] === 'complimentary') {
+            $mine[] = [$w['row_paid'], $w['free_ticket']];
+        } else {
+            $methods = ['visa' => 'Visa', 'mastercard' => 'Mastercard', 'fib' => 'FIB', 'fastpay' => 'FastPay'];
+            $mine[] = [$w['row_paid'], $paid !== null ? '<span dir="ltr">' . number_format((int) $paid) . ' ' . S::e(SiteData::prices()['currency']) . '</span>' : '–', true];
+            if ($registration['pay_method']) {
+                $mine[] = [$w['row_paid_by'], $methods[$registration['pay_method']] ?? $registration['pay_method']];
+            }
+            $mine[] = [$w['row_paid_on'], date('d/m/Y', (int) strtotime((string) $registration['paid_at']))];
+        }
+
+        // ---- The event (from the website's own program and map) ----
+        $when = implode('<br>', array_map(static fn (array $day): string => S::e($day['title']) . ($day['start'] ? ' · ' . S::e(str_replace('{time}', $day['start'], $w['from_time'])) : ''), $event['days']));
+        $where = S::e($event['place']) . '<br><a href="' . S::e($event['map']) . '" style="color:#0c6f6b">' . S::e($w['map_link']) . '</a>';
+        $eventRows = [
+            [$w['row_when'], $when, true],
+            [$w['row_where'], $where, true],
+            [$w['row_program'], '<a href="' . S::e(App::url('#program')) . '" style="color:#0c6f6b">' . S::e($w['program_link']) . '</a>', true],
+        ];
+
+        $entrance = S::e($withQr ? $w['entrance_qr'] : $w['entrance_text']);
+        if ($registration['ticket_type'] === 'student') {
+            $entrance .= '<br>' . S::e($w['entrance_student']);
+        }
+        $blocks = [
+            '<p style="margin:0 0 18px;font-size:16px">' . S::e($w['ticket_intro']) . '</p>',
+        ];
+        if ($withQr) {
+            $qrUrl = App::url('api/qr.php?r=' . rawurlencode($registration['ref']) . '&k=' . Links::viewToken($registration) . '&v=' . $ticket['version']);
+            $blocks[] = '<div style="text-align:center;margin:18px 0"><img src="' . S::e($qrUrl) . '" width="220" height="220" alt="QR" style="display:inline-block;border:1px solid #cfe3e3;border-radius:8px">'
+                . '<div style="font:bold 18px Arial,sans-serif;letter-spacing:1px;margin-top:8px" dir="ltr">' . S::e($ticket['ticket_no']) . '</div></div>';
+        }
+        $blocks[] = self::box('🎟 ' . $w['box_you'], $mine, '#e4f6f5', '#0c6f6b', $lang);
+        $blocks[] = self::box('📍 ' . $w['box_event'], $eventRows, '#fcefd3', '#8a5a0f', $lang);
+        $blocks[] = '<p style="margin:0 0 6px;font-weight:bold">' . S::e($w['entrance_title']) . '</p><p style="margin:0 0 16px">' . $entrance . '</p>';
+        $blocks[] = $w['ticket_name_note'];
+        $blocks[] = '<p style="margin:18px 0 0;font-weight:bold">' . S::e($w['see_you']) . '</p>';
+
+        $greeting = '<span style="font-size:22px;color:#0c6f6b">' . S::e(str_replace('{name}', (string) $registration['first_name'], $w['congrats'])) . '</span>';
+        $html = self::layout($lang, $greeting, $blocks, null, $vars);
         return [
             'to'          => $registration['email'],
             'subject'     => strtr($w['ticket_subject'], $vars),
             'html'        => $html,
             'text'        => self::toText($html),
-            'attachments' => [['name' => 'iSmile-2026-' . $ticket['ticket_no'] . '.pdf', 'content' => Tickets::pdf($registration, $ticket)]],
+            'attachments' => $withQr ? [['name' => 'iSmile-2026-' . $ticket['ticket_no'] . '.pdf', 'content' => Tickets::pdf($registration, $ticket)]] : [],
         ];
+    }
+
+    /**
+     * A coloured box with a title and label/value rows. A row's third item
+     * true means the value is already HTML (links, line breaks).
+     */
+    private static function box(string $title, array $rows, string $background, string $colour, string $lang): string
+    {
+        $align = Lang::isRtl($lang) ? 'right' : 'left';
+        $html = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;background:' . $background . ';border-radius:10px;margin:0 0 18px">'
+            . '<tr><td colspan="2" style="padding:12px 16px 6px;font-weight:bold;font-size:16px;color:' . $colour . ';text-align:' . $align . '">' . S::e($title) . '</td></tr>';
+        foreach ($rows as $row) {
+            [$label, $value] = $row;
+            $html .= '<tr><td style="padding:5px 16px;color:#5b7477;width:38%;vertical-align:top;font-size:14px;text-align:' . $align . '">' . S::e($label) . '</td>'
+                . '<td style="padding:5px 16px;font-weight:bold;font-size:14px;vertical-align:top;text-align:' . $align . '">' . (($row[2] ?? false) ? $value : S::e((string) $value)) . '</td></tr>';
+        }
+        return $html . '<tr><td colspan="2" style="height:8px"></td></tr></table>';
+    }
+
+    /**
+     * The summit's days, start times and venue, read from the website's own
+     * content (data/program.json, data/map.json), so the email always matches
+     * what the website shows.
+     */
+    private static function eventInfo(string $lang): array
+    {
+        $read = static function (string $file): array {
+            $data = json_decode((string) @file_get_contents(App::siteFile('data/' . $file)), true);
+            return is_array($data) ? $data : [];
+        };
+        $pick = static fn ($value): string => is_array($value) ? (string) (($value[$lang] ?? '') !== '' ? $value[$lang] : ($value['en'] ?? '')) : (string) $value;
+        $days = [];
+        $program = $read('program.json');
+        foreach ((array) ($program['days'] ?? []) as $day) {
+            if (!is_array($day)) {
+                continue;
+            }
+            $days[] = ['title' => strip_tags($pick($day['label'] ?? '')), 'start' => (string) ($day['sessions'][0]['start'] ?? '')];
+        }
+        if ($days === []) {
+            $days[] = ['title' => EmailText::for($lang)['dates_venue'], 'start' => ''];
+        }
+        $map = $read('map.json');
+        $place = (string) ($map['place'] ?? '') ?: 'Grand Millennium Sulaimani, Sulaymaniyah';
+        $url = (string) ($map['url'] ?? '');
+        if (!preg_match('#^https://#', $url)) {
+            $url = 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($place);
+        }
+        return ['days' => $days, 'place' => $place, 'map' => $url];
     }
 
     /** "Complete your registration by paying": a registration taken by phone. */
@@ -79,7 +181,7 @@ final class EmailTemplates
         if (!Checkouts::isOpen($checkout) || !SiteData::pricesReadyFor($checkout) || Registrations::isFull()) {
             return null;   // already paid, expired, or no longer possible
         }
-        $lang = Lang::pick($checkout['lang']);
+        $lang = self::emailLang($checkout['lang']);
         $w = EmailText::for($lang);
         $name = Registrations::fullName($checkout);
         $vars = ['{ref}' => $checkout['ref'], '{name}' => $name];
@@ -99,7 +201,7 @@ final class EmailTemplates
         $rows = [
             [$w['reference'], $registration['ref']],
             [$w['pdf_ticket_type'], $registration['ticket_type'] === 'student' ? $w['type_student'] : $w['type_professional']],
-            [$w['pdf_lunch'], EmailText::lunchLine($registration, Lang::pick($registration['lang']))],
+            [$w['pdf_lunch'], EmailText::lunchLine($registration, self::emailLang($registration['lang']))],
         ];
         if ($registration['status'] === 'unpaid' && SiteData::pricesReadyFor($registration)) {   // a form waiting for payment
             $rows[] = [$w['amount'], number_format(SiteData::amountFor($registration)) . ' ' . SiteData::prices()['currency']];
@@ -132,7 +234,7 @@ final class EmailTemplates
             ];
             return self::plainForTeam($email['to_email'], "iSmile: new {$request['kind']} request {$request['ref']} from {$request['company']}", implode("\n", $lines));
         }
-        $lang = Lang::pick($request['lang']);
+        $lang = self::emailLang($request['lang']);
         $w = EmailText::for($lang);
         $vars = ['{ref}' => $request['ref']];
         $table = '<table role="presentation" style="width:100%;border-collapse:collapse;font-size:14px">'
@@ -157,7 +259,7 @@ final class EmailTemplates
         $dir = $rtl ? 'rtl' : 'ltr';
         $align = $rtl ? 'right' : 'left';
         $font = $rtl ? "Tahoma,'Noto Kufi Arabic',Arial,sans-serif" : 'Arial,Helvetica,sans-serif';
-        $phone = (string) App::config('office_phone', '');
+        $phone = (string) App::config('office_phone', '') ?: self::sitePhone();
         $questions = str_replace('{phone}', $phone !== '' ? str_replace('{phone}', $phone, $w['call']) : '', $w['questions']);
 
         $body = '';
@@ -183,13 +285,36 @@ final class EmailTemplates
             . '<p style="margin:0 0 14px;font-weight:bold">' . $greeting . '</p>' . $body
             . '</td></tr>'
             . '<tr><td dir="' . $dir . '" style="padding:16px 26px;background:#f4fafa;font-family:' . $font . ';font-size:12px;line-height:1.5;color:#5b7477;text-align:' . $align . '">'
-            . S::e($questions) . '<br>' . S::e($w['refund_rule']) . '<br>' . S::e($w['no_reply'])
+            . ($phone !== '' ? str_replace(S::e($phone), '<span dir="ltr">' . S::e($phone) . '</span>', S::e($questions)) : S::e($questions)) . '<br>' . S::e($w['refund_rule']) . '<br>' . S::e($w['no_reply'])
             . '</td></tr></table></td></tr></table></body></html>';
+    }
+
+    /**
+     * The language of an email. Setting "email_language": "en" (the default)
+     * sends every email in English; "auto" uses the language the person chose
+     * on the website (Arabic and Kurdish texts are kept ready).
+     */
+    private static function emailLang(?string $chosen): string
+    {
+        return Settings::get('email_language') === 'auto' ? Lang::pick($chosen ?? 'en') : 'en';
+    }
+
+    /** The phone number shown in the website's footer (data/footer.json). */
+    private static function sitePhone(): string
+    {
+        $footer = json_decode((string) @file_get_contents(App::siteFile('data/footer.json')), true);
+        foreach ((array) ($footer['contact'] ?? []) as $item) {
+            if (is_array($item) && str_starts_with((string) ($item['href'] ?? ''), 'tel:')) {
+                return (string) ($item['text'] ?? '');
+            }
+        }
+        return '';
     }
 
     private static function toText(string $html): string
     {
         $text = preg_replace('#<a [^>]*href="([^"]+)"[^>]*>(.*?)</a>#s', '$2: $1', $html) ?? $html;
+        $text = preg_replace('#</td>\s*<td[^>]*>#i', ': ', $text) ?? $text;   // "Label: value" in tables
         $text = preg_replace('#<(br|/p|/tr|/div)[^>]*>#i', "\n", $text) ?? $text;
         $text = html_entity_decode(strip_tags($text), ENT_QUOTES | ENT_HTML5, 'UTF-8');
         return trim(preg_replace("/\n{3,}/", "\n\n", preg_replace('/[ \t]+/', ' ', $text) ?? $text) ?? $text);

@@ -7,8 +7,8 @@
 // the admin and emails the company and the team. Where there is no server (the
 // GitHub Pages copy), the last screen hands the filled-in request to WhatsApp
 // or email instead, already written out, so a request is never lost.
-import { t, tr, getLang, onLangChange } from "../i18n.js?v=75";
-import { isValidPhone } from "./registration.js?v=75";
+import { t, tr, getLang, onLangChange } from "../i18n.js?v=76";
+import { isValidPhone } from "./registration.js?v=76";
 
 const TOTAL_STEPS = 2;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -203,7 +203,7 @@ export function initSponsorForm({ tiers = [], enquiry = {} } = {}) {
       website: $("s_website").value.trim(),
       city: $("s_city").value.trim(),
       note: $("s_note").value.trim(),
-      hp: $("spfHp")?.value || "",
+      hp: $("spfTrap")?.value || "",
     };
   }
 
