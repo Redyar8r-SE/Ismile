@@ -3,8 +3,8 @@
 // suggests them with a link to the workshops page.
 // Demo only: nothing is sent to a server yet. Connect submitRegistration() to your backend.
 // Nothing about the visitor is kept in the browser.
-import { t, onLangChange } from "../i18n.js?v=74";
-import { formatPrice } from "../utils/money.js?v=74";
+import { t, onLangChange } from "../i18n.js?v=75";
+import { formatPrice } from "../utils/money.js?v=75";
 
 const TOTAL_STEPS = 3;
 
