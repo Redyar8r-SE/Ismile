@@ -35,6 +35,35 @@ jobs:
           DEPLOY_ENV: ${{ secrets.DEPLOY_ENV }}
         run: bash scripts/load-deploy-env.sh
 
+      # Optional: the owner sets the admin sign-in with two repository secrets
+      # (Settings › Secrets and variables › Actions): ADMIN_EMAIL and
+      # ADMIN_PASSWORD_HASH. When both are set they replace the ones in
+      # DEPLOY_ENV; when not set, nothing changes.
+      - name: Owner's admin sign-in (optional secrets)
+        env:
+          OWNER_ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          OWNER_ADMIN_PASSWORD_HASH: ${{ secrets.ADMIN_PASSWORD_HASH }}
+        run: |
+          set -euo pipefail
+          if [[ -n "${OWNER_ADMIN_EMAIL}" && -n "${OWNER_ADMIN_PASSWORD_HASH}" ]]; then
+            if [[ ! "${OWNER_ADMIN_PASSWORD_HASH}" =~ ^pbkdf2\$[0-9]+\$[A-Za-z0-9+/=]+\$[A-Za-z0-9+/=]+$ ]]; then
+              echo "ADMIN_PASSWORD_HASH secret is not a pbkdf2 hash: keeping the admin sign-in from DEPLOY_ENV." >&2
+              exit 0
+            fi
+            echo "::add-mask::${OWNER_ADMIN_PASSWORD_HASH}"
+            {
+              echo "ADMIN_EMAIL<<EOF_OWNER_ADMIN"
+              echo "${OWNER_ADMIN_EMAIL}"
+              echo "EOF_OWNER_ADMIN"
+              echo "ADMIN_PASSWORD_HASH<<EOF_OWNER_ADMIN"
+              echo "${OWNER_ADMIN_PASSWORD_HASH}"
+              echo "EOF_OWNER_ADMIN"
+            } >>"$GITHUB_ENV"
+            echo "Admin sign-in: using the ADMIN_EMAIL / ADMIN_PASSWORD_HASH secrets."
+          else
+            echo "Admin sign-in: using DEPLOY_ENV."
+          fi
+
       - name: Create .env file
         run: bash scripts/create-app-env.sh
 
