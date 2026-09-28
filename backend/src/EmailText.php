@@ -39,9 +39,7 @@ final class EmailText
 
 
             'ticket_subject'    => '🎉 You\'re in! Your iSmile 2026 registration ({ticket})',
-            'ticket_body'       => 'Your payment is confirmed. Welcome to iSmile 2026! Your ticket is below and attached as a PDF. Show the QR code at the entrance, on your phone or printed.',
             'ticket_name_note'  => 'Your name is printed as you typed it; it will also appear on your certificate. If it is wrong, reply to this email.',
-            'ticket_workshops'  => 'Hands-on workshops take place during the summit. See them at {url}',
             'ticket_no'         => 'Ticket number',
             'congrats'          => 'Congratulations, {name}! 🎉',
             'ticket_intro'      => 'Your payment is confirmed and you are officially registered for iSmile 2026, the 2nd edition of the summit. We are so happy to have you with us!',
@@ -113,9 +111,7 @@ final class EmailText
 
 
             'ticket_subject'    => '🎉 تم تسجيلك! تأكيد تسجيلك في iSmile 2026 ({ticket})',
-            'ticket_body'       => 'تم تأكيد الدفع. أهلاً بك في iSmile 2026! تجد تذكرتك أدناه، كما أنها مرفقة بصيغة PDF. أظهر رمز QR عند المدخل من هاتفك أو مطبوعاً.',
             'ticket_name_note'  => 'طُبع اسمك كما كتبته، وسيظهر كذلك في شهادتك. إذا كان فيه خطأ، ردّ على هذه الرسالة.',
-            'ticket_workshops'  => 'تُقام ورش عمل تطبيقية خلال أيام القمة. اطّلع عليها: {url}',
             'ticket_no'         => 'رقم التذكرة',
             'congrats'          => 'تهانينا يا {name}! 🎉',
             'ticket_intro'      => 'تم تأكيد الدفع، وأصبحت مسجّلاً رسمياً في iSmile 2026، النسخة الثانية من القمة. يسعدنا كثيراً أن تكون معنا!',
@@ -187,9 +183,7 @@ final class EmailText
 
 
             'ticket_subject'    => '🎉 تۆمار کرایت! تۆمارکردنەکەت بۆ iSmile 2026 ({ticket})',
-            'ticket_body'       => 'پارەدانەکەت پشتڕاست کرایەوە. بەخێربێیت بۆ iSmile 2026! بلیتەکەت لە خوارەوەیە و وەک PDF هاوپێچ کراوە. کۆدی QR لە دەروازە نیشان بدە، لە مۆبایلەکەت یان چاپکراو.',
             'ticket_name_note'  => 'ناوەکەت وەک خۆت نووسیوتە چاپ کراوە و لە بڕوانامەکەشتدا دەردەکەوێت. ئەگەر هەڵەی تێدایە، وەڵامی ئەم ئیمەیڵە بدەرەوە.',
-            'ticket_workshops'  => 'لە ڕۆژانی لووتکەکەدا وۆرکشۆپی پراکتیکی هەیە. لێرە بیانبینە: {url}',
             'ticket_no'         => 'ژمارەی بلیت',
             'congrats'          => 'پیرۆزە {name}! 🎉',
             'ticket_intro'      => 'پارەدانەکەت پشتڕاست کرایەوە و بە فەرمی بۆ iSmile 2026، خولی دووەمی لووتکەکە، تۆمار کرایت. زۆر دڵخۆشین کە لەگەڵمانیت!',

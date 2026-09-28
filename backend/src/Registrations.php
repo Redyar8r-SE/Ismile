@@ -114,11 +114,20 @@ final class Registrations
      * 'open' is false when registration is switched off, the summit is full,
      * or the prices are not set yet.
      */
+    /**
+     * Open only when both switches say open: the admin's Settings
+     * ("Registration is open") and the website's "Close registration" switch.
+     */
+    public static function isOpen(): bool
+    {
+        return Settings::bool('registration_open') && !SiteData::closedBySwitch();
+    }
+
     public static function publicState(string $lang): array
     {
         $prices = SiteData::prices();
         $reason = null;
-        if (!Settings::bool('registration_open')) {
+        if (!self::isOpen()) {
             $reason = 'closed';
         } elseif (self::isFull()) {
             $reason = 'full';

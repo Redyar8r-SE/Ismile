@@ -5,11 +5,11 @@
 // which checks with the payment company, and shows what the server says:
 // checking, paid and registered (with the QR ticket), not completed (with
 // "Try again"), too late (fill in the form again), or cancelled.
-import { loadJSON } from "./utils/load-json.js?v=76";
-import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang, t, onLangChange } from "./i18n.js?v=76";
-import { initNav } from "./components/nav.js?v=76";
-import { initTheme } from "./components/theme.js?v=76";
-import { initFooter } from "./sections/footer.js?v=76";
+import { loadJSON } from "./utils/load-json.js?v=77";
+import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang, t, onLangChange } from "./i18n.js?v=77";
+import { initNav } from "./components/nav.js?v=77";
+import { initTheme } from "./components/theme.js?v=77";
+import { initFooter } from "./sections/footer.js?v=77";
 
 const FAST_TRIES = 40;      // every 3 seconds for the first two minutes
 const SLOW_TRIES = 40;      // then every 15 seconds for ten more minutes

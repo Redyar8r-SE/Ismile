@@ -802,6 +802,26 @@ try {
     }
 
     // ------------------------------------------------------------------
+    section('The "Close registration" switch (website admin)');
+    $ticketsFile = App::siteFile('data/tickets.json');
+    $ticketsBefore = (string) file_get_contents($ticketsFile);
+    $switched = static function (bool $closed) use ($ticketsFile, $ticketsBefore): void {
+        $data = json_decode($ticketsBefore, true);
+        $data['registrationClosed'] = $closed;
+        file_put_contents($ticketsFile, json_encode($data, JSON_PRETTY_PRINT));
+    };
+    try {
+        Settings::set('registration_open', '1');
+        $switched(true);
+        check('switched ON: the website says registration is closed', Registrations::publicState('en')['reason'] === 'closed' && !Registrations::isOpen());
+        check('switched ON: a form sent anyway is refused', (register(['lang' => 'en'])['json']['error'] ?? '') === 'reg_closed');
+        $switched(false);
+        check('switched OFF: registration is open again', Registrations::publicState('en')['open'] === true);
+    } finally {
+        file_put_contents($ticketsFile, $ticketsBefore);
+    }
+
+    // ------------------------------------------------------------------
     section('Rate limits');
     $blocked = false;
     for ($i = 0; $i < 70 && !$blocked; $i++) {

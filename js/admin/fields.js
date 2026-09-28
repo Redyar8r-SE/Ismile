@@ -30,6 +30,17 @@ const PARTS = [
     fields: [],
   },
   {
+    id: "registrationStatus", title: "Registration: open or closed", kind: "single", file: "tickets",
+    hint: "One switch for the whole website. Switched ON, registration is closed: the Register page shows “Registration opens soon” instead of the form. Switched OFF, the form is open. Press Save after switching.",
+    itemFields: [
+      {
+        key: "registrationClosed", label: "Close registration", type: "switch",
+        on: ["Registration is CLOSED", "Visitors see “Registration opens soon”. Press to open registration, then Save."],
+        off: ["Registration is OPEN", "Visitors can fill in the form. Press to close registration, then Save."],
+      },
+    ],
+  },
+  {
     id: "ticketPrices", title: "Ticket prices", kind: "single", file: "tickets",
     hint: "In Iraqi dinars, whole numbers. Leave 0 to show “Price soon”. Lunch is optional and priced per day: visitors can add Day 1, Day 2 or both, and it is added to their total. Workshop names, prices and seats are managed in the registrations admin (/admin/ → Workshops).",
     itemFields: [
@@ -576,6 +587,7 @@ export const GROUPS = [
   {
     id: "registration", page: "register", title: "Registration", where: "The three-step registration page",
     blocks: [
+      single("registrationStatus", "Open or closed"),
       single("ticketPrices", "Ticket and lunch prices"),
       text("registrationTop", "Top of the page"),
       text("registrationTickets", "Tickets and instructions"),

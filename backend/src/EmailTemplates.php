@@ -72,7 +72,7 @@ final class EmailTemplates
         $lunchDays = [];
         foreach ([1, 2] as $n) {
             if ((int) $registration['lunch_day' . $n] === 1) {
-                $lunchDays[] = S::e($event['days'][$n - 1]['title'] ?? EmailText::for($lang)['lunch_day' . $n]);
+                $lunchDays[] = S::e($event['days'][$n - 1]['title'] ?? $w['lunch_day' . $n]);
             }
         }
         $mine[] = [$w['row_days'], $w['days_both']];

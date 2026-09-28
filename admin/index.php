@@ -68,7 +68,8 @@ Page::top('Dashboard', 'index');
 $tile = static fn (string $colour, string $label, string $value, string $note = ''): string =>
     '<div class="tile ' . $colour . '"><b>' . Page::e($value) . '</b><span>' . Page::e($label) . '</span>' . ($note !== '' ? '<small>' . Page::e($note) . '</small>' : '') . '</div>';
 
-echo '<div class="state-line">Registration is ' . (Settings::bool('registration_open') ? '<span class="pill green">open</span>' : '<span class="pill red">closed</span>')
+echo '<div class="state-line">Registration is ' . (Registrations::isOpen() ? '<span class="pill green">open</span>' : '<span class="pill red">closed</span>')
+    . (SiteData::closedBySwitch() ? ' <span class="muted">(closed by the switch in Site content › Registration)</span>' : '')
     . ' · payments: <b>' . Page::e((string) App::config('payments.gateway')) . '</b>' . (App::isLive() ? '' : ' (test site)') . '</div>';
 
 if ($attention) {

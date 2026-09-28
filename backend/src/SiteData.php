@@ -32,6 +32,15 @@ final class SiteData
         ];
     }
 
+    /**
+     * The website switch "Close registration" (Site content › Registration ›
+     * Open or closed), saved in data/tickets.json.
+     */
+    public static function closedBySwitch(): bool
+    {
+        return (self::read('tickets')['registrationClosed'] ?? false) === true;
+    }
+
     /** The amount for one registration, worked out on the server only. */
     public static function amountFor(array $registration): int
     {

@@ -1,7 +1,7 @@
 // The list editors: workshops, sponsor tiers, partners, and the program.
 // main.js passes a small context so this file does not import it back.
-import { LANGS } from "./fields.js?v=76";
-import { WORKSHOP_ICONS } from "../config/icons.js?v=76";
+import { LANGS } from "./fields.js?v=77";
+import { WORKSHOP_ICONS } from "../config/icons.js?v=77";
 
 const el = (tag, className, text) => {
   const node = document.createElement(tag);
@@ -111,6 +111,32 @@ function fieldRow(item, field, ctx, extras = {}) {
     });
     paint();
     row.append(choices);
+    return row;
+  }
+
+  // A big on/off switch (same look as the program's "To be announced").
+  // field.on / field.off: [title, explanation] shown for each position.
+  if (field.type === "switch") {
+    const button = el("button", "tba-switch");
+    button.type = "button";
+    button.setAttribute("role", "switch");
+    button.append(el("span", "tba-knob"));
+    const words = el("span", "tba-words");
+    button.append(words);
+    const show = () => {
+      const on = item[field.key] === true;
+      const [title, note] = on ? field.on : field.off;
+      button.classList.toggle("is-on", on);
+      button.setAttribute("aria-checked", String(on));
+      words.replaceChildren(el("b", null, title), el("small", null, note));
+    };
+    button.addEventListener("click", () => {
+      item[field.key] = item[field.key] !== true;
+      show();
+      ctx.markDirty();
+    });
+    show();
+    row.append(button);
     return row;
   }
 
