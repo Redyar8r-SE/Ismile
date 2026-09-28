@@ -170,7 +170,7 @@ final class Tickets
         $pdf->MultiCell(124, 4.5, $words['pdf_footer'], 0, 'C', false, 1);
         $pdf->setRTL(false);
         $pdf->SetX(12);
-        $pdf->Cell(124, 5, 'info@ismile.krd · ismile.krd', 0, 1, 'C');
+        $pdf->Cell(124, 5, 'ismile@italk.krd · ismile.krd', 0, 1, 'C');
         return $pdf->Output('', 'S');
     }
 }

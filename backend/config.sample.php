@@ -64,11 +64,11 @@ return [
         'resend_key' => '',
         'from_email' => 'tickets@ismile.krd',
         'from_name'  => 'iSmile 2026',
-        'reply_to'   => 'info@ismile.krd',
+        'reply_to'   => 'ismile@italk.krd',
     ],
 
     // Who gets the "something needs attention" emails.
-    'alerts_to' => ['info@ismile.krd'],
+    'alerts_to' => ['ismile@italk.krd'],
 
     // Shown at the bottom of every email.
     'office_phone' => '',

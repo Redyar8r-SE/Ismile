@@ -18,7 +18,7 @@ final class BrevoMailer implements Mailer
         $payload = [
             'sender'      => ['email' => App::config('mail.from_email'), 'name' => App::config('mail.from_name', 'iSmile 2026')],
             'to'          => [['email' => $to]],
-            'replyTo'     => ['email' => App::config('mail.reply_to', 'info@ismile.krd')],
+            'replyTo'     => ['email' => App::config('mail.reply_to', 'ismile@italk.krd')],
             'subject'     => $subject,
             'htmlContent' => $html,
             'textContent' => $text,

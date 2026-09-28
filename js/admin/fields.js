@@ -500,8 +500,6 @@ const PARTS = [
     fields: many([
       ["foot_org", "Organisers line"], ["foot_links", "Links column title"],
       ["foot_contact", "Contact column title"], ["legal", "Copyright line"],
-      ["credit_by", "Credit line (before the developer name)"],
-      ["credit_aria", "Developer link (for screen readers)"],
     ]),
   },
 ];

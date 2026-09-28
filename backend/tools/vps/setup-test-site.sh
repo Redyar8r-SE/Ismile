@@ -215,8 +215,8 @@ return [
     // The pretend payment company: no Psoola, no real money, no webhooks.
     'payments'  => ['gateway' => 'fake', 'fake_hosts' => ['$DOMAIN'], 'psoola' => ['api_base' => '', 'api_key' => '', 'merchant_id' => '', 'webhook_secret' => ''], 'fake_secret' => '$FAKE_SECRET'],
     // Emails are written to storage/outbox as files, never sent.
-    'mail'      => ['driver' => 'log', 'brevo_key' => '', 'from_email' => 'tickets@ismile.krd', 'from_name' => 'iSmile 2026 (test)', 'reply_to' => 'info@ismile.krd'],
-    'alerts_to' => ['info@ismile.krd'],
+    'mail'      => ['driver' => 'log', 'brevo_key' => '', 'from_email' => 'tickets@ismile.krd', 'from_name' => 'iSmile 2026 (test)', 'reply_to' => 'ismile@italk.krd'],
+    'alerts_to' => ['ismile@italk.krd'],
     'office_phone' => '',
 ];
 PHP
@@ -246,12 +246,19 @@ ISMILE_RESEND_KEY="${RESEND_KEY:-}" ISMILE_BREVO_KEY="${BREVO_KEY:-}" ISMILE_MAI
   $cfg = include $path;
   $key = (string) getenv("ISMILE_RESEND_KEY");
   $brevo = (string) getenv("ISMILE_BREVO_KEY");
+  // The contact address changed (29 Sep 2026): replies and alerts go to ismile@italk.krd.
+  if (($cfg["mail"]["reply_to"] ?? "") === "info@ismile.krd") {
+      $cfg["mail"]["reply_to"] = "ismile@italk.krd";
+  }
+  if (($cfg["alerts_to"] ?? []) === ["info@ismile.krd"]) {
+      $cfg["alerts_to"] = ["ismile@italk.krd"];
+  }
   $from = (string) getenv("ISMILE_MAIL_FROM");
   if ($brevo !== "") {
       $cfg["mail"]["driver"] = "brevo";
       $cfg["mail"]["brevo_key"] = $brevo;
       $cfg["mail"]["resend_key"] = "";
-      $cfg["mail"]["from_email"] = $from !== "" && $from !== "onboarding@resend.dev" ? $from : "info@ismile.krd";
+      $cfg["mail"]["from_email"] = $from !== "" && $from !== "onboarding@resend.dev" ? $from : "ismile@italk.krd";
       echo "Emails: sent through Brevo, from {$cfg["mail"]["from_email"]}.
 ";
   } elseif ($key !== "") {
@@ -352,7 +359,7 @@ if [ ! -f "$BASE/.first-run-done" ]; then
   echo "Registration opened on the TEST site."
   # Email test mode (on by default) needs an address. Here emails are only
   # written to storage/outbox as files anyway (mail driver "log").
-  mariadb "$DB" -e "INSERT INTO settings (k, v, updated_at) VALUES ('email_test_address', '${OWNER_EMAIL:-info@ismile.krd}', NOW()) ON DUPLICATE KEY UPDATE v = VALUES(v), updated_at = NOW()"
+  mariadb "$DB" -e "INSERT INTO settings (k, v, updated_at) VALUES ('email_test_address', '${OWNER_EMAIL:-ismile@italk.krd}', NOW()) ON DUPLICATE KEY UPDATE v = VALUES(v), updated_at = NOW()"
   touch "$BASE/.first-run-done"
 fi
 

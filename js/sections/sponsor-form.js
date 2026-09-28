@@ -7,8 +7,8 @@
 // the admin and emails the company and the team. Where there is no server (the
 // GitHub Pages copy), the last screen hands the filled-in request to WhatsApp
 // or email instead, already written out, so a request is never lost.
-import { t, tr, getLang, onLangChange } from "../i18n.js?v=77";
-import { isValidPhone } from "./registration.js?v=77";
+import { t, tr, getLang, onLangChange } from "../i18n.js?v=78";
+import { isValidPhone } from "./registration.js?v=78";
 
 const TOTAL_STEPS = 2;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -281,7 +281,7 @@ export function initSponsorForm({ tiers = [], enquiry = {} } = {}) {
     if (!saved) {
       const message = asMessage(ref);
       const phone = String(enquiry.whatsapp || "").replace(/\D/g, "");
-      const email = enquiry.email || "info@ismile.krd";
+      const email = enquiry.email || "ismile@italk.krd";
       const whats = $("spfWhats");
       whats.hidden = !phone;
       if (phone) whats.href = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;

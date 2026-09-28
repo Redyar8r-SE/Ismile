@@ -20,7 +20,7 @@ final class ResendMailer implements Mailer
         $payload = [
             'from'     => $name . ' <' . App::config('mail.from_email') . '>',
             'to'       => [$to],
-            'reply_to' => App::config('mail.reply_to', 'info@ismile.krd'),
+            'reply_to' => App::config('mail.reply_to', 'ismile@italk.krd'),
             'subject'  => $subject,
             'html'     => $html,
             'text'     => $text,
