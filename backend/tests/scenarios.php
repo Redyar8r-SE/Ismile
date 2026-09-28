@@ -192,6 +192,9 @@ try {
     $form = checkoutByRef($ref);
     check('the form is kept only while paying, with a server-made reference', $answer['status'] === 200 && preg_match('/^ISM26-[A-Z0-9]{6}$/', $ref) === 1 && ($form['status'] ?? '') === 'open');
     check('NOT registered before paying (not in the registrations at all)', Registrations::findByRef($ref) === null);
+    $sent = array_values(array_filter(\Ismile\Admin\Lists::rows('forms'), fn ($row) => $row['ref'] === $ref));
+    check('the unpaid form shows at once in Lists → All forms sent, as "waiting"', count($sent) === 1 && $sent[0]['form_status'] === 'waiting' && $sent[0]['id'] === null);
+    check('… and in the database list 13_forms_sent', Db::value('SELECT `Payment` FROM `13_forms_sent` WHERE `Reference` = ?', [$ref]) === 'Not paid yet');
     $payment = lastPaymentOf($form);
     check('price worked out by the server (ticket + lunch day 1)', (int) $payment['amount_expected'] === $prices['professional'] + $prices['lunchDay1']);
     check('visitor is sent to the payment page', str_contains((string) ($answer['json']['redirect'] ?? ''), 'fake-psoola.php'));
@@ -501,7 +504,7 @@ try {
     check('a second ticket for the same person', $refuses(fn () => Db::insert('tickets', ['registration_id' => $sample['id'], 'ticket_no' => 'X-' . bin2hex(random_bytes(3)), 'source' => 'complimentary', 'created_at' => $now])));
     check('an action by an admin who does not exist', $refuses(fn () => Audit::log(999999999, 'test')));
     $simpleLists = array_column(Db::all('SELECT table_name AS name FROM information_schema.views WHERE table_schema = DATABASE() ORDER BY table_name'), 'name');
-    check('the 12 simple numbered lists exist (and nothing else)', $simpleLists === ['01_registered_people', '02_lunch_day_1', '03_lunch_day_2', '04_students', '05_workshops', '06_workshop_people', '07_sponsors', '08_exhibition', '09_sponsor_calls', '10_sponsor_packages', '11_payments', '12_money_per_day'], implode(',', $simpleLists));
+    check('the 13 simple numbered lists exist (and nothing else)', $simpleLists === ['01_registered_people', '02_lunch_day_1', '03_lunch_day_2', '04_students', '05_workshops', '06_workshop_people', '07_sponsors', '08_exhibition', '09_sponsor_calls', '10_sponsor_packages', '11_payments', '12_money_per_day', '13_forms_sent'], implode(',', $simpleLists));
     $listsWork = true;
     foreach ($simpleLists as $list) {
         try {

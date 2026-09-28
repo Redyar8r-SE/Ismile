@@ -272,6 +272,32 @@ chmod 640 "$BACKEND/config.php"
 # ---------------------------------------------------------------------------
 say "6/8 Website + backend files, database tables"
 export COMPOSER_ALLOW_SUPERUSER=1
+# ONCE (29 Sep 2026, the Owner's wish after testing): delete the test people,
+# forms, payments, tickets, emails, workshop bookings and sponsor requests, so
+# the numbers start again at T26-00001. Kept: accounts, workshops, sponsor
+# packages, ambassadors, settings, audit log. Only on a test site.
+if [ ! -f "$BASE/.test-data-cleared-1" ] \
+  && php -r 'exit(((include $argv[1])["env"] ?? "") === "test" ? 0 : 1);' "$BACKEND/config.php" \
+  && mariadb -N "$DB" -e "SHOW TABLES LIKE 'registrations'" | grep -q registrations; then
+  mariadb "$DB" <<'SQL'
+SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE TABLE emails;
+TRUNCATE TABLE webhook_log;
+TRUNCATE TABLE tickets;
+TRUNCATE TABLE payments;
+TRUNCATE TABLE workshop_bookings;
+TRUNCATE TABLE registrations;
+TRUNCATE TABLE checkouts;
+TRUNCATE TABLE student_id_photos;
+TRUNCATE TABLE sponsor_calls;
+TRUNCATE TABLE sponsor_requests;
+TRUNCATE TABLE rate_limits;
+SET FOREIGN_KEY_CHECKS = 1;
+SQL
+  rm -f "$BACKEND/storage/outbox/"* 2>/dev/null || true
+  touch "$BASE/.test-data-cleared-1"
+  echo "Test data deleted (people, forms, payments, tickets, emails, bookings, sponsor requests)."
+fi
 PHP=php ISMILE_SITE="$SITE" ISMILE_BACKEND_DIR="$BACKEND" bash "$REPO/backend/tools/deploy.sh" test
 # Accounts that still have the old made-up password (printed in public logs) get the new one.
 if [ -n "$OLD_OWNER_PASS" ]; then
