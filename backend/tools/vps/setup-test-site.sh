@@ -20,8 +20,8 @@
 #   DOMAIN=api.ismile.krd    public hostname (site_url + nginx server_name)
 #   PORT=8081                the port the host's nginx forwards to
 #   OWNER_EMAIL=...          an Owner account (made if it does not exist yet)
-#   OWNER_PASSWORD=...       its password (12+ characters); when it changes, the
-#                            account gets the new one. Without it: a made-up one.
+#   OWNER_PASSWORD=...       its password (12+ characters), checked on every run:
+#                            the account always gets it. Without it: a made-up one.
 #   SITE_PASSWORD=...        the browser password (user "ismile"); without it: made up
 #   NO_SITE_PASSWORD=1       no browser password in front of the site
 #   QUIET_SECRETS=1          never print passwords (GitHub Actions: logs are public)
@@ -155,8 +155,8 @@ if [ -n "${SITE_PASSWORD:-}" ]; then
   mv "$SECRETS.new" "$SECRETS"
 fi
 if [ -n "${OWNER_PASSWORD:-}" ] && [ "${#OWNER_PASSWORD}" -lt 12 ]; then
-  echo "warning: OWNER_PASSWORD has fewer than 12 characters, so it is not used." >&2
-  OWNER_PASSWORD=""
+  echo "ERROR: the Owner password (GitHub secret API_OWNER_PASSWORD) has only ${#OWNER_PASSWORD} characters: 12 or more are needed." >&2
+  exit 1
 fi
 if [ -n "${OWNER_PASSWORD:-}" ]; then OWNER_PASS="$OWNER_PASSWORD"; fi
 show() { [ -n "${QUIET_SECRETS:-}" ] && echo "(hidden: see $SECRETS or the GitHub secrets)" || echo "$1"; }
@@ -235,22 +235,16 @@ if [ -n "$OLD_OWNER_PASS" ]; then
 fi
 touch "$BASE/.passwords-renewed-1"
 if [ -n "${OWNER_EMAIL:-}" ]; then
-  OWNER_EMAIL="$(printf '%s' "$OWNER_EMAIL" | tr 'A-Z' 'a-z' | tr -d ' ')"
-  if ! mariadb -N "$DB" -e "SELECT 1 FROM admin_users WHERE email = '$(printf '%s' "$OWNER_EMAIL" | sed "s/'//g")'" | grep -q 1; then
+  OWNER_EMAIL="$(printf '%s' "$OWNER_EMAIL" | tr 'A-Z' 'a-z' | tr -d ' \r\n')"
+  if [ -n "${OWNER_PASSWORD:-}" ]; then
+    # Checked on every run: the account always has the secret's password.
+    ISMILE_OWNER_PASSWORD="$OWNER_PASSWORD" php "$BACKEND/tools/install.php" --ensure-owner "$OWNER_EMAIL" | tail -1
+  elif ! mariadb -N "$DB" -e "SELECT 1 FROM admin_users WHERE email = '$(printf '%s' "$OWNER_EMAIL" | sed "s/'//g")'" | grep -q 1; then
     ISMILE_OWNER_PASSWORD="$OWNER_PASS" php "$BACKEND/tools/install.php" --owner "$OWNER_EMAIL" "Owner" | tail -1
-    grep -q "^OWNER_EMAIL=$OWNER_EMAIL\$" "$SECRETS" || echo "OWNER_EMAIL=$OWNER_EMAIL" >> "$SECRETS"
-    if [ -n "${OWNER_PASSWORD:-}" ]; then
-      printf '%s' "$OWNER_PASSWORD" | sha256sum | cut -c1-64 > "$BASE/.owner-password-applied"
-    fi
-  elif [ -n "${OWNER_PASSWORD:-}" ]; then
-    # A changed OWNER_PASSWORD secret = a new password for that account.
-    NEW_SUM="$(printf '%s' "$OWNER_PASSWORD" | sha256sum | cut -c1-64)"
-    if [ "$NEW_SUM" != "$(cat "$BASE/.owner-password-applied" 2>/dev/null)" ]; then
-      ISMILE_OWNER_PASSWORD="$OWNER_PASSWORD" php "$BACKEND/tools/install.php" --set-password "$OWNER_EMAIL" | tail -1
-      echo "$NEW_SUM" > "$BASE/.owner-password-applied"
-    fi
   fi
-  chmod 600 "$BASE/.owner-password-applied" 2>/dev/null || true
+  grep -q "^OWNER_EMAIL=$OWNER_EMAIL\$" "$SECRETS" || echo "OWNER_EMAIL=$OWNER_EMAIL" >> "$SECRETS"
+else
+  echo "No OWNER_EMAIL: no Owner account was checked or made."
 fi
 # FIRST RUN ONLY: a test site needs something to test with. While the real
 # prices are 0, it gets EXAMPLE ticket prices and registration is opened. The

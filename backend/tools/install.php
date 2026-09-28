@@ -156,6 +156,35 @@ if ($ownerAt !== false) {
     echo "Owner account created (#$id). Sign in at " . App::url('admin/') . " and set up the phone code.\n";
 }
 
+// Used by the automatic deploy: makes sure this Owner can sign in with this
+// password (makes the account, or gives it the password, unlocks it, switches
+// it back on). Signs it out only when something had to change. Never prints the password.
+$ensureAt = array_search('--ensure-owner', $argv, true);
+if ($ensureAt !== false) {
+    $email = strtolower(trim((string) ($argv[$ensureAt + 1] ?? '')));
+    $password = (string) getenv('ISMILE_OWNER_PASSWORD');
+    if (!Auth::validPassword($password)) {
+        fwrite(STDERR, "ERROR: the Owner password has fewer than 12 characters. Make it longer.\n");
+        exit(1);
+    }
+    $user = Db::one('SELECT * FROM admin_users WHERE email = ?', [$email]);
+    if ($user === null) {
+        $id = Auth::createUser($email, 'Owner', 'owner', $password);
+        echo "Owner account made (#$id).\n";
+    } elseif (!password_verify($password, $user['password_hash']) || $user['disabled_at'] !== null
+        || $user['locked_until'] !== null || $user['role'] !== 'owner') {
+        Db::run(
+            'UPDATE admin_users SET password_hash = ?, role = ?, failed_logins = 0, locked_until = NULL, disabled_at = NULL,'
+            . ' session_version = session_version + 1 WHERE id = ?',
+            [password_hash($password, PASSWORD_DEFAULT), 'owner', $user['id']]
+        );
+        echo "Owner account #{$user['id']}: password set from the secret, unlocked, switched on.\n";
+    } else {
+        echo "Owner account #{$user['id']}: OK, the password matches the secret.\n";
+    }
+    exit(0);
+}
+
 // A new password for an account that already exists (forgotten password, or a
 // password that was seen by someone else). Also unlocks it, switches it back
 // on and signs it out everywhere. The phone code stays as it is.
