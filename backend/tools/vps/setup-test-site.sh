@@ -146,11 +146,21 @@ if [ ! -f "$BASE/.passwords-renewed-1" ]; then
   # shellcheck disable=SC1090
   . "$SECRETS"
 fi
+# Secrets pasted into GitHub often end with an invisible new line or space:
+# remove them at the start and end, or the password never matches what is typed.
+for name in OWNER_EMAIL OWNER_PASSWORD SITE_PASSWORD; do
+  value="${!name:-}"
+  trimmed="${value#"${value%%[![:space:]]*}"}"
+  trimmed="${trimmed%"${trimmed##*[![:space:]]}"}"
+  if [ "$value" != "$trimmed" ]; then
+    echo "note: $name had spaces or new lines at the start or end; they were removed."
+    printf -v "$name" '%s' "$trimmed"
+  fi
+done
 if [ -n "${SITE_PASSWORD:-}" ]; then
   # Kept in the file too: the GitHub deploy's check signs in with it.
   SITE_PASS="$SITE_PASSWORD"
-  { grep -v '^SITE_PASS=' "$SECRETS"; printf 'SITE_PASS=%s
-' "$SITE_PASS"; } > "$SECRETS.new"
+  { grep -v '^SITE_PASS=' "$SECRETS"; printf 'SITE_PASS=%s\n' "$SITE_PASS"; } > "$SECRETS.new"
   chmod 600 "$SECRETS.new"
   mv "$SECRETS.new" "$SECRETS"
 fi
