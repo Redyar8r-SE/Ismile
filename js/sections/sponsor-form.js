@@ -6,8 +6,8 @@
 // Where the request goes: there is no server yet, so the last screen hands the
 // filled-in request to WhatsApp or email, already written out. When the site
 // has its own server, send() below gains one fetch and everything else stays.
-import { t, tr, onLangChange } from "../i18n.js?v=75";
-import { isValidPhone } from "./registration.js?v=75";
+import { t, tr, onLangChange } from "../i18n.js?v=76";
+import { isValidPhone } from "./registration.js?v=76";
 
 const TOTAL_STEPS = 2;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -199,7 +199,7 @@ export function initSponsorForm({ tiers = [], enquiry = {} } = {}) {
     const ref = reference();
     const message = asMessage(ref);
     const phone = String(enquiry.whatsapp || "").replace(/\D/g, "");
-    const email = enquiry.email || "info@ismile.krd";
+    const email = enquiry.email || "ismile@italk.krd";
 
     $("spfOkText").textContent = t("spf_ok_text").replace("{email}", answers().email);
     $("spfOkRef").textContent = ref;
