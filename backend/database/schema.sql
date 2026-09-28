@@ -737,3 +737,25 @@ FROM payments p
 WHERE p.confirmed_at IS NOT NULL AND p.status IN ('paid','mismatch','duplicate','kept')
 GROUP BY DATE(p.confirmed_at)
 ORDER BY `Day` DESC;
+
+-- Every registration form, the moment it is sent, paid or not (newest first).
+-- Only the paid ones are registrations; the others waited for payment or expired.
+CREATE OR REPLACE SQL SECURITY DEFINER VIEW `13_forms_sent` AS
+SELECT
+  c.ref                                                              AS `Reference`,
+  c.created_at                                                       AS `Sent`,
+  CONCAT_WS(' ', c.first_name, c.father_name, c.grandfather_name)    AS `Full name`,
+  c.phone                                                            AS `Phone`,
+  c.email                                                            AS `Email`,
+  c.city                                                             AS `City`,
+  IF(c.ticket_type = 'student', 'Student', 'Professional')           AS `Ticket`,
+  c.university                                                       AS `University`,
+  IF(c.lunch_day1 = 1, 'Yes', '')                                    AS `Lunch day 1`,
+  IF(c.lunch_day2 = 1, 'Yes', '')                                    AS `Lunch day 2`,
+  UPPER(c.pay_method)                                                AS `Pays by`,
+  CASE WHEN c.status = 'paid' THEN 'Paid (registered)'
+       WHEN c.status = 'open' THEN 'Not paid yet'
+       ELSE 'Expired (never paid)' END                               AS `Payment`,
+  IF(c.source = 'office', 'Office', 'Website')                       AS `From`
+FROM checkouts c
+ORDER BY c.created_at DESC;

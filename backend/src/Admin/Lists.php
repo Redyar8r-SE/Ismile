@@ -13,6 +13,7 @@ final class Lists
     /** key => [tab label, explanation] */
     public const ALL = [
         'registered' => ['Registered', 'Everyone registered for the event. Only people who paid (or got a free ticket from the Owner) are here.'],
+        'forms'      => ['All forms sent', 'Every registration form sent (website or office) the moment it is sent, paid or not, newest first. Only the paid ones are registered: "waiting" means the person has not paid yet, "expired" means they never paid.'],
         'lunch1'     => ['Lunch day 1', 'Registered people who chose lunch on day 1: the list for the caterer.'],
         'lunch2'     => ['Lunch day 2', 'Registered people who chose lunch on day 2: the list for the caterer.'],
         'students'   => ['Students', 'Registered students, with their university and whether their ID photo is stored.'],
@@ -39,6 +40,7 @@ final class Lists
             'sponsors'         => ['package' => 'Package', 'contact_name' => 'Contact', 'phone' => 'Phone', 'sponsor_status' => 'Status', 'amount_agreed' => 'Agreed (IQD)', 'amount_paid' => 'Paid (IQD)', 'next_call_at' => 'Next call', 'ref' => 'Reference'],
             'exhibition'       => ['package' => 'Booth type', 'booth_number' => 'Booth no.', 'contact_name' => 'Contact', 'phone' => 'Phone', 'sponsor_status' => 'Status', 'amount_agreed' => 'Agreed (IQD)', 'amount_paid' => 'Paid (IQD)', 'next_call_at' => 'Next call', 'ref' => 'Reference'],
             'students', 'studentids' => ['phone' => 'Phone', 'university' => 'University', 'ambassador_code' => 'Ambassador', 'id_photo' => 'ID photo', 'ticket_no' => 'Ticket no.', 'ref' => 'Reference'],
+            'forms'            => ['phone' => 'Phone', 'email' => 'Email', 'ticket_type' => 'Ticket', 'lunch' => 'Lunch', 'university' => 'University', 'form_status' => 'Payment', 'created_at' => 'Sent', 'ref' => 'Reference'],
             'lunch1', 'lunch2' => ['phone' => 'Phone', 'ticket_type' => 'Ticket', 'ticket_no' => 'Ticket no.', 'ref' => 'Reference'],
             default            => ['phone' => 'Phone', 'ticket_type' => 'Ticket', 'lunch' => 'Lunch', 'ticket_no' => 'Ticket no.', 'ref' => 'Reference', 'paid_at' => 'Paid'],
         };
@@ -49,6 +51,12 @@ final class Lists
         if (isset(self::COMPANY_LISTS[$list])) {
             return Db::all("SELECT s.*, s.status AS sponsor_status, p.name_en AS package FROM sponsor_requests s LEFT JOIN sponsor_packages p ON p.id = s.package_id
                             WHERE s.kind = ? ORDER BY s.status = 'declined', s.company", [self::COMPANY_LISTS[$list]]);
+        }
+        if ($list === 'forms') {
+            // The forms (checkouts), not the registrations: "id" is the registration, if paid.
+            return Db::all("SELECT c.*, c.registration_id AS id,
+                                   CASE WHEN c.status = 'paid' THEN 'paid' WHEN c.status = 'open' AND c.expires_at > ? THEN 'waiting' ELSE 'expired' END AS form_status
+                            FROM checkouts c ORDER BY c.created_at DESC, c.id DESC", [\Ismile\App::now()]);
         }
         if ($list === 'workshops') {
             return array_merge(...array_column(self::workshopGroups(), 'people') ?: [[]]);
@@ -101,6 +109,7 @@ final class Lists
                COALESCE(SUM(status = 'cancelled'), 0)                                         AS cancelled
              FROM registrations"
         ) ?? [];
+        $row['forms'] = (int) Db::value('SELECT COUNT(*) FROM checkouts');
         $row['workshops'] = (int) Db::value('SELECT COUNT(*) FROM workshop_bookings WHERE removed_at IS NULL');
         $row['sponsors'] = (int) Db::value("SELECT COUNT(*) FROM sponsor_requests WHERE kind = 'sponsor'");
         $row['exhibition'] = (int) Db::value("SELECT COUNT(*) FROM sponsor_requests WHERE kind = 'booth'");

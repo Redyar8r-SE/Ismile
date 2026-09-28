@@ -5,6 +5,8 @@
 #   API_OWNER_EMAIL     the Owner's admin sign-in on api.ismile.krd (made if missing)
 #   API_OWNER_PASSWORD  its password, 12+ characters (change the secret = new password)
 #   API_SITE_PASSWORD   the browser password in front of the site (user "ismile")
+#   API_RESEND_KEY      optional: send the emails for real through Resend
+#   API_MAIL_FROM       optional: the sender (default onboarding@resend.dev)
 # The log is public (public repository): passwords are never printed.
 name: Deploy API (api.ismile.krd)
 
@@ -64,9 +66,11 @@ jobs:
           OWNER_EMAIL: ${{ secrets.API_OWNER_EMAIL }}
           OWNER_PASSWORD: ${{ secrets.API_OWNER_PASSWORD }}
           SITE_PASSWORD: ${{ secrets.API_SITE_PASSWORD }}
+          RESEND_KEY: ${{ secrets.API_RESEND_KEY }}
+          MAIL_FROM: ${{ secrets.API_MAIL_FROM }}
           QUIET_SECRETS: "1"
         with:
-          envs: OWNER_EMAIL,OWNER_PASSWORD,SITE_PASSWORD,QUIET_SECRETS
+          envs: OWNER_EMAIL,OWNER_PASSWORD,SITE_PASSWORD,RESEND_KEY,MAIL_FROM,QUIET_SECRETS
           host: ${{ env.DEPLOY_HOST }}
           username: ${{ env.DEPLOY_USER }}
           password: ${{ env.DEPLOY_PASSWORD }}

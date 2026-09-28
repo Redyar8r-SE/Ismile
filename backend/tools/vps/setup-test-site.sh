@@ -24,6 +24,10 @@
 #                            the account always gets it. Without it: a made-up one.
 #   SITE_PASSWORD=...        the browser password (user "ismile"); without it: made up
 #   NO_SITE_PASSWORD=1       no browser password in front of the site
+#   RESEND_KEY=re_...        send the emails for real through Resend (test site:
+#                            email test mode still sends them all to the test address)
+#   MAIL_FROM=...            the sender (default onboarding@resend.dev until
+#                            ismile.krd is verified in Resend, then tickets@ismile.krd)
 #   QUIET_SECRETS=1          never print passwords (GitHub Actions: logs are public)
 
 set -euo pipefail
@@ -148,7 +152,7 @@ if [ ! -f "$BASE/.passwords-renewed-1" ]; then
 fi
 # Secrets pasted into GitHub often end with an invisible new line or space:
 # remove them at the start and end, or the password never matches what is typed.
-for name in OWNER_EMAIL OWNER_PASSWORD SITE_PASSWORD; do
+for name in OWNER_EMAIL OWNER_PASSWORD SITE_PASSWORD RESEND_KEY MAIL_FROM; do
   value="${!name:-}"
   trimmed="${value#"${value%%[![:space:]]*}"}"
   trimmed="${trimmed%"${trimmed##*[![:space:]]}"}"
@@ -227,6 +231,28 @@ else
     file_put_contents($path, "<?php\nreturn " . var_export($cfg, true) . ";\n");
   ' "$BACKEND/config.php" "$DOMAIN"
 fi
+# Emails: really sent through Resend when RESEND_KEY is given, else only
+# written to storage/outbox as files.
+ISMILE_RESEND_KEY="${RESEND_KEY:-}" ISMILE_MAIL_FROM="${MAIL_FROM:-}" php -r '
+  $path = $argv[1];
+  $cfg = include $path;
+  $key = (string) getenv("ISMILE_RESEND_KEY");
+  if ($key !== "") {
+      $cfg["mail"]["driver"] = "resend";
+      $cfg["mail"]["resend_key"] = $key;
+      $cfg["mail"]["from_email"] = (string) getenv("ISMILE_MAIL_FROM") ?: "onboarding@resend.dev";
+      echo "Emails: sent through Resend, from {$cfg["mail"]["from_email"]}.
+";
+  } else {
+      $cfg["mail"]["driver"] = "log";
+      $cfg["mail"]["resend_key"] = "";
+      echo "Emails: not sent, only written to storage/outbox (no RESEND_KEY).
+";
+  }
+  file_put_contents($path, "<?php
+return " . var_export($cfg, true) . ";
+");
+' "$BACKEND/config.php"
 chown root:www-data "$BACKEND/config.php"
 chmod 640 "$BACKEND/config.php"
 
@@ -257,6 +283,11 @@ if [ -n "${OWNER_EMAIL:-}" ]; then
     ISMILE_OWNER_PASSWORD="$OWNER_PASS" php "$BACKEND/tools/install.php" --owner "$OWNER_EMAIL" "Owner" | tail -1
   fi
   grep -q "^OWNER_EMAIL=$OWNER_EMAIL\$" "$SECRETS" || echo "OWNER_EMAIL=$OWNER_EMAIL" >> "$SECRETS"
+  # Test emails go to the Owner while the test address is still the first default.
+  if [ "$(mariadb -N "$DB" -e "SELECT v FROM settings WHERE k = 'email_test_address'")" = "info@ismile.krd" ]; then
+    mariadb "$DB" -e "UPDATE settings SET v = '$(printf '%s' "$OWNER_EMAIL" | sed "s/'//g")', updated_at = NOW() WHERE k = 'email_test_address'"
+    echo "Email test address: now the Owner's email (change it in Settings)."
+  fi
 else
   echo "No OWNER_EMAIL: no Owner account was checked or made."
 fi

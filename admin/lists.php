@@ -5,6 +5,7 @@
 //   Students                registered students and their university
 //   Workshops               each workshop with the people booked on it
 //   Sponsors / Exhibition   the sponsor requests and the booth requests, apart
+//   All forms sent          every form, paid or not (paid = registered)
 //   Cancelled
 // Only paid people are registrations, so every list holds paid people only.
 
@@ -117,7 +118,7 @@ $e = [Page::class, 'e'];
     <?php foreach ($rows as $i => $row): ?>
     <tr>
       <td><?= $i + 1 ?></td>
-      <td><a href="registration.php?id=<?= (int) $row['id'] ?>"><b><?= $e(Registrations::fullName($row)) ?></b></a> <?= Page::paidBadge($row['status']) ?></td>
+      <td><?php if ($row['id']): ?><a href="registration.php?id=<?= (int) $row['id'] ?>"><b><?= $e(Registrations::fullName($row)) ?></b></a><?php else: ?><b><?= $e(Registrations::fullName($row)) ?></b><?php endif; ?> <?= Page::paidBadge($row['status']) ?></td>
       <?php foreach (array_keys($columns) as $key): ?>
         <td<?= $key === 'phone' ? ' dir="ltr"' : '' ?>><?= match ($key) {
             'ref', 'ticket_no' => $row[$key] ? '<code>' . $e($row[$key]) . '</code>' : '–',
@@ -125,6 +126,7 @@ $e = [Page::class, 'e'];
             'lunch' => trim(($row['lunch_day1'] ? 'Day 1 ' : '') . ($row['lunch_day2'] ? 'Day 2' : '')) ?: '–',
             'workshop_paid' => Page::paidBadge((string) $row['workshop_paid']),
             'amount_paid' => $row['amount_paid'] !== null ? number_format((int) $row['amount_paid']) : '–',
+            'form_status' => Page::pill((string) $row['form_status']),
             'sponsor_status' => Page::pill((string) $row['sponsor_status']),
             'id_photo' => $row['id_photo'] !== 'stored' ? '<span class="muted">none</span>' : ($canPhotos ? '<a href="photo.php?id=' . (int) $row['id'] . '" target="_blank" rel="noopener">✓ see photo</a>' : '✓ stored'),
             'package' => $row['package'] !== null ? $e((string) $row['package']) : '<span class="muted">not chosen</span>',
