@@ -37,6 +37,15 @@ export function initRegistration({ tickets = {} } = {}) {
   const card = $("regCard");
   const form = $("regForm");
   const progress = $("regProgress");
+
+  // Closed with the admin switch (Site content › Registration): the panel
+  // "Registration opens soon" is shown and the form is never started.
+  if (tickets.registrationClosed === true) {
+    $("regClosed").hidden = false;
+    form.hidden = true;
+    progress.hidden = true;
+    return;
+  }
   const stepperItems = [...$("regStepper").children];
   const steps = [...form.querySelectorAll(".reg-step")];
   const backBtn = $("regBack");
