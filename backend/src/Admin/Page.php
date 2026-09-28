@@ -72,12 +72,22 @@ final class Page
         header("Content-Security-Policy: default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'none'");
     }
 
+    /**
+     * The website editor (texts, pictures, prices). Normally admin.html next to
+     * this admin; when the website runs on another server (config.php
+     * content_editor_url, e.g. https://ismile.krd/admin.html), that one.
+     */
+    public static function contentUrl(): string
+    {
+        return (string) App::config('content_editor_url', '') ?: '../admin.html';
+    }
+
     /** The first page a role sees after signing in. */
     public static function home(array $user): string
     {
         return match ($user['role']) {
             'checkin' => 'checkin.php',
-            'content' => '../admin.html',
+            'content' => self::contentUrl(),
             default   => 'index.php',
         };
     }
@@ -133,7 +143,7 @@ final class Page
                 }
             }
             if (Auth::can($user, 'content')) {
-                echo '<a href="../admin.html">Site content</a>';
+                echo '<a href="' . self::e(self::contentUrl()) . '"' . (str_starts_with(self::contentUrl(), 'http') ? ' target="_blank" rel="noopener"' : '') . '>Site content</a>';
             }
             echo '</nav><form method="post" action="logout.php" class="who"><span>' . self::e($user['name']) . ' · ' . self::e($user['role']) . '</span>'
                 . self::csrfField() . '<button class="btn small ghost">Sign out</button></form>';

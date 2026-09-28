@@ -226,6 +226,9 @@ else
     $path = $argv[1]; $domain = $argv[2];
     $cfg = include $path;
     $cfg["site_url"] = "https://" . $domain;
+    // "Site content" opens the website editor on ismile.krd, which can save
+    // (the one on this server has nowhere to save and asks for a GitHub key).
+    $cfg["content_editor_url"] = "https://ismile.krd/admin.html";
     // A test copy (not test.…) must name its address to allow pretend payments.
     if (($cfg["env"] ?? "") === "test") {
         $cfg["payments"]["fake_hosts"] = [$domain];

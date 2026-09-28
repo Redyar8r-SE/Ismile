@@ -55,7 +55,7 @@ if ($paid + $comp > 0 && ($lastBackup === null || $lastBackup < time() - 36 * 36
 }
 $prices = SiteData::prices();
 if ($prices['professional'] <= 0 || $prices['student'] <= 0) {
-    $attention[] = ['Ticket prices are not set. Nobody can pay until they are (Site content → Ticket prices).', '../admin.html'];
+    $attention[] = ['Ticket prices are not set. Nobody can pay until they are (Site content → Ticket prices).', Page::contentUrl()];
 }
 if (Settings::bool('email_test_mode')) {
     $attention[] = ['Email test mode is ON: every email goes to the test address, not to the people.', 'settings.php'];
