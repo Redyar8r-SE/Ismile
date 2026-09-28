@@ -26,6 +26,8 @@
 #   NO_SITE_PASSWORD=1       no browser password in front of the site
 #   RESEND_KEY=re_...        send the emails for real through Resend (test site:
 #                            email test mode still sends them all to the test address)
+#   BREVO_KEY=xkeysib-...    send them through Brevo instead (used when given;
+#                            MAIL_FROM must then be a sender verified in Brevo)
 #   MAIL_FROM=...            the sender (default onboarding@resend.dev until
 #                            ismile.krd is verified in Resend, then tickets@ismile.krd)
 #   QUIET_SECRETS=1          never print passwords (GitHub Actions: logs are public)
@@ -152,7 +154,7 @@ if [ ! -f "$BASE/.passwords-renewed-1" ]; then
 fi
 # Secrets pasted into GitHub often end with an invisible new line or space:
 # remove them at the start and end, or the password never matches what is typed.
-for name in OWNER_EMAIL OWNER_PASSWORD SITE_PASSWORD RESEND_KEY MAIL_FROM; do
+for name in OWNER_EMAIL OWNER_PASSWORD SITE_PASSWORD RESEND_KEY BREVO_KEY MAIL_FROM; do
   value="${!name:-}"
   trimmed="${value#"${value%%[![:space:]]*}"}"
   trimmed="${trimmed%"${trimmed##*[![:space:]]}"}"
@@ -233,11 +235,21 @@ else
 fi
 # Emails: really sent through Resend when RESEND_KEY is given, else only
 # written to storage/outbox as files.
-ISMILE_RESEND_KEY="${RESEND_KEY:-}" ISMILE_MAIL_FROM="${MAIL_FROM:-}" php -r '
+ISMILE_RESEND_KEY="${RESEND_KEY:-}" ISMILE_BREVO_KEY="${BREVO_KEY:-}" ISMILE_MAIL_FROM="${MAIL_FROM:-}" php -r '
   $path = $argv[1];
   $cfg = include $path;
   $key = (string) getenv("ISMILE_RESEND_KEY");
-  if ($key !== "") {
+  $brevo = (string) getenv("ISMILE_BREVO_KEY");
+  $from = (string) getenv("ISMILE_MAIL_FROM");
+  if ($brevo !== "") {
+      $cfg["mail"]["driver"] = "brevo";
+      $cfg["mail"]["brevo_key"] = $brevo;
+      $cfg["mail"]["resend_key"] = "";
+      $cfg["mail"]["from_email"] = $from !== "" && $from !== "onboarding@resend.dev" ? $from : "info@ismile.krd";
+      echo "Emails: sent through Brevo, from {$cfg["mail"]["from_email"]}.
+";
+  } elseif ($key !== "") {
+      $cfg["mail"]["brevo_key"] = "";
       $cfg["mail"]["driver"] = "resend";
       $cfg["mail"]["resend_key"] = $key;
       $cfg["mail"]["from_email"] = (string) getenv("ISMILE_MAIL_FROM") ?: "onboarding@resend.dev";
@@ -246,7 +258,8 @@ ISMILE_RESEND_KEY="${RESEND_KEY:-}" ISMILE_MAIL_FROM="${MAIL_FROM:-}" php -r '
   } else {
       $cfg["mail"]["driver"] = "log";
       $cfg["mail"]["resend_key"] = "";
-      echo "Emails: not sent, only written to storage/outbox (no RESEND_KEY).
+      $cfg["mail"]["brevo_key"] = "";
+      echo "Emails: not sent, only written to storage/outbox (no BREVO_KEY or RESEND_KEY).
 ";
   }
   file_put_contents($path, "<?php
