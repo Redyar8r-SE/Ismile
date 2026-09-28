@@ -99,4 +99,55 @@ final class SiteData
     {
         Workshops::syncWebsite();
     }
+
+    /**
+     * The content files the backend only READS: prices and the open/closed
+     * switch (tickets), and what the ticket email shows (program, map, footer).
+     * workshops.json and sponsors.json are never copied: the backend writes them.
+     */
+    public const FOLLOWED = ['tickets', 'program', 'map', 'footer'];
+
+    /**
+     * When the website runs on another server (config.php content_source_url,
+     * e.g. https://ismile.krd), copy those files from it, so the backend always
+     * charges the website's prices and follows its "Close registration" switch.
+     * A file is only replaced by valid JSON that differs; on any problem the
+     * current copy stays. Returns name => 'updated' | 'same' | 'error: …'.
+     */
+    public static function followWebsite(): array
+    {
+        $base = rtrim((string) App::config('content_source_url', ''), '/');
+        if ($base === '') {
+            return [];
+        }
+        $report = [];
+        foreach (self::FOLLOWED as $name) {
+            $curl = curl_init("$base/data/$name.json?t=" . time());
+            curl_setopt_array($curl, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 10, CURLOPT_CONNECTTIMEOUT => 5, CURLOPT_FOLLOWLOCATION => false]);
+            $body = curl_exec($curl);
+            $status = (int) curl_getinfo($curl, CURLINFO_RESPONSE_CODE);
+            curl_close($curl);
+            $data = is_string($body) ? json_decode($body, true) : null;
+            if ($status !== 200 || !is_array($data) || $data === []) {
+                $report[$name] = "error: HTTP $status or not JSON";
+                continue;
+            }
+            $file = App::siteFile("data/$name.json");
+            $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "
+";
+            $current = is_file($file) ? json_decode((string) file_get_contents($file), true) : null;
+            if ($current === $data) {
+                $report[$name] = 'same';
+                continue;
+            }
+            $tmp = $file . '.tmp';
+            if (@file_put_contents($tmp, $json) === false || !@rename($tmp, $file)) {
+                @unlink($tmp);
+                $report[$name] = 'error: cannot write';
+                continue;
+            }
+            $report[$name] = 'updated';
+        }
+        return $report;
+    }
 }

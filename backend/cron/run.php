@@ -5,7 +5,9 @@
 //   */5 * * * *   php /home/USER/ismile-backend/cron/run.php five
 //   30 2 * * *    php /home/USER/ismile-backend/cron/run.php nightly
 //
-// minute  : sends the emails that are due (tickets go out within a minute)
+// minute  : copies the website's prices / switch / texts when the website
+//           runs on another server (content_source_url), then sends the
+//           emails that are due (tickets go out within a minute)
 // five    : asks the payment company about payments still waiting (lost
 //           webhooks), deletes forms that were not paid in time, raises alerts
 // nightly : backs up the database, deletes ID photos after the summit,
@@ -49,7 +51,13 @@ if ($lock === false || !flock($lock, LOCK_EX | LOCK_NB)) {
 $report = [];
 try {
     if ($job === 'minute') {
+        // First the website's prices, switch and texts (when it runs elsewhere),
+        // so payments and emails use what the website shows right now.
+        $followed = SiteData::followWebsite();
         $report = Outbox::process(MailerFactory::make());
+        if ($followed) {
+            $report['website_content'] = $followed;
+        }
     }
 
     if ($job === 'five') {

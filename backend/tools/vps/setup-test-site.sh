@@ -229,6 +229,9 @@ else
     // "Site content" opens the website editor on ismile.krd, which can save
     // (the one on this server has nowhere to save and asks for a GitHub key).
     $cfg["content_editor_url"] = "https://ismile.krd/admin.html";
+    // The backend follows the website on ismile.krd: its prices, its "Close
+    // registration" switch and the texts in the email (copied every minute).
+    $cfg["content_source_url"] = "https://ismile.krd";
     // A test copy (not test.…) must name its address to allow pretend payments.
     if (($cfg["env"] ?? "") === "test") {
         $cfg["payments"]["fake_hosts"] = [$domain];
@@ -378,6 +381,9 @@ fi
 mkdir -p "$BACKEND/storage"
 chown -R www-data:www-data "$SITE/data" "$BACKEND/storage"
 chmod 750 "$BACKEND/storage"
+# Copy the website's prices, switch and email texts now (then every minute by cron).
+runuser -u www-data -- php "$BACKEND/cron/run.php" minute >/dev/null 2>&1 || true
+echo "Website content followed from ismile.krd: $(php -r '$t = json_decode((string) @file_get_contents($argv[1]), true) ?: []; echo "prices ", (int) ($t["professional"] ?? 0), " / ", (int) ($t["student"] ?? 0), ", registration ", !empty($t["registrationClosed"]) ? "CLOSED" : "open";' "$SITE/data/tickets.json")"
 
 # Read-only login for MySQL Workbench: sees only the 12 simple lists.
 mariadb <<SQL
