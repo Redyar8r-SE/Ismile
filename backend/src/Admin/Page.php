@@ -118,15 +118,11 @@ final class Page
     public static function top(string $title, string $current): void
     {
         $user = self::$user;
-        $test = !App::isLive();
         echo '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">';
         echo '<meta name="robots" content="noindex"><title>' . self::e($title) . ' · iSmile admin</title>';
         // The version follows the files' date, so a change is never hidden by the browser's cache.
         $v = static fn (string $file): int => (int) @filemtime(App::siteFile('admin/' . $file)) ?: 1;
         echo '<link rel="stylesheet" href="admin.css?v=' . $v('admin.css') . '"><script src="admin.js?v=' . $v('admin.js') . '" defer></script></head><body>';
-        if ($test) {
-            echo '<div class="testbar">TEST SITE: test data, test payments. Nothing here is real.</div>';
-        }
         echo '<header class="bar"><a class="brand" href="' . ($user ? self::home($user) : 'index.php') . '">i<b>Smile</b> admin</a>';
         if ($user) {
             echo '<nav class="menu">';

@@ -70,7 +70,7 @@ $tile = static fn (string $colour, string $label, string $value, string $note = 
 
 echo '<div class="state-line">Registration is ' . (Registrations::isOpen() ? '<span class="pill green">open</span>' : '<span class="pill red">closed</span>')
     . (SiteData::closedBySwitch() ? ' <span class="muted">(closed by the switch in Site content › Registration)</span>' : '')
-    . ' · payments: <b>' . Page::e((string) App::config('payments.gateway')) . '</b>' . (App::isLive() ? '' : ' (test site)') . '</div>';
+    . ' · payments: <b>' . Page::e((string) App::config('payments.gateway')) . '</b>' . '</div>';
 
 if ($attention) {
     echo '<div class="attention"><h2>Needs attention</h2><ul>';

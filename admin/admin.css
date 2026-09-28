@@ -14,7 +14,6 @@ body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Segoe UI",Tah
 a{color:var(--teal-d)}
 code{font-family:Consolas,monospace;font-size:.92em;background:#eef6f6;padding:1px 5px;border-radius:5px}
 code.big{font-size:1.15em;font-weight:700}
-.testbar{background:repeating-linear-gradient(45deg,#e0a33a,#e0a33a 14px,#f0b54e 14px,#f0b54e 28px);color:#3a2a06;text-align:center;font-weight:800;padding:8px;letter-spacing:.03em}
 .bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;background:#12302f;color:#fff;padding:10px 18px}
 .brand{color:#fff;text-decoration:none;font-size:20px;font-weight:600}
 .brand b{color:#7fd6d2}
@@ -175,7 +174,7 @@ ol.steps{display:grid;gap:10px;padding-left:20px}
 .list-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start}
 table.name-list td{vertical-align:middle}
 @media print{
-  .bar,.testbar,.no-print,.flash{display:none!important}
+  .bar,.no-print,.flash{display:none!important}
   body{background:#fff}.card{box-shadow:none;border:0}
   .paid-badge{border:1px solid #000;color:#000!important;background:#fff!important}
 }
