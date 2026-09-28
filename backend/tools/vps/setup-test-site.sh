@@ -207,7 +207,7 @@ return [
     'secret'    => '$APP_SECRET',
     'timezone'  => 'Asia/Baghdad',
     // The pretend payment company: no Psoola, no real money, no webhooks.
-    'payments'  => ['gateway' => 'fake', 'psoola' => ['api_base' => '', 'api_key' => '', 'merchant_id' => '', 'webhook_secret' => ''], 'fake_secret' => '$FAKE_SECRET'],
+    'payments'  => ['gateway' => 'fake', 'fake_hosts' => ['$DOMAIN'], 'psoola' => ['api_base' => '', 'api_key' => '', 'merchant_id' => '', 'webhook_secret' => ''], 'fake_secret' => '$FAKE_SECRET'],
     // Emails are written to storage/outbox as files, never sent.
     'mail'      => ['driver' => 'log', 'brevo_key' => '', 'from_email' => 'tickets@ismile.krd', 'from_name' => 'iSmile 2026 (test)', 'reply_to' => 'info@ismile.krd'],
     'alerts_to' => ['info@ismile.krd'],
@@ -220,6 +220,10 @@ else
     $path = $argv[1]; $domain = $argv[2];
     $cfg = include $path;
     $cfg["site_url"] = "https://" . $domain;
+    // A test copy (not test.…) must name its address to allow pretend payments.
+    if (($cfg["env"] ?? "") === "test") {
+        $cfg["payments"]["fake_hosts"] = [$domain];
+    }
     file_put_contents($path, "<?php\nreturn " . var_export($cfg, true) . ";\n");
   ' "$BACKEND/config.php" "$DOMAIN"
 fi
@@ -274,6 +278,27 @@ if [ ! -f "$BASE/.first-run-done" ]; then
   # written to storage/outbox as files anyway (mail driver "log").
   mariadb "$DB" -e "INSERT INTO settings (k, v, updated_at) VALUES ('email_test_address', '${OWNER_EMAIL:-info@ismile.krd}', NOW()) ON DUPLICATE KEY UPDATE v = VALUES(v), updated_at = NOW()"
   touch "$BASE/.first-run-done"
+fi
+
+# ONCE (28 Sep 2026): the test copy was made while the real site said "closed",
+# and its website switch cannot be changed from the test site. Open it here,
+# with example prices if they are still 0. Only on a test site, never on live.
+if [ ! -f "$BASE/.test-registration-opened-1" ] && php -r 'exit(((include $argv[1])["env"] ?? "") === "test" ? 0 : 1);' "$BACKEND/config.php"; then
+  php -r '
+    $file = $argv[1];
+    $p = json_decode((string) file_get_contents($file), true) ?: [];
+    if ((int) ($p["professional"] ?? 0) === 0 || (int) ($p["student"] ?? 0) === 0) {
+        $p = array_merge($p, ["currency" => "IQD", "professional" => 50000, "student" => 25000, "lunchDay1" => 10000, "lunchDay2" => 10000]);
+        echo "Example prices set on the TEST site.
+";
+    }
+    $p["registrationClosed"] = false;
+    file_put_contents($file, json_encode($p, JSON_PRETTY_PRINT) . "
+");
+    echo "Registration opened on the TEST site (website switch).
+";' "$SITE/data/tickets.json"
+  mariadb "$DB" -e "INSERT INTO settings (k, v, updated_at) VALUES ('registration_open', '1', NOW()) ON DUPLICATE KEY UPDATE v = '1', updated_at = NOW()"
+  touch "$BASE/.test-registration-opened-1"
 fi
 
 # The web server writes the workshop/sponsor cards and the private storage.

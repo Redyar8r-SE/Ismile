@@ -20,9 +20,11 @@ final class FakeGateway implements Gateway
         // Fails closed: refused on the live site, and also on any address that is
         // not a test copy, in case a config.php was copied without changing 'env'.
         $host = strtolower((string) parse_url((string) App::config('site_url'), PHP_URL_HOST));
-        $testHost = in_array($host, ['localhost', '127.0.0.1'], true) || str_starts_with($host, 'test.');
+        // A test copy at another address is named in config.php (payments.fake_hosts).
+        $testHost = in_array($host, ['localhost', '127.0.0.1'], true) || str_starts_with($host, 'test.')
+            || in_array($host, (array) App::config('payments.fake_hosts', []), true);
         if (App::isLive() || !$testHost) {
-            throw new GatewayNotReady('The fake payment gateway runs only on a test site (test.… or localhost).');
+            throw new GatewayNotReady('The fake payment gateway runs only on a test site (test.…, localhost, or payments.fake_hosts in config.php).');
         }
     }
 
