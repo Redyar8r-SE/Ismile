@@ -1,7 +1,11 @@
 # Deploy PHP backend to api.ismile.krd (ismile LXC).
 # Re-runs the idempotent VPS setup script: pulls this branch, updates files/DB,
 # leaves the live Node site on ismile.krd alone.
-# Secrets: same GitHub DEPLOY_ENV as the Node deploy (SSH into LXC :2260).
+# Secrets: same GitHub DEPLOY_ENV as the Node deploy (SSH into LXC :2260), plus
+#   API_OWNER_EMAIL     the Owner's admin sign-in on api.ismile.krd (made if missing)
+#   API_OWNER_PASSWORD  its password, 12+ characters (change the secret = new password)
+#   API_SITE_PASSWORD   the browser password in front of the site (user "ismile")
+# The log is public (public repository): passwords are never printed.
 name: Deploy API (api.ismile.krd)
 
 on:
@@ -56,7 +60,13 @@ jobs:
 
       - name: Run setup-test-site.sh on the LXC
         uses: appleboy/ssh-action@v1.2.0
+        env:
+          OWNER_EMAIL: ${{ secrets.API_OWNER_EMAIL }}
+          OWNER_PASSWORD: ${{ secrets.API_OWNER_PASSWORD }}
+          SITE_PASSWORD: ${{ secrets.API_SITE_PASSWORD }}
+          QUIET_SECRETS: "1"
         with:
+          envs: OWNER_EMAIL,OWNER_PASSWORD,SITE_PASSWORD,QUIET_SECRETS
           host: ${{ env.DEPLOY_HOST }}
           username: ${{ env.DEPLOY_USER }}
           password: ${{ env.DEPLOY_PASSWORD }}

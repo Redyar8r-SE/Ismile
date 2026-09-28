@@ -19,8 +19,12 @@
 #   BRANCH=backend           which Git branch to run
 #   DOMAIN=api.ismile.krd    public hostname (site_url + nginx server_name)
 #   PORT=8081                the port the host's nginx forwards to
-#   OWNER_EMAIL=...          the first Owner account (first run only)
+#   OWNER_EMAIL=...          an Owner account (made if it does not exist yet)
+#   OWNER_PASSWORD=...       its password (12+ characters); when it changes, the
+#                            account gets the new one. Without it: a made-up one.
+#   SITE_PASSWORD=...        the browser password (user "ismile"); without it: made up
 #   NO_SITE_PASSWORD=1       no browser password in front of the site
+#   QUIET_SECRETS=1          never print passwords (GitHub Actions: logs are public)
 
 set -euo pipefail
 
@@ -128,6 +132,34 @@ if [ ! -f "$SECRETS" ]; then
 fi
 # shellcheck disable=SC1090
 . "$SECRETS"
+# Until 28 Sep 2026 the GitHub deploy printed these passwords in its (public)
+# log. Make new ones once; the Owner accounts that still have the old made-up
+# password get the new one further down.
+OLD_OWNER_PASS=""
+if [ ! -f "$BASE/.passwords-renewed-1" ]; then
+  OLD_OWNER_PASS="$OWNER_PASS"
+  sed -i \
+    -e "s#^OWNER_PASS=.*#OWNER_PASS=$(openssl rand -base64 18 | tr -d '/+=' | cut -c1-16)#" \
+    -e "s#^SITE_PASS=.*#SITE_PASS=$(openssl rand -base64 12 | tr -d '/+=' | cut -c1-12)#" \
+    -e "s#^VIEWER_PASS=.*#VIEWER_PASS=$(openssl rand -base64 18 | tr -d '/+=' | cut -c1-16)#" \
+    "$SECRETS"
+  # shellcheck disable=SC1090
+  . "$SECRETS"
+fi
+if [ -n "${SITE_PASSWORD:-}" ]; then
+  # Kept in the file too: the GitHub deploy's check signs in with it.
+  SITE_PASS="$SITE_PASSWORD"
+  { grep -v '^SITE_PASS=' "$SECRETS"; printf 'SITE_PASS=%s
+' "$SITE_PASS"; } > "$SECRETS.new"
+  chmod 600 "$SECRETS.new"
+  mv "$SECRETS.new" "$SECRETS"
+fi
+if [ -n "${OWNER_PASSWORD:-}" ] && [ "${#OWNER_PASSWORD}" -lt 12 ]; then
+  echo "warning: OWNER_PASSWORD has fewer than 12 characters, so it is not used." >&2
+  OWNER_PASSWORD=""
+fi
+if [ -n "${OWNER_PASSWORD:-}" ]; then OWNER_PASS="$OWNER_PASSWORD"; fi
+show() { [ -n "${QUIET_SECRETS:-}" ] && echo "(hidden: see $SECRETS or the GitHub secrets)" || echo "$1"; }
 
 # ---------------------------------------------------------------------------
 say "3/8 Database $DB"
@@ -188,9 +220,37 @@ chmod 640 "$BACKEND/config.php"
 say "6/8 Website + backend files, database tables"
 export COMPOSER_ALLOW_SUPERUSER=1
 PHP=php ISMILE_SITE="$SITE" ISMILE_BACKEND_DIR="$BACKEND" bash "$REPO/backend/tools/deploy.sh" test
-if [ -n "${OWNER_EMAIL:-}" ] && ! mariadb -N "$DB" -e "SELECT 1 FROM admin_users WHERE role = 'owner' LIMIT 1" | grep -q 1; then
-  ISMILE_OWNER_PASSWORD="$OWNER_PASS" php "$BACKEND/tools/install.php" --owner "$OWNER_EMAIL" "Owner" | tail -1
-  echo "OWNER_EMAIL=$OWNER_EMAIL" >> "$SECRETS"
+# Accounts that still have the old made-up password (printed in public logs) get the new one.
+if [ -n "$OLD_OWNER_PASS" ]; then
+  ISMILE_OLD="$OLD_OWNER_PASS" ISMILE_NEW="$OWNER_PASS" php -r '
+    $cfg = include $argv[1];
+    $db = new PDO("mysql:host=localhost;dbname={$cfg["db"]["name"]};charset=utf8mb4", $cfg["db"]["user"], $cfg["db"]["pass"]);
+    foreach ($db->query("SELECT id, email, password_hash FROM admin_users") as $u) {
+        if (password_verify(getenv("ISMILE_OLD"), $u["password_hash"])) {
+            $db->prepare("UPDATE admin_users SET password_hash = ?, session_version = session_version + 1 WHERE id = ?")
+               ->execute([password_hash(getenv("ISMILE_NEW"), PASSWORD_DEFAULT), $u["id"]]);
+            echo "New password for {$u["email"]} (the old one was in a public log).\n";
+        }
+    }' "$BACKEND/config.php"
+fi
+touch "$BASE/.passwords-renewed-1"
+if [ -n "${OWNER_EMAIL:-}" ]; then
+  OWNER_EMAIL="$(printf '%s' "$OWNER_EMAIL" | tr 'A-Z' 'a-z' | tr -d ' ')"
+  if ! mariadb -N "$DB" -e "SELECT 1 FROM admin_users WHERE email = '$(printf '%s' "$OWNER_EMAIL" | sed "s/'//g")'" | grep -q 1; then
+    ISMILE_OWNER_PASSWORD="$OWNER_PASS" php "$BACKEND/tools/install.php" --owner "$OWNER_EMAIL" "Owner" | tail -1
+    grep -q "^OWNER_EMAIL=$OWNER_EMAIL\$" "$SECRETS" || echo "OWNER_EMAIL=$OWNER_EMAIL" >> "$SECRETS"
+    if [ -n "${OWNER_PASSWORD:-}" ]; then
+      printf '%s' "$OWNER_PASSWORD" | sha256sum | cut -c1-64 > "$BASE/.owner-password-applied"
+    fi
+  elif [ -n "${OWNER_PASSWORD:-}" ]; then
+    # A changed OWNER_PASSWORD secret = a new password for that account.
+    NEW_SUM="$(printf '%s' "$OWNER_PASSWORD" | sha256sum | cut -c1-64)"
+    if [ "$NEW_SUM" != "$(cat "$BASE/.owner-password-applied" 2>/dev/null)" ]; then
+      ISMILE_OWNER_PASSWORD="$OWNER_PASSWORD" php "$BACKEND/tools/install.php" --set-password "$OWNER_EMAIL" | tail -1
+      echo "$NEW_SUM" > "$BASE/.owner-password-applied"
+    fi
+  fi
+  chmod 600 "$BASE/.owner-password-applied" 2>/dev/null || true
 fi
 # FIRST RUN ONLY: a test site needs something to test with. While the real
 # prices are 0, it gets EXAMPLE ticket prices and registration is opened. The
@@ -264,9 +324,9 @@ cat <<DONE
 Done. API site files: $SITE   backend: $BACKEND   (the live Node site was not touched)
 
 Open https://$DOMAIN once the host is set up (host-nginx-test.conf).
-  Browser password : ismile / $([ -z "${NO_SITE_PASSWORD:-}" ] && echo "$SITE_PASS" || echo "(none)")
-  Admin            : https://$DOMAIN/admin/  ${OWNER_EMAIL:-(no Owner yet: run again with OWNER_EMAIL=you@example.com)} / $OWNER_PASS
+  Browser password : ismile / $([ -z "${NO_SITE_PASSWORD:-}" ] && show "$SITE_PASS" || echo "(none)")
+  Admin            : https://$DOMAIN/admin/  ${OWNER_EMAIL:-(no Owner yet: run again with OWNER_EMAIL=you@example.com)} / $(show "$OWNER_PASS")
                      (the first sign-in asks to set up the phone code)
-  Workbench        : user ismile_viewer / $VIEWER_PASS, database $DB, via "Standard TCP/IP over SSH"
+  Workbench        : user ismile_viewer / $(show "$VIEWER_PASS"), database $DB, via "Standard TCP/IP over SSH"
 All passwords are in $SECRETS (root only). Give them to people directly, never in a group chat.
 DONE

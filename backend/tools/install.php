@@ -9,6 +9,8 @@
 //                                                 creates a READ-ONLY database login that
 //                                                 sees only the simple numbered lists
 //                                                 (01_registered_people …), for MySQL Workbench
+//   php backend/tools/install.php --set-password you@example.com
+//                                                 a new password for an existing account
 //
 // Safe to run again: tables that exist are left as they are.
 
@@ -152,4 +154,26 @@ if ($ownerAt !== false) {
     }
     $id = Auth::createUser($email, $name, 'owner', $password);
     echo "Owner account created (#$id). Sign in at " . App::url('admin/') . " and set up the phone code.\n";
+}
+
+// A new password for an account that already exists (forgotten password, or a
+// password that was seen by someone else). Also unlocks it, switches it back
+// on and signs it out everywhere. The phone code stays as it is.
+$resetAt = array_search('--set-password', $argv, true);
+if ($resetAt !== false) {
+    $email = strtolower((string) ($argv[$resetAt + 1] ?? ''));
+    $id = (int) Db::value('SELECT id FROM admin_users WHERE email = ?', [$email]);
+    if ($id === 0) {
+        exit("There is no account for $email.\n");
+    }
+    $password = $askPassword('ISMILE_OWNER_PASSWORD', $email);
+    if (!Auth::validPassword($password)) {
+        exit("The password must have at least 12 characters.\n");
+    }
+    Db::run(
+        'UPDATE admin_users SET password_hash = ?, failed_logins = 0, locked_until = NULL, disabled_at = NULL,'
+        . ' session_version = session_version + 1 WHERE id = ?',
+        [password_hash($password, PASSWORD_DEFAULT), $id]
+    );
+    echo "New password set for $email (#$id).\n";
 }
