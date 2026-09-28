@@ -41,10 +41,27 @@ say() { printf '\n\033[1m== %s\033[0m\n' "$*"; }
 mkdir -p "$BASE"
 chmod 755 "$BASE"
 
+wait_for_dpkg() {
+  local i=0
+  while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 \
+     || fuser /var/lib/dpkg/lock >/dev/null 2>&1 \
+     || fuser /var/lib/apt/lists/lock >/dev/null 2>&1; do
+    i=$((i + 1))
+    if [ "$i" -gt 90 ]; then
+      echo "error: dpkg/apt still locked after 7.5 minutes" >&2
+      exit 1
+    fi
+    echo "waiting for apt/dpkg lock (${i}/90)…"
+    sleep 5
+  done
+}
+
 # ---------------------------------------------------------------------------
 say "1/8 Programs: PHP, MariaDB, nginx (only what is missing is installed)"
 export DEBIAN_FRONTEND=noninteractive
+wait_for_dpkg
 apt-get update -qq
+wait_for_dpkg
 apt-get install -y -qq nginx mariadb-server git unzip curl cron openssl apache2-utils \
   php-fpm php-cli php-mysql php-curl php-gd php-mbstring php-xml php-zip composer >/dev/null
 PHP_VERSION="$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;')"
