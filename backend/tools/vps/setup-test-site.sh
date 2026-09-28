@@ -42,10 +42,25 @@ mkdir -p "$BASE"
 chmod 755 "$BASE"
 
 wait_for_dpkg() {
+  # unattended-upgrade-shutdown holds lock-frontend forever while idle; stop it.
+  systemctl stop unattended-upgrades 2>/dev/null || true
   local i=0
-  while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 \
-     || fuser /var/lib/dpkg/lock >/dev/null 2>&1 \
-     || fuser /var/lib/apt/lists/lock >/dev/null 2>&1; do
+  while true; do
+    local holders
+    holders="$(fuser /var/lib/dpkg/lock-frontend /var/lib/dpkg/lock /var/lib/apt/lists/lock 2>/dev/null || true)"
+    # Ignore the idle shutdown waiter — it is not an active apt transaction.
+    if [ -n "$holders" ]; then
+      local real=0
+      for pid in $holders; do
+        if ! tr '\0' ' ' <"/proc/$pid/cmdline" 2>/dev/null | grep -q 'unattended-upgrade-shutdown'; then
+          real=1
+          break
+        fi
+      done
+      [ "$real" = 0 ] && break
+    else
+      break
+    fi
     i=$((i + 1))
     if [ "$i" -gt 90 ]; then
       echo "error: dpkg/apt still locked after 7.5 minutes" >&2
@@ -59,16 +74,22 @@ wait_for_dpkg() {
 # ---------------------------------------------------------------------------
 say "1/8 Programs: PHP, MariaDB, nginx (only what is missing is installed)"
 export DEBIAN_FRONTEND=noninteractive
-wait_for_dpkg
-apt-get update -qq
-wait_for_dpkg
-apt-get install -y -qq nginx mariadb-server git unzip curl cron openssl apache2-utils \
-  php-fpm php-cli php-mysql php-curl php-gd php-mbstring php-xml php-zip composer >/dev/null
+need_pkgs=0
+command -v php >/dev/null 2>&1 && command -v nginx >/dev/null 2>&1 && command -v mariadb >/dev/null 2>&1 \
+  && command -v composer >/dev/null 2>&1 && command -v htpasswd >/dev/null 2>&1 || need_pkgs=1
+if [ "$need_pkgs" = 1 ]; then
+  wait_for_dpkg
+  apt-get update -qq
+  wait_for_dpkg
+  apt-get install -y -qq nginx mariadb-server git unzip curl cron openssl apache2-utils \
+    php-fpm php-cli php-mysql php-curl php-gd php-mbstring php-xml php-zip composer >/dev/null
+else
+  echo "PHP/nginx/MariaDB already present — skipping apt install"
+fi
 PHP_VERSION="$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;')"
 php -r 'exit(PHP_VERSION_ID >= 80100 ? 0 : 1);' || { echo "PHP $PHP_VERSION is too old: 8.1 or newer is needed."; exit 1; }
 FPM_SOCK="/run/php/php${PHP_VERSION}-fpm.sock"
 echo "PHP $PHP_VERSION, MariaDB $(mariadb --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)"
-
 # Small server (1 GB): keep PHP and MariaDB modest.
 cat > "/etc/php/$PHP_VERSION/fpm/conf.d/99-ismile.ini" <<'INI'
 ; iSmile: student ID photos up to 8 MB

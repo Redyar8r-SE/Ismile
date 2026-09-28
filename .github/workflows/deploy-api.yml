@@ -66,15 +66,8 @@ jobs:
           script: |
             set -euo pipefail
             cd /root
-            # Wait out unattended-upgrades before apt in setup-test-site.sh
-            i=0
-            while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 \
-               || fuser /var/lib/dpkg/lock >/dev/null 2>&1; do
-              i=$((i + 1))
-              [ "$i" -le 90 ] || { echo "dpkg still locked"; exit 1; }
-              echo "waiting for dpkg lock (${i}/90)…"
-              sleep 5
-            done
+            # Idle unattended-upgrade-shutdown holds dpkg locks forever; stop it.
+            systemctl stop unattended-upgrades 2>/dev/null || true
             curl -fsSL "https://raw.githubusercontent.com/Redyar8r-SE/Ismile/backend/backend/tools/vps/setup-test-site.sh" \
               -o /root/ismile-test-setup.sh
             chmod +x /root/ismile-test-setup.sh
