@@ -43,6 +43,7 @@
 .gal-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px;margin-top:22px;list-style:none;padding:0}
 .gal-grid li{margin:0;min-width:0;grid-column:span 2}
 .gal-grid li.span-3{grid-column:span 3}
+.gal-grid li.gal-clone{display:none}
 .gal-grid li.span-6{grid-column:span 6}
 .gal-grid li.span-6 .gal-item{aspect-ratio:3/1}
 .gal-grid[data-count="1"] li{grid-column:span 6}
@@ -84,4 +85,5 @@
   .gal-grid .gal-cap{font-size:14px!important;padding-inline:16px!important}
   .gal-grid .gal-item{aspect-ratio:3/2!important;height:auto!important}
   .gal-grid[data-count="1"] li{flex-basis:100%;max-width:none}
+  .gal-grid li.gal-clone{display:block}
 }

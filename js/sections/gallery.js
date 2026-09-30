@@ -1,6 +1,6 @@
 // Photos under the timeline in "About iSmile", from data/gallery.json.
 // Pictures only: they do not open larger when tapped.
-import { tr, onLangChange } from "../i18n.js?v=77";
+import { tr, onLangChange } from "../i18n.js?v=78";
 
 export function initGallery(items) {
   const block = document.getElementById("gallery");
@@ -21,17 +21,23 @@ export function initGallery(items) {
     return "";
   }
 
-  function render() {
-    grid.dataset.count = list.length;
-    grid.innerHTML = list
-      .map((item, i) => `
-        <li${spanFor(i)}>
+  function tile(item, i, clone) {
+    return `
+        <li${clone ? ' class="gal-clone" aria-hidden="true"' : spanFor(i)}>
           <figure class="gal-item">
-            <img src="${item.photo}" alt="${tr(item.caption)}" loading="lazy" width="1080" height="720">
+            <img src="${item.photo}" alt="${clone ? "" : tr(item.caption)}" loading="lazy" width="1080" height="720">
             <figcaption class="gal-cap">${tr(item.caption)}</figcaption>
           </figure>
-        </li>`)
-      .join("");
+        </li>`;
+  }
+
+  // A copy of every photo follows the last one. Only phones show the copies
+  // (gallery.css): they let the sliding row carry on from the last photo to
+  // the first in the same direction, like a circle, instead of rewinding.
+  function render() {
+    grid.dataset.count = list.length;
+    grid.innerHTML = list.map((item, i) => tile(item, i, false)).join("")
+      + (list.length > 1 ? list.map((item, i) => tile(item, i, true)).join("") : "");
   }
 
   render();
@@ -41,11 +47,14 @@ export function initGallery(items) {
 }
 
 // On phones only (the one-row layout in gallery.css, 520px wide or less) the
-// photos move to the next one every few seconds and start again after the
-// last. It waits while the row is off screen, and for a while after the
-// visitor swipes it themselves. Tablets and laptops keep the still grid.
-const SLIDE_EVERY = 3000;
-const WAIT_AFTER_TOUCH = 6000;
+// photos move to the next one every few seconds, and after the last one the
+// first comes next from the same side. When the row settles on a copy of a
+// photo it jumps, without animation, to the real one in the same place, so
+// the circle never ends. It waits while the row is off screen, and for a
+// while after the visitor swipes it themselves. Tablets and laptops keep the
+// still grid.
+const SLIDE_EVERY = 6000;
+const WAIT_AFTER_TOUCH = 8000;
 
 function initPhoneSlides(grid) {
   const phone = matchMedia("(max-width:520px)");
@@ -71,17 +80,32 @@ function initPhoneSlides(grid) {
     const items = [...grid.children];
     if (items.length < 2) return;
     const rtl = getComputedStyle(grid).direction === "rtl";
-    const atEnd = grid.scrollWidth - grid.clientWidth - Math.abs(grid.scrollLeft) < 4;
     const index = currentIndex(items, rtl);
-    if (atEnd || index >= items.length - 1) {
-      grid.scrollTo({ left: 0, behavior: "smooth" });
-      return;
-    }
+    if (index >= items.length - 1) return;
     const target = items[index + 1].getBoundingClientRect();
     const box = grid.getBoundingClientRect();
     const delta = rtl ? target.right - box.right : target.left - box.left;
     grid.scrollBy({ left: delta, behavior: "smooth" });
   }
+
+  // Resting on a copy: move to the real photo, which looks exactly the same.
+  function wrap() {
+    if (!phone.matches) return;
+    const items = [...grid.children];
+    const real = items.filter((li) => !li.classList.contains("gal-clone"));
+    const copies = items.length - real.length;
+    if (!copies) return;
+    const index = currentIndex(items, getComputedStyle(grid).direction === "rtl");
+    if (index < real.length) return;
+    const shift = items[index - real.length].getBoundingClientRect().left - items[index].getBoundingClientRect().left;
+    grid.scrollBy({ left: shift, behavior: "instant" });
+  }
+
+  let settle = 0;
+  grid.addEventListener("scroll", () => {
+    clearTimeout(settle);
+    settle = setTimeout(wrap, 200);
+  }, { passive: true });
 
   const touched = () => { touchedAt = Date.now(); };
   grid.addEventListener("touchstart", touched, { passive: true });

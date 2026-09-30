@@ -1,11 +1,11 @@
 // Entry point for sponsor.html: the sponsorship and booth request form.
 // The same header, footer and languages as the main page, and nothing else.
-import { loadJSON } from "./utils/load-json.js?v=77";
-import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from "./i18n.js?v=77";
-import { initNav } from "./components/nav.js?v=77";
-import { initTheme } from "./components/theme.js?v=77";
-import { initFooter } from "./sections/footer.js?v=77";
-import { initSponsorForm } from "./sections/sponsor-form.js?v=77";
+import { loadJSON } from "./utils/load-json.js?v=78";
+import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from "./i18n.js?v=78";
+import { initNav } from "./components/nav.js?v=78";
+import { initTheme } from "./components/theme.js?v=78";
+import { initFooter } from "./sections/footer.js?v=78";
+import { initSponsorForm } from "./sections/sponsor-form.js?v=78";
 
 async function start() {
   initNav();
