@@ -1,10 +1,10 @@
 // Registration page: shared navigation, translations, footer, and form.
-import { loadJSON } from "./utils/load-json.js?v=76";
-import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from "./i18n.js?v=76";
-import { initNav } from "./components/nav.js?v=76";
-import { initTheme } from "./components/theme.js?v=76";
-import { initFooter } from "./sections/footer.js?v=76";
-import { initRegistration } from "./sections/registration.js?v=76";
+import { loadJSON } from "./utils/load-json.js?v=77";
+import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from "./i18n.js?v=77";
+import { initNav } from "./components/nav.js?v=77";
+import { initTheme } from "./components/theme.js?v=77";
+import { initFooter } from "./sections/footer.js?v=77";
+import { initRegistration } from "./sections/registration.js?v=77";
 
 async function start() {
   initNav();

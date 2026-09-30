@@ -1,6 +1,6 @@
 // Photos under the timeline in "About iSmile", from data/gallery.json.
 // Pictures only: they do not open larger when tapped.
-import { tr, onLangChange } from "../i18n.js?v=76";
+import { tr, onLangChange } from "../i18n.js?v=77";
 
 export function initGallery(items) {
   const block = document.getElementById("gallery");
@@ -37,6 +37,59 @@ export function initGallery(items) {
   render();
   onLangChange(render);
   initVideo();
+  initPhoneSlides(grid);
+}
+
+// On phones only (the one-row layout in gallery.css, 520px wide or less) the
+// photos move to the next one every few seconds and start again after the
+// last. It waits while the row is off screen, and for a while after the
+// visitor swipes it themselves. Tablets and laptops keep the still grid.
+const SLIDE_EVERY = 3000;
+const WAIT_AFTER_TOUCH = 6000;
+
+function initPhoneSlides(grid) {
+  const phone = matchMedia("(max-width:520px)");
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window)) return;
+  let visible = false;
+  let touchedAt = 0;
+
+  // The photo whose start edge is closest to the row's start edge.
+  function currentIndex(items, rtl) {
+    const edge = grid.getBoundingClientRect()[rtl ? "right" : "left"];
+    let best = 0;
+    let bestGap = Infinity;
+    items.forEach((li, i) => {
+      const gap = Math.abs(li.getBoundingClientRect()[rtl ? "right" : "left"] - edge);
+      if (gap < bestGap) { best = i; bestGap = gap; }
+    });
+    return best;
+  }
+
+  function next() {
+    if (!phone.matches || !visible || document.hidden) return;
+    if (Date.now() - touchedAt < WAIT_AFTER_TOUCH) return;
+    const items = [...grid.children];
+    if (items.length < 2) return;
+    const rtl = getComputedStyle(grid).direction === "rtl";
+    const atEnd = grid.scrollWidth - grid.clientWidth - Math.abs(grid.scrollLeft) < 4;
+    const index = currentIndex(items, rtl);
+    if (atEnd || index >= items.length - 1) {
+      grid.scrollTo({ left: 0, behavior: "smooth" });
+      return;
+    }
+    const target = items[index + 1].getBoundingClientRect();
+    const box = grid.getBoundingClientRect();
+    const delta = rtl ? target.right - box.right : target.left - box.left;
+    grid.scrollBy({ left: delta, behavior: "smooth" });
+  }
+
+  const touched = () => { touchedAt = Date.now(); };
+  grid.addEventListener("touchstart", touched, { passive: true });
+  grid.addEventListener("pointerdown", touched);
+  grid.addEventListener("wheel", touched, { passive: true });
+
+  new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; }, { threshold: 0.5 }).observe(grid);
+  setInterval(next, SLIDE_EVERY);
 }
 
 // The highlights video plays by itself, muted and looping, while it is on

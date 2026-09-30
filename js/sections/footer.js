@@ -1,5 +1,5 @@
 // The footer links and contact lines, from data/footer.json.
-import { tr, onLangChange } from "../i18n.js?v=76";
+import { tr, onLangChange } from "../i18n.js?v=77";
 
 export function initFooter({ links = [], contact = [] }) {
   const linkBox = document.getElementById("footLinks");
