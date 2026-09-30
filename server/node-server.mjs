@@ -74,7 +74,7 @@ export function createAppServer() {
           .end(resolved.message || "Error");
         return;
       }
-      sendFile(res, resolved.filePath);
+      sendFile(res, resolved.filePath, req);
     } catch (error) {
       console.error(error);
       res.writeHead(500, { "Content-Type": "text/plain; charset=utf-8" }).end("Server error");

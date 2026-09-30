@@ -6,6 +6,7 @@ import {
   contentType,
   isPublicPath,
   loadEnvFile,
+  parseRange,
   resolveStaticFile,
   safeJoin,
 } from "../server/static.mjs";
@@ -23,6 +24,17 @@ describe("static helpers", () => {
     expect(contentType("x.html")).toContain("text/html");
     expect(contentType("x.webp")).toBe("image/webp");
     expect(contentType("x.bin")).toBe("application/octet-stream");
+    expect(contentType("x.mp4")).toBe("video/mp4");
+  });
+
+  it("parses byte ranges for video on phones", () => {
+    expect(parseRange(undefined, 100)).toBeNull();
+    expect(parseRange("bytes=0-1", 100)).toEqual({ start: 0, end: 1 });
+    expect(parseRange("bytes=10-", 100)).toEqual({ start: 10, end: 99 });
+    expect(parseRange("bytes=-20", 100)).toEqual({ start: 80, end: 99 });
+    expect(parseRange("bytes=50-500", 100)).toEqual({ start: 50, end: 99 });
+    expect(parseRange("bytes=100-", 100)).toBe("invalid");
+    expect(parseRange("bytes=0-1,5-6", 100)).toBeNull();
   });
 
   it("blocks path traversal outside root", () => {

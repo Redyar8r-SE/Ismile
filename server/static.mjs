@@ -21,6 +21,11 @@ export const TYPES = {
   ".ico": "image/x-icon",
   ".woff": "font/woff",
   ".woff2": "font/woff2",
+  ".mp4": "video/mp4",
+  ".m4v": "video/mp4",
+  ".webm": "video/webm",
+  ".mov": "video/quicktime",
+  ".mp3": "audio/mpeg",
   ".pdf": "application/pdf",
   ".txt": "text/plain; charset=utf-8",
   ".xml": "application/xml; charset=utf-8",
@@ -106,13 +111,67 @@ export function resolveStaticFile(root, pathname) {
 }
 
 /**
+ * Parse a single "bytes=start-end" Range header against a file size.
+ * Returns null when there is no usable range (send the whole file) and
+ * "invalid" when the range cannot be satisfied.
+ * @param {string | undefined} header
+ * @param {number} size
+ * @returns {{ start: number, end: number } | null | "invalid"}
+ */
+export function parseRange(header, size) {
+  if (!header) return null;
+  const match = /^bytes=(\d*)-(\d*)$/.exec(header.trim());
+  if (!match) return null; // several ranges or another unit: send it all
+  const [, from, to] = match;
+  if (from === "" && to === "") return "invalid";
+  let start;
+  let end;
+  if (from === "") {
+    // "bytes=-500": the last 500 bytes
+    const suffix = Number(to);
+    if (suffix === 0) return "invalid";
+    start = Math.max(0, size - suffix);
+    end = size - 1;
+  } else {
+    start = Number(from);
+    end = to === "" ? size - 1 : Math.min(Number(to), size - 1);
+  }
+  if (start >= size || start > end) return "invalid";
+  return { start, end };
+}
+
+/**
+ * Send a file with its length and support for byte ranges. Phones need the
+ * ranges for video: Safari on iPhone will not play an MP4 whose server
+ * answers a Range request with the whole file.
  * @param {ServerResponse} res
  * @param {string} filePath
+ * @param {{ method?: string, headers?: Record<string, string | string[] | undefined> }} [req]
  */
-export function sendFile(res, filePath) {
+export function sendFile(res, filePath, req) {
   const type = contentType(filePath);
-  res.writeHead(200, { "Content-Type": type });
-  createReadStream(filePath).pipe(res);
+  const size = statSync(filePath).size;
+  const head = req?.method === "HEAD";
+  const rangeHeader = req?.headers?.range;
+  const range = parseRange(Array.isArray(rangeHeader) ? rangeHeader[0] : rangeHeader, size);
+  if (range === "invalid") {
+    res.writeHead(416, { "Content-Range": `bytes */${size}`, "Accept-Ranges": "bytes" }).end();
+    return;
+  }
+  if (range) {
+    res.writeHead(206, {
+      "Content-Type": type,
+      "Content-Length": range.end - range.start + 1,
+      "Content-Range": `bytes ${range.start}-${range.end}/${size}`,
+      "Accept-Ranges": "bytes",
+    });
+    if (head) res.end();
+    else createReadStream(filePath, { start: range.start, end: range.end }).pipe(res);
+    return;
+  }
+  res.writeHead(200, { "Content-Type": type, "Content-Length": size, "Accept-Ranges": "bytes" });
+  if (head) res.end();
+  else createReadStream(filePath).pipe(res);
 }
 
 /**
