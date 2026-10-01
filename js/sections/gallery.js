@@ -1,6 +1,6 @@
 // Photos under the timeline in "About iSmile", from data/gallery.json.
 // Pictures only: they do not open larger when tapped.
-import { tr, onLangChange } from "../i18n.js?v=78";
+import { tr, onLangChange } from "../i18n.js?v=79";
 
 export function initGallery(items) {
   const block = document.getElementById("gallery");
@@ -47,73 +47,62 @@ export function initGallery(items) {
 }
 
 // On phones only (the one-row layout in gallery.css, 520px wide or less) the
-// photos move to the next one every few seconds, and after the last one the
-// first comes next from the same side. When the row settles on a copy of a
-// photo it jumps, without animation, to the real one in the same place, so
-// the circle never ends. It waits while the row is off screen, and for a
-// while after the visitor swipes it themselves. Tablets and laptops keep the
-// still grid.
-const SLIDE_EVERY = 6000;
-const WAIT_AFTER_TOUCH = 8000;
+// photos drift slowly and without stopping, like a belt going round: copies
+// of the photos follow the last one, and when the first copy reaches the
+// place of the first photo the row moves back by exactly that distance, which
+// looks the same, so the circle never ends. Snapping is off while it drifts.
+// It waits while the row is off screen, and for a while after the visitor
+// swipes it themselves. Tablets and laptops keep the still grid.
+const SPEED = 25; // pixels a second
+const WAIT_AFTER_TOUCH = 5000;
 
 function initPhoneSlides(grid) {
   const phone = matchMedia("(max-width:520px)");
   if (matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window)) return;
   let visible = false;
   let touchedAt = 0;
+  let pos = null; // how far the row has drifted, kept as a fraction
+  let lastTime = 0;
 
-  // The photo whose start edge is closest to the row's start edge.
-  function currentIndex(items, rtl) {
-    const edge = grid.getBoundingClientRect()[rtl ? "right" : "left"];
-    let best = 0;
-    let bestGap = Infinity;
-    items.forEach((li, i) => {
-      const gap = Math.abs(li.getBoundingClientRect()[rtl ? "right" : "left"] - edge);
-      if (gap < bestGap) { best = i; bestGap = gap; }
-    });
-    return best;
+  // The length of one full round: from the first photo to its first copy.
+  function roundLength() {
+    const first = grid.firstElementChild;
+    const copy = grid.querySelector(".gal-clone");
+    if (!first || !copy) return 0;
+    return Math.abs(copy.getBoundingClientRect().left - first.getBoundingClientRect().left);
   }
 
-  function next() {
-    if (!phone.matches || !visible || document.hidden) return;
-    if (Date.now() - touchedAt < WAIT_AFTER_TOUCH) return;
-    const items = [...grid.children];
-    if (items.length < 2) return;
-    const rtl = getComputedStyle(grid).direction === "rtl";
-    const index = currentIndex(items, rtl);
-    if (index >= items.length - 1) return;
-    const target = items[index + 1].getBoundingClientRect();
-    const box = grid.getBoundingClientRect();
-    const delta = rtl ? target.right - box.right : target.left - box.left;
-    grid.scrollBy({ left: delta, behavior: "smooth" });
+  function frame(time) {
+    requestAnimationFrame(frame);
+    const moving = phone.matches && visible && !document.hidden && Date.now() - touchedAt > WAIT_AFTER_TOUCH;
+    if (!moving) {
+      if (grid.style.scrollSnapType) grid.style.scrollSnapType = "";
+      pos = null;
+      return;
+    }
+    const round = roundLength();
+    if (!round) return;
+    const sign = getComputedStyle(grid).direction === "rtl" ? -1 : 1;
+    if (pos === null) {
+      // Start (or carry on after a swipe) from wherever the row is now.
+      grid.style.scrollSnapType = "none";
+      pos = Math.abs(grid.scrollLeft);
+      lastTime = time;
+    }
+    const seconds = Math.min(time - lastTime, 50) / 1000;
+    lastTime = time;
+    pos += SPEED * seconds;
+    if (pos >= round) pos -= round;
+    grid.scrollLeft = sign * pos;
   }
-
-  // Resting on a copy: move to the real photo, which looks exactly the same.
-  function wrap() {
-    if (!phone.matches) return;
-    const items = [...grid.children];
-    const real = items.filter((li) => !li.classList.contains("gal-clone"));
-    const copies = items.length - real.length;
-    if (!copies) return;
-    const index = currentIndex(items, getComputedStyle(grid).direction === "rtl");
-    if (index < real.length) return;
-    const shift = items[index - real.length].getBoundingClientRect().left - items[index].getBoundingClientRect().left;
-    grid.scrollBy({ left: shift, behavior: "instant" });
-  }
-
-  let settle = 0;
-  grid.addEventListener("scroll", () => {
-    clearTimeout(settle);
-    settle = setTimeout(wrap, 200);
-  }, { passive: true });
 
   const touched = () => { touchedAt = Date.now(); };
   grid.addEventListener("touchstart", touched, { passive: true });
   grid.addEventListener("pointerdown", touched);
   grid.addEventListener("wheel", touched, { passive: true });
 
-  new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; }, { threshold: 0.5 }).observe(grid);
-  setInterval(next, SLIDE_EVERY);
+  new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; }, { threshold: 0.3 }).observe(grid);
+  requestAnimationFrame(frame);
 }
 
 // The highlights video plays by itself, muted and looping, while it is on
@@ -164,6 +153,14 @@ function initVideo() {
   });
 
   if (matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window)) return;
+
+  // Some phones refuse to start any video by itself (iPhone Low Power Mode,
+  // Android battery saver, the browsers inside Instagram or WhatsApp). They
+  // do allow it straight after a tap, so any tap on the page tries again.
+  const retry = () => { if (visible && !withSound && video.paused) playMuted(); };
+  document.addEventListener("touchend", retry, { passive: true });
+  document.addEventListener("click", retry);
+
   new IntersectionObserver(([entry]) => {
     visible = entry.isIntersecting;
     if (visible) playMuted();
