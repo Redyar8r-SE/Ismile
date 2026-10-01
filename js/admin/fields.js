@@ -206,7 +206,8 @@ const PARTS = [
   {
     id: "hero", title: "Top of the page",
     hint: "The big title visitors see first.",
-    fields: many([["hero_ed_sfx", "Big number: the letters after the 2 (nd)"], ["hero_title", "Main title"], ["hero_sub", "Subtitle"]]),
+    fields: many([["hero_ed_sfx", "Big number: the letters after the 2 (nd)"], ["hero_title", "Main title"], ["hero_sub", "Subtitle"],
+      ["cd_label", "Countdown: label above it"], ["cd_days", "Countdown: days"], ["cd_hours", "Countdown: hours"], ["cd_minutes", "Countdown: minutes"], ["cd_seconds", "Countdown: seconds"]]),
   },
   {
     id: "ticket", title: "Ticket card",

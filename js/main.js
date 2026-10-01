@@ -1,23 +1,25 @@
 // Entry point: loads the data files, then starts each page section.
-import { loadJSON } from "./utils/load-json.js?v=80";
-import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from "./i18n.js?v=80";
-import { initNav } from "./components/nav.js?v=80";
-import { initTheme } from "./components/theme.js?v=80";
-import { initProgram } from "./sections/program.js?v=80";
-import { initSpeakers } from "./sections/speakers.js?v=80";
-import { initSponsors } from "./sections/sponsors.js?v=80";
-import { initPartners } from "./sections/partners.js?v=80";
-import { initJourney } from "./sections/journey.js?v=80";
-import { initProjects } from "./sections/projects.js?v=80";
-import { initGallery } from "./sections/gallery.js?v=80";
-import { initFooter } from "./sections/footer.js?v=80";
-import { initVenue } from "./sections/venue.js?v=80";
-import { initReveal } from "./utils/reveal.js?v=80";
-import { initReadMore } from "./sections/read-more.js?v=80";
+import { loadJSON } from "./utils/load-json.js?v=81";
+import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from "./i18n.js?v=81";
+import { initNav } from "./components/nav.js?v=81";
+import { initTheme } from "./components/theme.js?v=81";
+import { initProgram } from "./sections/program.js?v=81";
+import { initSpeakers } from "./sections/speakers.js?v=81";
+import { initSponsors } from "./sections/sponsors.js?v=81";
+import { initPartners } from "./sections/partners.js?v=81";
+import { initJourney } from "./sections/journey.js?v=81";
+import { initProjects } from "./sections/projects.js?v=81";
+import { initGallery } from "./sections/gallery.js?v=81";
+import { initFooter } from "./sections/footer.js?v=81";
+import { initVenue } from "./sections/venue.js?v=81";
+import { initReveal } from "./utils/reveal.js?v=81";
+import { initReadMore } from "./sections/read-more.js?v=81";
+import { initCountdown } from "./sections/countdown.js?v=81";
 
 async function start() {
   initNav();
   initTheme();
+  initCountdown();
 
   try {
     const [strings, program, speakers, sponsors, partners, journey, projects, gallery, footer, map] = await Promise.all([

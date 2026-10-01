@@ -1,6 +1,6 @@
 // Photos under the timeline in "About iSmile", from data/gallery.json.
 // Pictures only: they do not open larger when tapped.
-import { tr, onLangChange } from "../i18n.js?v=80";
+import { tr, onLangChange } from "../i18n.js?v=81";
 
 export function initGallery(items) {
   const block = document.getElementById("gallery");
