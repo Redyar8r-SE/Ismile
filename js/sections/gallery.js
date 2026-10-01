@@ -1,6 +1,6 @@
 // Photos under the timeline in "About iSmile", from data/gallery.json.
 // Pictures only: they do not open larger when tapped.
-import { tr, onLangChange } from "../i18n.js?v=79";
+import { tr, onLangChange } from "../i18n.js?v=80";
 
 export function initGallery(items) {
   const block = document.getElementById("gallery");
@@ -58,7 +58,9 @@ const WAIT_AFTER_TOUCH = 5000;
 
 function initPhoneSlides(grid) {
   const phone = matchMedia("(max-width:520px)");
-  if (matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window)) return;
+  // The owner wants these moving on every phone, so the "Reduce Motion"
+  // setting does not stop them.
+  if (!("IntersectionObserver" in window)) return;
   let visible = false;
   let touchedAt = 0;
   let pos = null; // how far the row has drifted, kept as a fraction
@@ -108,8 +110,9 @@ function initPhoneSlides(grid) {
 // The highlights video plays by itself, muted and looping, while it is on
 // screen (browsers only allow a video to start on its own without sound).
 // "Tap for sound" starts it again from the beginning with sound and controls;
-// when that ends it goes back to playing muted. With reduced motion, or if the
-// browser still refuses, the big play button is shown instead.
+// when that ends it goes back to playing muted. If the browser still refuses
+// (iPhone Low Power Mode and the like), the big play button is shown and the
+// first tap anywhere on the page starts it.
 function initVideo() {
   const box = document.getElementById("galVideo");
   if (!box) return;
@@ -152,7 +155,9 @@ function initVideo() {
     playMuted();
   });
 
-  if (matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window)) return;
+  // The owner wants these moving on every phone, so the "Reduce Motion"
+  // setting does not stop them.
+  if (!("IntersectionObserver" in window)) return;
 
   // Some phones refuse to start any video by itself (iPhone Low Power Mode,
   // Android battery saver, the browsers inside Instagram or WhatsApp). They

@@ -5,10 +5,10 @@
 // A workshop without a title is not announced yet: like a speaker who is not
 // announced, it shows only "Coming soon" over shaped placeholders, never
 // pretend text, and no price or button (the office number sits above the cards).
-import { t, tr, onLangChange } from "../i18n.js?v=79";
-import { formatPrice } from "../utils/money.js?v=79";
-import { callButton, phoneHref, PHONE_ICON } from "../utils/phone.js?v=79";
-import { tCount } from "../utils/count.js?v=79";
+import { t, tr, onLangChange } from "../i18n.js?v=80";
+import { formatPrice } from "../utils/money.js?v=80";
+import { callButton, phoneHref, PHONE_ICON } from "../utils/phone.js?v=80";
+import { tCount } from "../utils/count.js?v=80";
 
 // A tooth and a dental mirror: hands-on dental training.
 const WORKSHOP_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3.5c-2.8 0-4.6 1.5-4.6 4.2 0 1.8.6 3.1.9 5.1.3 2.8.5 6.7 1.8 6.7 1.1 0 1-3.6 1.9-3.6s.8 3.6 1.9 3.6c1.3 0 1.5-3.9 1.8-6.7.3-2 .9-3.3.9-5.1 0-2.7-1.8-4.2-4.6-4.2z"/><circle cx="17.6" cy="5.4" r="2.6"/><path d="M17.9 8l.5 3"/><path d="M18.4 11l1.4 9.2"/></svg>';
