@@ -2,9 +2,6 @@
    Hero: animated wordmark and tooth mark, event "ticket"
    ========================================================== */
 .hero{background:var(--hero-bg);color:var(--hero-text);position:relative;overflow:hidden}
-/* The full 2021 hall behind the title, darkened most on the side the text is on */
-.hero{background:linear-gradient(90deg,rgba(6,22,28,.94) 0%,rgba(6,22,28,.8) 45%,rgba(6,22,28,.55) 100%),url(../../assets/photos/2021-hall.jpg) center/cover no-repeat,var(--hero-bg)}
-[dir="rtl"] .hero{background:linear-gradient(270deg,rgba(6,22,28,.94) 0%,rgba(6,22,28,.8) 45%,rgba(6,22,28,.55) 100%),url(../../assets/photos/2021-hall.jpg) center/cover no-repeat,var(--hero-bg)}
 
 /* Countdown to the first day, under the two big buttons */
 .countdown{margin-top:30px}
@@ -102,7 +99,6 @@ html[lang="ar"] .hero-ed-big sup{order:-1;font-size:.3em;margin-top:.3em;font-we
   .hero-mark{top:calc((100% - 20px)/2)}
 }
 @media (max-width:860px){
-  .hero,[dir="rtl"] .hero{background:linear-gradient(180deg,rgba(6,22,28,.86) 0%,rgba(6,22,28,.72) 55%,rgba(6,22,28,.92) 100%),url(../../assets/photos/2021-hall.jpg) center/cover no-repeat,var(--hero-bg)}
   .hero .wrap{grid-template-columns:minmax(0,1fr);padding-block:56px 64px;gap:40px}
   .hero .wrap > *{min-width:0}
   .hero-mark{--mark-scale:2.2}
