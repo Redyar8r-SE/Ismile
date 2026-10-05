@@ -33,7 +33,7 @@ Page::top('Phone code (two-step sign-in)', '');
 if ((int) $fresh['totp_enabled'] === 1) {
     echo '<div class="card narrow"><p>' . Page::pill('confirmed') . ' The phone code is on for your account.</p>'
         . '<p class="muted">Lost your phone? Ask the Owner to reset it on the Users page.</p>'
-        . '<p><a class="btn" href="' . Page::home($user) . '">Continue</a></p></div>';
+        . '<div class="form-actions"><a class="btn" href="' . Page::home($user) . '">Continue</a></div></div>';
     Page::bottom();
     exit;
 }
@@ -59,7 +59,7 @@ $png = base64_encode((string) $barcode->getBarcodePngData(6, 6, [0, 0, 0]));
   <form method="post" class="stack">
     <?= Page::csrfField() ?>
     <label>Code<input name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="7" required autofocus></label>
-    <button class="btn">Turn on</button>
+    <div class="form-actions"><button class="btn">Turn on</button></div>
   </form>
   <p class="muted small">Write the key above on paper and keep it in the sealed envelope in the office: it lets you set up a new phone.</p>
 </div>

@@ -1,6 +1,6 @@
 <?php
-// Sign in: email and password, then (Owner and Finance) the 6-digit code
-// from the phone app.
+// Sign in: email and password, then the phone code when enabled.
+// Owner and Finance must set up a phone code before accessing the Database.
 
 declare(strict_types=1);
 
@@ -68,7 +68,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         }
 
         $user = Auth::checkPassword((string) ($_POST['email'] ?? ''), (string) ($_POST['password'] ?? ''));
-        if (Auth::needsTwoFactor($user) && (int) $user['totp_enabled'] === 1) {
+        if ((int) $user['totp_enabled'] === 1) {
             $_SESSION['pending_uid'] = (int) $user['id'];
             $_SESSION['pending_at'] = time();
             $askCode = true;

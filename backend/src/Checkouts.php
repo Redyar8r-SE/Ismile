@@ -172,15 +172,23 @@ final class Checkouts
             throw new UserError('An email address is needed: the payment link and the ticket are sent there.');
         }
         $ticket = Validate::oneOf($in['ticket'] ?? null, ['professional', 'student'], 'professional');
-        $specialty = Validate::oneOf($in['specialty'] ?? null, Registrations::SPECIALTIES, $ticket === 'student' ? 'student' : 'gp');
+        $specialty = Validate::oneOf($in['specialty'] ?? null, Registrations::SPECIALTIES);
+        if ($specialty === null) {
+            throw new UserError('Choose the caller\'s specialty.');
+        }
         if ($specialty === 'student') {
             $ticket = 'student';   // same rule as the website form
         }
         $university = null;
+        $ambassador = null;
         if ($ticket === 'student') {
             $university = Validate::text($in['university'] ?? '', 160);
             if ($university === '') {
                 throw new UserError('Write the student\'s university.');
+            }
+            $ambassador = Validate::text($in['ambassador'] ?? '', 40) ?: null;
+            if ($ambassador !== null && !preg_match('/^[\p{L}\p{N}\-_. ]{1,40}$/u', $ambassador)) {
+                throw new UserError('The ambassador code contains unsupported characters.');
             }
         }
         return [
@@ -188,7 +196,7 @@ final class Checkouts
             'phone' => $phone, 'email' => $email, 'city' => Validate::text($in['city'] ?? '', 80) ?: '-',
             'gender' => 'prefer-not', 'age' => null, 'specialty' => $specialty, 'lang' => Lang::pick($in['lang'] ?? 'ku'),
             'ticket_type' => $ticket, 'lunch_day1' => ($in['lunch_day1'] ?? '') === '1' ? 1 : 0, 'lunch_day2' => ($in['lunch_day2'] ?? '') === '1' ? 1 : 0,
-            'pay_method' => 'visa', 'university' => $university, 'ambassador_code' => null, 'id_photo_id' => null,
+            'pay_method' => 'visa', 'university' => $university, 'ambassador_code' => $ambassador, 'id_photo_id' => null,
         ];
     }
 

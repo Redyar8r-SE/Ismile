@@ -74,17 +74,51 @@ if ($q !== '') {
     );
 }
 
-Page::top('Workshops', 'workshops');
+$workshopCounts = array_column(Db::all("SELECT workshop_id, COUNT(*) AS booked, COALESCE(SUM(payment_status='paid'),0) AS paid, COALESCE(SUM(payment_status='complimentary'),0) AS free, COALESCE(SUM(payment_status='unpaid'),0) AS unpaid, COALESCE(SUM(amount_paid),0) AS money FROM workshop_bookings WHERE removed_at IS NULL GROUP BY workshop_id"), null, 'workshop_id');
+$availableTotal = $bookingTotal = $unpaidTotal = 0;
+foreach ($workshops as $workshop) {
+    $availableTotal += max(0,(int) ($workshop['totalSeats'] ?? 0) - (int) ($workshopCounts[$workshop['id']]['booked'] ?? 0));
+    $bookingTotal += (int) ($workshopCounts[$workshop['id']]['booked'] ?? 0);
+    $unpaidTotal += (int) ($workshopCounts[$workshop['id']]['unpaid'] ?? 0);
+}
+Page::top('Workshops', 'workshops', ($user['role']==='owner' ? '<a class="btn ghost" href="#manage">Workshop settings</a>' : '') . '<a class="btn" href="#book">Book a guest ' . Page::navIcon('arrow') . '</a>');
 $e = [Page::class, 'e'];
 ?>
+<?= Page::stats([
+    ['Active workshops', number_format(count($workshops)), 'Workshops available for booking', 'workshops', 'blue'],
+    ['Seats available', number_format($availableTotal), 'Across all active workshops', 'ticket', 'teal'],
+    ['Workshop bookings', number_format($bookingTotal), 'Seats reserved in active workshops', 'users', 'violet'],
+    ['Payment to collect', number_format($unpaidTotal), 'Unpaid workshop bookings', 'payments', 'gold'],
+]) ?>
+<div class="workshop-grid" id="workshop-grid">
+<?php foreach ($workshops as $i => $workshop):
+    $counts = $workshopCounts[$workshop['id']] ?? ['booked'=>0,'paid'=>0,'free'=>0,'unpaid'=>0,'money'=>0];
+    $total = (int) ($workshop['totalSeats'] ?? 0);
+    $left = max(0,$total-(int)$counts['booked']);
+    $speaker = is_array($workshop['speaker'] ?? null) ? ($workshop['speaker']['en'] ?? '') : '';
+?>
+  <article class="card workshop-card<?= $left===0 ? ' is-full' : '' ?>">
+    <div class="workshop-card-top"><span class="workshop-card-icon"><?= Page::navIcon('workshops') ?></span><span class="pill <?= $left>0 ? 'green':'red' ?>"><?= $left>0 ? $left.' seats left':'Full' ?></span></div>
+    <span class="workshop-number">WORKSHOP <?= str_pad((string)($i+1),2,'0',STR_PAD_LEFT) ?></span>
+    <h2><?= $e(SiteData::workshopName($workshop)) ?></h2><p class="workshop-speaker"><?= $speaker!=='' ? $e($speaker) : 'Trainer to be announced' ?></p>
+    <div class="workshop-price"><strong><?= (int)($workshop['price'] ?? 0)>0 ? Page::money((int)$workshop['price']) : 'Price to be set' ?></strong><span>per seat</span></div>
+    <div class="capacity-label"><span>Seat availability</span><b><?= (int)$counts['booked'] ?> / <?= $total ?> booked</b></div>
+    <progress value="<?= min((int)$counts['booked'],max(1,$total)) ?>" max="<?= max(1,$total) ?>" aria-label="<?= $e(SiteData::workshopName($workshop).' booked seats') ?>"></progress>
+    <div class="workshop-payment"><span><i class="dot teal"></i><?= (int)$counts['paid'] ?> paid<?= (int)$counts['free'] ? ' · '.(int)$counts['free'].' free':'' ?></span><span><?= (int)$counts['unpaid'] ?> unpaid</span></div>
+    <div class="workshop-collected"><span>Collected</span><b><?= Page::money((int)$counts['money']) ?></b></div>
+    <div class="workshop-card-actions"><a class="btn" href="workshops.php?id=<?= rawurlencode($workshop['id']) ?>#people">View people</a><a class="btn ghost" href="export.php?what=workshop&amp;id=<?= rawurlencode($workshop['id']) ?>" aria-label="<?= $e('Export sign-in sheet for '.SiteData::workshopName($workshop)) ?>"><?= Page::navIcon('download') ?> Sign-in sheet</a></div>
+  </article>
+<?php endforeach; ?>
+</div>
+<?php if (!$workshops): ?><div class="card"><?= Page::emptyState('Your workshops start here', 'Add an active workshop to begin taking bookings.', 'workshops') ?></div><?php endif; ?>
+
 <div class="card book-caller" id="book">
-  <h2>📞 Book a caller</h2>
+  <?= Page::panelHeading('Book a caller', 'Find a registered guest and reserve their workshop seat.', 'registrations') ?>
   <p class="muted">Type the caller's name, phone or ISM26-… reference. Only <b>registered</b> people (they paid the event ticket) can take a workshop seat. Not registered yet? <a href="registration.php?new=1">Register them by phone</a>: they get a "Pay now" link and appear here once they have paid.</p>
   <form method="get" class="filters" action="workshops.php#book">
     <?php if ($open !== ''): ?><input type="hidden" name="id" value="<?= $e($open) ?>"><?php endif; ?>
-    <input type="search" name="q" value="<?= $e($q) ?>" placeholder="Name, phone or ISM26-…" autofocus>
-    <button class="btn">Find</button>
-    <?php if ($q !== ''): ?><a class="btn ghost" href="workshops.php">Clear</a><?php endif; ?>
+    <input type="search" name="q" value="<?= $e($q) ?>" placeholder="Name, phone or ISM26-…" aria-label="Find a registered guest for a workshop">
+    <div class="search-actions"><?php if ($q !== ''): ?><a class="btn ghost" href="workshops.php">Clear</a><?php endif; ?><button class="btn">Find</button></div>
   </form>
   <?php foreach ($found as $person):
       $booked = Db::all('SELECT wb.*, wb.workshop_id FROM workshop_bookings wb WHERE wb.registration_id = ? AND wb.removed_at IS NULL', [$person['id']]); ?>
@@ -104,31 +138,6 @@ $e = [Page::class, 'e'];
   </div>
   <?php endforeach; ?>
   <?php if ($q !== '' && !$found): ?><p class="flash warn">Nobody registered found for “<?= $e($q) ?>”. Only people who paid are registered. <a href="registration.php?new=1">Register them by phone</a> first.</p><?php endif; ?>
-</div>
-
-<div class="card table-wrap">
-<table>
-  <tr><th>Workshop</th><th>Price</th><th>Seats</th><th>Booked</th><th>✓ Paid</th><th>✗ Not paid</th><th>Money</th><th>Left</th><th></th></tr>
-  <?php foreach ($workshops as $workshop):
-      $counts = Db::one("SELECT COUNT(*) AS booked, COALESCE(SUM(payment_status = 'paid'), 0) AS paid, COALESCE(SUM(payment_status = 'complimentary'), 0) AS free,
-                                COALESCE(SUM(payment_status = 'unpaid'), 0) AS unpaid, COALESCE(SUM(amount_paid), 0) AS money
-                         FROM workshop_bookings WHERE workshop_id = ? AND removed_at IS NULL", [$workshop['id']]);
-      $total = (int) ($workshop['totalSeats'] ?? 0);
-      $left = $total - (int) $counts['booked']; ?>
-  <tr>
-    <td><b><?= $e(SiteData::workshopName($workshop)) ?></b><?= empty($workshop['title']) ? ' <span class="muted small">(title not announced yet)</span>' : '' ?></td>
-    <td><?= (int) ($workshop['price'] ?? 0) > 0 ? Page::money((int) $workshop['price']) : '<span class="muted">not set</span>' ?></td>
-    <td><?= $total ?></td><td><?= (int) $counts['booked'] ?></td>
-    <td><b class="green-text"><?= (int) $counts['paid'] ?></b><?= (int) $counts['free'] ? ' <small class="muted">+' . (int) $counts['free'] . ' free</small>' : '' ?></td>
-    <td><?= (int) $counts['unpaid'] ? '<b class="red-text">' . (int) $counts['unpaid'] . '</b>' : '0' ?></td>
-    <td><?= Page::money((int) $counts['money']) ?></td>
-    <td><?= $left <= 0 ? Page::pill('full') : '<b>' . $left . '</b>' ?></td>
-    <td><a class="btn small ghost" href="workshops.php?id=<?= $e($workshop['id']) ?>#people">People</a>
-        <a class="btn small green" href="export.php?what=workshop&id=<?= $e($workshop['id']) ?>">Sign-in sheet</a></td>
-  </tr>
-  <?php endforeach; ?>
-  <?php if (!$workshops): ?><tr><td colspan="9" class="muted">No workshops in data/workshops.json.</td></tr><?php endif; ?>
-</table>
 </div>
 
 <?php if ($user['role'] === 'owner'):
@@ -160,10 +169,10 @@ $e = [Page::class, 'e'];
             . '<label>Picture on the website' . $iconSelect((string) ($w['icon'] ?? 'tools')) . '</label></div>';
     }; ?>
 <div class="card" id="manage">
-  <h2>⚙ Manage the workshops (Owner)</h2>
+  <?= Page::panelHeading('Workshop settings', 'Names, prices, visibility and seat limits. Owner access.', 'settings') ?>
   <p class="muted">Add a new workshop, change its name, price or seats, or hide it. The website's workshop cards change at once. The seats are the limit: nobody can be booked past it, and the seats can never be fewer than the people already booked.</p>
   <div class="table-wrap"><table>
-    <tr><th>Workshop</th><th>On the website</th><th>Seats (limit)</th><th>Booked</th><th></th></tr>
+    <tr><th>Workshop</th><th>On the website</th><th>Seats (limit)</th><th>Booked</th><th class="table-action-heading">Actions</th></tr>
     <?php foreach ($all as $w): ?>
     <tr>
       <td><b><?= $e(SiteData::workshopName($w)) ?></b><br><small class="muted"><?= $e($w['id']) ?> · <?= $w['price'] > 0 ? Page::money($w['price']) : 'price not set' ?></small></td>
@@ -176,19 +185,19 @@ $e = [Page::class, 'e'];
         </div>
       </td>
       <td><b><?= (int) $w['booked'] ?></b> <small class="muted">· <?= (int) $w['seatsLeft'] ?> left</small></td>
-      <td>
+      <td class="table-action-cell"><div class="row-actions">
         <details class="edit"><summary class="btn small ghost">Edit</summary>
           <form method="post" class="stack"><?= Page::csrfField() ?><input type="hidden" name="do" value="ws_update"><input type="hidden" name="ws" value="<?= $e($w['id']) ?>">
-            <?= $fieldsFor($w) ?><button class="btn">Save</button></form>
+            <?= $fieldsFor($w) ?><div class="form-actions"><button class="btn">Save workshop</button></div></form>
         </details>
         <form method="post" class="inline-form"><?= Page::csrfField() ?><input type="hidden" name="ws" value="<?= $e($w['id']) ?>">
           <?php if ($w['status'] === 'active'): ?><button class="btn small gold" name="do" value="ws_hide" data-confirm="Hide this workshop? It leaves the website and takes no new bookings. People already booked stay.">Hide</button>
           <?php else: ?><button class="btn small green" name="do" value="ws_show">Show again</button><?php endif; ?>
           <?php if ((int) Db::value('SELECT COUNT(*) FROM workshop_bookings WHERE workshop_id = ?', [$w['id']]) === 0): ?>
-            <button class="btn small red" name="do" value="ws_delete" data-confirm="Delete this workshop for good?">Delete</button>
+            <div class="row-danger-actions"><button class="btn small red" name="do" value="ws_delete" data-confirm="Delete this workshop for good?">Delete</button></div>
           <?php endif; ?>
         </form>
-      </td>
+      </div></td>
     </tr>
     <?php endforeach; ?>
   </table></div>
@@ -197,7 +206,7 @@ $e = [Page::class, 'e'];
     <form method="post" class="stack"><?= Page::csrfField() ?><input type="hidden" name="do" value="ws_create">
       <?= $fieldsFor(null) ?>
       <p class="muted small">Leave the names empty only if the title is not announced yet: the website then shows "Coming soon".</p>
-      <button class="btn green">Add the workshop</button>
+      <div class="form-actions"><button class="btn green">Add the workshop</button></div>
     </form>
   </details>
 </div>
@@ -211,7 +220,7 @@ $e = [Page::class, 'e'];
   <h2><?= $e(SiteData::workshopName($workshop)) ?>: <?= count($people) ?> people</h2>
   <p class="muted">Not paid first. Workshop money is not refunded.</p>
   <div class="table-wrap"><table>
-    <tr><th>Name</th><th>Workshop paid?</th><th>Phone</th><th>Event ticket</th><th>Price</th><th></th></tr>
+    <tr><th>Name</th><th>Workshop paid?</th><th>Phone</th><th>Event ticket</th><th>Price</th><th class="table-action-heading">Actions</th></tr>
     <?php foreach ($people as $person): ?>
     <tr>
       <td><a href="registration.php?id=<?= (int) $person['rid'] ?>"><b><?= $e(Registrations::fullName($person)) ?></b></a></td>
@@ -219,7 +228,7 @@ $e = [Page::class, 'e'];
       <td dir="ltr"><?= $e($person['phone']) ?></td>
       <td><?= Page::paidBadge($person['reg_status']) ?></td>
       <td><?= Page::money((int) $person['price_agreed']) ?></td>
-      <td><?= Page::workshopPaymentForm($person, $user, $back . '#people') ?></td>
+      <td class="table-action-cell"><?= Page::workshopPaymentForm($person, $user, $back . '#people') ?></td>
     </tr>
     <?php endforeach; ?>
     <?php if (!$people): ?><tr><td colspan="6" class="muted">Nobody booked yet.</td></tr><?php endif; ?>

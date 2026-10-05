@@ -169,6 +169,7 @@ final class Auth
             'export'        => ['registration', 'finance'],
             'photos'        => ['registration'],
             'content'       => ['content'],
+            'communications' => ['registration', 'finance'],
         ];
         return in_array($user['role'], $allowed[$area] ?? [], true);
     }

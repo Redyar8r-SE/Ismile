@@ -65,20 +65,28 @@ $daily = Db::all("SELECT DATE(confirmed_at) AS day, currency,
                   GROUP BY DATE(confirmed_at), currency ORDER BY day DESC LIMIT 60");
 $hooks = Db::all('SELECT * FROM webhook_log ORDER BY id DESC LIMIT 50');
 $flagged = (int) Db::value("SELECT COUNT(*) FROM payments WHERE status IN ('mismatch','duplicate')");
+$paymentSummary = Db::one("SELECT COUNT(*) AS attempts, COALESCE(SUM(status='paid'),0) AS paid, COALESCE(SUM(status IN ('created','waiting')),0) AS waiting FROM payments");
 
 Page::top('Payments', 'payments');
 $e = [Page::class, 'e'];
 ?>
-<div class="toolbar tabs">
+<?= Page::stats([
+    ['Confirmed payments', number_format((int)$paymentSummary['paid']), 'Successful ticket payments', 'payments', 'green'],
+    ['Waiting for payment', number_format((int)$paymentSummary['waiting']), 'Created and waiting attempts', 'clock', 'gold'],
+    ['Needs Finance', number_format($flagged), 'Wrong amount or duplicate payment', 'search', $flagged ? 'red' : 'blue'],
+    ['Payment attempts', number_format((int)$paymentSummary['attempts']), 'All recorded payment attempts', 'registrations', 'violet'],
+]) ?>
+<div class="toolbar tabs segmented-tabs">
   <?php foreach (['' => 'All', 'flagged' => "Needs Finance ($flagged)", 'paid' => 'Paid', 'waiting' => 'Waiting', 'failed' => 'Failed', 'expired' => 'Expired', 'kept' => 'Reviewed (kept)'] as $value => $label): ?>
-    <a class="btn small <?= $filter === $value ? '' : 'ghost' ?><?= $value === 'flagged' && $flagged ? ' red' : '' ?>" href="payments.php<?= $value !== '' ? '?status=' . $value : '' ?>"><?= $e($label) ?></a>
+    <a class="btn small <?= $filter === $value ? '' : 'ghost' ?><?= $value === 'flagged' && $flagged ? ' red' : '' ?>"<?= $filter === $value ? ' aria-current="page"' : '' ?> href="payments.php<?= $value !== '' ? '?status=' . $value : '' ?>"><?= $e($label) ?></a>
   <?php endforeach; ?>
-  <a class="btn small green" href="export.php?what=payments">Export to Excel</a>
 </div>
 
-<div class="card table-wrap">
+<section class="card ledger-panel">
+<div class="panel-top"><?= Page::panelHeading('Payment ledger', 'Review each attempt, the amount received and any action needed.', 'payments') ?><div class="panel-actions"><a class="btn green" href="export.php?what=payments">Export to Excel</a></div></div>
+<div class="table-wrap">
 <table>
-  <tr><th>#</th><th>Person</th><th>Method</th><th>Expected</th><th>Confirmed</th><th>Status</th><th>Company id</th><th>Started</th><th></th></tr>
+  <tr><th>#</th><th>Person</th><th>Method</th><th>Expected</th><th>Confirmed</th><th>Status</th><th>Company id</th><th>Started</th><th class="table-action-heading">Actions</th></tr>
   <?php foreach ($rows as $row): ?>
   <tr class="<?= in_array($row['status'], ['mismatch', 'duplicate'], true) ? 'row-red' : '' ?>">
     <td><?= (int) $row['id'] ?></td>
@@ -90,32 +98,33 @@ $e = [Page::class, 'e'];
     <td><?= Page::pill($row['status']) ?><?= $row['last_error'] ? '<br><small class="muted">' . $e($row['last_error']) . '</small>' : '' ?></td>
     <td><code><?= $e($row['provider_payment_id'] ?? '–') ?></code><br><small class="muted"><?= $e($row['gateway']) ?></small></td>
     <td><?= Page::when($row['created_at']) ?></td>
-    <td>
+    <td class="table-action-cell"><div class="row-actions">
       <?php if (in_array($row['status'], ['created', 'waiting'], true)): ?>
         <form method="post"><?= Page::csrfField() ?><input type="hidden" name="id" value="<?= (int) $row['id'] ?>"><input type="hidden" name="do" value="check"><button class="btn small ghost">Check now</button></form>
       <?php elseif (in_array($row['status'], ['duplicate', 'mismatch'], true)): ?>
         <form method="post" class="inline-form"><?= Page::csrfField() ?><input type="hidden" name="id" value="<?= (int) $row['id'] ?>"><input type="hidden" name="do" value="kept">
-          <input name="note" placeholder="What was agreed (no refund)" required><button class="btn small violet">Reviewed, close</button></form>
+          <input name="note" aria-label="What was agreed with the customer" placeholder="What was agreed (no refund)" required><div class="form-actions compact"><button class="btn small violet">Reviewed, close</button></div></form>
       <?php endif; ?>
-    </td>
+    </div></td>
   </tr>
   <?php endforeach; ?>
-  <?php if (!$rows): ?><tr><td colspan="9" class="muted">No payments.</td></tr><?php endif; ?>
+  <?php if (!$rows): ?><tr><td colspan="9" class="muted"><?= Page::emptyState('No payments in this view', 'Payment attempts will appear here when guests start paying. Choose All to see every status.', 'payments') ?></td></tr><?php endif; ?>
 </table>
 </div>
+</section>
 
 <div class="grid2">
   <div class="card">
-    <h2>Daily totals (confirmed)</h2>
+    <?= Page::panelHeading('Daily settlement', 'Confirmed ticket money and held payments, grouped by day.', 'calendar') ?>
     <p class="muted small">Compare each day with Psoola's settlement report: <b>Tickets + Held</b> should equal what Psoola paid. "Held" is money that arrived without a ticket (wrong amount or paid twice), see the red rows.</p>
-    <table><tr><th>Day</th><th>Payments</th><th>Tickets</th><th>Held</th><th>Total received</th></tr>
+    <div class="table-wrap"><table><tr><th>Day</th><th>Payments</th><th>Tickets</th><th>Held</th><th>Total received</th></tr>
       <?php foreach ($daily as $day): ?><tr><td><?= $e($day['day']) ?></td><td><?= (int) $day['n'] ?></td><td><?= Page::money((int) $day['total'], $day['currency']) ?></td>
         <td><?= (int) $day['held'] ? '<b class="red-text">' . Page::money((int) $day['held'], $day['currency']) . '</b>' : '–' ?></td><td><b><?= Page::money((int) $day['total'] + (int) $day['held'], $day['currency']) ?></b></td></tr><?php endforeach; ?>
       <?php if (!$daily): ?><tr><td colspan="5" class="muted">No confirmed payments yet.</td></tr><?php endif; ?>
-    </table>
+    </table></div>
   </div>
   <div class="card" id="webhooks">
-    <h2>Messages from the payment company</h2>
+    <?= Page::panelHeading('Payment company messages', 'Recent confirmations and delivery results.', 'mail') ?>
     <p class="muted small">The first place to look when someone says "I paid but got nothing".</p>
     <div class="table-wrap"><table><tr><th>When</th><th>Payment</th><th>Signature</th><th>Result</th></tr>
       <?php foreach ($hooks as $hook): ?>

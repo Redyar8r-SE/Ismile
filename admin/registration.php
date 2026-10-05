@@ -42,31 +42,53 @@ if (isset($_GET['new'])) {
             Page::redirect('registration.php?new=1');
         } catch (UserError $error) {
             Page::flash('error', $error->key);
-            Page::redirect('registration.php?new=1');
         }
     }
-    Page::top('Register a caller (phone)', 'registrations');
+    $e = [Page::class, 'e'];
+    $value = static fn (string $key): string => Page::e(is_string($_POST[$key] ?? null) ? $_POST[$key] : '');
+    $selected = static fn (string $key, string $option, string $default = ''): string => ($_POST[$key] ?? $default) === $option ? ' selected' : '';
+    $student = ($_POST['specialty'] ?? '') === 'student' || ($_POST['ticket'] ?? '') === 'student';
+    Page::top('Register a caller (phone)', 'registrations', '<a class="btn ghost" href="registrations.php">&larr; All registrations</a>');
     ?>
-    <form method="post" class="card stack narrow">
+    <form method="post" class="card stack caller-form" id="caller-form">
       <?= Page::csrfField() ?>
-      <p class="muted">For someone who calls the office. They get a <b>"Pay now"</b> email and are <b>registered only after paying</b>. Students: write the university (the office has seen the ID).</p>
-      <div class="row3"><label>First name<input name="first_name" required></label><label>Father's name<input name="father_name" required></label><label>Grandfather's name<input name="grandfather_name" required></label></div>
-      <div class="row3"><label>Phone<input name="phone" dir="ltr" required placeholder="0750 123 4567"></label><label>Email<input type="email" name="email" dir="ltr" required></label><label>City<input name="city"></label></div>
-      <div class="row3">
-        <label>Ticket<select name="ticket"><option value="professional">Professional</option><option value="student">Student</option></select></label>
-        <label>University (students)<input name="university"></label>
-        <label>Email language<select name="lang"><option value="ku">Kurdish</option><option value="ar">Arabic</option><option value="en">English</option></select></label>
-      </div>
-      <div class="checks"><label><input type="checkbox" name="lunch_day1" value="1"> Lunch day 1</label><label><input type="checkbox" name="lunch_day2" value="1"> Lunch day 2</label></div>
-      <button class="btn" name="do" value="pay_link">Send the "Pay now" link</button>
-      <?php if ($user['role'] === 'owner'): ?>
-        <fieldset class="card danger">
-          <legend><b>Owner: free ticket instead</b></legend>
-          <label>Reason (required, logged)<input name="comp_reason" placeholder="e.g. Diamond sponsor staff"></label>
-          <button class="btn violet" name="do" value="free" data-confirm="Register this person with a FREE ticket now? It is logged with your name and the reason.">Register with a free ticket</button>
-        </fieldset>
-      <?php endif; ?>
+      <p class="muted">Enter the caller's details and send a payment link. They receive their ticket after paying. Fields marked * are required.</p>
+      <fieldset class="form-section">
+        <legend>1. Caller details</legend>
+        <div class="row3"><label>First name *<input name="first_name" maxlength="60" value="<?= $value('first_name') ?>" autocomplete="given-name" required></label><label>Father's name *<input name="father_name" maxlength="60" value="<?= $value('father_name') ?>" required></label><label>Grandfather's name *<input name="grandfather_name" maxlength="60" value="<?= $value('grandfather_name') ?>" required></label></div>
+        <div class="row3"><label>Phone *<input type="tel" name="phone" dir="ltr" autocomplete="tel" value="<?= $value('phone') ?>" required placeholder="0750 123 4567"></label><label>Email *<input type="email" name="email" dir="ltr" autocomplete="email" maxlength="190" value="<?= $value('email') ?>" required></label><label>City<input name="city" maxlength="80" value="<?= $value('city') ?>" autocomplete="address-level2"></label></div>
+      </fieldset>
+      <fieldset class="form-section">
+        <legend>2. Specialty &amp; ticket</legend>
+        <div class="row3">
+          <label>What is your specialty? *<select name="specialty" id="caller-specialty" required>
+            <option value="">Choose specialty</option>
+            <?php foreach (Registrations::SPECIALTY_NAMES as $key => $label): ?><option value="<?= $e($key) ?>"<?= $selected('specialty', $key) ?>><?= $e($label) ?></option><?php endforeach; ?>
+          </select></label>
+          <label>Ticket *<select name="ticket" id="caller-ticket"><option value="professional"<?= !$student ? ' selected' : '' ?>>Professional</option><option value="student"<?= $student ? ' selected' : '' ?>>Student</option></select></label>
+          <label>Email language<select name="lang"><option value="ku"<?= $selected('lang', 'ku', 'ku') ?>>Kurdish</option><option value="ar"<?= $selected('lang', 'ar', 'ku') ?>>Arabic</option><option value="en"<?= $selected('lang', 'en', 'ku') ?>>English</option></select></label>
+        </div>
+        <p class="muted small" id="caller-ticket-note">Dental students receive a student ticket. For student tickets, record the university after checking the ID.</p>
+        <div class="row3" id="caller-student-fields">
+          <label>University (required for students)<input name="university" id="caller-university" maxlength="160" value="<?= $value('university') ?>"<?= $student ? ' required' : '' ?>></label>
+          <label>Ambassador code (optional)<input name="ambassador" maxlength="40" value="<?= $value('ambassador') ?>" placeholder="e.g. AMB-SARA" autocomplete="off"></label>
+        </div>
+      </fieldset>
+      <fieldset class="form-section">
+        <legend>3. Lunch</legend>
+        <div class="checks"><label class="inline"><input type="checkbox" name="lunch_day1" value="1"<?= ($_POST['lunch_day1'] ?? '') === '1' ? ' checked' : '' ?>> Lunch day 1</label><label class="inline"><input type="checkbox" name="lunch_day2" value="1"<?= ($_POST['lunch_day2'] ?? '') === '1' ? ' checked' : '' ?>> Lunch day 2</label></div>
+      </fieldset>
+      <div class="form-actions"><a class="btn ghost" href="registrations.php">Cancel</a><button class="btn" name="do" value="pay_link">Send payment link</button></div>
     </form>
+      <?php if ($user['role'] === 'owner'): ?>
+        <details class="card more owner-ticket"<?= ($_POST['do'] ?? '') === 'free' ? ' open' : '' ?>>
+          <summary>Owner: issue a complimentary ticket</summary>
+          <label>Reason (required for a free ticket)<input name="comp_reason" form="caller-form" maxlength="255" value="<?= $value('comp_reason') ?>" placeholder="e.g. Diamond sponsor staff"></label>
+          <div class="form-actions">
+          <button class="btn violet" form="caller-form" name="do" value="free" data-confirm="Register this person with a FREE ticket now? It is logged with your name and the reason.">Register with a free ticket</button>
+          </div>
+        </details>
+      <?php endif; ?>
     <?php
     Page::bottom();
     exit;
@@ -119,10 +141,9 @@ $prices = SiteData::prices();
 $paidAmount = ($value = Db::value("SELECT amount_confirmed FROM payments WHERE registration_id = ? AND status = 'paid' LIMIT 1", [$id])) !== null ? (int) $value : null;
 $e = [Page::class, 'e'];
 
-Page::top(Registrations::fullName($registration), 'registrations');
+Page::top(Registrations::fullName($registration), 'registrations', '<a class="btn ghost" href="registrations.php">&larr; All registrations</a>');
 ?>
 <div class="toolbar">
-  <a class="btn ghost" href="registrations.php">← All registrations</a>
   <span><code class="big"><?= $e($registration['ref']) ?></code> <?= Page::pill($registration['status']) ?>
   <?= $registration['comp_reason'] ? '<span class="muted">(' . $e($registration['comp_reason']) . ')</span>' : '' ?></span>
 </div>
@@ -142,7 +163,7 @@ Page::top(Registrations::fullName($registration), 'registrations');
       <dt>Email</dt><dd dir="ltr"><?= $e($registration['email']) ?></dd>
       <dt>City</dt><dd><?= $e($registration['city']) ?></dd>
       <dt>Gender / age</dt><dd><?= $e($registration['gender']) ?> / <?= $e($registration['age'] ?? '–') ?></dd>
-      <dt>Specialty</dt><dd><?= $e($registration['specialty']) ?></dd>
+      <dt>Specialty</dt><dd><?= $e(Registrations::SPECIALTY_NAMES[$registration['specialty']] ?? $registration['specialty']) ?></dd>
       <dt>Ticket</dt><dd><?= $e($registration['ticket_type']) ?></dd>
       <dt>Lunch</dt><dd><?= $registration['lunch_day1'] ? 'Day 1 ' : '' ?><?= $registration['lunch_day2'] ? 'Day 2' : '' ?><?= !$registration['lunch_day1'] && !$registration['lunch_day2'] ? 'None' : '' ?></dd>
       <dt>Paid</dt><dd><?= Page::paidBadge($registration['status']) ?> <?= $paidAmount !== null ? Page::money($paidAmount, $prices['currency']) : '' ?> <?= $registration['pay_method'] ? $e(strtoupper($registration['pay_method'])) : '' ?> · <?= Page::when($registration['paid_at']) ?></dd>
@@ -158,7 +179,7 @@ Page::top(Registrations::fullName($registration), 'registrations');
         <div class="row3"><label>First<input name="first_name" value="<?= $e($registration['first_name']) ?>" required></label><label>Father<input name="father_name" value="<?= $e($registration['father_name']) ?>" required></label><label>Grandfather<input name="grandfather_name" value="<?= $e($registration['grandfather_name']) ?>" required></label></div>
         <div class="row3"><label>Email<input name="email" dir="ltr" value="<?= $e($registration['email']) ?>" required></label><label>Phone<input name="phone" dir="ltr" value="<?= $e($registration['phone']) ?>" required></label><label>City<input name="city" value="<?= $e($registration['city']) ?>"></label></div>
         <p class="muted small">Changing the name reissues the ticket and emails it again (the name goes on the certificate). Every change is logged.</p>
-        <button class="btn">Save</button>
+        <div class="form-actions"><button class="btn">Save details</button></div>
       </form>
     </details>
     <?php endif; ?>
@@ -170,7 +191,7 @@ Page::top(Registrations::fullName($registration), 'registrations');
       <p><code class="big"><?= $e($ticket['ticket_no']) ?></code> version <?= (int) $ticket['version'] ?> · <?= $e($ticket['source']) ?></p>
       <p><?= $ticket['checked_in_at'] ? Page::pill('arrived') . ' checked in ' . Page::when($ticket['checked_in_at']) : 'Not checked in yet.' ?></p>
       <?php if ($canEdit): ?>
-      <form method="post"><?= Page::csrfField() ?><input type="hidden" name="do" value="resend_ticket"><button class="btn">Resend ticket</button></form>
+      <form method="post" class="form-actions"><?= Page::csrfField() ?><input type="hidden" name="do" value="resend_ticket"><button class="btn">Resend ticket</button></form>
       <?php endif; ?>
     <?php elseif ($ticket): ?>
       <p><?= Page::pill('cancelled') ?> Ticket <?= $e($ticket['ticket_no']) ?> was cancelled.</p>
@@ -200,14 +221,14 @@ Page::top(Registrations::fullName($registration), 'registrations');
 <div class="card">
   <h2>Workshops (booked by phone)</h2>
   <div class="table-wrap"><table>
-    <tr><th>Workshop</th><th>Price</th><th>Paid?</th><th>Booked by</th><th></th></tr>
+    <tr><th>Workshop</th><th>Price</th><th>Paid?</th><th>Booked by</th><th class="table-action-heading">Actions</th></tr>
     <?php foreach ($bookings as $booking): $workshop = SiteData::workshop($booking['workshop_id']); ?>
     <tr>
       <td><?= $e($workshop ? SiteData::workshopName($workshop) : $booking['workshop_id']) ?><?= $booking['over_capacity'] ? ' ' . Page::pill('waiting_list') . '<small> over capacity</small>' : '' ?></td>
       <td><?= Page::money((int) $booking['price_agreed'], $prices['currency']) ?></td>
       <td><?= Page::paidBadge($booking['payment_status']) ?><?= $booking['payment_status'] === 'paid' ? '<br><small class="muted">' . $e((string) $booking['paid_how']) . ', ' . Page::when($booking['paid_at']) . '</small>' : '' ?></td>
       <td><?= $e($booking['booked_by_name'] ?? '') ?> <?= Page::when($booking['created_at']) ?></td>
-      <td>
+      <td class="table-action-cell">
         <?php if ($canEdit): ?>
           <?= Page::workshopPaymentForm($booking, $user, 'registration.php?id=' . $id) ?>
         <?php endif; ?>
@@ -238,12 +259,12 @@ Page::top(Registrations::fullName($registration), 'registrations');
 <div class="card">
   <h2>Emails</h2>
   <div class="table-wrap"><table>
-    <tr><th>Email</th><th>To</th><th>Status</th><th>Tries</th><th>Sent</th><th></th></tr>
+    <tr><th>Email</th><th>To</th><th>Status</th><th>Tries</th><th>Sent</th><th class="table-action-heading">Actions</th></tr>
     <?php foreach ($emails as $email): ?>
     <tr><td><?= $e($email['kind']) ?></td><td dir="ltr"><?= $e($email['to_email']) ?></td>
       <td><?= Page::pill($email['status']) ?><?= $email['last_error'] ? '<br><small class="muted">' . $e($email['last_error']) . '</small>' : '' ?></td>
       <td><?= (int) $email['attempts'] ?></td><td><?= Page::when($email['sent_at']) ?></td>
-      <td><?php if ($canEdit): ?><form method="post"><?= Page::csrfField() ?><input type="hidden" name="do" value="resend_email"><input type="hidden" name="email_id" value="<?= (int) $email['id'] ?>"><button class="btn small ghost">Send again</button></form><?php endif; ?></td></tr>
+      <td class="table-action-cell"><?php if ($canEdit): ?><form method="post"><?= Page::csrfField() ?><input type="hidden" name="do" value="resend_email"><input type="hidden" name="email_id" value="<?= (int) $email['id'] ?>"><button class="btn small ghost">Send again</button></form><?php endif; ?></td></tr>
     <?php endforeach; ?>
     <?php if (!$emails): ?><tr><td colspan="6" class="muted">No emails.</td></tr><?php endif; ?>
   </table></div>
@@ -255,18 +276,18 @@ Page::top(Registrations::fullName($registration), 'registrations');
     <h2>Notes</h2>
     <form method="post" class="stack"><?= Page::csrfField() ?><input type="hidden" name="do" value="notes">
       <textarea name="notes" rows="4" <?= $canEdit ? '' : 'readonly' ?>><?= $e($registration['notes'] ?? '') ?></textarea>
-      <?php if ($canEdit): ?><button class="btn small">Save notes</button><?php endif; ?>
+      <?php if ($canEdit): ?><div class="form-actions"><button class="btn">Save notes</button></div><?php endif; ?>
     </form>
   </div>
   <div class="card danger">
     <h2>Cancel</h2>
+    <p class="muted small">Tickets are non-refundable: cancelling stops the ticket at the door and frees workshop seats; no money is returned.</p>
     <?php if ($canEdit && $registration['status'] !== 'cancelled'): ?>
     <form method="post" class="stack"><?= Page::csrfField() ?><input type="hidden" name="do" value="cancel">
       <label>Reason for cancelling<input name="reason" required></label>
-      <button class="btn red" data-confirm="Cancel this registration? The ticket will stop working at the door. Tickets are non-refundable.">Cancel registration</button>
+      <div class="form-actions danger-actions"><button class="btn red" data-confirm="Cancel this registration? The ticket will stop working at the door. Tickets are non-refundable.">Cancel registration</button></div>
     </form>
     <?php endif; ?>
-    <p class="muted small">Tickets are non-refundable: cancelling stops the ticket at the door and frees workshop seats; no money is returned.</p>
   </div>
 </div>
 

@@ -1,7 +1,7 @@
 {
   "currency": "IQD",
-  "professional": 0,
-  "student": 0,
+  "professional": 40000,
+  "student": 30000,
   "lunchDay1": 0,
   "lunchDay2": 0,
   "registrationClosed": true

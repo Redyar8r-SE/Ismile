@@ -31,21 +31,22 @@ $columns = Lists::columns($current);
 Page::top('Lists', 'lists');
 $e = [Page::class, 'e'];
 ?>
-<div class="toolbar tabs no-print">
+<div class="list-workspace"><nav class="list-library no-print" aria-label="Customer lists">
+  <span class="library-caption">YOUR CUSTOMER LISTS</span>
   <?php foreach (Lists::ALL as $key => [$label]): if ($key === 'studentids' && !$canPhotos) { continue; } ?>
-    <a class="btn <?= $key === $current ? '' : 'ghost' ?>" href="lists.php?list=<?= $e($key) ?>"><?= $e($label) ?> <span class="count"><?= (int) ($counts[$key] ?? 0) ?></span></a>
+    <a class="library-link<?= $key === $current ? ' on' : '' ?>"<?= $key === $current ? ' aria-current="page"' : '' ?> href="lists.php?list=<?= $e($key) ?>"><?= Page::navIcon(match($key){'lunch1','lunch2'=>'lunch','workshops'=>'workshops','sponsors','exhibition'=>'sponsors','students','studentids'=>'users','cancelled'=>'close',default=>'registrations'}) ?><span><?= $e($label) ?></span><b><?= (int) ($counts[$key] ?? 0) ?></b></a>
   <?php endforeach; ?>
-</div>
+</nav>
 
-<div class="card">
+<div class="card list-content">
   <div class="list-head">
     <div>
       <h2><?= $e(Lists::ALL[$current][0]) ?>: <?= $current === 'workshops' ? (int) ($counts['workshops'] ?? 0) . ' bookings' : count($rows) ?></h2>
       <p class="muted"><?= $e(Lists::ALL[$current][1]) ?></p>
     </div>
-    <div class="no-print">
-      <?php if (Auth::can($user, 'export')): ?><a class="btn green" href="export.php?what=list&amp;list=<?= $e($current) ?>">Export to Excel</a><?php endif; ?>
+    <div class="toolbar no-print">
       <button class="btn ghost" type="button" data-print>Print</button>
+      <?php if (Auth::can($user, 'export')): ?><a class="btn green" href="export.php?what=list&amp;list=<?= $e($current) ?>">Export to Excel</a><?php endif; ?>
     </div>
   </div>
   <?php if ($current === 'studentids'): ?>
@@ -140,5 +141,6 @@ $e = [Page::class, 'e'];
     <?php if (!$rows): ?><tr><td colspan="<?= count($columns) + 2 ?>" class="muted">Nobody on this list yet.</td></tr><?php endif; ?>
   </table></div>
   <?php endif; ?>
+</div>
 </div>
 <?php Page::bottom();

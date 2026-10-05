@@ -60,18 +60,25 @@ if ($q !== '') {
 }
 $arrived = (int) Db::value('SELECT COUNT(*) FROM tickets WHERE checked_in_at IS NOT NULL AND cancelled_at IS NULL');
 $tickets = (int) Db::value('SELECT COUNT(*) FROM tickets WHERE cancelled_at IS NULL');
+$arrivalPercent = $tickets > 0 ? min(100,(int)round($arrived/$tickets*100)) : 0;
+$recentArrivals = Db::all('SELECT r.first_name, r.father_name, r.grandfather_name, t.checked_in_at FROM tickets t JOIN registrations r ON r.id=t.registration_id WHERE t.checked_in_at IS NOT NULL AND t.cancelled_at IS NULL ORDER BY t.checked_in_at DESC LIMIT 5');
 
 Page::top('Check-in', 'checkin');
 $e = [Page::class, 'e'];
 ?>
-<div class="checkin">
-  <p class="muted"><b><?= $arrived ?></b> of <b><?= $tickets ?></b> tickets checked in.</p>
+<section class="arrival-banner"><div><span class="welcome-label">THE ISMILE WELCOME DESK</span><h2>A warm welcome. A smooth arrival.</h2><p>Scan a ticket or search a guest to get them through the door.</p></div><div class="arrival-numbers"><div><b><?= $arrived ?></b><span>Checked in</span></div><div><b><?= max(0,$tickets-$arrived) ?></b><span>Still to arrive</span></div><div><b><?= $tickets ?></b><span>Valid tickets</span></div></div><div class="arrival-banner-progress"><span><?= $arrivalPercent ?>% of ticket holders have arrived</span><div class="track"><i class="teal" style="width:<?= $arrivalPercent ?>%"></i></div></div></section>
+<div class="checkin-workspace"><div class="checkin-main">
+  <section class="card scanner-panel">
+  <?= Page::panelHeading('Find a guest', 'Use a ticket number, guest name or a ticket QR code.', 'checkin') ?>
+  <div class="scan-illustration" aria-hidden="true"><span><?= Page::navIcon('checkin') ?></span></div>
   <form method="get" class="scan-form" id="scanForm">
-    <input type="search" name="q" id="scanInput" value="<?= $e($q) ?>" placeholder="Scan, T26-…, or a name" autocomplete="off" autofocus>
+    <label class="scan-input-label">Ticket number or guest name<input type="search" name="q" id="scanInput" value="<?= $e($q) ?>" placeholder="T26-… or a guest’s name" autocomplete="off" autofocus></label>
     <button class="btn big">Find</button>
-    <button type="button" class="btn big green" id="scanCamera" hidden>📷 Scan QR</button>
+    <button type="button" class="btn big green" id="scanCamera" hidden><?= Page::navIcon('camera') ?> Scan QR</button>
   </form>
   <video id="scanVideo" playsinline muted hidden></video>
+  <p class="scanner-note"><?= Page::navIcon('ticket') ?> Always check the guest’s name before confirming their arrival.</p>
+  </section>
 
   <?php if ($scanNote): ?><div class="flash err big"><?= $e($scanNote) ?></div><?php endif; ?>
 
@@ -91,11 +98,15 @@ $e = [Page::class, 'e'];
     <?php elseif ($row['checked_in_at']): ?>
       <p class="big-note">Already checked in at <?= date('H:i', strtotime($row['checked_in_at'])) ?>.</p>
     <?php else: ?>
-      <form method="post"><?= Page::csrfField() ?><input type="hidden" name="ticket" value="<?= (int) $row['ticket_id'] ?>"><button class="btn big green">✓ Check in</button></form>
+      <form method="post" class="form-actions"><?= Page::csrfField() ?><input type="hidden" name="ticket" value="<?= (int) $row['ticket_id'] ?>"><button class="btn big green"><?= Page::navIcon('check') ?><span>Check in</span></button></form>
     <?php endif; ?>
   </div>
   <?php endforeach; ?>
   <?php if ($q !== '' && !$results && !$scanNote): ?><div class="flash err">Nobody found for "<?= $e($q) ?>".</div><?php endif; ?>
-  <p class="muted small">No internet at the venue? Use the printed list (Registrations → Export, the night before) and type the arrivals in afterwards.</p>
-</div>
+  <?php if ($q===''): ?><div class="card checkin-ready"><?= Page::emptyState('Ready for your next guest', 'Search or scan their ticket above. Their name and ticket status will appear here.', 'users') ?></div><?php endif; ?>
+</div><aside class="checkin-side" aria-label="Check-in help">
+  <section class="card"><?= Page::panelHeading('Three simple steps', 'A consistent welcome for every guest.', 'checkin') ?><ol class="welcome-steps"><li><b>Find their ticket</b><span>Scan the newest QR code or search their name.</span></li><li><b>Confirm their details</b><span>Check the name and make sure the ticket is valid.</span></li><li><b>Welcome them in</b><span>Press Check in. An earlier arrival is clearly marked.</span></li></ol></section>
+  <section class="card"><?= Page::panelHeading('Recent arrivals', 'The latest guests welcomed by your team.', 'users') ?><?php if (!$recentArrivals): ?><?= Page::emptyState('The welcome desk is ready', 'Your first checked-in guests will appear here.', 'checkin') ?><?php else: ?><div class="recent-arrivals"><?php foreach ($recentArrivals as $guest): ?><div class="arrival-row"><span class="guest-avatar" aria-hidden="true"><?= $e(mb_strtoupper(mb_substr($guest['first_name'],0,1))) ?></span><div><b><?= $e(Registrations::fullName($guest)) ?></b><small><?= Page::when($guest['checked_in_at']) ?></small></div><span class="arrival-check" aria-hidden="true"><?= Page::navIcon('check') ?></span></div><?php endforeach; ?></div><?php endif; ?></section>
+  <div class="offline-note"><?= Page::navIcon('lists') ?><div><b>Have a printed list ready</b><p>If the venue loses internet, use the exported list and record arrivals here afterwards.</p></div></div>
+</aside></div>
 <?php Page::bottom();

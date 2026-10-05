@@ -10,8 +10,10 @@
 --
 -- Rules the design follows:
 --   * utf8mb4 everywhere, so Kurdish and Arabic are stored exactly as typed.
---   * Nothing is deleted by the application. Rows are marked instead
---     (status, removed_at, disabled_at, cancelled_at), so history stays.
+--   * Registration, payment and ticket history is retained. Rows are marked
+--     (status, removed_at, disabled_at, cancelled_at). Unpaid forms expire;
+--     ambassador codes may be deleted with an audit entry, while registrations
+--     retain their recorded code.
 --   * Every link between tables is a FOREIGN KEY: the database itself refuses
 --     a payment for a registration that does not exist, a ticket for a
 --     payment that does not exist, an action by an unknown admin, and so on.
@@ -199,6 +201,8 @@ CREATE TABLE IF NOT EXISTS registrations (
   COMMENT='Registered people (paid or free ticket only)';
 
 -- Ambassador codes, so student registrations can be counted per ambassador.
+-- Registrations store the typed code, not a foreign key: removing a code
+-- from this list does not remove or alter a student's registration history.
 CREATE TABLE IF NOT EXISTS ambassadors (
   id          INT UNSIGNED  NOT NULL AUTO_INCREMENT,
   code        VARCHAR(40)   NOT NULL,

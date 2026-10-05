@@ -11,6 +11,14 @@ namespace Ismile;
 final class Registrations
 {
     public const SPECIALTIES = ['gp', 'spec', 'omfs', 'lab', 'acad', 'student'];
+    public const SPECIALTY_NAMES = [
+        'gp' => 'General dentist',
+        'spec' => 'Specialist',
+        'omfs' => 'Oral and maxillofacial surgeon',
+        'lab' => 'Dental technician',
+        'acad' => 'Academic or researcher',
+        'student' => 'Dental student',
+    ];
     public const GENDERS = ['female', 'male', 'other', 'prefer-not'];
     public const PAY_METHODS = ['visa', 'mastercard', 'fib', 'fastpay'];
 

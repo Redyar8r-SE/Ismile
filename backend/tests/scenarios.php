@@ -12,6 +12,7 @@
 declare(strict_types=1);
 
 use Ismile\App;
+use Ismile\Ambassadors;
 use Ismile\Audit;
 use Ismile\Auth;
 use Ismile\Backup;
@@ -341,11 +342,12 @@ try {
     section('Registered by phone, or a free ticket (Owner)');
     $staff = ['id' => $adminId, 'role' => 'registration', 'name' => 'Checks'];
     $owner = ['id' => $adminId, 'role' => 'owner', 'name' => 'Checks'];
-    $phoneForm = Checkouts::createFromOffice(['first_name' => 'Phone', 'father_name' => 'Caller', 'grandfather_name' => 'Test', 'phone' => '0751 234 5678', 'email' => 'caller' . time() . '@example.com', 'ticket' => 'professional', 'lang' => 'ku'], $staff);
+    $phoneForm = Checkouts::createFromOffice(['first_name' => 'Phone', 'father_name' => 'Caller', 'grandfather_name' => 'Test', 'phone' => '0751 234 5678', 'email' => 'caller' . time() . '@example.com', 'ticket' => 'professional', 'specialty' => 'omfs', 'lang' => 'ku'], $staff);
     check('a caller gets a "Pay now" email, and is NOT registered yet', (int) Db::value("SELECT COUNT(*) FROM emails WHERE checkout_id = ? AND kind = 'pay_now'", [$phoneForm['id']]) === 1 && Registrations::findByRef($phoneForm['ref']) === null);
     $link = http('GET', Links::payUrl($phoneForm));
     fakePay((string) $link['location'], 'pay');
     check('…the caller pays with the link: registered', (registrationByRef($phoneForm['ref'])['status'] ?? '') === 'paid');
+    check('the caller\'s chosen specialty survives payment', (registrationByRef($phoneForm['ref'])['specialty'] ?? '') === 'omfs');
     $fails = static function (callable $work): bool {
         try {
             $work();
@@ -354,12 +356,30 @@ try {
             return true;
         }
     };
-    $guest = ['first_name' => 'Guest', 'father_name' => 'Of', 'grandfather_name' => 'Honour', 'phone' => '0770 111 2233', 'email' => 'guest' . time() . '@example.com', 'ticket' => 'professional', 'comp_reason' => 'Keynote guest'];
+    $guest = ['first_name' => 'Guest', 'father_name' => 'Of', 'grandfather_name' => 'Honour', 'phone' => '0770 111 2233', 'email' => 'guest' . time() . '@example.com', 'ticket' => 'professional', 'specialty' => 'acad', 'comp_reason' => 'Keynote guest'];
     check('only the Owner can give a free ticket', $fails(fn () => Office::createComplimentary($staff, $guest)));
     check('a free ticket needs a reason', $fails(fn () => Office::createComplimentary($owner, ['comp_reason' => ''] + $guest)));
     $free = Office::createComplimentary($owner, $guest);
     check('the Owner registers a guest with a free ticket: registered, ticket, logged', $free['status'] === 'complimentary' && $free['pay_method'] === null && Tickets::forRegistration((int) $free['id']) !== null
         && (int) Db::value("SELECT COUNT(*) FROM audit_log WHERE action = 'ticket.complimentary' AND target_id = ?", [$free['id']]) === 1);
+    check('a free ticket keeps the selected specialty', $free['specialty'] === 'acad');
+
+    section('Ambassador code management');
+    $code = 'TEST-' . strtoupper(bin2hex(random_bytes(6)));
+    $ambassadorInput = ['code' => $code, 'owner_name' => 'Test Ambassador', 'university' => 'Test University'];
+    check('registration staff cannot create ambassador codes', $fails(fn () => Ambassadors::save($ambassadorInput, $staff)));
+    Ambassadors::save($ambassadorInput, $owner);
+    $ambassadorId = (int) Db::value('SELECT id FROM ambassadors WHERE code = ?', [$code]);
+    Ambassadors::save(['owner_name' => 'Updated Ambassador'] + $ambassadorInput, $owner);
+    check('saving an existing code updates its ambassador', Db::value('SELECT owner_name FROM ambassadors WHERE id = ?', [$ambassadorId]) === 'Updated Ambassador');
+    check('registration staff cannot delete ambassador codes', $fails(fn () => Ambassadors::delete($ambassadorId, $staff)) && Db::value('SELECT id FROM ambassadors WHERE id = ?', [$ambassadorId]) !== null);
+    Db::update('registrations', ['ambassador_code' => $code], 'id = ?', [$student['id']]);
+    Ambassadors::delete($ambassadorId, $owner);
+    check('the Owner can delete a used code without changing registrations', Db::value('SELECT id FROM ambassadors WHERE id = ?', [$ambassadorId]) === null
+        && Registrations::find((int) $student['id'])['ambassador_code'] === $code);
+    check('deleting a code records the ambassador and code in the audit log', str_contains((string) Db::value("SELECT details FROM audit_log WHERE action = 'ambassador.delete' AND target_id = ?", [$ambassadorId]), $code));
+    check('deleting a missing code reports an error', $fails(fn () => Ambassadors::delete($ambassadorId, $owner)));
+    Db::update('registrations', ['ambassador_code' => $student['ambassador_code']], 'id = ?', [$student['id']]);
 
     // ------------------------------------------------------------------
     section('Personal links cannot be guessed');
@@ -479,6 +499,11 @@ try {
     check('the signed-in session opens the dashboard', ($first['get'])('GET', 'index.php')['status'] === 200);
     Auth::endOtherSessions($loginId);
     check('after a password change, the old session is signed out', str_contains(($first['get'])('GET', 'index.php')['location'], 'login.php'));
+    Db::update('admin_users', ['role' => 'registration', 'totp_last_step' => null], 'id = ?', [$loginId]);
+    $optionalStep = intdiv(time(), 30);
+    $optional = $signIn(Totp::code($loginSecret, $optionalStep));
+    check('Registration staff with a phone code enabled must use it to sign in', $optional['in']);
+    check('optional phone codes cannot be reused', !$signIn(Totp::code($loginSecret, $optionalStep))['in']);
     Db::update('admin_users', ['disabled_at' => App::now()], 'id = ?', [$loginId]);
 
     // ------------------------------------------------------------------

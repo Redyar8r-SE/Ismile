@@ -1,9 +1,9 @@
 // iSmile admin: edit every text, list and photo on the site, and save to GitHub.
-import { GROUPS, PAGE_TITLES, LANGS, DATA_FILES } from "./fields.js?v=78";
-import * as store from "./store.js?v=78";
-import { upload, imageFromClipboard } from "./images.js?v=78";
-import { buildList, buildProgram, buildTypes, buildSingle } from "./lists.js?v=78";
-import { loadAccounts, makeAccount, check, forget, fileText, ACCOUNTS_FILE } from "./accounts.js?v=78";
+import { GROUPS, PAGE_TITLES, LANGS, DATA_FILES } from "./fields.js?v=79";
+import * as store from "./store.js?v=79";
+import { upload, imageFromClipboard } from "./images.js?v=79";
+import { buildList, buildProgram, buildTypes, buildSingle } from "./lists.js?v=79";
+import { loadAccounts, makeAccount, check, forget, fileText, ACCOUNTS_FILE } from "./accounts.js?v=79";
 
 // Tells the small script in admin.html that the admin code did load, so it
 // does not offer to reload the page.
@@ -633,9 +633,16 @@ function buildForm() {
 }
 
 function showGroup(id, { scroll = true } = {}) {
+  if (!GROUPS.some((group) => group.id === id)) return;
   document.querySelectorAll(".group").forEach((s) => { s.hidden = s.id !== `group-${id}`; });
-  document.querySelectorAll(".gnav").forEach((b) => b.classList.toggle("is-active", b.dataset.for === id));
+  document.querySelectorAll(".gnav").forEach((b) => {
+    const active = b.dataset.for === id;
+    b.classList.toggle("is-active", active);
+    if (active) b.setAttribute("aria-current", "true");
+    else b.removeAttribute("aria-current");
+  });
   $("groupPick").value = id;
+  history.replaceState(null, "", "#" + encodeURIComponent(id));
   if (scroll) window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -749,6 +756,7 @@ function setUpSearch() {
 
 // ---------- signing in ----------
 function showSignedIn(name) {
+  $("saveConnectionLabel").textContent = "Connected · Your changes can be saved";
   $("who").textContent = name;
   $("connected").hidden = false;
   $("signinForm").hidden = true;
@@ -769,6 +777,7 @@ function showNoServer(problem) {
 }
 
 function showSignedOut() {
+  $("saveConnectionLabel").textContent = "Connect your account to save changes";
   $("connected").hidden = true;
   $("signinForm").hidden = store.mode() !== "server";
   $("connectForm").hidden = store.mode() !== "key";
@@ -856,6 +865,7 @@ async function saveToGitHub() {
   // Nothing can be written to the website until a server is set up. Your admin
   // password is a different thing: it guards this page, it cannot save.
   if (!store.ready()) {
+    $("connectCard").open = true;
     return say(store.mode() === "key"
       ? "Paste your GitHub key at the top of this page first, then press Save again."
       : "Saving to the website is not set up yet, so nothing was sent. Press “Download files” to get your changes as files, then put them in the data folder on github.com.", "bad");
@@ -976,6 +986,9 @@ async function start() {
     return;
   }
   buildForm();
+  const initialGroup = location.hash.slice(1);
+  showGroup(GROUPS.some((group) => group.id === initialGroup) ? initialGroup : GROUPS[0].id, { scroll: false });
+  window.addEventListener("hashchange", () => showGroup(location.hash.slice(1), { scroll: false }));
   setUpSearch();
   $("groupPick").addEventListener("change", (event) => showGroup(event.target.value));
   markDirty();

@@ -69,40 +69,62 @@ Page::action(static function () use ($user): string {
 
 $users = Db::all('SELECT * FROM admin_users ORDER BY disabled_at IS NOT NULL, role, name');
 $e = [Page::class, 'e'];
-Page::top('Users', 'users');
+$active = array_filter($users, static fn (array $row): bool => !$row['disabled_at']);
+$secured = count(array_filter($active, static fn (array $row): bool => (bool) $row['totp_enabled']));
+$roleGuide = [
+    'owner' => ['settings', 'Owner', 'Full access to the event, settings, team and website.'],
+    'registration' => ['registrations', 'Registration', 'Guests, student approvals, workshop bookings and lists.'],
+    'finance' => ['payments', 'Finance', 'Payments, money checks and financial exports.'],
+    'content' => ['content', 'Content', 'Website wording, photos and content.'],
+    'checkin' => ['checkin', 'Check-in', 'Find tickets, scan QR codes and welcome guests.'],
+];
+Page::top('Users', 'users', '<a class="btn" href="#add-person">' . Page::navIcon('users') . '<span>Add a person</span></a>');
 ?>
-<div class="card table-wrap">
+<?= Page::stats([
+    ['Active accounts', number_format(count($active)), 'People who can sign in', 'users', 'blue'],
+    ['Phone code enabled', number_format($secured), 'Active accounts with two-step sign-in', 'security', 'teal'],
+    ['Team roles', number_format(count(array_unique(array_column($active, 'role')))), 'Different roles across your active team', 'settings', 'violet'],
+    ['Disabled accounts', number_format(count($users) - count($active)), 'History retained for your records', 'close', 'gold'],
+]) ?>
+<section class="card team-directory">
+<div class="panel-top"><?= Page::panelHeading('Your team', 'A personal account for every person helping run your event.', 'users') ?><span class="pill grey"><?= count($users) ?> accounts</span></div>
+<div class="table-wrap">
 <table>
-  <tr><th>Name</th><th>Email</th><th>Role</th><th>Phone code</th><th>Last sign-in</th><th>Actions</th></tr>
+  <thead><tr><th scope="col">Team member</th><th scope="col">Access & role</th><th scope="col">Sign-in security</th><th scope="col">Last sign-in</th><th scope="col" class="table-action-heading">Account actions</th></tr></thead><tbody>
   <?php foreach ($users as $row): ?>
   <tr class="<?= $row['disabled_at'] ? 'row-grey' : '' ?>">
-    <td><b><?= $e($row['name']) ?></b><?= $row['disabled_at'] ? ' ' . Page::pill('declined') : '' ?></td>
-    <td dir="ltr"><?= $e($row['email']) ?></td>
-    <td><form method="post" class="inline-form"><?= Page::csrfField() ?><input type="hidden" name="do" value="role"><input type="hidden" name="id" value="<?= (int) $row['id'] ?>">
-      <select name="role"><?php foreach (Auth::ROLES as $role): ?><option value="<?= $role ?>"<?= $role === $row['role'] ? ' selected' : '' ?>><?= $role ?></option><?php endforeach; ?></select><button class="btn small ghost">Set</button></form></td>
-    <td><?= (int) $row['totp_enabled'] ? Page::pill('confirmed') : (in_array($row['role'], Auth::NEEDS_TWO_FACTOR, true) ? Page::pill('pending') . ' <small>needed</small>' : '–') ?></td>
-    <td><?= Page::when($row['last_login_at']) ?></td>
-    <td class="actions">
-      <form method="post" class="inline-form"><?= Page::csrfField() ?><input type="hidden" name="id" value="<?= (int) $row['id'] ?>"><input type="hidden" name="do" value="password"><input type="password" name="password" placeholder="New password (12+)" minlength="12" autocomplete="new-password"><button class="btn small ghost">Set password</button></form>
-      <form method="post"><?= Page::csrfField() ?><input type="hidden" name="id" value="<?= (int) $row['id'] ?>"><input type="hidden" name="do" value="reset2fa"><button class="btn small ghost" data-confirm="Reset this person's phone code?">Reset phone code</button></form>
-      <?php if ($row['disabled_at']): ?>
+    <td><div class="team-member"><span class="team-avatar" aria-hidden="true"><?= $e(mb_strtoupper(mb_substr($row['name'],0,1))) ?></span><div><b><?= $e($row['name']) ?></b><small dir="ltr"><?= $e($row['email']) ?></small><span class="pill <?= $row['disabled_at'] ? 'grey':'green' ?>"><?= $row['disabled_at'] ? 'Disabled' : 'Active' ?></span><?php if ((int)$row['id']===(int)$user['id']): ?><span class="team-you">You</span><?php endif; ?></div></div></td>
+    <td><?php if ((int)$row['id']===(int)$user['id']): ?><span class="team-role"><?= Page::navIcon($roleGuide[$row['role']][0]) ?><?= $e($roleGuide[$row['role']][1]) ?></span><small class="field-hint">Your own role stays protected.</small><?php else: ?><form method="post" class="inline-form team-role-form"><?= Page::csrfField() ?><input type="hidden" name="do" value="role"><input type="hidden" name="id" value="<?= (int) $row['id'] ?>">
+      <select name="role" aria-label="<?= $e('Role for ' . $row['name']) ?>"><?php foreach (Auth::ROLES as $role): ?><option value="<?= $role ?>"<?= $role === $row['role'] ? ' selected' : '' ?>><?= $e($roleGuide[$role][1]) ?></option><?php endforeach; ?></select><button class="btn small ghost">Set role</button></form><?php endif; ?></td>
+    <td><span class="security-status <?= (int)$row['totp_enabled'] ? 'enabled':'pending' ?>"><?= Page::navIcon('security') ?><span><?= (int)$row['totp_enabled'] ? 'Phone code on' : 'Phone code off' ?></span></span><small class="field-hint"><?= in_array($row['role'], Auth::NEEDS_TWO_FACTOR, true) ? 'Required for this role' : 'Optional for this role' ?></small></td>
+    <td><span class="team-last-login"><?= $row['last_login_at'] ? Page::when($row['last_login_at']) : 'Not signed in yet' ?></span></td>
+    <td class="table-action-cell"><div class="row-actions">
+      <details class="edit account-menu"><summary class="btn small ghost"><?= Page::navIcon('settings') ?><span>Manage account</span></summary><form method="post" class="stack"><?= Page::csrfField() ?><input type="hidden" name="id" value="<?= (int) $row['id'] ?>"><input type="hidden" name="do" value="password"><label>New password<input type="password" name="password" placeholder="12 or more characters" minlength="12" required autocomplete="new-password"></label><div class="form-actions compact"><button class="btn small">Set password</button></div></form>
+      <form method="post" class="account-security-action"><?= Page::csrfField() ?><input type="hidden" name="id" value="<?= (int) $row['id'] ?>"><input type="hidden" name="do" value="reset2fa"><button class="btn small ghost" data-confirm="Reset this person's phone code?">Reset phone code</button></form>
+      <?php if ((int)$row['id']!==(int)$user['id']): ?><div class="row-danger-actions"><?php if ($row['disabled_at']): ?>
         <form method="post"><?= Page::csrfField() ?><input type="hidden" name="id" value="<?= (int) $row['id'] ?>"><input type="hidden" name="do" value="enable"><button class="btn small green">Enable</button></form>
       <?php else: ?>
         <form method="post"><?= Page::csrfField() ?><input type="hidden" name="id" value="<?= (int) $row['id'] ?>"><input type="hidden" name="do" value="disable"><button class="btn small red" data-confirm="Disable this account? Their history stays.">Disable</button></form>
-      <?php endif; ?>
-    </td>
+      <?php endif; ?></div><?php endif; ?></details>
+    </div></td>
   </tr>
   <?php endforeach; ?>
-</table>
+</tbody></table>
 </div>
-<form method="post" class="card stack narrow">
+</section>
+<div class="team-setup-grid">
+<form method="post" class="card stack" id="add-person">
   <?= Page::csrfField() ?><input type="hidden" name="do" value="add">
-  <h2>Add a person</h2>
+  <?= Page::panelHeading('Add a person', 'Welcome someone to the team and give them the right access.', 'users') ?>
+  <div class="row3">
   <label>Name<input name="name" required></label>
   <label>Email<input type="email" name="email" required></label>
+  </div>
   <label>Role<select name="role"><?php foreach (Auth::ROLE_NAMES as $role => $label): ?><option value="<?= $role ?>"><?= $e($label) ?></option><?php endforeach; ?></select></label>
-  <label>Password (12+ characters; they can be given a new one later)<input type="password" name="password" minlength="12" required autocomplete="new-password"></label>
-  <button class="btn">Create account</button>
-  <p class="muted small">No shared accounts: one person, one account. Owner and Finance must set up the phone code at their first sign-in.</p>
+  <label>Initial password<input type="password" name="password" minlength="12" required autocomplete="new-password"><small class="field-hint">At least 12 characters. Share the password with them in person.</small></label>
+  <p class="configuration-note">One person, one account. Owner and Finance set up their phone code at first sign-in.</p>
+  <div class="form-actions"><button class="btn"><?= Page::navIcon('check') ?><span>Create account</span></button></div>
 </form>
+<section class="card role-guide"><?= Page::panelHeading('Choose the right role', 'Keep each person’s access matched to their work.', 'security') ?><div class="role-guide-list"><?php foreach ($roleGuide as [$icon,$label,$description]): ?><div><span class="role-guide-icon"><?= Page::navIcon($icon) ?></span><div><b><?= $e($label) ?></b><p><?= $e($description) ?></p></div></div><?php endforeach; ?></div></section>
+</div>
 <?php Page::bottom();

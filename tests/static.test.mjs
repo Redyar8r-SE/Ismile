@@ -26,7 +26,7 @@ describe("static helpers", () => {
   });
 
   it("blocks path traversal outside root", () => {
-    const root = "/opt/ismile";
+    const root = path.resolve("/opt/ismile");
     expect(safeJoin(root, "/index.html")).toBe(path.join(root, "index.html"));
     expect(safeJoin(root, "/../etc/passwd")).toBeNull();
     expect(safeJoin(root, "/%2e%2e/etc/passwd")).toBeNull();

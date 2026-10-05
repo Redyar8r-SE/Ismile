@@ -6,6 +6,7 @@ server/admin-config.php
 backend/config.php
 backend/storage/
 backend/vendor/
+.local/
 api/_backend.php
 
 # Deploy secrets — keep local / in GitHub Actions secret DEPLOY_ENV only.

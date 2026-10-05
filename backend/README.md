@@ -77,12 +77,46 @@ lose the webhook, close the page. Give Psoola this webhook address:
 SPF/DKIM records to the domain first. Settings → Test mode sends every email to
 one test address until launch.
 
+### Communication center and backups
+
+The Database menu includes a Communication center for the Owner, Registration
+and Finance. It reads the existing email queue, with recipient/reference search,
+status, message type and language filters, pagination and delivery details.
+Skipped messages are separate from sent messages; log-mode emails are labelled
+as saved locally. Team alerts are visible only to the Owner. This page does not
+send or resend emails.
+
+Backups is Owner-only. It shows the latest completed gzip database export, its
+date and size, retained copies, and authenticated download buttons. Create
+backup uses the same engine as the nightly job. Creation and downloads are
+recorded in the activity log. Backup files stay in private storage and are
+published only after the export finishes; partial or corrupt files are omitted.
+Website files and images stored outside the database are not part of this copy.
+
+Focused checks: `php -d extension=mbstring backend/tests/admin-operations.php`.
+
 ## Database design
 
 `database/schema.sql` is the full design (13 tables in 6 sections, with
 foreign keys, allowed-value lists and 3 read-only views). Later changes to a
 live database go in `database/migrations/` (see the README there);
 `tools/install.php` applies them once each, and the deploy script runs it.
+
+### Office registration and ambassador codes
+
+The phone registration form requires the caller's specialty. Dental students
+receive a student ticket, which requires their university; an ambassador code
+is optional. The chosen specialty is kept on both paid and complimentary tickets.
+
+Owners manage ambassador codes under Settings → Ambassador codes. Save an
+existing code to update its name or university. Delete removes the code from
+the management list and records its details in the audit log. Codes already
+recorded on registrations are preserved and shown below the list after deletion.
+This uses the existing database columns; no schema migration is needed.
+
+Field checks without a configured database: `php backend/tests/office-fields.php`.
+The full test-site scenarios also check ambassador permissions, deletion,
+registration history and specialty persistence after payment.
 
 ## Local development
 
