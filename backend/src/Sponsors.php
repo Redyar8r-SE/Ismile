@@ -85,12 +85,12 @@ final class Sponsors
             }
         }
         $request = self::find((int) $id);
-        Outbox::queue('sponsor_received', null, [], (int) $id, $email, $lang);
+        Outbox::queue('sponsor_received', null, [], (int) $id, $email);
         $team = Settings::get('sponsor_notify_email');
         $teamList = Validate::email($team) ? [$team] : (array) App::config('alerts_to', []);
         foreach ($teamList as $address) {
             if (Validate::email((string) $address)) {
-                Outbox::queue('sponsor_notify', null, [], (int) $id, (string) $address, 'en');
+                Outbox::queue('sponsor_notify', null, [], (int) $id, (string) $address);
             }
         }
         return $request;

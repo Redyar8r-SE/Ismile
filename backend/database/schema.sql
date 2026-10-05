@@ -160,7 +160,7 @@ CREATE TABLE IF NOT EXISTS registrations (
   gender             ENUM('female','male','other','prefer-not') NOT NULL,
   age                TINYINT UNSIGNED  NULL,
   specialty          ENUM('gp','spec','omfs','lab','acad','student') NOT NULL,
-  lang               ENUM('en','ar','ku') NOT NULL DEFAULT 'en',  -- language of their emails and ticket
+  lang               ENUM('en','ar','ku') NOT NULL DEFAULT 'en',  -- website language they used (emails are always English)
   -- what they chose and paid for
   ticket_type        ENUM('professional','student') NOT NULL,
   lunch_day1         TINYINT(1)        NOT NULL DEFAULT 0,
@@ -460,7 +460,6 @@ CREATE TABLE IF NOT EXISTS emails (
   checkout_id          INT UNSIGNED      NULL,                 -- a "pay now" link for a phone registration
   sponsor_request_id   INT UNSIGNED      NULL,
   to_email             VARCHAR(190)      NOT NULL,
-  lang                 ENUM('en','ar','ku') NOT NULL DEFAULT 'en',
   data                 TEXT              NULL,                 -- extra details as JSON (e.g. a rejection reason)
   status               ENUM('pending','sent','failed') NOT NULL DEFAULT 'pending',
   attempts             TINYINT UNSIGNED  NOT NULL DEFAULT 0,

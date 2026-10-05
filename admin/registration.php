@@ -66,7 +66,6 @@ if (isset($_GET['new'])) {
             <?php foreach (Registrations::SPECIALTY_NAMES as $key => $label): ?><option value="<?= $e($key) ?>"<?= $selected('specialty', $key) ?>><?= $e($label) ?></option><?php endforeach; ?>
           </select></label>
           <label>Ticket *<select name="ticket" id="caller-ticket"><option value="professional"<?= !$student ? ' selected' : '' ?>>Professional</option><option value="student"<?= $student ? ' selected' : '' ?>>Student</option></select></label>
-          <label>Email language<select name="lang"><option value="ku"<?= $selected('lang', 'ku', 'ku') ?>>Kurdish</option><option value="ar"<?= $selected('lang', 'ar', 'ku') ?>>Arabic</option><option value="en"<?= $selected('lang', 'en', 'ku') ?>>English</option></select></label>
         </div>
         <p class="muted small" id="caller-ticket-note">Dental students receive a student ticket. For student tickets, record the university after checking the ID.</p>
         <div class="row3" id="caller-student-fields">

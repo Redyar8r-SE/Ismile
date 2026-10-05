@@ -11,7 +11,7 @@ use Ismile\Settings;
 
 $user = Page::guard('communications');
 $in = [];
-foreach (['status','kind','lang','q'] as $key) $in[$key] = Page::query($key);
+foreach (['status','kind','q'] as $key) $in[$key] = Page::query($key);
 [$where,$params] = Queue::where($user,$in);
 [$scope,$scopeParams] = Queue::where($user);
 $counts = array_column(Db::all('SELECT (' . Queue::STATE_SQL . ") AS state, COUNT(*) AS n FROM emails e WHERE $scope GROUP BY state",$scopeParams),'n','state');
@@ -41,14 +41,13 @@ Page::top('Communication center','communications','<a class="btn ghost" href="' 
   <label class="filter-field filter-search"><span>Recipient, name or reference</span><input type="search" name="q" value="<?= $e($in['q']) ?>" placeholder="Search your event emails…"></label>
   <label class="filter-field"><span>Status</span><select name="status"><option value="">All statuses</option><?php foreach (Queue::STATES as $key=>$label): ?><option value="<?= $key ?>"<?= $in['status']===$key ? ' selected':'' ?>><?= $label ?></option><?php endforeach; ?></select></label>
   <label class="filter-field"><span>Message type</span><select name="kind"><option value="">All types</option><?php foreach (Queue::KINDS as $key=>$label): if ($key==='alert' && $user['role']!=='owner') continue; ?><option value="<?= $key ?>"<?= $in['kind']===$key ? ' selected':'' ?>><?= $label ?></option><?php endforeach; ?></select></label>
-  <label class="filter-field"><span>Language</span><select name="lang"><option value="">All languages</option><?php foreach (['en'=>'English','ar'=>'Arabic','ku'=>'Kurdish'] as $key=>$label): ?><option value="<?= $key ?>"<?= $in['lang']===$key ? ' selected':'' ?>><?= $label ?></option><?php endforeach; ?></select></label>
   <div class="form-actions filter-actions"><a class="btn ghost" href="communications.php">Clear filters</a><button class="btn">Search messages</button></div>
 </form>
 <section class="card message-directory"><div class="panel-top"><?= Page::panelHeading('Email activity','Your event emails and their latest queue status.','communications') ?><span class="pill grey"><?= number_format($total) ?> messages</span></div>
-<?php if (!$rows): ?><?= Page::emptyState($in['q']!=='' || $in['status']!=='' || $in['kind']!=='' || $in['lang']!=='' ? 'No messages match these filters' : 'Your messages will appear here','Tickets, phone payment links and sponsor messages appear here when they are queued.','mail') ?><?php else: ?>
+<?php if (!$rows): ?><?= Page::emptyState($in['q']!=='' || $in['status']!=='' || $in['kind']!=='' ? 'No messages match these filters' : 'Your messages will appear here','Tickets, phone payment links and sponsor messages appear here when they are queued.','mail') ?><?php else: ?>
 <div class="table-wrap"><table class="message-table"><thead><tr><th scope="col">Recipient & message</th><th scope="col">Status</th><th scope="col">Timeline</th><th scope="col">Related record</th><th scope="col">Details</th></tr></thead><tbody>
 <?php foreach ($rows as $row): $state=$row['delivery_state']; $saved=$state==='sent' && str_starts_with((string)$row['provider_message_id'],'log:'); ?>
-<tr><td><div class="message-recipient"><span class="message-avatar"><?= Page::navIcon('mail') ?></span><div><b dir="ltr"><?= $e($row['to_email']) ?></b><small><?= $e(Queue::KINDS[$row['kind']] ?? str_replace('_',' ',$row['kind'])) ?> · <?= $e(['en'=>'English','ar'=>'Arabic','ku'=>'Kurdish'][$row['lang']] ?? $row['lang']) ?></small></div></div></td>
+<tr><td><div class="message-recipient"><span class="message-avatar"><?= Page::navIcon('mail') ?></span><div><b dir="ltr"><?= $e($row['to_email']) ?></b><small><?= $e(Queue::KINDS[$row['kind']] ?? str_replace('_',' ',$row['kind'])) ?></small></div></div></td>
 <td><?= Page::pill($state) ?><?php if ($saved): ?><small class="field-hint">Saved locally</small><?php elseif ($state==='pending' && $row['attempts']>0): ?><small class="field-hint">Retry scheduled</small><?php elseif ($state==='skipped'): ?><small class="field-hint">No message sent</small><?php endif; ?></td>
 <td><small class="message-time">Queued <?= Page::when($row['created_at']) ?></small><small class="message-time"><?= $state==='pending' ? 'Next attempt ' . Page::when($row['next_attempt_at']) : ($row['sent_at'] ? ($state==='skipped' ? 'Processed ' : ($saved ? 'Saved ' : 'Sent ')) . Page::when($row['sent_at']) : 'Attempts: ' . (int)$row['attempts']) ?></small></td>
 <td><?php if ($row['registration_id']): ?><a class="message-record" href="registration.php?id=<?= (int)$row['registration_id'] ?>"><?= $e($row['reference']) ?></a><small class="field-hint"><?= $e(Registrations::fullName($row)) ?></small><?php elseif ($row['checkout_id']): ?><b class="message-record"><?= $e($row['reference']) ?></b><small class="field-hint">Phone payment form</small><?php elseif ($row['sponsor_request_id']): ?><a class="message-record" href="sponsors.php?id=<?= (int)$row['sponsor_request_id'] ?>"><?= $e($row['reference']) ?></a><small class="field-hint"><?= $e($row['company']) ?></small><?php else: ?><span class="muted small"><?= $row['kind']==='alert' ? 'Team alert' : 'No linked record' ?></span><?php endif; ?></td>

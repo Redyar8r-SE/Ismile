@@ -1,5 +1,5 @@
 <?php
-// Builds each email from the queue row, in the registrant's language.
+// Builds each email from the queue row. Every email is in English.
 // No email ever contains a password, a card number, an ID photo or another
 // person's details; links are personal signed links.
 
@@ -49,8 +49,7 @@ final class EmailTemplates
         if ($ticket === null || $ticket['cancelled_at'] !== null || !in_array($registration['status'], ['paid', 'complimentary'], true)) {
             return null;
         }
-        $lang = self::emailLang($registration['lang']);
-        $w = EmailText::for($lang);
+        $w = EmailText::words();
         $name = Registrations::fullName($registration);
         $vars = ['{ref}' => $registration['ref'], '{name}' => $name, '{ticket}' => $ticket['ticket_no']];
         $withQr = Settings::bool('ticket_qr_in_email');   // off until the entrance check is decided
@@ -68,7 +67,7 @@ final class EmailTemplates
             $mine[] = [$w['row_university'], $registration['university']];
         }
         // Lunch with the real day and date: "Day 1 · 20 November", both, or none.
-        $event = self::eventInfo($lang);
+        $event = self::eventInfo();
         $lunchDays = [];
         foreach ([1, 2] as $n) {
             if ((int) $registration['lunch_day' . $n] === 1) {
@@ -109,14 +108,14 @@ final class EmailTemplates
             $blocks[] = '<div style="text-align:center;margin:18px 0"><img src="' . S::e($qrUrl) . '" width="220" height="220" alt="QR" style="display:inline-block;border:1px solid #cfe3e3;border-radius:8px">'
                 . '<div style="font:bold 18px Arial,sans-serif;letter-spacing:1px;margin-top:8px" dir="ltr">' . S::e($ticket['ticket_no']) . '</div></div>';
         }
-        $blocks[] = self::box('🎟 ' . $w['box_you'], $mine, '#e4f6f5', '#0c6f6b', $lang);
-        $blocks[] = self::box('📍 ' . $w['box_event'], $eventRows, '#fcefd3', '#8a5a0f', $lang);
+        $blocks[] = self::box('🎟 ' . $w['box_you'], $mine, '#e4f6f5', '#0c6f6b');
+        $blocks[] = self::box('📍 ' . $w['box_event'], $eventRows, '#fcefd3', '#8a5a0f');
         $blocks[] = '<p style="margin:0 0 6px;font-weight:bold">' . S::e($w['entrance_title']) . '</p><p style="margin:0 0 16px">' . $entrance . '</p>';
         $blocks[] = $w['ticket_name_note'];
         $blocks[] = '<p style="margin:18px 0 0;font-weight:bold">' . S::e($w['see_you']) . '</p>';
 
         $greeting = '<span style="font-size:22px;color:#0c6f6b">' . S::e(str_replace('{name}', (string) $registration['first_name'], $w['congrats'])) . '</span>';
-        $html = self::layout($lang, $greeting, $blocks, null, $vars);
+        $html = self::layout($greeting, $blocks, null, $vars);
         return [
             'to'          => $registration['email'],
             'subject'     => strtr($w['ticket_subject'], $vars),
@@ -130,15 +129,14 @@ final class EmailTemplates
      * A coloured box with a title and label/value rows. A row's third item
      * true means the value is already HTML (links, line breaks).
      */
-    private static function box(string $title, array $rows, string $background, string $colour, string $lang): string
+    private static function box(string $title, array $rows, string $background, string $colour): string
     {
-        $align = Lang::isRtl($lang) ? 'right' : 'left';
         $html = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;background:' . $background . ';border-radius:10px;margin:0 0 18px">'
-            . '<tr><td colspan="2" style="padding:12px 16px 6px;font-weight:bold;font-size:16px;color:' . $colour . ';text-align:' . $align . '">' . S::e($title) . '</td></tr>';
+            . '<tr><td colspan="2" style="padding:12px 16px 6px;font-weight:bold;font-size:16px;color:' . $colour . ';text-align:left">' . S::e($title) . '</td></tr>';
         foreach ($rows as $row) {
             [$label, $value] = $row;
-            $html .= '<tr><td style="padding:5px 16px;color:#5b7477;width:38%;vertical-align:top;font-size:14px;text-align:' . $align . '">' . S::e($label) . '</td>'
-                . '<td style="padding:5px 16px;font-weight:bold;font-size:14px;vertical-align:top;text-align:' . $align . '">' . (($row[2] ?? false) ? $value : S::e((string) $value)) . '</td></tr>';
+            $html .= '<tr><td style="padding:5px 16px;color:#5b7477;width:38%;vertical-align:top;font-size:14px;text-align:left">' . S::e($label) . '</td>'
+                . '<td style="padding:5px 16px;font-weight:bold;font-size:14px;vertical-align:top;text-align:left">' . (($row[2] ?? false) ? $value : S::e((string) $value)) . '</td></tr>';
         }
         return $html . '<tr><td colspan="2" style="height:8px"></td></tr></table>';
     }
@@ -148,13 +146,13 @@ final class EmailTemplates
      * content (data/program.json, data/map.json), so the email always matches
      * what the website shows.
      */
-    private static function eventInfo(string $lang): array
+    private static function eventInfo(): array
     {
         $read = static function (string $file): array {
             $data = json_decode((string) @file_get_contents(App::siteFile('data/' . $file)), true);
             return is_array($data) ? $data : [];
         };
-        $pick = static fn ($value): string => is_array($value) ? (string) (($value[$lang] ?? '') !== '' ? $value[$lang] : ($value['en'] ?? '')) : (string) $value;
+        $pick = static fn ($value): string => is_array($value) ? (string) ($value['en'] ?? '') : (string) $value;
         $days = [];
         $program = $read('program.json');
         foreach ((array) ($program['days'] ?? []) as $day) {
@@ -164,7 +162,7 @@ final class EmailTemplates
             $days[] = ['title' => strip_tags($pick($day['label'] ?? '')), 'start' => (string) ($day['sessions'][0]['start'] ?? '')];
         }
         if ($days === []) {
-            $days[] = ['title' => EmailText::for($lang)['dates_venue'], 'start' => ''];
+            $days[] = ['title' => EmailText::words()['dates_venue'], 'start' => ''];
         }
         $map = $read('map.json');
         $place = (string) ($map['place'] ?? '') ?: 'Grand Millennium Sulaimani, Sulaymaniyah';
@@ -181,12 +179,11 @@ final class EmailTemplates
         if (!Checkouts::isOpen($checkout) || !SiteData::pricesReadyFor($checkout) || Registrations::isFull()) {
             return null;   // already paid, expired, or no longer possible
         }
-        $lang = self::emailLang($checkout['lang']);
-        $w = EmailText::for($lang);
+        $w = EmailText::words();
         $name = Registrations::fullName($checkout);
         $vars = ['{ref}' => $checkout['ref'], '{name}' => $name];
         $blocks = [$w['pay_now_body'], self::detailsTable($checkout + ['status' => 'unpaid'], $w, [])];
-        $html = self::layout($lang, strtr($w['hello'], ['{name}' => S::e($name)]), $blocks, [$w['pay_button'], Links::payUrl($checkout), true], $vars);
+        $html = self::layout(strtr($w['hello'], ['{name}' => S::e($name)]), $blocks, [$w['pay_button'], Links::payUrl($checkout), true], $vars);
         return [
             'to'          => $checkout['email'],
             'subject'     => strtr($w['pay_now_subject'], $vars),
@@ -201,7 +198,7 @@ final class EmailTemplates
         $rows = [
             [$w['reference'], $registration['ref']],
             [$w['pdf_ticket_type'], $registration['ticket_type'] === 'student' ? $w['type_student'] : $w['type_professional']],
-            [$w['pdf_lunch'], EmailText::lunchLine($registration, self::emailLang($registration['lang']))],
+            [$w['pdf_lunch'], EmailText::lunchLine($registration)],
         ];
         if ($registration['status'] === 'unpaid' && SiteData::pricesReadyFor($registration)) {   // a form waiting for payment
             $rows[] = [$w['amount'], number_format(SiteData::amountFor($registration)) . ' ' . SiteData::prices()['currency']];
@@ -234,14 +231,13 @@ final class EmailTemplates
             ];
             return self::plainForTeam($email['to_email'], "iSmile: new {$request['kind']} request {$request['ref']} from {$request['company']}", implode("\n", $lines));
         }
-        $lang = self::emailLang($request['lang']);
-        $w = EmailText::for($lang);
+        $w = EmailText::words();
         $vars = ['{ref}' => $request['ref']];
         $table = '<table role="presentation" style="width:100%;border-collapse:collapse;font-size:14px">'
             . '<tr><td style="padding:6px 0;color:#5b7477;width:40%">' . S::e($w['reference']) . '</td><td style="font-weight:bold" dir="ltr">' . S::e($request['ref']) . '</td></tr>'
             . '<tr><td style="padding:6px 0;color:#5b7477">' . S::e($w['sponsor_kind']) . '</td><td style="font-weight:bold">' . S::e($request['kind'] === 'booth' ? $w['sponsor_booth'] : $w['sponsor_sponsor']) . '</td></tr>'
             . '</table>';
-        $html = self::layout($lang, strtr($w['hello'], ['{name}' => S::e($request['contact_name'])]), [$w['sponsor_body'], $table], null, $vars);
+        $html = self::layout(strtr($w['hello'], ['{name}' => S::e($request['contact_name'])]), [$w['sponsor_body'], $table], null, $vars);
         return ['to' => $request['email'], 'subject' => strtr($w['sponsor_subject'], $vars), 'html' => $html, 'text' => self::toText($html), 'attachments' => []];
     }
 
@@ -252,13 +248,10 @@ final class EmailTemplates
     }
 
     /** The shared email frame: header band, text blocks, one button, footer. */
-    private static function layout(string $lang, string $greeting, array $blocks, ?array $button, array $vars): string
+    private static function layout(string $greeting, array $blocks, ?array $button, array $vars): string
     {
-        $w = EmailText::for($lang);
-        $rtl = Lang::isRtl($lang);
-        $dir = $rtl ? 'rtl' : 'ltr';
-        $align = $rtl ? 'right' : 'left';
-        $font = $rtl ? "Tahoma,'Noto Kufi Arabic',Arial,sans-serif" : 'Arial,Helvetica,sans-serif';
+        $w = EmailText::words();
+        $font = 'Arial,Helvetica,sans-serif';
         $phone = (string) App::config('office_phone', '') ?: self::sitePhone();
         $questions = str_replace('{phone}', $phone !== '' ? str_replace('{phone}', $phone, $w['call']) : '', $w['questions']);
 
@@ -275,28 +268,18 @@ final class EmailTemplates
             }
         }
 
-        return '<!doctype html><html lang="' . $lang . '" dir="' . $dir . '"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"></head>'
+        return '<!doctype html><html lang="en" dir="ltr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"></head>'
             . '<body style="margin:0;padding:0;background:#eef6f6">'
             . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef6f6"><tr><td align="center" style="padding:24px 12px">'
             . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:12px;overflow:hidden">'
             . '<tr><td style="background:#12302f;padding:22px 26px;color:#ffffff;font-family:Arial,sans-serif" dir="ltr"><div style="font-size:24px;font-weight:bold">iSmile 2026</div>'
-            . '<div style="font-size:13px;color:#cfefee;font-family:' . $font . '" dir="' . $dir . '">' . S::e($w['dates_venue']) . '</div></td></tr>'
-            . '<tr><td dir="' . $dir . '" style="padding:26px;font-family:' . $font . ';font-size:15px;line-height:1.6;color:#12302f;text-align:' . $align . '">'
+            . '<div style="font-size:13px;color:#cfefee;font-family:' . $font . '">' . S::e($w['dates_venue']) . '</div></td></tr>'
+            . '<tr><td style="padding:26px;font-family:' . $font . ';font-size:15px;line-height:1.6;color:#12302f;text-align:left">'
             . '<p style="margin:0 0 14px;font-weight:bold">' . $greeting . '</p>' . $body
             . '</td></tr>'
-            . '<tr><td dir="' . $dir . '" style="padding:16px 26px;background:#f4fafa;font-family:' . $font . ';font-size:12px;line-height:1.5;color:#5b7477;text-align:' . $align . '">'
+            . '<tr><td style="padding:16px 26px;background:#f4fafa;font-family:' . $font . ';font-size:12px;line-height:1.5;color:#5b7477;text-align:left">'
             . ($phone !== '' ? str_replace(S::e($phone), '<span dir="ltr">' . S::e($phone) . '</span>', S::e($questions)) : S::e($questions)) . '<br>' . S::e($w['refund_rule']) . '<br>' . S::e($w['no_reply'])
             . '</td></tr></table></td></tr></table></body></html>';
-    }
-
-    /**
-     * The language of an email. Setting "email_language": "en" (the default)
-     * sends every email in English; "auto" uses the language the person chose
-     * on the website (Arabic and Kurdish texts are kept ready).
-     */
-    private static function emailLang(?string $chosen): string
-    {
-        return Settings::get('email_language') === 'auto' ? Lang::pick($chosen ?? 'en') : 'en';
     }
 
     /** The phone number shown in the website's footer (data/footer.json). */

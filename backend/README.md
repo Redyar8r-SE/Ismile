@@ -81,7 +81,8 @@ one test address until launch.
 
 The Database menu includes a Communication center for the Owner, Registration
 and Finance. It reads the existing email queue, with recipient/reference search,
-status, message type and language filters, pagination and delivery details.
+status and message type filters, pagination and delivery details. Every email is
+sent in English.
 Skipped messages are separate from sent messages; log-mode emails are labelled
 as saved locally. Team alerts are visible only to the Owner. This page does not
 send or resend emails.

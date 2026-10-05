@@ -99,11 +99,10 @@ final class Tickets
         return $data;
     }
 
-    /** The PDF ticket, in the registrant's language. */
+    /** The PDF ticket, in English. */
     public static function pdf(array $registration, array $ticket): string
     {
-        $lang = Lang::pick($registration['lang']);
-        $words = EmailText::for($lang);
+        $words = EmailText::words();
         $pdf = new \TCPDF('P', 'mm', 'A5', true, 'UTF-8');
         $pdf->SetCreator('iSmile 2026');
         $pdf->SetAuthor('iSmile 2026');
@@ -113,7 +112,6 @@ final class Tickets
         $pdf->SetMargins(12, 12, 12);
         $pdf->SetAutoPageBreak(false);
         $pdf->AddPage();
-        $pdf->setRTL(Lang::isRtl($lang));
 
         // Header band
         $pdf->SetFillColor(18, 48, 47);
@@ -133,11 +131,11 @@ final class Tickets
         $pdf->Cell(124, 5, $words['pdf_name'], 0, 1);
         $pdf->SetX(12);
         $pdf->SetFont('dejavusans', 'B', 16);
-        $pdf->MultiCell(124, 8, Registrations::fullName($registration), 0, Lang::isRtl($lang) ? 'R' : 'L', false, 1);
+        $pdf->MultiCell(124, 8, Registrations::fullName($registration), 0, 'L', false, 1);
 
         $rows = [
             [$words['pdf_ticket_type'], $registration['ticket_type'] === 'student' ? $words['type_student'] : $words['type_professional']],
-            [$words['pdf_lunch'], EmailText::lunchLine($registration, $lang)],
+            [$words['pdf_lunch'], EmailText::lunchLine($registration)],
             [$words['pdf_reference'], $registration['ref']],
             [$words['pdf_ticket_no'], $ticket['ticket_no']],
         ];
@@ -157,13 +155,10 @@ final class Tickets
         }
 
         // QR code, centred, with the ticket number under it for typing in.
-        // Drawn left-to-right: in right-to-left mode TCPDF mirrors positions.
-        $pdf->setRTL(false);
         $pdf->write2DBarcode(self::qrPayload($ticket), 'QRCODE,M', 44, 116, 60, 60, ['border' => 0, 'padding' => 2, 'fgcolor' => [0, 0, 0], 'bgcolor' => [255, 255, 255]], 'N');
         $pdf->SetXY(12, 178);
         $pdf->SetFont('dejavusans', 'B', 12);
         $pdf->Cell(124, 7, $ticket['ticket_no'], 0, 1, 'C');
-        $pdf->setRTL(Lang::isRtl($lang));
         $pdf->SetFont('dejavusans', '', 8.5);
         $pdf->SetTextColor(91, 116, 119);
         $pdf->SetXY(12, 187);

@@ -38,10 +38,10 @@ try {
     foreach (Auth::ROLES as $role) {
         $check("communication access for $role",Auth::can(['role'=>$role],'communications')===in_array($role,['owner','registration','finance'],true));
     }
-    [$scope,$params]=CommunicationQuery::where(['role'=>'registration'],['status'=>'failed','kind'=>'alert','lang'=>'ar','q'=>"x' OR 1=1 --"]);
+    [$scope,$params]=CommunicationQuery::where(['role'=>'registration'],['status'=>'failed','kind'=>'alert','q'=>"x' OR 1=1 --"]);
     $check('staff never gains alert access through filters',str_contains($scope,"e.kind <> 'alert'") && !str_contains($scope,"x' OR"));
-    $check('filter values are passed as parameters',in_array('failed',$params,true) && in_array('alert',$params,true) && in_array('ar',$params,true));
-    [$invalid,$invalidParams]=CommunicationQuery::where(['role'=>'owner'],['status'=>'bad','kind'=>'bad','lang'=>'bad']);
+    $check('filter values are passed as parameters',in_array('failed',$params,true) && in_array('alert',$params,true));
+    [$invalid,$invalidParams]=CommunicationQuery::where(['role'=>'owner'],['status'=>'bad','kind'=>'bad']);
     $check('unknown filter values are ignored',$invalid==='1=1' && $invalidParams===[]);
     $check('skipped messages are classified separately',str_contains(CommunicationQuery::STATE_SQL,"LIKE 'skipped:%'") && str_contains(CommunicationQuery::STATE_SQL,"THEN 'skipped'"));
     $check('empty backup catalog has no success',Backup::available()===[] && Backup::latestTime()===null);

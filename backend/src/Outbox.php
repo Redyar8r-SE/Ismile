@@ -15,14 +15,13 @@ final class Outbox
     /** Minutes to wait before retry 1, 2 and 3. After that the email is marked failed. */
     private const RETRY_MINUTES = [5, 15, 40];
 
-    public static function queue(string $kind, ?array $registration, array $data = [], ?int $sponsorRequestId = null, ?string $to = null, ?string $lang = null): int
+    public static function queue(string $kind, ?array $registration, array $data = [], ?int $sponsorRequestId = null, ?string $to = null): int
     {
         return Db::insert('emails', [
             'kind'               => $kind,
             'registration_id'    => $registration['id'] ?? null,
             'sponsor_request_id' => $sponsorRequestId,
             'to_email'           => $to ?? (string) ($registration['email'] ?? ''),
-            'lang'               => Lang::pick($lang ?? ($registration['lang'] ?? 'en')),
             'data'               => $data ? json_encode($data, JSON_UNESCAPED_UNICODE) : null,
             'status'             => 'pending',
             'next_attempt_at'    => App::now(),
@@ -37,7 +36,6 @@ final class Outbox
             'kind'            => $kind,
             'checkout_id'     => $checkout['id'],
             'to_email'        => (string) $checkout['email'],
-            'lang'            => Lang::pick($checkout['lang']),
             'status'          => 'pending',
             'next_attempt_at' => App::now(),
             'created_at'      => App::now(),

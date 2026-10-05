@@ -804,7 +804,6 @@ try {
     $student = Db::one("SELECT * FROM registrations WHERE ticket_type = 'student' AND status = 'paid' ORDER BY id DESC LIMIT 1");
     Db::run("UPDATE registrations SET lang = 'ku', lunch_day1 = 1, lunch_day2 = 0 WHERE id = ?", [$student['id']]);
     $build = static fn (): ?array => EmailTemplates::build(['kind' => 'ticket', 'registration_id' => $student['id'], 'data' => null, 'to_email' => '', 'checkout_id' => null, 'sponsor_request_id' => null]);
-    Settings::set('email_language', 'en');
     Settings::set('ticket_qr_in_email', '0');
     $mail = $build();
     check('the ticket email is in English, even for someone who registered in Kurdish', $mail !== null && str_starts_with($mail['subject'], "🎉 You're in!") && str_contains($mail['html'], 'lang="en"'));
@@ -819,9 +818,18 @@ try {
     $mail = $build();
     check('switched on, the QR code and the PDF ticket come back', count($mail['attachments']) === 1 && str_contains($mail['html'], 'api/qr.php'));
     Settings::set('ticket_qr_in_email', '0');
-    Settings::set('email_language', 'auto');
-    check('email language "auto" sends Kurdish to a Kurdish registrant', str_contains((string) $build()['subject'], 'تۆمار'));
-    Settings::set('email_language', 'en');
+    try {
+        Settings::set('email_language', 'auto');
+        check('there is no "email language" setting any more', false);
+    } catch (\InvalidArgumentException) {
+        check('there is no "email language" setting any more', true);
+    }
+    // An old value left in a database changes nothing.
+    Db::run("INSERT INTO settings (k, v, updated_at) VALUES ('email_language', 'auto', ?) ON DUPLICATE KEY UPDATE v = 'auto'", [App::now()]);
+    $mail = $build();
+    check('there is no switch for another language: still English, left to right', str_starts_with($mail['subject'], "🎉 You're in!") && str_contains($mail['html'], 'lang="en" dir="ltr"') && !preg_match('/[\x{0600}-\x{06FF}]/u', $mail['subject'] . $mail['text']));
+    Db::run("DELETE FROM settings WHERE k = 'email_language'");
+    check('the email queue keeps no language column', !Db::value("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'emails' AND column_name = 'lang'"));
     try {
         (new \Ismile\Mail\ResendMailer())->send('x@example.com', 'x', 'x', 'x');
         check('Resend refuses to run without its key', (string) App::config('mail.resend_key', '') !== '');
@@ -857,7 +865,7 @@ try {
     }
     check('many form submissions from one address are blocked (429)', $blocked);
 } finally {
-    foreach (['registration_open', 'ticket_capacity', 'lunch_capacity_day1', 'lunch_capacity_day2', 'email_test_mode', 'email_language', 'ticket_qr_in_email'] as $key) {
+    foreach (['registration_open', 'ticket_capacity', 'lunch_capacity_day1', 'lunch_capacity_day2', 'email_test_mode', 'ticket_qr_in_email'] as $key) {
         Settings::set($key, $saved[$key]);
     }
     Db::run("DELETE FROM rate_limits WHERE bucket LIKE 'register:%'");

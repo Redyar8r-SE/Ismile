@@ -30,10 +30,6 @@ final class CommunicationQuery
             $where[] = 'e.kind = ?';
             $params[] = $filters['kind'];
         }
-        if (in_array($filters['lang'] ?? '', ['en', 'ar', 'ku'], true)) {
-            $where[] = 'e.lang = ?';
-            $params[] = $filters['lang'];
-        }
         $query = trim((string) ($filters['q'] ?? ''));
         if ($query !== '') {
             $fields = ['e.to_email','r.ref','c.ref','s.ref','s.company',"CONCAT_WS(' ',r.first_name,r.father_name,r.grandfather_name)","CONCAT_WS(' ',c.first_name,c.father_name,c.grandfather_name)"];

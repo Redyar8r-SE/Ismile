@@ -194,7 +194,7 @@ final class Checkouts
         return [
             'first_name' => $first, 'father_name' => $father, 'grandfather_name' => $grandfather,
             'phone' => $phone, 'email' => $email, 'city' => Validate::text($in['city'] ?? '', 80) ?: '-',
-            'gender' => 'prefer-not', 'age' => null, 'specialty' => $specialty, 'lang' => Lang::pick($in['lang'] ?? 'ku'),
+            'gender' => 'prefer-not', 'age' => null, 'specialty' => $specialty, 'lang' => 'en',
             'ticket_type' => $ticket, 'lunch_day1' => ($in['lunch_day1'] ?? '') === '1' ? 1 : 0, 'lunch_day2' => ($in['lunch_day2'] ?? '') === '1' ? 1 : 0,
             'pay_method' => 'visa', 'university' => $university, 'ambassador_code' => $ambassador, 'id_photo_id' => null,
         ];
