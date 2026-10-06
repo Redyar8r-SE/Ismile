@@ -28,7 +28,7 @@ Page::top('Backups','backups','<form method="post">' . Page::csrfField() . '<inp
     ['Latest successful backup',$latest ? date('j M',$latest['created_at']) : 'None yet',$latest ? date('Y · H:i',$latest['created_at']) : 'Create your first database copy','calendar','teal'],
     ['Available backups',number_format(count($backups)),'Completed database copies','backups','blue'],
     ['Total size',$size($totalSize),'Compressed backup files','download','violet'],
-    ['Retention',Backup::KEEP_DAYS . ' days','Older copies are cleaned up by the backup job','clock','gold'],
+    ['Retention',Backup::KEEP_COUNT . ' backups','The newest successful copies are kept','clock','gold'],
 ]) ?>
 <div class="backup-workspace">
 <section class="card latest-backup">

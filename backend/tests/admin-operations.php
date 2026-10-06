@@ -58,10 +58,55 @@ try {
     $check('only the completed valid gzip is offered',count($available)===1 && $available[0]['name']===$valid);
     $check('newer incomplete files do not become the latest success',Backup::latestTime()===$available[0]['created_at']);
     $check('valid catalog entries include size and timestamp',$available[0]['size']>0 && $available[0]['created_at']>0);
+    $cachePath=App::storage('backups/' . $valid . '.verified.json');
+    $cached=json_decode((string)file_get_contents($cachePath),true);
+    $check('full verification persists a small result',($cached['complete']??false)===true && filesize($cachePath)<2048);
+    // A deliberately changed cached verdict proves catalog calls skip the full
+    // read. Download lookup must still check the actual bytes independently.
+    $cached['complete']=false;
+    file_put_contents($cachePath,json_encode($cached));
+    $check('catalog uses a recent unchanged-file result',Backup::available()===[]);
+    $check('downloads ignore the catalog cache',Backup::find($valid)!==null);
+    $cached=json_decode((string)file_get_contents($cachePath),true);
+    $cached['complete']=false;$cached['checked_at']=time()-86401;
+    file_put_contents($cachePath,json_encode($cached));
+    $check('expired catalog results are fully rechecked',count(Backup::available())===1);
+    file_put_contents($cachePath,'invalid JSON');
+    $check('damaged verification cache is rebuilt',count(Backup::available())===1);
+    $cached=json_decode((string)file_get_contents($cachePath),true);
+    $cached['fingerprint']='different-file';$cached['complete']=false;
+    file_put_contents($cachePath,json_encode($cached));
+    $check('mismatched file metadata triggers verification',count(Backup::available())===1);
+    $validPath=App::storage('backups/' . $valid);
+    $original=(string)file_get_contents($validPath);
+    $damaged=$original;$damaged[strlen($damaged)-8]=chr(ord($damaged[strlen($damaged)-8]) ^ 255);
+    file_put_contents($validPath,$damaged);
+    $check('changed backup trailer invalidates a cached success',Backup::available()===[] && Backup::find($valid)===null);
+    file_put_contents($validPath,$original);
+    $check('repaired backup is checked again',count(Backup::available())===1);
+    // Even matching size/timestamps/trailer are not sufficient for downloads.
+    $cached=json_decode((string)file_get_contents($cachePath),true);
+    $damaged=$original;$damaged[12]=chr(ord($damaged[12]) ^ 255);
+    file_put_contents($validPath,$damaged);
+    $cached['fingerprint']=(new ReflectionMethod(Backup::class,'fingerprint'))->invoke(null,$validPath);
+    file_put_contents($cachePath,json_encode($cached));
+    $check('fresh download verification rejects corruption despite a cached success',Backup::find($valid)===null);
+    file_put_contents($validPath,$original);
+    $check('backup can be downloaded again after repair',Backup::find($valid)!==null);
+    $lock=fopen(App::storage('tmp/backup.lock'),'c');
+    flock($lock,LOCK_EX);
+    $blocked=false;
+    try { Backup::run(); } catch (Ismile\UserError $error) { $blocked=str_contains($error->key,'already running'); }
+    finally { fclose($lock); }
+    $check('another backup is rejected before any database work',$blocked);
     foreach (['../config.php','..\\config.php','/etc/passwd',$valid . '.part','unknown.sql.gz',"$valid\0"] as $name) $check('rejects invalid download name ' . str_replace("\0",'NUL',$name),Backup::find($name)===null);
     echo "$passed checks passed.\n";
 } finally {
-    foreach ($created as $file) if (is_file($file)) unlink($file);
+    foreach ($created as $file) {
+        if (is_file($file)) unlink($file);
+        if (is_file($file . '.verified.json')) unlink($file . '.verified.json');
+    }
+    if (is_file(App::storage('tmp/backup.lock'))) unlink(App::storage('tmp/backup.lock'));
     foreach (['.htaccess'] as $file) if (is_file($root.'/'.$file)) unlink($root.'/'.$file);
     foreach (['logs','outbox','backups','tmp'] as $folder) if (is_dir($root.'/'.$folder)) rmdir($root.'/'.$folder);
     rmdir($root);

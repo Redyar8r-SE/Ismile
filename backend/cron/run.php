@@ -96,6 +96,8 @@ try {
     }
 
     if ($job === 'nightly') {
+        // Give interactive requests CPU priority where the host supports it.
+        if (function_exists('proc_nice')) @proc_nice(10);
         $report['backup'] = Backup::run();
 
         // Student ID photos are deleted a fixed time after the summit.

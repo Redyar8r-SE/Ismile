@@ -94,7 +94,36 @@ recorded in the activity log. Backup files stay in private storage and are
 published only after the export finishes; partial or corrupt files are omitted.
 Website files and images stored outside the database are not part of this copy.
 
+Keep the nightly schedule outside busy registration/check-in hours (the example
+uses 02:30 in the server's cron timezone). The nightly PHP process lowers its
+CPU priority when supported. Manual and scheduled backups share one lock, so
+only one export can run at a time. Fast gzip compression reduces CPU work but
+may produce larger files. Retention keeps the newest five successful backups,
+including manual copies. After a sixth copy finishes and passes verification,
+the oldest successful copy and its verification sidecar are removed. Failed
+exports preserve existing copies. Retention counts copies rather than days;
+multiple manual backups in one day use the same five-copy allowance.
+Table data is read sequentially with an unbuffered cursor, limiting PHP memory
+to the current row and its SQL representation instead of the entire table.
+Photo export uses one query per table. The original connection buffering mode
+is restored after every table, including when an export fails. This reduces
+PHP memory use; database and disk load during an export still need measurement.
+
+Each new export is fully verified once. Catalogs and the missing-backup alert
+reuse that result for up to 24 hours while file size, timestamps, inode, gzip
+header and trailer match. Legacy or changed files are checked on first use;
+expired results are rechecked. Downloads always run a fresh full verification.
+The small private `.verified.json` sidecars are deleted with rotated backups.
+This reduces repeated decompression; it does not eliminate the database reads
+or disk work during an export. Measure response times during a backup on
+staging before choosing the live schedule.
+
 Focused checks: `php -d extension=mbstring backend/tests/admin-operations.php`.
+Retention checks: `php -d extension=mbstring backend/tests/backup-retention.php`.
+To also verify rotation after a real export (test database, disposable backup
+storage): `ISMILE_CONFIG=/path/to/test-config.php php backend/tests/backup-retention.php --database`.
+Database streaming checks (isolated test database only):
+`ISMILE_CONFIG=/path/to/test-config.php php backend/tests/backup-streaming.php`.
 
 ## Database design
 
