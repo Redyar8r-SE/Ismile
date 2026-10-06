@@ -4,5 +4,5 @@
   "student": 30000,
   "lunchDay1": 0,
   "lunchDay2": 0,
-  "registrationClosed": false
+  "registrationClosed": true
 }
