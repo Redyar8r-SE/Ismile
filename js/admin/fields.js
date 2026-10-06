@@ -42,7 +42,7 @@ const PARTS = [
   },
   {
     id: "ticketPrices", title: "Ticket prices", kind: "single", file: "tickets",
-    hint: "In Iraqi dinars, whole numbers. Leave 0 to show “Price soon”. Lunch is optional and priced per day: visitors can add Day 1, Day 2 or both, and it is added to their total. Workshop prices are set on each workshop: Workshops page › Workshops › The workshops.",
+    hint: "In Iraqi dinars, whole numbers. Leave 0 to show “Price soon”. Lunch is optional and priced per day: visitors can add Day 1, Day 2 or both, and it is added to their total. Workshop names, prices and seats are managed in the registrations admin (/admin/ → Workshops).",
     itemFields: [
       { key: "professional", label: "Professional ticket (IQD)", type: "number" },
       { key: "student", label: "Student ticket (IQD)", type: "number" },
@@ -51,47 +51,9 @@ const PARTS = [
     ],
   },
   {
-    id: "workshopList", title: "Workshop list", kind: "list", file: "workshops",
-    hint: "Each workshop card, with its price and how many seats are left. Leave the title empty and the card shows “Coming soon” with no seat numbers; fill it in when the workshop is announced. Seats are booked by phone: update “Seats left” as the office takes bookings, and set it to 0 to show the workshop as full. The booking phone is in “Wording on the cards and booking phone” below.",
-    itemName: "workshop",
-    newItem: () => ({ id: `ws${Date.now().toString(36).slice(-4)}`, icon: "tools", title: { en: "", ar: "", ku: "" }, company: null, speaker: null, price: 0, totalSeats: 20, seatsLeft: 20 }),
-    itemFields: [
-      { key: "title", label: "Workshop title", type: "i18n" },
-      { key: "company", label: "Company (optional)", type: "i18n" },
-      { key: "speaker", label: "Speaker (optional)", type: "i18n" },
-      { key: "price", label: "Price per seat (IQD)", type: "number" },
-      { key: "totalSeats", label: "Total seats", type: "number" },
-      { key: "seatsLeft", label: "Seats left", type: "number" },
-    ],
-  },
-  {
-    id: "sponsorTiers", title: "Sponsor tiers", kind: "list", file: "sponsors", listKey: "tiers",
-    hint: "The Diamond / Platinum / Gold / Silver / Exhibitor cards and how many places are still open in each.",
-    itemName: "tier",
-    refreshes: ["sponsorList"],
-    rowInfo: (tier, data) => {
-      const used = (data.sponsors.sponsors || []).filter((s) => s.tier === tier.id).length;
-      return {
-        label: used ? `${used} sponsor${used === 1 ? "" : "s"}` : "no sponsors yet",
-        lock: used > 0,
-        lockReason: "Sponsors use this tier — move them first",
-      };
-    },
-    newItem: () => ({ id: `tier${Date.now().toString(36).slice(-4)}`, name: { en: "", ar: "", ku: "" }, className: "tc-silver", subtitle: { en: "", ar: "", ku: "" }, spots: 3 }),
-    itemFields: [
-      { key: "name", label: "Tier name", type: "i18n" },
-      { key: "subtitle", label: "Tier subtitle", type: "i18n" },
-      { key: "spots", label: "Open places", type: "number" },
-      { key: "className", label: "Colour", type: "select", options: [
-        ["tc-dia", "Diamond (light blue)"], ["tc-gold", "Gold"], ["tc-silver", "Silver"], ["tc-exhibitor", "Exhibitor"], ["tc-bronze", "Bronze"], ["tc-plat", "Platinum"],
-      ] },
-    ],
-  },
-  {
     id: "sponsorList", title: "Sponsors", kind: "list", file: "sponsors", listKey: "sponsors",
-    hint: "Companies that already sponsor iSmile 2026. Each one shows its logo in its tier, in place of an open slot.",
+    hint: "Companies that already sponsor iSmile 2026. Each one shows its logo in its tier, in place of an open slot. The tiers themselves (names, places, prices) are managed in the database admin: Sponsors & booths.",
     itemName: "sponsor",
-    refreshes: ["sponsorTiers"],
     newItem: () => ({ name: "", tier: "gold", logo: null, bg: "#ffffff" }),
     itemFields: [
       { key: "name", label: "Company name", type: "text" },
@@ -292,7 +254,7 @@ const PARTS = [
   },
   {
     id: "workshopsText", title: "Workshops — words",
-    hint: "The labels on the workshop cards and the booking phone. The workshops themselves are in “The workshops” above.",
+    hint: "The labels on the workshop cards and the booking phone. The workshops themselves (names, prices, seats) are managed in the registrations admin: /admin/ → Workshops.",
     fields: many([
       ["ws_phone", "Workshop booking phone: the number (e.g. +964 750 123 4567), or \"Will be announced soon\" until you have it"],
       ["w_call", "Call to book button"], ["w_call_how", "Text above the phone number"],
@@ -498,7 +460,7 @@ const PARTS = [
       ["spf_st1", "Stepper: step 1"], ["spf_st2", "Stepper: step 2"],
       ["step_of", "Step counter (keep {n} and {total})"],
       ["spf_s1_title", "Step 1 title"], ["spf_s1_sub", "Step 1 text"],
-      ["spf_kind_spon", "Choice 1: sponsorship"], ["spf_kind_spon_d", "Choice 1 text"],
+      ["spf_kind_spon", "Choice 1: sponsorship"], ["spf_kind_tiers_d", "Choice 1 text"],
       ["spf_kind_booth", "Choice 2: booth"], ["spf_kind_booth_d", "Choice 2 text"],
       ["spf_pack_title", "Packages heading"], ["spf_pack_sub", "Packages text"],
       ["spf_pack_unsure", "Last option: not sure yet"], ["spf_pack_unsure_d", "Last option: its text"],
@@ -599,9 +561,9 @@ export const GROUPS = [
     blocks: [special("speakers", "speakers", "The speakers"), text("speakersText", "Wording and placeholders")],
   },
   {
-    id: "sponsors", page: "home", title: "Sponsors & partners", where: "Sponsor tiers and the trusted partner logos",
+    id: "sponsors", page: "home", title: "Sponsors & partners", where: "The sponsor logos and the trusted partner logos",
     blocks: [
-      list("sponsorTiers", "Sponsor tiers"), list("sponsorList", "Sponsors with a logo"),
+      list("sponsorList", "Sponsors with a logo"),
       list("partnerList", "Trusted partners"), text("sponsorsText", "Wording"),
     ],
   },
@@ -619,7 +581,7 @@ export const GROUPS = [
   },
   {
     id: "workshops", page: "workshops", title: "Workshops", where: "The workshops page: the cards, the booking phone and the wording",
-    blocks: [list("workshopList", "The workshops"), text("workshopsText", "Wording on the cards and booking phone"), text("workshopsPage", "The rest of the page")],
+    blocks: [text("workshopsText", "Wording on the cards and booking phone"), text("workshopsPage", "The rest of the page")],
   },
   {
     id: "registration", page: "register", title: "Registration", where: "The three-step registration page",

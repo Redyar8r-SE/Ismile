@@ -1,10 +1,15 @@
 // Registration: individual details, optional lunch, payment review, and success screen.
 // Workshops are not sold here: after registering, the success screen
 // suggests them with a link to the workshops page.
-// Demo only: nothing is sent to a server yet. Connect submitRegistration() to your backend.
+//
+// The form is sent to the server (api/register.php), which saves it, makes the
+// reference and works out the price. Professionals then go straight to the
+// payment page; students wait for their ID to be checked. Where there is no
+// server (GitHub Pages) or registration is closed, the form is not shown at
+// all, so nobody can believe they registered when nothing was saved.
 // Nothing about the visitor is kept in the browser.
-import { t, onLangChange } from "../i18n.js?v=82";
-import { formatPrice } from "../utils/money.js?v=82";
+import { t, getLang, onLangChange } from "../i18n.js?v=85";
+import { formatPrice } from "../utils/money.js?v=85";
 
 const TOTAL_STEPS = 3;
 
@@ -13,12 +18,8 @@ const TOTAL_STEPS = 3;
 const PAY_METHODS = { visa: "pay_visa_t", mastercard: "pay_mastercard_t", fib: "pay_fib_t", fastpay: "pay_fastpay_t" };
 const payMethod = (value) => (value in PAY_METHODS ? value : "visa");
 
-// A reference such as ISM26-7KQ2XM: no 0/O or 1/I, so it is easy to read out.
-function makeReference() {
-  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  const bytes = crypto.getRandomValues(new Uint8Array(6));
-  return `ISM26-${[...bytes].map((byte) => alphabet[byte % alphabet.length]).join("")}`;
-}
+// Which step each field the server may complain about sits on.
+const FIELD_STEP = { terms: 3 };
 
 // Earlier versions kept the visitor's name, email and phone in the browser.
 // Nothing uses them any more, so they are removed from any device that has them.
@@ -58,6 +59,10 @@ export function initRegistration({ tickets = {} } = {}) {
   let step = 1;
 
   let lastSuccess = null;
+  let sending = false;
+  // What the server says: open or not, prices, lunch days left. null = no server.
+  let server = null;
+  let serverChecked = false;
 
   // ---------- Helpers ----------
   const checkedValue = (name) => form.querySelector(`input[name="${name}"]:checked`)?.value;
@@ -442,40 +447,143 @@ export function initRegistration({ tickets = {} } = {}) {
     submitRegistration();
   });
 
-  function submitRegistration() {
-    const payment = payMethod(checkedValue("pay"));
-    const order = { lines: orderLines(), total: orderTotal(), payment };
+  // Everything the server needs, read straight from the fields. The server
+  // checks it all again and sets the price itself.
+  function formData() {
+    const data = new FormData();
+    const student = checkedValue("ticket") === "student";
+    data.append("lang", getLang());
+    data.append("first_name", $("p_first").value.trim());
+    data.append("father_name", $("p_second").value.trim());
+    data.append("grandfather_name", $("p_third").value.trim());
+    data.append("phone", $("p_phone").value.trim());
+    data.append("email", $("p_email").value.trim());
+    data.append("city", $("p_city").value.trim());
+    data.append("gender", $("p_gender").value);
+    data.append("age", $("p_age").value.trim());
+    data.append("specialty", specialty.value);
+    data.append("ticket", student ? "student" : "professional");
+    chosenLunch().forEach((day) => data.append(`lunch_${day.id}`, "1"));
+    data.append("pay", payMethod(checkedValue("pay")));
+    data.append("terms", $("terms").checked ? "1" : "0");
+    data.append("website", $("regTrap")?.value || "");   // spam trap: people never fill it
+    if (student) {
+      data.append("university", $("p_uni").value.trim());
+      data.append("ambassador", $("p_ambassador").value.trim());
+      const photo = $("p_student_id").files?.[0];
+      if (photo) data.append("student_id", photo);
+    }
+    return data;
+  }
 
-    const attendee = {
-      ref: makeReference(),
-      createdAt: new Date().toISOString(),
-      name: [$("p_first"), $("p_second"), $("p_third")].map((input) => input.value.trim()).join(" "),
-      email: $("p_email").value.trim(),
-      phone: $("p_phone").value.trim(),
-      ticket: checkedValue("ticket") === "student" ? "student" : "professional",
-      lunch: chosenLunch().map((day) => day.id),
-    };
-    // TODO: send { attendee, order } to your server here.
+  function setSending(on) {
+    sending = on;
+    submitBtn.disabled = on;
+    backBtn.disabled = on;
+    submitBtn.querySelector("span").textContent = t(on ? "reg_sending" : "submit");
+  }
 
-    lastSuccess = { payment, total: order.total, email: attendee.email, ref: attendee.ref };
-    renderSuccess();
-    form.hidden = true;
-    progress.hidden = true;
-    success.hidden = false;
-    card.scrollIntoView({ behavior: "smooth", block: "start" });
-    success.focus({ preventScroll: true });
+  // A problem the server found: shown next to the field it is about, or under
+  // the terms when it is about the registration as a whole.
+  function showServerError(key, field) {
+    const input = field ? $(field) : null;
+    if (input && input.id !== "terms") {
+      goTo(FIELD_STEP[input.id] || 1);
+      showError(input, key);
+      input.focus();
+      return;
+    }
+    const error = $("termsError");
+    error.textContent = t(key);
+    error.hidden = false;
+  }
+
+  async function submitRegistration() {
+    if (sending) return;
+    setSending(true);
+    $("termsError").hidden = true;
+    let result = null;
+    try {
+      const response = await fetch("api/register.php", { method: "POST", body: formData(), headers: { Accept: "application/json" } });
+      result = await response.json();
+    } catch {
+      result = { ok: false, error: "err_server" };
+    }
+
+    if (!result.ok) {
+      setSending(false);
+      if (result.error === "reg_closed" || result.error === "reg_full") {
+        await checkServer();
+        return;
+      }
+      showServerError(result.error || "err_server", result.field);
+      return;
+    }
+
+    // Everyone (students too) goes straight to the secure payment page: a
+    // person is registered only once the payment is confirmed. The form stays
+    // disabled so a second press cannot send it twice.
+    submitBtn.querySelector("span").textContent = t("reg_to_payment");
+    if (result.redirect) {
+      window.location.assign(result.redirect);
+      return;
+    }
+    // The payment could not start right now (full, closed, or the payment
+    // company did not answer): their own payment page says why and offers
+    // "Try again". Never the form a second time.
+    window.location.assign(`${result.statusUrl}&e=${encodeURIComponent(result.payError || "pay_start_failed")}`);   // lunch_full, reg_full, reg_closed or pay_start_failed
   }
 
   function renderSuccess() {
     if (!lastSuccess) return;
-    const { payment, total, email, ref } = lastSuccess;
-    const method = t(PAY_METHODS[payMethod(payment)]);
-    $("successTitle").textContent = t("success_title");
-    $("successText").textContent = t("success_text")
-      .replace("{method}", method)
-      .replace("{total}", formatPrice(total))
-      .replaceAll("{email}", email);
+    const { kind, email, ref } = lastSuccess;
+    $("successTitle").textContent = t(kind === "student" ? "reg_ok_student_title" : "reg_ok_later_title");
+    $("successText").textContent = t(kind === "student" ? "reg_ok_student_text" : "reg_ok_later_text").replaceAll("{email}", isolate(email));
     $("successRef").textContent = ref;
+  }
+
+  // ---------- Is registration open? ----------
+  // Asks the server before showing the form. No answer (no server, e.g. the
+  // GitHub Pages copy) counts as closed.
+  async function checkServer() {
+    try {
+      const response = await fetch(`api/config.php?lang=${getLang()}`, { cache: "no-store", headers: { Accept: "application/json" } });
+      const data = await response.json();
+      server = data && data.ok === true ? data : null;
+    } catch {
+      server = null;
+    }
+    serverChecked = true;
+    renderAvailability();
+  }
+
+  function renderAvailability() {
+    const closedBox = $("regClosed");
+    card.classList.toggle("is-checking", !serverChecked);
+    if (!serverChecked) return;
+    const open = server?.open === true;
+    closedBox.hidden = open || lastSuccess !== null;
+    if (lastSuccess === null) {
+      form.hidden = !open;
+      progress.hidden = !open;
+    }
+    if (!open) {
+      const reason = server?.reason;
+      const message = reason === "closed" ? server.messages?.[getLang()] || server.message : "";
+      $("regClosedTitle").textContent = t(reason === "full" ? "reg_full_title" : "reg_closed_title");
+      $("regClosedText").textContent = message || t(reason === "full" ? "reg_full_text" : "reg_closed_text");
+      return;
+    }
+    // Lunch days that are full (or have no price yet) cannot be chosen.
+    LUNCH.forEach((day) => {
+      const input = form.querySelector(`input[name="lunch"][value="${day.id}"]`);
+      const available = server.lunch?.[day.id] !== false;
+      input.disabled = !available;
+      if (!available) input.checked = false;
+      input.closest("label")?.classList.toggle("is-unavailable", !available);
+    });
+    syncChecked("lunch");
+    updateNextLabel();
   }
 
   $("regAgain").addEventListener("click", () => {
@@ -490,6 +598,7 @@ export function initRegistration({ tickets = {} } = {}) {
     form.hidden = false;
     progress.hidden = false;
     goTo(1);
+    renderAvailability();
   });
 
   // ---------- Prices in the side panel and on the lunch cards ----------
@@ -514,10 +623,14 @@ export function initRegistration({ tickets = {} } = {}) {
     updateNextLabel();
     if (step === 3) renderReview();
     renderSuccess();
+    renderAvailability();
+    if (sending) submitBtn.querySelector("span").textContent = t("reg_sending");
   });
 
   // ---------- Start ----------
   updateAgeButtons();
   renderTicketPrices();
   goTo(1, { scroll: false });
+  renderAvailability();
+  checkServer();
 }

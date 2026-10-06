@@ -1,0 +1,8 @@
+# cPanel -> Git Version Control -> "Deploy HEAD Commit" runs this.
+# It deploys to the TEST site (test.ismile.krd). After checking the test
+# site, deploy to the live site from the cPanel Terminal:
+#   bash ~/repositories/Ismile/backend/tools/deploy.sh live
+---
+deployment:
+  tasks:
+    - /bin/bash backend/tools/deploy.sh test

@@ -308,9 +308,21 @@ html[dir="rtl"] .reg-nav svg{transform:scaleX(-1)}
 html[dir="rtl"] .success-ws-btn svg{transform:scaleX(-1)}
 .success-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
 
+
+
+/* ---------- Server connection ---------- */
+/* While the page asks the server whether registration is open, the form waits
+   out of sight so it never flashes up and then disappears. */
+.reg-card.is-checking .reg-progress,.reg-card.is-checking #regForm{visibility:hidden}
+.reg-card.is-checking{min-height:320px}
 /* Registration closed: shown instead of the form */
 .reg-closed{display:grid;justify-items:center;gap:12px;padding:56px 32px;text-align:center}
 .reg-closed-ic{width:76px;height:76px;border-radius:50%;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--teal-ink),var(--teal));box-shadow:0 0 0 10px color-mix(in srgb,var(--teal) 15%,transparent)}
 .reg-closed-ic svg{width:36px;height:36px}
 .reg-closed h3{margin-top:12px;font-size:26px}
 .reg-closed p{max-width:46ch;color:var(--muted)}
+.lunch-card.is-unavailable{opacity:.5;cursor:not-allowed}
+/* The bot trap: off screen for people, still in the form for bots. */
+/* The spam trap: invisible and unreachable for people, but it never moves
+   off-screen (an off-screen box makes right-to-left pages scroll sideways). */
+.reg-trap{position:absolute;top:0;inset-inline-start:0;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;opacity:0;pointer-events:none}

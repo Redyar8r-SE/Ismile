@@ -3,11 +3,12 @@
 // Two steps: what the company wants, then who they are. The packages come from
 // data/sponsors.json, so a tier renamed in the admin is renamed here too.
 //
-// Where the request goes: there is no server yet, so the last screen hands the
-// filled-in request to WhatsApp or email, already written out. When the site
-// has its own server, send() below gains one fetch and everything else stays.
-import { t, tr, onLangChange } from "../i18n.js?v=82";
-import { isValidPhone } from "./registration.js?v=82";
+// Where the request goes: to the server (api/sponsor.php), which saves it for
+// the admin and emails the company and the team. Where there is no server (the
+// GitHub Pages copy), the last screen hands the filled-in request to WhatsApp
+// or email instead, already written out, so a request is never lost.
+import { t, tr, getLang, onLangChange } from "../i18n.js?v=85";
+import { isValidPhone } from "./registration.js?v=85";
 
 const TOTAL_STEPS = 2;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -188,26 +189,104 @@ export function initSponsorForm({ tiers = [], enquiry = {} } = {}) {
     return lines.join("\n");
   }
 
-  function send(event) {
+  // What the server receives: ids, not the translated names shown on screen.
+  function payload() {
+    return {
+      lang: getLang(),
+      kind,
+      package: kind === "booth" ? "" : pack,
+      company: $("s_company").value.trim(),
+      contact: $("s_contact").value.trim(),
+      role: $("s_role").value.trim(),
+      phone: $("s_phone").value.trim(),
+      email: $("s_email").value.trim(),
+      website: $("s_website").value.trim(),
+      city: $("s_city").value.trim(),
+      note: $("s_note").value.trim(),
+      hp: $("spfTrap")?.value || "",
+    };
+  }
+
+  // Saves on the server. Returns the reference, null when there is no server,
+  // or false when the server found a problem it has already shown.
+  async function saveOnServer() {
+    const body = JSON.stringify(payload());
+    let response;
+    try {
+      response = await fetch("api/sponsor.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body,
+      });
+    } catch {
+      return null;                      // offline or no server: use WhatsApp / email
+    }
+    let answer;
+    try {
+      answer = await response.json();
+    } catch {
+      return null;                      // not our server (e.g. GitHub Pages): use WhatsApp / email
+    }
+    if (answer.ok && answer.ref) return answer.ref;
+    const input = answer.field ? $(answer.field) : null;
+    if (input) {
+      goTo(2);
+      showError(input, answer.error);
+      input.focus();
+      return false;
+    }
+    if (answer.error === "backend_missing") return null;
+    $("spfOkText").textContent = "";
+    alertLine(answer.error || "err_server");
+    return false;
+  }
+
+  function alertLine(key) {
+    let line = $("spfServerError");
+    if (!line) {
+      line = document.createElement("p");
+      line.className = "f-error";
+      line.id = "spfServerError";
+      submitBtn.closest(".reg-nav").insertAdjacentElement("beforebegin", line);
+    }
+    line.dataset.key = key;
+    line.textContent = t(key);
+    line.hidden = false;
+  }
+
+  let sending = false;
+  async function send(event) {
     event.preventDefault();
     if (step < TOTAL_STEPS) {
       nextBtn.click();
       return;
     }
-    if (!validateDetails()) return;
+    if (!validateDetails() || sending) return;
+    sending = true;
+    submitBtn.disabled = true;
+    $("spfServerError")?.setAttribute("hidden", "");
 
-    const ref = reference();
-    const message = asMessage(ref);
-    const phone = String(enquiry.whatsapp || "").replace(/\D/g, "");
-    const email = enquiry.email || "ismile@italk.krd";
+    const saved = await saveOnServer();
+    sending = false;
+    submitBtn.disabled = false;
+    if (saved === false) return;
 
+    const ref = saved || reference();
     $("spfOkText").textContent = t("spf_ok_text").replace("{email}", answers().email);
     $("spfOkRef").textContent = ref;
 
-    const whats = $("spfWhats");
-    whats.hidden = !phone;
-    if (phone) whats.href = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-    $("spfMail").href = `mailto:${email}?subject=${encodeURIComponent(`${t("spf_msg_head")}: ${ref}`)}&body=${encodeURIComponent(message)}`;
+    // Saved on the server: the team already has it, so no extra step.
+    // No server: one more tap sends it by WhatsApp or email.
+    $("spfSend").hidden = Boolean(saved);
+    if (!saved) {
+      const message = asMessage(ref);
+      const phone = String(enquiry.whatsapp || "").replace(/\D/g, "");
+      const email = enquiry.email || "ismile@italk.krd";
+      const whats = $("spfWhats");
+      whats.hidden = !phone;
+      if (phone) whats.href = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+      $("spfMail").href = `mailto:${email}?subject=${encodeURIComponent(`${t("spf_msg_head")}: ${ref}`)}&body=${encodeURIComponent(message)}`;
+    }
 
     form.hidden = true;
     progress.hidden = true;

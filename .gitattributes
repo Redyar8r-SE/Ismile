@@ -1,0 +1,6 @@
+# Keep files checked by the JavaScript formatter consistent on Windows and Linux.
+biome.json text eol=lf
+package.json text eol=lf
+server/*.mjs text eol=lf
+netlify/functions/*.mjs text eol=lf
+tests/*.mjs text eol=lf

@@ -1,0 +1,5 @@
+Options -Indexes
+# The helper that finds the backend is not an address anyone needs.
+<FilesMatch "^_">
+  Require all denied
+</FilesMatch>

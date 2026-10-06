@@ -1,20 +1,20 @@
 // Entry point: loads the data files, then starts each page section.
-import { loadJSON } from "./utils/load-json.js?v=82";
-import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from "./i18n.js?v=82";
-import { initNav } from "./components/nav.js?v=82";
-import { initTheme } from "./components/theme.js?v=82";
-import { initProgram } from "./sections/program.js?v=82";
-import { initSpeakers } from "./sections/speakers.js?v=82";
-import { initSponsors } from "./sections/sponsors.js?v=82";
-import { initPartners } from "./sections/partners.js?v=82";
-import { initJourney } from "./sections/journey.js?v=82";
-import { initProjects } from "./sections/projects.js?v=82";
-import { initGallery } from "./sections/gallery.js?v=82";
-import { initFooter } from "./sections/footer.js?v=82";
-import { initVenue } from "./sections/venue.js?v=82";
-import { initReveal } from "./utils/reveal.js?v=82";
-import { initReadMore } from "./sections/read-more.js?v=82";
-import { initCountdown } from "./sections/countdown.js?v=82";
+import { loadJSON } from "./utils/load-json.js?v=85";
+import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from "./i18n.js?v=85";
+import { initNav } from "./components/nav.js?v=85";
+import { initTheme } from "./components/theme.js?v=85";
+import { initProgram } from "./sections/program.js?v=85";
+import { initSpeakers } from "./sections/speakers.js?v=85";
+import { initSponsors } from "./sections/sponsors.js?v=85";
+import { initPartners } from "./sections/partners.js?v=85";
+import { initJourney } from "./sections/journey.js?v=85";
+import { initProjects } from "./sections/projects.js?v=85";
+import { initGallery } from "./sections/gallery.js?v=85";
+import { initFooter } from "./sections/footer.js?v=85";
+import { initVenue } from "./sections/venue.js?v=85";
+import { initReveal } from "./utils/reveal.js?v=85";
+import { initReadMore } from "./sections/read-more.js?v=85";
+import { initCountdown } from "./sections/countdown.js?v=85";
 
 async function start() {
   initNav();

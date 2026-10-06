@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-title-key="pm_page_title">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="assets/favicon-32.png?v=1" type="image/png" sizes="32x32">
+<link rel="icon" href="assets/favicon-192.png?v=1" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=1">
+<script>try{var t=localStorage.getItem("ismile-theme");document.documentElement.dataset.theme=(t==="light"||t==="dark")?t:(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")}catch(e){}</script>
+<title>Your payment · iSmile 2026</title>
+<meta name="description" content="The status of your iSmile 2026 registration and payment.">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=Noto+Kufi+Arabic:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/base/tokens.css?v=85">
+<link rel="stylesheet" href="css/base/base.css?v=85">
+<link rel="stylesheet" href="css/components/boot.css?v=85">
+<link rel="stylesheet" href="css/components/buttons.css?v=85">
+<link rel="stylesheet" href="css/components/brand.css?v=85">
+<link rel="stylesheet" href="css/layout/header.css?v=85">
+<link rel="stylesheet" href="css/layout/footer.css?v=85">
+<link rel="stylesheet" href="css/sections/register.css?v=85">
+<link rel="stylesheet" href="css/sections/register-page.css?v=85">
+<link rel="stylesheet" href="css/sections/payment-page.css?v=85">
+<script type="module" src="js/payment.js?v=85"></script>
+</head>
+<body>
+<div class="siteboot" id="siteboot" aria-hidden="true">
+  <div class="siteboot-box">
+    <div class="siteboot-mark">
+      <svg class="siteboot-ring" viewBox="0 0 88 88"><circle class="siteboot-rail" cx="44" cy="44" r="40"/><circle class="siteboot-arc" cx="44" cy="44" r="40"/></svg>
+      <svg class="siteboot-logo" width="34" height="40" viewBox="0 0 1080 1155" aria-hidden="true"><svg x="0" y="0" width="1080" height="1155" viewBox="0 0 1080 1155" overflow="hidden"><image href="assets/brand/ismile-logo.png" width="2481" height="1155"/></svg></svg>
+    </div>
+  </div>
+</div>
+<noscript><style>#siteboot{display:none}</style></noscript>
+<script>
+(function () {
+  var page = document.documentElement;
+  var lifted = false;
+  page.classList.add("siteboot-on", "site-animations-pending");
+  var lift = function () {
+    if (lifted) return;
+    lifted = true;
+    page.classList.remove("siteboot-on");
+    var cover = document.getElementById("siteboot");
+    if (cover) cover.classList.add("is-gone");
+    setTimeout(function () {
+      page.classList.remove("site-animations-pending");
+      page.classList.add("site-ready");
+    }, cover ? 500 : 0);
+  };
+  window.siteReady = lift;
+  window.addEventListener("load", function () { setTimeout(lift, 2500); });
+  setTimeout(lift, 6000);
+})();
+</script>
+
+<!-- ============ HEADER ============ -->
+<header class="top reg-top" id="top">
+  <div class="wrap">
+    <a class="brand" href="index.html" aria-label="iSmile 2026 home">
+      <svg class="brand-mark" width="34" height="40" viewBox="0 0 1080 1155" aria-hidden="true"><svg x="0" y="0" width="1080" height="1155" viewBox="0 0 1080 1155" overflow="hidden"><image href="assets/brand/ismile-logo.png" width="2481" height="1155"/></svg></svg>
+      <span>i<b>Smile</b></span>
+    </a>
+    <div class="lang" id="langSwitch" role="group" aria-label="Language" data-i18n-label="a_lang">
+      <button type="button" data-lang="en" aria-pressed="true" lang="en">EN</button>
+      <button type="button" data-lang="ar" aria-pressed="false" lang="ar">العربية</button>
+      <button type="button" data-lang="ku" aria-pressed="false" lang="ckb">کوردی</button>
+    </div>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Light or dark" aria-pressed="false" data-i18n-label="a_theme">
+      <svg class="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/></svg>
+      <svg class="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8.2 8.2 0 019.5 4 8.3 8.3 0 1020 14.5z"/></svg>
+    </button>
+  </div>
+</header>
+
+<main>
+<section class="block pm-page">
+  <div class="wrap">
+    <a class="reg-page-back" href="index.html"><span class="reg-page-back-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></span><span data-i18n="reg_back_site">Back to the summit</span></a>
+    <div class="reg-card pm-card" id="pmCard" data-state="checking" aria-live="polite">
+      <div class="pm-ic" aria-hidden="true">
+          <svg class="pm-i pm-i-checking" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="19" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-dasharray="80 40"/></svg>
+          <svg class="pm-i pm-i-paid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+          <svg class="pm-i pm-i-failed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 7v6M12 17h.01"/></svg>
+          <svg class="pm-i pm-i-student" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"/></svg>
+      </div>
+      <p class="section-kicker" data-i18n="pm_kicker">Your registration</p>
+      <p class="pm-hello" id="pmHello" hidden></p>
+      <h1 id="pmTitle">Checking your payment…</h1>
+      <p class="pm-text" id="pmText">This usually takes a few seconds. Please keep this page open.</p>
+      <div class="pm-ticket" id="pmTicket" hidden>
+        <img id="pmQr" alt="QR code of your ticket" width="240" height="240">
+        <small data-i18n="pm_ticket_no">Ticket number</small>
+        <b id="pmTicketNo" dir="ltr"></b>
+      </div>
+      <div class="success-ref" id="pmRefBox" hidden><small data-i18n="success_ref">Your reference number</small><b id="pmRef" dir="ltr"></b></div>
+      <div class="pm-actions">
+        <a class="btn btn-primary" id="pmRetry" href="#" hidden><span data-i18n="pm_retry">Pay now</span></a>
+        <a class="btn btn-outline" href="workshops.html" id="pmWorkshops" hidden><span data-i18n="success_ws_btn">See the workshops</span></a>
+      </div>
+      <p class="pm-help"><span data-i18n="help_title">Need help registering?</span> <a href="mailto:ismile@italk.krd" dir="ltr">ismile@italk.krd</a></p>
+    </div>
+  </div>
+</section>
+</main>
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="wrap">
+    <div class="cols">
+      <div>
+        <a class="brand" href="index.html"><svg class="brand-mark" width="34" height="40" viewBox="0 0 1080 1155" aria-hidden="true"><svg x="0" y="0" width="1080" height="1155" viewBox="0 0 1080 1155" overflow="hidden"><image href="assets/brand/ismile-logo.png" width="2481" height="1155"/></svg></svg><span>i<b>Smile</b></span></a>
+        <p class="foot-about" data-i18n="foot_org">iSmile is Iraq’s largest international dental summit, organized by italk Foundation in collaboration with the Kurdistan Dental Association / Slemani Branch.</p>
+      </div>
+      <div>
+        <h3 data-i18n="foot_links">Summit</h3>
+        <div id="footLinks"></div>
+      </div>
+      <div>
+        <h3 data-i18n="foot_contact">Contact</h3>
+        <div id="footContact"></div>
+      </div>
+    </div>
+    <div class="footbar">
+      <p class="legal"><span data-i18n="legal">© 2026 iSmile. All rights reserved.</span></p>
+    </div>
+  </div>
+</footer>
+
+<button class="to-top" id="toTop" type="button" aria-label="Back to top" data-i18n-label="to_top" title="Back to top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+
+</body>
+</html>

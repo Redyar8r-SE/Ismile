@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="en" dir="ltr" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,21 +7,22 @@
 <link rel="icon" href="assets/favicon-192.png?v=1" type="image/png" sizes="192x192">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=1">
 <meta name="robots" content="noindex, nofollow">
-<title>iSmile admin</title>
+<title>Site content · iSmile Database</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=Noto+Kufi+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-<link rel="stylesheet" href="css/base/tokens.css?v=82">
-<link rel="stylesheet" href="css/base/base.css?v=82">
-<link rel="stylesheet" href="css/components/buttons.css?v=82">
-<link rel="stylesheet" href="css/components/brand.css?v=82">
-<link rel="stylesheet" href="css/admin.css?v=82">
+<link rel="stylesheet" href="css/base/tokens.css?v=85">
+<link rel="stylesheet" href="css/base/base.css?v=85">
+<link rel="stylesheet" href="css/components/buttons.css?v=85">
+<link rel="stylesheet" href="css/components/brand.css?v=85">
+<link rel="stylesheet" href="css/admin.css?v=85">
+<link rel="stylesheet" href="css/admin-database.css?v=85">
 
-<script type="module" src="js/admin/main.js?v=82"></script>
+<script type="module" src="js/admin/main.js?v=85"></script>
 </head>
-<body class="admin checking">
+<body class="admin site-content-editor checking">
 
 <!-- Shown while the page works out whether a password is needed. Hiding the
      admin until then stops it flashing on screen before the login appears. -->
@@ -31,8 +32,8 @@
       <svg class="bootring" viewBox="0 0 76 76"><circle class="bootrail" cx="38" cy="38" r="35"/><circle class="bootarc" cx="38" cy="38" r="35"/></svg>
       <svg class="bootlogo" width="34" height="40" viewBox="0 0 1080 1155" aria-hidden="true"><svg x="0" y="0" width="1080" height="1155" viewBox="0 0 1080 1155" overflow="hidden"><image href="assets/brand/ismile-logo.png" width="2481" height="1155"/></svg></svg>
     </div>
-    <p class="boottitle">iSmile <b>admin</b></p>
-    <p class="boottext" id="bootText" role="status" aria-live="polite">Loading the admin…</p>
+    <p class="boottitle">iSmile <b>Site content</b></p>
+    <p class="boottext" id="bootText" role="status" aria-live="polite">Opening your content workspace…</p>
     <button type="button" class="btn btn-primary btn-sm" id="bootReload" hidden>Reload the page</button>
   </div>
 </div>
@@ -60,7 +61,7 @@ setTimeout(function () {
 <div class="lockwrap" id="lock" hidden>
   <form class="lockcard" id="lockForm">
     <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>
-    <h1>iSmile admin</h1>
+    <h1>iSmile Site content</h1>
     <p>Sign in to change the website.</p>
     <label class="lockfield"><span>Email</span><input type="email" id="lockEmail" autocomplete="username" required></label>
     <label class="lockfield"><span>Password</span><input type="password" id="lockPass" autocomplete="current-password" required></label>
@@ -74,8 +75,9 @@ setTimeout(function () {
   <div class="abar-in">
     <a class="abrand" href="index.html">
       <svg class="brand-mark" width="34" height="40" viewBox="0 0 1080 1155" aria-hidden="true"><svg x="0" y="0" width="1080" height="1155" viewBox="0 0 1080 1155" overflow="hidden"><image href="assets/brand/ismile-logo.png" width="2481" height="1155"/></svg></svg>
-      <span>iSmile <b>admin</b></span>
+      <span>i<b>Smile</b><small>Site content</small></span>
     </a>
+    <a class="database-return" href="admin/content.php"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 12H4m6-6-6 6 6 6"/></svg><span>Database</span></a>
     <span class="chip" id="repo">repository</span>
     <span class="conn" id="connState" data-state="off"><i></i><span id="connText">Not connected</span></span>
 
@@ -97,6 +99,7 @@ setTimeout(function () {
 
 <div class="ashell">
   <aside class="aside">
+    <div class="editor-navigation-heading"><span>CONTENT LIBRARY</span><p>Find a section to update.</p></div>
     <!-- Find any text by typing a word from it, in any language -->
     <div class="find">
       <label class="find-box">
@@ -115,9 +118,11 @@ setTimeout(function () {
   </aside>
 
   <main class="acontent">
+    <section class="editor-welcome"><div><span class="editor-eyebrow">Your website workspace</span><h1>Good content. A beautiful event.</h1><p>Refine the words, photos and details that introduce iSmile to your guests.</p></div><div class="editor-language-tags"><span>English</span><span lang="ar">العربية</span><span lang="ckb">کوردی</span></div></section>
     <p class="msg is-info" id="msg" hidden></p>
 
-    <section class="card connect" id="connectCard">
+    <details class="card connect" id="connectCard">
+      <summary class="editor-save-options"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2"/></svg><span><b>Saving options</b><small id="saveConnectionLabel">Connect your account to save changes</small></span><span class="editor-save-chevron" aria-hidden="true"></span></summary>
       <div id="signinForm" hidden>
         <h2>Sign in</h2>
         <p>Use the email and password for this website. The password is checked on the server, and nothing secret is kept in this browser.</p>
@@ -146,7 +151,7 @@ setTimeout(function () {
         <span>Signed in as <b id="who"></b> — changes save straight to the website.</span>
         <button type="button" class="btn btn-outline btn-sm" id="disconnectBtn">Sign out</button>
       </div>
-    </section>
+    </details>
 
     <div id="groups"></div>
   </main>

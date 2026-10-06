@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>iSmile 2026 — Backend: what is built, and what I need from you</title>
+<style>
+@page { size: A4; margin: 14mm 14mm 15mm; }
+* { box-sizing: border-box; }
+body { margin: 0; color: #12302F; font: 10.2pt/1.5 Arial, Helvetica, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+h1 { font-size: 24pt; margin: 0 0 2mm; line-height: 1.1; }
+h2 { font-size: 15pt; margin: 5mm 0 3mm; display: flex; align-items: center; gap: 3mm; break-after: avoid; }
+h2 .n { width: 8.5mm; height: 8.5mm; border-radius: 50%; background: #12302F; color: #fff; display: inline-grid; place-items: center; font-size: 11pt; flex: none; }
+h3 { font-size: 11pt; margin: 0 0 1.5mm; }
+p { margin: 0 0 2.5mm; }
+ul, ol { margin: 0 0 2.5mm; padding-left: 5mm; }
+li { margin-bottom: .8mm; }
+.page { }
+.page:last-child { break-after: auto; }
+.eyebrow { display: inline-block; font-size: 8.5pt; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; background: #D5F1EF; color: #0C6F6B; padding: 1mm 3mm; border-radius: 99px; margin-bottom: 3mm; }
+.lede { color: #4A6467; font-size: 11pt; }
+.small { font-size: 8.6pt; color: #5B7477; }
+code { font-family: Consolas, "Courier New", monospace; font-size: 8.8pt; background: #EEF6F6; padding: .2mm 1.2mm; border-radius: 1mm; }
+.callout { border-radius: 3mm; padding: 3.5mm 4.5mm; margin: 3mm 0; break-inside: avoid; }
+.c-red { background: #FBE1DC; color: #7E2A1C; border-left: 4px solid #E0604A; }
+.c-teal { background: #E4F6F5; color: #0C5F5B; border-left: 4px solid #16A6A1; }
+.c-gold { background: #FCEFD3; color: #6E480C; border-left: 4px solid #E0A33A; }
+.c-green { background: #DDF3E5; color: #1D5B36; border-left: 4px solid #2E9E5B; }
+table { width: 100%; border-collapse: collapse; font-size: 9.2pt; margin: 1mm 0 3mm; }
+th, td { border: 1px solid #D4E4E4; padding: 1.7mm 2.4mm; vertical-align: top; text-align: left; }
+th { background: #EEF6F6; }
+tr { break-inside: avoid; }
+.pill { display: inline-block; padding: .2mm 2.2mm; border-radius: 99px; font-size: 8pt; font-weight: 700; white-space: nowrap; }
+.ok { background: #DDF3E5; color: #1D6B3C; }
+.wait { background: #FCEFD3; color: #8A5A0F; }
+.no { background: #FBE1DC; color: #9A3322; }
+.you { background: #FCEFD3; color: #8A5A0F; }
+.dev { background: #DDEBFB; color: #1B4F91; }
+.ps { background: #E6E2FB; color: #3F33A0; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3mm; margin: 4mm 0; }
+.stat { border-radius: 3mm; padding: 3mm 3.5mm; }
+.stat b { display: block; font-size: 20pt; line-height: 1.1; }
+.stat span { font-size: 8.8pt; font-weight: 700; }
+.s1 { background: #D5F1EF; color: #0C6F6B; } .s2 { background: #DDF3E5; color: #1D6B3C; }
+.s3 { background: #E6E2FB; color: #3F33A0; } .s4 { background: #FCEFD3; color: #8A5A0F; }
+.shots { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+figure { margin: 0; break-inside: avoid; }
+figure .frame { border: 1px solid #D4E4E4; border-radius: 2.5mm; overflow: hidden; background: #fff; }
+figure img { display: block; width: 100%; }
+figure .crop { height: 62mm; overflow: hidden; }
+figcaption { font-size: 8.4pt; color: #5B7477; margin-top: 1.2mm; }
+svg { display: block; width: 100%; height: auto; }
+svg text { font-family: Arial, Helvetica, sans-serif; }
+.check td:first-child { width: 7mm; text-align: center; }
+footer { margin-top: 4mm; font-size: 8.4pt; color: #5B7477; }
+</style>
+</head>
+<body>
+
+<!-- PAGE 1 -->
+<div>
+  <span class="eyebrow">iSmile 2026 · Backend report · 27 September 2026</span>
+  <h1>The backend is built. Here is what it does, and what I need from you</h1>
+  <p class="lede">Everything in the backend plan is now written and tested on a test copy of the website. Three things are still missing: the <b>server and domain</b> (you are sending them tonight), <b>Psoola's documents and test keys</b>, and the <b>prices</b>. None of these needs a rebuild. Each one is a setting or a small, marked piece of code.</p>
+
+  <div class="stats">
+    <div class="stat s1"><b>88 / 88</b><span>automatic checks pass</span></div>
+    <div class="stat s2"><b>12</b><span>new admin pages</span></div>
+    <div class="stat s3"><b>13</b><span>database tables</span></div>
+    <div class="stat s4"><b>3</b><span>languages: EN · AR · KU</span></div>
+  </div>
+
+  <h2><span class="n">1</span>How it works now</h2>
+  <svg viewBox="0 0 1000 250" role="img" aria-label="One registration from form to ticket">
+    <defs><marker id="k" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#12302F"/></marker></defs>
+    <g font-size="13" text-anchor="middle">
+      <rect x="10" y="30" width="170" height="90" rx="12" fill="#D5F1EF" stroke="#16A6A1" stroke-width="2"/>
+      <text x="95" y="62" font-weight="700" font-size="15" fill="#0C6F6B">Visitor</text>
+      <text x="95" y="84">fills the form on</text><text x="95" y="102">register.html</text>
+
+      <rect x="235" y="30" width="200" height="90" rx="12" fill="#12302F"/>
+      <text x="335" y="62" font-weight="700" font-size="15" fill="#fff">Our server</text>
+      <text x="335" y="84" fill="#CFE9E7">checks, sets the price,</text><text x="335" y="102" fill="#CFE9E7">saves in the database</text>
+
+      <rect x="490" y="30" width="170" height="90" rx="12" fill="#E6E2FB" stroke="#6A5BD8" stroke-width="2"/>
+      <text x="575" y="62" font-weight="700" font-size="15" fill="#3F33A0">Psoola</text>
+      <text x="575" y="84">Visa · MasterCard</text><text x="575" y="102">FIB · FastPay</text>
+
+      <rect x="715" y="30" width="270" height="90" rx="12" fill="#DDF3E5" stroke="#2E9E5B" stroke-width="2"/>
+      <text x="850" y="62" font-weight="700" font-size="15" fill="#1D5B36">Ticket</text>
+      <text x="850" y="84">PDF + QR code by email,</text><text x="850" y="102">and on the "You are in!" page</text>
+
+      <line x1="180" y1="75" x2="232" y2="75" stroke="#12302F" stroke-width="2.2" marker-end="url(#k)"/>
+      <line x1="435" y1="75" x2="487" y2="75" stroke="#12302F" stroke-width="2.2" marker-end="url(#k)"/>
+      <path d="M575 120 V170 H335 V123" fill="none" stroke="#6A5BD8" stroke-width="2.2" stroke-dasharray="6 5" marker-end="url(#k)"/>
+      <text x="455" y="192" font-size="12" fill="#3F33A0">"paid" message → our server asks Psoola itself before believing it</text>
+      <path d="M435 105 H462 V145 H688 V100 H712" fill="none" stroke="#2E9E5B" stroke-width="2.2" marker-end="url(#k)"/>
+      <text x="700" y="160" font-size="12" fill="#1D5B36">only after Psoola confirms</text>
+
+      <rect x="235" y="205" width="200" height="40" rx="10" fill="#FCEFD3" stroke="#E0A33A" stroke-width="2"/>
+      <text x="335" y="230" font-weight="700" fill="#8A5A0F">You see it all in /admin/</text>
+    </g>
+  </svg>
+  <div class="callout c-teal"><b>Students</b> upload their student ID. Someone approves it in the admin first. Then they get a "Pay now" email, pay, and receive their ticket. <b>Professionals</b> pay straight away.</div>
+
+  <h2><span class="n">2</span>What I built</h2>
+  <table>
+    <tr><th style="width:26%">Part</th><th>What it does</th><th style="width:13%">State</th></tr>
+    <tr><td><b>Registration page</b></td><td>Asks the server whether registration is open. Sends the form to the server, not WhatsApp. Goes to Psoola to pay. Shows "Registration opens soon" while closed, and has a hidden trap that catches spam bots.</td><td><span class="pill ok">done, tested</span></td></tr>
+    <tr><td><b>Payment page</b> (new)</td><td>Where people land after paying: "Checking…", then "You are in!" with the QR code, or "Payment did not go through" with a <i>Try again</i> button.</td><td><span class="pill ok">done, tested</span></td></tr>
+    <tr><td><b>Student ID page</b> (new)</td><td>A rejected student sends a new photo from the link in their email.</td><td><span class="pill ok">done, tested</span></td></tr>
+    <tr><td><b>Sponsor form</b></td><td>Saved on the server with a reference (SPN26-…); the sponsor team is emailed. Falls back to WhatsApp/email if the server cannot be reached, so no request is ever lost.</td><td><span class="pill ok">done, tested</span></td></tr>
+    <tr><td><b>Emails</b></td><td>Registration received, Pay now, ticket (PDF + QR), student approved or rejected, one reminder after 3 days unpaid, and sponsor emails. Written in all three languages.</td><td><span class="pill ok">done, tested</span></td></tr>
+    <tr><td><b>Admin</b> at <code>/admin/</code></td><td>Dashboard · Registrations (search, filters, duplicates, export to Excel) · one registration · Student approvals · Payments (red flags, daily totals, refunds) · Workshops (phone bookings) · Sponsors &amp; booths · Check-in (phone camera QR scan) · Settings · Users · Export.</td><td><span class="pill ok">done, tested</span></td></tr>
+    <tr><td><b>Timed jobs</b></td><td>Every minute: send emails. Every 5 minutes: re-check unfinished payments with Psoola. Nightly: database backup, and student ID photos deleted 90 days after the summit.</td><td><span class="pill ok">done, tested</span></td></tr>
+    <tr><td><b>Publishing tools</b></td><td>The cPanel "Deploy" button goes to the test site first, then live. Updates never overwrite prices or texts you changed in the admin.</td><td><span class="pill ok">done, tested</span></td></tr>
+    <tr><td><b>Psoola connection</b></td><td>Everything around it is ready. Three marked places need Psoola's documents: create a payment, check a payment, and verify their message. Until then a <b>pretend Psoola</b> runs on the test site so every case can be tested.</td><td><span class="pill wait">waits for Psoola</span></td></tr>
+  </table>
+</div>
+
+<!-- PAGE 2 -->
+<div class="page">
+  <h2><span class="n">3</span>What it looks like (test site, test prices)</h2>
+  <div class="shots">
+    <figure><div class="frame crop"><img src="report-img/closed-en.png" style="margin-top:-14mm"></div><figcaption>Registration page while closed. You can write your own message (e.g. the opening date) in Settings.</figcaption></figure>
+    <figure><div class="frame crop"><img src="report-img/prof-status.png" style="margin-top:-18mm"></div><figcaption>After paying: "You are in!" with the ticket QR code.</figcaption></figure>
+    <figure><div class="frame crop"><img src="report-img/admin-dashboard.png"></div><figcaption>Admin dashboard: the big numbers, and a red box for anything that needs attention.</figcaption></figure>
+    <figure><div class="frame crop"><img src="report-img/admin-settings.png"></div><figcaption>Settings (Owner only): open or close registration, capacity, and email test mode.</figcaption></figure>
+    <figure><div class="frame crop" style="height:78mm"><img src="report-img/mail.png"></div><figcaption>Ticket email (Kurdish shown). The PDF ticket is attached.</figcaption></figure>
+    <figure><div class="frame crop" style="height:78mm"><img src="report-img/ticket.png"></div><figcaption>The PDF ticket. The QR code is signed, so a fake or copied ticket is refused at the door.</figcaption></figure>
+  </div>
+  <p class="small" style="margin-top:3mm">The screenshots use made-up test prices. The real <code>data/tickets.json</code> still says <b>0</b> for every price, and a price of 0 cannot be paid: registration cannot even be opened until the prices are set.</p>
+</div>
+
+<!-- PAGE 3 -->
+<div class="page">
+  <h2><span class="n">4</span>How I checked it</h2>
+  <table class="check">
+    <tr><td>✅</td><td><b>88 automatic checks</b> run against the test site, like a real visitor and a real Psoola would. Paid, failed, and wrong-amount payments. Paid twice, lost webhook, fake webhook. Student approve and reject, full capacity, lunch limits, reminders, backup, rate limits, and sign-in rules. All 88 pass, including 11 new ones added after the security review.</td></tr>
+    <tr><td>✅</td><td><b>Browser tests</b> of the whole path, in English and Arabic: professional pays, student with ID photo, failed payment and try again, sponsor form, and every admin page. No errors.</td></tr>
+    <tr><td>✅</td><td><b>Every PHP file</b> passes the syntax check (PHP 8.1, the version cPanel hosting has).</td></tr>
+    <tr><td>✅</td><td><b>A separate security review</b> of all the new code. Results are in section 5.</td></tr>
+  </table>
+
+  <h3>Safety rules the code enforces</h3>
+  <ul>
+    <li><b>No ticket without money confirmed by Psoola.</b> The browser can never say "paid". Our server asks Psoola directly and checks the amount and currency.</li>
+    <li><b>The server sets the price</b> from the admin, never the page. A price of 0 cannot be paid.</li>
+    <li><b>Paid twice?</b> Only one ticket is made. The second payment is flagged red for Finance to refund.</li>
+    <li><b>Admin:</b> each person has their own account and role. There is a phone code (two-factor) for Owner and Finance. Five wrong passwords lock the account for 15 minutes. Every action is written to the audit log.</li>
+    <li><b>Student ID photos</b> are stored outside the website, shown only to signed-in staff, and deleted after the summit.</li>
+    <li><b>Test mode:</b> until launch every email goes to one test address, so no real person gets a test ticket.</li>
+  </ul>
+
+  <h2><span class="n">5</span>Security review</h2>
+  <div id="review">
+    <p>A second, independent check read all the new code looking for ways to break it. It confirmed that the main safety rules hold. It found <b>6 real problems</b>, and all 6 are now <b>fixed</b>, each with a new automatic check that proves it.</p>
+    <table>
+      <tr><th style="width:5%">#</th><th>Problem found</th><th>Now</th></tr>
+      <tr><td>1</td><td>After signing in, a trick link could send an admin to a fake website.</td><td><span class="pill ok">fixed</span></td></tr>
+      <tr><td>2</td><td>If a card was declined and the person then paid on the same Psoola page, the money could be taken with no ticket.</td><td><span class="pill ok">fixed: ticket made</span></td></tr>
+      <tr><td>3</td><td>A link that kept failing (Psoola down) could send "Pay now" emails again and again.</td><td><span class="pill ok">fixed: max 1 a day</span></td></tr>
+      <tr><td>4</td><td>Switching registration off did not stop "Pay now" links.</td><td><span class="pill ok">fixed: stops all payments</span></td></tr>
+      <tr><td>5</td><td>Many people paying for the last few places at the same moment could oversell tickets or lunch.</td><td><span class="pill ok">fixed: places held while paying</span></td></tr>
+      <tr><td>6</td><td>A rejected student could be approved before sending a new photo.</td><td><span class="pill ok">fixed</span></td></tr>
+      <tr><td>+</td><td>Also fixed: the pretend Psoola can never run on the real address, even if a setting is copied wrongly. Odd links no longer cause error pages, and very large photos are refused.</td><td><span class="pill ok">fixed</span></td></tr>
+    </table>
+    <div class="callout c-gold"><b>Before go-live (after the server is up).</b> (a) Only the Owner/Finance should change prices; today the content editor can. I will add an alert on every price change, or move prices under Owner control. (b) Check whether the hosting sits behind Cloudflare, so the spam limits count each visitor separately. (c) A used phone code should not work twice, and changing a password should sign out old sessions. These three are small and go on the go-live checklist.</div>
+  </div>
+</div>
+
+<!-- PAGE 4 -->
+<div class="page">
+  <h2><span class="n">6</span>What I need from you</h2>
+  <p><span class="pill you">you</span> = you or the owner &nbsp; <span class="pill ps">Psoola</span> = ask Psoola &nbsp; <span class="pill dev">me</span> = I do it once I have it</p>
+  <h3>Tonight: the server and the domain</h3>
+  <table>
+    <tr><th style="width:5%">#</th><th>What</th><th style="width:12%">Who</th></tr>
+    <tr><td>1</td><td><b>The domain</b> (ismile.krd suggested), pointed at the hosting. The hosting company's "nameservers" go into the domain settings.</td><td><span class="pill you">you</span></td></tr>
+    <tr><td>2</td><td><b>cPanel hosting</b> with PHP 8.1 or newer, MySQL, SSL (AutoSSL), Cron Jobs, Terminal/SSH and Git Version Control. Almost every cPanel plan has all of these.</td><td><span class="pill you">you</span></td></tr>
+    <tr><td>3</td><td><b>The cPanel sign-in.</b> Please do <u>not</u> paste the password into a chat or email. Share it by phone, or create a separate cPanel user for me.</td><td><span class="pill you">you</span></td></tr>
+    <tr><td>4</td><td><b>The Owner's email</b> for the first admin account, and a phone with an authenticator app (Google Authenticator or Microsoft Authenticator) for the two-factor code.</td><td><span class="pill you">you</span></td></tr>
+    <tr><td>5</td><td>Then I set up <b>test.ismile.krd</b> first (password-protected), the database, the timed jobs, and run the 88 checks on the real server. The live site comes after.</td><td><span class="pill dev">me</span></td></tr>
+  </table>
+
+  <h3>From Psoola (the critical path)</h3>
+  <table>
+    <tr><td style="width:5%">6</td><td><b>Merchant account, API documentation and test keys.</b> These fill the three marked places in the code. The 32 questions are in <i>"Questions for Psoola"</i> on your Desktop.</td><td style="width:12%"><span class="pill ps">Psoola</span></td></tr>
+    <tr><td>7</td><td>Register our webhook address with them: <code>https://ismile.krd/api/webhook.php</code> (and the test one: <code>https://test.ismile.krd/api/webhook.php</code>).</td><td><span class="pill ps">Psoola</span></td></tr>
+    <tr><td>8</td><td>Their fee per payment, so it can be built into the ticket price.</td><td><span class="pill ps">Psoola</span></td></tr>
+  </table>
+
+  <h3>Decisions and numbers (type them into the admin, no code needed)</h3>
+  <table>
+    <tr><td style="width:5%">9</td><td><b>Prices in IQD</b>: professional, student, lunch day 1, lunch day 2. Admin → Site content → Ticket prices.</td><td style="width:12%"><span class="pill you">you</span></td></tr>
+    <tr><td>10</td><td><b>Capacity</b>: total tickets (from the venue), and lunches per day (from the caterer). Registration closes itself at these numbers.</td><td><span class="pill you">you</span></td></tr>
+    <tr><td>11</td><td><b>People and roles</b>: who approves student IDs, who handles sponsors, who is Finance, and who scans tickets at the door. Each person gets their own account.</td><td><span class="pill you">you</span></td></tr>
+    <tr><td>12</td><td><b>Email sending</b>: a free Brevo account (brevo.com) for tickets@ismile.krd. I add its records to the domain so emails don't land in spam.</td><td><span class="pill you">you</span> + <span class="pill dev">me</span></td></tr>
+    <tr><td>13</td><td>Confirm: students are approved <b>before</b> they pay (this is how it's built now). Confirm the refund wording, whether age and gender are still needed, and the office phone number for the bottom of emails.</td><td><span class="pill you">you</span></td></tr>
+  </table>
+
+  <div class="callout c-gold"><b>Timeline.</b> Server tonight → test site working in 1–2 days. Psoola documents → about 2 days to connect and test with their test keys. Then prices, a real small payment on the live site, a two-person sign-off (plan, section 10), and <b>registration opens (target ~25 October)</b>.</div>
+  <footer>Technical details: <code>backend/README.md</code> (setup, updates, cron jobs). Plan: <i>iSmile 2026 – Backend Plan</i> on your Desktop. All code is on this computer and not yet on GitHub.</footer>
+</div>
+
+</body>
+</html>

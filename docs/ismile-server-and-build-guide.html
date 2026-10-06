@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>iSmile 2026 — Which server, and how we build on it</title>
+<style>
+@page { size: A4; margin: 14mm 14mm 15mm; }
+* { box-sizing: border-box; }
+body { margin: 0; color: #12302F; font: 10.2pt/1.5 Arial, Helvetica, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+h1 { font-size: 24pt; margin: 0 0 2mm; line-height: 1.1; }
+h2 { font-size: 15pt; margin: 0 0 3mm; display: flex; align-items: center; gap: 3mm; break-after: avoid; }
+h2 .n { width: 8.5mm; height: 8.5mm; border-radius: 50%; background: #12302F; color: #fff; display: inline-grid; place-items: center; font-size: 11pt; flex: none; }
+h3 { font-size: 11pt; margin: 0 0 1.5mm; }
+p { margin: 0 0 2.5mm; }
+.page { break-after: page; }
+.page:last-child { break-after: auto; }
+.eyebrow { display: inline-block; font-size: 8.5pt; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; background: #D5F1EF; color: #0C6F6B; padding: 1mm 3mm; border-radius: 99px; margin-bottom: 3mm; }
+.lede { color: #4A6467; font-size: 11pt; }
+.small { font-size: 8.6pt; color: #5B7477; }
+.mono { font-family: Consolas, "Courier New", monospace; font-size: 9pt; }
+.callout { border-radius: 3mm; padding: 3.5mm 4.5mm; margin: 3mm 0; break-inside: avoid; }
+.c-red { background: #FBE1DC; color: #7E2A1C; border-left: 4px solid #E0604A; }
+.c-teal { background: #E4F6F5; color: #0C5F5B; border-left: 4px solid #16A6A1; }
+.c-gold { background: #FCEFD3; color: #6E480C; border-left: 4px solid #E0A33A; }
+.c-green { background: #DDF3E5; color: #1D5B36; border-left: 4px solid #2E9E5B; }
+svg { display: block; width: 100%; height: auto; }
+svg text { font-family: Arial, Helvetica, sans-serif; }
+svg text:not([fill]) { fill: #12302F; }
+table { width: 100%; border-collapse: collapse; font-size: 9.2pt; }
+th, td { border: 1px solid #D4E4E4; padding: 1.7mm 2.4mm; vertical-align: top; text-align: left; }
+th { background: #EEF6F6; }
+tr { break-inside: avoid; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+.pick { border-radius: 4mm; padding: 4mm; break-inside: avoid; }
+.pick h3 { font-size: 12.5pt; }
+.pick .price { font-size: 16pt; font-weight: 700; margin: 1mm 0; }
+.pick ul { margin: 1mm 0 0; padding-left: 5mm; }
+.pk1 { background: #D5F1EF; border: 2px solid #16A6A1; }
+.pk2 { background: #EEF6F6; border: 1px solid #CFE3E3; }
+.badge { display: inline-block; font-size: 8pt; font-weight: 700; color: #fff; background: #16A6A1; border-radius: 99px; padding: .6mm 2.4mm; }
+.feat td:first-child { width: 28%; font-weight: 700; }
+.feat td:nth-child(2) { width: 25%; }
+.need { color: #1D6B3C; font-weight: 700; }
+.no td:first-child { width: 30%; font-weight: 700; color: #9A3222; }
+.weeks td:first-child { width: 22%; font-weight: 700; color: #fff; }
+.w1 td:first-child{background:#B25B45}.w2 td:first-child{background:#0E8C87}.w3 td:first-child{background:#3F6FC0}
+.w4 td:first-child{background:#6A5BD8}.w5 td:first-child{background:#2E8A55}.w6 td:first-child{background:#A77414}
+.check td:first-child { width: 7mm; text-align: center; }
+footer { margin-top: 4mm; font-size: 8.4pt; color: #5B7477; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <marker id="k" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#12302F"/></marker>
+    <marker id="t" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#16A6A1"/></marker>
+    <marker id="v" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#6A5BD8"/></marker>
+  </defs>
+</svg>
+
+<!-- PAGE 1 -->
+<div class="page">
+  <span class="eyebrow">iSmile 2026 · Server · 27 September 2026</span>
+  <h1>Which server to buy, and how we build on it</h1>
+  <p class="lede">For the owner. What kind of server, which features it must have and why nothing bigger is needed, then step by step how the backend gets built on it. Follows the backend plan of 27 Sep 2026.</p>
+
+  <h2 style="margin-top:5mm"><span class="n">1</span>The answer in one line</h2>
+  <div class="callout c-teal" style="font-size:11pt"><b>Buy managed shared hosting with cPanel</b>, about <b>$5–20 per month</b>, on a yearly plan, with servers in Europe. Not a VPS, not a dedicated server, not cloud (AWS / Google). Nobody on the team has to look after Linux, and it is more than strong enough.</div>
+
+  <div class="grid2">
+    <div class="pick pk1">
+      <span class="badge">Recommended</span>
+      <h3 style="margin-top:2mm">Managed hosting with cPanel</h3>
+      <div class="price">$5–20 / month</div>
+      <ul>
+        <li>The hosting company updates the server and keeps it running</li>
+        <li>PHP, MySQL, SSL, email, backups, timed jobs: all ready</li>
+        <li>Everything is done with clicks in cPanel</li>
+        <li>If it breaks, their 24/7 support fixes it</li>
+      </ul>
+    </div>
+    <div class="pick pk2">
+      <h3>VPS (your own virtual server)</h3>
+      <div class="price">$10–30 / month + work</div>
+      <ul>
+        <li>More power and freedom</li>
+        <li>But someone must install, update and watch it every week</li>
+        <li>A missed security update is a real risk with payments and student photos</li>
+        <li><b>Only if you have that person.</b> You do not, so: no.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2 style="margin-top:6mm"><span class="n">2</span>Examples of hosts that fit</h2>
+  <p>These are examples that offer cPanel with the features on the next page. Prices change often, so check the list on page 2 against the plan page before paying.</p>
+  <table>
+    <tr><th>Host</th><th>Plan to look at</th><th>Why it fits</th><th>Watch out for</th></tr>
+    <tr><td><b>Namecheap</b></td><td>Stellar Plus or Stellar Business</td><td>cheap, cPanel, daily AutoBackup, SSH, PHP up to 8.5</td><td>about $3/month in the first year, about $7 on renewal</td></tr>
+    <tr><td><b>ChemiCloud</b></td><td>shared cPanel plans</td><td>fast (LiteSpeed, NVMe), several backups a day, free move</td><td>higher renewal price</td></tr>
+    <tr><td><b>InMotion Hosting</b></td><td>shared cPanel plans</td><td>PHP 8.4, SSH, Git, good support</td><td>pick a US-East or EU data centre</td></tr>
+    <tr><td><b>Hosting.com</b> (was A2 Hosting)</td><td>shared cPanel plans</td><td>daily backups with 30-day restore</td><td>check the minimum cron interval</td></tr>
+  </table>
+  <p class="small" style="margin-top:2mm">Hostinger and SiteGround are good hosts but use their own panel, not cPanel. They would work too; this guide is written for cPanel. The <b>.krd domain</b> may not be sold by these companies. Buy it from a .krd registrar, then point it to the host (step 2 on page 3).</p>
+
+  <div class="callout c-gold"><b>Before paying, ask the host's live chat these 3 questions:</b> (1) Can cron jobs run <b>every minute</b>? (2) Can PHP make <b>outgoing HTTPS calls</b> to a payment company? (3) Are <b>daily backups included</b>, and for how many days? If any answer is "no", pick another host.</div>
+</div>
+
+<!-- PAGE 2 -->
+<div class="page">
+  <h2><span class="n">3</span>The features the server must have, and why</h2>
+  <table class="feat">
+    <tr><th>Feature</th><th>Minimum</th><th>Why we need it</th></tr>
+    <tr><td>cPanel</td><td class="need">yes</td><td>everything below is done with clicks, no Linux knowledge</td></tr>
+    <tr><td>PHP</td><td class="need">8.1 or newer (8.3 best)</td><td>the backend and admin.php are written in PHP</td></tr>
+    <tr><td>PHP extensions</td><td class="need">pdo_mysql, curl, gd, mbstring, openssl, zip</td><td>database · talking to Psoola and Brevo · cleaning student ID photos · Kurdish/Arabic text · security · PDF tickets</td></tr>
+    <tr><td>MySQL or MariaDB</td><td class="need">MySQL 8 / MariaDB 10.6+</td><td>the database with registrations, payments, tickets</td></tr>
+    <tr><td>Free SSL (https)</td><td class="need">Let's Encrypt / AutoSSL</td><td>the padlock; Psoola will only send the webhook to https</td></tr>
+    <tr><td>Cron jobs</td><td class="need">every 1 minute</td><td>send ticket emails fast, check unpaid payments every 5 minutes, nightly backup</td></tr>
+    <tr><td>Daily backups</td><td class="need">kept 30 days</td><td>if something is deleted or hacked we can go back</td></tr>
+    <tr><td>Folders outside public_html</td><td class="need">yes (normal in cPanel)</td><td>student ID photos and Psoola keys must have no web address</td></tr>
+    <tr><td>Subdomains</td><td class="need">yes</td><td><span class="mono">test.ismile.krd</span> to try everything before the real site</td></tr>
+    <tr><td>SSH and Git</td><td class="need">yes</td><td>the developer uploads code safely from GitHub</td></tr>
+    <tr><td>Email accounts</td><td class="need">a few</td><td>info@, tickets@, sponsors@ ismile.krd</td></tr>
+    <tr><td>Storage</td><td class="need">10 GB</td><td>website ~200 MB, photos ~1–2 GB, backups</td></tr>
+    <tr><td>Upload size</td><td class="need">at least 10 MB</td><td>student ID photos up to 8 MB</td></tr>
+    <tr><td>Server location</td><td class="need">Europe (or Gulf)</td><td>fast from Iraq, and close to Psoola</td></tr>
+  </table>
+
+  <h2 style="margin-top:6mm"><span class="n">4</span>Why we need only this, not a big server</h2>
+  <svg viewBox="0 0 1000 250" role="img" aria-label="Load compared to capacity">
+    <g font-size="15">
+      <text x="10" y="30" font-weight="700">What iSmile needs at its busiest (registration week)</text>
+      <rect x="10" y="45" width="980" height="36" rx="8" fill="#EEF6F6"/>
+      <rect x="10" y="45" width="60" height="36" rx="8" fill="#16A6A1"/>
+      <text x="84" y="69">about 2,000 registrations, a few hundred visitors at the same time</text>
+
+      <text x="10" y="125" font-weight="700">What a normal $10 cPanel plan handles easily</text>
+      <rect x="10" y="140" width="980" height="36" rx="8" fill="#2E9E5B"/>
+      <text x="26" y="164" fill="#fff" font-weight="700">tens of thousands of visitors a day</text>
+
+      <text x="10" y="215" font-size="13" fill="#5B7477">Each registration is a small form, one database row and one email. The database for the whole summit stays under 50 MB.</text>
+      <text x="10" y="237" font-size="13" fill="#5B7477">The heavy work (card payments, FIB, FastPay) happens on Psoola's servers, not ours.</text>
+    </g>
+  </svg>
+
+  <h3 style="margin-top:3mm">What we do <u>not</u> need, and why</h3>
+  <table class="no">
+    <tr><td>VPS or dedicated server</td><td>more power than we use, and it needs someone to maintain Linux</td></tr>
+    <tr><td>AWS, Google Cloud, Azure</td><td>built for big companies; complex and easy to misconfigure</td></tr>
+    <tr><td>Node.js, Docker, Python</td><td>we chose PHP (see our earlier answer)</td></tr>
+    <tr><td>WordPress</td><td>the website is already built; WordPress would add risk and updates</td></tr>
+    <tr><td>Hosting company's email for tickets</td><td>shared hosting mail often lands in spam; tickets go through Brevo</td></tr>
+    <tr><td>Paid SSL certificate</td><td>the free one gives the same padlock</td></tr>
+    <tr><td>"Unlimited" top plans, paid add-ons (SiteLock etc.)</td><td>not needed; our security is in the code and the checklist</td></tr>
+  </table>
+</div>
+
+<!-- PAGE 3 -->
+<div class="page">
+  <h2><span class="n">5</span>How it looks inside the server</h2>
+  <svg viewBox="0 0 1000 420" role="img" aria-label="Server folders">
+    <rect x="10" y="10" width="980" height="400" rx="16" fill="#F4FAFA" stroke="#E0604A" stroke-width="2.5"/>
+    <text x="30" y="40" font-size="17" font-weight="700" fill="#9A3222">cPanel account · one hosting plan</text>
+
+    <rect x="30" y="60" width="300" height="200" rx="12" fill="#D5F1EF" stroke="#16A6A1" stroke-width="2"/>
+    <text x="46" y="88" font-size="15" font-weight="700" fill="#0C6F6B">ismile.krd  (live)</text>
+    <text x="46" y="112" font-size="13" font-family="Consolas,monospace">public_html/</text>
+    <text x="46" y="134" font-size="13" fill="#5B7477">website + admin + api</text>
+    <text x="46" y="160" font-size="13">Psoola <tspan font-weight="700">live</tspan> keys</text>
+    <text x="46" y="182" font-size="13">Real people, real money</text>
+    <text x="46" y="240" font-size="12.5" fill="#0C6F6B" font-weight="700">only tested code comes here</text>
+
+    <rect x="350" y="60" width="300" height="200" rx="12" fill="#FCEFD3" stroke="#E0A33A" stroke-width="2"/>
+    <text x="366" y="88" font-size="15" font-weight="700" fill="#8A5A0F">test.ismile.krd  (staging)</text>
+    <text x="366" y="112" font-size="13" font-family="Consolas,monospace">test/</text>
+    <text x="366" y="134" font-size="13" fill="#5B7477">same code, own database</text>
+    <text x="366" y="160" font-size="13">Psoola <tspan font-weight="700">test</tspan> keys</text>
+    <text x="366" y="182" font-size="13">Test cards, no real money</text>
+    <text x="366" y="206" font-size="13">Password-protected</text>
+    <text x="366" y="240" font-size="12.5" fill="#8A5A0F" font-weight="700">everything is tried here first</text>
+
+    <rect x="670" y="60" width="300" height="200" rx="12" fill="#fff" stroke="#6A5BD8" stroke-width="2" stroke-dasharray="6 4"/>
+    <text x="686" y="88" font-size="15" font-weight="700" fill="#3F33A0">private/  (no web address)</text>
+    <text x="686" y="116" font-size="13">secrets.php (live)</text>
+    <text x="686" y="138" font-size="13">secrets-test.php</text>
+    <text x="686" y="160" font-size="13">id-photos/</text>
+    <text x="686" y="182" font-size="13">app/  shared PHP code</text>
+    <text x="686" y="240" font-size="12.5" fill="#3F33A0" font-weight="700">nobody can open it from the web</text>
+
+    <path d="M500 260 V282" fill="none"/>
+    <rect x="30" y="285" width="455" height="105" rx="12" fill="#DDEBFB" stroke="#2F7BD8" stroke-width="1.5"/>
+    <text x="46" y="312" font-size="15" font-weight="700" fill="#1B4F91">Two MySQL databases</text>
+    <text x="46" y="336" font-size="13"><tspan font-family="Consolas,monospace">ismile_live</tspan> and <tspan font-family="Consolas,monospace">ismile_test</tspan></text>
+    <text x="46" y="358" font-size="13" fill="#5B7477">so test data never mixes with real registrations</text>
+
+    <rect x="505" y="285" width="465" height="105" rx="12" fill="#FBE1DC" stroke="#E0604A" stroke-width="1.5"/>
+    <text x="521" y="312" font-size="15" font-weight="700" fill="#9A3222">Cron jobs (cPanel → Cron Jobs)</text>
+    <text x="521" y="336" font-size="13">every 1 min: emails · every 5 min: Psoola check</text>
+    <text x="521" y="358" font-size="13">every night: backup · monthly: photo check</text>
+  </svg>
+
+  <h2 style="margin-top:6mm"><span class="n">6</span>How new code reaches the server</h2>
+  <svg viewBox="0 0 1000 200" role="img" aria-label="Deploy flow">
+    <g font-size="13">
+      <rect x="10" y="30" width="170" height="110" rx="12" fill="#EEF6F6" stroke="#CFE3E3"/>
+      <text x="95" y="62" text-anchor="middle" font-size="15" font-weight="700">1 · Developer</text>
+      <text x="95" y="86" text-anchor="middle">writes code</text><text x="95" y="104" text-anchor="middle">on their computer</text>
+      <line x1="180" y1="85" x2="208" y2="85" stroke="#12302F" stroke-width="2" marker-end="url(#k)"/>
+
+      <rect x="210" y="30" width="170" height="110" rx="12" fill="#E6E2FB" stroke="#6A5BD8"/>
+      <text x="295" y="62" text-anchor="middle" font-size="15" font-weight="700" fill="#3F33A0">2 · GitHub</text>
+      <text x="295" y="86" text-anchor="middle">saved with history</text><text x="295" y="104" text-anchor="middle">no secrets inside</text>
+      <line x1="380" y1="85" x2="408" y2="85" stroke="#12302F" stroke-width="2" marker-end="url(#k)"/>
+
+      <rect x="410" y="30" width="170" height="110" rx="12" fill="#FCEFD3" stroke="#E0A33A"/>
+      <text x="495" y="62" text-anchor="middle" font-size="15" font-weight="700" fill="#8A5A0F">3 · test.ismile.krd</text>
+      <text x="495" y="86" text-anchor="middle">pulled with cPanel Git</text><text x="495" y="104" text-anchor="middle">tried with test cards</text>
+      <line x1="580" y1="85" x2="608" y2="85" stroke="#12302F" stroke-width="2" marker-end="url(#k)"/>
+
+      <rect x="610" y="30" width="170" height="110" rx="12" fill="#DDF3E5" stroke="#2E9E5B"/>
+      <text x="695" y="62" text-anchor="middle" font-size="15" font-weight="700" fill="#1D6B3C">4 · You check</text>
+      <text x="695" y="86" text-anchor="middle">"it works" on the</text><text x="695" y="104" text-anchor="middle">test site</text>
+      <line x1="780" y1="85" x2="808" y2="85" stroke="#12302F" stroke-width="2" marker-end="url(#k)"/>
+
+      <rect x="810" y="30" width="180" height="110" rx="12" fill="#16A6A1"/>
+      <text x="900" y="62" text-anchor="middle" font-size="15" font-weight="700" fill="#fff">5 · ismile.krd</text>
+      <text x="900" y="86" text-anchor="middle" fill="#fff">same code goes live</text><text x="900" y="104" text-anchor="middle" fill="#fff">backup taken first</text>
+
+      <path d="M495 140 V175 H95 V142" fill="none" stroke="#E0604A" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#k)"/>
+      <text x="300" y="192" text-anchor="middle" fill="#9A3222" font-weight="700">problem found → back to the developer, the live site is untouched</text>
+    </g>
+  </svg>
+</div>
+
+<!-- PAGE 4 -->
+<div class="page">
+  <h2><span class="n">7</span>Week 1: setting up the server, step by step</h2>
+  <p>After you buy the domain and hosting. Who does what is shown on the right.</p>
+  <table class="check">
+    <tr><th>#</th><th>Step</th><th>Who</th></tr>
+    <tr><td>1</td><td>Buy the hosting (yearly) and the domain <b>ismile.krd</b> for 2+ years, auto-renew on, in the organiser's name.</td><td>You</td></tr>
+    <tr><td>2</td><td>Point the domain to the host (change the "nameservers" at the domain seller to the ones the host gives).</td><td>You, with the host's chat</td></tr>
+    <tr><td>3</td><td>Turn on 2-step login for cPanel. Give the developer their own access, not your password.</td><td>You</td></tr>
+    <tr><td>4</td><td>In cPanel: set PHP to 8.3, switch on the extensions on page 2, upload limit 10 MB.</td><td>Developer</td></tr>
+    <tr><td>5</td><td>Turn on free SSL. Check that <span class="mono">https://ismile.krd</span> shows the padlock.</td><td>Developer</td></tr>
+    <tr><td>6</td><td>Create the subdomain <span class="mono">test.ismile.krd</span> and lock it with a password.</td><td>Developer</td></tr>
+    <tr><td>7</td><td>Connect GitHub with cPanel Git. Upload the current website to both.</td><td>Developer</td></tr>
+    <tr><td>8</td><td>Switch the admin to save on the server (<span class="mono">server/admin.php</span>). Test: edit and save a speaker.</td><td>Developer + you</td></tr>
+    <tr><td>9</td><td>Create the two databases and the <span class="mono">private/</span> folder. Put the database passwords in <span class="mono">secrets.php</span>.</td><td>Developer</td></tr>
+    <tr><td>10</td><td>Create the email boxes info@, tickets@, sponsors@. Open the Brevo account and add its domain records.</td><td>Developer + you</td></tr>
+    <tr><td>11</td><td>Turn on daily backups; test one restore on the test site.</td><td>Developer</td></tr>
+    <tr><td>12</td><td>Old address (GitHub Pages) forwards to ismile.krd.</td><td>Developer</td></tr>
+    <tr><td>13</td><td>Send Psoola the account request and the questions document.</td><td>You</td></tr>
+  </table>
+  <div class="callout c-green"><b>Week 1 is done when:</b> https://ismile.krd opens with the padlock, you can edit and save in the admin, test.ismile.krd exists, and the Psoola request is sent in writing.</div>
+
+  <h2 style="margin-top:5mm"><span class="n">8</span>Then the build, week by week</h2>
+  <table class="weeks">
+    <tr class="w2"><td>Week 2 · 6 – 12 Oct</td><td>Database tables; registration saves with server reference; student ID upload; admin Registrations and Student approvals; sponsor requests.</td></tr>
+    <tr class="w3"><td>Week 3 · 13 – 19 Oct</td><td>Psoola: create payment, webhook, status check, "Pay now" link, Payments page. Pretend Psoola if their keys are late.</td></tr>
+    <tr class="w4"><td>Week 4 · 20 – 26 Oct</td><td>Ticket email with QR + PDF in three languages through Brevo; retries and Resend button.</td></tr>
+    <tr class="w5"><td>Week 5 · 27 Oct – 2 Nov</td><td>Dashboard, exports, Workshops, roles, check-in. Live keys, one real payment refunded. <b>Registration opens 27 Oct.</b></td></tr>
+    <tr class="w6"><td>Weeks 6–7 · 3 – 16 Nov</td><td>Watch real registrations daily, fix, train the office. Summit 20–21 Nov.</td></tr>
+  </table>
+
+  <div class="callout c-gold"><b>Cost per year, roughly:</b> hosting $60–240 · domain $10–40 · Brevo $0–25 (one busy month) · Psoola fee per payment (ask them). Total without Psoola: <b>about $100–300 for the year.</b></div>
+  <footer>Prepared 27 September 2026 for iSmile 2026. Host examples and prices were checked online in September 2026 and change often; confirm on the host's own page before buying. Sources: namecheap.com/hosting/shared, hostadvice.com/cpanel-hosting, qde.com/blog/best-cpanel-web-hosting-providers.</footer>
+</div>
+
+</body>
+</html>

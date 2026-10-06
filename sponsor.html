@@ -15,21 +15,22 @@
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=Noto+Kufi+Arabic:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <!-- Base -->
-<link rel="stylesheet" href="css/base/tokens.css?v=82">
-<link rel="stylesheet" href="css/base/base.css?v=82">
+<link rel="stylesheet" href="css/base/tokens.css?v=85">
+<link rel="stylesheet" href="css/base/base.css?v=85">
 <!-- Components -->
-<link rel="stylesheet" href="css/components/boot.css?v=82">
-<link rel="stylesheet" href="css/components/buttons.css?v=82">
-<link rel="stylesheet" href="css/components/brand.css?v=82">
-<link rel="stylesheet" href="css/components/tier-card.css?v=82">
+<link rel="stylesheet" href="css/components/boot.css?v=85">
+<link rel="stylesheet" href="css/components/buttons.css?v=85">
+<link rel="stylesheet" href="css/components/brand.css?v=85">
+<link rel="stylesheet" href="css/components/tier-card.css?v=85">
 <!-- Layout -->
-<link rel="stylesheet" href="css/layout/header.css?v=82">
-<link rel="stylesheet" href="css/layout/footer.css?v=82">
+<link rel="stylesheet" href="css/layout/header.css?v=85">
+<link rel="stylesheet" href="css/layout/footer.css?v=85">
 <!-- The form borrows the registration card, stepper and fields. -->
-<link rel="stylesheet" href="css/sections/register.css?v=82">
-<link rel="stylesheet" href="css/sections/sponsor-form.css?v=82">
+<link rel="stylesheet" href="css/sections/register.css?v=85">
+<link rel="stylesheet" href="css/sections/sponsor-form.css?v=85">
+<link rel="stylesheet" href="css/sections/booth-map.css?v=85">
 
-<script type="module" src="js/sponsor.js?v=82"></script>
+<script type="module" src="js/sponsor.js?v=85"></script>
 </head>
 <body>
 
@@ -89,6 +90,64 @@
       <p class="lead" data-i18n="spf_sub">Partner with Iraq's largest and most prestigious dental summit. Tell us which package interests you and who to talk to, and we will send you the full packages, what each one includes and the prices.</p>
     </div>
 
+    <section class="exhibition" id="exhibition" aria-labelledby="exhibitionTitle" data-view="map">
+      <div class="exhibition-head">
+        <div>
+          <p class="section-kicker" data-i18n="bm_kicker">Exhibition floor plan</p>
+          <h2 id="exhibitionTitle" data-i18n="bm_title">Own an iSmile experience</h2>
+          <p data-i18n="bm_intro">Explore the 44 numbered booths. Reserved spaces appear in red on the map and in the table.</p>
+        </div>
+        <span class="exhibition-live" id="boothLive" role="status" data-i18n="bm_connecting">Connecting to availability…</span>
+      </div>
+      <div class="exhibition-overview" aria-label="Availability summary" data-i18n-label="bm_summary_label">
+        <div class="exhibition-stat"><span data-i18n="bm_total">Numbered booths</span><strong>44</strong></div>
+        <div class="exhibition-stat stat-available"><span data-i18n="bm_available">Available</span><strong id="boothAvailableCount">—</strong></div>
+        <div class="exhibition-stat stat-booked"><span data-i18n="bm_booked">Booked</span><strong id="boothBookedCount">—</strong></div>
+      </div>
+      <div class="exhibition-legend" aria-label="Booth tiers" data-i18n-label="bm_tiers">
+        <span><i class="tier-platinum"></i><span data-i18n="bm_platinum">Platinum</span></span>
+        <span><i class="tier-gold"></i><span data-i18n="bm_gold">Gold</span></span>
+        <span><i class="tier-silver"></i><span data-i18n="bm_silver">Silver</span></span>
+        <span><i class="tier-bronze"></i><span data-i18n="bm_bronze">Bronze</span></span>
+        <span><i class="tier-booked"></i><span data-i18n="bm_booked">Booked</span></span>
+      </div>
+      <div class="exhibition-view-switch" role="group" aria-label="Floor plan view" data-i18n-label="bm_view">
+        <button type="button" id="boothMapView" aria-controls="boothMapPanel" aria-pressed="true" data-i18n="bm_view_map">Map</button>
+        <button type="button" id="boothTableView" aria-controls="boothTablePanel" aria-pressed="false" data-i18n="bm_view_table">Table</button>
+      </div>
+      <div class="exhibition-layout">
+        <div class="exhibition-map-panel" id="boothMapPanel">
+          <div class="exhibition-panel-head">
+            <div><h3 data-i18n="bm_map_title">Explore the floor plan</h3><p class="exhibition-hint" data-i18n="bm_hint">Select a booth to see its size and availability. On a phone, scroll across the map to explore.</p></div>
+            <div class="exhibition-zoom" role="group" aria-label="Map zoom" data-i18n-label="bm_zoom">
+              <button type="button" id="boothZoomOut" aria-label="Zoom out" data-i18n-label="bm_zoom_out" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12"/></svg></button>
+              <button type="button" id="boothZoomReset" aria-label="Reset map zoom" data-i18n-label="bm_zoom_reset"><span id="boothZoomValue">100%</span></button>
+              <button type="button" id="boothZoomIn" aria-label="Zoom in" data-i18n-label="bm_zoom_in"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12M12 6v12"/></svg></button>
+            </div>
+          </div>
+          <div class="exhibition-map-scroll" id="boothMapScroll" tabindex="0" role="region" aria-label="Numbered exhibition map" data-i18n-label="bm_map_label">
+            <div id="boothMap"></div>
+          </div>
+          <div class="exhibition-selected" id="boothSelected" aria-live="polite" hidden></div>
+        </div>
+        <div class="exhibition-table-panel" id="boothTablePanel">
+          <div class="exhibition-panel-head"><div><p class="exhibition-eyebrow" data-i18n="bm_directory">Booth directory</p><h3 data-i18n="bm_table_title">Numbers &amp; sizes</h3><p class="exhibition-hint" data-i18n="bm_table_hint">Compare the tiers, sizes and bookings. Select a booth number to find it on the map.</p></div></div>
+          <div class="exhibition-table-scroll" tabindex="0" role="region" aria-label="Booth tiers, numbers, sizes and live bookings" data-i18n-label="bm_table_caption">
+            <table class="booth-table">
+              <caption class="sr-only" data-i18n="bm_table_caption">Booth tiers, numbers, sizes and live bookings</caption>
+              <thead><tr><th scope="col" data-i18n="bm_tier">Tier</th><th scope="col" data-i18n="bm_numbers">Booths</th><th scope="col" data-i18n="bm_size">Size (W × L)</th><th scope="col" data-i18n="bm_booked">Booked</th></tr></thead>
+              <tbody id="boothTableBody"></tbody>
+            </table>
+          </div>
+          <div class="exhibition-table-footer">
+            <p class="exhibition-footnote" data-i18n="bm_size_note">W = width · L = length · Sizes in meters. Booths 1, 6 and 24: width only.</p>
+            <p class="exhibition-footnote exhibition-privacy"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2"/></svg><span data-i18n="bm_privacy">Bookings update automatically. Company names and contact details are private.</span></p>
+          </div>
+        </div>
+      </div>
+      <noscript><p>Enable JavaScript to view the numbered map and live booth availability.</p></noscript>
+    </section>
+
     <div class="reg">
       <!-- Side column -->
       <aside class="reg-aside">
@@ -131,6 +190,8 @@
         </div>
 
         <form id="spfForm" novalidate>
+          <!-- Left empty by people, filled in by bots: the server refuses it. -->
+          <div class="reg-trap" aria-hidden="true"><label>Leave this box empty <input id="spfTrap" type="text" tabindex="-1" autocomplete="nope" data-lpignore="true" data-1p-ignore></label></div>
           <!-- Step 1: sponsorship or booth, and which package -->
           <div class="reg-step" data-step="1">
             <div class="step-head">
@@ -141,7 +202,7 @@
               <label class="type-card is-checked">
                 <input type="radio" name="spfKind" value="sponsor" checked>
                 <span class="tc-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5L2.6 9.3l6.5-.9z"/></svg></span>
-                <span class="tc-text"><b data-i18n="spf_kind_spon">Sponsorship package</b><small data-i18n="spf_kind_spon_d">Diamond, Platinum, Gold, Silver or Exhibitor: logo placement and visibility.</small></span>
+                <span class="tc-text"><b data-i18n="spf_kind_spon">Sponsorship package</b><small data-i18n="spf_kind_tiers_d">Platinum, Gold, Silver or Bronze: logo placement and visibility.</small></span>
                 <span class="tc-check" aria-hidden="true"></span>
               </label>
               <label class="type-card">

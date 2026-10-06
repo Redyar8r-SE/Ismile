@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>iSmile 2026 — The backend, everything I built</title>
+<style>
+@page { size: A4; margin: 14mm 14mm 15mm; }
+* { box-sizing: border-box; }
+body { margin: 0; color: #12302F; font: 10pt/1.5 Arial, Helvetica, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+h1 { font-size: 25pt; margin: 0 0 2mm; line-height: 1.1; }
+h2 { font-size: 15pt; margin: 6mm 0 3mm; display: flex; align-items: center; gap: 3mm; break-after: avoid; }
+h2 .n { width: 8.5mm; height: 8.5mm; border-radius: 50%; background: #12302F; color: #fff; display: inline-grid; place-items: center; font-size: 10.5pt; flex: none; }
+h3 { font-size: 11pt; margin: 3mm 0 1.5mm; break-after: avoid; }
+p { margin: 0 0 2.5mm; }
+ul, ol { margin: 0 0 2.5mm; padding-left: 5mm; }
+li { margin-bottom: .8mm; }
+.newpage { break-before: page; }
+.eyebrow { display: inline-block; font-size: 8.5pt; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; background: #D5F1EF; color: #0C6F6B; padding: 1mm 3mm; border-radius: 99px; margin-bottom: 3mm; }
+.lede { color: #4A6467; font-size: 11pt; }
+.small { font-size: 8.6pt; color: #5B7477; }
+code { font-family: Consolas, "Courier New", monospace; font-size: 8.6pt; background: #EEF6F6; padding: .2mm 1.2mm; border-radius: 1mm; }
+.callout { border-radius: 3mm; padding: 3.5mm 4.5mm; margin: 3mm 0; break-inside: avoid; }
+.c-red { background: #FBE1DC; color: #7E2A1C; border-left: 4px solid #E0604A; }
+.c-teal { background: #E4F6F5; color: #0C5F5B; border-left: 4px solid #16A6A1; }
+.c-gold { background: #FCEFD3; color: #6E480C; border-left: 4px solid #E0A33A; }
+.c-green { background: #DDF3E5; color: #1D5B36; border-left: 4px solid #2E9E5B; }
+table { width: 100%; border-collapse: collapse; font-size: 8.9pt; margin: 1mm 0 3mm; }
+th, td { border: 1px solid #D4E4E4; padding: 1.5mm 2.2mm; vertical-align: top; text-align: left; }
+th { background: #EEF6F6; }
+tr { break-inside: avoid; }
+td.k { font-weight: 700; width: 24%; }
+.pill { display: inline-block; padding: .2mm 2mm; border-radius: 99px; font-size: 7.8pt; font-weight: 700; white-space: nowrap; margin: .2mm 0; }
+.ok { background: #DDF3E5; color: #1D6B3C; } .wait { background: #FCEFD3; color: #8A5A0F; }
+.no { background: #FBE1DC; color: #9A3322; } .blue { background: #DDEBFB; color: #1B4F91; } .vio { background: #E6E2FB; color: #3F33A0; }
+.toc { columns: 2; column-gap: 8mm; font-size: 9.6pt; margin: 2mm 0 4mm; padding-left: 6mm; }
+.toc li { break-inside: avoid; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3mm; margin: 4mm 0; }
+.stat { border-radius: 3mm; padding: 3mm 3.5mm; }
+.stat b { display: block; font-size: 19pt; line-height: 1.1; }
+.stat span { font-size: 8.6pt; font-weight: 700; }
+.s1 { background: #D5F1EF; color: #0C6F6B; } .s2 { background: #DDF3E5; color: #1D6B3C; }
+.s3 { background: #E6E2FB; color: #3F33A0; } .s4 { background: #FCEFD3; color: #8A5A0F; }
+.steps { counter-reset: s; list-style: none; padding: 0; display: grid; gap: 1.6mm; }
+.steps li { counter-increment: s; display: grid; grid-template-columns: 7mm 1fr; gap: 2.5mm; align-items: start; break-inside: avoid; margin: 0; }
+.steps li::before { content: counter(s); width: 6.5mm; height: 6.5mm; border-radius: 50%; background: #16A6A1; color: #fff; font-weight: 700; font-size: 8.5pt; display: grid; place-items: center; }
+.steps.gold li::before { background: #C98A1E; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; }
+.tests { columns: 2; column-gap: 6mm; font-size: 8.4pt; padding: 0; list-style: none; margin: 0 0 2mm; }
+.tests li { break-inside: avoid; padding-left: 4.5mm; position: relative; margin-bottom: .7mm; }
+.tests li::before { content: "✓"; position: absolute; left: 0; color: #2E9E5B; font-weight: 700; }
+.tests li.new::after { content: " NEW"; font-size: 6.8pt; font-weight: 700; color: #1B4F91; }
+.tests .g { font-weight: 700; color: #0C6F6B; padding-left: 0; margin-top: 1.5mm; }
+.tests .g::before { content: ""; }
+svg { display: block; width: 100%; height: auto; }
+svg text { font-family: Arial, Helvetica, sans-serif; }
+footer { margin-top: 4mm; font-size: 8.4pt; color: #5B7477; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs><marker id="k" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#12302F"/></marker></defs></svg>
+
+<span class="eyebrow">iSmile 2026 · Backend · complete description · 27 September 2026</span>
+<h1>The backend: everything I built, explained</h1>
+<p class="lede">This document explains every part of the new backend in plain words: what a visitor sees, what happens with payments, the admin pages, the database, the emails, the timed jobs, the safety rules, how it goes onto the server, how it was tested, and what is still missing.</p>
+
+<div class="stats">
+  <div class="stat s1"><b>~7,400</b><span>lines of new code</span></div>
+  <div class="stat s2"><b>88 / 88</b><span>automatic checks pass</span></div>
+  <div class="stat s3"><b>13</b><span>database tables</span></div>
+  <div class="stat s4"><b>5</b><span>admin roles</span></div>
+</div>
+
+<h3>Contents</h3>
+<ol class="toc">
+  <li>What a "backend" is, and the three new folders</li>
+  <li>A professional registers and pays</li>
+  <li>A student registers</li>
+  <li>Psoola: how payments are connected</li>
+  <li>Every payment situation, and what happens</li>
+  <li>Website pages I changed or added</li>
+  <li>The addresses the pages talk to (API)</li>
+  <li>The admin: every page</li>
+  <li>Roles: who can see what</li>
+  <li>The database: all 13 tables</li>
+  <li>The emails</li>
+  <li>The PDF ticket and the QR code</li>
+  <li>Timed jobs (automatic work)</li>
+  <li>Settings you control</li>
+  <li>Safety and security</li>
+  <li>Putting it on the server</li>
+  <li>How it was tested (all 88 checks)</li>
+  <li>The security review and the fixes</li>
+  <li>What is not finished yet</li>
+  <li>Every file I made</li>
+</ol>
+
+<h2><span class="n">1</span>What a "backend" is, and the three new folders</h2>
+<p>Until now the website was only pages: the registration form could not save anything, so it sent people to WhatsApp. The <b>backend</b> is the part that runs on the server. It receives the form, saves it in a database, talks to Psoola for the money, makes tickets, sends emails, and gives you the admin to see and manage everything.</p>
+<svg viewBox="0 0 1000 250" role="img" aria-label="The three new folders">
+  <g font-size="13" text-anchor="middle">
+    <rect x="10" y="10" width="300" height="140" rx="12" fill="#D5F1EF" stroke="#16A6A1" stroke-width="2"/>
+    <text x="160" y="42" font-size="17" font-weight="700" fill="#0C6F6B">api/</text>
+    <text x="160" y="68">what the website pages call:</text>
+    <text x="160" y="88">register, pay, payment status,</text>
+    <text x="160" y="108">QR image, sponsor, webhook</text>
+    <text x="160" y="132" fill="#5B7477" font-size="12">public, 10 small files</text>
+
+    <rect x="350" y="10" width="300" height="140" rx="12" fill="#FCEFD3" stroke="#E0A33A" stroke-width="2"/>
+    <text x="500" y="42" font-size="17" font-weight="700" fill="#8A5A0F">admin/</text>
+    <text x="500" y="68">the pages YOU use at /admin/:</text>
+    <text x="500" y="88">dashboard, registrations, students,</text>
+    <text x="500" y="108">payments, workshops, sponsors…</text>
+    <text x="500" y="132" fill="#5B7477" font-size="12">sign-in + phone code</text>
+
+    <rect x="690" y="10" width="300" height="140" rx="12" fill="#12302F"/>
+    <text x="840" y="42" font-size="17" font-weight="700" fill="#fff">backend/</text>
+    <text x="840" y="68" fill="#CFE9E7">the actual brain: rules, payments,</text>
+    <text x="840" y="88" fill="#CFE9E7">tickets, emails, database, secrets</text>
+    <text x="840" y="108" fill="#CFE9E7">+ timed jobs, tools, tests</text>
+    <text x="840" y="132" fill="#F3C97A" font-size="12">NOT reachable from the internet</text>
+
+    <rect x="600" y="175" width="390" height="65" rx="12" fill="#E6E2FB" stroke="#6A5BD8" stroke-width="2"/>
+    <text x="795" y="203" font-size="15" font-weight="700" fill="#3F33A0">MySQL database (13 tables)</text>
+    <text x="795" y="225">every registration, payment, ticket, email</text>
+    <rect x="10" y="175" width="560" height="65" rx="12" fill="#fff" stroke="#D4E4E4" stroke-width="2"/>
+    <text x="290" y="203" font-size="14" font-weight="700">Language: PHP 8.1 · Database: MySQL/MariaDB</text>
+    <text x="290" y="225" fill="#5B7477">what every cPanel hosting has · no framework · one library (TCPDF, for PDF + QR)</text>
+  </g>
+</svg>
+
+<h2><span class="n">2</span>A professional registers and pays</h2>
+<ol class="steps">
+  <li><div>They open <b>register.html</b>. The page first asks the server: <i>is registration open, what are the prices, which lunch days are left?</i> If closed, they see "Registration opens soon" instead of the form.</div></li>
+  <li><div>They fill in the 3 steps (details, lunch, payment method: Visa, MasterCard, FIB or FastPay) and press the button.</div></li>
+  <li><div>The server checks everything again (it never trusts the page): name, phone, email, allowed choices, capacity, spam trap, too many tries.</div></li>
+  <li><div>It saves the registration with a reference like <b>ISM26-CB4TNZ</b> and <b>works out the price itself</b> (ticket + chosen lunch days) from the prices in the admin.</div></li>
+  <li><div>It asks Psoola to create a payment for exactly that amount and sends the visitor to Psoola's payment page.</div></li>
+  <li><div>The visitor pays. Psoola sends them back to our new <b>payment.html</b>, which shows "Checking your payment…".</div></li>
+  <li><div>Psoola also sends our server a message (webhook). Our server does <b>not</b> believe the message: it asks Psoola directly "is payment X paid, and how much?"</div></li>
+  <li><div>Only if Psoola says <b>paid, the right amount, the right currency</b>: the registration becomes paid and a <b>ticket</b> is made (T26-00001, T26-00002…).</div></li>
+  <li><div>The page changes to <b>"You are in! Welcome to iSmile 2026"</b> with the QR code, and the ticket email with the PDF goes out.</div></li>
+</ol>
+
+<h2><span class="n">3</span>A student registers</h2>
+<ol class="steps gold">
+  <li><div>Same form, but they choose "dental student", add their university, and upload a <b>photo of their student ID</b>. (Choosing "student" always gives the student ticket, whatever else they pick.)</div></li>
+  <li><div>The photo is checked: must really be an image (a renamed program is refused), is re-saved clean, and stored in a <b>private folder</b> under a random name.</div></li>
+  <li><div>No payment yet. They get the email "we are checking your student ID".</div></li>
+  <li><div>Someone with the Registration role opens <b>Student approvals</b> in the admin, sees the photo large, and presses <b>Approve</b> or <b>Reject</b> with a reason.</div></li>
+  <li><div><b>Approved</b> → they get a "Pay now" email with a personal link → they pay the student price → ticket.</div></li>
+  <li><div><b>Rejected</b> → they get the reason and a link to <b>student-id.html</b> to send a clearer photo → it comes back to the approvals list.</div></li>
+</ol>
+<div class="callout c-teal">Why approve first? So nobody pays and then needs a refund because their ID was not valid. Refunds are the messiest part of any payment system.</div>
+
+<h2><span class="n">4</span>Psoola: how payments are connected</h2>
+<p>There are exactly three connections with Psoola. All the code around them is finished; only the three places where we speak Psoola's "language" wait for their documents.</p>
+<table>
+  <tr><th style="width:6%"></th><th style="width:30%">Connection</th><th>What it does</th><th style="width:15%">State</th></tr>
+  <tr><td><b>A</b></td><td>Create a payment</td><td>Our server tells Psoola: "payment for ISM26-…, amount X IQD" and gets back the address of Psoola's payment page.</td><td><span class="pill wait">needs Psoola docs</span></td></tr>
+  <tr><td><b>B</b></td><td>Webhook (Psoola → us)</td><td>Psoola tells us "payment X changed". Our server checks Psoola's signature on the message, writes it in the log, and then uses C. The message itself never makes a ticket.</td><td><span class="pill wait">needs Psoola docs</span></td></tr>
+  <tr><td><b>C</b></td><td>Check a payment (us → Psoola)</td><td>Our server asks Psoola: "what is the status and amount of payment X?" This answer is the only thing that can make a ticket.</td><td><span class="pill wait">needs Psoola docs</span></td></tr>
+</table>
+<p><b>Until Psoola's documents arrive</b>, a <b>pretend Psoola</b> runs on the test site (<code>api/fake-psoola.php</code>). It shows a page where the tester chooses what happens: <b>pay</b>, <b>fail</b>, <b>pay a smaller amount</b>, <b>pay but lose the webhook</b>, or <b>close the page</b>. That is how every situation below was tested. The pretend Psoola refuses to run on the real address.</p>
+
+<h2><span class="n">5</span>Every payment situation, and what happens</h2>
+<table>
+  <tr><th style="width:34%">Situation</th><th>What the system does</th></tr>
+  <tr><td class="k">Paid normally</td><td>Ticket made, ticket email sent, status page shows the QR.</td></tr>
+  <tr><td class="k">Card declined / payment failed</td><td>Stays unpaid, no ticket. One "Pay now" email with a personal link so they can try again without filling the form again.</td></tr>
+  <tr><td class="k">Declined, then paid on the same Psoola page</td><td>The late "paid" is still accepted and the ticket is made; the money is never lost. <span class="pill blue">fixed after review</span></td></tr>
+  <tr><td class="k">Psoola confirms a different amount</td><td>NOT paid. Marked <b>mismatch</b> in red for Finance, alert email, no ticket.</td></tr>
+  <tr><td class="k">Paid twice (two tabs)</td><td>Only one ticket. The second payment is marked <b>duplicate</b> in red: Finance refunds it.</td></tr>
+  <tr><td class="k">Paid, but Psoola's message is lost</td><td>Every 5 minutes the server asks Psoola about all waiting payments, finds it paid, makes the ticket.</td></tr>
+  <tr><td class="k">The same message arrives twice</td><td>Nothing changes the second time; still exactly one ticket.</td></tr>
+  <tr><td class="k">A fake "paid" message from a hacker</td><td>Refused (wrong signature), logged as REJECTED. After 3 in one hour, an alert email.</td></tr>
+  <tr><td class="k">Visitor closed the page before paying</td><td>Stays unpaid. After 24 hours the attempt closes; they get the "Pay now" link. After 3 days unpaid: one reminder.</td></tr>
+  <tr><td class="k">Clicked "Pay" many times</td><td>Within 10 minutes the same payment is reused, so no pile of payments at Psoola. <span class="pill blue">fixed after review</span></td></tr>
+  <tr><td class="k">Psoola is down</td><td>Registration stays saved; "Pay now" email, at most one a day. <span class="pill blue">fixed after review</span></td></tr>
+  <tr><td class="k">Last places, many paying at once</td><td>A place is held for 1 hour for the person paying; others see "full". If it ever goes over anyway, the ticket is made and the Owner is alerted. <span class="pill blue">fixed after review</span></td></tr>
+  <tr><td class="k">Registration switched off (emergency)</td><td>No new payment can start from anywhere, including "Pay now" links. <span class="pill blue">fixed after review</span></td></tr>
+  <tr><td class="k">Price still 0</td><td>Cannot be paid, and registration cannot be opened until prices are set.</td></tr>
+</table>
+
+<h2><span class="n">6</span>Website pages I changed or added</h2>
+<table>
+  <tr><th style="width:24%">Page</th><th>What changed</th></tr>
+  <tr><td class="k">register.html</td><td>Asks the server if registration is open and shows the real prices. Sends the form to the server (not WhatsApp), then to Psoola. "Registration opens soon" panel while closed (your own message possible, in 3 languages). Hidden spam trap. Clear messages for every error, in the visitor's language.</td></tr>
+  <tr><td class="k">payment.html <span class="pill ok">new</span></td><td>Where people land after paying: "Checking…" → "You are in!" with QR and ticket number, or "Payment did not go through" with <b>Try again</b>, or "We are checking your student ID".</td></tr>
+  <tr><td class="k">student-id.html <span class="pill ok">new</span></td><td>A rejected student sends a clearer photo from their personal link.</td></tr>
+  <tr><td class="k">sponsor.html</td><td>The request is saved on the server with a reference (SPN26-…); the company and your sponsor team get emails. If the server cannot be reached, the old WhatsApp/email step appears, so no request is lost.</td></tr>
+  <tr><td class="k">Language files</td><td>About 47 new texts in each of English, Arabic and Kurdish (payment page, errors, closed message).</td></tr>
+</table>
+
+<h2><span class="n">7</span>The addresses the pages talk to (API)</h2>
+<table>
+  <tr><th style="width:26%">Address</th><th>Used by</th><th>What it does</th></tr>
+  <tr><td><code>api/config.php</code></td><td>register.html</td><td>Open or closed, prices, which lunch days are left.</td></tr>
+  <tr><td><code>api/register.php</code></td><td>register.html</td><td>Saves the registration (+ student photo); starts the payment for professionals.</td></tr>
+  <tr><td><code>api/pay.php</code></td><td>"Pay now" emails, Try again</td><td>Personal, expiring link that starts a new payment without the form.</td></tr>
+  <tr><td><code>api/status.php</code></td><td>payment.html</td><td>Is it paid? Asks Psoola if still waiting (at most every 10 seconds).</td></tr>
+  <tr><td><code>api/qr.php</code></td><td>payment.html, emails</td><td>The ticket QR as an image, personal link only.</td></tr>
+  <tr><td><code>api/student-photo.php</code></td><td>student-id.html</td><td>New ID photo after a rejection.</td></tr>
+  <tr><td><code>api/sponsor.php</code></td><td>sponsor.html</td><td>Saves a sponsor or booth request.</td></tr>
+  <tr><td><code>api/webhook.php</code></td><td>Psoola</td><td>Psoola's "payment changed" messages. This is the address we give Psoola.</td></tr>
+  <tr><td><code>api/fake-psoola.php</code></td><td>test site only</td><td>The pretend Psoola page.</td></tr>
+</table>
+<p class="small">"Personal link" means the link contains a secret code made from the person's record and a server secret. It cannot be guessed, and one person's link never opens another person's data.</p>
+
+<h2><span class="n">8</span>The admin: every page</h2>
+<table>
+  <tr><th style="width:22%">Page</th><th>What you see and can do</th></tr>
+  <tr><td class="k">Sign in</td><td>Email + password, then the 6-digit phone code (Owner and Finance must have it). 5 wrong tries lock the account for 15 minutes.</td></tr>
+  <tr><td class="k">Dashboard</td><td>Big numbers: registered, paid, not paid, students waiting, money confirmed, professionals/students with ticket, emails sent/failed, open sponsor requests. Capacity bars for tickets and lunch. A <b>red "Needs attention" box</b>: students waiting, payments with problems, fake messages, failed emails, missing backup.</td></tr>
+  <tr><td class="k">Registrations</td><td>Search by name, phone, email or reference; filters (status, ticket type, lunch, method, date); possible duplicates marked; export to Excel.</td></tr>
+  <tr><td class="k">One registration</td><td>Every detail, payments, ticket, emails, workshops and history. Buttons: edit contact details (ticket is re-made and re-sent), resend ticket or "Pay now", add workshop, cancel, <b>complimentary ticket</b> (Owner only, with reason). "Register a caller" for phone registrations.</td></tr>
+  <tr><td class="k">Student approvals</td><td>Oldest first, ID photo large, Approve or Reject with a reason.</td></tr>
+  <tr><td class="k">Payments</td><td>Every attempt with Psoola's id, method, amount, status. Problems in red. <b>Daily totals</b> to compare with Psoola's report. Mark refunds. The log of every Psoola message.</td></tr>
+  <tr><td class="k">Workshops</td><td>Seats total / booked / paid / left for each workshop, and who is in it. The website's "seats left" follows these numbers. Export = the trainer's sign-in sheet.</td></tr>
+  <tr><td class="k">Sponsors &amp; booths</td><td>New → Contacted → Agreed → Paid → Confirmed (or Declined / Waiting list). Notes, person in charge. Cannot be Confirmed before Paid; a tier cannot take more than its spots (Owner can override; logged).</td></tr>
+  <tr><td class="k">Check-in</td><td>For the door, works on a phone: scan the QR with the camera, type the ticket number, or search a name. A second scan says "Already checked in at 09:12". Fake or old QR codes are refused.</td></tr>
+  <tr><td class="k">Settings</td><td>Owner only: see section 14. Also ambassador codes (with how many students used each) and the audit log.</td></tr>
+  <tr><td class="k">Users</td><td>Owner only: add people with a role, disable accounts (never deleted, so history stays), reset a lost phone code.</td></tr>
+  <tr><td class="k">Export</td><td>Excel files (Kurdish and Arabic stay correct). Every export is logged with who and when.</td></tr>
+  <tr><td class="k">Site content</td><td>Your existing content admin (texts, speakers, prices) stays as it was.</td></tr>
+</table>
+
+<h2><span class="n">9</span>Roles: who can see what</h2>
+<table>
+  <tr><th style="width:18%">Role</th><th>Can use</th><th style="width:14%">Phone code</th></tr>
+  <tr><td class="k">Owner</td><td>Everything, including Settings, Users, complimentary tickets and overrides.</td><td><span class="pill no">required</span></td></tr>
+  <tr><td class="k">Registration</td><td>Dashboard, registrations (edit), student approvals + photos, workshops, sponsors, check-in, export.</td><td><span class="pill wait">optional</span></td></tr>
+  <tr><td class="k">Finance</td><td>Dashboard, registrations (view), payments and refunds, sponsors, export.</td><td><span class="pill no">required</span></td></tr>
+  <tr><td class="k">Content</td><td>Only the site texts.</td><td><span class="pill wait">optional</span></td></tr>
+  <tr><td class="k">Check-in</td><td>Only the check-in page (door staff on summit days).</td><td><span class="pill wait">optional</span></td></tr>
+</table>
+<p>The server checks the role on <b>every</b> page and every button, not only by hiding menu items.</p>
+
+<h2><span class="n">10</span>The database: all 13 tables</h2>
+<p>You never need to open these directly: the admin shows them as pages. Kurdish and Arabic are stored exactly as typed. Nothing is ever deleted by the system; things are marked (cancelled, disabled, removed) so there is always a history.</p>
+<table>
+  <tr><th style="width:23%">Table</th><th>What one row is</th><th style="width:22%">Seen in admin</th></tr>
+  <tr><td class="k">registrations</td><td>One person: names, phone, email, city, specialty, ticket type, lunch days, payment method, status (waiting / unpaid / paid / complimentary / cancelled), reference, personal-link secrets.</td><td>Registrations, Dashboard</td></tr>
+  <tr><td class="k">student_checks</td><td>A student's ID check: university, photo file name, waiting / approved / rejected, reviewer, reason, ambassador code.</td><td>Student approvals</td></tr>
+  <tr><td class="k">payments</td><td>One payment attempt: Psoola's id, method, amount expected and confirmed, status (created, waiting, paid, failed, expired, mismatch, duplicate, refunded), Psoola's raw answers.</td><td>Payments</td></tr>
+  <tr><td class="k">tickets</td><td>Ticket number, version (a name change makes version 2 and the old QR stops working), how it was made (payment or complimentary), check-in time.</td><td>One registration, Check-in</td></tr>
+  <tr><td class="k">emails</td><td>Every email as a queue: kind, to, language, sent / failed, tries.</td><td>One registration, Dashboard</td></tr>
+  <tr><td class="k">workshop_bookings</td><td>A person booked into a workshop by phone, paid or not.</td><td>Workshops</td></tr>
+  <tr><td class="k">sponsor_requests</td><td>A sponsor or booth request with its status, notes and person in charge.</td><td>Sponsors &amp; booths</td></tr>
+  <tr><td class="k">ambassadors</td><td>Ambassador codes, to count students per ambassador.</td><td>Settings</td></tr>
+  <tr><td class="k">webhook_log</td><td>Every message Psoola sent and what we did with it.</td><td>Payments</td></tr>
+  <tr><td class="k">admin_users</td><td>People who can sign in: role, password (scrambled, never readable), phone-code secret, lock status.</td><td>Users</td></tr>
+  <tr><td class="k">audit_log</td><td>Who did what and when. Never edited, never deleted.</td><td>Settings</td></tr>
+  <tr><td class="k">settings</td><td>Open/closed, capacity, test mode… (section 14).</td><td>Settings</td></tr>
+  <tr><td class="k">rate_limits</td><td>Counters that stop spam and password guessing.</td><td>(internal)</td></tr>
+</table>
+
+<h2><span class="n">11</span>The emails</h2>
+<p>All emails are written in the person's language (English, Arabic or Kurdish), in the iSmile colours, with a plain-text copy for old phones. They go out through a queue: if sending fails, it retries; you see failures on the dashboard.</p>
+<table>
+  <tr><th style="width:28%">Email</th><th>When</th></tr>
+  <tr><td class="k">We are checking your student ID</td><td>A student registers.</td></tr>
+  <tr><td class="k">Approved: pay now</td><td>A student is approved (contains the personal pay link).</td></tr>
+  <tr><td class="k">Not approved</td><td>A student is rejected: the reason + link to send a new photo.</td></tr>
+  <tr><td class="k">Pay now</td><td>A payment failed or expired (max one a day).</td></tr>
+  <tr><td class="k">Reminder</td><td>3 days after registering, still unpaid. Only once.</td></tr>
+  <tr><td class="k">Sorry, we are full</td><td>Capacity reached: unpaid people are told once.</td></tr>
+  <tr><td class="k">Your ticket</td><td>Paid (or complimentary): QR in the email + PDF ticket attached. Again if details change.</td></tr>
+  <tr><td class="k">Sponsor: received</td><td>To the company, with their reference.</td></tr>
+  <tr><td class="k">Sponsor: new request</td><td>To your sponsor team address (set in Settings).</td></tr>
+  <tr><td class="k">Alert (English, to you)</td><td>Wrong amount, paid twice, over capacity, fake messages, many failed emails, missing backup, disk nearly full.</td></tr>
+</table>
+<div class="callout c-gold"><b>Test mode</b> (on by default): every email goes to one test address instead of the real person, until you switch it off at launch. Sending uses <b>Brevo</b> from tickets@ismile.krd; until a Brevo account exists, emails are saved as files instead.</div>
+
+<h2><span class="n">12</span>The PDF ticket and the QR code</h2>
+<ul>
+  <li>The ticket is a one-page A4 PDF in the person's language: name, ticket type, lunch days, reference, ticket number and a large QR code.</li>
+  <li>The QR code contains the ticket number plus a <b>signature</b> made with the server's secret. At the door, the check-in page verifies the signature: a QR made by someone else is refused as <b>forged</b>.</li>
+  <li>If a name is changed, the ticket becomes version 2 and is emailed again; the <b>old QR stops working</b>.</li>
+  <li>A second scan shows "Already checked in at …", so a copied ticket cannot bring two people in.</li>
+</ul>
+
+<h2><span class="n">13</span>Timed jobs (automatic work)</h2>
+<table>
+  <tr><th style="width:18%">How often</th><th>What it does</th></tr>
+  <tr><td class="k">Every minute</td><td>Sends the queued emails.</td></tr>
+  <tr><td class="k">Every 5 minutes</td><td>Asks Psoola about every payment still waiting (catches lost messages); closes attempts older than 24 hours; sends the 3-day reminders and the "full" emails; checks for problems and sends alerts.</td></tr>
+  <tr><td class="k">Every night 02:30</td><td>Full database backup (kept in the private folder); deletes student ID photos 90 days after the summit (the approve/reject decision stays); cleans old counters.</td></tr>
+</table>
+
+<h2><span class="n">14</span>Settings you control (Owner)</h2>
+<table>
+  <tr><th style="width:32%">Setting</th><th>What it does</th><th style="width:16%">Starts as</th></tr>
+  <tr><td class="k">Registration is open</td><td>The main switch. Off = form closed and no payments start (emergency stop).</td><td>off</td></tr>
+  <tr><td class="k">Message while closed (EN/AR/KU)</td><td>Your own text, e.g. "Registration opens on 25 October".</td><td>empty (default text)</td></tr>
+  <tr><td class="k">Ticket capacity</td><td>Registration closes itself at this number.</td><td>0 = no limit</td></tr>
+  <tr><td class="k">Lunch capacity day 1 / day 2</td><td>That lunch day disappears from the form when full.</td><td>0 = no limit</td></tr>
+  <tr><td class="k">Email test mode + address</td><td>All emails to one test address.</td><td>on</td></tr>
+  <tr><td class="k">Sponsor requests go to</td><td>Who gets "new sponsor request".</td><td>empty</td></tr>
+  <tr><td class="k">"Pay now" link valid for</td><td>Days a personal pay link works (1–30).</td><td>7 days</td></tr>
+  <tr><td class="k">Prices</td><td>Not here: in Site content → Ticket prices (professional, student, lunch day 1, lunch day 2, IQD).</td><td>all 0</td></tr>
+</table>
+<p class="small">Secret things (database password, Psoola keys, Brevo key, the server secret) are in <code>config.php</code> on the server only. They never appear in the admin, in Git, or in any email.</p>
+
+<h2><span class="n">15</span>Safety and security</h2>
+<div class="two">
+<div>
+<h3>Money</h3>
+<ul>
+  <li>No ticket without Psoola itself confirming paid + exact amount + currency.</li>
+  <li>The server sets the price; the page cannot change it.</li>
+  <li>Each Psoola payment can be confirmed only once (the database locks the row while deciding).</li>
+  <li>Price 0 cannot be paid.</li>
+  <li>Fake webhooks refused and logged.</li>
+</ul>
+<h3>Visitors' data</h3>
+<ul>
+  <li>Personal links cannot be guessed and expire.</li>
+  <li>ID photos: checked, cleaned, private, deleted after the summit.</li>
+  <li>Everything typed is stored as plain text: code or "SQL" in a name does nothing.</li>
+  <li>Spam trap + limits on how often one address can send forms.</li>
+  <li>Forms posted from other websites are refused.</li>
+</ul>
+</div>
+<div>
+<h3>Admin</h3>
+<ul>
+  <li>Own account per person, 5 roles, checked on the server.</li>
+  <li>Phone code for Owner and Finance; lock after 5 wrong tries.</li>
+  <li>Sign-out after 30 minutes idle, 12 hours at most.</li>
+  <li>Every button has a one-time token (stops trick links clicking for you).</li>
+  <li>Admin pages cannot be shown inside another website.</li>
+  <li>Every action and every export in the audit log.</li>
+</ul>
+<h3>Server</h3>
+<ul>
+  <li>The backend folder sits outside the public website.</li>
+  <li>Always HTTPS (padlock); internal files blocked even if uploaded by mistake.</li>
+  <li>Nightly backup; alerts if it is missing.</li>
+</ul>
+</div>
+</div>
+
+<h2><span class="n">16</span>Putting it on the server</h2>
+<ol class="steps">
+  <li><div><b>Two copies</b>: <b>test.ismile.krd</b> (password-protected, pretend Psoola, emails in test mode) and <b>ismile.krd</b> (the real one). Always test first.</div></li>
+  <li><div><b>deploy.sh</b>: one command puts the project on the server: the website into the public folder, the backend outside it. cPanel's "Deploy" button runs it for the test site (<code>.cpanel.yml</code>).</div></li>
+  <li><div><b>merge-data.php</b>: an update <b>never overwrites</b> what you changed in the admin (prices, speakers, texts). It only adds new files and new translation texts.</div></li>
+  <li><div><b>install.php</b>: creates the 13 tables and your first Owner account.</div></li>
+  <li><div><b>.htaccess</b> files: HTTPS always, no "www", backend/docs/tools blocked, admin pages never cached.</div></li>
+  <li><div><b>Cron jobs</b> in cPanel for the timed jobs (section 13).</div></li>
+  <li><div>Run the 88 checks on the test copy on the real server, then go live.</div></li>
+</ol>
+<p class="small">The step-by-step commands are in <code>backend/README.md</code>. I tested the deploy on a pretend server folder on this laptop: 14 new files and 454 new texts were added, and a price changed in the admin was kept.</p>
+
+<h2><span class="n">17</span>How it was tested (all 88 checks)</h2>
+<p>A test program (<code>backend/tests/scenarios.php</code>) acts like a visitor, like Psoola and like a hacker against a test copy, then looks in the database. It refuses to run on the live site. Result today: <b>88 passed, 0 failed</b>. Items marked NEW were added after the security review.</p>
+<ul class="tests">
+  <li class="g">Opening rules</li>
+  <li>prices are set on the test site</li><li>closed: page told "closed" with the Kurdish message</li><li>closed: a registration sent anyway is refused</li><li>open: page told "open"</li>
+  <li class="g">Professional pays with a card</li>
+  <li>saved as unpaid with a server-made reference</li><li>price worked out by the server (ticket + lunch)</li><li>visitor sent to the payment page</li><li>chosen method recorded</li><li>webhook → server asks → paid</li><li>ticket made with a number</li><li>ticket email queued</li><li>status page shows paid, ticket number and QR</li><li>QR image served on the personal link</li>
+  <li class="g">Webhooks</li>
+  <li>same webhook twice changes nothing</li><li>still exactly one ticket</li><li>forged webhook rejected (401)</li><li>…and logged as REJECTED</li><li>genuine webhook about unknown payment changes nothing</li>
+  <li class="g">Money problems</li>
+  <li>smaller amount NOT paid (mismatch)</li><li>…no ticket made</li><li>…Finance alerted</li><li>failed: stays unpaid, no ticket</li><li>failed: one "Pay now" email</li><li>"Pay now" link starts a fresh payment</li><li>wrong "Pay now" token refused</li><li>expired "Pay now" link refused</li><li>webhook lost: still waiting</li><li>5-minute job finds it paid; ticket made</li><li class="new">paid after "failed": money not lost</li><li class="new">many failed tries: one email a day</li><li class="new">registration off: pay link cannot start a payment</li><li class="new">"Pay" again within minutes reuses the attempt</li><li>paid twice: second = duplicate, one ticket</li>
+  <li class="g">Students</li>
+  <li>renamed program as ID photo refused</li><li>student without photo refused</li><li>"dental student" always gets student ticket</li><li>saved as waiting, no payment</li><li>photo private under a random name</li><li>photo has no public address</li><li>admin photo page needs sign-in</li><li>"checking your ID" email</li><li>rejected: reason emailed</li><li>better photo with link → waiting again</li><li>another person's token cannot upload</li><li class="new">rejected student cannot be approved before a new photo</li><li>approved: unpaid + "Pay now" email</li><li>pays student price, gets ticket</li>
+  <li class="g">Personal links</li>
+  <li>status with someone else's token refused</li><li>QR with someone else's token refused</li><li>paid registration cannot pay again</li>
+  <li class="g">Tickets at the door</li>
+  <li>genuine QR accepted</li><li>forged QR refused</li><li>name change re-issues and re-emails</li><li>old QR stops working</li>
+  <li class="g">Capacity</li>
+  <li>lunch day full disappears, other day works</li><li>full lunch day refused</li><li>tickets full: form closes</li><li>registration sent anyway refused</li><li class="new">last place held for the person paying</li><li class="new">…and they get the ticket</li>
+  <li class="g">Typed-in text stays text</li>
+  <li>code in a name saved as text</li><li>"SQL" in a field did nothing</li><li>email shows it safely</li><li>injection in admin search finds nothing</li>
+  <li class="g">Admin protection</li>
+  <li>sign-in without its token refused</li><li>5 admin pages need a sign-in</li><li class="new">sign-in never sends you to another site (3 tricks)</li><li class="new">odd links do not crash a page</li><li>admin cannot be framed</li>
+  <li class="g">Sponsors, workshops, jobs, limits</li>
+  <li>sponsor saved with a reference</li><li>company and team emailed</li><li>cannot be Confirmed before Paid</li><li>form from another website refused</li><li>workshop lowers "seats left"</li><li>removing frees the seat</li><li>queued emails sent</li><li>none left pending</li><li>3 days unpaid: one reminder</li><li>never a second reminder</li><li>backup written</li><li>backup contains registrations</li><li>many forms from one address blocked (429)</li>
+</ul>
+<p><b>Also tested in a real browser</b> (Microsoft Edge, automatically): professional pays in English; student with ID photo in Arabic; failed payment and try again; sponsor form; admin sign-in with phone code and every admin page, approve, add workshop, check-in scan twice, Excel export. No errors.</p>
+
+<h2><span class="n">18</span>The security review and the fixes</h2>
+<p>After building, a second independent check read all the code looking for ways to break it. It confirmed the main rules hold (tickets only after confirmed money, locks against double payment, private photos, prepared database queries, escaped output, protected exports). It found 6 real problems. All are fixed and each now has a check that proves it:</p>
+<table>
+  <tr><th style="width:5%">#</th><th>Problem</th><th>Fix</th></tr>
+  <tr><td>1</td><td>A trick sign-in link could send an admin to a fake site after signing in.</td><td>Only our own admin pages are accepted as the next page.</td></tr>
+  <tr><td>2</td><td>Paid after a declined card → money taken, no ticket.</td><td>A late "paid" is always checked with Psoola and honoured.</td></tr>
+  <tr><td>3</td><td>A failing link could send "Pay now" emails endlessly.</td><td>Max one a day; recent attempts reused.</td></tr>
+  <tr><td>4</td><td>"Registration off" did not stop pay links.</td><td>Off now stops every payment.</td></tr>
+  <tr><td>5</td><td>Last places could be oversold when many pay at once.</td><td>Places held while paying; Owner alerted if a limit is ever passed.</td></tr>
+  <tr><td>6</td><td>A rejected student could be approved without a new photo.</td><td>Only a waiting photo can be approved or rejected.</td></tr>
+  <tr><td>+</td><td>Smaller items.</td><td>Pretend Psoola refused on any non-test address; odd links no longer crash pages; photos over 16 megapixels refused; very large page numbers handled.</td></tr>
+</table>
+
+<h2><span class="n">19</span>What is not finished yet</h2>
+<table>
+  <tr><th style="width:30%">Item</th><th>Why / what is needed</th><th style="width:14%">Waiting on</th></tr>
+  <tr><td class="k">Psoola connection (A, B, C)</td><td>Three marked places in <code>PsoolaGateway.php</code>. About 2 days of work once their documentation and test keys arrive.</td><td><span class="pill vio">Psoola</span></td></tr>
+  <tr><td class="k">Server + domain</td><td>Set up test.ismile.krd, database, cron jobs, run the 88 checks there.</td><td><span class="pill wait">you (tonight)</span></td></tr>
+  <tr><td class="k">Prices, capacity, people</td><td>Typed into the admin; no code needed.</td><td><span class="pill wait">you</span></td></tr>
+  <tr><td class="k">Brevo account</td><td>For real emails + DNS records so they don't land in spam.</td><td><span class="pill wait">you</span> <span class="pill blue">me</span></td></tr>
+  <tr><td class="k">3 go-live security items</td><td>(a) prices changeable only by Owner/Finance, or an alert on change; (b) check for Cloudflare so spam limits count each visitor; (c) a used phone code can't be reused, and a password change signs out old sessions.</td><td><span class="pill blue">me</span></td></tr>
+  <tr><td class="k">Saved to GitHub</td><td>All this work is on this laptop only, not yet committed. It should be saved to Git before anything else.</td><td><span class="pill blue">me, with your OK</span></td></tr>
+</table>
+
+<h2><span class="n">20</span>Every file I made</h2>
+<table>
+  <tr><th style="width:30%">Folder</th><th>Files</th></tr>
+  <tr><td class="k">api/ (public)</td><td>config, register, pay, status, qr, student-photo, sponsor, webhook, fake-psoola, _boot · ~440 lines</td></tr>
+  <tr><td class="k">admin/ (your pages)</td><td>login, two-factor, logout, index (dashboard), registrations, registration, students, photo, payments, workshops, sponsors, checkin, settings, users, export, admin.css, admin.js, .htaccess · ~1,900 lines</td></tr>
+  <tr><td class="k">backend/src (the brain)</td><td>App, Db, Auth, Totp (phone codes), Security, Links (personal links), Registrations, Payments (+ Gateway, FakeGateway, PsoolaGateway), Tickets, Outbox (email queue), EmailTemplates, EmailText (3 languages), Mail (Brevo, Log), IdPhotos, Office (admin actions), Sponsors, Settings, SiteData (prices), RateLimit, Validate, Api, Audit, Backup, Lang, Admin/Page, Admin/RegistrationQuery · ~3,500 lines</td></tr>
+  <tr><td class="k">backend/database</td><td>schema.sql: the 13 tables · 265 lines</td></tr>
+  <tr><td class="k">backend/cron</td><td>run.php: the timed jobs</td></tr>
+  <tr><td class="k">backend/tools</td><td>install.php, deploy.sh, merge-data.php</td></tr>
+  <tr><td class="k">backend/tests</td><td>scenarios.php: the 88 checks · 445 lines</td></tr>
+  <tr><td class="k">backend/</td><td>config.sample.php (settings template), README.md (setup guide), composer files (the TCPDF library)</td></tr>
+  <tr><td class="k">Website</td><td>new: payment.html, student-id.html, js/payment.js, js/student-id.js, css/sections/payment-page.css · changed: register.html, sponsor.html, js/sections/registration.js, js/sections/sponsor-form.js, css/sections/register.css, data/i18n (en, ar, ku) · ~1,000 lines</td></tr>
+  <tr><td class="k">Server files</td><td>.htaccess (root, api, admin, backend), .cpanel.yml, .gitignore additions (secrets never go to Git)</td></tr>
+</table>
+
+<div class="callout c-green"><b>In one sentence:</b> the whole registration, payment, ticket and admin system is built and tested; it needs only the server (tonight), Psoola's documents, and your prices to go live.</div>
+<footer>Other documents on your Desktop: <i>Backend built (what I did and what I need)</i> (short version) · <i>Backend Plan</i> · <i>Questions for Psoola</i> · <i>How a payment works</i>.</footer>
+
+</body>
+</html>

@@ -1,6 +1,14 @@
 # The admin server settings hold sign-in secrets: never commit them.
 server/admin-config.php
 
+# Backend secrets and private data: passwords, keys, student ID photos,
+# backups and logs live only on the server.
+backend/config.php
+backend/storage/
+backend/vendor/
+.local/
+api/_backend.php
+
 # Deploy secrets — keep local / in GitHub Actions secret DEPLOY_ENV only.
 .env
 .env.*
@@ -13,5 +21,3 @@ deploy.env
 node_modules/
 coverage/
 .DS_Store
-.admin-password.local
-.admin-login.local

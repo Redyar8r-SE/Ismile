@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>iSmile 2026 — Admin guide for staff</title>
+<style>
+@page { size: A4; margin: 13mm 13mm 14mm; }
+* { box-sizing: border-box; }
+body { margin: 0; color: #12302F; font: 10.3pt/1.5 Arial, Helvetica, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+h1 { font-size: 27pt; margin: 0 0 2mm; line-height: 1.1; }
+h2 { font-size: 16pt; margin: 0 0 3mm; display: flex; align-items: center; gap: 3mm; break-after: avoid; }
+h2 .n { width: 9mm; height: 9mm; border-radius: 50%; background: #16A6A1; color: #fff; display: inline-grid; place-items: center; font-size: 11pt; flex: none; }
+h3 { font-size: 11.5pt; margin: 4mm 0 1.5mm; break-after: avoid; color: #0C5F5B; }
+p { margin: 0 0 2.5mm; }
+ul, ol { margin: 0 0 3mm; padding-left: 5.5mm; }
+li { margin-bottom: 1mm; }
+.chapter { margin-top: 7mm; }
+.eyebrow { display: inline-block; font-size: 8.5pt; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; background: #D5F1EF; color: #0C6F6B; padding: 1mm 3mm; border-radius: 99px; margin-bottom: 3mm; }
+.lede { color: #4A6467; font-size: 11.5pt; }
+.small { font-size: 8.8pt; color: #5B7477; }
+code, .k { font-family: Consolas, "Courier New", monospace; font-size: 9pt; background: #EEF6F6; padding: .2mm 1.4mm; border-radius: 1mm; }
+.btnlike { display: inline-block; padding: .3mm 2.4mm; border-radius: 1.6mm; background: #16A6A1; color: #fff; font-weight: 700; font-size: 9pt; white-space: nowrap; }
+.btnlike.green { background: #2E9E5B; } .btnlike.red { background: #E0604A; } .btnlike.violet { background: #6A5BD8; } .btnlike.ghost { background: #fff; color: #0C6F6B; box-shadow: inset 0 0 0 1.5px #16A6A1; }
+.callout { border-radius: 3mm; padding: 3.5mm 4.5mm; margin: 3mm 0; break-inside: avoid; }
+.c-red { background: #FBE1DC; color: #7E2A1C; border-left: 4px solid #E0604A; }
+.c-teal { background: #E4F6F5; color: #0C5F5B; border-left: 4px solid #16A6A1; }
+.c-gold { background: #FCEFD3; color: #6E480C; border-left: 4px solid #E0A33A; }
+.c-green { background: #DDF3E5; color: #1D5B36; border-left: 4px solid #2E9E5B; }
+table { width: 100%; border-collapse: collapse; font-size: 9.4pt; margin: 1mm 0 3mm; }
+th, td { border: 1px solid #D4E4E4; padding: 1.6mm 2.4mm; vertical-align: top; text-align: left; }
+th { background: #EEF6F6; }
+tr { break-inside: avoid; }
+td.k1 { font-weight: 700; width: 27%; }
+figure { margin: 2mm 0 4mm; break-inside: avoid; }
+figure .frame { border: 1px solid #C9DCDC; border-radius: 2.5mm; overflow: hidden; background: #fff; box-shadow: 0 1mm 3mm rgba(18,48,47,.08); }
+figure img { display: block; width: 100%; }
+figure .crop { overflow: hidden; }
+figcaption { font-size: 8.8pt; color: #5B7477; margin-top: 1.3mm; }
+.phone { width: 62mm; }
+.side { display: grid; grid-template-columns: 64mm 1fr; gap: 6mm; align-items: start; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; }
+.steps { counter-reset: s; list-style: none; padding: 0; display: grid; gap: 1.8mm; margin-bottom: 3mm; }
+.steps > li { counter-increment: s; display: grid; grid-template-columns: 8mm 1fr; gap: 2.5mm; align-items: start; break-inside: avoid; margin: 0; }
+.steps > li::before { content: counter(s); width: 7mm; height: 7mm; border-radius: 50%; background: #12302F; color: #fff; font-weight: 700; font-size: 9pt; display: grid; place-items: center; }
+.badge { display: inline-block; padding: .3mm 2.2mm; border-radius: 1.5mm; font-size: 8.4pt; font-weight: 900; color: #fff; white-space: nowrap; }
+.b-paid { background: #2E9E5B; } .b-free { background: #6A5BD8; } .b-no { background: #E0604A; } .b-cancel { background: #6B7C7E; }
+.pill { display: inline-block; padding: .2mm 2.2mm; border-radius: 99px; font-size: 8.2pt; font-weight: 700; white-space: nowrap; }
+.p-green { background: #DDF3E5; color: #1D6B3C; } .p-gold { background: #FCEFD3; color: #8A5A0F; } .p-red { background: #FBE1DC; color: #9A3222; } .p-violet { background: #E6E2FB; color: #3F33A0; }
+.toc { columns: 2; column-gap: 8mm; font-size: 10pt; padding-left: 6mm; margin: 2mm 0 4mm; }
+.toc li { break-inside: avoid; }
+.cover-rule { background: #12302F; color: #fff; border-radius: 4mm; padding: 5mm 6mm; margin: 5mm 0; }
+.cover-rule b { color: #7EE0DA; }
+.qa dt { font-weight: 700; margin-top: 3mm; color: #0C5F5B; break-after: avoid; }
+.qa dd { margin: 1mm 0 0 0; }
+</style>
+</head>
+<body>
+
+<!-- ================= COVER ================= -->
+<span class="eyebrow">iSmile 2026 · Staff guide · the admin</span>
+<h1>How to use the iSmile admin</h1>
+<p class="lede">A step-by-step guide for anyone on the team, even if you have never used it. The admin is where you see and manage everything: registrations, payments, lunch lists, students and their ID photos, workshops, sponsors, exhibition booths and the check-in at the door. You never need to open the database itself. The admin shows it to you as simple pages.</p>
+
+<div class="cover-rule">
+  <p style="margin:0 0 2mm;font-size:12pt"><b>The one rule to remember</b></p>
+  <p style="margin:0">A person is <b>registered only after paying</b>. Filling in the form is not enough. The moment the payment company (Psoola) confirms the exact amount, the person appears in the admin with a ticket. If they do not pay, they never appear, and their form is deleted automatically.</p>
+</div>
+
+<table>
+  <tr><th style="width:33%">Where</th><th>Address</th></tr>
+  <tr><td class="k1">The real admin</td><td><span class="k">https://ismile.krd/admin/</span></td></tr>
+  <tr><td class="k1">The test admin (for practice)</td><td><span class="k">https://test.ismile.krd/admin/</span> Has an orange "TEST SITE" bar. Nothing there is real, so practise freely.</td></tr>
+</table>
+<p class="small">The pictures in this guide come from the test admin, filled with example people. Every name, phone number and payment in them is made up.</p>
+
+<h3>Contents</h3>
+<ol class="toc">
+  <li>Your account and your role</li>
+  <li>Signing in the first time (phone code)</li>
+  <li>Signing in every day</li>
+  <li>The Dashboard</li>
+  <li>Finding a person (Registrations)</li>
+  <li>One person's page</li>
+  <li>Lists: lunch, students, ID photos, workshops, sponsors</li>
+  <li>Booking a workshop by phone</li>
+  <li>Adding and changing workshops (Owner)</li>
+  <li>Registering someone who calls</li>
+  <li>Payments (Finance)</li>
+  <li>Check-in at the door</li>
+  <li>Sponsors &amp; booths</li>
+  <li>Settings (Owner)</li>
+  <li>Users (Owner)</li>
+  <li>Excel and printing</li>
+  <li>Questions people ask</li>
+  <li>Golden rules</li>
+</ol>
+
+<h3>The coloured badges you will see everywhere</h3>
+<table>
+  <tr><td style="width:24%"><span class="badge b-paid">✓ PAID</span></td><td>Paid and registered (event ticket), or the workshop is paid.</td></tr>
+  <tr><td><span class="badge b-free">★ FREE</span></td><td>A free ticket or free workshop, given by the Owner.</td></tr>
+  <tr><td><span class="badge b-no">✗ NOT PAID</span></td><td>Only for workshops: booked but the money is not received yet.</td></tr>
+  <tr><td><span class="badge b-cancel">CANCELLED</span></td><td>Cancelled. The ticket does not work at the door.</td></tr>
+  <tr><td><span class="pill p-green">green</span> <span class="pill p-gold">gold</span> <span class="pill p-red">red</span></td><td>Small labels: green = done / good, gold = waiting, red = needs attention.</td></tr>
+</table>
+
+<!-- ================= 1 ================= -->
+<div class="chapter">
+<h2><span class="n">1</span>Your account and your role</h2>
+<p>Every person has their <b>own</b> account. Never share your password or your phone code. The Owner creates accounts on the Users page (chapter 15). Your <b>role</b> decides which pages you see:</p>
+<table>
+  <tr><th style="width:18%">Role</th><th>For</th><th>Can use</th><th style="width:15%">Phone code</th></tr>
+  <tr><td class="k1">Owner</td><td>The organiser</td><td>Everything, including Settings, Users, free tickets, and correcting mistakes.</td><td><span class="pill p-red">required</span></td></tr>
+  <tr><td class="k1">Registration</td><td>The office team</td><td>Dashboard, Registrations, Lists, Workshops, Sponsors, Check-in, Excel, student ID photos, registering callers.</td><td><span class="pill p-gold">optional</span></td></tr>
+  <tr><td class="k1">Finance</td><td>Money</td><td>Dashboard, Registrations (view), Lists, Payments, Sponsors, Excel.</td><td><span class="pill p-red">required</span></td></tr>
+  <tr><td class="k1">Check-in</td><td>Door staff on summit days</td><td>Only the Check-in page.</td><td><span class="pill p-gold">optional</span></td></tr>
+  <tr><td class="k1">Content</td><td>Website texts</td><td>Only the website editor (Site content).</td><td><span class="pill p-gold">optional</span></td></tr>
+</table>
+<div class="callout c-teal">If a menu item is missing for you, your role does not include it. Ask the Owner if you need it.</div>
+
+<!-- ================= 2 ================= -->
+<h2 style="margin-top:6mm"><span class="n">2</span>Signing in the first time (phone code)</h2>
+<p>You need: your email, the password the Owner gave you, and a phone with <b>Google Authenticator</b> or <b>Microsoft Authenticator</b> (free in the App Store / Play Store).</p>
+<ol class="steps">
+  <li><div>Open the admin address. Type your <b>email</b> and <b>password</b>, press <span class="btnlike">Sign in</span>.</div></li>
+  <li><div>Owner and Finance: the <b>Phone code</b> page opens. In the phone app press <b>+</b>, choose <b>Scan a QR code</b>, and scan the square picture.</div></li>
+  <li><div>The app now shows <b>iSmile</b> with a 6-digit number that changes every 30 seconds. Type that number and press <span class="btnlike">Turn on</span>.</div></li>
+  <li><div>Write the <b>key</b> under the picture on paper and give it to the Owner for the sealed envelope in the office. It lets you set up a new phone if yours is lost.</div></li>
+</ol>
+<div class="two">
+  <figure><div class="frame"><img src="guide-img/01-login.png"></div><figcaption>Step 1: the sign-in page.</figcaption></figure>
+  <figure><div class="frame crop" style="height:88mm"><img src="guide-img/02-phone-setup.png"></div><figcaption>Steps 2–3: scan the picture, type the 6-digit code. (This is a test account; your picture will be different.)</figcaption></figure>
+</div>
+</div>
+
+<!-- ================= 3 ================= -->
+<div class="chapter">
+<h2><span class="n">3</span>Signing in every day</h2>
+<div class="side">
+  <figure><div class="frame"><img src="guide-img/02b-login-code.png"></div><figcaption>After the password: the 6-digit code.</figcaption></figure>
+  <div>
+    <ol class="steps">
+      <li><div>Email and password, <span class="btnlike">Sign in</span>.</div></li>
+      <li><div>Open the phone app, type the <b>current</b> 6-digit number, <span class="btnlike">Sign in</span>. A code works only once; if it is refused, wait for the next one.</div></li>
+      <li><div>When you finish, press <span class="btnlike ghost">Sign out</span> (top right), especially on a shared computer.</div></li>
+    </ol>
+    <table>
+      <tr><td class="k1">Signed out by itself?</td><td>After 30 minutes without using it, or 12 hours in total. Just sign in again. This protects people's data.</td></tr>
+      <tr><td class="k1">5 wrong tries</td><td>The account is locked for 15 minutes. Wait, then try again.</td></tr>
+      <tr><td class="k1">Lost your phone</td><td>Tell the Owner. They press <b>Reset phone code</b> on the Users page, and you set it up again.</td></tr>
+      <tr><td class="k1">Forgot password</td><td>The Owner sets a new one on the Users page.</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ================= 4 ================= -->
+<h2 style="margin-top:4mm"><span class="n">4</span>The Dashboard</h2>
+<p>The first page after signing in. It answers "how are we doing?" at a glance.</p>
+<figure><div class="frame crop" style="height:125mm"><img src="guide-img/04-dashboard.png"></div><figcaption>The Dashboard.</figcaption></figure>
+<table>
+  <tr><td class="k1">The menu (top)</td><td>Every page of the admin. Your role decides which ones you see.</td></tr>
+  <tr><td class="k1">Red box "Needs attention"</td><td>Things someone must look at: a wrong or double payment, fake payment messages, a failed email, a missing backup, an unset limit, email test mode still on. Each line has an <b>Open</b> link to the right page. <b>Goal: an empty red box.</b></td></tr>
+  <tr><td class="k1">Registered (paid)</td><td>How many people are registered (paid, plus free tickets).</td></tr>
+  <tr><td class="k1">Paying right now</td><td>People who sent the form and are on the payment page. <b>Not registered yet.</b> They appear as registered only if the payment succeeds.</td></tr>
+  <tr><td class="k1">Money confirmed</td><td>Total confirmed by Psoola for event tickets.</td></tr>
+  <tr><td class="k1">Lunch bars</td><td>Lunches taken on day 1 and day 2, against the caterer's limits (Settings). The event itself has <b>no seat limit</b>: everyone who pays can join.</td></tr>
+  <tr><td class="k1">Latest registrations</td><td>The newest registered people. Click a reference to open that person.</td></tr>
+</table>
+</div>
+
+<!-- ================= 5 ================= -->
+<div class="chapter">
+<h2><span class="n">5</span>Finding a person (Registrations)</h2>
+<p>Click <b>Registrations</b> in the menu. You see everyone registered, newest first, with a <span class="badge b-paid">✓ PAID</span> or <span class="badge b-free">★ FREE</span> badge next to each name.</p>
+<figure><div class="frame crop" style="height:120mm"><img src="guide-img/05-registrations.png"></div><figcaption>The Registrations page: search box and filters at the top, the list below.</figcaption></figure>
+<h3>To find someone</h3>
+<ol class="steps">
+  <li><div>Type in the search box any of: <b>name</b> (even part of it), <b>phone</b> (0750… or +964…), <b>email</b>, the reference <span class="k">ISM26-…</span> or the ticket number <span class="k">T26-…</span>.</div></li>
+  <li><div>Press <span class="btnlike">Search</span>. Press <span class="btnlike ghost">Clear</span> to see everyone again.</div></li>
+  <li><div>Click the <b>name</b> or the <b>reference</b> to open the person's page (next chapter).</div></li>
+</ol>
+<figure><div class="frame"><img src="guide-img/06-search.png"></div><figcaption>Searching "Hawre" finds the one person.</figcaption></figure>
+<h3>Filters (the boxes next to the search)</h3>
+<table>
+  <tr><td class="k1">Status</td><td>Registered (paid + free), only Paid, only Free ticket, or Cancelled.</td></tr>
+  <tr><td class="k1">Ticket</td><td>Professional or Student.</td></tr>
+  <tr><td class="k1">Lunch</td><td>Day 1, Day 2, or no lunch.</td></tr>
+  <tr><td class="k1">City / Language</td><td>Where they live, and the language of their emails.</td></tr>
+  <tr><td class="k1">Possible duplicates</td><td>Two registrations with the same phone or email. Often a family sharing a phone; check before changing anything.</td></tr>
+  <tr><td class="k1">Email failed</td><td>People whose ticket email could not be delivered (usually a typing mistake in the address).</td></tr>
+</table>
+<p><span class="btnlike green">Export to Excel (this list)</span> downloads exactly what you see, with the filters applied.</p>
+</div>
+
+<!-- ================= 6 ================= -->
+<div class="chapter">
+<h2><span class="n">6</span>One person's page</h2>
+<p>Everything about one person on one page. Top to bottom:</p>
+<figure><div class="frame crop" style="height:150mm"><img src="guide-img/07-person.png"></div><figcaption>A registered student: details, ticket, ID photo, workshops, payment, emails.</figcaption></figure>
+<table>
+  <tr><td class="k1">Details</td><td>Name, phone, email, city, ticket type, lunch days, and <b>Paid</b>: the amount, how (FIB, Visa…) and when.</td></tr>
+  <tr><td class="k1">Ticket</td><td>The ticket number (T26-…), and whether they already arrived. <span class="btnlike">Resend ticket</span> emails it again.</td></tr>
+  <tr><td class="k1">Student</td><td>For students: university, ambassador code, and the <b>ID photo</b> they sent with the form, shown large. The photo is <b>stored in the database</b>. Click it to see it full size. There is no approval step: a student who uploads the ID and pays is registered, and the ticket email goes out when the payment is confirmed.</td></tr>
+  <tr><td class="k1">Workshops</td><td>Their workshop bookings, and a form to book one (chapter 8).</td></tr>
+  <tr><td class="k1">Payments</td><td>Their payment(s) as Psoola confirmed them.</td></tr>
+  <tr><td class="k1">Emails</td><td>Every email sent to them. <span class="btnlike ghost">Send again</span> re-sends one.</td></tr>
+  <tr><td class="k1">Notes</td><td>Anything the office wants to remember. Only staff see it.</td></tr>
+  <tr><td class="k1">Cancel</td><td>Cancels the registration. The ticket stops working at the door and their workshop seats become free. <b>No money is returned.</b> Write the reason.</td></tr>
+  <tr><td class="k1">History</td><td>Who changed what and when. It cannot be edited.</td></tr>
+</table>
+<h3>Fix a wrong email, phone or name</h3>
+<div class="side">
+  <figure><div class="frame"><img src="guide-img/08-edit.png"></div><figcaption>"Edit name, email or phone" opens this.</figcaption></figure>
+  <ol class="steps">
+    <li><div>Press <span class="btnlike ghost">Edit name, email or phone</span>.</div></li>
+    <li><div>Correct the field and press <span class="btnlike">Save</span>.</div></li>
+    <li><div><b>Wrong email?</b> After saving, press <span class="btnlike">Resend ticket</span>. It goes to the new address.</div></li>
+    <li><div><b>Name changed?</b> A new ticket is made and emailed automatically. The old QR code stops working (the name is printed on the certificate).</div></li>
+  </ol>
+</div>
+</div>
+
+<!-- ================= 7 ================= -->
+<div class="chapter">
+<h2><span class="n">7</span>Lists: lunch, students, ID photos, workshops, sponsors</h2>
+<p>Click <b>Lists</b>. Ready-made lists, with the number on each tab. Every person on these lists has paid (only paid people are registered).</p>
+<figure><div class="frame"><img src="guide-img/10-list-lunch1.png"></div><figcaption>"Lunch day 1": the names for the caterer.</figcaption></figure>
+<table>
+  <tr><td class="k1">Registered</td><td>Everyone registered, A to Z.</td></tr>
+  <tr><td class="k1">Lunch day 1 / Lunch day 2</td><td>Who chose lunch on that day. Send it to the caterer.</td></tr>
+  <tr><td class="k1">Students</td><td>Registered students with their university, ambassador code and whether their ID photo is stored.</td></tr>
+  <tr><td class="k1">Student IDs</td><td>Every registered student's <b>ID photo</b> side by side, with name and university. Click a photo to see it full size.</td></tr>
+  <tr><td class="k1">Workshops</td><td>Each workshop as its own section, with <b>who booked it</b>, ✓ PAID / ✗ NOT PAID and the amount, plus seats booked and left.</td></tr>
+  <tr><td class="k1">Sponsors</td><td>The sponsorship requests: company, package, contact, status.</td></tr>
+  <tr><td class="k1">Exhibition (booths)</td><td>The exhibition booth requests, <b>separate</b> from the sponsors.</td></tr>
+  <tr><td class="k1">Cancelled</td><td>Cancelled registrations.</td></tr>
+</table>
+<p>On every list: <span class="btnlike green">Export to Excel</span> (a file you can send or edit) and <span class="btnlike ghost">Print</span> (a clean paper list, without the menu).</p>
+<figure><div class="frame crop" style="height:92mm"><img src="guide-img/28-list-studentids.png"></div><figcaption>"Student IDs": every student's ID photo, from the database, side by side.</figcaption></figure>
+<figure><div class="frame crop" style="height:150mm"><img src="guide-img/27-list-workshops.png"></div><figcaption>"Workshops": each workshop with the people who booked it, paid or not.</figcaption></figure>
+</div>
+
+<!-- ================= 8 ================= -->
+<div class="chapter">
+<h2><span class="n">8</span>Booking a workshop by phone</h2>
+<p>Workshops are booked only by phone, by the office. <b>Only registered people</b> (who paid the event ticket) can take a workshop seat. Click <b>Workshops</b>.</p>
+<figure><div class="frame crop" style="height:104mm"><img src="guide-img/13-workshops.png"></div><figcaption>Each workshop: price, seats, booked, paid, not paid, money received, seats left.</figcaption></figure>
+<h3>When someone calls to book</h3>
+<ol class="steps">
+  <li><div>In <b>📞 Book a caller</b>, type their <b>name</b> or <b>phone</b>, press <span class="btnlike">Find</span>. Check the <span class="badge b-paid">✓ PAID</span> next to their name: they are registered. <i>Nobody found?</i> They have not paid the event ticket. Register them first (chapter 10).</div></li>
+  <li><div>Choose the <b>workshop</b>. Its price is used automatically. Only the Owner sees a price box and can agree a different price.</div></li>
+  <li><div>Choose <b>Paid?</b>: <b>✗ Not paid yet</b> if they will pay later (e.g. at the door), or <b>✓ Paid now</b> if you received the money.</div></li>
+  <li><div>If <b>Paid now</b>: type the <b>amount received</b>. It must be <b>exactly</b> the price, or it is refused. Choose <b>how</b>: cash, transfer or Psoola.</div></li>
+  <li><div>Press <span class="btnlike green">Book the workshop</span>. The seats left on the website go down by one at once.</div></li>
+</ol>
+<figure><div class="frame"><img src="guide-img/14-book-caller.png"></div><figcaption>Booking Chnar on the Implant workshop, paid in cash, the exact 50,000 IQD.</figcaption></figure>
+<figure><div class="frame"><img src="guide-img/15-booked.png"></div><figcaption>The green message confirms the booking and the payment.</figcaption></figure>
+<h3>Mark a workshop paid later</h3>
+<p>Press <span class="btnlike ghost">People</span> next to the workshop. People who have not paid are at the top. Type the amount, choose how, press <span class="btnlike green">✓ Mark paid</span>.</p>
+<figure><div class="frame"><img src="guide-img/16-workshop-people.png"></div><figcaption>The people in one workshop, with their workshop payment and their event ticket.</figcaption></figure>
+<div class="callout c-gold"><b>No refunds.</b> Once a workshop is paid, staff cannot undo it, remove it, or cancel that person. Only the Owner can, to correct a mistake (for example, money recorded on the wrong person). <span class="btnlike green">Sign-in sheet</span> downloads the list for the trainer.</div>
+</div>
+
+<!-- ================= 9 (new) ================= -->
+<div class="chapter">
+<h2><span class="n">9</span>Adding and changing workshops (Owner)</h2>
+<p>We do not know yet how many workshops there will be, so the Owner adds them here. Everything is <b>saved in the database</b>, and the website's workshop page changes <b>at once</b>. Open <b>Workshops</b> and scroll down to <b>⚙ Manage the workshops</b>.</p>
+<h3>Add a new workshop</h3>
+<ol class="steps">
+  <li><div>Press <span class="btnlike green">+ Add a new workshop</span>.</div></li>
+  <li><div>Write the <b>name</b> in English, Arabic and Kurdish. Trainer and company are optional. Leave the names empty only if the title is not announced yet (the website then shows "Coming soon").</div></li>
+  <li><div>Type the <b>price per seat</b> (IQD; 0 = not set yet), the number of <b>seats</b> (this is the limit), and choose the <b>picture</b> for the website card.</div></li>
+  <li><div>Press <span class="btnlike green">Add the workshop</span>. It is in the database, on the website, and ready for booking.</div></li>
+</ol>
+<figure><div class="frame"><img src="guide-img/32-workshop-add.png"></div><figcaption>The workshops, with their seats and bookings, and the form to add a new one.</figcaption></figure>
+<table>
+  <tr><td class="k1"><span class="btnlike ghost">−</span> <span class="btnlike ghost">+</span></td><td>One seat fewer / one seat more. The seats are the <b>limit</b>: nobody can be booked past it. They can never go <b>below the people already booked</b>.</td></tr>
+  <tr><td class="k1"><span class="btnlike ghost">Edit</span></td><td>Change the name, trainer, company, price, seats or picture. A new price counts for new bookings; people already booked keep the price agreed with them.</td></tr>
+  <tr><td class="k1"><span class="btnlike" style="background:#E0A33A">Hide</span></td><td>Takes it off the website and stops new bookings. The people already booked stay. <b>Show again</b> puts it back.</td></tr>
+  <tr><td class="k1"><span class="btnlike red">Delete</span></td><td>Only for a workshop nobody was ever booked on (the button appears only then). Otherwise use Hide, so the history stays.</td></tr>
+</table>
+<div class="callout c-teal">Workshops are managed <b>only</b> here. The "Site content" editor still has the wording of the workshops page (for example the booking phone number), but not the workshops themselves.</div>
+</div>
+
+<!-- ================= 9 ================= -->
+<div class="chapter">
+<h2><span class="n">10</span>Registering someone who calls</h2>
+<p>For someone who wants to register by phone. On the <b>Registrations</b> page press <span class="btnlike ghost">+ Register a caller (phone)</span>.</p>
+<div class="side">
+  <figure><div class="frame crop" style="height:120mm"><img src="guide-img/17-phone-register.png"></div><figcaption>The phone registration form.</figcaption></figure>
+  <div>
+    <ol class="steps">
+      <li><div>Type their names, phone, <b>email</b> (the payment link and the ticket go there), city.</div></li>
+      <li><div>Choose the ticket. For a student, write the university (you have seen their ID).</div></li>
+      <li><div>Choose the language of their emails, and the lunch days.</div></li>
+      <li><div>Press <span class="btnlike">Send the "Pay now" link</span>.</div></li>
+    </ol>
+    <div class="callout c-teal">They get an email with a <b>Pay now</b> button. They are <b>registered only after paying</b>: then they appear in Registrations with a ticket. If they do not pay within the days set in Settings (3 days), the details are deleted automatically.</div>
+    <h3>Owner only: a free ticket</h3>
+    <p>For a guest, a speaker's assistant, etc. Fill in the same form, write the <b>reason</b> in the Owner box, and press <span class="btnlike violet">Register with a free ticket</span>. They are registered at once with a <span class="badge b-free">★ FREE</span> ticket, emailed to them. The reason and your name are recorded.</p>
+  </div>
+</div>
+</div>
+
+<!-- ================= 10 ================= -->
+<div class="chapter">
+<h2><span class="n">11</span>Payments (Finance)</h2>
+<p>Every payment attempt made on Psoola. The page Finance checks every day.</p>
+<figure><div class="frame crop" style="height:95mm"><img src="guide-img/18-payments.png"></div><figcaption>The Payments page. A red row needs Finance.</figcaption></figure>
+<table>
+  <tr><th style="width:22%">Status</th><th>Meaning</th><th style="width:30%">What to do</th></tr>
+  <tr><td><span class="pill p-green">Paid</span></td><td>Confirmed by Psoola. The person is registered.</td><td>Nothing.</td></tr>
+  <tr><td><span class="pill p-gold">Waiting</span></td><td>The person is on the payment page right now. <b>Not registered.</b></td><td>Nothing. <span class="btnlike ghost">Check now</span> asks Psoola at once.</td></tr>
+  <tr><td><span class="pill p-red">Failed</span> / <span class="pill p-red">Expired</span></td><td>Card declined or page closed. Not registered.</td><td>Nothing. They can try again.</td></tr>
+  <tr><td><span class="pill p-red">Mismatch</span></td><td>Psoola confirmed a <b>different amount</b>. Nobody was registered.</td><td>Contact the person and Psoola.</td></tr>
+  <tr><td><span class="pill p-red">Duplicate</span></td><td>The same person <b>paid twice</b> (e.g. two tabs). One ticket only.</td><td>Contact the person (no refunds), then close it.</td></tr>
+  <tr><td><span class="pill p-violet">Reviewed (kept)</span></td><td>Finance looked at it and closed it.</td><td>Nothing.</td></tr>
+</table>
+<h3>Closing a red row</h3>
+<ol class="steps">
+  <li><div>Call or email the person; agree what happens (iSmile does not refund; for example, the extra payment counts for a workshop).</div></li>
+  <li><div>Write what was agreed in the box on the red row and press <span class="btnlike violet">Reviewed, close</span>. It leaves the red box on the Dashboard.</div></li>
+</ol>
+<table>
+  <tr><td class="k1">Daily totals</td><td>Money confirmed per day. Compare with Psoola's daily report; if a day is different, look for a red row.</td></tr>
+  <tr><td class="k1">Messages from the payment company</td><td>Every "payment changed" message Psoola sent. First place to look when someone says "I paid but got nothing".</td></tr>
+</table>
+</div>
+
+<!-- ================= 11 ================= -->
+<div class="chapter">
+<h2><span class="n">12</span>Check-in at the door</h2>
+<p>For summit days. Works on a phone. Door staff have the <b>Check-in</b> role and see only this page.</p>
+<div class="two">
+  <div>
+    <ol class="steps">
+      <li><div>Press <span class="btnlike green">📷 Scan QR</span> and point the phone at the QR code on the person's ticket (phone screen or paper). Or type the ticket number <span class="k">T26-…</span> or the name, and press <span class="btnlike">Find</span>.</div></li>
+      <li><div>Check the name on the screen against the person. The card also shows their lunch days and workshops.</div></li>
+      <li><div>Press <span class="btnlike green">✓ Check in</span>. Done: they may enter.</div></li>
+    </ol>
+    <table>
+      <tr><td class="k1">"Already checked in at 09:12"</td><td>This ticket was already used. Someone may be using a copy. Send them to the registration desk.</td></tr>
+      <tr><td class="k1">Red "not genuine" / "old ticket" / "no valid ticket"</td><td>A fake QR, an old ticket after a name change, or a cancelled ticket. Do not let them in; send them to the registration desk.</td></tr>
+      <tr><td class="k1">No internet</td><td>The evening before, export the Registered list to Excel and print it. Tick names on paper, enter them afterwards.</td></tr>
+    </table>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:3mm">
+    <figure><div class="frame"><img src="guide-img/20-checkin-found.png"></div><figcaption>Found: press Check in.</figcaption></figure>
+    <figure><div class="frame"><img src="guide-img/22-checkin-again.png"></div><figcaption>Scanned again: already checked in.</figcaption></figure>
+  </div>
+</div>
+</div>
+
+<!-- ================= 12 ================= -->
+<div class="chapter">
+<h2><span class="n">13</span>Sponsors &amp; booths</h2>
+<p>Requests from the sponsor form on the website. A person handles each one; nothing is sold automatically. <b>Sponsors</b> and <b>exhibition booths</b> are different, so they have separate tabs at the top: <span class="btnlike">🏆 Sponsors</span> and <span class="btnlike">🏪 Exhibition (booths)</span>.</p>
+<div class="two">
+  <figure><div class="frame crop" style="height:62mm"><img src="guide-img/23-sponsors.png"></div><figcaption>Sponsors: spots confirmed per tier at the top, requests below.</figcaption></figure>
+  <figure><div class="frame crop" style="height:62mm"><img src="guide-img/31-sponsors-booths.png"></div><figcaption>Exhibition (booths): the booth requests on their own.</figcaption></figure>
+</div>
+<ol class="steps">
+  <li><div>Open a request (click the company). Assign it to yourself and add notes about calls.</div></li>
+  <li><div>Move it along: <span class="pill p-gold">New</span> → <span class="pill p-gold">Contacted</span> → <span class="pill p-gold">Agreed</span> → <span class="pill p-green">Paid</span> → <span class="pill p-green">Confirmed</span>. Or <span class="pill p-red">Declined</span> / <span class="pill p-violet">Waiting list</span>.</div></li>
+  <li><div>A request can be <b>Confirmed</b> only after it is <b>Paid</b>, and a tier cannot take more sponsors than its spots. Only the Owner can override either.</div></li>
+</ol>
+<p>For a clean list to send or print, use <b>Lists → Sponsors</b> or <b>Lists → Exhibition (booths)</b>.</p>
+
+<!-- ================= 13 ================= -->
+<h2 style="margin-top:6mm"><span class="n">14</span>Settings (Owner)</h2>
+<figure><div class="frame crop" style="height:95mm"><img src="guide-img/24-settings.png"></div><figcaption>Settings: registration open/closed, limits, emails.</figcaption></figure>
+<table>
+  <tr><td class="k1">Registration is open</td><td>The main switch. Untick it in an emergency: the form closes and <b>no payments can start</b>. Everything else keeps working.</td></tr>
+  <tr><td class="k1">Message while closed</td><td>What visitors read while closed (e.g. "Registration opens on 25 October"), in 3 languages.</td></tr>
+  <tr><td class="k1">Lunch limits</td><td>From the caterer: a lunch day disappears from the form when full (0 = no limit). The <b>event has no seat limit</b>; workshop seats are set on the Workshops page.</td></tr>
+  <tr><td class="k1">Test mode</td><td>While ticked, <b>every email goes to the test address</b>, not to the people. Untick it on launch day.</td></tr>
+  <tr><td class="k1">Sponsor requests go to</td><td>The email that hears about new sponsor requests.</td></tr>
+  <tr><td class="k1">Phone "Pay now" links work for</td><td>Days a phone caller has to pay (then their details are deleted).</td></tr>
+  <tr><td class="k1">Ambassador codes</td><td>Add an ambassador's code; see how many students used each one.</td></tr>
+  <tr><td class="k1">Audit log</td><td>Everything anyone did, newest first.</td></tr>
+</table>
+<p class="small">Prices are not here: they are in <b>Site content → Ticket prices</b>. Every price change is logged and emailed to the Owner.</p>
+</div>
+
+<!-- ================= 14 ================= -->
+<div class="chapter">
+<h2><span class="n">15</span>Users (Owner)</h2>
+<figure><div class="frame crop" style="height:85mm"><img src="guide-img/25-users.png"></div><figcaption>Everyone who can sign in, and their role.</figcaption></figure>
+<table>
+  <tr><td class="k1">Add a person</td><td>Email, name, role and a first password (12+ characters). Give it to them in person or by phone, never by chat.</td></tr>
+  <tr><td class="k1">Change role</td><td>Choose the new role and save. It takes effect at once.</td></tr>
+  <tr><td class="k1">New password</td><td>Sets a password and <b>signs them out everywhere</b>.</td></tr>
+  <tr><td class="k1">Reset phone code</td><td>For a lost phone. They set it up again at their next sign-in.</td></tr>
+  <tr><td class="k1">Disable</td><td>Someone leaves the team: disable, never delete, so their history stays. Can be enabled again.</td></tr>
+</table>
+
+<!-- ================= 15 ================= -->
+<h2 style="margin-top:6mm"><span class="n">16</span>Excel and printing</h2>
+<ul>
+  <li><b>Registrations → Export to Excel</b>: the list you see, with your filters.</li>
+  <li><b>Lists → Export to Excel / Print</b>: lunch lists for the caterer, students, everyone.</li>
+  <li><b>Workshops → Sign-in sheet</b>: one workshop's people, with a signature column.</li>
+  <li><b>Payments → Export to Excel</b> and <b>Sponsors → Export to Excel</b> (Finance / Owner).</li>
+</ul>
+<div class="callout c-red"><b>Exported files contain people's personal data</b> (names, phones, emails). Do not post them in group chats, delete them when you no longer need them, and never send them outside the team. Every export is recorded with your name.</div>
+</div>
+
+<!-- ================= 16 ================= -->
+<div class="chapter">
+<h2><span class="n">17</span>Questions people ask</h2>
+<dl class="qa">
+  <dt>"I paid but I did not get a ticket."</dt>
+  <dd>Search their name, phone or email in <b>Registrations</b>. <b>Found with ✓ PAID?</b> Check the email address on their page; fix it if wrong and press Resend ticket (also ask them to check spam). <b>Not found?</b> Their payment was not confirmed, so they are not registered. Look at <b>Payments</b> (a waiting or red row with their name) and <b>Messages from the payment company</b>; if Psoola took the money, Finance contacts Psoola. Never promise a ticket before the admin shows ✓ PAID.</dd>
+  <dt>"I filled in the form but I am not in the list."</dt>
+  <dd>Correct: the form alone is not a registration. They must pay. They can fill in the form again on the website, or you register them by phone (chapter 10) and they pay with the link.</dd>
+  <dt>"I paid twice."</dt>
+  <dd>They have one ticket. Finance sees a red <b>Duplicate</b> row on Payments, contacts them (iSmile does not refund) and closes it with a note.</dd>
+  <dt>"My name is spelled wrong on the ticket."</dt>
+  <dd>Open their page, Edit, correct the name, Save. A new ticket is emailed automatically; the old one stops working.</dd>
+  <dt>"Can I pay the event ticket in cash at the office?"</dt>
+  <dd>No: event tickets are paid only through Psoola (Visa, MasterCard, FIB, FastPay), so every payment is confirmed. For a guest, the Owner can give a free ticket. Workshops can be paid in cash.</dd>
+  <dt>"Is this student really a student?"</dt>
+  <dd>Open their page and look at the ID photo they sent. There is no approval step; if something is clearly wrong, tell the Owner.</dd>
+  <dt>"I want to cancel and get my money back."</dt>
+  <dd>Tickets and workshops are non-refundable. You may cancel the registration (the ticket stops working) but no money is returned.</dd>
+  <dt>"Where are the student ID photos?"</dt>
+  <dd>Inside the database. See one on the student's page, or all of them in <b>Lists → Student IDs</b>. They are deleted automatically 90 days after the summit.</dd>
+  <dt>"A new workshop was announced / a workshop needs more seats."</dt>
+  <dd>The Owner adds it, or presses <b>+</b> for more seats, on <b>Workshops → ⚙ Manage the workshops</b>. The website changes at once.</dd>
+  <dt>"Can the event be full?"</dt>
+  <dd>No. The event has no seat limit: everyone who pays can join. Only lunch and each workshop have limits.</dd>
+  <dt>Something looks wrong or broken.</dt>
+  <dd>Do not try to fix it by guessing. Take a screenshot and send it to the Owner. Everything is logged, so nothing is lost.</dd>
+</dl>
+
+<!-- ================= 17 ================= -->
+<h2 style="margin-top:6mm"><span class="n">18</span>Golden rules</h2>
+<div class="two">
+  <div class="callout c-green">
+    <b>Always</b>
+    <ul style="margin:2mm 0 0">
+      <li>Use your own account; sign out on shared computers.</li>
+      <li>Check the <span class="badge b-paid">✓ PAID</span> badge before promising anything.</li>
+      <li>Type workshop money exactly as received.</li>
+      <li>Write a reason when you cancel or give something free.</li>
+      <li>Keep the Dashboard's red box empty.</li>
+    </ul>
+  </div>
+  <div class="callout c-red">
+    <b>Never</b>
+    <ul style="margin:2mm 0 0">
+      <li>Share your password or phone code.</li>
+      <li>Send exported lists outside the team.</li>
+      <li>Promise a refund. iSmile does not refund.</li>
+      <li>Send someone's personal ticket link to another person.</li>
+      <li>Practise on the real admin: use the test admin.</li>
+    </ul>
+  </div>
+</div>
+<p class="small" style="margin-top:4mm">iSmile 2026 · Summit 20–21 November 2026, Grand Millennium Sulaimani · Questions: info@ismile.krd</p>
+</div>
+
+</body>
+</html>
