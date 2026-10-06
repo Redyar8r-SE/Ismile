@@ -2,6 +2,7 @@ import { createServer } from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { handler } from "../netlify/functions/api.mjs";
+import { boothAvailability } from "./booths.mjs";
 import { loadEnvFile, resolveStaticFile, sendFile } from "./static.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -62,6 +63,12 @@ export function createAppServer() {
   return createServer(async (req, res) => {
     try {
       const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
+      if (url.pathname === "/api/booths.php") {
+        const result = await boothAvailability(req.method);
+        res.writeHead(result.statusCode, result.headers);
+        res.end(result.body);
+        return;
+      }
       if (url.pathname === "/api" || url.pathname.startsWith("/api/")) {
         await handleApi(req, res, url);
         return;

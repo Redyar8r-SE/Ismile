@@ -1,21 +1,23 @@
 // Entry point for sponsor.html: the sponsorship and booth request form.
 // The same header, footer and languages as the main page, and nothing else.
-import { loadJSON } from "./utils/load-json.js?v=78";
-import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from "./i18n.js?v=78";
-import { initNav } from "./components/nav.js?v=78";
-import { initTheme } from "./components/theme.js?v=78";
-import { initFooter } from "./sections/footer.js?v=78";
-import { initSponsorForm } from "./sections/sponsor-form.js?v=78";
+import { loadJSON } from "./utils/load-json.js?v=81";
+import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from "./i18n.js?v=81";
+import { initNav } from "./components/nav.js?v=81";
+import { initTheme } from "./components/theme.js?v=81";
+import { initFooter } from "./sections/footer.js?v=81";
+import { initSponsorForm } from "./sections/sponsor-form.js?v=81";
+import { initBoothMap } from "./sections/booth-map.js?v=84";
 
 async function start() {
   initNav();
   initTheme();
 
   try {
-    const [strings, sponsors, footer] = await Promise.all([
+    const [strings, sponsors, footer, boothPlan] = await Promise.all([
       loadJSON("data/i18n/en.json"),
       loadJSON("data/sponsors.json"),
       loadJSON("data/footer.json"),
+      loadJSON("data/booth-tiers.json"),
     ]);
 
     initI18n(strings);
@@ -29,6 +31,7 @@ async function start() {
 
     initFooter(footer);
     initSponsorForm(sponsors);
+    initBoothMap(boothPlan);
 
     initLangSwitch();
     setLang(preferredLang());

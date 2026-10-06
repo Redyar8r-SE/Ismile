@@ -28,6 +28,9 @@ umask 077
 	echo "PORT=${APP_PORT}"
 	echo "APP_PORT=${APP_PORT}"
 	echo "PM2_APP_NAME=${PM2_APP_NAME:-ismile}"
+	echo "BOOTH_API_URL=${BOOTH_API_URL:-}"
+	echo "BOOTH_API_USERNAME=${BOOTH_API_USERNAME:-}"
+	echo "BOOTH_API_PASSWORD=${BOOTH_API_PASSWORD:-}"
 } >.env
 
 echo "Wrote .env"

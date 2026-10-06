@@ -1,6 +1,32 @@
 // Small helpers for the admin pages (no inline scripts, so the page's content
 // security policy can forbid them).
 
+// Package options carry their floor-plan numbers from the shared backend data.
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll("[data-booth-picker]").forEach((form) => {
+    const packageSelect = form.querySelector('[name="package_id"]');
+    const boothSelect = form.querySelector('[name="booth_number"]');
+    if (!packageSelect || !boothSelect) return;
+    const emptyLabel = boothSelect.options[0].textContent;
+    const booked = new Set(JSON.parse(boothSelect.dataset.booked || "[]"));
+    const render = () => {
+      const previous = boothSelect.value;
+      const numbers = JSON.parse(packageSelect.selectedOptions[0]?.dataset.booths || "[]");
+      boothSelect.replaceChildren(new Option(numbers.length ? emptyLabel : "Choose a package first", ""));
+      numbers.forEach((number) => {
+        const own = String(number) === boothSelect.dataset.current && boothSelect.dataset.currentActive === "1";
+        const taken = booked.has(number) && !own;
+        const option = new Option(`Booth ${number}${taken ? " — Booked" : ""}`, String(number));
+        option.disabled = taken;
+        boothSelect.add(option);
+      });
+      boothSelect.value = numbers.some((number) => String(number) === previous) ? previous : "";
+    };
+    packageSelect.addEventListener("change", render);
+    render();
+  });
+});
+
 // The sidebar stays visible on desktop and becomes a keyboard-friendly drawer on phones.
 document.addEventListener("DOMContentLoaded", () => {
   const sidebar = document.getElementById("admin-sidebar");

@@ -45,6 +45,7 @@ if [[ -n "${GITHUB_ENV:-}" ]]; then
 	mask_secret "$ADMIN_PASSWORD_HASH"
 	mask_secret "$SESSION_SECRET"
 	mask_secret "$GITHUB_TOKEN"
+	mask_secret "${BOOTH_API_PASSWORD:-}"
 
 	github_env_set DEPLOY_HOST "$DEPLOY_HOST"
 	github_env_set DEPLOY_USER "$DEPLOY_USER"
@@ -62,4 +63,7 @@ if [[ -n "${GITHUB_ENV:-}" ]]; then
 	github_env_set ALLOWED_ORIGIN "$ALLOWED_ORIGIN"
 	github_env_set PUBLIC_URL "${PUBLIC_URL:-}"
 	github_env_set DOMAINS "${DOMAINS:-}"
+	github_env_set BOOTH_API_URL "${BOOTH_API_URL:-}"
+	github_env_set BOOTH_API_USERNAME "${BOOTH_API_USERNAME:-}"
+	github_env_set BOOTH_API_PASSWORD "${BOOTH_API_PASSWORD:-}"
 fi

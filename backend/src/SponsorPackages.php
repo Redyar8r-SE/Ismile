@@ -1,5 +1,5 @@
 <?php
-// The sponsorship packages (Diamond, Platinum, Gold, Silver…) and the
+// The sponsorship packages (Platinum, Gold, Silver, Bronze) and the
 // exhibition booth types: kept in the database with their price and number of
 // places, managed on the admin's Sponsors page (Owner). The website's tier
 // cards (data/sponsors.json "tiers") are written from here after every change.
@@ -150,6 +150,9 @@ final class SponsorPackages
             'price' => $price === '' ? 0 : (int) $price,
             'places' => $places,
             'style' => Validate::oneOf($in['style'] ?? null, array_keys(self::STYLES), 'tc-silver'),
+            'booth_tier' => array_key_exists('booth_tier', $in)
+                ? Validate::oneOf($in['booth_tier'], array_keys(BoothPlan::TIERS))
+                : (['tc-plat' => 'platinum', 'tc-gold' => 'gold', 'tc-silver' => 'silver', 'tc-bronze' => 'bronze'][$in['style'] ?? ''] ?? null),
         ];
     }
 
@@ -194,7 +197,7 @@ final class SponsorPackages
 
     /**
      * First install: the tiers already on the website become the starting
-     * packages (price not set yet), plus one standard exhibition booth.
+     * packages (price not set yet), plus four matching exhibition booth tiers.
      * Does nothing once the table has packages.
      */
     public static function importFromWebsite(): int
@@ -224,12 +227,20 @@ final class SponsorPackages
                 $row['subtitle_' . $lang] = $part($item, 'subtitle', $lang, 160);
             }
             $row['name_en'] ??= ucfirst((string) $item['id']);
+            $row['booth_tier'] = Validate::oneOf($item['id'], array_keys(BoothPlan::TIERS));
             Db::insert('sponsor_packages', $row);
         }
-        Db::insert('sponsor_packages', [
-            'id' => 'booth-standard', 'kind' => 'booth', 'name_en' => 'Standard booth', 'name_ar' => 'جناح قياسي', 'name_ku' => 'جناحی ستاندارد',
-            'price' => 0, 'places' => 0, 'style' => 'tc-exhibitor', 'status' => 'active', 'sort_order' => 1, 'created_at' => $now, 'updated_at' => $now,
-        ]);
-        return $n + 1;
+        $order = 0;
+        foreach (BoothPlan::TIERS as $tier => $name) {
+            $source = self::find($tier);
+            Db::insert('sponsor_packages', [
+                'id' => 'booth-' . $tier, 'kind' => 'booth', 'name_en' => $name,
+                'name_ar' => $source['name_ar'] ?? null, 'name_ku' => $source['name_ku'] ?? null,
+                'price' => 0, 'places' => count(BoothPlan::numbers($tier)),
+                'style' => $source['style'] ?? 'tc-silver', 'booth_tier' => $tier,
+                'status' => 'active', 'sort_order' => ++$order, 'created_at' => $now, 'updated_at' => $now,
+            ]);
+        }
+        return $n + 4;
     }
 }

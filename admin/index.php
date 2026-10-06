@@ -29,7 +29,7 @@ $money = (int) Db::value("SELECT COALESCE(SUM(amount_confirmed), 0) FROM payment
 $emailsSent = $count("SELECT COUNT(*) FROM emails e WHERE $emailScope AND (" . CommunicationQuery::STATE_SQL . ") = 'sent'",$emailParams);
 $emailsFailed = $count("SELECT COUNT(*) FROM emails e WHERE $emailScope AND e.status = 'failed'",$emailParams);
 $openSponsors = $count("SELECT COUNT(*) FROM sponsor_requests WHERE status IN ('new','contacted','agreed','paid')");
-$sponsorMoney = $count("SELECT COALESCE(SUM(amount_paid), 0) FROM sponsor_requests WHERE status IN ('paid','confirmed')");
+$sponsorMoney = $count("SELECT COALESCE(SUM(amount_paid), 0) FROM sponsor_requests");
 $callsDue = \Ismile\Sponsors::callsDue();
 $currency = SiteData::prices()['currency'];
 
@@ -163,7 +163,7 @@ Page::top('Dashboard', 'index');
 <?= Page::stats([
     ['Paying right now', number_format($payingNow), 'Open forms · ticket not issued yet', 'clock', 'gold'],
     ['Email delivery', "$emailsSent / $emailsFailed", 'Sent / failed emails', 'mail', $emailsFailed ? 'red' : 'green'],
-    ['Open partnerships', number_format($openSponsors), Page::money($sponsorMoney,$currency) . ' confirmed', 'sponsors', 'blue'],
+    ['Open partnerships', number_format($openSponsors), Page::money($sponsorMoney,$currency) . ' received', 'sponsors', 'blue'],
     ['Cancelled tickets', number_format($cancelled), 'Cancelled registrations', 'close', 'violet'],
 ]) ?>
 <?php Page::bottom();

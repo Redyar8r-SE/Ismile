@@ -13,6 +13,8 @@ require __DIR__ . '/_boot.php';
 
 use Ismile\Admin\Page;
 use Ismile\App;
+use Ismile\Auth;
+use Ismile\BoothPlan;
 use Ismile\Db;
 use Ismile\SponsorPackages;
 use Ismile\Sponsors;
@@ -22,9 +24,91 @@ $user = Page::guard('sponsors');
 $isOwner = $user['role'] === 'owner';
 $id = (int) ($_GET['id'] ?? 0);
 $kind = in_array(Page::query('kind'), ['sponsor', 'booth'], true) ? Page::query('kind') : 'sponsor';
+
+// Office bookings can be created without a company submitting the website form.
+if (Page::query('new') === '1') {
+    if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
+        try {
+            Auth::checkCsrf();
+            if (($_POST['do'] ?? '') !== 'create_booking') {
+                throw new UserError('Unknown action.');
+            }
+            $created = Sponsors::createByStaff(array_replace($_POST, ['kind' => $kind]), $user);
+            Page::flash('ok', 'Booking saved: ' . $created['company'] . ' (' . $created['ref'] . ').'
+                . ($created['booth_number'] ? ' Booth ' . $created['booth_number'] . ' is reserved and appears red on the public map.' : '')
+                . ($created['status'] === 'paid' ? ' Payment recorded; press Confirm to finish.' : ''));
+            Page::redirect('sponsors.php?id=' . $created['id']);
+        } catch (UserError $error) {
+            Page::flash('error', $error->key);
+        } catch (\Throwable $error) {
+            App::log('error', 'Staff sponsor booking failed', ['error' => $error->getMessage()]);
+            Page::flash('error', 'The booking could not be saved. Please try again.');
+        }
+    }
+    $e = [Page::class, 'e'];
+    $value = static fn (string $key): string => Page::e((string) ($_POST[$key] ?? ''));
+    $packages = SponsorPackages::all($kind, false);
+    $bookedBooths = Sponsors::bookedBooths();
+    $title = $kind === 'booth' ? 'Book exhibition booth' : 'Add sponsor booking';
+    Page::top($title, 'sponsors', '<a class="btn ghost" href="sponsors.php?kind=' . $kind . '">&larr; Back to ' . ($kind === 'booth' ? 'exhibition booths' : 'sponsors') . '</a>');
+    ?>
+    <form method="post" class="card stack" id="staffBookingForm" data-booth-picker>
+      <?= Page::csrfField() ?><input type="hidden" name="do" value="create_booking">
+      <?= Page::panelHeading($title, 'Record a company booking made by phone or directly with your team.', 'sponsors') ?>
+      <div class="row3">
+        <label>Company name<input name="company" required minlength="2" maxlength="160" autocomplete="organization" value="<?= $value('company') ?>"></label>
+        <label>Contact person<input name="contact" required minlength="2" maxlength="120" autocomplete="name" value="<?= $value('contact') ?>"></label>
+        <label>WhatsApp / phone<input name="phone" type="tel" required maxlength="30" autocomplete="tel" placeholder="0750 123 4567" value="<?= $value('phone') ?>"></label>
+      </div>
+      <div class="row3">
+        <label>Email (optional)<input name="email" type="email" maxlength="190" autocomplete="email" value="<?= $value('email') ?>"></label>
+        <label>Position (optional)<input name="role" maxlength="120" autocomplete="organization-title" value="<?= $value('role') ?>"></label>
+        <label>City (optional)<input name="city" maxlength="80" autocomplete="address-level2" value="<?= $value('city') ?>"></label>
+      </div>
+      <div class="row3">
+        <label><?= $kind === 'booth' ? 'Booth type' : 'Sponsorship package' ?><select name="package_id" required><option value="">Choose a <?= $kind === 'booth' ? 'booth type' : 'package' ?></option>
+          <?php foreach ($packages as $package): ?><option value="<?= $e($package['id']) ?>" data-booths="<?= $e(json_encode(BoothPlan::numbers($package['booth_tier']))) ?>"<?= ($_POST['package_id'] ?? '') === $package['id'] ? ' selected' : '' ?>><?= $e($package['name_en']) ?><?= $package['price'] > 0 ? ' · ' . number_format((int) $package['price']) . ' IQD' : '' ?></option><?php endforeach; ?>
+        </select></label>
+        <label><?= $kind === 'booth' ? 'Reserve booth number' : 'Reserve booth number (optional)' ?><select name="booth_number" data-booked="<?= $e(json_encode($bookedBooths)) ?>"<?= $kind === 'booth' ? ' required' : '' ?>><option value=""><?= $kind === 'booth' ? 'Choose a booth' : 'No booth required' ?></option>
+          <?php $chosenPackage = SponsorPackages::find((string) ($_POST['package_id'] ?? '')); foreach (BoothPlan::numbers($chosenPackage['booth_tier'] ?? null) as $booth): $taken = in_array($booth, $bookedBooths, true); ?><option value="<?= $booth ?>"<?= (string) ($_POST['booth_number'] ?? '') === (string) $booth ? ' selected' : '' ?><?= $taken ? ' disabled' : '' ?>>Booth <?= $booth ?><?= $taken ? ' — Booked' : '' ?></option><?php endforeach; ?>
+        </select></label>
+        <label>Agreed price in IQD (optional)<input name="amount_agreed" type="number" min="0" max="1000000000" step="1" inputmode="numeric" placeholder="e.g. 6000000" value="<?= $value('amount_agreed') ?>"></label>
+      </div>
+      <p class="muted small">Saving reserves the selected booth immediately and turns it red on the public map. Company and contact details stay private. Leave the price empty if it has not been agreed yet.</p>
+      <div class="row3">
+        <label>Payment received<select name="paid_how"><option value="">Not paid yet</option>
+          <?php foreach (Sponsors::PAID_HOW as $method => $label): ?><option value="<?= $e($method) ?>"<?= ($_POST['paid_how'] ?? '') === $method ? ' selected' : '' ?>><?= $e($label) ?> — full agreed amount received</option><?php endforeach; ?>
+        </select></label>
+        <label>Contact language<select name="lang"><?php foreach (['en' => 'English', 'ar' => 'Arabic', 'ku' => 'Kurdish'] as $language => $label): ?><option value="<?= $language ?>"<?= ($_POST['lang'] ?? 'en') === $language ? ' selected' : '' ?>><?= $label ?></option><?php endforeach; ?></select></label>
+        <label>Website / social page (optional)<input name="website" maxlength="190" value="<?= $value('website') ?>"></label>
+      </div>
+      <label>Notes (optional)<textarea name="notes" rows="3" maxlength="5000"><?= $value('notes') ?></textarea></label>
+      <?php if (!$packages): ?><p class="flash warn">No active <?= $kind === 'booth' ? 'booth types' : 'sponsorship packages' ?> are configured. The Owner can add one from the packages section.</p><?php endif; ?>
+      <div class="form-actions"><button class="btn green big-btn"<?= !$packages ? ' disabled' : '' ?>><?= $kind === 'booth' ? 'Save booth booking' : 'Save sponsor booking' ?></button><a class="btn ghost" href="sponsors.php?kind=<?= $kind ?>">Cancel</a></div>
+    </form>
+    <?php
+    Page::bottom();
+    exit;
+}
 $back = ($id > 0 ? 'sponsors.php?id=' . $id : 'sponsors.php?kind=' . $kind)
     . (str_starts_with((string) ($_POST['do'] ?? ''), 'pk_') ? '#packages' : '');
 
+$detailsInput = null;
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && ($_POST['do'] ?? '') === 'details') {
+    $detailsInput = $_POST;
+    try {
+        Auth::checkCsrf();
+        Sponsors::saveDetails($id, $_POST, $user);
+        Page::flash('ok', 'Saved. Booking details updated; the booth map updates automatically.');
+        Page::redirect($back . '#bookingDetails');
+    } catch (UserError $error) {
+        Page::flash('error', $error->key);
+    } catch (\Throwable $error) {
+        App::log('error', 'Sponsor details failed', ['error' => $error->getMessage()]);
+        Page::flash('error', 'The details could not be saved. Please try again.');
+    }
+}
+if ($detailsInput === null) {
 Page::action(static function () use ($user, $id): string {
     $do = (string) ($_POST['do'] ?? '');
     // ---- the packages and prices (Owner) ----
@@ -61,16 +145,14 @@ Page::action(static function () use ($user, $id): string {
             return 'Payment recorded. Last step: press the green Confirm button.';
         case 'unpay':
             Sponsors::undoPayment($id, $user);
-            return 'Payment removed. The request is back to Agreed.';
+            return 'Last payment removed. Earlier payments stay recorded; the remaining balance is due.';
         case 'status':
             Sponsors::changeStatus($request, (string) ($_POST['status'] ?? ''), $user, ($_POST['override'] ?? '') === '1');
             return 'Status changed.';
-        case 'details':
-            Sponsors::saveDetails($id, $_POST, $user);
-            return 'Saved.';
     }
     throw new UserError('Unknown action.');
 }, $back);
+}
 
 $e = [Page::class, 'e'];
 $money = static fn ($amount): string => $amount === null || $amount === '' ? '–' : Page::money((int) $amount);
@@ -85,10 +167,18 @@ if ($id > 0 && ($request = Sponsors::find($id))) {
     $calls = Sponsors::calls($id);
     $history = Db::all("SELECT a.*, u.name FROM audit_log a LEFT JOIN admin_users u ON u.id = a.user_id WHERE target_type = 'sponsor_request' AND target_id = ? ORDER BY a.id DESC LIMIT 50", [$id]);
     $isBooth = $request['kind'] === 'booth';
+    $balance = max(0, (int) $request['amount_agreed'] - (int) $request['amount_paid']);
+    $edit = $request;
+    foreach (['company' => 'company', 'contact' => 'contact_name', 'phone' => 'phone', 'email' => 'email', 'role' => 'contact_role', 'city' => 'city', 'website' => 'website', 'lang' => 'lang', 'package_id' => 'package_id', 'booth_number' => 'booth_number', 'amount_agreed' => 'amount_agreed', 'assigned_to' => 'assigned_to', 'notes' => 'notes'] as $field => $column) {
+        if ($detailsInput !== null && array_key_exists($field, $detailsInput)) {
+            $edit[$column] = (string) $detailsInput[$field];
+        }
+    }
+    $editPackage = SponsorPackages::find((string) ($edit['package_id'] ?? ''));
     $due = $request['next_call_at'] && $request['next_call_at'] <= $now && !in_array($request['status'], ['confirmed', 'declined'], true);
     Page::top($request['company'], 'sponsors', '<a class="btn ghost" href="sponsors.php?kind=' . rawurlencode($request['kind']) . '">&larr; All ' . ($isBooth ? 'exhibition requests' : 'sponsor requests') . '</a>');
     ?>
-    <div class="toolbar"><span><code class="big"><?= $e($request['ref']) ?></code> <?= Page::pill($request['status']) ?></span></div>
+    <div class="toolbar"><span><code class="big"><?= $e($request['ref']) ?></code> <?= Page::pill($request['status']) ?></span><a class="btn" href="#bookingDetails">Edit details</a></div>
     <?php
     // ---- the progress bar: where this company is ----
     $stepOf = ['new' => 1, 'contacted' => 2, 'waiting_list' => 2, 'agreed' => 3, 'paid' => 4, 'confirmed' => 5, 'declined' => 0];
@@ -132,18 +222,17 @@ if ($id > 0 && ($request = Sponsors::find($id))) {
         <h3>After the call, what happened?</h3>
         <?= $callForm(true) ?>
       <?php elseif ($request['status'] === 'agreed'): ?>
-        <h2 class="icon-label"><?= Page::navIcon('payments') ?><span>What to do now: wait for the money, then record it</span></h2>
-        <p class="lead-line">They agreed to pay <b class="big-money"><?= $agreed ?></b>. When the money arrives, press the button:</p>
+        <h2 class="icon-label"><?= Page::navIcon('payments') ?><span><?= $request['amount_paid'] !== null ? 'Upgrade balance: collect the remaining payment' : 'What to do now: wait for the money, then record it' ?></span></h2>
+        <p class="lead-line">Agreed total: <b><?= $agreed ?></b>.<?= $request['amount_paid'] !== null ? ' Already received: <b>' . $money($request['amount_paid']) . '</b>.' : '' ?> Remaining balance: <b class="big-money"><?= Page::money($balance) ?></b>. Record it when received:</p>
         <form method="post" class="stack"><?= Page::csrfField() ?><input type="hidden" name="do" value="pay">
-          <input type="hidden" name="amount_paid" value="<?= (int) $request['amount_agreed'] ?>">
+          <input type="hidden" name="amount_paid" value="<?= $balance ?>">
           <div class="choices">
             <?php foreach (Sponsors::PAID_HOW as $key => $label): ?><label class="choice"><input type="radio" name="paid_how" value="<?= $key ?>" required><span><i class="choice-icon"><?= Page::navIcon(['cash' => 'cash', 'transfer' => 'bank', 'psoola' => 'payments', 'other' => 'content'][$key]) ?></i><span class="choice-label"><?= $e($label) ?></span></span></label><?php endforeach; ?>
           </div>
-          <div class="form-actions"><button class="btn green big-btn"><?= Page::navIcon('cash') ?><span>They paid <?= $agreed ?></span></button></div>
+          <div class="form-actions"><button class="btn green big-btn"><?= Page::navIcon('cash') ?><span>They paid <?= Page::money($balance) ?></span></button></div>
         </form>
         <details class="more"><summary>They want to pay a different amount?</summary>
-          <p class="muted">Save a new call with "They agreed a price" and the new price. Then record the payment.</p>
-          <?= $callForm(true) ?>
+          <p class="muted"><a href="#bookingDetails">Edit details below</a> to update the agreed total, then record the remaining balance.</p>
         </details>
       <?php elseif ($request['status'] === 'paid'): ?>
         <h2 class="icon-label"><?= Page::navIcon('check') ?><span>Last step: confirm them</span></h2>
@@ -186,22 +275,50 @@ if ($id > 0 && ($request = Sponsors::find($id))) {
           <dt>Price told</dt><dd><?= $money($request['price_quoted']) ?></dd>
           <dt>Agreed</dt><dd><b><?= $money($request['amount_agreed']) ?></b></dd>
           <dt>Paid</dt><dd><?= $request['amount_paid'] !== null ? '<b class="txt-ok">' . $money($request['amount_paid']) . '</b> · ' . $e(Sponsors::PAID_HOW[$request['paid_how']] ?? '') . ', ' . Page::when($request['paid_at']) : 'not paid' ?></dd>
+          <dt>Remaining balance</dt><dd><b><?= Page::money($balance) ?></b></dd>
         </dl>
         <?php if ($request['message']): ?><h3>Their message</h3><p class="message"><?= nl2br($e($request['message'])) ?></p><?php endif; ?>
       </div>
-      <div class="card">
-        <h2>Details</h2>
-        <form method="post" class="stack"><?= Page::csrfField() ?><input type="hidden" name="do" value="details">
-          <label><?= $isBooth ? 'Booth type' : 'Package' ?><select name="package_id"><option value="">Not chosen yet</option>
-            <?php foreach ($packages as $option): ?><option value="<?= $e($option['id']) ?>"<?= $option['id'] === $request['package_id'] ? ' selected' : '' ?>><?= $e($option['name_en']) ?><?= $option['price'] > 0 ? ' · ' . number_format((int) $option['price']) . ' IQD' : '' ?><?= $option['status'] === 'hidden' ? ' (hidden)' : '' ?></option><?php endforeach; ?></select></label>
+      <div class="card" id="bookingDetails">
+        <h2>Edit booking details</h2>
+        <?php if ($request['booth_number'] && !in_array((int) $request['booth_number'], BoothPlan::numbers($package['booth_tier'] ?? null), true)): ?>
+          <p class="flash warn">The existing booth <?= $e($request['booth_number']) ?> does not belong to this package. Choose its matching package and booth number before saving, or choose “No booth reserved” to release it.</p>
+        <?php endif; ?>
+        <p class="muted">Assign a numbered booth and save to reserve it immediately. The public map and table show it in red, with no company details. Choose “No booth reserved” to release it. Declined and waiting-list requests do not hold a booth.</p>
+        <form method="post" class="stack" id="bookingDetailsForm" data-booth-picker><?= Page::csrfField() ?><input type="hidden" name="do" value="details">
           <div class="row3">
-            <label>Booth number<input name="booth_number" maxlength="20" value="<?= $e($request['booth_number'] ?? '') ?>" placeholder="<?= $isBooth ? 'e.g. B12' : 'if they have a booth' ?>"></label>
-            <label>Handled by<select name="assigned_to"><option value="0">Nobody yet</option>
-              <?php foreach ($staff as $person): ?><option value="<?= (int) $person['id'] ?>"<?= (int) $request['assigned_to'] === (int) $person['id'] ? ' selected' : '' ?>><?= $e($person['name']) ?></option><?php endforeach; ?></select></label>
-            <label>Next call<input type="datetime-local" name="next_call_at" value="<?= $e($inputTime($request['next_call_at'])) ?>"></label>
+            <label>Company name<input name="company" required minlength="2" maxlength="160" value="<?= $e($edit['company']) ?>"></label>
+            <label>Contact person<input name="contact" required minlength="2" maxlength="120" value="<?= $e($edit['contact_name']) ?>"></label>
+            <label>WhatsApp / phone<input name="phone" type="tel" required maxlength="30" value="<?= $e($edit['phone']) ?>"></label>
           </div>
-          <label>Notes<textarea name="notes" rows="4"><?= $e($request['notes'] ?? '') ?></textarea></label>
+          <div class="row3">
+            <label>Email (optional)<input name="email" type="email" maxlength="190" value="<?= $e($edit['email']) ?>"></label>
+            <label>Position (optional)<input name="role" maxlength="120" value="<?= $e($edit['contact_role'] ?? '') ?>"></label>
+            <label>City (optional)<input name="city" maxlength="80" value="<?= $e($edit['city'] ?? '') ?>"></label>
+          </div>
+          <div class="row3">
+            <label>Contact language<select name="lang"><?php foreach (['en' => 'English', 'ar' => 'Arabic', 'ku' => 'Kurdish'] as $language => $label): ?><option value="<?= $language ?>"<?= $edit['lang'] === $language ? ' selected' : '' ?>><?= $label ?></option><?php endforeach; ?></select></label>
+            <label>Website / social page (optional)<input name="website" maxlength="190" value="<?= $e($edit['website'] ?? '') ?>"></label>
+            <label>Agreed total in IQD<input name="amount_agreed" type="number" min="0" max="1000000000" step="1" inputmode="numeric" value="<?= $e((string) ($edit['amount_agreed'] ?? '')) ?>"<?= $request['amount_agreed'] !== null || $request['amount_paid'] !== null ? ' required' : '' ?>></label>
+          </div>
+          <p class="muted small">For Gold to Platinum, choose Platinum, choose one of its available booths, and enter the new agreed total. Money already received stays recorded. Any extra balance must be received before confirming the upgraded booking.</p>
+          <label><?= $isBooth ? 'Booth type' : 'Package' ?><select name="package_id"><option value="">Not chosen yet</option>
+            <?php foreach ($packages as $option): ?><option value="<?= $e($option['id']) ?>" data-booths="<?= $e(json_encode(BoothPlan::numbers($option['booth_tier']))) ?>"<?= $option['id'] === $edit['package_id'] ? ' selected' : '' ?>><?= $e($option['name_en']) ?><?= $option['price'] > 0 ? ' · ' . number_format((int) $option['price']) . ' IQD' : '' ?><?= $option['status'] === 'hidden' ? ' (hidden)' : '' ?></option><?php endforeach; ?></select></label>
+          <div class="row3">
+            <label>Reserve booth<select name="booth_number" data-current="<?= $e($request['booth_number'] ?? '') ?>" data-current-active="<?= in_array($request['status'], ['declined','waiting_list'], true) ? '0' : '1' ?>" data-booked="<?= $e(json_encode(Sponsors::bookedBooths())) ?>"><option value="">No booth reserved</option>
+              <?php $bookedBooths = Sponsors::bookedBooths(); $currentBooth = (string) ($edit['booth_number'] ?? ''); ?>
+              <?php if ($currentBooth !== '' && (!ctype_digit($currentBooth) || (int) $currentBooth < 1 || (int) $currentBooth > 44)): ?><option value="<?= $e($currentBooth) ?>" selected><?= $e($currentBooth) ?> (previous label)</option><?php endif; ?>
+              <?php foreach (BoothPlan::numbers($editPackage['booth_tier'] ?? null) as $booth): $own = ctype_digit($currentBooth) && (int) $currentBooth === $booth; $taken = in_array($booth, $bookedBooths, true) && ((string) $request['booth_number'] !== (string) $booth || in_array($request['status'], ['declined', 'waiting_list'], true)); ?>
+                <option value="<?= $booth ?>"<?= $own ? ' selected' : '' ?><?= $taken && !$own ? ' disabled' : '' ?>>Booth <?= $booth ?><?= $taken ? ' — Booked' : '' ?></option>
+              <?php endforeach; ?>
+            </select></label>
+            <label>Handled by<select name="assigned_to"><option value="0">Nobody yet</option>
+              <?php foreach ($staff as $person): ?><option value="<?= (int) $person['id'] ?>"<?= (int) $edit['assigned_to'] === (int) $person['id'] ? ' selected' : '' ?>><?= $e($person['name']) ?></option><?php endforeach; ?></select></label>
+            <label>Next call<input type="datetime-local" name="next_call_at" value="<?= $e($detailsInput !== null ? (string) ($detailsInput['next_call_at'] ?? '') : $inputTime($request['next_call_at'])) ?>"></label>
+          </div>
+          <label>Notes<textarea name="notes" rows="4" maxlength="5000"><?= $e($edit['notes'] ?? '') ?></textarea></label>
           <div class="form-actions"><button class="btn">Save details</button></div>
+          <a class="btn ghost" href="<?= $e(App::url('sponsor.html#exhibition')) ?>" target="_blank" rel="noopener">View public booth map</a>
         </form>
       </div>
     </div>
@@ -257,8 +374,8 @@ foreach (Db::all('SELECT kind, COUNT(*) AS n FROM sponsor_requests GROUP BY kind
 $callsDue = Sponsors::callsDue($kind);
 $packages = SponsorPackages::all($kind);
 $stageCounts = array_column(Db::all('SELECT status,COUNT(*) AS n FROM sponsor_requests WHERE kind=? GROUP BY status',[$kind]),'n','status');
-$confirmedMoney = (int) Db::value("SELECT COALESCE(SUM(amount_paid),0) FROM sponsor_requests WHERE kind=? AND status IN ('paid','confirmed')",[$kind]);
-Page::top('Sponsors & booths', 'sponsors');
+$confirmedMoney = (int) Db::value("SELECT COALESCE(SUM(amount_paid),0) FROM sponsor_requests WHERE kind=?",[$kind]);
+Page::top('Sponsors & booths', 'sponsors', '<a class="btn green" href="sponsors.php?kind=' . $kind . '&amp;new=1">+ ' . ($kind === 'booth' ? 'Book exhibition booth' : 'Add sponsor booking') . '</a>');
 ?>
 <div class="toolbar tabs kind-tabs">
   <a class="btn <?= $kind === 'sponsor' ? '' : 'ghost' ?>"<?= $kind==='sponsor' ? ' aria-current="page"':'' ?> href="sponsors.php?kind=sponsor"><?= Page::navIcon('sponsors') ?> Sponsors <span class="count"><?= $kindCounts['sponsor'] ?? 0 ?></span></a>
@@ -285,16 +402,16 @@ Page::top('Sponsors & booths', 'sponsors');
   <?php foreach (Sponsors::STATUSES as $status): ?><a class="btn small <?= $filter === $status ? '' : 'ghost' ?>" href="sponsors.php?kind=<?= $kind ?>&amp;status=<?= $status ?>"><?= $e(str_replace('_', ' ', ucfirst($status))) ?></a><?php endforeach; ?>
 </div>
 <section class="card partner-directory"><div class="panel-top"><?= Page::panelHeading($kind==='booth' ? 'Booth enquiries':'Sponsor enquiries','Your contacts, agreed amounts and upcoming calls, in one place.','sponsors') ?><div class="panel-actions"><a class="btn green" href="export.php?what=list&amp;list=<?= $kind === 'booth' ? 'exhibition' : 'sponsors' ?>">Export to Excel</a></div></div><div class="table-wrap"><table>
-  <tr><th>Company</th><th><?= $kind === 'booth' ? 'Booth' : 'Package' ?></th><th>Status</th><th>Agreed / paid</th><th>Next call</th><th>Handled by</th><th>Received</th></tr>
+  <tr><th>Company</th><th><?= $kind === 'booth' ? 'Booth' : 'Package' ?></th><th>Status</th><th>Agreed / paid</th><th>Next call</th><th>Handled by</th><th>Received</th><th>Actions</th></tr>
   <?php foreach ($rows as $row): $due = $row['next_call_at'] && $row['next_call_at'] <= $now && !in_array($row['status'], ['confirmed', 'declined'], true); ?>
   <tr><td><a href="sponsors.php?id=<?= (int) $row['id'] ?>"><b><?= $e($row['company']) ?></b></a><br><small><?= $e($row['contact_name']) ?> · <span dir="ltr"><?= $e($row['phone']) ?></span></small></td>
     <td><?= $row['package_name'] ? $e($row['package_name']) : '<span class="muted">not chosen</span>' ?><?= $row['booth_number'] ? '<br><small>Booth ' . $e($row['booth_number']) . '</small>' : '' ?></td>
     <td><?= Page::pill($row['status']) ?></td>
-    <td><?= $money($row['amount_agreed']) ?><?= $row['amount_paid'] !== null ? '<br><small class="txt-ok">paid ' . $money($row['amount_paid']) . '</small>' : '' ?></td>
+    <td><?= $money($row['amount_agreed']) ?><?= $row['amount_paid'] !== null ? '<br><small class="txt-ok">paid ' . $money($row['amount_paid']) . '</small>' : '' ?><?= $row['amount_paid'] !== null && (int) $row['amount_agreed'] > (int) $row['amount_paid'] ? '<br><small>balance ' . $money((int) $row['amount_agreed'] - (int) $row['amount_paid']) . '</small>' : '' ?></td>
     <td><?= $row['next_call_at'] ? ($due ? '<b class="txt-bad icon-label">' . Page::navIcon('phone') . '<span>' . Page::when($row['next_call_at']) . '</span></b>' : Page::when($row['next_call_at'])) : '–' ?></td>
-    <td><?= $e($row['handler'] ?? '–') ?></td><td><?= Page::when($row['created_at']) ?></td></tr>
+    <td><?= $e($row['handler'] ?? '–') ?></td><td><?= Page::when($row['created_at']) ?></td><td><a class="btn small ghost" href="sponsors.php?id=<?= (int) $row['id'] ?>#bookingDetails">Edit details</a></td></tr>
   <?php endforeach; ?>
-  <?php if (!$rows): ?><tr><td colspan="7" class="muted"><?= Page::emptyState('No enquiries in this view','New requests appear here when a company sends the sponsor or booth form.','sponsors') ?></td></tr><?php endif; ?>
+  <?php if (!$rows): ?><tr><td colspan="8" class="muted"><?= Page::emptyState('No bookings in this view','Use the booking button above to add a company, or receive a request from the website.','sponsors') ?></td></tr><?php endif; ?>
 </table></div></section>
 
 <?php if ($isOwner):
@@ -303,6 +420,10 @@ Page::top('Sponsors & booths', 'sponsors');
         $styles = '';
         foreach (SponsorPackages::STYLES as $key => $label) {
             $styles .= '<option value="' . $key . '"' . (($p['style'] ?? 'tc-silver') === $key ? ' selected' : '') . '>' . $e($label) . '</option>';
+        }
+        $tierOptions = '<option value="">No numbered booth allocation</option>';
+        foreach (BoothPlan::TIERS as $tier => $name) {
+            $tierOptions .= '<option value="' . $tier . '"' . (($p['booth_tier'] ?? '') === $tier ? ' selected' : '') . '>' . $name . '</option>';
         }
         return '<div class="row3">'
             . '<label>Name (English)<input name="name_en" required maxlength="80" value="' . $v('name_en') . '"></label>'
@@ -315,7 +436,8 @@ Page::top('Sponsors & booths', 'sponsors');
             . '<div class="row3">'
             . '<label>Price (IQD; empty = not set yet)<input name="price" inputmode="numeric" placeholder="e.g. 5000000" value="' . ($p && $p['price'] > 0 ? (int) $p['price'] : '') . '"></label>'
             . '<label>Places (empty = no limit)<input type="number" min="0" max="500" name="places" placeholder="no limit" value="' . ($p && $p['places'] > 0 ? (int) $p['places'] : '') . '"></label>'
-            . '<label>Colour on the website<select name="style">' . $styles . '</select></label></div>';
+            . '<label>Colour on the website<select name="style">' . $styles . '</select></label></div>'
+            . '<label>Floor-plan tier<select name="booth_tier">' . $tierOptions . '</select></label>';
     }; ?>
 <div class="card" id="packages">
   <?= Page::panelHeading($kind==='booth' ? 'Booth types & prices':'Sponsor packages & prices','Manage availability and the offers your team shares with companies. Owner access.','settings') ?>

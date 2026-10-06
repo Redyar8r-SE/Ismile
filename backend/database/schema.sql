@@ -371,6 +371,7 @@ CREATE TABLE IF NOT EXISTS sponsor_packages (
   price        INT UNSIGNED       NOT NULL DEFAULT 0,         -- IQD, the list price told on the phone; 0 = not set yet
   places       SMALLINT UNSIGNED  NOT NULL DEFAULT 0,         -- how many can be sold; 0 = no limit
   style        VARCHAR(30)        NOT NULL DEFAULT 'tc-silver', -- the colour of the website card
+  booth_tier   ENUM('platinum','gold','silver','bronze') NULL,   -- allowed floor-plan numbers
   status       ENUM('active','hidden') NOT NULL DEFAULT 'active',
   sort_order   SMALLINT UNSIGNED  NOT NULL DEFAULT 0,
   created_at   DATETIME           NOT NULL,
@@ -408,6 +409,9 @@ CREATE TABLE IF NOT EXISTS sponsor_requests (
   paid_how       ENUM('cash','transfer','psoola','other') NULL,
   paid_at        DATETIME      NULL,
   booth_number   VARCHAR(20)   NULL,                           -- where their booth is (exhibition)
+  -- Reserve immediately when assigned. Declined / waiting-list releases it.
+  reserved_booth  VARCHAR(20) AS (IF(status NOT IN ('declined','waiting_list') AND booth_number IS NOT NULL,
+    TRIM(LEADING '0' FROM TRIM(booth_number)), NULL)) STORED,
   last_call_at   DATETIME      NULL,
   next_call_at   DATETIME      NULL,                           -- when to call them again
   notes          TEXT          NULL,
@@ -416,6 +420,7 @@ CREATE TABLE IF NOT EXISTS sponsor_requests (
   updated_at     DATETIME      NOT NULL,
   PRIMARY KEY (id),
   UNIQUE KEY uq_sponsor_ref (ref),
+  UNIQUE KEY uq_sponsor_reserved_booth (reserved_booth),
   KEY k_sponsor_status (status, created_at),
   KEY k_sponsor_package (kind, package_id, status),            -- places taken per package
   KEY k_sponsor_next_call (next_call_at),                      -- "calls due today"

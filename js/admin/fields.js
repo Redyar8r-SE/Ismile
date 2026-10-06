@@ -459,7 +459,7 @@ const PARTS = [
       ["spf_st1", "Stepper: step 1"], ["spf_st2", "Stepper: step 2"],
       ["step_of", "Step counter (keep {n} and {total})"],
       ["spf_s1_title", "Step 1 title"], ["spf_s1_sub", "Step 1 text"],
-      ["spf_kind_spon", "Choice 1: sponsorship"], ["spf_kind_spon_d", "Choice 1 text"],
+      ["spf_kind_spon", "Choice 1: sponsorship"], ["spf_kind_tiers_d", "Choice 1 text"],
       ["spf_kind_booth", "Choice 2: booth"], ["spf_kind_booth_d", "Choice 2 text"],
       ["spf_pack_title", "Packages heading"], ["spf_pack_sub", "Packages text"],
       ["spf_pack_unsure", "Last option: not sure yet"], ["spf_pack_unsure_d", "Last option: its text"],

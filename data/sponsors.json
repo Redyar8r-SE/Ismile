@@ -1,21 +1,6 @@
 {
   "tiers": [
     {
-      "id": "diamond",
-      "name": {
-        "en": "Diamond",
-        "ar": "الماسي",
-        "ku": "ئەڵماس"
-      },
-      "className": "tc-dia",
-      "subtitle": {
-        "en": "Headline partners",
-        "ar": "الشركاء الرئيسيون",
-        "ku": "هاوبەشە سەرەکییەکان"
-      },
-      "spots": 2
-    },
-    {
       "id": "platinum",
       "name": {
         "en": "Platinum",
@@ -24,11 +9,11 @@
       },
       "className": "tc-plat",
       "subtitle": {
-        "en": "Leading partners",
-        "ar": "الشركاء الروّاد",
-        "ku": "هاوبەشە پێشەنگەکان"
+        "en": "6 exhibition spaces",
+        "ar": "6 مساحات في المعرض",
+        "ku": "6 شوێنی پێشانگا"
       },
-      "spots": 2
+      "spots": 6
     },
     {
       "id": "gold",
@@ -39,11 +24,11 @@
       },
       "className": "tc-gold",
       "subtitle": {
-        "en": "Main partners",
-        "ar": "الشركاء الأساسيون",
-        "ku": "هاوبەشە بنەڕەتییەکان"
+        "en": "7 exhibition spaces",
+        "ar": "7 مساحات في المعرض",
+        "ku": "7 شوێنی پێشانگا"
       },
-      "spots": 3
+      "spots": 7
     },
     {
       "id": "silver",
@@ -54,11 +39,26 @@
       },
       "className": "tc-silver",
       "subtitle": {
-        "en": "Supporting partners",
-        "ar": "الشركاء الداعمون",
-        "ku": "هاوبەشە پشتگیرەکان"
+        "en": "21 exhibition spaces",
+        "ar": "21 مساحات في المعرض",
+        "ku": "21 شوێنی پێشانگا"
       },
-      "spots": 5
+      "spots": 21
+    },
+    {
+      "id": "bronze",
+      "name": {
+        "en": "Bronze",
+        "ar": "البرونزي",
+        "ku": "برۆنز"
+      },
+      "className": "tc-bronze",
+      "subtitle": {
+        "en": "10 exhibition spaces",
+        "ar": "10 مساحات في المعرض",
+        "ku": "10 شوێنی پێشانگا"
+      },
+      "spots": 10
     }
   ],
   "sponsors": [],

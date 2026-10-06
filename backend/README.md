@@ -127,6 +127,74 @@ Database streaming checks (isolated test database only):
 
 ## Database design
 
+### Live exhibition map
+
+`sponsor.html#exhibition` shows the supplied 44-booth floor plan and its tier,
+number and size table. `GET /api/booths.php` returns only booked numbers; no
+company, request ID, contact, payment or staff information is public. Visible
+pages refresh every three seconds and immediately when returning to the tab.
+Unavailable data is labelled unknown and retried; it is never shown as available.
+The source floor plan is traced as theme-aware SVG vectors, keeping the same
+booth positions and numbers. The map supports 100–200% zoom and exploration
+on phones. Above 900px the map sits on the left with the compact table on the
+right. Phones and portrait tablets switch between Map and Table views; the
+directory is scrollable inside its panel. Selecting a number returns to the
+map and centers its booth. Availability totals use the
+same response as the red map/table marks; unknown data shows no available count.
+
+In Sponsors or Exhibition requests, open a company, choose **Reserve booth**
+under Details and save. Assignment reserves the space immediately, even before
+payment. Choose **No booth reserved** to release it. Declined and waiting-list
+requests release their spaces; reactivating one must pass the same uniqueness
+check. Both sponsorship and exhibition requests share the same 44 spaces.
+The database unique key refuses simultaneous reservations of one booth.
+
+The active sponsorship and exhibition tiers are Platinum, Gold, Silver and
+Bronze. Package `booth_tier` controls the booth selector on both staff forms.
+Platinum: 37–42; Gold: 1, 6, 24, 30, 36, 43, 44; Silver: 2–5, 7–14,
+25–28, 31–35; Bronze: 15–23, 29. `data/booth-tiers.json` supplies the public
+map/table and backend validation, so the assignments cannot drift apart.
+Migration `2026-10-06-align-booth-tiers.sql` preserves prices and request
+history while hiding old packages and adding the four matching booth types.
+
+Staff can also create companies directly: **Sponsors & booths → Sponsors →
+Add sponsor booking**, or **Exhibition (booths) → Book exhibition booth**.
+Enter company, contact and phone, choose a package/type and (for exhibition)
+a numbered booth. Email is optional. An optional agreed price starts the
+booking at Agreed; recording the full received payment starts it at Paid,
+ready for the existing Confirm action. A selected booth is reserved on save.
+Owner, Registration and Finance may use this flow. Creation is audited and
+does not send website-request notification emails.
+
+Existing bookings have an **Edit details** button in the directory and on the
+company page. Staff can correct company/contact details, change the package and
+matching booth, and enter a new agreed total. For a paid Gold-to-Platinum upgrade,
+money already received is preserved; a higher total returns the booking to
+Agreed with the outstanding balance shown. Record exactly that balance, then
+confirm the upgraded booking. Old and new booths change together on save.
+The agreed total cannot fall below money received. Edits and each additional
+payment retain before/after details in the private audit history. Owner undo
+removes the latest payment and restores the earlier money record. This uses
+existing columns and requires no additional schema migration.
+
+The main Node website has a read-only route at the same `/api/booths.php` path.
+Set `BOOTH_API_URL` in its deployment environment to the PHP endpoint (for
+example `https://api.ismile.krd/api/booths.php`). If that server has HTTP Basic
+authentication, also set `BOOTH_API_USERNAME` and `BOOTH_API_PASSWORD`. These
+credentials stay on the Node server. It forwards only validated booth numbers,
+never the upstream's other fields. Without configuration, the map explicitly
+shows availability as unavailable. On PHP hosting no proxy settings are needed.
+
+Run the installer before serving the new API. Migration
+`2026-10-06-live-booth-map.sql` adds a generated reservation column and a unique
+key. Existing duplicate active assignments must be resolved before this
+migration can succeed; it does not silently discard anyone's booking. Unchanged
+legacy booth labels are preserved, but new assignments use numbers 1–44.
+
+Checks: `php backend/tests/booth-reservations.php` for field validation; with an
+isolated test database configured, add `--database` to check reservation and
+release behavior. The test refuses live environments and non-test databases.
+
 `database/schema.sql` is the full design (13 tables in 6 sections, with
 foreign keys, allowed-value lists and 3 read-only views). Later changes to a
 live database go in `database/migrations/` (see the README there);

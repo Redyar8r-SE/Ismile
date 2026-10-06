@@ -556,12 +556,12 @@ try {
         }
     };
     $packageIds = array_column(\Ismile\SponsorPackages::all(), 'id');
-    check('the packages are in the database (the website tiers + a standard booth)', in_array('diamond', $packageIds, true) && in_array('booth-standard', $packageIds, true));
-    $spn = http('POST', "$base/api/sponsor.php", json_encode(['lang' => 'ar', 'kind' => 'sponsor', 'package' => 'diamond', 'company' => 'Test Co', 'contact' => 'Ali Hasan', 'phone' => '0750 111 2233', 'email' => 'ali@testco.example']), ['Content-Type: application/json', 'Origin: ' . $base]);
+    check('the packages are in the database (the four website tiers and matching booth tiers)', in_array('platinum', $packageIds, true) && in_array('booth-silver', $packageIds, true));
+    $spn = http('POST', "$base/api/sponsor.php", json_encode(['lang' => 'ar', 'kind' => 'sponsor', 'package' => 'platinum', 'company' => 'Test Co', 'contact' => 'Ali Hasan', 'phone' => '0750 111 2233', 'email' => 'ali@testco.example']), ['Content-Type: application/json', 'Origin: ' . $base]);
     $request = Db::one('SELECT * FROM sponsor_requests WHERE ref = ?', [$spn['json']['ref'] ?? '']);
-    check('a sponsor request is saved with a reference and its package', $request !== null && $request['status'] === 'new' && $request['package_id'] === 'diamond');
+    check('a sponsor request is saved with a reference and its package', $request !== null && $request['status'] === 'new' && $request['package_id'] === 'platinum');
     check('the company and the team are emailed', (int) Db::value('SELECT COUNT(*) FROM emails WHERE sponsor_request_id = ?', [$request['id']]) >= 2);
-    $odd = http('POST', "$base/api/sponsor.php", json_encode(['lang' => 'en', 'kind' => 'booth', 'package' => 'diamond', 'company' => 'Booth Co', 'contact' => 'Sara Ahmed', 'phone' => '0750 111 4455', 'email' => 'sara@boothco.example']), ['Content-Type: application/json', 'Origin: ' . $base]);
+    $odd = http('POST', "$base/api/sponsor.php", json_encode(['lang' => 'en', 'kind' => 'booth', 'package' => 'platinum', 'company' => 'Booth Co', 'contact' => 'Sara Ahmed', 'phone' => '0750 111 4455', 'email' => 'sara@boothco.example']), ['Content-Type: application/json', 'Origin: ' . $base]);
     $booth = Db::one('SELECT * FROM sponsor_requests WHERE ref = ?', [$odd['json']['ref'] ?? '']);
     check('a booth request never gets a sponsor package', $booth !== null && $booth['kind'] === 'booth' && $booth['package_id'] === null);
     check('cannot be Confirmed before Paid', $fails(fn () => Sponsors::changeStatus($request, 'confirmed', $staff)));
@@ -588,28 +588,28 @@ try {
     check('after paying, a call cannot decline them or change the amount', $fails(fn () => Sponsors::logCall($id, ['outcome' => 'declined'], $staff)) && $fails(fn () => Sponsors::logCall($id, ['outcome' => 'agreed', 'amount' => '1'], $staff)));
     check('after paying, staff cannot move them back (Owner only)', $fails(fn () => Sponsors::changeStatus(Sponsors::find($id), 'contacted', $staff)));
     check('staff cannot undo a payment (Owner only)', $fails(fn () => Sponsors::undoPayment($id, $staff)));
-    \Ismile\SponsorPackages::update('diamond', ['name_en' => 'Diamond', 'price' => '5000000', 'places' => '1', 'style' => 'tc-dia'], $owner);
+    \Ismile\SponsorPackages::update('platinum', ['name_en' => 'Platinum', 'price' => '5000000', 'places' => '1', 'style' => 'tc-dia'], $owner);
     Sponsors::changeStatus(Sponsors::find($id), 'confirmed', $staff);
     check('a paid sponsor is Confirmed', Sponsors::find($id)['status'] === 'confirmed');
-    check('a booth cannot be given a sponsor package', $fails(fn () => Sponsors::saveDetails((int) $booth['id'], ['package_id' => 'diamond'], $staff)));
-    Sponsors::saveDetails((int) $booth['id'], ['package_id' => 'booth-standard', 'booth_number' => 'B12', 'assigned_to' => (string) $adminId], $staff);
+    check('a booth cannot be given a sponsor package', $fails(fn () => Sponsors::saveDetails((int) $booth['id'], ['package_id' => 'platinum'], $staff)));
+    Sponsors::saveDetails((int) $booth['id'], ['package_id' => 'booth-silver', 'booth_number' => '12', 'assigned_to' => (string) $adminId], $staff);
     $boothAfter = Sponsors::find((int) $booth['id']);
-    check('a booth gets its booth type and number', $boothAfter['package_id'] === 'booth-standard' && $boothAfter['booth_number'] === 'B12');
-    // A second Diamond sponsor, while the only Diamond place is taken.
-    $second = Db::insert('sponsor_requests', ['ref' => 'SPN26-T' . strtoupper(bin2hex(random_bytes(2))), 'kind' => 'sponsor', 'package_id' => 'diamond', 'company' => 'Second Co', 'contact_name' => 'B', 'phone' => '+9647501112299', 'email' => 'b@second.example', 'lang' => 'en', 'status' => 'new', 'created_at' => App::now(), 'updated_at' => App::now()]);
+    check('a booth gets its booth type and number', $boothAfter['package_id'] === 'booth-silver' && $boothAfter['booth_number'] === '12');
+    // A second Platinum sponsor, while the only Platinum place is taken.
+    $second = Db::insert('sponsor_requests', ['ref' => 'SPN26-T' . strtoupper(bin2hex(random_bytes(2))), 'kind' => 'sponsor', 'package_id' => 'platinum', 'company' => 'Second Co', 'contact_name' => 'B', 'phone' => '+9647501112299', 'email' => 'b@second.example', 'lang' => 'en', 'status' => 'new', 'created_at' => App::now(), 'updated_at' => App::now()]);
     Sponsors::logCall($second, ['outcome' => 'agreed', 'amount' => '5000000'], $staff);
     Sponsors::recordPayment($second, ['amount_paid' => '5000000', 'paid_how' => 'cash'], $staff);
     check('a package cannot have more Confirmed companies than places', $fails(fn () => Sponsors::changeStatus(Sponsors::find($second), 'confirmed', $staff)));
     Sponsors::changeStatus(Sponsors::find($second), 'confirmed', $owner, true);
     check('the Owner can override a full package (logged)', Sponsors::find($second)['status'] === 'confirmed'
         && (int) Db::value("SELECT COUNT(*) FROM audit_log WHERE action = 'sponsor.status' AND target_id = ? AND details LIKE '%\"override\":true%'", [$second]) === 1);
-    check('with 2 confirmed, the places cannot be set to 1', $fails(fn () => \Ismile\SponsorPackages::update('diamond', ['name_en' => 'Diamond', 'places' => '1'], $owner)));
+    check('with 2 confirmed, the places cannot be set to 1', $fails(fn () => \Ismile\SponsorPackages::update('platinum', ['name_en' => 'Platinum', 'places' => '1'], $owner)));
     check('staff cannot change packages or prices', $fails(fn () => \Ismile\SponsorPackages::create(['name_en' => 'Bronze'], $staff)));
-    check('a package that companies chose cannot be deleted', $fails(fn () => \Ismile\SponsorPackages::delete('diamond', $owner)));
+    check('a package that companies chose cannot be deleted', $fails(fn () => \Ismile\SponsorPackages::delete('platinum', $owner)));
     $bronze = \Ismile\SponsorPackages::create(['name_en' => 'Bronze', 'name_ku' => 'برۆنز', 'price' => '1,000,000', 'places' => '4', 'style' => 'tc-bronze'], $owner);
     $site = json_decode((string) file_get_contents(App::siteFile('data/sponsors.json')), true);
     $tierIds = array_column($site['tiers'] ?? [], 'id');
-    check('a new package appears on the website at once (without its price)', in_array($bronze, $tierIds, true) && !str_contains((string) json_encode($site['tiers']), 'price') && !in_array('booth-standard', $tierIds, true));
+    check('a new package appears on the website at once (without its price)', in_array($bronze, $tierIds, true) && !str_contains((string) json_encode($site['tiers']), 'price') && !in_array('booth-silver', $tierIds, true));
     check('the website file keeps its logos and contact details', array_key_exists('sponsors', $site) && array_key_exists('enquiry', $site));
     \Ismile\SponsorPackages::setStatus($bronze, 'hidden', $owner);
     $site = json_decode((string) file_get_contents(App::siteFile('data/sponsors.json')), true);
@@ -617,11 +617,11 @@ try {
     \Ismile\SponsorPackages::delete($bronze, $owner);
     check('an unused package can be deleted', \Ismile\SponsorPackages::find($bronze) === null);
     $sponsorList = Db::one('SELECT * FROM `07_sponsors` WHERE `Company` = ?', ['Test Co']);
-    check('the simple Sponsors list shows the package and the money', $sponsorList !== null && $sponsorList['Package'] === 'Diamond' && (int) $sponsorList['Paid (IQD)'] === 5000000);
+    check('the simple Sponsors list shows the package and the money', $sponsorList !== null && $sponsorList['Package'] === 'Platinum' && (int) $sponsorList['Paid (IQD)'] === 5000000);
     check('the simple Calls list shows every call', (int) Db::value("SELECT COUNT(*) FROM `09_sponsor_calls` WHERE `Company` = 'Test Co'") === 3);
-    // Put Diamond back as it is on the website, so the test changes nothing there.
+    // Put Platinum back as it is on the website, so the test changes nothing there.
     Db::run("UPDATE sponsor_requests SET status = 'declined', amount_paid = NULL, paid_how = NULL, paid_at = NULL WHERE id IN (?, ?)", [$id, $second]);
-    \Ismile\SponsorPackages::update('diamond', ['name_en' => 'Diamond', 'name_ar' => 'الماسي', 'name_ku' => 'ئەڵماس', 'subtitle_en' => 'Headline partners', 'subtitle_ar' => 'الشركاء الرئيسيون', 'subtitle_ku' => 'هاوبەشە سەرەکییەکان', 'price' => '0', 'places' => '2', 'style' => 'tc-dia'], $owner);
+    \Ismile\SponsorPackages::update('platinum', ['name_en' => 'Platinum', 'name_ar' => 'الماسي', 'name_ku' => 'ئەڵماس', 'subtitle_en' => 'Headline partners', 'subtitle_ar' => 'الشركاء الرئيسيون', 'subtitle_ku' => 'هاوبەشە سەرەکییەکان', 'price' => '0', 'places' => '2', 'style' => 'tc-dia'], $owner);
     $crossSite = http('POST', "$base/api/sponsor.php", json_encode(['company' => 'X']), ['Content-Type: application/json', 'Origin: https://evil.example']);
     check('a form posted from another website is refused', $crossSite['status'] === 403);
     check('the sponsor page needs a sign-in', str_contains((string) http('GET', "$base/admin/sponsors.php")['location'], 'login.php'));
