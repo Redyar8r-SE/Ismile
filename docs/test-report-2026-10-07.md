@@ -52,3 +52,9 @@ Mutation tests used fresh, separate databases and private storage. The existing 
 The normal local PHP website/dashboard is available at `http://127.0.0.1:5501/`; the existing static Live Server on port 5500 is unchanged. Temporary audit web servers were stopped after testing.
 
 Before event use, complete and verify the real Psoola integration: `backend/src/Payments/PsoolaGateway.php` still contains unfinished provider integration methods. Also verify real email credentials/delivery, production scheduled jobs and hosting behavior, and scan the QR using the actual staff phones/cameras over the event network. GitHub-backed content publishing was not exercised against the external service.
+
+## Deployment follow-up
+
+The merged public-site release passed lint, types and all 27 JavaScript tests. The first API deployment saved a database backup but stopped during migration: creating a missing attendance table from the current schema already included `checkin_method`, while the following migration tried to add it again. The installer now records that migration without repeating the column addition when the column is present.
+
+A new isolated regression test upgrades the actual previous release schema, checks all three new migrations, queries all 14 views, verifies the single Standard booth, resumes an interrupted upgrade, exercises adding the column to a pre-existing attendance table, and repeats installation. These upgrade checks passed before redeployment. The earlier local QA results above describe the pre-deployment run.

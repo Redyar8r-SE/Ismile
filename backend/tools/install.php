@@ -56,7 +56,13 @@ foreach ($migrations as $file) {
     }
     if (!$isNew) {
         echo "Applying upgrade $name ... ";
-        $run($statements($file));
+        // Step 1 creates missing tables from the current schema. An older
+        // database without attendance therefore already gets this column.
+        $methodAlreadyPresent = $name === '2026-10-07-manual-checkin.sql'
+            && Db::value("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'ticket_attendance' AND column_name = 'checkin_method'");
+        if (!$methodAlreadyPresent) {
+            $run($statements($file));
+        }
         echo "done\n";
     }
     Db::run('INSERT INTO schema_migrations (name, applied_at) VALUES (?, ?)', [$name, App::now()]);
