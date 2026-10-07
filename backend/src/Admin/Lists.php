@@ -13,6 +13,7 @@ final class Lists
     /** key => [tab label, explanation] */
     public const ALL = [
         'registered' => ['Registered', 'Everyone registered for the event. Only people who paid (or got a free ticket from the Owner) are here.'],
+        'attendance' => ['Attendance', 'Each guest’s Day 1 and Day 2 arrivals and certificate. Payment without attendance does not earn a certificate.'],
         'forms'      => ['All forms sent', 'Every registration form sent (website or office) the moment it is sent, paid or not, newest first. Only the paid ones are registered: "waiting" means the person has not paid yet, "expired" means they never paid.'],
         'lunch1'     => ['Lunch day 1', 'Registered people who chose lunch on day 1: the list for the caterer.'],
         'lunch2'     => ['Lunch day 2', 'Registered people who chose lunch on day 2: the list for the caterer.'],
@@ -20,7 +21,7 @@ final class Lists
         'studentids' => ['Student IDs', 'Every registered student with the ID photo they sent, side by side. The photos are stored in the database.'],
         'workshops'  => ['Workshops', 'Each workshop with the people booked on it, and whether they paid the workshop.'],
         'sponsors'   => ['Sponsors', 'Sponsorship requests: the company, the package, where it stands, the money agreed and paid, and the next call.'],
-        'exhibition' => ['Exhibition (booths)', 'Exhibition booth requests, separate from the sponsors: booth type and number, money and the next call.'],
+        'exhibition' => ['Booths', 'Standard booth bookings, company contacts, agreed amounts, payments and follow-up calls.'],
         'cancelled'  => ['Cancelled', 'Registrations that were cancelled (no refunds are made).'],
     ];
 
@@ -36,9 +37,10 @@ final class Lists
     public static function columns(string $list): array
     {
         return match ($list) {
+            'attendance' => ['ticket_no' => 'Ticket', 'day1' => 'Day 1 arrival', 'day2' => 'Day 2 arrival', 'certificate_no' => 'Certificate', 'ref' => 'Reference'],
             'workshops'        => ['phone' => 'Phone', 'workshop_paid' => 'Workshop paid?', 'amount_paid' => 'Amount (IQD)', 'ref' => 'Reference'],
-            'sponsors'         => ['package' => 'Package', 'contact_name' => 'Contact', 'phone' => 'Phone', 'sponsor_status' => 'Status', 'amount_agreed' => 'Agreed (IQD)', 'amount_paid' => 'Paid (IQD)', 'next_call_at' => 'Next call', 'ref' => 'Reference'],
-            'exhibition'       => ['package' => 'Booth type', 'booth_number' => 'Booth no.', 'contact_name' => 'Contact', 'phone' => 'Phone', 'sponsor_status' => 'Status', 'amount_agreed' => 'Agreed (IQD)', 'amount_paid' => 'Paid (IQD)', 'next_call_at' => 'Next call', 'ref' => 'Reference'],
+            'sponsors'         => ['package' => 'Package', 'contact_name' => 'Contact', 'phone' => 'Phone', 'sponsor_status' => 'Status', 'amount_agreed' => 'Agreed (IQD)', 'amount_paid' => 'Paid (IQD)', 'next_call_at' => 'Next call', 'cancelled_at' => 'Cancelled on', 'cancellation_reason' => 'Cancellation reason', 'ref' => 'Reference'],
+            'exhibition'       => ['package' => 'Booth type', 'contact_name' => 'Contact', 'phone' => 'Phone', 'sponsor_status' => 'Status', 'amount_agreed' => 'Agreed (IQD)', 'amount_paid' => 'Paid (IQD)', 'next_call_at' => 'Next call', 'cancelled_at' => 'Cancelled on', 'cancellation_reason' => 'Cancellation reason', 'ref' => 'Reference'],
             'students', 'studentids' => ['phone' => 'Phone', 'university' => 'University', 'ambassador_code' => 'Ambassador', 'id_photo' => 'ID photo', 'ticket_no' => 'Ticket no.', 'ref' => 'Reference'],
             'forms'            => ['phone' => 'Phone', 'email' => 'Email', 'ticket_type' => 'Ticket', 'lunch' => 'Lunch', 'university' => 'University', 'form_status' => 'Payment', 'created_at' => 'Sent', 'ref' => 'Reference'],
             'lunch1', 'lunch2' => ['phone' => 'Phone', 'ticket_type' => 'Ticket', 'ticket_no' => 'Ticket no.', 'ref' => 'Reference'],
@@ -69,8 +71,11 @@ final class Lists
             'cancelled' => "r.status = 'cancelled'",
             default     => $registered,
         };
-        return Db::all("SELECT r.*, t.ticket_no, p.uploaded_at AS photo_uploaded, p.bytes AS photo_bytes, IF(p.id IS NULL, 'missing', 'stored') AS id_photo
+        return Db::all("SELECT r.*, t.ticket_no, a1.checked_in_at AS day1, a2.checked_in_at AS day2, c.certificate_no, p.uploaded_at AS photo_uploaded, p.bytes AS photo_bytes, IF(p.id IS NULL, 'missing', 'stored') AS id_photo
                         FROM registrations r LEFT JOIN tickets t ON t.registration_id = r.id AND t.cancelled_at IS NULL
+                        LEFT JOIN ticket_attendance a1 ON a1.ticket_id=t.id AND a1.event_day=1
+                        LEFT JOIN ticket_attendance a2 ON a2.ticket_id=t.id AND a2.event_day=2
+                        LEFT JOIN certificates c ON c.registration_id=r.id AND t.id IS NOT NULL
                         LEFT JOIN student_id_photos p ON p.id = r.id_photo_id
                         WHERE $where ORDER BY r.first_name, r.father_name, r.grandfather_name");
     }
@@ -110,6 +115,7 @@ final class Lists
              FROM registrations"
         ) ?? [];
         $row['forms'] = (int) Db::value('SELECT COUNT(*) FROM checkouts');
+        $row['attendance'] = $row['registered'];
         $row['workshops'] = (int) Db::value('SELECT COUNT(*) FROM workshop_bookings WHERE removed_at IS NULL');
         $row['sponsors'] = (int) Db::value("SELECT COUNT(*) FROM sponsor_requests WHERE kind = 'sponsor'");
         $row['exhibition'] = (int) Db::value("SELECT COUNT(*) FROM sponsor_requests WHERE kind = 'booth'");

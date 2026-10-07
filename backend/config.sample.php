@@ -37,6 +37,11 @@ return [
 
     'timezone' => 'Asia/Baghdad',
 
+    // Optional final certificate artwork: absolute path to an approved PNG/JPEG.
+    // Leave empty to use the built-in landscape A4 design. Name is centered
+    // at y=98 mm; certificate number and attended days at y=181 mm.
+    'certificates' => ['background' => ''],
+
     // ---- Payments ----
     // 'fake'   : a pretend payment page on our own site, for building and testing
     //            before Psoola sends its documents. Never use on the live site.

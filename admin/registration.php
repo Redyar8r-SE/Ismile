@@ -8,6 +8,7 @@ declare(strict_types=1);
 require __DIR__ . '/_boot.php';
 
 use Ismile\Admin\Page;
+use Ismile\Admin\CheckinWorkspace;
 use Ismile\Auth;
 use Ismile\Db;
 use Ismile\Links;
@@ -20,6 +21,12 @@ use Ismile\UserError;
 
 $user = Page::guard('registrations');
 $canEdit = Auth::can($user, 'edit');
+$inCheckin = ($_GET['workspace'] ?? '') === 'checkin';
+if ($inCheckin) Page::guard('checkin');
+$workspaceDay = isset($_GET['day']) && in_array((int)$_GET['day'], [1,2], true) ? (int)$_GET['day'] : null;
+$listUrl = $inCheckin ? CheckinWorkspace::url('guests', $workspaceDay) : 'registrations.php';
+$workspaceQuery = $inCheckin ? '&workspace=checkin' . ($workspaceDay ? '&day=' . $workspaceDay : '') : '';
+if ($inCheckin && isset($_GET['new'])) Page::redirect('registration.php?new=1');
 
 // ---------- A caller registers by phone ----------
 // They are registered only after paying: they get a "Pay now" email. Only the
@@ -34,12 +41,12 @@ if (isset($_GET['new'])) {
             if (($_POST['do'] ?? '') === 'free') {
                 $created = Office::createComplimentary($user, $_POST);
                 Page::flash('ok', 'Registered ' . $created['ref'] . ' with a free ticket. The ticket is on its way by email.');
-                Page::redirect('registration.php?id=' . $created['id']);
+                Page::redirect('registration.php?id=' . $created['id'] . $workspaceQuery);
             }
             $checkout = \Ismile\Checkouts::createFromOffice($_POST, $user);
             Page::flash('ok', 'A "Pay now" email is on its way to ' . $checkout['email'] . ' (' . $checkout['ref'] . '). ' . Registrations::fullName($checkout)
                 . ' is registered as soon as they pay; nothing is saved as a registration before that. The link works for ' . max(1, \Ismile\Settings::int('pay_link_days')) . ' day(s).');
-            Page::redirect('registration.php?new=1');
+            Page::redirect($inCheckin ? CheckinWorkspace::url('register', $workspaceDay) : 'registration.php?new=1');
         } catch (UserError $error) {
             Page::flash('error', $error->key);
         }
@@ -48,7 +55,8 @@ if (isset($_GET['new'])) {
     $value = static fn (string $key): string => Page::e(is_string($_POST[$key] ?? null) ? $_POST[$key] : '');
     $selected = static fn (string $key, string $option, string $default = ''): string => ($_POST[$key] ?? $default) === $option ? ' selected' : '';
     $student = ($_POST['specialty'] ?? '') === 'student' || ($_POST['ticket'] ?? '') === 'student';
-    Page::top('Register a caller (phone)', 'registrations', '<a class="btn ghost" href="registrations.php">&larr; All registrations</a>');
+    Page::top($inCheckin ? 'Check-in · Register' : 'Register a caller (phone)', $inCheckin ? 'checkin' : 'registrations', '<a class="btn ghost" href="' . Page::e($listUrl) . '">&larr; ' . ($inCheckin ? 'Guest list' : 'All registrations') . '</a>');
+    if ($inCheckin) echo CheckinWorkspace::navigation('register', $user, $workspaceDay);
     ?>
     <form method="post" class="card stack caller-form" id="caller-form">
       <?= Page::csrfField() ?>
@@ -77,7 +85,7 @@ if (isset($_GET['new'])) {
         <legend>3. Lunch</legend>
         <div class="checks"><label class="inline"><input type="checkbox" name="lunch_day1" value="1"<?= ($_POST['lunch_day1'] ?? '') === '1' ? ' checked' : '' ?>> Lunch day 1</label><label class="inline"><input type="checkbox" name="lunch_day2" value="1"<?= ($_POST['lunch_day2'] ?? '') === '1' ? ' checked' : '' ?>> Lunch day 2</label></div>
       </fieldset>
-      <div class="form-actions"><a class="btn ghost" href="registrations.php">Cancel</a><button class="btn" name="do" value="pay_link">Send payment link</button></div>
+      <div class="form-actions"><a class="btn ghost" href="<?= $e($listUrl) ?>">Cancel</a><button class="btn" name="do" value="pay_link">Send payment link</button></div>
     </form>
       <?php if ($user['role'] === 'owner'): ?>
         <details class="card more owner-ticket"<?= ($_POST['do'] ?? '') === 'free' ? ' open' : '' ?>>
@@ -95,13 +103,14 @@ if (isset($_GET['new'])) {
 
 $registration = Registrations::find((int) ($_GET['id'] ?? 0));
 if ($registration === null) {
-    Page::top('Registration not found', 'registrations');
-    echo '<p><a class="btn" href="registrations.php">Back to the list</a></p>';
+    Page::top('Registration not found', $inCheckin ? 'checkin' : 'registrations');
+    if ($inCheckin) echo CheckinWorkspace::navigation('guests', $user, $workspaceDay);
+    echo '<p><a class="btn" href="' . Page::e($listUrl) . '">Back to the list</a></p>';
     Page::bottom();
     exit;
 }
 $id = (int) $registration['id'];
-$back = 'registration.php?id=' . $id;
+$back = 'registration.php?id=' . $id . $workspaceQuery;
 
 // ---------- Actions ----------
 Page::action(static function () use ($registration, $user, $canEdit): string {
@@ -140,7 +149,8 @@ $prices = SiteData::prices();
 $paidAmount = ($value = Db::value("SELECT amount_confirmed FROM payments WHERE registration_id = ? AND status = 'paid' LIMIT 1", [$id])) !== null ? (int) $value : null;
 $e = [Page::class, 'e'];
 
-Page::top(Registrations::fullName($registration), 'registrations', '<a class="btn ghost" href="registrations.php">&larr; All registrations</a>');
+Page::top(Registrations::fullName($registration), $inCheckin ? 'checkin' : 'registrations', '<a class="btn ghost" href="' . Page::e($listUrl) . '">&larr; ' . ($inCheckin ? 'Guest list' : 'All registrations') . '</a>');
+if ($inCheckin) echo CheckinWorkspace::navigation('guests', $user, $workspaceDay);
 ?>
 <div class="toolbar">
   <span><code class="big"><?= $e($registration['ref']) ?></code> <?= Page::pill($registration['status']) ?>
@@ -188,7 +198,9 @@ Page::top(Registrations::fullName($registration), 'registrations', '<a class="bt
     <h2>Ticket</h2>
     <?php if ($ticket && $ticket['cancelled_at'] === null): ?>
       <p><code class="big"><?= $e($ticket['ticket_no']) ?></code> version <?= (int) $ticket['version'] ?> · <?= $e($ticket['source']) ?></p>
-      <p><?= $ticket['checked_in_at'] ? Page::pill('arrived') . ' checked in ' . Page::when($ticket['checked_in_at']) : 'Not checked in yet.' ?></p>
+      <?php $attendance = Db::all('SELECT event_day, checked_in_at FROM ticket_attendance WHERE ticket_id=? ORDER BY event_day', [$ticket['id']]); ?>
+      <?php foreach ([1,2] as $eventDay): $arrival = array_values(array_filter($attendance, static fn($a) => (int)$a['event_day']===$eventDay))[0] ?? null; ?><p>Day <?= $eventDay ?>: <?= $arrival ? Page::pill('arrived') . ' ' . Page::when($arrival['checked_in_at']) : 'Not checked in' ?></p><?php endforeach; ?>
+      <?php if ($attendance && Auth::can($user, 'certificates')): ?><p><a class="btn green" href="certificate-download.php?id=<?= $id ?>">Download certificate (PDF)</a></p><?php else: ?><p class="muted small">Certificate available after attendance. Payment alone does not qualify.</p><?php endif; ?>
       <?php if ($canEdit): ?>
       <form method="post" class="form-actions"><?= Page::csrfField() ?><input type="hidden" name="do" value="resend_ticket"><button class="btn">Resend ticket</button></form>
       <?php endif; ?>

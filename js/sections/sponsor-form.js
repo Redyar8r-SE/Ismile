@@ -304,6 +304,8 @@ export function initSponsorForm({ tiers = [], enquiry = {} } = {}) {
         radio.closest("label").classList.toggle("is-checked", radio.checked);
       });
       packWrap.hidden = kind === "booth";
+      const map = document.getElementById("exhibition");
+      if (map) map.hidden = kind === "booth";
     }
     if (input.name === "spfPack") {
       pack = input.value;
@@ -338,6 +340,8 @@ export function initSponsorForm({ tiers = [], enquiry = {} } = {}) {
   }
 
   // ---------- Start ----------
+  const sponsorMap = document.getElementById("exhibition");
+  if (sponsorMap) sponsorMap.hidden = kind === "booth";
   if (kind === "booth") {
     const radio = form.querySelector('input[name="spfKind"][value="booth"]');
     if (radio) {

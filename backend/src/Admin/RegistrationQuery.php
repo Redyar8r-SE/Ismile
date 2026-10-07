@@ -6,28 +6,38 @@ declare(strict_types=1);
 
 namespace Ismile\Admin;
 
-use Ismile\Validate;
-
 final class RegistrationQuery
 {
-    public const FILTERS = ['q', 'type', 'status', 'lunch', 'city', 'lang', 'email', 'dup'];
+    public const FILTERS = ['q', 'type', 'status', 'lunch', 'city', 'lang', 'email', 'dup', 'attendance'];
 
     /** @return array{0: string, 1: array} WHERE clause and its values */
     public static function where(array $in): array
     {
         $where = ['1 = 1'];
+        $attendance = $in['attendance'] ?? '';
+        if (in_array($attendance, ['attended', 'day1', 'day2', 'both', 'none'], true)) {
+            $d1 = 'EXISTS (SELECT 1 FROM ticket_attendance a WHERE a.ticket_id=t.id AND a.event_day=1)';
+            $d2 = 'EXISTS (SELECT 1 FROM ticket_attendance a WHERE a.ticket_id=t.id AND a.event_day=2)';
+            $where[] = match ($attendance) {
+                'attended' => "($d1 OR $d2)", 'day1' => $d1, 'day2' => $d2, 'both' => "($d1 AND $d2)", 'none' => "(NOT $d1 AND NOT $d2)",
+            };
+        }
         $params = [];
         $q = trim((string) ($in['q'] ?? ''));
         if ($q !== '') {
-            $phone = Validate::phone($q);
+            $phone = GuestLookup::phonePrefix($q);
             $like = '%' . str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $q) . '%';
-            $where[] = "(r.ref = ? OR r.email LIKE ? OR r.phone LIKE ? OR CONCAT_WS(' ', r.first_name, r.father_name, r.grandfather_name) LIKE ?"
-                . ($phone ? ' OR r.phone = ?' : '') . ' OR t.ticket_no = ?)';
-            array_push($params, strtoupper($q), $like, $like, $like);
-            if ($phone) {
-                $params[] = $phone;
+            $nameLike = substr($like,1);
+            if (preg_match('/^\p{L}$/u',$q)) {
+                $where[]="CONCAT_WS(' ',r.first_name,r.father_name,r.grandfather_name) LIKE ?";
+                $params[]=$nameLike;
+            } else {
+                $where[] = "(r.ref = ? OR r.email LIKE ? OR r.phone LIKE ? OR CONCAT_WS(' ', r.first_name, r.father_name, r.grandfather_name) LIKE ?"
+                    . ($phone ? ' OR r.phone LIKE ?' : '') . ' OR t.ticket_no = ?)';
+                array_push($params, strtoupper($q), $like, $like, $nameLike);
+                if ($phone) $params[] = $phone.'%';
+                $params[] = strtoupper($q);
             }
-            $params[] = strtoupper($q);
         }
         if (in_array($in['type'] ?? '', ['professional', 'student'], true)) {
             $where[] = 'r.ticket_type = ?';

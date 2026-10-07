@@ -16,7 +16,7 @@ namespace Ismile;
 
 final class Sponsors
 {
-    public const STATUSES = ['new', 'contacted', 'agreed', 'paid', 'confirmed', 'declined', 'waiting_list'];
+    public const STATUSES = ['new', 'contacted', 'agreed', 'paid', 'confirmed', 'declined', 'waiting_list', 'cancelled'];
 
     /** Call results, with the plain words the admin shows. */
     public const OUTCOMES = [
@@ -47,6 +47,7 @@ final class Sponsors
         // The package they picked, if it is a shown package of this kind; "not sure" = none yet.
         $package = SponsorPackages::find(Validate::text($in['package'] ?? '', 40));
         $packageId = $package && $package['kind'] === $kind && $package['status'] === 'active' ? $package['id'] : null;
+        if ($kind==='booth') $packageId=SponsorPackages::standardBooth(true)['id']??null;
         $company = Validate::text($in['company'] ?? '', 160);
         if (mb_strlen($company) < 2) {
             throw new UserError($company === '' ? 'err_required' : 'err_name', 's_company');
@@ -123,9 +124,7 @@ final class Sponsors
             throw new UserError('Enter a valid email address, or leave it empty.');
         }
         $booth = self::boothNumber($in['booth_number'] ?? '');
-        if ($kind === 'booth' && $booth === null) {
-            throw new UserError('Choose the booth number to reserve.');
-        }
+        if ($kind==='booth' && $booth!==null) throw new UserError('Only sponsor bookings use numbered positions on the map.');
         $price = trim((string) ($in['amount_agreed'] ?? ''));
         if ($price !== '' && (!preg_match('/^\d{1,10}$/D', $price) || (int) $price > 1000000000)) {
             throw new UserError('Enter the agreed price in whole IQD (up to 1,000,000,000), or leave it empty.');
@@ -139,6 +138,7 @@ final class Sponsors
             throw new UserError('Enter the agreed amount before recording its full payment.');
         }
         $packageId = Validate::text($in['package_id'] ?? '', 40);
+        if ($kind==='booth') $packageId=SponsorPackages::standardBooth(true)['id']??'';
 
         return Db::transaction(static function () use ($in, $user, $kind, $company, $contact, $phone, $email, $booth, $amount, $how, $packageId): array {
             $package = Db::one('SELECT * FROM sponsor_packages WHERE id = ? FOR UPDATE', [$packageId]);
@@ -228,6 +228,7 @@ final class Sponsors
             if ($request === null) {
                 throw new UserError('Request not found.');
             }
+            if ($request['status']==='cancelled') throw new UserError('This booking is cancelled. Reopen it before recording another call.');
             $done = $request['amount_paid'] !== null;
             if ($done && in_array($outcome, ['agreed', 'declined'], true)) {
                 throw new UserError('A payment is already recorded. Use Edit details to change the agreed total; save this call as "Talked to them" with a note.');
@@ -331,7 +332,7 @@ final class Sponsors
     public static function bookedBooths(): array
     {
         $numbers = [];
-        foreach (Db::all('SELECT reserved_booth FROM sponsor_requests WHERE reserved_booth IS NOT NULL') as $row) {
+        foreach (Db::all("SELECT reserved_booth FROM sponsor_requests WHERE kind='sponsor' AND reserved_booth IS NOT NULL") as $row) {
             $number = (string) $row['reserved_booth'];
             if (ctype_digit($number) && (int) $number >= 1 && (int) $number <= 44) {
                 $numbers[] = (int) $number;
@@ -379,6 +380,7 @@ final class Sponsors
         Db::transaction(static function () use ($requestId, $in, $user): void {
             $request = Db::one('SELECT * FROM sponsor_requests WHERE id = ? FOR UPDATE', [$requestId]) ?? throw new UserError('Request not found.');
             $packageId = Validate::text($in['package_id'] ?? '', 40);
+            if ($request['kind']==='booth') $packageId=SponsorPackages::standardBooth()['id']??'';
             $package = SponsorPackages::find($packageId);
             if ($packageId !== '' && ($package === null || $package['kind'] !== $request['kind'])) {
                 throw new UserError('That package is not for ' . ($request['kind'] === 'booth' ? 'exhibition booths.' : 'sponsors.'));
@@ -390,13 +392,18 @@ final class Sponsors
                 }
             }
             $assigned = (int) ($in['assigned_to'] ?? 0);
-            $booth = self::boothNumber($in['booth_number'] ?? '', $request['booth_number']);
-            BoothPlan::check($package, $booth);
+            if ($request['kind']==='booth') {
+                if (trim((string)($in['booth_number']??''))!=='') throw new UserError('Only sponsor bookings use the numbered map.');
+                $booth=$request['booth_number']; // Historical labels stay in the record; they do not reserve the map.
+            } else {
+                $booth = self::boothNumber($in['booth_number'] ?? '', $request['booth_number']);
+                BoothPlan::check($package, $booth);
+            }
             $change = [
                 'package_id'   => $package ? $package['id'] : null,
                 'assigned_to'  => $assigned > 0 && Db::value('SELECT id FROM admin_users WHERE id = ?', [$assigned]) ? $assigned : null,
                 'booth_number' => $booth,
-                'next_call_at' => self::dateTime((string) ($in['next_call_at'] ?? '')),
+                'next_call_at' => $request['status']==='cancelled'?null:self::dateTime((string) ($in['next_call_at'] ?? '')),
                 'notes'        => Validate::multiline($in['notes'] ?? '', 5000) ?: null,
                 'updated_at'   => App::now(),
             ];
@@ -436,7 +443,7 @@ final class Sponsors
                     throw new UserError('The agreed total cannot be less than the money already received.');
                 }
                 $change['amount_agreed'] = $total;
-                if ($total !== null && !in_array($request['status'], ['declined', 'waiting_list'], true)) {
+                if ($total !== null && !in_array($request['status'], ['declined', 'waiting_list', 'cancelled'], true)) {
                     if ($request['amount_paid'] !== null) {
                         $change['status'] = $total > (int) $request['amount_paid'] ? 'agreed' : ($request['status'] === 'confirmed' ? 'confirmed' : 'paid');
                     } else {
@@ -467,6 +474,24 @@ final class Sponsors
      *  - a package cannot have more Confirmed companies than places (Owner may override);
      *  - once paid, going back or declining is for the Owner only (no refunds).
      */
+    public static function cancel(int $id, string $reason, array $user): string
+    {
+        if (!Auth::can($user,'sponsors')) throw new UserError('Your role cannot cancel company bookings.');
+        $reason=Validate::text($reason,500);
+        if ($reason==='') throw new UserError('Enter the reason for cancelling this booking.');
+        return Db::transaction(static function() use($id,$reason,$user): string {
+            $request=Db::one('SELECT * FROM sponsor_requests WHERE id=? FOR UPDATE',[$id])??throw new UserError('Booking not found.');
+            if ($request['status']==='cancelled') return 'This booking is already cancelled.';
+            if ($request['amount_paid']!==null && $user['role']!=='owner') throw new UserError('A payment is recorded. Only the Owner can cancel this booking.');
+            $now=App::now();
+            self::updateWithBoothCheck($id,['status'=>'cancelled','cancelled_at'=>$now,'cancelled_by'=>(int)$user['id'],
+                'cancellation_reason'=>$reason,'next_call_at'=>null,'updated_at'=>$now]);
+            Audit::log((int)$user['id'],'sponsor.cancel','sponsor_request',$id,['from'=>$request['status'],'reason'=>$reason,
+                'amount_agreed'=>$request['amount_agreed'],'amount_paid'=>$request['amount_paid'],'released_map_position'=>$request['kind']==='sponsor'?$request['booth_number']:null]);
+            return 'Booking cancelled. The booking and payment history are kept.';
+        });
+    }
+
     public static function changeStatus(array $request, string $status, array $user, bool $override = false): void
     {
         Db::transaction(static function () use ($request, $status, $user, $override): void {
@@ -476,6 +501,11 @@ final class Sponsors
             }
             if ($status === $request['status']) {
                 return;
+            }
+            if ($status==='cancelled') throw new UserError('Use Cancel booking and enter the reason.');
+            if ($request['status']==='cancelled') {
+                if ($status!=='new' || $request['amount_paid']!==null) throw new UserError('Only an unpaid cancelled booking can be reopened as New.');
+                $extra=['booth_number'=>null,'cancelled_at'=>null,'cancelled_by'=>null,'cancellation_reason'=>null,'next_call_at'=>null];
             }
             $isOwner = $user['role'] === 'owner';
             if ($status === 'paid' && !($request['status'] === 'confirmed' && $isOwner)) {
@@ -509,14 +539,15 @@ final class Sponsors
             self::updateWithBoothCheck((int) $request['id'], ['status' => $status, 'updated_at' => App::now()] + ($extra ?? []));
             Audit::log((int) $user['id'], 'sponsor.status', 'sponsor_request', (int) $request['id'], [
                 'from' => $request['status'], 'to' => $status, 'override' => $override && $isOwner,
-            ] + (isset($extra) ? ['payment_removed' => $request['amount_paid']] : []));
+                'previous_cancellation_reason'=>$request['cancellation_reason']??null,
+            ] + (array_key_exists('amount_paid', $extra ?? []) ? ['payment_removed' => $request['amount_paid']] : []));
         });
     }
 
     /** Calls due now or earlier (for the dashboard, and per tab on the sponsor page). */
     public static function callsDue(?string $kind = null): int
     {
-        return (int) Db::value("SELECT COUNT(*) FROM sponsor_requests WHERE next_call_at IS NOT NULL AND next_call_at <= ? AND status NOT IN ('confirmed','declined')"
+        return (int) Db::value("SELECT COUNT(*) FROM sponsor_requests WHERE next_call_at IS NOT NULL AND next_call_at <= ? AND status NOT IN ('confirmed','declined','cancelled')"
             . ($kind !== null ? ' AND kind = ?' : ''), $kind !== null ? [App::now(), $kind] : [App::now()]);
     }
 

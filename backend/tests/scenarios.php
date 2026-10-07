@@ -529,7 +529,7 @@ try {
     check('a second ticket for the same person', $refuses(fn () => Db::insert('tickets', ['registration_id' => $sample['id'], 'ticket_no' => 'X-' . bin2hex(random_bytes(3)), 'source' => 'complimentary', 'created_at' => $now])));
     check('an action by an admin who does not exist', $refuses(fn () => Audit::log(999999999, 'test')));
     $simpleLists = array_column(Db::all('SELECT table_name AS name FROM information_schema.views WHERE table_schema = DATABASE() ORDER BY table_name'), 'name');
-    check('the 13 simple numbered lists exist (and nothing else)', $simpleLists === ['01_registered_people', '02_lunch_day_1', '03_lunch_day_2', '04_students', '05_workshops', '06_workshop_people', '07_sponsors', '08_exhibition', '09_sponsor_calls', '10_sponsor_packages', '11_payments', '12_money_per_day', '13_forms_sent'], implode(',', $simpleLists));
+    check('all 14 numbered database lists exist, including attendance and certificates', $simpleLists === ['01_registered_people', '02_lunch_day_1', '03_lunch_day_2', '04_students', '05_workshops', '06_workshop_people', '07_sponsors', '08_exhibition', '09_sponsor_calls', '10_sponsor_packages', '11_payments', '12_money_per_day', '13_forms_sent', '14_attendance_and_certificates'], implode(',', $simpleLists));
     $listsWork = true;
     foreach ($simpleLists as $list) {
         try {
@@ -556,14 +556,14 @@ try {
         }
     };
     $packageIds = array_column(\Ismile\SponsorPackages::all(), 'id');
-    check('the packages are in the database (the four website tiers and matching booth tiers)', in_array('platinum', $packageIds, true) && in_array('booth-silver', $packageIds, true));
+    check('the four sponsor tiers and the single Standard booth type are installed', count(array_intersect(['platinum','gold','silver','bronze'],$packageIds)) === 4 && in_array('booth-standard', $packageIds, true));
     $spn = http('POST', "$base/api/sponsor.php", json_encode(['lang' => 'ar', 'kind' => 'sponsor', 'package' => 'platinum', 'company' => 'Test Co', 'contact' => 'Ali Hasan', 'phone' => '0750 111 2233', 'email' => 'ali@testco.example']), ['Content-Type: application/json', 'Origin: ' . $base]);
     $request = Db::one('SELECT * FROM sponsor_requests WHERE ref = ?', [$spn['json']['ref'] ?? '']);
     check('a sponsor request is saved with a reference and its package', $request !== null && $request['status'] === 'new' && $request['package_id'] === 'platinum');
     check('the company and the team are emailed', (int) Db::value('SELECT COUNT(*) FROM emails WHERE sponsor_request_id = ?', [$request['id']]) >= 2);
     $odd = http('POST', "$base/api/sponsor.php", json_encode(['lang' => 'en', 'kind' => 'booth', 'package' => 'platinum', 'company' => 'Booth Co', 'contact' => 'Sara Ahmed', 'phone' => '0750 111 4455', 'email' => 'sara@boothco.example']), ['Content-Type: application/json', 'Origin: ' . $base]);
     $booth = Db::one('SELECT * FROM sponsor_requests WHERE ref = ?', [$odd['json']['ref'] ?? '']);
-    check('a booth request never gets a sponsor package', $booth !== null && $booth['kind'] === 'booth' && $booth['package_id'] === null);
+    check('a booth request always receives Standard instead of a sponsor package', $booth !== null && $booth['kind'] === 'booth' && $booth['package_id'] === 'booth-standard');
     check('cannot be Confirmed before Paid', $fails(fn () => Sponsors::changeStatus($request, 'confirmed', $staff)));
     check('cannot be made Agreed without an agreed amount', $fails(fn () => Sponsors::changeStatus($request, 'agreed', $staff)));
     check('the database refuses Paid without the money recorded', $refuses(fn () => Db::run("UPDATE sponsor_requests SET status = 'paid' WHERE id = ?", [$request['id']])));
@@ -591,10 +591,12 @@ try {
     \Ismile\SponsorPackages::update('platinum', ['name_en' => 'Platinum', 'price' => '5000000', 'places' => '1', 'style' => 'tc-dia'], $owner);
     Sponsors::changeStatus(Sponsors::find($id), 'confirmed', $staff);
     check('a paid sponsor is Confirmed', Sponsors::find($id)['status'] === 'confirmed');
-    check('a booth cannot be given a sponsor package', $fails(fn () => Sponsors::saveDetails((int) $booth['id'], ['package_id' => 'platinum'], $staff)));
-    Sponsors::saveDetails((int) $booth['id'], ['package_id' => 'booth-silver', 'booth_number' => '12', 'assigned_to' => (string) $adminId], $staff);
+    Sponsors::saveDetails((int) $booth['id'], ['package_id' => 'platinum'], $staff);
+    check('staff cannot switch a booth from Standard to a sponsor tier', Sponsors::find((int)$booth['id'])['package_id'] === 'booth-standard');
+    check('exhibition booths cannot reserve a sponsor map position', $fails(fn () => Sponsors::saveDetails((int)$booth['id'], ['booth_number'=>'12'], $staff)));
+    Sponsors::saveDetails((int) $booth['id'], ['package_id' => 'booth-standard', 'assigned_to' => (string) $adminId], $staff);
     $boothAfter = Sponsors::find((int) $booth['id']);
-    check('a booth gets its booth type and number', $boothAfter['package_id'] === 'booth-silver' && $boothAfter['booth_number'] === '12');
+    check('a booth keeps Standard and its assigned staff without a map number', $boothAfter['package_id'] === 'booth-standard' && $boothAfter['booth_number'] === null && (int)$boothAfter['assigned_to'] === $adminId);
     // A second Platinum sponsor, while the only Platinum place is taken.
     $second = Db::insert('sponsor_requests', ['ref' => 'SPN26-T' . strtoupper(bin2hex(random_bytes(2))), 'kind' => 'sponsor', 'package_id' => 'platinum', 'company' => 'Second Co', 'contact_name' => 'B', 'phone' => '+9647501112299', 'email' => 'b@second.example', 'lang' => 'en', 'status' => 'new', 'created_at' => App::now(), 'updated_at' => App::now()]);
     Sponsors::logCall($second, ['outcome' => 'agreed', 'amount' => '5000000'], $staff);
@@ -775,8 +777,8 @@ try {
     check('queued emails are sent', $counts['sent'] > 0 && $counts['failed'] === 0, json_encode($counts));
     check('no email is left pending', (int) Db::value("SELECT COUNT(*) FROM emails WHERE status = 'pending' AND next_attempt_at <= NOW()") === 0);
     Db::run('UPDATE checkouts SET expires_at = ? WHERE id = ?', [date('Y-m-d H:i:s', time() - 60), $failedForm['id']]);
-    exec(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__DIR__ . '/../cron/run.php') . ' five', $output, $code);
-    check('the 5-minute job closes forms not paid in time', (Checkouts::find((int) $failedForm['id'])['status'] ?? '') === 'expired', implode(' ', $output));
+    exec(escapeshellarg(PHP_BINARY) . ' -c ' . escapeshellarg((string)php_ini_loaded_file()) . ' ' . escapeshellarg(__DIR__ . '/../cron/run.php') . ' five', $output, $code);
+    check('the 5-minute job closes forms not paid in time', $code === 0 && (Checkouts::find((int) $failedForm['id'])['status'] ?? '') === 'expired', implode(' ', $output));
     check('nobody who did not pay gets reminder emails', (int) Db::value("SELECT COUNT(*) FROM emails WHERE kind NOT IN ('ticket','pay_now','alert','sponsor_received','sponsor_notify')") === 0);
     $file = Backup::run();
     check('database backup written', is_file(App::storage('backups/' . $file)) && filesize(App::storage('backups/' . $file)) > 1000);
@@ -812,11 +814,12 @@ try {
     check('it names the lunch day they chose (Day 1 only)', str_contains($mail['html'], '✓ Day 1') && !str_contains($mail['html'], '✓ Day 2'));
     check('students are asked to bring their student ID', str_contains($mail['html'], 'bring your student ID'));
     check('it shows the venue and a map link from the website', str_contains($mail['html'], 'Grand Millennium') && str_contains($mail['html'], 'google.com/maps'));
-    check('no QR code and no PDF while that is switched off', $mail['attachments'] === [] && !str_contains($mail['html'], 'api/qr.php'));
+    check('QR code and PDF are always included, even with the obsolete off setting', count($mail['attachments']) === 1 && str_contains($mail['html'], 'api/qr.php'));
     check('the plain-text version reads "Label: value"', str_contains($mail['text'], 'Your reference: ' . $student['ref']));
     Settings::set('ticket_qr_in_email', '1');
     $mail = $build();
-    check('switched on, the QR code and the PDF ticket come back', count($mail['attachments']) === 1 && str_contains($mail['html'], 'api/qr.php'));
+    check('the emailed QR remains included with the legacy setting on', count($mail['attachments']) === 1 && str_contains($mail['html'], 'api/qr.php'));
+    check('the email explains two daily admissions', str_contains($mail['text'], 'once on Day 1 and once on Day 2'));
     Settings::set('ticket_qr_in_email', '0');
     try {
         Settings::set('email_language', 'auto');

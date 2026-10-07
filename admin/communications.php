@@ -36,14 +36,14 @@ Page::top('Communication center','communications','<a class="btn ghost" href="' 
     ['Skipped',number_format($counts['skipped'] ?? 0),'No longer needed; no email sent','check','blue'],
 ]) ?>
 <div class="communication-mode icon-label"><?= Page::navIcon('mail') ?><div><b><?= $localMail ? 'Emails are saved locally' : (Settings::bool('email_test_mode') ? 'Email test mode is enabled' : 'Event email delivery') ?></b><p><?= $localMail ? 'This preview writes email files on this computer. It does not send them to guest inboxes.' : (Settings::bool('email_test_mode') ? 'Guest emails are redirected to your configured test address.' : 'Sent means the email service accepted the message. Inbox delivery is not tracked here.') ?></p></div></div>
-<form method="get" class="card filters filter-panel">
+<form method="get" class="card filters filter-panel" data-instant-search data-search-regions="messages">
   <?= Page::panelHeading('Find a message','Search by recipient, guest name, company or reference.','search') ?>
   <label class="filter-field filter-search"><span>Recipient, name or reference</span><input type="search" name="q" value="<?= $e($in['q']) ?>" placeholder="Search your event emails…"></label>
   <label class="filter-field"><span>Status</span><select name="status"><option value="">All statuses</option><?php foreach (Queue::STATES as $key=>$label): ?><option value="<?= $key ?>"<?= $in['status']===$key ? ' selected':'' ?>><?= $label ?></option><?php endforeach; ?></select></label>
   <label class="filter-field"><span>Message type</span><select name="kind"><option value="">All types</option><?php foreach (Queue::KINDS as $key=>$label): if ($key==='alert' && $user['role']!=='owner') continue; ?><option value="<?= $key ?>"<?= $in['kind']===$key ? ' selected':'' ?>><?= $label ?></option><?php endforeach; ?></select></label>
   <div class="form-actions filter-actions"><a class="btn ghost" href="communications.php">Clear filters</a><button class="btn">Search messages</button></div>
 </form>
-<section class="card message-directory"><div class="panel-top"><?= Page::panelHeading('Email activity','Your event emails and their latest queue status.','communications') ?><span class="pill grey"><?= number_format($total) ?> messages</span></div>
+<section class="card message-directory" data-search-region="messages"><div class="panel-top"><?= Page::panelHeading('Email activity','Your event emails and their latest queue status.','communications') ?><span class="pill grey"><?= number_format($total) ?> messages</span></div>
 <?php if (!$rows): ?><?= Page::emptyState($in['q']!=='' || $in['status']!=='' || $in['kind']!=='' ? 'No messages match these filters' : 'Your messages will appear here','Tickets, phone payment links and sponsor messages appear here when they are queued.','mail') ?><?php else: ?>
 <div class="table-wrap"><table class="message-table"><thead><tr><th scope="col">Recipient & message</th><th scope="col">Status</th><th scope="col">Timeline</th><th scope="col">Related record</th><th scope="col">Details</th></tr></thead><tbody>
 <?php foreach ($rows as $row): $state=$row['delivery_state']; $saved=$state==='sent' && str_starts_with((string)$row['provider_message_id'],'log:'); ?>

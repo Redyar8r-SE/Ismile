@@ -46,6 +46,12 @@ final class SponsorPackages
         return $id === null || $id === '' ? null : Db::one('SELECT * FROM sponsor_packages WHERE id = ?', [$id]);
     }
 
+    public static function standardBooth(bool $activeOnly = false): ?array
+    {
+        $package=self::find('booth-standard');
+        return $package && $package['kind']==='booth' && (!$activeOnly || $package['status']==='active')?$package:null;
+    }
+
     public static function name(?array $package, string $lang = 'en'): string
     {
         if ($package === null) {
@@ -60,9 +66,10 @@ final class SponsorPackages
     public static function create(array $in, array $user): string
     {
         self::requireOwner($user);
-        $fields = self::fields($in);
         $kind = Validate::oneOf($in['kind'] ?? null, array_keys(self::KINDS), 'sponsor');
-        $id = self::newId($kind === 'booth' && stripos($fields['name_en'], 'booth') === false ? 'booth-' . $fields['name_en'] : $fields['name_en']);
+        $fields = self::fields($in,$kind);
+        if ($kind==='booth' && self::standardBooth()!==null) throw new UserError('There is one Standard booth type. Edit its price and places instead.');
+        $id = $kind==='booth'?'booth-standard':self::newId($fields['name_en']);
         $now = App::now();
         Db::insert('sponsor_packages', $fields + [
             'id' => $id, 'kind' => $kind, 'status' => 'active',
@@ -78,7 +85,9 @@ final class SponsorPackages
     public static function update(string $id, array $in, array $user): void
     {
         self::requireOwner($user);
-        $fields = self::fields($in);
+        $package=self::find($id)??throw new UserError('Package not found.');
+        if ($package['kind']==='booth' && $id!=='booth-standard') throw new UserError('Legacy booth types are archived. Edit the Standard booth instead.');
+        $fields = self::fields($in,$package['kind']);
         Db::transaction(static function () use ($id, $fields): void {
             if (!Db::value('SELECT id FROM sponsor_packages WHERE id = ? FOR UPDATE', [$id])) {
                 throw new UserError('Package not found.');
@@ -100,6 +109,7 @@ final class SponsorPackages
         if (!in_array($status, ['active', 'hidden'], true) || self::find($id) === null) {
             throw new UserError('Package not found.');
         }
+        if ($status==='active' && self::find($id)['kind']==='booth' && $id!=='booth-standard') throw new UserError('Only the Standard booth type can be offered.');
         Db::update('sponsor_packages', ['status' => $status, 'updated_at' => App::now()], 'id = ?', [$id]);
         Audit::log((int) $user['id'], 'package.' . ($status === 'hidden' ? 'hide' : 'show'), 'sponsor_package', null, ['id' => $id]);
         self::syncWebsite();
@@ -128,8 +138,9 @@ final class SponsorPackages
     }
 
     /** The form, checked. */
-    private static function fields(array $in): array
+    private static function fields(array $in, string $kind): array
     {
+        if ($kind==='booth') $in=array_replace($in,['name_en'=>'Standard booth','style'=>'tc-exhibitor','booth_tier'=>'']);
         $text = static fn (string $key, int $max): ?string => Validate::text($in[$key] ?? '', $max) ?: null;
         $name = $text('name_en', 80);
         if ($name === null) {
@@ -197,7 +208,7 @@ final class SponsorPackages
 
     /**
      * First install: the tiers already on the website become the starting
-     * packages (price not set yet), plus four matching exhibition booth tiers.
+     * packages (price not set yet), plus one Standard exhibition booth.
      * Does nothing once the table has packages.
      */
     public static function importFromWebsite(): int
@@ -230,17 +241,8 @@ final class SponsorPackages
             $row['booth_tier'] = Validate::oneOf($item['id'], array_keys(BoothPlan::TIERS));
             Db::insert('sponsor_packages', $row);
         }
-        $order = 0;
-        foreach (BoothPlan::TIERS as $tier => $name) {
-            $source = self::find($tier);
-            Db::insert('sponsor_packages', [
-                'id' => 'booth-' . $tier, 'kind' => 'booth', 'name_en' => $name,
-                'name_ar' => $source['name_ar'] ?? null, 'name_ku' => $source['name_ku'] ?? null,
-                'price' => 0, 'places' => count(BoothPlan::numbers($tier)),
-                'style' => $source['style'] ?? 'tc-silver', 'booth_tier' => $tier,
-                'status' => 'active', 'sort_order' => ++$order, 'created_at' => $now, 'updated_at' => $now,
-            ]);
-        }
-        return $n + 4;
+        Db::insert('sponsor_packages',['id'=>'booth-standard','kind'=>'booth','name_en'=>'Standard booth','price'=>0,'places'=>0,
+            'style'=>'tc-exhibitor','booth_tier'=>null,'status'=>'active','sort_order'=>1,'created_at'=>$now,'updated_at'=>$now]);
+        return $n + 1;
     }
 }

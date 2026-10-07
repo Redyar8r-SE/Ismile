@@ -99,6 +99,8 @@ Page::top('Dashboard', 'index');
   </div>
   <div class="hero-event"><span class="hero-orbit" aria-hidden="true"><?= Page::navIcon('ticket') ?></span><span class="hero-date"><?= Page::navIcon('calendar') ?> <?= $e(date('j F Y')) ?></span><span class="hero-registration"><?= Page::pill(Registrations::isOpen() ? 'open' : 'closed') ?> Registration</span></div>
 </section>
+<?= Page::liveUpdates() ?>
+<div data-live-region="dashboard-records">
 <?= Page::stats([
     ['Registered guests', number_format($registered), $comp ? "$paid paid · $comp complimentary" : 'Paid and complimentary tickets', 'users', 'teal'],
     ['Ticket revenue', Page::money($money, $currency), 'Confirmed ticket payments', 'payments', 'blue'],
@@ -166,4 +168,5 @@ Page::top('Dashboard', 'index');
     ['Open partnerships', number_format($openSponsors), Page::money($sponsorMoney,$currency) . ' received', 'sponsors', 'blue'],
     ['Cancelled tickets', number_format($cancelled), 'Cancelled registrations', 'close', 'violet'],
 ]) ?>
+</div>
 <?php Page::bottom();

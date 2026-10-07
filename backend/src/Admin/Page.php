@@ -22,8 +22,10 @@ final class Page
         'lists'         => ['Lists', 'registrations'],
         'payments'      => ['Payments', 'payments'],
         'workshops'     => ['Workshops', 'workshops'],
-        'sponsors'      => ['Sponsors & booths', 'sponsors'],
-        'checkin'       => ['Check-in', 'checkin'],
+        'sponsors'      => ['Sponsors', 'sponsors'],
+        'booths'        => ['Booths', 'sponsors'],
+        'checkin'       => ['Registration', 'checkin'],
+        'certificates'  => ['Certificates', 'certificates'],
         'settings'      => ['Settings', 'owner'],
         'users'         => ['Users', 'owner'],
         'communications' => ['Communication center', 'communications'],
@@ -42,7 +44,9 @@ final class Page
             'payments' => '<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18M7 15h4"/>',
             'workshops' => '<path d="M12 5v16M3 4c4-1 7 0 9 2 2-2 5-3 9-2v15c-4-1-7 0-9 2-2-2-5-3-9-2Z"/>',
             'sponsors' => '<path d="M4 21V8l8-5 8 5v13M2 21h20M9 21v-5h6v5M8 9h1m6 0h1m-8 4h1m6 0h1"/>',
+            'booths' => '<rect x="3" y="8" width="18" height="13" rx="2"/><path d="M3 8l3-5h12l3 5M8 8v13m8-13v13M3 13h18"/>',
             'checkin' => '<path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5M8 12l3 3 5-6"/>',
+            'certificates' => '<circle cx="12" cy="9" r="6"/><path d="m8 14-2 7 6-3 6 3-2-7m-7-6 2 2 3-4"/>',
             'settings' => '<path d="m9 3-.7 2.2-2 .9L4 5.6 2 9l1.7 1.6v2.8L2 15l2 3.4 2.3-.5 2 .9L9 21h6l.7-2.2 2-.9 2.3.5 2-3.4-1.7-1.6v-2.8L22 9l-2-3.4-2.3.5-2-.9L15 3Z"/><circle cx="12" cy="12" r="3"/>',
             'users' => '<circle cx="9" cy="8" r="3"/><path d="M3 21v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 0 1 0 6m2 4a5 5 0 0 1 3 4v2"/>',
             'content' => '<path d="m15 4 5 5M4 20l4-1L21 6a2 2 0 0 0-5-3L3 16l-1 5Z"/>',
@@ -204,6 +208,7 @@ final class Page
         // The version follows the files' date, so a change is never hidden by the browser's cache.
         $v = static fn (string $file): int => (int) @filemtime(App::siteFile('admin/' . $file)) ?: 1;
         echo '<link rel="stylesheet" href="admin.css?v=' . $v('admin.css') . '"><script src="admin.js?v=' . $v('admin.js') . '" defer></script></head><body class="' . ($user ? 'admin-shell' : 'database-auth') . '" data-page="' . self::e($current) . '">';
+        if ($current === 'checkin') echo '<script src="vendor/jsQR.js" defer></script>';
         if ($user) {
             echo '<a class="skip-link" href="#main-content">Skip to content</a>';
             echo '<aside class="sidebar" id="admin-sidebar" aria-label="Database navigation">';
@@ -211,7 +216,7 @@ final class Page
             echo '<nav class="sidebar-nav" aria-label="Database pages">';
             $groups = [
                 'Workspace' => ['index'],
-                'Event operations' => ['registrations', 'lists', 'payments', 'workshops', 'sponsors', 'checkin'],
+                'Event operations' => ['registrations', 'lists', 'payments', 'workshops', 'sponsors', 'booths', 'checkin', 'certificates'],
                 'Database' => ['communications', 'settings', 'users', 'backups'],
             ];
             foreach ($groups as $group => $files) {
@@ -234,7 +239,7 @@ final class Page
             echo '<form method="post" action="logout.php">' . self::csrfField() . '<button class="sidebar-signout" type="submit">' . self::navIcon('logout') . '<span>Sign out</span></button></form><p class="sidebar-footnote">iSmile 2026 &middot; Team workspace</p></div></aside>';
             echo '<button class="sidebar-backdrop" type="button" aria-label="Close navigation" tabindex="-1" hidden></button><div class="workspace" id="admin-workspace"><header class="workspace-header"><div class="workspace-heading"><button class="sidebar-toggle icon-button" type="button" aria-label="Open navigation" aria-controls="admin-sidebar" aria-expanded="false" hidden>' . self::navIcon('menu') . '</button><div><span class="workspace-eyebrow">iSmile 2026</span><span class="workspace-breadcrumb">Database <span aria-hidden="true">/</span> <b>' . self::e($title) . '</b></span></div></div>';
             if (Auth::can($user, 'registrations')) {
-                echo '<form class="workspace-search" action="registrations.php" method="get" role="search">' . self::navIcon('search') . '<input type="search" name="q" aria-label="Search registrations by name, phone or reference" placeholder="Search name, phone or reference…"><button type="submit" aria-label="Search registrations">' . self::navIcon('search') . '</button></form>';
+                echo '<form data-guest-suggestions class="workspace-search" action="registrations.php" method="get" role="search">' . self::navIcon('search') . '<input type="search" name="q" aria-label="Search registrations by name, phone or reference" placeholder="Search name, phone or reference…"><button type="submit" aria-label="Search registrations">' . self::navIcon('search') . '</button></form>';
             }
             echo '<span class="workspace-status"><i aria-hidden="true"></i>' . (App::isLive() ? 'Live environment' : 'Test environment') . '</span></header>';
         } else {
@@ -247,7 +252,8 @@ final class Page
             'payments' => 'Review payments, follow up on issues and keep every amount accounted for.',
             'workshops' => 'Organise workshops, manage bookings and keep track of available seats.',
             'sponsors' => 'Build your partnerships and keep every conversation moving forward.',
-            'checkin' => 'Welcome your guests. Find a ticket or scan its QR code to check in.',
+            'booths' => 'Manage Standard booth bookings, agreed amounts, payments and follow-up calls.',
+            'checkin' => 'Welcome every guest. Follow attendance, lunch bookings and live event reports.',
             'settings' => 'Make the database work for your team. Manage registration, emails and ambassador codes.',
             'users' => 'Give your team the right access to support a smooth event.',
             'content' => 'Bring your event to life. Manage the words, photos and details your guests see.',
@@ -255,13 +261,19 @@ final class Page
             'backups' => 'Keep a copy of your event records. Check your latest successful backup and download it securely.',
             default => $user ? '' : 'Welcome to your iSmile workspace. Sign in to continue.',
         };
-        $section = $current === 'index' ? 'Overview' : (in_array($current, ['registrations', 'lists', 'payments', 'workshops', 'sponsors', 'checkin'], true) ? 'Event operations' : 'Database');
+        $section = $current === 'index' ? 'Overview' : (in_array($current, ['registrations', 'lists', 'payments', 'workshops', 'sponsors', 'booths', 'checkin'], true) ? 'Event operations' : 'Database');
         echo '<main class="page" id="main-content" tabindex="-1"><div class="page-heading"><div class="page-heading-copy">' . ($user ? '<div class="page-title-row"><span class="page-symbol">' . self::navIcon($current !== '' ? $current : 'security') . '</span><div><span class="page-kicker">' . $section . '</span><h1>' . self::e($title) . '</h1></div></div>' : '<h1>' . self::e($title) . '</h1>') . ($description !== '' ? '<p>' . self::e($description) . '</p>' : '') . '</div>' . ($actions !== '' ? '<div class="page-actions no-print">' . $actions . '</div>' : '') . '</div>';
         Auth::startSession();
         foreach ($_SESSION['flash'] ?? [] as [$kind, $message]) {
             echo '<div class="flash ' . ($kind === 'ok' ? 'ok' : 'err') . '" role="' . ($kind === 'ok' ? 'status' : 'alert') . '">' . self::e($message) . '</div>';
         }
         unset($_SESSION['flash']);
+    }
+
+    /** Read-only regions update in place while the user keeps their filters. */
+    public static function liveUpdates(): string
+    {
+        return '<div class="live-report-toolbar no-print" data-live-directory><div><span class="live-report-badge"><i></i> Live updates</span><span class="muted small">New records appear automatically</span></div><div><span data-live-directory-status role="status" aria-live="polite">Checking for updates every 5 seconds</span><button type="button" class="btn small ghost" data-live-directory-refresh>Update now</button></div></div>';
     }
 
     public static function bottom(): void

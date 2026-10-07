@@ -83,7 +83,7 @@ $e = [Page::class, 'e'];
 </div>
 
 <section class="card ledger-panel">
-<div class="panel-top"><?= Page::panelHeading('Payment ledger', 'Review each attempt, the amount received and any action needed.', 'payments') ?><div class="panel-actions"><a class="btn green" href="export.php?what=payments">Export to Excel</a></div></div>
+<div class="panel-top"><?= Page::panelHeading('Payment ledger', 'Review each attempt, the amount received and any action needed.', 'payments') ?><div class="panel-actions"><a class="btn ghost" href="export.php?what=payments&amp;format=pdf">Download PDF</a><a class="btn green" href="export.php?what=payments">Export to Excel</a></div></div>
 <div class="table-wrap">
 <table>
   <tr><th>#</th><th>Person</th><th>Method</th><th>Expected</th><th>Confirmed</th><th>Status</th><th>Company id</th><th>Started</th><th class="table-action-heading">Actions</th></tr>

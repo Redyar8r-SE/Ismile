@@ -25,7 +25,9 @@ final class Settings
         'sponsor_notify_email'  => '',
         'summit_end'            => '2026-11-21',
         'photo_keep_days'       => '90',
-        'ticket_qr_in_email'    => '0',     // QR code + PDF ticket in the email: off until the entrance check is decided
+        'ticket_qr_in_email'    => '1',     // Legacy setting; ticket emails always include the QR and PDF.
+        'event_day1'            => '2026-11-20',
+        'event_day2'            => '2026-11-21',
         'pay_link_days'         => '7',
         // Not on the Settings page: the prices the timed job last saw, so any
         // change to data/tickets.json is noticed, logged and announced.
