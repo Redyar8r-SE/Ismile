@@ -92,11 +92,16 @@ jobs:
               -o /root/ismile-test-setup.sh
             chmod +x /root/ismile-test-setup.sh
             DOMAIN=api.ismile.krd BRANCH=backend bash /root/ismile-test-setup.sh
+            runuser -u www-data -- php /opt/ismile-test/backend/tools/verify-deployment.php --source /opt/ismile-test/repo
             # Smoke: PHP admin + config API (basic auth from secrets.env)
             SP="$(grep '^SITE_PASS=' /opt/ismile-test/secrets.env | cut -d= -f2-)"
             code="$(curl -s -o /dev/null -w '%{http_code}' -u "ismile:${SP}" -H 'Host: api.ismile.krd' http://127.0.0.1:8081/admin/login.php)"
             echo "admin_login_http=${code}"
             test "$code" = "200"
+            # The QR fallback must be accessible through nginx's allow-list.
+            curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' \
+              http://127.0.0.1:8081/admin/vendor/jsQR.js | cmp - /opt/ismile-test/site/admin/vendor/jsQR.js
+            echo "qr_decoder_http=200 (matches deployed file)"
             curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' -H 'X-Forwarded-Proto: https' \
               http://127.0.0.1:8081/api/config.php | grep -q '"ok":true'
             echo "api.ismile.krd update OK"
