@@ -60,7 +60,7 @@ final class EmailText
         'program_link'      => 'See the full program',
         'entrance_title'    => 'At the entrance',
         'entrance_text'     => 'Give your name or your reference number at the registration desk.',
-        'entrance_qr'       => 'Show the QR code above at the registration desk, on your phone or printed.',
+        'entrance_qr'       => 'Show this QR at the entrance on both days, on your phone or printed. It admits you once on Day 1 and once on Day 2. Repeated check-in on the same day is blocked. Your participation certificate becomes available after check-in.',
         'entrance_student'  => 'Students: please bring your student ID card.',
         'see_you'           => 'See you in Sulaymaniyah!',
 
@@ -77,7 +77,7 @@ final class EmailText
         'pdf_reference'     => 'Reference',
         'pdf_ticket_no'     => 'Ticket no.',
         'pdf_note'          => 'Note',
-        'pdf_footer'        => 'Show this QR code at the entrance. The ticket is personal and can be used once. Tickets are non-refundable.',
+        'pdf_footer'        => 'Keep this QR for both days: one admission on Day 1 and one on Day 2. Repeat entry on the same day is blocked. Certificates require check-in. Tickets are non-refundable.',
     ];
 
     public static function words(): array

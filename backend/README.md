@@ -127,6 +127,110 @@ Database streaming checks (isolated test database only):
 
 ## Database design
 
+### Two-day QR admission and certificates
+
+The admin Registration workspace (`checkin.php`) groups Check-in, Attended,
+Guest list and Report. Registration forms and certificates remain on their
+separate pages. Guest and attendee filters include category, lunch bookings,
+student ID status, specialty, city, university, ambassador, language, payment
+status and arrival date/time/staff. PDF and Excel exports preserve these filters.
+Attended shows exact arrival timestamps in Iraq time and the staff member for
+each day. The report refreshes every 15 seconds through an authenticated,
+uncached endpoint, with cumulative Day 1/Day 2 charts, latest arrivals, guest
+breakdowns, attendance rates and lunch planning. Lunch counts represent bookings
+and event arrivals, not meals collected. Check-in staff cannot view contact
+details or ID images, or download detailed reports; existing role rules apply.
+
+Every valid ticket email includes its signed QR and PDF ticket. The same QR
+admits the guest once on Day 1 and once on Day 2. A repeat admission on the same
+day is blocked, including simultaneous scans at different desks. Name changes
+invalidate old QR versions without resetting admissions. Search helps locate
+a guest. Staff can also select **Admit without QR** after confirming the
+identity of the guest in front of them. Search accepts name, phone, registration
+reference or ticket number. This admits an existing paid or complimentary
+guest; it does not register or approve an unpaid person. Guests need no phone
+internet, but the check-in desk must stay connected to the database.
+QR and manual admissions share the same ticket lock and daily limit. Manual
+admission after a QR check-in (or vice versa) is blocked on the same day.
+The current ticket version is checked again when staff submit the form.
+Migration `2026-10-07-manual-checkin.sql` records the method on each arrival;
+Attended, guest details, reports and filtered PDF/Excel exports identify manual
+admission and retain its time and staff member. Certificates are issued by
+both methods.
+
+The live welcome desk selects the day from the server’s Asia/Baghdad date:
+20 November 2026 and 21 November 2026. Admissions outside those dates are
+rejected. Test mode offers a Day 1 / Day 2 rehearsal switch. The camera uses
+native decoding when available and a local jsQR fallback. HTTPS and camera
+permission are required. A complete QR payload can also be pasted from an
+external scanner. Staff confirm the guest’s name before admitting them.
+At 12:00 AM Iraq time on Day 2, the same QR becomes available for its second
+admission. Day 1 attendance stays recorded. Live admission always uses the
+current server date, even if a form was opened before midnight or waited on
+another scanner’s lock. An open live scanner refreshes at midnight and when
+returning from sleep after that deadline. No third-day admission is available.
+
+`ticket_attendance` has a unique `(ticket_id, event_day)` key and records
+the timestamp and staff member. Admission, certificate creation and audit
+logging share a transaction. `tickets.checked_in_at` retains the first
+arrival for existing dashboard queries. `certificates` stores one named,
+numbered certificate per registration. Attendance on either day qualifies;
+payment alone does not. The Certificate page and downloads exclude cancelled
+tickets and registrations. Correcting a name updates the certificate.
+PDFs render from these records when downloaded, using current artwork.
+
+Certificates are **never emailed automatically by attendance**. On Certificates,
+press **Send PDF by email** for one guest, or **Send all certificates by email** for everyone
+eligible. These authenticated, CSRF-protected actions queue a separate email
+and personal PDF per guest. Bulk sending skips certificates already sent or
+pending at their current email address. Individual resend is explicit; failed
+messages can be retried. The sending job checks attendance and active status
+again and skips cancelled/ineligible guests. Delivery states appear on the
+certificate list and in Communication center. Local mail-driver `log` saves
+emails and PDF attachments to private storage instead of contacting guests.
+Individual and combined PDF downloads remain available.
+
+Check-in, Registrations, Guest list, Attended and Communication center update
+their search results as staff type, after a 250 ms pause. A single letter such
+as `R` finds names beginning with that letter; typing more narrows the list.
+The welcome desk also accepts partial phone numbers, references and tickets,
+including local Iraqi phone prefixes such as `0750`. It shows the first 20
+matches. The header search offers up to eight clickable guest suggestions.
+Filters and export links update with the current search without reloading
+the page. Older responses cannot overwrite newer queries. Searching never
+admits a guest; the admission action and identity verification remain explicit.
+
+
+**Certificates** provides individual PDFs and one combined PDF with a page
+per participant. **Lists** offers individual PDF reports and **Download all
+event lists (PDF)**. Payments are included in that bundle only for roles
+with payment access. Student ID photos use their own protected PDF export;
+Finance cannot download those images. Registration exports retain current
+filters, including Day 1, Day 2, both days, and no attendance. Wide reports
+split columns into readable groups and repeat the reference in each group.
+
+The sample design is `docs/ismile-certificate-preview.pdf`. Optional final
+artwork can be installed as a PNG/JPEG in private storage and configured via
+`certificates.background` in `config.php`. The sample config documents the
+name and certificate number positions. No signature image is fabricated.
+
+Upgrade: deploy the source and run `php backend/tools/install.php` on staging
+first. Migration `2026-10-06-two-day-attendance.sql` preserves legacy arrivals
+whose dates match the two event dates and creates their certificate records.
+Other historic timestamps remain in the legacy field without assigning an
+event day. New installations include both tables and the
+`14_attendance_and_certificates` read-only database view.
+
+Focused checks (isolated `ismile_attendance_test_*` database only):
+`ISMILE_CONFIG=/path/to/test-config.php php backend/tests/attendance-certificates.php`.
+This creates fixture registrations and queued log-mode ticket emails; it does
+not send them. It verifies both admissions, concurrent scans, rollback,
+revocation, names, migration, email attachments and PDF rendering. Camera
+decoder tests use its generated fixture:
+`node backend/tests/qr-scanner.mjs /path/to/test-storage/tmp/qr-test.json`.
+These automate camera logic; test actual camera permission and QR capture on
+the event’s phones before opening the doors.
+
 ### Live exhibition map
 
 `sponsor.html#exhibition` shows the supplied 44-booth floor plan and its tier,
@@ -142,29 +246,41 @@ directory is scrollable inside its panel. Selecting a number returns to the
 map and centers its booth. Availability totals use the
 same response as the red map/table marks; unknown data shows no available count.
 
-In Sponsors or Exhibition requests, open a company, choose **Reserve booth**
-under Details and save. Assignment reserves the space immediately, even before
-payment. Choose **No booth reserved** to release it. Declined and waiting-list
-requests release their spaces; reactivating one must pass the same uniqueness
-check. Both sponsorship and exhibition requests share the same 44 spaces.
-The database unique key refuses simultaneous reservations of one booth.
+Event operations has separate **Sponsors** and **Booths** pages. Sponsors
+choose a sponsorship tier and optionally reserve a numbered position on the
+map. Assignment reserves immediately, before payment. Declined, waiting-list
+and cancelled requests release the position. The database unique key refuses
+simultaneous reservations of one sponsor position.
 
-The active sponsorship and exhibition tiers are Platinum, Gold, Silver and
-Bronze. Package `booth_tier` controls the booth selector on both staff forms.
-Platinum: 37–42; Gold: 1, 6, 24, 30, 36, 43, 44; Silver: 2–5, 7–14,
-25–28, 31–35; Bronze: 15–23, 29. `data/booth-tiers.json` supplies the public
-map/table and backend validation, so the assignments cannot drift apart.
-Migration `2026-10-06-align-booth-tiers.sql` preserves prices and request
-history while hiding old packages and adding the four matching booth types.
+Sponsorship tiers are Platinum, Gold, Silver and Bronze. Package `booth_tier`
+controls the sponsor selector. Platinum: 37?42; Gold: 1, 6, 24, 30, 36, 43, 44;
+Silver: 2?5, 7?14, 25?28, 31?35; Bronze: 15?23, 29.
+`data/booth-tiers.json` supplies the public map and backend validation.
+The public floor plan is hidden when the request is for an exhibition booth.
 
-Staff can also create companies directly: **Sponsors & booths → Sponsors →
-Add sponsor booking**, or **Exhibition (booths) → Book exhibition booth**.
-Enter company, contact and phone, choose a package/type and (for exhibition)
-a numbered booth. Email is optional. An optional agreed price starts the
-booking at Agreed; recording the full received payment starts it at Paid,
-ready for the existing Confirm action. A selected booth is reserved on save.
-Owner, Registration and Finance may use this flow. Creation is audited and
-does not send website-request notification emails.
+Booths has one **Standard booth** type, with its own price and capacity.
+Booth bookings have no sponsorship tiers or numbered map reservations.
+Migration `2026-10-07-separate-sponsors-booths.sql` moves existing exhibition
+bookings to Standard, archives previous types and audits their original
+package and booth number. Existing agreements, payments and calls are retained.
+
+Staff can create companies using **Sponsors ? Add sponsor booking** or
+**Booths ? Book exhibition booth**. Enter company, contact and phone; email
+is optional. An agreed amount starts the booking at Agreed. Recording the full
+payment starts it at Paid, ready for Confirm. Owner, Registration and Finance
+can create bookings; creation is audited and sends no request emails.
+
+**Cancel booking** requires a reason and records the time and staff member.
+Cancellation retains agreed amounts, receipts and call history, removes
+follow-up reminders and releases the sponsor map position. Only the Owner
+can cancel a booking with a recorded payment. Unpaid cancelled bookings may
+be reopened as New, with no map position assigned; paid ones remain cancelled.
+
+Dashboard, Lists, Registrations, Guest list, Attended, Sponsors and Booths refresh
+read-only results every five seconds without navigating. Current filters,
+pagination, open guest details and table scrolling are preserved. Hidden tabs
+pause updates and resume on return. Authentication remains required for each
+request; connection errors retain the last successful list and retry.
 
 Existing bookings have an **Edit details** button in the directory and on the
 company page. Staff can correct company/contact details, change the package and

@@ -28,10 +28,11 @@ $rows = Lists::rows($current);
 $counts = Lists::counts();
 $columns = Lists::columns($current);
 
-Page::top('Lists', 'lists');
+Page::top('Lists', 'lists', Auth::can($user, 'export') ? '<a class="btn green" href="export.php?what=all&amp;format=pdf">Download all event lists (PDF)</a>' : '');
 $e = [Page::class, 'e'];
 ?>
-<div class="list-workspace"><nav class="list-library no-print" aria-label="Customer lists">
+<?= Page::liveUpdates() ?>
+<div class="list-workspace" data-live-region="event-lists"><nav class="list-library no-print" aria-label="Customer lists">
   <span class="library-caption">YOUR CUSTOMER LISTS</span>
   <?php foreach (Lists::ALL as $key => [$label]): if ($key === 'studentids' && !$canPhotos) { continue; } ?>
     <a class="library-link<?= $key === $current ? ' on' : '' ?>"<?= $key === $current ? ' aria-current="page"' : '' ?> href="lists.php?list=<?= $e($key) ?>"><?= Page::navIcon(match($key){'lunch1','lunch2'=>'lunch','workshops'=>'workshops','sponsors','exhibition'=>'sponsors','students','studentids'=>'users','cancelled'=>'close',default=>'registrations'}) ?><span><?= $e($label) ?></span><b><?= (int) ($counts[$key] ?? 0) ?></b></a>
@@ -46,6 +47,7 @@ $e = [Page::class, 'e'];
     </div>
     <div class="toolbar no-print">
       <button class="btn ghost" type="button" data-print>Print</button>
+      <?php if (Auth::can($user, 'export')): ?><a class="btn ghost" href="export.php?what=list&amp;list=<?= $e($current) ?>&amp;format=pdf">Download PDF</a><?php endif; ?>
       <?php if (Auth::can($user, 'export')): ?><a class="btn green" href="export.php?what=list&amp;list=<?= $e($current) ?>">Export to Excel</a><?php endif; ?>
     </div>
   </div>
@@ -96,7 +98,7 @@ $e = [Page::class, 'e'];
   <div class="table-wrap"><table class="name-list">
     <tr><th>#</th><th>Company</th><?php foreach ($columns as $label): ?><th><?= $e($label) ?></th><?php endforeach; ?></tr>
     <?php foreach ($rows as $i => $row): ?>
-    <tr><td><?= $i + 1 ?></td><td><a href="sponsors.php?id=<?= (int) $row['id'] ?>"><b><?= $e($row['company']) ?></b></a></td>
+    <tr><td><?= $i + 1 ?></td><td><a href="<?= $current==='exhibition'?'booths.php':'sponsors.php' ?>?id=<?= (int) $row['id'] ?>"><b><?= $e($row['company']) ?></b></a></td>
       <?php foreach (array_keys($columns) as $key): ?><td<?= in_array($key, ['phone', 'email'], true) ? ' dir="ltr"' : '' ?>><?= match ($key) {
             'ref', 'ticket_no' => $row[$key] ? '<code>' . $e($row[$key]) . '</code>' : '–',
             'paid_at', 'created_at' => Page::when($row[$key]),

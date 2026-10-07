@@ -148,3 +148,6 @@ html[dir="rtl"] :is(.exhibition-map-panel, .exhibition-table-panel) { direction:
   .booth-mobile-label { display: block; margin-bottom: 5px; color: var(--muted); font-size: 9px; font-weight: 400; line-height: 1.5; }
 }
 @media (prefers-reduced-motion: reduce) { .map-booth polygon, .booth-number { transition: none; } }
+
+/* Only sponsorship requests use the floor plan. */
+.exhibition[hidden] { display: none; }

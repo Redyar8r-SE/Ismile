@@ -34,6 +34,7 @@ final class BoothPlan
     public static function check(?array $package, ?string $number): void
     {
         if ($number === null) return;
+        if (($package['kind']??null)==='booth') throw new UserError('Only sponsors use numbered positions on the map.');
         if ($package === null || !in_array((int) $number, self::numbers($package['booth_tier'] ?? null), true)) {
             throw new UserError('Choose a booth number that belongs to the selected package.');
         }

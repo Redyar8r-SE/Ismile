@@ -288,6 +288,33 @@ CREATE TABLE IF NOT EXISTS tickets (
 -- 5. WORKSHOPS AND SPONSORS
 -- ============================================================================
 
+CREATE TABLE IF NOT EXISTS ticket_attendance (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  ticket_id INT UNSIGNED NOT NULL,
+  event_day TINYINT UNSIGNED NOT NULL,
+  checked_in_at DATETIME NOT NULL,
+  checked_in_by INT UNSIGNED NULL,
+  checkin_method ENUM('signed_qr','manual_lookup') NOT NULL DEFAULT 'signed_qr',
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_attendance_ticket_day (ticket_id, event_day),
+  KEY k_attendance_day_time (event_day, checked_in_at),
+  CONSTRAINT fk_attendance_ticket FOREIGN KEY (ticket_id) REFERENCES tickets (id),
+  CONSTRAINT fk_attendance_staff FOREIGN KEY (checked_in_by) REFERENCES admin_users (id),
+  CONSTRAINT ck_attendance_day CHECK (event_day IN (1, 2))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS certificates (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  registration_id INT UNSIGNED NOT NULL,
+  certificate_no VARCHAR(40) NOT NULL,
+  recipient_name VARCHAR(190) NOT NULL,
+  issued_at DATETIME NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_certificate_registration (registration_id),
+  UNIQUE KEY uq_certificate_no (certificate_no),
+  CONSTRAINT fk_certificate_registration FOREIGN KEY (registration_id) REFERENCES registrations (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- The workshops themselves. Added, changed and hidden on the admin's
 -- Workshops page (Owner); the website's workshop cards are made from this
 -- table automatically. total_seats is the limit: nobody can book past it.
@@ -356,8 +383,8 @@ CREATE TABLE IF NOT EXISTS workshop_bookings (
   COMMENT='Workshop bookings (by phone)';
 
 -- The sponsorship packages (Diamond, Platinum, Gold, Silver…) and the
--- exhibition booth types, each with its price and number of places. Managed
--- by the Owner on the admin's Sponsors page; the website's tier cards are made
+-- single Standard exhibition booth, with its price and capacity. Managed
+-- by the Owner on separate Sponsors and Booths pages; the website's tier cards are made
 -- from this table automatically.
 CREATE TABLE IF NOT EXISTS sponsor_packages (
   id           VARCHAR(40)        NOT NULL,                   -- short name, e.g. "gold", "booth-standard"
@@ -376,9 +403,12 @@ CREATE TABLE IF NOT EXISTS sponsor_packages (
   sort_order   SMALLINT UNSIGNED  NOT NULL DEFAULT 0,
   created_at   DATETIME           NOT NULL,
   updated_at   DATETIME           NOT NULL,
+  active_booth_type VARCHAR(8) AS (IF(kind='booth' AND status='active','standard',NULL)) STORED,
   PRIMARY KEY (id),
   KEY k_package_kind (kind, status, sort_order),
-  CONSTRAINT ck_package_id CHECK (id REGEXP '^[a-z0-9-]{2,40}$')
+  UNIQUE KEY uq_active_booth_type (active_booth_type),
+  CONSTRAINT ck_package_id CHECK (id REGEXP '^[a-z0-9-]{2,40}$'),
+  CONSTRAINT ck_standard_booth CHECK (kind<>'booth' OR status='hidden' OR (id='booth-standard' AND booth_tier IS NULL))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Sponsor packages and booth types, with prices';
 
@@ -401,16 +431,16 @@ CREATE TABLE IF NOT EXISTS sponsor_requests (
   message        TEXT          NULL,
   lang           ENUM('en','ar','ku') NOT NULL DEFAULT 'en',
   -- where it stands
-  status         ENUM('new','contacted','agreed','paid','confirmed','declined','waiting_list') NOT NULL DEFAULT 'new',
+  status         ENUM('new','contacted','agreed','paid','confirmed','declined','waiting_list','cancelled') NOT NULL DEFAULT 'new',
   assigned_to    INT UNSIGNED  NULL,                           -- the team member handling it
   price_quoted   INT UNSIGNED  NULL,                           -- IQD, the amount last told on the phone
   amount_agreed  INT UNSIGNED  NULL,                           -- IQD, the amount they agreed to pay
   amount_paid    INT UNSIGNED  NULL,                           -- IQD, received
   paid_how       ENUM('cash','transfer','psoola','other') NULL,
   paid_at        DATETIME      NULL,
-  booth_number   VARCHAR(20)   NULL,                           -- where their booth is (exhibition)
-  -- Reserve immediately when assigned. Declined / waiting-list releases it.
-  reserved_booth  VARCHAR(20) AS (IF(status NOT IN ('declined','waiting_list') AND booth_number IS NOT NULL,
+  booth_number   VARCHAR(20)   NULL,                           -- sponsor map position; legacy exhibitor labels retained
+  -- Only sponsors reserve. Declined / waiting-list / cancelled release it.
+  reserved_booth  VARCHAR(20) AS (IF(kind='sponsor' AND status NOT IN ('declined','waiting_list','cancelled') AND booth_number IS NOT NULL,
     TRIM(LEADING '0' FROM TRIM(booth_number)), NULL)) STORED,
   last_call_at   DATETIME      NULL,
   next_call_at   DATETIME      NULL,                           -- when to call them again
@@ -418,6 +448,9 @@ CREATE TABLE IF NOT EXISTS sponsor_requests (
   created_ip     VARCHAR(45)   NULL,
   created_at     DATETIME      NOT NULL,
   updated_at     DATETIME      NOT NULL,
+  cancelled_at   DATETIME      NULL,
+  cancelled_by   INT UNSIGNED  NULL,
+  cancellation_reason VARCHAR(500) NULL,
   PRIMARY KEY (id),
   UNIQUE KEY uq_sponsor_ref (ref),
   UNIQUE KEY uq_sponsor_reserved_booth (reserved_booth),
@@ -425,9 +458,11 @@ CREATE TABLE IF NOT EXISTS sponsor_requests (
   KEY k_sponsor_package (kind, package_id, status),            -- places taken per package
   KEY k_sponsor_next_call (next_call_at),                      -- "calls due today"
   CONSTRAINT fk_sponsor_assigned FOREIGN KEY (assigned_to) REFERENCES admin_users (id),
+  CONSTRAINT fk_sponsor_cancelled_by FOREIGN KEY (cancelled_by) REFERENCES admin_users (id),
   CONSTRAINT fk_sponsor_package  FOREIGN KEY (package_id)  REFERENCES sponsor_packages (id),
   CONSTRAINT ck_sponsor_paid CHECK (status NOT IN ('paid','confirmed') OR (amount_paid IS NOT NULL AND paid_at IS NOT NULL AND paid_how IS NOT NULL)),
-  CONSTRAINT ck_sponsor_agreed CHECK (status NOT IN ('agreed','paid','confirmed') OR amount_agreed IS NOT NULL)
+  CONSTRAINT ck_sponsor_agreed CHECK (status NOT IN ('agreed','paid','confirmed') OR amount_agreed IS NOT NULL),
+  CONSTRAINT ck_sponsor_cancelled CHECK (status<>'cancelled' OR (cancelled_at IS NOT NULL AND cancelled_by IS NOT NULL AND cancellation_reason IS NOT NULL AND CHAR_LENGTH(TRIM(cancellation_reason))>0))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Sponsor and booth requests';
 
@@ -460,7 +495,7 @@ CREATE TABLE IF NOT EXISTS sponsor_calls (
 -- time from the registration, so a resend after fixing an address is right.
 CREATE TABLE IF NOT EXISTS emails (
   id                   INT UNSIGNED      NOT NULL AUTO_INCREMENT,
-  kind                 VARCHAR(30)       NOT NULL,             -- ticket, pay_now, alert, sponsor_received, sponsor_notify
+  kind                 VARCHAR(30)       NOT NULL,             -- ticket, certificate, pay_now, alert, sponsor_received, sponsor_notify
   registration_id      INT UNSIGNED      NULL,
   checkout_id          INT UNSIGNED      NULL,                 -- a "pay now" link for a phone registration
   sponsor_request_id   INT UNSIGNED      NULL,
@@ -582,9 +617,22 @@ SELECT
   r.paid_at                                                          AS `Paid on`,
   t.ticket_no                                                        AS `Ticket number`,
   t.checked_in_at                                                    AS `Arrived at the door`,
+  (SELECT a.checked_in_at FROM ticket_attendance a WHERE a.ticket_id=t.id AND a.event_day=1) AS `Day 1 arrival`,
+  (SELECT a.checked_in_at FROM ticket_attendance a WHERE a.ticket_id=t.id AND a.event_day=2) AS `Day 2 arrival`,
   IF(r.terms_accepted_at IS NULL, '', 'Yes')                         AS `Accepted no-refund terms`
 FROM registrations r
 LEFT JOIN tickets t ON t.registration_id = r.id;
+
+CREATE OR REPLACE SQL SECURITY DEFINER VIEW `14_attendance_and_certificates` AS
+SELECT r.ref AS `Reference`, CONCAT_WS(' ', r.first_name, r.father_name, r.grandfather_name) AS `Full name`,
+       t.ticket_no AS `Ticket`,
+       (SELECT a.checked_in_at FROM ticket_attendance a WHERE a.ticket_id=t.id AND a.event_day=1) AS `Day 1 arrival`,
+       (SELECT a.checked_in_at FROM ticket_attendance a WHERE a.ticket_id=t.id AND a.event_day=2) AS `Day 2 arrival`,
+       (SELECT a.checkin_method FROM ticket_attendance a WHERE a.ticket_id=t.id AND a.event_day=1) AS `Day 1 check-in method`,
+       (SELECT a.checkin_method FROM ticket_attendance a WHERE a.ticket_id=t.id AND a.event_day=2) AS `Day 2 check-in method`,
+       c.certificate_no AS `Certificate`, c.issued_at AS `Certificate issued`
+FROM registrations r JOIN tickets t ON t.registration_id=r.id LEFT JOIN certificates c ON c.registration_id=r.id
+WHERE r.status IN ('paid','complimentary') AND t.cancelled_at IS NULL;
 
 -- The caterer's lists.
 CREATE OR REPLACE SQL SECURITY DEFINER VIEW `02_lunch_day_1` AS
@@ -648,7 +696,7 @@ SELECT
   s.phone                                                AS `Phone`,
   s.email                                                AS `Email`,
   CASE s.status WHEN 'new' THEN 'New' WHEN 'contacted' THEN 'Contacted' WHEN 'agreed' THEN 'Agreed'
-    WHEN 'paid' THEN 'Paid' WHEN 'confirmed' THEN 'Confirmed' WHEN 'declined' THEN 'Declined' ELSE 'Waiting list' END AS `Status`,
+    WHEN 'paid' THEN 'Paid' WHEN 'confirmed' THEN 'Confirmed' WHEN 'declined' THEN 'Declined' WHEN 'cancelled' THEN 'Cancelled' ELSE 'Waiting list' END AS `Status`,
   s.price_quoted                                         AS `Price told (IQD)`,
   s.amount_agreed                                        AS `Agreed (IQD)`,
   s.amount_paid                                          AS `Paid (IQD)`,
@@ -666,13 +714,12 @@ CREATE OR REPLACE SQL SECURITY DEFINER VIEW `08_exhibition` AS
 SELECT
   s.ref                                                  AS `Reference`,
   s.company                                              AS `Company`,
-  COALESCE(p.name_en, 'Booth (type not chosen)')         AS `Booth type`,
-  s.booth_number                                         AS `Booth number`,
+  'Standard booth'                                       AS `Booth type`,
   s.contact_name                                         AS `Contact person`,
   s.phone                                                AS `Phone`,
   s.email                                                AS `Email`,
   CASE s.status WHEN 'new' THEN 'New' WHEN 'contacted' THEN 'Contacted' WHEN 'agreed' THEN 'Agreed'
-    WHEN 'paid' THEN 'Paid' WHEN 'confirmed' THEN 'Confirmed' WHEN 'declined' THEN 'Declined' ELSE 'Waiting list' END AS `Status`,
+    WHEN 'paid' THEN 'Paid' WHEN 'confirmed' THEN 'Confirmed' WHEN 'declined' THEN 'Declined' WHEN 'cancelled' THEN 'Cancelled' ELSE 'Waiting list' END AS `Status`,
   s.price_quoted                                         AS `Price told (IQD)`,
   s.amount_agreed                                        AS `Agreed (IQD)`,
   s.amount_paid                                          AS `Paid (IQD)`,

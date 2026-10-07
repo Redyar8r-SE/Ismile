@@ -47,6 +47,9 @@ final class Office
         Audit::log((int) $user['id'], 'registration.edit', 'registration', (int) $registration['id'], $changes);
 
         $nameChanged = isset($changes['first_name']) || isset($changes['father_name']) || isset($changes['grandfather_name']);
+        if ($nameChanged) {
+            Db::run('UPDATE certificates SET recipient_name = ? WHERE registration_id = ?', [trim($first . ' ' . $father . ' ' . $grandfather), $registration['id']]);
+        }
         $ticket = Tickets::forRegistration((int) $registration['id']);
         if ($nameChanged && $ticket && $ticket['cancelled_at'] === null) {
             // A new version: the old QR (with the old name) stops working at the door.

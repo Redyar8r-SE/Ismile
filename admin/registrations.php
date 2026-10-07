@@ -34,7 +34,7 @@ $overview = Db::one("SELECT COALESCE(SUM(status IN ('paid','complimentary')),0) 
 Page::top('Registrations', 'registrations', Auth::can($user,'edit') ? '<a class="btn" href="registration.php?new=1">+ Register a caller (phone)</a>' : '');
 $e = [Page::class, 'e'];
 $select = static function (string $name, array $options, string $current): string {
-    $label = ['type'=>'Ticket type', 'status'=>'Registration status', 'lunch'=>'Lunch', 'city'=>'City', 'lang'=>'Language', 'dup'=>'Duplicates', 'email'=>'Email delivery'][$name] ?? $name;
+    $label = ['type'=>'Ticket type', 'status'=>'Registration status', 'lunch'=>'Lunch', 'city'=>'City', 'lang'=>'Language', 'dup'=>'Duplicates', 'email'=>'Email delivery', 'attendance'=>'Attendance'][$name] ?? $name;
     $html = '<label class="filter-field"><span>' . Page::e($label) . '</span><select name="' . $name . '">';
     foreach ($options as $value => $label) {
         $html .= '<option value="' . Page::e($value) . '"' . ((string) $value === $current ? ' selected' : '') . '>' . Page::e($label) . '</option>';
@@ -42,13 +42,16 @@ $select = static function (string $name, array $options, string $current): strin
     return $html . '</select></label>';
 };
 ?>
+<?= Page::liveUpdates() ?>
+<div data-live-region="registration-totals">
 <?= Page::stats([
     ['Registered guests', number_format((int)$overview['registered']), 'Paid and complimentary tickets', 'users', 'teal'],
     ['Professionals', number_format((int)$overview['professionals']), 'Registered professional guests', 'registrations', 'blue'],
     ['Students', number_format((int)$overview['students']), 'Registered student guests', 'workshops', 'violet'],
     ['Cancelled', number_format((int)$overview['cancelled']), 'Cancelled registrations', 'close', 'gold'],
 ]) ?>
-<form class="filters card filter-panel" method="get">
+</div>
+<form class="filters card filter-panel" method="get" data-instant-search data-search-regions="registration-totals registration-directory">
   <?= Page::panelHeading('Find the right guest', 'Search your directory or narrow it down with the filters below.', 'search') ?>
   <label class="filter-field filter-search"><span>Name, phone, email or reference</span><input type="search" name="q" value="<?= $e($in['q']) ?>" placeholder="Search your guests…" autofocus></label>
   <?= $select('type', ['' => 'Any ticket', 'professional' => 'Professional', 'student' => 'Student'], $in['type']) ?>
@@ -58,13 +61,18 @@ $select = static function (string $name, array $options, string $current): strin
   <?= $select('lang', ['' => 'Any language', 'en' => 'English', 'ar' => 'Arabic', 'ku' => 'Kurdish'], $in['lang']) ?>
   <?= $select('dup', ['' => 'All', '1' => 'Possible duplicates'], $in['dup']) ?>
   <?= $select('email', ['' => 'Any email state', 'failed' => 'Email failed'], $in['email']) ?>
+  <?= $select('attendance', ['' => 'Any attendance', 'attended' => 'Attended either day', 'day1' => 'Attended Day 1', 'day2' => 'Attended Day 2', 'both' => 'Attended both days', 'none' => 'Never attended'], $in['attendance']) ?>
   <div class="form-actions filter-actions"><a class="btn ghost" href="registrations.php">Clear filters</a><button class="btn">Search</button></div>
 </form>
 
+<div data-live-region="registration-directory">
 <section class="card directory-panel"><div class="toolbar list-head">
   <div><h2>Guest directory <span class="result-count"><?= $total ?></span></h2><p class="muted small">Showing the registrations that match your filters.</p></div>
   <?php if (Auth::can($user, 'export')): ?>
+  <div class="directory-export-actions">
+    <a class="btn ghost" href="export.php?<?= $e(RegistrationQuery::queryString($in, ['what' => 'registrations', 'format' => 'pdf'])) ?>">Download PDF (this list)</a>
     <a class="btn green" href="export.php?<?= $e(RegistrationQuery::queryString($in, ['what' => 'registrations'])) ?>">Export to Excel (this list)</a>
+  </div>
   <?php endif; ?>
 </div>
 
@@ -72,7 +80,7 @@ $select = static function (string $name, array $options, string $current): strin
 <table>
   <tr><th>Reference</th><th>Name</th><th>Phone</th><th>Ticket</th><th>Lunch</th><th>Status</th><th>Ticket no.</th><th>Registered</th></tr>
   <?php foreach ($rows as $row): ?>
-  <tr>
+  <tr data-registration-result>
     <td><a href="registration.php?id=<?= (int) $row['id'] ?>"><code><?= $e($row['ref']) ?></code></a>
       <?= $row['possible_duplicate'] ? ' <span class="pill violet" title="Same email or phone as another registration">duplicate?</span>' : '' ?></td>
     <td><div class="guest-cell"><span class="guest-avatar" aria-hidden="true"><?= $e(mb_strtoupper(mb_substr($row['first_name'],0,1))) ?></span><div><a href="registration.php?id=<?= (int) $row['id'] ?>"><b><?= $e(Registrations::fullName($row)) ?></b></a><small><?= Page::paidBadge($row['status']) ?></small></div></div></td>
@@ -95,4 +103,5 @@ $select = static function (string $name, array $options, string $current): strin
   <?php if ($offset + $perPage < $total): ?><a class="btn ghost" href="?<?= $e(RegistrationQuery::queryString($in, ['page' => $pageNo + 1])) ?>">Next →</a><?php endif; ?>
 </div>
 <?php endif; ?>
+</div>
 <?php Page::bottom();

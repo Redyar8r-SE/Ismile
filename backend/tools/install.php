@@ -79,8 +79,8 @@ $imported = \Ismile\Workshops::importFromWebsite();
 if ($imported > 0) {
     echo "Workshops copied from the website: $imported\n";
 }
-// 5. The sponsor packages the same way (the tiers on the website, plus one
-//    four matching exhibition tiers). Their prices are set in the admin.
+// 5. Sponsor tiers from the website plus one Standard exhibition booth type.
+//    Their prices are set on the separate Sponsors and Booths admin pages.
 $imported = \Ismile\SponsorPackages::importFromWebsite();
 \Ismile\SponsorPackages::syncWebsite();
 if ($imported > 0) {

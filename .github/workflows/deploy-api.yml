@@ -82,6 +82,10 @@ jobs:
           script: |
             set -euo pipefail
             cd /root
+            # Save the existing database before applying schema migrations.
+            if [ -f /opt/ismile-test/backend/bootstrap.php ] && [ -f /opt/ismile-test/backend/config.php ]; then
+              runuser -u www-data -- php -r 'require $argv[1]; \Ismile\Backup::run(); echo "Pre-deployment database backup saved.\n";' /opt/ismile-test/backend/bootstrap.php
+            fi
             # Idle unattended-upgrade-shutdown holds dpkg locks forever; stop it.
             systemctl stop unattended-upgrades 2>/dev/null || true
             curl -fsSL "https://raw.githubusercontent.com/Redyar8r-SE/Ismile/backend/backend/tools/vps/setup-test-site.sh" \

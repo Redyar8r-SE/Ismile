@@ -50,15 +50,15 @@ if ($database) {
             'created_at' => App::now(), 'updated_at' => App::now(),
         ]);
     };
-    $first = $make('booth', 'Private exhibitor');
+    $first = $make('sponsor', 'Private sponsor one');
     $second = $make('sponsor', 'Private sponsor');
-    $save = static fn (int $id, string $number) => Sponsors::saveDetails($id, ['booth_number' => $number, 'package_id' => Sponsors::find($id)['kind'] === 'booth' ? 'booth-silver' : 'silver'], $owner);
+    $save = static fn (int $id, string $number) => Sponsors::saveDetails($id, ['booth_number' => $number, 'package_id' => 'silver'], $owner);
     $save($first, '08');
     $check('assignment reserves immediately while request is New', Sponsors::find($first)['status'] === 'new' && Sponsors::bookedBooths() === [8]);
     $check('normalizes the stored booth number', Sponsors::find($first)['booth_number'] === '8');
     $public = json_encode(['ok' => true, 'booked' => Sponsors::bookedBooths()]);
     $check('public state contains only booked numbers', $public === '{"ok":true,"booked":[8]}');
-    $check('sponsors and exhibitors cannot occupy the same booth', $rejects(static fn () => $save($second, '8')));
+    $check('two sponsors cannot occupy the same map position', $rejects(static fn () => $save($second, '8')));
     $check('failed assignment leaves second request unchanged', Sponsors::find($second)['booth_number'] === null);
     $check('database also rejects bypassing staff validation', (static function () use ($second): bool {
         try { Db::run('UPDATE sponsor_requests SET booth_number = ? WHERE id = ?', ['008', $second]); return false; }
@@ -86,13 +86,13 @@ if ($database) {
     $check('reservation changes are audited', (int) Db::value("SELECT COUNT(*) FROM audit_log WHERE action = 'sponsor.details'") >= 5);
 
     $staffInput = [
-        'kind' => 'booth', 'package_id' => 'booth-gold', 'company' => 'Office company',
+        'kind' => 'sponsor', 'package_id' => 'gold', 'company' => 'Office company',
         'contact' => 'Office contact', 'phone' => '0750 111 2233', 'email' => '',
         'booth_number' => '44', 'amount_agreed' => '6000000', 'notes' => 'Booked directly with the office.',
     ];
     $emailCount = (int) Db::value('SELECT COUNT(*) FROM emails');
     $manual = Sponsors::createByStaff($staffInput, $owner);
-    $check('staff creates a booth booking without a website request', $manual['kind'] === 'booth' && $manual['company'] === 'Office company');
+    $check('staff creates a sponsor booking without a website request', $manual['kind'] === 'sponsor' && $manual['company'] === 'Office company');
     $check('staff booking reserves its booth immediately', Sponsors::bookedBooths() === [44]);
     $check('agreed price is stored without claiming payment', $manual['status'] === 'agreed' && (int) $manual['amount_agreed'] === 6000000 && $manual['amount_paid'] === null);
     $check('email is optional for an office booking', $manual['email'] === '');
@@ -104,9 +104,8 @@ if ($database) {
     $check('office booking does not enqueue unsolicited emails', (int) Db::value('SELECT COUNT(*) FROM emails') === $emailCount);
 
     foreach ([
-        'missing booth' => ['booth_number' => ''],
-        'wrong package kind' => ['package_id' => 'gold'],
-        'wrong tier booth number' => ['package_id' => 'booth-platinum', 'booth_number' => '8'],
+        'wrong package kind' => ['package_id' => 'booth-standard'],
+        'wrong tier booth number' => ['package_id' => 'platinum', 'booth_number' => '8'],
         'missing company' => ['company' => ''],
         'invalid phone' => ['phone' => '123'],
         'invalid email' => ['email' => 'invalid'],
@@ -133,7 +132,7 @@ if ($database) {
     ];
     foreach ($expected as $tier => $numbers) {
         $check($tier . ' matches the screenshot numbers', Ismile\BoothPlan::numbers($tier) === $numbers);
-        foreach ([$tier, 'booth-' . $tier] as $packageId) {
+        foreach ([$tier] as $packageId) {
             $check($packageId . ' has the same tier and number count', Ismile\SponsorPackages::find($packageId)['booth_tier'] === $tier && (int) Ismile\SponsorPackages::find($packageId)['places'] === count($numbers));
         }
     }
@@ -180,9 +179,46 @@ if ($database) {
         $check($role . ' cannot edit bookings', $rejects(static fn () => Sponsors::saveDetails($upgradeId, $upgrade, ['id' => $ownerId, 'role' => $role])));
         $check($role . ' cannot record balance payments', $rejects(static fn () => Sponsors::recordPayment($upgradeId, ['amount_paid' => '1000000', 'paid_how' => 'cash'], ['id' => $ownerId, 'role' => $role])));
     }
-    Sponsors::saveDetails((int) $manual['id'], ['package_id' => 'booth-platinum', 'booth_number' => '42', 'amount_agreed' => '7000000'], $registration);
-    $check('exhibition bookings can also change their tier and agreed total', Sponsors::find((int) $manual['id'])['package_id'] === 'booth-platinum' && (int) Sponsors::find((int) $manual['id'])['amount_agreed'] === 7000000 && Sponsors::bookedBooths() === [38,42]);
+    Sponsors::saveDetails((int) $manual['id'], ['package_id' => 'platinum', 'booth_number' => '42', 'amount_agreed' => '7000000'], $registration);
+    $check('sponsor bookings can change their tier and agreed total', Sponsors::find((int) $manual['id'])['package_id'] === 'platinum' && (int) Sponsors::find((int) $manual['id'])['amount_agreed'] === 7000000 && Sponsors::bookedBooths() === [38,42]);
     Sponsors::changeStatus($manual, 'declined', $owner);
     Sponsors::changeStatus($manualSponsor, 'declined', $owner);
+
+    $standard=Ismile\SponsorPackages::standardBooth(true);
+    $check('only Standard booth is offered',count(Ismile\SponsorPackages::all('booth',false))===1 && $standard['name_en']==='Standard booth' && $standard['booth_tier']===null);
+    $boothInput=array_replace($staffInput,['kind'=>'booth','company'=>'Standard exhibitor','package_id'=>'booth-platinum','booth_number'=>'']);
+    $booth= Sponsors::createByStaff($boothInput,$registration);
+    $check('an exhibition booking uses Standard booth without a map position',$booth['package_id']==='booth-standard' && $booth['booth_number']===null && Sponsors::bookedBooths()===[]);
+    $check('exhibitors cannot reserve a sponsorship map position',$rejects(static fn()=>Sponsors::createByStaff(array_replace($boothInput,['booth_number'=>'8']),$owner)) && $rejects(static fn()=>Sponsors::saveDetails((int)$booth['id'],['booth_number'=>'8'],$owner)));
+    $check('owner cannot create another booth type',$rejects(static fn()=>Ismile\SponsorPackages::create(['kind'=>'booth','name_en'=>'Platinum'],$owner)));
+    $check('database also refuses a second active booth type',(static function() use($standard): bool {
+        unset($standard['active_booth_type']);$standard['id']='booth-forbidden';
+        try{Db::insert('sponsor_packages',$standard);return false;}catch(PDOException){return true;}
+    })());
+    $cancelled= Sponsors::createByStaff(array_replace($staffInput,['company'=>'Withdrawn sponsor','package_id'=>'silver','booth_number'=>'8','amount_agreed'=>'1000000']),$registration);
+    $cancelledId=(int)$cancelled['id'];
+    Sponsors::logCall($cancelledId,['outcome'=>'reached','note'=>'They discussed their withdrawal.','next_call_at'=>'2026-10-01T09:00'],$registration);
+    $check('cancellation requires a reason',$rejects(static fn()=>Sponsors::cancel($cancelledId,' ',$registration)));
+    $check('check-in staff cannot cancel a company booking',$rejects(static fn()=>Sponsors::cancel($cancelledId,'Withdrew',['id'=>$ownerId,'role'=>'checkin'])));
+    Sponsors::cancel($cancelledId,'Company withdrew after agreeing the amount.',$registration);
+    $withdrawn= Sponsors::find($cancelledId);
+    $check('agreed sponsor can be cancelled with staff, time and reason',$withdrawn['status']==='cancelled' && (int)$withdrawn['cancelled_by']===$ownerId && $withdrawn['cancelled_at']!==null && $withdrawn['cancellation_reason']==='Company withdrew after agreeing the amount.');
+    $check('cancellation preserves agreed price and call history',(int)$withdrawn['amount_agreed']===1000000 && count(Sponsors::calls($cancelledId))===1);
+    $check('cancellation releases map position and clears follow-up calls',Sponsors::bookedBooths()===[] && $withdrawn['reserved_booth']===null && $withdrawn['booth_number']==='8' && $withdrawn['next_call_at']===null);
+    Sponsors::cancel($cancelledId,'Second click',$registration);
+    $check('duplicate cancellation is harmless and audited once',(int)Db::value("SELECT COUNT(*) FROM audit_log WHERE action='sponsor.cancel' AND target_id=?",[$cancelledId])===1);
+    $check('cancelled bookings cannot be paid or silently reactivated by calls',$rejects(static fn()=>Sponsors::recordPayment($cancelledId,['amount_paid'=>'1000000','paid_how'=>'cash'],$owner)) && $rejects(static fn()=>Sponsors::logCall($cancelledId,['outcome'=>'agreed','amount'=>'1000000'],$owner)));
+    Sponsors::saveDetails($cancelledId,['package_id'=>'silver','booth_number'=>'8','amount_agreed'=>'1200000','next_call_at'=>'2026-10-01T09:00'],$owner);
+    $check('editing details cannot reactivate a cancelled booking',Sponsors::find($cancelledId)['status']==='cancelled' && Sponsors::find($cancelledId)['next_call_at']===null && Sponsors::bookedBooths()===[]);
+    $newHolder= Sponsors::createByStaff(array_replace($staffInput,['company'=>'New sponsor holder','package_id'=>'silver','booth_number'=>'8']),$owner);
+    Sponsors::changeStatus(Sponsors::find($cancelledId),'new',$registration);
+    $check('reopening does not steal a map position already reused',Sponsors::find($cancelledId)['status']==='new' && Sponsors::find($cancelledId)['booth_number']===null && Sponsors::bookedBooths()===[8]);
+    Sponsors::cancel((int)$booth['id'],'Exhibitor withdrew',$finance);
+    $check('agreed Standard booth bookings can also be cancelled',Sponsors::find((int)$booth['id'])['status']==='cancelled');
+    $paid= Sponsors::createByStaff(array_replace($boothInput,['company'=>'Paid exhibitor','paid_how'=>'cash']),$owner);
+    $check('only the owner can cancel a booking with money received',$rejects(static fn()=>Sponsors::cancel((int)$paid['id'],'Withdrew',$finance)));
+    Sponsors::cancel((int)$paid['id'],'Owner approved cancellation',$owner);
+    $check('paid cancellation retains money and payment method',Sponsors::find((int)$paid['id'])['status']==='cancelled' && (int)Sponsors::find((int)$paid['id'])['amount_paid']===6000000 && Sponsors::find((int)$paid['id'])['paid_how']==='cash');
+    $check('paid cancellation cannot reopen or remove its money',$rejects(static fn()=>Sponsors::changeStatus(Sponsors::find((int)$paid['id']),'new',$owner)));
 }
 echo "$passed checks passed.\n";

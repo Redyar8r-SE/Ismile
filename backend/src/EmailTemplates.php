@@ -37,6 +37,20 @@ final class EmailTemplates
             $checkout = $email['checkout_id'] ? Checkouts::find((int) $email['checkout_id']) : null;
             return $checkout ? self::payNow($checkout) : null;
         }
+        if ($kind === 'certificate') {
+            $registration = Registrations::find((int)$email['registration_id']);
+            $rows = Certificates::rows((int)$email['registration_id']);
+            if ($registration === null || !$rows) return null;
+            $name = Registrations::fullName($registration);
+            $vars = ['{ref}'=>$registration['ref']];
+            $html = self::layout('Dear '.S::e($name).',', [
+                '<p>Thank you for attending iSmile 2026. Your personal Certificate of Participation is attached as a PDF.</p>',
+                self::box('Your certificate', [['Name',$name],['Reference',$registration['ref']],['Certificate number',$rows[0]['certificate_no']],['Attendance',$rows[0]['attended_days']]], '#e4f6f5', '#0c6f6b'),
+                '<p>With appreciation,<br>iSmile Organizing Committee</p>',
+            ], null, $vars);
+            return ['to'=>$registration['email'],'subject'=>'iSmile 2026: your Certificate of Participation ('.$registration['ref'].')','html'=>$html,'text'=>self::toText($html),
+                'attachments'=>[['name'=>'iSmile-2026-'.$rows[0]['certificate_no'].'.pdf','content'=>Certificates::pdf($rows)]]];
+        }
         if ($kind !== 'ticket') {
             throw new \RuntimeException("Unknown email kind '$kind'.");
         }
@@ -52,7 +66,7 @@ final class EmailTemplates
         $w = EmailText::words();
         $name = Registrations::fullName($registration);
         $vars = ['{ref}' => $registration['ref'], '{name}' => $name, '{ticket}' => $ticket['ticket_no']];
-        $withQr = Settings::bool('ticket_qr_in_email');   // off until the entrance check is decided
+        $withQr = true; // Every valid ticket email includes the two-day admission QR.
 
         // ---- Your registration ----
         $paid = $registration['status'] === 'complimentary' ? null

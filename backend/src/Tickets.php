@@ -58,7 +58,7 @@ final class Tickets
     public static function readScan(string $scanned): ?array
     {
         $scanned = trim($scanned);
-        if (preg_match('/^ISM26:(T26-\d{5}):(\d+):([A-Za-z0-9_-]+)$/', $scanned, $m)) {
+        if (preg_match('/^ISM26:(T26-\d{5,10}):(\d+):([A-Za-z0-9_-]+)$/', $scanned, $m)) {
             if (!Security::verify("ISM26:{$m[1]}:{$m[2]}", $m[3])) {
                 return ['error' => 'forged'];
             }
@@ -71,7 +71,7 @@ final class Tickets
             }
             return ['ticket' => $ticket];
         }
-        if (preg_match('/^T26-\d{5}$/i', $scanned)) {
+        if (preg_match('/^T26-\d{5,10}$/i', $scanned)) {
             $ticket = Db::one('SELECT * FROM tickets WHERE ticket_no = ?', [strtoupper($scanned)]);
             return $ticket ? ['ticket' => $ticket] : ['error' => 'unknown'];
         }
@@ -87,7 +87,7 @@ final class Tickets
         }
         // Add a white border (the "quiet zone") so every phone scanner reads it.
         $inner = imagecreatefromstring($png);
-        $pad = $pixelsPerModule * 3;
+        $pad = $pixelsPerModule * 4;
         $out = imagecreatetruecolor(imagesx($inner) + 2 * $pad, imagesy($inner) + 2 * $pad);
         imagefill($out, 0, 0, imagecolorallocate($out, 255, 255, 255));
         imagecopy($out, $inner, $pad, $pad, 0, 0, imagesx($inner), imagesy($inner));

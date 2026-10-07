@@ -22,7 +22,7 @@ final class Auth
         'registration' => 'Registration (registrations, approvals, workshops, export)',
         'finance'      => 'Finance (payments, money checks, exports)',
         'content'      => 'Content (site text only)',
-        'checkin'      => 'Check-in (scan page only)',
+        'checkin'      => 'Check-in (arrivals, attendance, guest list and totals)',
     ];
     public const NEEDS_TWO_FACTOR = ['owner', 'finance'];
 
@@ -167,6 +167,7 @@ final class Auth
             'sponsors'      => ['registration', 'finance'],
             'checkin'       => ['registration', 'checkin'],
             'export'        => ['registration', 'finance'],
+            'certificates'  => ['registration', 'finance'],
             'photos'        => ['registration'],
             'content'       => ['content'],
             'communications' => ['registration', 'finance'],
