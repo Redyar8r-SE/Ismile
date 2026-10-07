@@ -56,6 +56,12 @@ html[lang="ar"] .hero-ed-big sup{order:-1;font-size:.3em;margin-top:.3em;font-we
 .hero .sub .edition-sup{font-size:.65em}
 .hero .cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:30px}
 
+/* Transparent logos keep their original colors above the event pass. */
+.hero-pass{display:grid;gap:24px;min-width:0}
+/* Tracks follow the artwork proportions: equal first-three heights, half-height ADA. */
+.hero-partners{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2.451477fr) minmax(0,2.896175fr) minmax(0,1.185268fr);align-items:center;gap:clamp(6px,1.6vw,10px);width:100%;max-width:632px;justify-self:center;padding:14px 0;background:transparent;direction:ltr}
+.hero-partner{display:block;width:100%;min-width:0;height:auto;overflow:hidden}
+
 /* Ticket card */
 .ticket{background:linear-gradient(160deg,rgba(22,166,161,.22),rgba(22,166,161,.05));color:#fff;border:1px solid rgba(22,166,161,.45);border-radius:var(--r-lg);padding:26px 28px;position:relative;overflow:hidden;box-shadow:0 30px 60px -35px rgba(0,0,0,.6)}
 .t-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-bottom:18px;border-bottom:1px solid rgba(22,166,161,.3)}
@@ -98,6 +104,8 @@ html[lang="ar"] .hero-ed-big sup{order:-1;font-size:.3em;margin-top:.3em;font-we
   .hero-mark{--mark-scale:1.55;--mark-nudge:4px}
 }
 @media (max-width:420px){
+  .hero-pass{gap:20px}
+  .hero-partners{padding:10px 0}
   .ticket{padding:22px 18px}
   .t-logo{width:44px;height:44px}
   .t-rows b{font-size:17px}

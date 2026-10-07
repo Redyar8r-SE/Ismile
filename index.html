@@ -20,14 +20,14 @@
 <!-- Components -->
 <link rel="stylesheet" href="css/components/boot.css?v=81">
 <link rel="stylesheet" href="css/components/buttons.css?v=81">
-<link rel="stylesheet" href="css/components/brand.css?v=81">
+<link rel="stylesheet" href="css/components/brand.css?v=82">
 <link rel="stylesheet" href="css/components/tier-card.css?v=81">
 <link rel="stylesheet" href="css/components/reveal.css?v=81">
 <!-- Layout -->
 <link rel="stylesheet" href="css/layout/header.css?v=81">
 <link rel="stylesheet" href="css/layout/footer.css?v=81">
 <!-- Sections (in page order) -->
-<link rel="stylesheet" href="css/sections/hero.css?v=81">
+<link rel="stylesheet" href="css/sections/hero.css?v=92">
 <link rel="stylesheet" href="css/sections/stats.css?v=81">
 <link rel="stylesheet" href="css/sections/about.css?v=81">
 <link rel="stylesheet" href="css/sections/gallery.css?v=81">
@@ -144,23 +144,81 @@
         <a class="btn btn-ghost" href="#program" data-i18n="cta_program">See the program</a>
       </div>
     </div>
-    <div class="ticket">
-      <div class="t-head">
-        <div><p class="t-kicker" data-i18n="t_pass">Event pass</p><p class="t-name">iSmile 2026</p></div>
-        <span class="t-badge"><span class="edition-en">2<sup class="edition-sup">nd</sup> edition</span><span class="edition-translated" data-i18n="t_edition">2nd edition</span></span>
+    <div class="hero-pass">
+      <div class="hero-partners">
+        <svg class="hero-partner hero-partner-kda" viewBox="14 38 304 304" role="img" aria-label="Kurdistan Dental Association — سەندیکای پزیشکانی ددانی کوردستان">
+          <title>Kurdistan Dental Association — سەندیکای پزیشکانی ددانی کوردستان</title>
+          <defs><clipPath id="kda-artwork"><circle cx="166" cy="190" r="152"/></clipPath></defs>
+          <image href="assets/brand/kda-logo-source.png" width="330" height="378" clip-path="url(#kda-artwork)"/>
+        </svg>
+        <svg class="hero-partner" viewBox="41 54 581 237" role="img" aria-label="italk MedX">
+          <title>italk MedX</title>
+          <defs>
+            <filter id="medx-navy" color-interpolation-filters="sRGB">
+              <feColorMatrix type="matrix" values="0 0 0 0 .137254902  0 0 0 0 .231372549  0 0 0 0 .458823529  -1.159090909 0 0 0 1.159090909" result="navy"/>
+              <feComposite in="navy" in2="SourceGraphic" operator="in"/>
+            </filter>
+            <filter id="medx-white-emblem" color-interpolation-filters="sRGB">
+              <feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  1.159090909 0 0 0 -.159090909" result="emblem"/>
+              <feComposite in="emblem" in2="SourceGraphic" operator="in"/>
+            </filter>
+            <clipPath id="medx-emblem"><rect x="49" y="62" width="198" height="221" rx="16"/></clipPath>
+          </defs>
+          <image href="assets/brand/italkmedx-partner-source.png" width="641" height="368" filter="url(#medx-navy)"/>
+          <rect x="49" y="62" width="198" height="221" rx="16" fill="#233b75"/>
+          <image href="assets/brand/italkmedx-partner-source.png" width="641" height="368" clip-path="url(#medx-emblem)" filter="url(#medx-white-emblem)"/>
+        </svg>
+        <svg class="hero-partner" viewBox="31 73 530 183" role="img" aria-label="CAPP">
+          <title>CAPP</title>
+          <defs>
+            <filter id="capp-red" color-interpolation-filters="sRGB">
+              <feColorMatrix type="matrix" values="0 0 0 0 .866666667  0 0 0 0 .129411765  0 0 0 0 .160784314  1.356382979 -1.356382979 0 0 0" result="red"/>
+              <feComposite in="red" in2="SourceGraphic" operator="in"/>
+            </filter>
+            <filter id="capp-blue" color-interpolation-filters="sRGB">
+              <feColorMatrix type="matrix" values="0 0 0 0 .043137255  0 0 0 0 .313725490  0 0 0 0 .631372549  -1.7 0 1.7 0 0" result="blue"/>
+              <feComposite in="blue" in2="SourceGraphic" operator="in"/>
+            </filter>
+          </defs>
+          <image href="assets/brand/capp-logo-source.png" width="584" height="301" filter="url(#capp-red)"/>
+          <image href="assets/brand/capp-logo-source.png" width="584" height="301" filter="url(#capp-blue)"/>
+        </svg>
+        <svg class="hero-partner hero-partner-ada" viewBox="31 51 531 224" role="img" aria-label="American Dental Association">
+          <title>American Dental Association</title>
+          <defs>
+            <clipPath id="ada-caption"><rect x="31" y="230" width="531" height="45"/></clipPath>
+            <filter id="ada-green" color-interpolation-filters="sRGB">
+              <feColorMatrix type="matrix" values="0 0 0 0 .149019608  0 0 0 0 .682352941  0 0 0 0 .294117647  -1.875 1.875 0 0 0" result="green"/>
+              <feComposite in="green" in2="SourceGraphic" operator="in"/>
+            </filter>
+            <filter id="ada-caption-white" color-interpolation-filters="sRGB">
+              <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  -1 -1 -1 0 3"/>
+              <feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1 0" result="caption"/>
+              <feComposite in="caption" in2="SourceGraphic" operator="in"/>
+            </filter>
+          </defs>
+          <image href="assets/brand/ada-logo-source.png" width="584" height="346" filter="url(#ada-green)"/>
+          <image href="assets/brand/ada-logo-source.png" width="584" height="346" clip-path="url(#ada-caption)" filter="url(#ada-caption-white)"/>
+        </svg>
       </div>
-      <ul class="t-rows">
-        <li class="t-date-row"><span class="t-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></span><div><small data-i18n="t_when">When</small><b class="event-date" data-i18n="t_date_full">20 &amp; 21 November 2026</b></div></li>
-        <li><span class="t-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg></span><div><small data-i18n="t_len">Length</small><b data-i18n="t_len_v">2 full days</b></div></li>
-        <li><span class="t-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 21s7-6.2 7-11.5a7 7 0 10-14 0C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></span><div><small data-i18n="t_where">Where</small><b data-i18n="t_venue">Grand Millennium Sulaimani</b></div></li>
-      </ul>
-      <div class="tear" aria-hidden="true"></div>
-      <div class="t-foot">
-        <div class="t-orgs">
-          <div><small data-i18n="org_by">Organized by</small><b data-i18n="org_italk">italk Foundation</b></div>
-          <div><small data-i18n="org_with">In collaboration with</small><b data-i18n="ticket_org_kda">Kurdistan Dental Association / Slemani Branch</b></div>
+      <div class="ticket">
+        <div class="t-head">
+          <div><p class="t-kicker" data-i18n="t_pass">Event pass</p><p class="t-name">iSmile 2026</p></div>
+          <span class="t-badge"><span class="edition-en">2<sup class="edition-sup">nd</sup> edition</span><span class="edition-translated" data-i18n="t_edition">2nd edition</span></span>
         </div>
-        <svg class="t-logo" width="34" height="40" viewBox="0 0 1080 1155" aria-hidden="true"><svg x="0" y="0" width="1080" height="1155" viewBox="0 0 1080 1155" overflow="hidden"><image href="assets/brand/ismile-logo.png" width="2481" height="1155"/></svg></svg>
+        <ul class="t-rows">
+          <li class="t-date-row"><span class="t-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></span><div><small data-i18n="t_when">When</small><b class="event-date" data-i18n="t_date_full">20 &amp; 21 November 2026</b></div></li>
+          <li><span class="t-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg></span><div><small data-i18n="t_len">Length</small><b data-i18n="t_len_v">2 full days</b></div></li>
+          <li><span class="t-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 21s7-6.2 7-11.5a7 7 0 10-14 0C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></span><div><small data-i18n="t_where">Where</small><b data-i18n="t_venue">Grand Millennium Sulaimani</b></div></li>
+        </ul>
+        <div class="tear" aria-hidden="true"></div>
+        <div class="t-foot">
+          <div class="t-orgs">
+            <div><small data-i18n="org_by">Organized by</small><b data-i18n="org_italk">italk MedX</b></div>
+            <div><small data-i18n="org_with">In collaboration with</small><b data-i18n="ticket_org_kda">Kurdistan Dental Association / Slemani Branch</b></div>
+          </div>
+          <svg class="t-logo" width="34" height="40" viewBox="0 0 1080 1155" aria-hidden="true"><svg x="0" y="0" width="1080" height="1155" viewBox="0 0 1080 1155" overflow="hidden"><image href="assets/brand/ismile-logo.png" width="2481" height="1155"/></svg></svg>
+        </div>
       </div>
     </div>
   </div>
@@ -188,6 +246,7 @@
   <div class="wrap">
     <div class="ab-head">
       <h2 data-i18n="ab_title">About iSmile</h2>
+      <p class="event-slogan" lang="en" dir="ltr">The Evolution of Dental Art and Science</p>
       <p class="lead" data-i18n="ab_lead">iSmile is the largest and most prestigious international dental summit in Iraq. It began in 2021, when italk Foundation and the Kurdistan Dental Association brought science, clinical practice, industry and the dental community together in Kurdistan.</p>
     </div>
 
