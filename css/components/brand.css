@@ -5,6 +5,12 @@
 .brand svg{display:block;flex:none}
 .brand b{color:var(--teal)}
 
+/* The event slogan keeps its English wording in every language. */
+.event-slogan{max-width:40ch;margin-top:14px;color:var(--teal-ink);font-family:var(--font);font-size:clamp(17px,1.65vw,22px);font-weight:600;line-height:1.45;text-wrap:balance}
+.reg-page-intro .reg-page-hero-copy .event-slogan{color:#91DEDA;font-size:clamp(17px,1.65vw,22px);line-height:1.45}
+footer .event-slogan{color:#7FD6D2;font-size:16px;max-width:30ch}
+html[dir="rtl"] .event-slogan{text-align:right}
+
 /* Transparent marks share the surface beneath them. A little extra light
    keeps the original blue visible against the dark header and footer. */
 .top:not(.scrolled) .brand-mark,

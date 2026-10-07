@@ -71,7 +71,7 @@ jobs:
         run: |
           set -euo pipefail
           zip -r -q deploy-bundle.zip \
-            index.html admin.html register.html sponsor.html workshops.html favicon.ico \
+            index.html admin.html register.html sponsor.html workshops.html payment.html favicon.ico \
             assets css data docs js netlify server \
             package.json ecosystem.config.cjs .env \
             -x '*.DS_Store' -x '**/deploy.env' -x '**/.deploy.env' -x '**/.git/*' -x '**/node_modules/*' -x '**/tests/*'
