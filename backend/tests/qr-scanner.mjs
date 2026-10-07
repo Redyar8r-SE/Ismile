@@ -33,11 +33,12 @@ async function run(mode) {
     setTimeout(fn) { timers.push(fn); }, addEventListener() {},
   };
   box.window = box;
+  if (mode === 'no-camera-api') box.navigator = {};
   if (mode === 'native' || mode === 'broken-native') box.BarcodeDetector = class {
     async detect() { if (mode === 'broken-native') throw new Error('Unsupported'); return [{ rawValue: fixture.payload }]; }
   };
   vm.createContext(box);
-  vm.runInContext(decoder, box);
+  if (mode !== 'missing-decoder') vm.runInContext(decoder, box);
   if (mode === 'stop') box.jsQR = () => null;
   vm.runInContext(scanner, box);
   handlers.forEach(fn => fn());
@@ -46,7 +47,11 @@ async function run(mode) {
   await new Promise(resolve => setImmediate(resolve));
   if (mode === 'stop') elements.scanStop.listeners.click();
   if (mode === 'broken-native') { await timers.shift()(); await new Promise(resolve => setImmediate(resolve)); }
-  if (mode === 'denied') {
+  if (mode === 'no-camera-api' || mode === 'missing-decoder') {
+    assert.equal(submissions, 0);
+    assert.equal(elements.scanCamera.hidden, false, 'Scan QR remains visible when scanning is unavailable');
+    assert.match(elements.scanStatus.textContent, mode === 'no-camera-api' ? /Camera access is unavailable/ : /QR scanner could not load/);
+  } else if (mode === 'denied') {
     assert.equal(submissions, 0);
     assert.match(elements.scanStatus.textContent, /Camera could not start/);
   } else if (mode === 'stop') {
@@ -57,7 +62,7 @@ async function run(mode) {
   }
   console.log(`PASS: ${mode} QR camera flow`);
 }
-for (const mode of ['native', 'fallback', 'broken-native', 'denied', 'stop']) await run(mode);
+for (const mode of ['native', 'fallback', 'broken-native', 'denied', 'stop', 'no-camera-api', 'missing-decoder']) await run(mode);
 
 for (const wakeFromSleep of [false, true]) {
   const handlers = [];

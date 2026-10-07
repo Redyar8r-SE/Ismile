@@ -391,8 +391,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("scanForm");
   const status = document.getElementById("scanStatus");
   const stop = document.getElementById("scanStop");
-  if (!start || !video || !navigator.mediaDevices?.getUserMedia) return;
-  if (!("BarcodeDetector" in window) && !window.jsQR) return;
+  if (!start || !video) return;
   start.hidden = false;
   let stream = null;
   let running = false;
@@ -411,12 +410,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
   start.addEventListener("click", async () => {
     if (stream) return;
+    if (!navigator.mediaDevices?.getUserMedia) {
+      if (status) status.textContent = "Camera access is unavailable here. Open this page over HTTPS in Chrome or Safari, or find the guest by name, phone, reference or ticket number.";
+      return;
+    }
     let detector = null;
     try {
       if ("BarcodeDetector" in window) {
         try { detector = new window.BarcodeDetector({ formats: ["qr_code"] }); } catch { /* use local decoder */ }
       }
-      if (!detector && !window.jsQR) throw new Error("QR scanning is unavailable.");
+      if (!detector && !window.jsQR) {
+        if (status) status.textContent = "The QR scanner could not load. Refresh this page, or find the guest by name, phone, reference or ticket number.";
+        return;
+      }
       stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
       video.srcObject = stream;
       video.hidden = false;

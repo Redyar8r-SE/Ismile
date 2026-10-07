@@ -85,11 +85,12 @@ $e = [Page::class, 'e'];
     <input type="hidden" name="day" value="<?= $day ?? 0 ?>">
     <label class="scan-input-label">Name, phone, reference or ticket number<input type="search" name="q" id="scanInput" value="<?= $e($q) ?>" placeholder="Guest name, 0750…, reference or ticket" autocomplete="off" autofocus></label>
     <button class="btn big">Find</button>
-    <button type="button" class="btn big green" id="scanCamera" hidden><?= Page::navIcon('camera') ?> Scan QR</button>
+    <button type="button" class="btn big green" id="scanCamera"><?= Page::navIcon('camera') ?> Scan QR</button>
   </form>
   <video id="scanVideo" playsinline muted hidden></video>
   <button type="button" class="btn ghost" id="scanStop" hidden>Stop camera</button>
   <p id="scanStatus" class="muted small" role="status" aria-live="polite">Scan the QR from the guest’s email. Camera scanning requires HTTPS and camera permission.</p>
+  <noscript><p class="flash err">Enable JavaScript to scan QR codes. You can also find the guest by name, phone, reference or ticket number.</p></noscript>
   <p class="scanner-note"><?= Page::navIcon('ticket') ?> Always check the guest’s name before confirming their arrival.</p>
   </section>
 
