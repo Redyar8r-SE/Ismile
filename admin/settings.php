@@ -26,7 +26,7 @@ Page::action(static function () use ($user): string {
     if ($do === 'settings') {
         $before = Settings::all();
         $values = [
-            'registration_open'    => ($_POST['registration_open'] ?? '') === '1' ? '1' : '0',
+            'registration_open'    => ($_POST['registration_closed'] ?? '') === '1' ? '0' : '1',
             'program_hidden'       => ($_POST['program_hidden'] ?? '') === '1' ? '1' : '0',
             'closed_message_en'    => Page::post('closed_message_en', 300),
             'closed_message_ar'    => Page::post('closed_message_ar', 300),
@@ -89,7 +89,7 @@ Page::top('Settings', 'settings', '<a class="btn ghost" href="#ambassadors">' . 
 ]) ?>
 <div class="configuration-layout">
 <aside class="configuration-nav no-print"><span class="section-eyebrow">On this page</span><nav aria-label="Settings sections">
-  <?php foreach ([['registration-settings','ticket','Registration'],['lunch-settings','lunch','Lunch capacity'],['email-settings','mail','Emails & payments'],['ambassadors','users','Ambassador codes'],['audit-log','clock','Activity log']] as [$anchor,$icon,$label]): ?>
+  <?php foreach ([['registration-settings','ticket','Registration'],['program-settings','calendar','Program visibility'],['lunch-settings','lunch','Lunch capacity'],['email-settings','mail','Emails & payments'],['ambassadors','users','Ambassador codes'],['audit-log','clock','Activity log']] as [$anchor,$icon,$label]): ?>
   <a href="#<?= $anchor ?>"><?= Page::navIcon($icon) ?><span><?= $label ?></span><?= Page::navIcon('arrow') ?></a>
   <?php endforeach; ?>
 </nav><div class="configuration-tip"><?= Page::navIcon('settings') ?><b>Your event, your settings</b><p>Keep registration, guest communication and your ambassador list in one place.</p></div></aside>
@@ -98,7 +98,7 @@ Page::top('Settings', 'settings', '<a class="btn ghost" href="#ambassadors">' . 
   <?= Page::csrfField() ?><input type="hidden" name="do" value="settings">
   <section class="card stack configuration-section" id="registration-settings">
   <?= Page::panelHeading('Registration', 'Choose when guests can register and what they see while registration is closed.', 'ticket') ?>
-  <label class="configuration-switch"><input type="checkbox" name="registration_open" value="1"<?= $checked('registration_open') ?>><span class="switch-track" aria-hidden="true"></span><span><b>Accept registrations</b><small>Switch off to pause registration and payments.</small></span></label>
+  <label class="configuration-switch"><input type="checkbox" name="registration_closed" value="1"<?= ($s['registration_open'] ?? '0') !== '1' ? ' checked' : '' ?>><span class="switch-track" aria-hidden="true"></span><span><b>Close registration</b><small>Switch on to close registration and show “Registration opens soon”. Switch off to accept registrations. Press Save settings.</small></span></label>
   <div class="price-overview"><?php foreach ([['Professional',$prices['professional']],['Student',$prices['student']],['Lunch · day 1',$prices['lunchDay1']],['Lunch · day 2',$prices['lunchDay2']]] as [$label,$amount]): ?><div><span><?= $label ?></span><b><?= Page::money($amount, $prices['currency']) ?></b></div><?php endforeach; ?></div>
   <p class="configuration-note">Edit prices in <a href="<?= $e(Page::contentUrl()) ?>">Site content</a> → Registration → Ticket and lunch prices. Prices must be above 0 to accept payments.</p>
   <div class="row3">

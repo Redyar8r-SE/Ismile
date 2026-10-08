@@ -12,17 +12,17 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=Noto+Kufi+Arabic:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/base/tokens.css?v=81">
-<link rel="stylesheet" href="css/base/base.css?v=81">
-<link rel="stylesheet" href="css/components/boot.css?v=81">
-<link rel="stylesheet" href="css/components/buttons.css?v=81">
-<link rel="stylesheet" href="css/components/brand.css?v=82">
-<link rel="stylesheet" href="css/layout/header.css?v=81">
-<link rel="stylesheet" href="css/layout/footer.css?v=81">
-<link rel="stylesheet" href="css/sections/hero.css?v=81">
-<link rel="stylesheet" href="css/sections/register.css?v=81">
-<link rel="stylesheet" href="css/sections/register-page.css?v=81">
-<script type="module" src="js/register.js?v=81"></script>
+<link rel="stylesheet" href="css/base/tokens.css?v=93">
+<link rel="stylesheet" href="css/base/base.css?v=93">
+<link rel="stylesheet" href="css/components/boot.css?v=93">
+<link rel="stylesheet" href="css/components/buttons.css?v=93">
+<link rel="stylesheet" href="css/components/brand.css?v=93">
+<link rel="stylesheet" href="css/layout/header.css?v=93">
+<link rel="stylesheet" href="css/layout/footer.css?v=93">
+<link rel="stylesheet" href="css/sections/hero.css?v=93">
+<link rel="stylesheet" href="css/sections/register.css?v=93">
+<link rel="stylesheet" href="css/sections/register-page.css?v=93">
+<script type="module" src="js/register.js?v=93"></script>
 </head>
 <body>
 <div class="siteboot" id="siteboot" aria-hidden="true">
@@ -161,6 +161,16 @@
           <p id="regClosedText"></p>
           <a class="btn btn-outline" href="mailto:ismile@italk.krd" dir="ltr">ismile@italk.krd</a>
         </div>
+
+        <!-- Shown instead of the form while registration is closed
+             (admin: Site content › Registration › Open or closed). -->
+        <div class="reg-closed" id="regClosed" hidden>
+          <div class="reg-closed-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4M12 13.5v2.5l1.5 1"/></svg></div>
+          <h3 data-i18n="reg_closed_title">Registration opens soon</h3>
+          <p data-i18n="reg_closed_text">Online registration is not open yet. Follow iSmile for the opening date, or write to us.</p>
+          <a class="btn btn-outline" href="mailto:ismile@italk.krd" dir="ltr">ismile@italk.krd</a>
+        </div>
+
 
         <div class="reg-progress" id="regProgress">
           <ol class="stepper" id="regStepper">

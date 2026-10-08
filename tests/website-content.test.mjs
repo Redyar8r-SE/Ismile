@@ -2,8 +2,10 @@ import { createHmac } from "node:crypto";
 import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { Readable } from "node:stream";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { contentRequest, editableContent } from "../server/content-store.mjs";
+import { registrationRequest } from "../server/registration.mjs";
 import { websiteState } from "../server/website-state.mjs";
 
 afterEach(() => {
@@ -12,6 +14,48 @@ afterEach(() => {
 });
 
 describe("website content and database controls", () => {
+  it("forwards the form unchanged and returns the database's closed response", async () => {
+    vi.stubEnv("WEBSITE_API_URL", "https://backend.example/api/");
+    vi.stubEnv("BOOTH_API_USERNAME", "server-only");
+    vi.stubEnv("BOOTH_API_PASSWORD", "server-password");
+    const bytes = Buffer.from([0, 255, 13, 10, 42]);
+    const req = /** @type {import('node:http').IncomingMessage} */ (
+      /** @type {unknown} */ (
+        Object.assign(Readable.from([bytes]), {
+          method: "POST",
+          headers: {
+            origin: "https://ismile.krd",
+            "content-type": "multipart/form-data; boundary=test",
+          },
+        })
+      )
+    );
+    const mock = vi
+      .fn()
+      .mockResolvedValue(new Response('{"ok":false,"error":"reg_closed"}', { status: 409 }));
+    vi.stubGlobal("fetch", mock);
+    const result = await registrationRequest(req);
+    expect(result.statusCode).toBe(409);
+    expect(JSON.parse(result.body)).toEqual({ ok: false, error: "reg_closed" });
+    expect(Buffer.from(mock.mock.calls[0][1].body)).toEqual(bytes);
+    expect(mock.mock.calls[0][1].headers.Origin).toBe("https://backend.example");
+    expect(result.body).not.toContain("server-password");
+  });
+
+  it("rejects registration requests from another origin before sending them", async () => {
+    const req = /** @type {import('node:http').IncomingMessage} */ (
+      /** @type {unknown} */ (
+        Object.assign(Readable.from([]), {
+          method: "POST",
+          headers: { origin: "https://untrusted.example" },
+        })
+      )
+    );
+    const mock = vi.fn();
+    vi.stubGlobal("fetch", mock);
+    expect((await registrationRequest(req)).statusCode).toBe(403);
+    expect(mock).not.toHaveBeenCalled();
+  });
   it("saves live translations and reads the same content after restart", async () => {
     const root = mkdtempSync(path.join(tmpdir(), "ismile-content-"));
     vi.stubEnv("CONTENT_ROOT", root);

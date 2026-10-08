@@ -117,7 +117,7 @@ export function createAppServer() {
       const override = contentFile(CONTENT_ROOT, url.pathname.slice(1));
       if (override && existsSync(override)) {
         res.setHeader("Cache-Control", "no-store");
-        sendFile(res, override);
+        sendFile(res, override, req);
         return;
       }
       const resolved = resolveStaticFile(ROOT, url.pathname);
@@ -127,7 +127,7 @@ export function createAppServer() {
           .end(resolved.message || "Error");
         return;
       }
-      sendFile(res, resolved.filePath);
+      sendFile(res, resolved.filePath, req);
     } catch (error) {
       console.error(error);
       res.writeHead(500, { "Content-Type": "text/plain; charset=utf-8" }).end("Server error");

@@ -15,32 +15,32 @@
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=Noto+Kufi+Arabic:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <!-- Base -->
-<link rel="stylesheet" href="css/base/tokens.css?v=81">
-<link rel="stylesheet" href="css/base/base.css?v=81">
+<link rel="stylesheet" href="css/base/tokens.css?v=93">
+<link rel="stylesheet" href="css/base/base.css?v=93">
 <!-- Components -->
-<link rel="stylesheet" href="css/components/boot.css?v=81">
-<link rel="stylesheet" href="css/components/buttons.css?v=81">
-<link rel="stylesheet" href="css/components/brand.css?v=82">
-<link rel="stylesheet" href="css/components/tier-card.css?v=81">
-<link rel="stylesheet" href="css/components/reveal.css?v=81">
+<link rel="stylesheet" href="css/components/boot.css?v=93">
+<link rel="stylesheet" href="css/components/buttons.css?v=93">
+<link rel="stylesheet" href="css/components/brand.css?v=93">
+<link rel="stylesheet" href="css/components/tier-card.css?v=93">
+<link rel="stylesheet" href="css/components/reveal.css?v=93">
 <!-- Layout -->
-<link rel="stylesheet" href="css/layout/header.css?v=81">
-<link rel="stylesheet" href="css/layout/footer.css?v=81">
+<link rel="stylesheet" href="css/layout/header.css?v=93">
+<link rel="stylesheet" href="css/layout/footer.css?v=93">
 <!-- Sections (in page order) -->
-<link rel="stylesheet" href="css/sections/hero.css?v=92">
-<link rel="stylesheet" href="css/sections/stats.css?v=81">
-<link rel="stylesheet" href="css/sections/about.css?v=81">
-<link rel="stylesheet" href="css/sections/gallery.css?v=81">
-<link rel="stylesheet" href="css/sections/experience.css?v=81">
-<link rel="stylesheet" href="css/sections/program.css?v=81">
-<link rel="stylesheet" href="css/sections/speakers.css?v=81">
-<link rel="stylesheet" href="css/sections/sponsors.css?v=81">
-<link rel="stylesheet" href="css/sections/partners.css?v=81">
-<link rel="stylesheet" href="css/sections/companies.css?v=81">
-<link rel="stylesheet" href="css/sections/register-page.css?v=81">
-<link rel="stylesheet" href="css/sections/venue.css?v=81">
+<link rel="stylesheet" href="css/sections/hero.css?v=93">
+<link rel="stylesheet" href="css/sections/stats.css?v=93">
+<link rel="stylesheet" href="css/sections/about.css?v=93">
+<link rel="stylesheet" href="css/sections/gallery.css?v=93">
+<link rel="stylesheet" href="css/sections/experience.css?v=93">
+<link rel="stylesheet" href="css/sections/program.css?v=93">
+<link rel="stylesheet" href="css/sections/speakers.css?v=93">
+<link rel="stylesheet" href="css/sections/sponsors.css?v=93">
+<link rel="stylesheet" href="css/sections/partners.css?v=93">
+<link rel="stylesheet" href="css/sections/companies.css?v=93">
+<link rel="stylesheet" href="css/sections/register-page.css?v=93">
+<link rel="stylesheet" href="css/sections/venue.css?v=93">
 
-<script type="module" src="js/main.js?v=81"></script>
+<script type="module" src="js/main.js?v=93"></script>
 </head>
 <body>
 
@@ -142,6 +142,15 @@
       <div class="cta">
         <a class="btn btn-primary" href="register.html" data-i18n="cta_register">Register now</a>
         <a class="btn btn-ghost" href="#program" data-i18n="cta_program">See the program</a>
+      </div>
+      <div class="countdown" id="countdown" data-start="2026-11-20T09:00:00+03:00" hidden>
+        <p class="cd-label" data-i18n="cd_label">Starts in</p>
+        <div class="cd-boxes">
+          <div class="cd-box"><b data-cd="days">0</b><small data-i18n="cd_days">Days</small></div>
+          <div class="cd-box"><b data-cd="hours">00</b><small data-i18n="cd_hours">Hours</small></div>
+          <div class="cd-box"><b data-cd="minutes">00</b><small data-i18n="cd_minutes">Minutes</small></div>
+          <div class="cd-box"><b data-cd="seconds">00</b><small data-i18n="cd_seconds">Seconds</small></div>
+        </div>
       </div>
     </div>
     <div class="hero-pass">
@@ -262,7 +271,7 @@
       </div>
       <figure class="gal-video" id="galVideo">
         <video preload="none" muted loop playsinline poster="assets/video/2021-highlights-poster.jpg" width="720" height="406">
-          <source src="assets/video/2021-highlights.mp4" type="video/mp4">
+          <source src="assets/video/2021-highlights.mp4?v=3" type="video/mp4">
         </video>
         <button type="button" class="gv-cover" aria-label="Play the iSmile 2021 highlights video" data-i18n-label="gv_play">
           <span class="gv-play"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.4-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg></span>

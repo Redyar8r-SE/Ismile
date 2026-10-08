@@ -491,5 +491,10 @@
   "bm_view": "بینینی نەخشەی پێشانگا",
   "bm_view_map": "نەخشە",
   "bm_view_table": "خشتە",
-  "bm_live_short": "ڕاستەوخۆ"
+  "bm_live_short": "ڕاستەوخۆ",
+  "cd_label": "ماوە بۆ دەستپێکردن",
+  "cd_days": "ڕۆژ",
+  "cd_hours": "کاتژمێر",
+  "cd_minutes": "خولەک",
+  "cd_seconds": "چرکە"
 }

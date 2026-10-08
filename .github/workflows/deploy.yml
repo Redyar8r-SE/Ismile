@@ -35,6 +35,35 @@ jobs:
           DEPLOY_ENV: ${{ secrets.DEPLOY_ENV }}
         run: bash scripts/load-deploy-env.sh
 
+      # Optional: the owner sets the admin sign-in with two repository secrets
+      # (Settings › Secrets and variables › Actions): ADMIN_EMAIL and
+      # ADMIN_PASSWORD_HASH. When both are set they replace the ones in
+      # DEPLOY_ENV; when not set, nothing changes.
+      - name: Owner's admin sign-in (optional secrets)
+        env:
+          OWNER_ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          OWNER_ADMIN_PASSWORD_HASH: ${{ secrets.ADMIN_PASSWORD_HASH }}
+        run: |
+          set -euo pipefail
+          if [[ -n "${OWNER_ADMIN_EMAIL}" && -n "${OWNER_ADMIN_PASSWORD_HASH}" ]]; then
+            if [[ ! "${OWNER_ADMIN_PASSWORD_HASH}" =~ ^pbkdf2\$[0-9]+\$[A-Za-z0-9+/=]+\$[A-Za-z0-9+/=]+$ ]]; then
+              echo "ADMIN_PASSWORD_HASH secret is not a pbkdf2 hash: keeping the admin sign-in from DEPLOY_ENV." >&2
+              exit 0
+            fi
+            echo "::add-mask::${OWNER_ADMIN_PASSWORD_HASH}"
+            {
+              echo "ADMIN_EMAIL<<EOF_OWNER_ADMIN"
+              echo "${OWNER_ADMIN_EMAIL}"
+              echo "EOF_OWNER_ADMIN"
+              echo "ADMIN_PASSWORD_HASH<<EOF_OWNER_ADMIN"
+              echo "${OWNER_ADMIN_PASSWORD_HASH}"
+              echo "EOF_OWNER_ADMIN"
+            } >>"$GITHUB_ENV"
+            echo "Admin sign-in: using the ADMIN_EMAIL / ADMIN_PASSWORD_HASH secrets."
+          else
+            echo "Admin sign-in: using DEPLOY_ENV."
+          fi
+
       - name: Create .env file
         run: bash scripts/create-app-env.sh
 
@@ -194,6 +223,28 @@ jobs:
               i=$((i + 1))
               sleep 1
             done
+            if [ "$BOOT_OK" = 1 ]; then
+              SETTINGS_OK=0
+              for attempt in $(seq 1 60); do
+                if curl -fsS --max-time 8 "http://127.0.0.1:${TEST_PORT}/api/site-state.php" | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d.get("ok") is True and isinstance(d.get("registrationOpen"),bool) and isinstance(d.get("programHidden"),bool)' 2>/dev/null; then
+                  if curl -fsS --max-time 8 "http://127.0.0.1:${TEST_PORT}/api/config.php" | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d.get("ok") is True and isinstance(d.get("open"),bool)' 2>/dev/null; then
+                    SETTINGS_OK=1
+                    break
+                  fi
+                fi
+                if [ "$((attempt % 10))" = 0 ]; then
+                  echo "Waiting for the database Settings connection ($attempt/60)."
+                fi
+                sleep 5
+              done
+              if [ "$SETTINGS_OK" != 1 ]; then
+                kill "$TEST_PID" 2>/dev/null || true
+                wait "$TEST_PID" 2>/dev/null || true
+                echo "ERROR: database Settings are unreachable. Live app was not touched. Configure WEBSITE_API_URL and backend HTTP credentials."
+                exit 1
+              fi
+              echo "Database Settings and registration configuration connected."
+            fi
             kill "$TEST_PID" 2>/dev/null || true
             wait "$TEST_PID" 2>/dev/null || true
             if command -v fuser >/dev/null 2>&1; then
