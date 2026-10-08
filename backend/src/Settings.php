@@ -12,6 +12,8 @@ final class Settings
     // address until someone deliberately opens it.
     public const DEFAULTS = [
         'registration_open'     => '0',
+        'program_hidden'        => '1',
+        'website_controls_migrated' => '0',
         // Empty = the page's own wording ("Online registration is not open yet…").
         // The Owner can write a custom one in Settings, e.g. with the opening date.
         'closed_message_en'     => '',
@@ -78,5 +80,24 @@ final class Settings
     public static function closedMessage(string $lang): string
     {
         return self::get('closed_message_' . Lang::pick($lang));
+    }
+
+    /** Import the old switches once, preserving the effective visitor state. */
+    public static function migrateWebsiteControls(): void
+    {
+        if (self::bool('website_controls_migrated')) return;
+        Db::transaction(static function (): void {
+            // Serialize installers so a later deployment cannot restore old values.
+            Db::run("INSERT IGNORE INTO settings (k, v, updated_at) VALUES ('website_controls_migrated', '0', ?)", [App::now()]);
+            $done = Db::value("SELECT v FROM settings WHERE k = 'website_controls_migrated' FOR UPDATE");
+            if ($done === '1') return;
+            if ((SiteData::read('tickets')['registrationClosed'] ?? false) === true) {
+                self::set('registration_open', '0');
+            }
+            $program = SiteData::read('program');
+            self::set('program_hidden', ($program['toBeAnnounced'] ?? true) === true ? '1' : '0');
+            self::set('website_controls_migrated', '1');
+        });
+        self::$cache = null;
     }
 }

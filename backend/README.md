@@ -53,6 +53,30 @@ by the deploy script, not in Git).
 
 ## Updating
 
+Registration and program visibility are controlled in Database → Settings.
+`registration_open` and `program_hidden` are stored in the MySQL `settings`
+table. Installation imports the previous JSON switches once, preserving
+their effective state. Later installs and content synchronization leave the
+database controls unchanged. The website reads `/api/site-state.php` and
+`/api/config.php` with no caching; closing registration also blocks submissions.
+
+The Node content editor saves directly to `CONTENT_ROOT`, a persistent folder
+outside release directories (the VPS deployment uses `TARGET/shared-content`).
+Public JSON and uploaded pictures are read from that same folder immediately.
+These edits are no longer GitHub commits; back up this folder separately from
+the database. GitHub deploys update code and provide defaults for unedited files.
+Standalone PHP hosting continues to write its website files directly.
+
+The Node website requires `WEBSITE_API_URL` (a URL in the PHP backend's `/api/`
+directory; `BOOTH_API_URL` can also supply the base) and, when protected,
+`BOOTH_API_USERNAME` / `BOOTH_API_PASSWORD`. The VPS workflow loads missing
+connection values from the existing `/opt/ismile-test/secrets.env` without
+printing secrets. The browser never receives these credentials.
+
+Focused regression checks: `npm run check-errors` and
+`ISMILE_CONFIG=/isolated/config.php php backend/tests/website-settings.php`
+(a fresh `ismile_website_test_*` database and separate website content).
+
 Push to GitHub → cPanel Git → "Update from Remote" → "Deploy HEAD Commit"
 (deploys to test). Check the test site, then:
 `bash ~/repositories/Ismile/backend/tools/deploy.sh live`

@@ -151,6 +151,27 @@ jobs:
             test -f ecosystem.config.cjs
             test -f .env
 
+            # Connect the public Node website to the installed PHP backend.
+            # Read the existing browser-password secret on the VPS; never log it.
+            if [ -f /opt/ismile-test/secrets.env ]; then
+              sed -i '/^WEBSITE_API_URL=$/d; /^BOOTH_API_URL=$/d; /^BOOTH_API_USERNAME=$/d; /^BOOTH_API_PASSWORD=$/d' .env
+              (
+                source /opt/ismile-test/secrets.env
+                if ! grep -q '^WEBSITE_API_URL=.' .env; then
+                  printf 'WEBSITE_API_URL=https://api.ismile.krd/api/\n' >> .env
+                fi
+                if ! grep -q '^BOOTH_API_URL=.' .env; then
+                  printf 'BOOTH_API_URL=https://api.ismile.krd/api/booths.php\n' >> .env
+                fi
+                if ! grep -q '^BOOTH_API_USERNAME=.' .env; then
+                  printf 'BOOTH_API_USERNAME=ismile\n' >> .env
+                fi
+                if ! grep -q '^BOOTH_API_PASSWORD=.' .env; then
+                  printf 'BOOTH_API_PASSWORD=%s\n' "$SITE_PASS" >> .env
+                fi
+              )
+            fi
+
             TEST_PORT=$((APP_PORT + 1000))
             if ss -ltn 2>/dev/null | grep -q ":${TEST_PORT} " || netstat -ltn 2>/dev/null | grep -q ":${TEST_PORT} "; then
               echo "ERROR: side port $TEST_PORT is already in use. Live app was not touched."

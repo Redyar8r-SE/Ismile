@@ -33,12 +33,11 @@ final class SiteData
     }
 
     /**
-     * The website switch "Close registration" (Site content › Registration ›
-     * Open or closed), saved in data/tickets.json.
+     * Registration visibility is controlled by database Settings.
      */
     public static function closedBySwitch(): bool
     {
-        return (self::read('tickets')['registrationClosed'] ?? false) === true;
+        return !Settings::bool('registration_open');
     }
 
     /** The amount for one registration, worked out on the server only. */

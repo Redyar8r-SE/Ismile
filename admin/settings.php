@@ -19,6 +19,7 @@ use Ismile\UserError;
 use Ismile\Validate;
 
 $user = Page::guard('owner');
+Settings::migrateWebsiteControls();
 
 Page::action(static function () use ($user): string {
     $do = (string) ($_POST['do'] ?? '');
@@ -26,6 +27,7 @@ Page::action(static function () use ($user): string {
         $before = Settings::all();
         $values = [
             'registration_open'    => ($_POST['registration_open'] ?? '') === '1' ? '1' : '0',
+            'program_hidden'       => ($_POST['program_hidden'] ?? '') === '1' ? '1' : '0',
             'closed_message_en'    => Page::post('closed_message_en', 300),
             'closed_message_ar'    => Page::post('closed_message_ar', 300),
             'closed_message_ku'    => Page::post('closed_message_ku', 300),
@@ -80,7 +82,7 @@ $checked = static fn (string $key): string => ($s[$key] ?? '') === '1' ? ' check
 Page::top('Settings', 'settings', '<a class="btn ghost" href="#ambassadors">' . Page::navIcon('users') . '<span>Ambassador codes</span></a>');
 ?>
 <?= Page::stats([
-    ['Registration', ($s['registration_open'] ?? '') === '1' && !SiteData::closedBySwitch() ? 'Open' : 'Closed', 'Current registration switches', 'ticket', 'teal'],
+    ['Registration', ($s['registration_open'] ?? '') === '1' ? 'Open' : 'Closed', 'Saved in the database', 'ticket', 'teal'],
     ['Ambassador codes', number_format(count($ambassadors)), 'Codes available to your students', 'users', 'blue'],
     ['Email delivery', ($s['email_test_mode'] ?? '') === '1' ? 'Test mode' : 'Guest emails', 'Where your event emails are sent', 'mail', 'violet'],
     ['Payment links', (int) $s['pay_link_days'] . ' days', 'Time to complete a phone booking', 'clock', 'gold'],
@@ -104,6 +106,11 @@ Page::top('Settings', 'settings', '<a class="btn ghost" href="#ambassadors">' . 
     <label>Message while closed (Arabic)<input name="closed_message_ar" dir="rtl" value="<?= $e($s['closed_message_ar']) ?>"></label>
     <label>Message while closed (Kurdish)<input name="closed_message_ku" dir="rtl" value="<?= $e($s['closed_message_ku']) ?>"></label>
   </div>
+  </section>
+  <section class="card stack configuration-section" id="program-settings">
+  <?= Page::panelHeading('Program visibility', 'Choose whether visitors see the sessions for Day 1 and Day 2.', 'calendar') ?>
+  <label class="configuration-switch"><input type="checkbox" name="program_hidden" value="1"<?= $checked('program_hidden') ?>><span class="switch-track" aria-hidden="true"></span><span><b>Hide program: To be announced</b><small>Switch on to show “To be announced” for both days. Switch off to show the saved sessions. Press Save settings.</small></span></label>
+  <p class="configuration-note">Registration and program visibility are saved in the database and apply to the public website. Edit days and sessions in <a href="<?= $e(Page::contentUrl()) ?>">Site content</a>.</p>
   </section>
   <section class="card stack configuration-section" id="lunch-settings">
   <?= Page::panelHeading('Lunch capacity', 'Set the number of meals your caterer can provide for each day.', 'lunch') ?>

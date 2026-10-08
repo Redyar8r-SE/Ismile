@@ -606,7 +606,15 @@ function buildForm() {
         body.append(hint);
       }
 
-      if (block.type === "security") buildAccounts(body);
+      if (block.type === "settings") {
+        const link = document.createElement("a");
+        link.className = "btn btn-outline";
+        const database = document.querySelector('a[href*="/admin/settings.php"]');
+        link.href = `${database?.href?.split("#")[0] || "https://api.ismile.krd/admin/settings.php"}#${block.anchor}`;
+        link.textContent = "Manage in Database Settings";
+        body.append(link);
+      }
+      else if (block.type === "security") buildAccounts(body);
       else if (block.type === "speakers") buildSpeakers(body);
       else if (block.type === "program") buildProgram(body, listContext);
       else if (block.type === "types") buildTypes(body, listContext);

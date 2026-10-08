@@ -93,6 +93,8 @@ if ($imported > 0) {
     echo "Sponsor packages copied from the website: $imported (set their prices in the admin: Sponsors)\n";
 }
 
+\Ismile\Settings::migrateWebsiteControls();
+
 $kinds = ['BASE TABLE' => [], 'VIEW' => []];
 foreach (Db::all('SHOW FULL TABLES') as $row) {
     [$tableName, $type] = array_values($row);

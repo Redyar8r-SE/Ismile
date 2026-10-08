@@ -26,7 +26,7 @@ const PARTS = [
   },
   {
     id: "program", title: "Program", kind: "program",
-    hint: "Every day and its sessions. Pick the time with the hour, minutes and AM / PM boxes. The big switch at the top hides the whole program (both days) behind “To be announced”; switch it off and everything comes back as it was.",
+    hint: "Edit the days, sessions and times here. Show or hide the program in Database → Settings → Program visibility.",
     fields: [],
   },
   {
@@ -585,7 +585,7 @@ export const GROUPS = [
   {
     id: "registration", page: "register", title: "Registration", where: "The three-step registration page",
     blocks: [
-      single("registrationStatus", "Open or closed"),
+      { type: "settings", title: "Open or closed", anchor: "registration-settings" },
       single("ticketPrices", "Ticket and lunch prices"),
       text("registrationTop", "Top of the page"),
       text("registrationTickets", "Tickets and instructions"),

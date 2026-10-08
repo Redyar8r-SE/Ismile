@@ -123,12 +123,11 @@ final class Registrations
      * or the prices are not set yet.
      */
     /**
-     * Open only when both switches say open: the admin's Settings
-     * ("Registration is open") and the website's "Close registration" switch.
+     * Database Settings are the only registration switch.
      */
     public static function isOpen(): bool
     {
-        return Settings::bool('registration_open') && !SiteData::closedBySwitch();
+        return Settings::bool('registration_open');
     }
 
     public static function publicState(string $lang): array
