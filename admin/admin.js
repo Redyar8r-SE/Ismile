@@ -351,16 +351,31 @@ document.addEventListener("DOMContentLoaded", () => {
   const university = form.querySelector('[name="university"]');
   const sync = () => {
     const dentalStudent = specialty.value === "student";
-    if (dentalStudent) ticket.value = "student";
+    if (dentalStudent && ticket.value !== "vip") ticket.value = "student";
     // Keep the select enabled so its value is included in the submitted form.
     ticket.querySelector('[value="professional"]').disabled = dentalStudent;
     const studentTicket = ticket.value === "student";
     fields.hidden = !studentTicket;
     fields.querySelectorAll("input").forEach((input) => { input.disabled = !studentTicket; });
     university.required = studentTicket;
+    const vipFields = document.getElementById("caller-vip-lunch");
+    const vipDay = form.querySelector('[name="vip_lunch_day"]');
+    if (vipFields && vipDay) {
+      const vip = ticket.value === "vip";
+      vipFields.hidden = !vip;
+      vipDay.disabled = !vip;
+      vipDay.required = vip;
+      form.querySelectorAll('[name="lunch_day1"], [name="lunch_day2"]').forEach((input) => {
+        const included = vip && input.name === `lunch_day${vipDay.value}`;
+        // Keep included lunch in the POST even though it cannot be unticked.
+        if (included) input.checked = true;
+      });
+    }
   };
   specialty.addEventListener("change", sync);
   ticket.addEventListener("change", sync);
+  form.querySelector('[name="vip_lunch_day"]')?.addEventListener("change", sync);
+  form.querySelectorAll('[name="lunch_day1"], [name="lunch_day2"]').forEach((input) => input.addEventListener("change", sync));
   sync();
 });
 

@@ -39,7 +39,7 @@ final class RegistrationQuery
                 $params[] = strtoupper($q);
             }
         }
-        if (in_array($in['type'] ?? '', ['professional', 'student'], true)) {
+        if (in_array($in['type'] ?? '', ['professional', 'student', 'vip'], true)) {
             $where[] = 'r.ticket_type = ?';
             $params[] = $in['type'];
         }

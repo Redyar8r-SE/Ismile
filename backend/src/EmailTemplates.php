@@ -70,12 +70,12 @@ final class EmailTemplates
 
         // ---- Your registration ----
         $paid = $registration['status'] === 'complimentary' ? null
-            : Db::value("SELECT amount_confirmed FROM payments WHERE registration_id = ? AND status = 'paid' ORDER BY id LIMIT 1", [$registration['id']]);
+            : Db::one("SELECT amount_confirmed, currency FROM payments WHERE registration_id = ? AND status = 'paid' ORDER BY id LIMIT 1", [$registration['id']]);
         $mine = [
             [$w['row_name'], $name],
             [$w['reference'], $registration['ref']],
             [$w['ticket_no'], $ticket['ticket_no']],
-            [$w['row_ticket'], $registration['ticket_type'] === 'student' ? $w['type_student'] : $w['type_professional']],
+            [$w['row_ticket'], $w['type_' . $registration['ticket_type']]],
         ];
         if ($registration['ticket_type'] === 'student' && $registration['university']) {
             $mine[] = [$w['row_university'], $registration['university']];
@@ -94,7 +94,7 @@ final class EmailTemplates
             $mine[] = [$w['row_paid'], $w['free_ticket']];
         } else {
             $methods = ['visa' => 'Visa', 'mastercard' => 'Mastercard', 'fib' => 'FIB', 'fastpay' => 'FastPay'];
-            $mine[] = [$w['row_paid'], $paid !== null ? '<span dir="ltr">' . number_format((int) $paid) . ' ' . S::e(SiteData::prices()['currency']) . '</span>' : '–', true];
+            $mine[] = [$w['row_paid'], $paid !== null ? '<span dir="ltr">' . number_format((int) $paid['amount_confirmed']) . ' ' . S::e($paid['currency']) . '</span>' : '–', true];
             if ($registration['pay_method']) {
                 $mine[] = [$w['row_paid_by'], $methods[$registration['pay_method']] ?? $registration['pay_method']];
             }
@@ -211,11 +211,14 @@ final class EmailTemplates
     {
         $rows = [
             [$w['reference'], $registration['ref']],
-            [$w['pdf_ticket_type'], $registration['ticket_type'] === 'student' ? $w['type_student'] : $w['type_professional']],
+            [$w['pdf_ticket_type'], $w['type_' . $registration['ticket_type']]],
             [$w['pdf_lunch'], EmailText::lunchLine($registration)],
         ];
         if ($registration['status'] === 'unpaid' && SiteData::pricesReadyFor($registration)) {   // a form waiting for payment
-            $rows[] = [$w['amount'], number_format(SiteData::amountFor($registration)) . ' ' . SiteData::prices()['currency']];
+            $quote = SiteData::quoteFor($registration);
+            $amounts = [];
+            foreach ($quote['totals'] as $currency => $amount) $amounts[] = number_format($amount) . ' ' . $currency;
+            $rows[] = [$w['amount'], implode(' + ', $amounts)];
         }
         if ($registration['status'] === 'complimentary') {
             $rows[] = [$w['pdf_note'], $w['complimentary']];

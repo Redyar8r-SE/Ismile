@@ -601,7 +601,7 @@ td.muted[colspan]:has(.empty-state){padding:12px;background:#fcfdff}
 .quiet-label{visibility:hidden}
 .trend-figure figcaption{font-size:10px;color:#8a9fab;margin:14px 0 0;text-align:center;line-height:1.7}
 .sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
-.ticket-donut{width:164px;height:164px;margin:26px auto;background:conic-gradient(#28aec1 0 var(--share),#8a77db var(--share) 100%);border-radius:50%;display:grid;place-items:center;box-shadow:0 0 0 9px #f8fbfd}
+.ticket-donut{width:164px;height:164px;margin:26px auto;background:conic-gradient(#28aec1 0 var(--share),#8a77db var(--share) var(--student-end,100%),#d7b768 var(--student-end,100%) 100%);border-radius:50%;display:grid;place-items:center;box-shadow:0 0 0 9px #f8fbfd}
 .ticket-donut.is-empty{background:#e9f0f6}
 .ticket-donut>div{width:124px;height:124px;border-radius:50%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .ticket-donut strong{font-size:31px;letter-spacing:-1px;line-height:1.2}
@@ -610,7 +610,7 @@ td.muted[colspan]:has(.empty-state){padding:12px;background:#fcfdff}
 .mix-legend>span{display:flex;align-items:center;gap:7px;font-size:11px;color:#6b8599}
 .mix-legend b{margin-left:auto;font-size:12px;color:#2d5672;font-weight:600}
 .dot{display:inline-block;width:7px;height:7px;border-radius:50%;flex:none}
-.dot.teal{background:#28aec1}.dot.violet{background:#8a77db}
+.dot.teal{background:#28aec1}.dot.violet{background:#8a77db}.dot.gold{background:#d7b768}
 .arrival-summary{padding-top:18px;border-top:1px solid #e7eef4}
 .arrival-summary>span{display:flex;justify-content:space-between;font-size:11px;color:#6c8598}
 .arrival-summary b{color:#39778b;font-weight:600}

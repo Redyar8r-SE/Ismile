@@ -49,6 +49,7 @@ Api::run(static function (): void {
         }
         $registration = $payment !== null && $payment['registration_id'] !== null ? Registrations::find((int) $payment['registration_id']) : null;
         if ($registration === null) {
+            $quote = SiteData::quoteFor($checkout);
             Api::json(200, [
                 'ok'        => true,
                 'ref'       => $checkout['ref'],
@@ -57,8 +58,9 @@ Api::run(static function (): void {
                 'ticket'    => $checkout['ticket_type'],
                 'lunch1'    => (bool) $checkout['lunch_day1'],
                 'lunch2'    => (bool) $checkout['lunch_day2'],
-                'amount'    => SiteData::pricesReadyFor($checkout) ? SiteData::amountFor($checkout) : null,
-                'currency'  => SiteData::prices()['currency'],
+                'amount'    => SiteData::pricesReadyFor($checkout) ? $quote['amount'] : null,
+                'currency'  => $quote['currency'],
+                'totals'    => $quote['totals'],
                 'payment'   => $payment['status'] ?? null,
                 'ticketNo'  => null,
                 'qr'        => null,
@@ -77,7 +79,7 @@ Api::run(static function (): void {
         'lunch1'    => (bool) $registration['lunch_day1'],
         'lunch2'    => (bool) $registration['lunch_day2'],
         'amount'    => null,
-        'currency'  => SiteData::prices()['currency'],
+        'currency'  => null,
         'payment'   => 'paid',
         'ticketNo'  => $hasTicket ? $ticket['ticket_no'] : null,
         'qr'        => $hasTicket ? 'api/qr.php?r=' . rawurlencode($registration['ref']) . '&k=' . rawurlencode($key) . '&v=' . $ticket['version'] : null,

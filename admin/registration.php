@@ -54,7 +54,8 @@ if (isset($_GET['new'])) {
     $e = [Page::class, 'e'];
     $value = static fn (string $key): string => Page::e(is_string($_POST[$key] ?? null) ? $_POST[$key] : '');
     $selected = static fn (string $key, string $option, string $default = ''): string => ($_POST[$key] ?? $default) === $option ? ' selected' : '';
-    $student = ($_POST['specialty'] ?? '') === 'student' || ($_POST['ticket'] ?? '') === 'student';
+    $vip = ($_POST['ticket'] ?? '') === 'vip';
+    $student = !$vip && (($_POST['specialty'] ?? '') === 'student' || ($_POST['ticket'] ?? '') === 'student');
     Page::top($inCheckin ? 'Check-in · Register' : 'Register a caller (phone)', $inCheckin ? 'checkin' : 'registrations', '<a class="btn ghost" href="' . Page::e($listUrl) . '">&larr; ' . ($inCheckin ? 'Guest list' : 'All registrations') . '</a>');
     if ($inCheckin) echo CheckinWorkspace::navigation('register', $user, $workspaceDay);
     ?>
@@ -73,7 +74,7 @@ if (isset($_GET['new'])) {
             <option value="">Choose specialty</option>
             <?php foreach (Registrations::SPECIALTY_NAMES as $key => $label): ?><option value="<?= $e($key) ?>"<?= $selected('specialty', $key) ?>><?= $e($label) ?></option><?php endforeach; ?>
           </select></label>
-          <label>Ticket *<select name="ticket" id="caller-ticket"><option value="professional"<?= !$student ? ' selected' : '' ?>>Professional</option><option value="student"<?= $student ? ' selected' : '' ?>>Student</option></select></label>
+          <label>Ticket *<select name="ticket" id="caller-ticket"><option value="professional"<?= !$student && !$vip ? ' selected' : '' ?>>Professional</option><option value="student"<?= $student ? ' selected' : '' ?>>Student</option><option value="vip"<?= $vip ? ' selected' : '' ?>>VIP</option></select></label>
         </div>
         <p class="muted small" id="caller-ticket-note">Dental students receive a student ticket. For student tickets, record the university after checking the ID.</p>
         <div class="row3" id="caller-student-fields">
@@ -83,6 +84,7 @@ if (isset($_GET['new'])) {
       </fieldset>
       <fieldset class="form-section">
         <legend>3. Lunch</legend>
+        <label id="caller-vip-lunch"<?= !$vip ? ' hidden' : '' ?>>VIP included lunch<select name="vip_lunch_day"<?= !$vip ? ' disabled' : '' ?>><option value="1"<?= $selected('vip_lunch_day','1','1') ?>>Day 1 · 20 November</option><option value="2"<?= $selected('vip_lunch_day','2','1') ?>>Day 2 · 21 November</option></select><small>VIP is $100 with one lunch included. The other day is $42. Call the guest to arrange home badge delivery.</small></label>
         <div class="checks"><label class="inline"><input type="checkbox" name="lunch_day1" value="1"<?= ($_POST['lunch_day1'] ?? '') === '1' ? ' checked' : '' ?>> Lunch day 1</label><label class="inline"><input type="checkbox" name="lunch_day2" value="1"<?= ($_POST['lunch_day2'] ?? '') === '1' ? ' checked' : '' ?>> Lunch day 2</label></div>
       </fieldset>
       <div class="form-actions"><a class="btn ghost" href="<?= $e($listUrl) ?>">Cancel</a><button class="btn" name="do" value="pay_link">Send payment link</button></div>
@@ -146,7 +148,8 @@ $bookings = Db::all('SELECT wb.*, u.name AS booked_by_name FROM workshop_booking
 $history = Db::all('SELECT a.*, u.name FROM audit_log a LEFT JOIN admin_users u ON u.id = a.user_id WHERE a.target_type = ? AND a.target_id = ? ORDER BY a.id DESC LIMIT 50', ['registration', $id]);
 $twins = Db::all("SELECT id, ref, first_name, father_name, grandfather_name, status FROM registrations WHERE id <> ? AND (email = ? OR phone = ?) AND status <> 'cancelled'", [$id, $registration['email'], $registration['phone']]);
 $prices = SiteData::prices();
-$paidAmount = ($value = Db::value("SELECT amount_confirmed FROM payments WHERE registration_id = ? AND status = 'paid' LIMIT 1", [$id])) !== null ? (int) $value : null;
+$paidPayment = Db::one("SELECT amount_confirmed, currency FROM payments WHERE registration_id = ? AND status = 'paid' LIMIT 1", [$id]);
+$paidAmount = $paidPayment !== null ? (int) $paidPayment['amount_confirmed'] : null;
 $e = [Page::class, 'e'];
 
 Page::top(Registrations::fullName($registration), $inCheckin ? 'checkin' : 'registrations', '<a class="btn ghost" href="' . Page::e($listUrl) . '">&larr; ' . ($inCheckin ? 'Guest list' : 'All registrations') . '</a>');
@@ -175,7 +178,8 @@ if ($inCheckin) echo CheckinWorkspace::navigation('guests', $user, $workspaceDay
       <dt>Specialty</dt><dd><?= $e(Registrations::SPECIALTY_NAMES[$registration['specialty']] ?? $registration['specialty']) ?></dd>
       <dt>Ticket</dt><dd><?= $e($registration['ticket_type']) ?></dd>
       <dt>Lunch</dt><dd><?= $registration['lunch_day1'] ? 'Day 1 ' : '' ?><?= $registration['lunch_day2'] ? 'Day 2' : '' ?><?= !$registration['lunch_day1'] && !$registration['lunch_day2'] ? 'None' : '' ?></dd>
-      <dt>Paid</dt><dd><?= Page::paidBadge($registration['status']) ?> <?= $paidAmount !== null ? Page::money($paidAmount, $prices['currency']) : '' ?> <?= $registration['pay_method'] ? $e(strtoupper($registration['pay_method'])) : '' ?> · <?= Page::when($registration['paid_at']) ?></dd>
+      <dt>Paid</dt><dd><?= Page::paidBadge($registration['status']) ?> <?= $paidAmount !== null ? Page::money($paidAmount, $paidPayment['currency']) : '' ?> <?= $registration['pay_method'] ? $e(strtoupper($registration['pay_method'])) : '' ?> · <?= Page::when($registration['paid_at']) ?></dd>
+      <?php if ($registration['ticket_type'] === 'vip'): ?><dt>VIP included lunch</dt><dd>Day <?= (int) $registration['vip_lunch_day'] ?> · Call to arrange home badge delivery.</dd><?php endif; ?>
       <dt>No-refund terms</dt><dd><?= $registration['terms_accepted_at'] ? 'accepted on the website, ' . Page::when($registration['terms_accepted_at']) : '<span class="muted">registered by the office</span>' ?></dd>
       <dt>Language</dt><dd><?= $e($registration['lang']) ?></dd>
       <dt>Form sent</dt><dd><?= Page::when($registration['created_at']) ?></dd>

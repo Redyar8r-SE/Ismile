@@ -4,12 +4,13 @@
 //
 // The form is sent to the server (api/register.php), which saves it, makes the
 // reference and works out the price. Professionals then go straight to the
-// payment page; students wait for their ID to be checked. Where there is no
+// payment page. Student ID photos are saved with the student's details. Where there is no
 // server (GitHub Pages) or registration is closed, the form is not shown at
 // all, so nobody can believe they registered when nothing was saved.
 // Nothing about the visitor is kept in the browser.
 import { t, getLang, onLangChange } from "../i18n.js?v=93";
 import { formatPrice } from "../utils/money.js?v=93";
+import { initRegistrationExperience } from "./registration-experience.js?v=94";
 
 const TOTAL_STEPS = 3;
 
@@ -42,6 +43,7 @@ export function initRegistration({ tickets = {} } = {}) {
   // Closed with the admin switch (Site content › Registration): the panel
   // "Registration opens soon" is shown and the form is never started.
   if (tickets.registrationClosed === true) {
+    document.querySelectorAll('[name="experience"]').forEach((input) => { input.disabled = true; });
     $("regClosed").hidden = false;
     form.hidden = true;
     progress.hidden = true;
@@ -63,19 +65,22 @@ export function initRegistration({ tickets = {} } = {}) {
   // What the server says: open or not, prices, lunch days left. null = no server.
   let server = null;
   let serverChecked = false;
+  let experience = null;
 
   // ---------- Helpers ----------
   const checkedValue = (name) => form.querySelector(`input[name="${name}"]:checked`)?.value;
   const optionText = (select) => select.options[select.selectedIndex]?.textContent.trim() || "";
   const isHidden = (el) => Boolean(el.closest("[hidden]:not(.reg-step)"));
-  const ticketPrice = () => Number(tickets[checkedValue("ticket") === "student" ? "student" : "professional"]) || 0;
+  const ticketPrice = () => checkedValue("ticket") === "vip" ? Number(tickets.vipUSD ?? tickets.vip ?? 100) : Number(tickets[checkedValue("ticket") === "student" ? "student" : "professional"]) || 0;
+  const ticketCurrency = () => checkedValue("ticket") === "vip" ? "USD" : tickets.currency || "IQD";
+  const lunchCurrency = () => tickets.lunchCurrency || tickets.currency || "IQD";
+  const priceText = (amount, currency) => currency === "USD" ? `$${Number(amount).toLocaleString("en-US")}` : formatPrice(amount);
   // Lunch is optional and per day: none, one or both.
   const LUNCH = [
     { id: "day1", price: () => Number(tickets.lunchDay1) || 0, label: "order_lunch_d1", short: "lunch_d1" },
     { id: "day2", price: () => Number(tickets.lunchDay2) || 0, label: "order_lunch_d2", short: "lunch_d2" },
   ];
   const chosenLunch = () => LUNCH.filter((day) => form.querySelector(`input[name="lunch"][value="${day.id}"]`).checked);
-  const orderTotal = () => ticketPrice() + chosenLunch().reduce((sum, day) => sum + day.price(), 0);
 
   // Keep the "selected" style of radio cards in sync
   function syncChecked(name) {
@@ -243,6 +248,7 @@ export function initRegistration({ tickets = {} } = {}) {
 
   // ---------- Steps ----------
   function goTo(number, { scroll = true } = {}) {
+    experience?.beforeStep();
     step = number;
     steps.forEach((section) => { section.hidden = Number(section.dataset.step) !== step; });
     stepperItems.forEach((item, index) => {
@@ -260,13 +266,13 @@ export function initRegistration({ tickets = {} } = {}) {
     if (scroll) {
       const top = card.getBoundingClientRect().top;
       if (top < 80 || top > window.innerHeight * 0.6) card.scrollIntoView({ behavior: "smooth", block: "start" });
-      steps[step - 1].querySelector(".step-head h3").focus({ preventScroll: true });
+      [...steps[step - 1].querySelectorAll(".step-head h3")].find((heading) => !isHidden(heading))?.focus({ preventScroll: true });
     }
   }
 
   // Lunch is optional: with no day ticked the button says so.
   function updateNextLabel() {
-    const skipping = step === 2 && chosenLunch().length === 0;
+    const skipping = step === 2 && checkedValue("ticket") !== "vip" && chosenLunch().length === 0;
     nextBtn.querySelector("span").textContent = t(skipping ? "lunch_skip" : "continue");
   }
 
@@ -303,7 +309,7 @@ export function initRegistration({ tickets = {} } = {}) {
       syncChecked("ticket");
       toggleUniversity();
     }
-    if (input === specialty && specialty.value === "student") {
+    if (input === specialty && specialty.value === "student" && checkedValue("ticket") !== "vip") {
       form.querySelector('input[name="ticket"][value="student"]').checked = true;
       syncChecked("ticket");
       toggleUniversity();
@@ -322,9 +328,9 @@ export function initRegistration({ tickets = {} } = {}) {
       showError($("p_uni"), "");
       showError($("p_ambassador"), "");
       showError($("p_student_id"), "");
-      $("p_student_id").value = "";
       renderStudentIdPreview();
     }
+    experience?.syncTier();
   }
 
   // ---------- "Is everything correct?" ----------
@@ -402,7 +408,7 @@ export function initRegistration({ tickets = {} } = {}) {
     rows.push([t("f_gender"), optionText($("p_gender"))]);
     rows.push([t("f_age"), $("p_age").value.trim()]);
     rows.push([t("f_spec"), optionText(specialty)]);
-    rows.push([t("f_ticket"), t(checkedValue("ticket") === "student" ? "ticket_student" : "ticket_prof")]);
+    rows.push([t("f_ticket"), t(checkedValue("ticket") === "vip" ? "xp_vip" : checkedValue("ticket") === "student" ? "ticket_student" : "ticket_prof")]);
     if (checkedValue("ticket") === "student") {
       rows.push([t("f_uni"), $("p_uni").value.trim()]);
       if ($("p_ambassador").value.trim()) rows.push([t("f_ambassador"), $("p_ambassador").value.trim()]);
@@ -410,6 +416,10 @@ export function initRegistration({ tickets = {} } = {}) {
     }
     const lunch = chosenLunch().map((day) => t(day.short));
     rows.push([t("rv_lunch"), lunch.length ? lunch.join(", ") : t("rv_lunch_none")]);
+    if (checkedValue("ticket") === "vip") {
+      rows.push([t("xp_review_included"), t(`xp_${experience.includedDay()}_full`)]);
+      rows.push([t("xp_review_followup"), t("xp_review_call").replace("{phone}", isolate($("p_phone").value.trim()))]);
+    }
     rows.push([t("pay_legend"), t(PAY_METHODS[payMethod(checkedValue("pay"))])]);
     fillList($("reviewList"), rows);
     renderOrder();
@@ -419,15 +429,19 @@ export function initRegistration({ tickets = {} } = {}) {
   // through the office.
   function orderLines() {
     const student = checkedValue("ticket") === "student";
+    const vip = checkedValue("ticket") === "vip";
     return [
-      { id: `ticket-${student ? "student" : "professional"}`, label: t(student ? "order_ticket_student" : "order_ticket_prof"), price: ticketPrice() },
-      ...chosenLunch().map((day) => ({ id: `lunch-${day.id}`, label: t(day.label), price: day.price() })),
+      { id: `ticket-${checkedValue("ticket")}`, label: t(vip ? "xp_review_vip" : student ? "order_ticket_student" : "order_ticket_prof"), price: ticketPrice(), currency: ticketCurrency() },
+      ...chosenLunch().filter((day) => !vip || day.id !== experience?.includedDay()).map((day) => ({ id: `lunch-${day.id}`, label: t(day.label), price: day.price(), currency: lunchCurrency() })),
     ];
   }
 
   function renderOrder() {
-    fillList($("orderList"), orderLines().map((line) => [line.label, formatPrice(line.price)]));
-    $("orderTotal").textContent = formatPrice(orderTotal());
+    const lines = orderLines();
+    fillList($("orderList"), lines.map((line) => [line.label, priceText(line.price, line.currency)]));
+    const totals = new Map();
+    lines.forEach((line) => totals.set(line.currency, (totals.get(line.currency) || 0) + line.price));
+    $("orderTotal").textContent = [...totals].map(([currency, amount]) => isolate(priceText(amount, currency))).join(" + ");
   }
 
   // ---------- Submit ----------
@@ -462,7 +476,8 @@ export function initRegistration({ tickets = {} } = {}) {
     data.append("gender", $("p_gender").value);
     data.append("age", $("p_age").value.trim());
     data.append("specialty", specialty.value);
-    data.append("ticket", student ? "student" : "professional");
+    data.append("ticket", checkedValue("ticket"));
+    if (checkedValue("ticket") === "vip") data.append("vip_lunch_day", experience.includedDay() === "day1" ? "1" : "2");
     chosenLunch().forEach((day) => data.append(`lunch_${day.id}`, "1"));
     data.append("pay", payMethod(checkedValue("pay")));
     data.append("terms", $("terms").checked ? "1" : "0");
@@ -550,6 +565,7 @@ export function initRegistration({ tickets = {} } = {}) {
       const response = await fetch(`api/config.php?lang=${getLang()}`, { cache: "no-store", headers: { Accept: "application/json" } });
       const data = await response.json();
       server = data && data.ok === true ? data : null;
+      if (server?.prices) { Object.assign(tickets, server.prices); renderTicketPrices(); }
     } catch {
       server = null;
     }
@@ -568,6 +584,7 @@ export function initRegistration({ tickets = {} } = {}) {
       progress.hidden = !open;
     }
     if (!open) {
+      experience?.availability(server);
       const reason = server?.reason;
       const message = reason === "closed" ? server.messages?.[getLang()] || server.message : "";
       $("regClosedTitle").textContent = t(reason === "full" ? "reg_full_title" : "reg_closed_title");
@@ -583,6 +600,7 @@ export function initRegistration({ tickets = {} } = {}) {
       input.closest("label")?.classList.toggle("is-unavailable", !available);
     });
     syncChecked("lunch");
+    experience?.availability(server);
     updateNextLabel();
   }
 
@@ -606,11 +624,14 @@ export function initRegistration({ tickets = {} } = {}) {
     $("tkPriceProf").textContent = formatPrice(tickets.professional);
     $("tkPriceStudent").textContent = formatPrice(tickets.student);
     const [day1, day2] = LUNCH.map((day) => day.price());
-    $("lunchPrice1").textContent = formatPrice(day1);
-    $("lunchPrice2").textContent = formatPrice(day2);
+    $("lunchPrice1").textContent = priceText(day1, lunchCurrency());
+    $("lunchPrice2").textContent = priceText(day2, lunchCurrency());
+    if ($("tkPriceVIP")) $("tkPriceVIP").textContent = priceText(tickets.vipUSD ?? tickets.vip ?? 100, "USD");
+    const vipPrice = document.querySelector(".vip-price-row>strong");
+    if (vipPrice) vipPrice.textContent = priceText(tickets.vipUSD ?? tickets.vip ?? 100, "USD");
     // One price when both days cost the same, otherwise the lower one as "from".
     const prices = [day1, day2].filter(Boolean);
-    $("tkPriceLunch").textContent = new Set(prices).size > 1 || prices.length === 1
+    if ($("tkPriceLunch")) $("tkPriceLunch").textContent = new Set(prices).size > 1 || prices.length === 1
       ? t("lunch_from").replace("{price}", formatPrice(Math.min(...prices)))
       : formatPrice(day1);
   }
@@ -628,6 +649,7 @@ export function initRegistration({ tickets = {} } = {}) {
   });
 
   // ---------- Start ----------
+  experience = initRegistrationExperience({ tickets, getStep: () => step, onLunchChange: () => { syncChecked("lunch"); updateNextLabel(); if (step === 3) renderReview(); } });
   updateAgeButtons();
   renderTicketPrices();
   goTo(1, { scroll: false });

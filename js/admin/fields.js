@@ -31,12 +31,13 @@ const PARTS = [
   },
   {
     id: "ticketPrices", title: "Ticket prices", kind: "single", file: "tickets",
-    hint: "In Iraqi dinars, whole numbers. Leave 0 to show “Price soon”. Lunch is optional and priced per day: visitors can add Day 1, Day 2 or both, and it is added to their total. Workshop names, prices and seats are managed in the registrations admin (/admin/ → Workshops).",
+    hint: "Professional and student tickets use IQD. VIP and lunch use USD, without currency conversion. VIP includes one lunch on the guest's chosen day; the other lunch costs extra. Leave 0 when a price is not set. Workshops are managed in the registrations admin.",
     itemFields: [
       { key: "professional", label: "Professional ticket (IQD)", type: "number" },
       { key: "student", label: "Student ticket (IQD)", type: "number" },
-      { key: "lunchDay1", label: "Lunch · Day 1 (IQD)", type: "number" },
-      { key: "lunchDay2", label: "Lunch · Day 2 (IQD)", type: "number" },
+      { key: "vip", label: "VIP package (USD, one lunch included)", type: "number" },
+      { key: "lunchDay1", label: "Lunch · Day 1 (USD)", type: "number" },
+      { key: "lunchDay2", label: "Lunch · Day 2 (USD)", type: "number" },
     ],
   },
   {

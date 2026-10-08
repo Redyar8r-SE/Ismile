@@ -841,7 +841,7 @@ try {
     }
 
     // ------------------------------------------------------------------
-    section('The "Close registration" switch (website admin)');
+    section('The "Close registration" switch (database settings)');
     $ticketsFile = App::siteFile('data/tickets.json');
     $ticketsBefore = (string) file_get_contents($ticketsFile);
     $switched = static function (bool $closed) use ($ticketsFile, $ticketsBefore): void {
@@ -850,11 +850,13 @@ try {
         file_put_contents($ticketsFile, json_encode($data, JSON_PRETTY_PRINT));
     };
     try {
-        Settings::set('registration_open', '1');
+        Settings::set('registration_open', '0');
         $switched(true);
         check('switched ON: the website says registration is closed', Registrations::publicState('en')['reason'] === 'closed' && !Registrations::isOpen());
         check('switched ON: a form sent anyway is refused', (register(['lang' => 'en'])['json']['error'] ?? '') === 'reg_closed');
         $switched(false);
+        check('a stale website flag cannot reopen the database switch', Registrations::publicState('en')['open'] === false);
+        Settings::set('registration_open', '1');
         check('switched OFF: registration is open again', Registrations::publicState('en')['open'] === true);
     } finally {
         file_put_contents($ticketsFile, $ticketsBefore);

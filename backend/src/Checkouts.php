@@ -81,11 +81,12 @@ final class Checkouts
         if ($specialty === null) {
             throw new UserError('err_required', 'p_spec');
         }
-        // A dental student always gets the student ticket, as on the form.
-        $ticket = $specialty === 'student' ? 'student' : (Validate::oneOf($in['ticket'] ?? null, ['professional', 'student'], 'professional'));
+        $ticket = Validate::oneOf($in['ticket'] ?? null, ['professional', 'student', 'vip'], 'professional');
+        if ($specialty === 'student' && $ticket !== 'vip') $ticket = 'student';
 
         $lunch1 = !empty($in['lunch_day1']) && $in['lunch_day1'] !== '0';
         $lunch2 = !empty($in['lunch_day2']) && $in['lunch_day2'] !== '0';
+        $vipDay = self::vipLunchDay($ticket, $in, $lunch1, $lunch2);
         if (($lunch1 && !$state['lunch']['day1']) || ($lunch2 && !$state['lunch']['day2'])) {
             throw new UserError('err_lunch_full', null, 409);
         }
@@ -112,6 +113,7 @@ final class Checkouts
             'phone' => $phone, 'email' => $email, 'city' => $city, 'gender' => $gender, 'age' => $age,
             'specialty' => $specialty, 'lang' => $lang, 'ticket_type' => $ticket,
             'lunch_day1' => $lunch1 ? 1 : 0, 'lunch_day2' => $lunch2 ? 1 : 0, 'pay_method' => $payMethod,
+            'vip_lunch_day' => $vipDay,
             'university' => $university, 'ambassador_code' => $ambassador,
         ];
         if (!SiteData::pricesReadyFor($row)) {
@@ -171,12 +173,12 @@ final class Checkouts
         if (!Validate::email($email)) {
             throw new UserError('An email address is needed: the payment link and the ticket are sent there.');
         }
-        $ticket = Validate::oneOf($in['ticket'] ?? null, ['professional', 'student'], 'professional');
+        $ticket = Validate::oneOf($in['ticket'] ?? null, ['professional', 'student', 'vip'], 'professional');
         $specialty = Validate::oneOf($in['specialty'] ?? null, Registrations::SPECIALTIES);
         if ($specialty === null) {
             throw new UserError('Choose the caller\'s specialty.');
         }
-        if ($specialty === 'student') {
+        if ($specialty === 'student' && $ticket !== 'vip') {
             $ticket = 'student';   // same rule as the website form
         }
         $university = null;
@@ -191,13 +193,27 @@ final class Checkouts
                 throw new UserError('The ambassador code contains unsupported characters.');
             }
         }
+        $lunch1 = ($in['lunch_day1'] ?? '') === '1';
+        $lunch2 = ($in['lunch_day2'] ?? '') === '1';
+        $vipDay = self::vipLunchDay($ticket, $in, $lunch1, $lunch2);
         return [
             'first_name' => $first, 'father_name' => $father, 'grandfather_name' => $grandfather,
             'phone' => $phone, 'email' => $email, 'city' => Validate::text($in['city'] ?? '', 80) ?: '-',
             'gender' => 'prefer-not', 'age' => null, 'specialty' => $specialty, 'lang' => 'en',
-            'ticket_type' => $ticket, 'lunch_day1' => ($in['lunch_day1'] ?? '') === '1' ? 1 : 0, 'lunch_day2' => ($in['lunch_day2'] ?? '') === '1' ? 1 : 0,
+            'ticket_type' => $ticket, 'lunch_day1' => $lunch1 ? 1 : 0, 'lunch_day2' => $lunch2 ? 1 : 0, 'vip_lunch_day' => $vipDay,
             'pay_method' => 'visa', 'university' => $university, 'ambassador_code' => $ambassador, 'id_photo_id' => null,
         ];
+    }
+
+    /** Both lunch flags describe attendance; exactly one VIP day is included. */
+    private static function vipLunchDay(string $ticket, array $in, bool $lunch1, bool $lunch2): ?int
+    {
+        if ($ticket !== 'vip') return null;
+        $day = filter_var($in['vip_lunch_day'] ?? null, FILTER_VALIDATE_INT);
+        if (!in_array($day, [1, 2], true) || ($day === 1 ? !$lunch1 : !$lunch2)) {
+            throw new UserError('err_required');
+        }
+        return $day;
     }
 
     /** A reference used by no form and no registration. */
@@ -242,7 +258,7 @@ final class Checkouts
     {
         $duplicateOf = Db::value("SELECT id FROM registrations WHERE (email = ? OR phone = ?) AND status <> 'cancelled' LIMIT 1", [$checkout['email'], $checkout['phone']]);
         $fields = ['ref', 'first_name', 'father_name', 'grandfather_name', 'phone', 'email', 'city', 'gender', 'age', 'specialty', 'lang',
-            'ticket_type', 'lunch_day1', 'lunch_day2', 'pay_method', 'university', 'ambassador_code', 'id_photo_id', 'view_nonce', 'created_by', 'created_ip', 'created_at', 'terms_accepted_at'];
+            'ticket_type', 'lunch_day1', 'lunch_day2', 'vip_lunch_day', 'pay_method', 'university', 'ambassador_code', 'id_photo_id', 'view_nonce', 'created_by', 'created_ip', 'created_at', 'terms_accepted_at'];
         $row = array_intersect_key($checkout, array_flip($fields));
         $id = Db::insert('registrations', $row + [
             'status' => 'paid', 'possible_duplicate' => $duplicateOf ? 1 : 0, 'paid_at' => $paidAt, 'updated_at' => $paidAt,

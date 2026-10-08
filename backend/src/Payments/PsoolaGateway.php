@@ -39,8 +39,9 @@ final class PsoolaGateway implements Gateway
         $this->ready();
         // ---- TO FILL FROM PSOOLA'S DOCUMENTATION (question 3.1) ----
         // What we will send (names to be matched to theirs):
-        //   amount          $payment['amount_expected']   (whole IQD)
-        //   currency        $payment['currency']          ('IQD')
+        //   amount          $payment['amount_expected']   (whole units)
+        //   currency        $payment['currency']          (USD or IQD, never inferred)
+        // Mixed-currency carts await Psoola's explicit settlement policy.
         //   our reference   $registration['ref']          (ISM26-XXXXXX)
         //   method          $payment['method']            (visa|mastercard|fib|fastpay, if they accept a preset method: Q 3.4)
         //   customer        $registration['email'], $registration['phone']

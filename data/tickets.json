@@ -2,7 +2,10 @@
   "currency": "IQD",
   "professional": 40000,
   "student": 30000,
-  "lunchDay1": 0,
-  "lunchDay2": 0,
+  "vip": 100,
+  "vipCurrency": "USD",
+  "lunchCurrency": "USD",
+  "lunchDay1": 42,
+  "lunchDay2": 42,
   "registrationClosed": false
 }

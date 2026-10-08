@@ -115,9 +115,10 @@ CREATE TABLE IF NOT EXISTS checkouts (
   age                TINYINT UNSIGNED  NULL,
   specialty          ENUM('gp','spec','omfs','lab','acad','student') NOT NULL,
   lang               ENUM('en','ar','ku') NOT NULL DEFAULT 'en',
-  ticket_type        ENUM('professional','student') NOT NULL,
+  ticket_type        ENUM('professional','student','vip') NOT NULL,
   lunch_day1         TINYINT(1)        NOT NULL DEFAULT 0,
   lunch_day2         TINYINT(1)        NOT NULL DEFAULT 0,
+  vip_lunch_day      TINYINT UNSIGNED  NULL,                   -- one hosted VIP lunch is included
   pay_method         ENUM('visa','mastercard','fib','fastpay') NOT NULL DEFAULT 'visa',
   university         VARCHAR(160)      NULL,                   -- students
   ambassador_code    VARCHAR(40)       NULL,
@@ -135,7 +136,8 @@ CREATE TABLE IF NOT EXISTS checkouts (
   CONSTRAINT fk_checkout_created_by FOREIGN KEY (created_by) REFERENCES admin_users (id),
   CONSTRAINT fk_checkout_photo      FOREIGN KEY (id_photo_id) REFERENCES student_id_photos (id) ON DELETE SET NULL,
   CONSTRAINT ck_checkout_lunch CHECK (lunch_day1 IN (0, 1) AND lunch_day2 IN (0, 1)),
-  CONSTRAINT ck_checkout_student CHECK (specialty <> 'student' OR ticket_type = 'student'),
+  CONSTRAINT ck_checkout_student CHECK (specialty <> 'student' OR ticket_type IN ('student','vip')),
+  CONSTRAINT ck_checkout_vip_lunch CHECK ((ticket_type <> 'vip' AND vip_lunch_day IS NULL) OR (ticket_type = 'vip' AND vip_lunch_day IS NOT NULL AND ((vip_lunch_day = 1 AND lunch_day1 = 1) OR (vip_lunch_day = 2 AND lunch_day2 = 1)))),
   CONSTRAINT ck_checkout_university CHECK (ticket_type <> 'student' OR university IS NOT NULL)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Forms waiting for payment (temporary, not registrations)';
@@ -162,9 +164,10 @@ CREATE TABLE IF NOT EXISTS registrations (
   specialty          ENUM('gp','spec','omfs','lab','acad','student') NOT NULL,
   lang               ENUM('en','ar','ku') NOT NULL DEFAULT 'en',  -- website language they used (emails are always English)
   -- what they chose and paid for
-  ticket_type        ENUM('professional','student') NOT NULL,
+  ticket_type        ENUM('professional','student','vip') NOT NULL,
   lunch_day1         TINYINT(1)        NOT NULL DEFAULT 0,
   lunch_day2         TINYINT(1)        NOT NULL DEFAULT 0,
+  vip_lunch_day      TINYINT UNSIGNED  NULL,                   -- one hosted VIP lunch is included
   pay_method         ENUM('visa','mastercard','fib','fastpay') NULL,   -- NULL for a free ticket
   -- students: kept as a record (no approval step)
   university         VARCHAR(160)      NULL,
@@ -193,7 +196,8 @@ CREATE TABLE IF NOT EXISTS registrations (
   CONSTRAINT fk_reg_created_by FOREIGN KEY (created_by) REFERENCES admin_users (id),
   CONSTRAINT fk_reg_photo      FOREIGN KEY (id_photo_id) REFERENCES student_id_photos (id) ON DELETE SET NULL,
   CONSTRAINT ck_reg_lunch CHECK (lunch_day1 IN (0, 1) AND lunch_day2 IN (0, 1)),
-  CONSTRAINT ck_reg_student CHECK (specialty <> 'student' OR ticket_type = 'student'),
+  CONSTRAINT ck_reg_student CHECK (specialty <> 'student' OR ticket_type IN ('student','vip')),
+  CONSTRAINT ck_reg_vip_lunch CHECK ((ticket_type <> 'vip' AND vip_lunch_day IS NULL) OR (ticket_type = 'vip' AND vip_lunch_day IS NOT NULL AND ((vip_lunch_day = 1 AND lunch_day1 = 1) OR (vip_lunch_day = 2 AND lunch_day2 = 1)))),
   CONSTRAINT ck_reg_university CHECK (ticket_type <> 'student' OR university IS NOT NULL),
   CONSTRAINT ck_reg_age CHECK (age IS NULL OR age BETWEEN 16 AND 120),
   CONSTRAINT ck_reg_free CHECK (status <> 'complimentary' OR comp_reason IS NOT NULL)
@@ -607,7 +611,7 @@ SELECT
   r.phone                                                            AS `Phone`,
   r.email                                                            AS `Email`,
   r.city                                                             AS `City`,
-  IF(r.ticket_type = 'student', 'Student', 'Professional')           AS `Ticket`,
+  CASE r.ticket_type WHEN 'student' THEN 'Student' WHEN 'vip' THEN 'VIP' ELSE 'Professional' END           AS `Ticket`,
   r.university                                                       AS `University`,
   IF(r.lunch_day1 = 1, 'Yes', '')                                    AS `Lunch day 1`,
   IF(r.lunch_day2 = 1, 'Yes', '')                                    AS `Lunch day 2`,
@@ -637,12 +641,12 @@ WHERE r.status IN ('paid','complimentary') AND t.cancelled_at IS NULL;
 -- The caterer's lists.
 CREATE OR REPLACE SQL SECURITY DEFINER VIEW `02_lunch_day_1` AS
 SELECT CONCAT_WS(' ', r.first_name, r.father_name, r.grandfather_name) AS `Full name`, r.phone AS `Phone`,
-       IF(r.ticket_type = 'student', 'Student', 'Professional') AS `Ticket`, r.ref AS `Reference`
+       CASE r.ticket_type WHEN 'student' THEN 'Student' WHEN 'vip' THEN 'VIP' ELSE 'Professional' END AS `Ticket`, r.ref AS `Reference`
 FROM registrations r WHERE r.status IN ('paid','complimentary') AND r.lunch_day1 = 1;
 
 CREATE OR REPLACE SQL SECURITY DEFINER VIEW `03_lunch_day_2` AS
 SELECT CONCAT_WS(' ', r.first_name, r.father_name, r.grandfather_name) AS `Full name`, r.phone AS `Phone`,
-       IF(r.ticket_type = 'student', 'Student', 'Professional') AS `Ticket`, r.ref AS `Reference`
+       CASE r.ticket_type WHEN 'student' THEN 'Student' WHEN 'vip' THEN 'VIP' ELSE 'Professional' END AS `Ticket`, r.ref AS `Reference`
 FROM registrations r WHERE r.status IN ('paid','complimentary') AND r.lunch_day2 = 1;
 
 -- Registered students (the ID photos are seen in the admin).
@@ -769,8 +773,9 @@ SELECT
   COALESCE(CONCAT_WS(' ', r.first_name, r.father_name, r.grandfather_name),
            CONCAT_WS(' ', c.first_name, c.father_name, c.grandfather_name), '(form deleted)') AS `Full name`,
   UPPER(p.method)                                                          AS `Method`,
-  p.amount_expected                                                        AS `Amount (IQD)`,
-  p.amount_confirmed                                                       AS `Confirmed (IQD)`,
+  p.amount_expected                                                        AS `Amount`,
+  p.amount_confirmed                                                       AS `Confirmed`,
+  p.currency                                                               AS `Currency`,
   CASE p.status WHEN 'paid' THEN 'Paid' WHEN 'waiting' THEN 'Paying now' WHEN 'created' THEN 'Starting'
     WHEN 'failed' THEN 'Failed' WHEN 'expired' THEN 'Not completed' WHEN 'mismatch' THEN 'Wrong amount (Finance)'
     WHEN 'duplicate' THEN 'Paid twice (Finance)' ELSE 'Reviewed by Finance' END AS `Status`,
@@ -785,12 +790,13 @@ ORDER BY p.id DESC;
 CREATE OR REPLACE SQL SECURITY DEFINER VIEW `12_money_per_day` AS
 SELECT
   DATE(p.confirmed_at)                                                   AS `Day`,
+  p.currency                                                            AS `Currency`,
   SUM(p.status = 'paid')                                                 AS `Tickets paid`,
-  COALESCE(SUM(IF(p.status = 'paid', p.amount_confirmed, 0)), 0)         AS `Ticket money (IQD)`,
-  COALESCE(SUM(IF(p.status IN ('mismatch','duplicate','kept'), p.amount_confirmed, 0)), 0) AS `Held for Finance (IQD)`
+  COALESCE(SUM(IF(p.status = 'paid', p.amount_confirmed, 0)), 0)         AS `Ticket money`,
+  COALESCE(SUM(IF(p.status IN ('mismatch','duplicate','kept'), p.amount_confirmed, 0)), 0) AS `Held for Finance`
 FROM payments p
 WHERE p.confirmed_at IS NOT NULL AND p.status IN ('paid','mismatch','duplicate','kept')
-GROUP BY DATE(p.confirmed_at)
+GROUP BY DATE(p.confirmed_at), p.currency
 ORDER BY `Day` DESC;
 
 -- Every registration form, the moment it is sent, paid or not (newest first).
@@ -803,7 +809,7 @@ SELECT
   c.phone                                                            AS `Phone`,
   c.email                                                            AS `Email`,
   c.city                                                             AS `City`,
-  IF(c.ticket_type = 'student', 'Student', 'Professional')           AS `Ticket`,
+  CASE c.ticket_type WHEN 'student' THEN 'Student' WHEN 'vip' THEN 'VIP' ELSE 'Professional' END           AS `Ticket`,
   c.university                                                       AS `University`,
   IF(c.lunch_day1 = 1, 'Yes', '')                                    AS `Lunch day 1`,
   IF(c.lunch_day2 = 1, 'Yes', '')                                    AS `Lunch day 2`,

@@ -69,11 +69,17 @@ final class Payments
         if (!Settings::bool('registration_open') || !SiteData::pricesReadyFor($checkout)) {
             throw new UserError('reg_closed', null, 409);
         }
+        $quote = SiteData::quoteFor($checkout);
+        // Psoola must define settlement for a cart containing USD and IQD.
+        // Never add currencies together or silently convert the visitor's price.
+        if ($quote['amount'] === null) {
+            return ['redirect' => null, 'error' => 'pay_start_failed'];
+        }
         // An attempt made in the last few minutes is reused, so repeated clicks
         // (or an email scanner opening the link) never pile up payments at the company.
         $recent = Db::one("SELECT * FROM payments WHERE checkout_id = ? AND status = 'waiting' AND redirect_url IS NOT NULL AND created_at > ? ORDER BY id DESC LIMIT 1",
             [$checkout['id'], date('Y-m-d H:i:s', time() - self::REUSE_MINUTES * 60)]);
-        if ($recent !== null && (int) $recent['amount_expected'] === SiteData::amountFor($checkout)) {
+        if ($recent !== null && (int) $recent['amount_expected'] === $quote['amount'] && $recent['currency'] === $quote['currency']) {
             return ['redirect' => $recent['redirect_url'], 'error' => null];
         }
         // Places held by people paying right now count too, so the last seats
@@ -85,15 +91,14 @@ final class Payments
             throw new UserError('lunch_full', null, 409);   // the lunch they chose is full: register again without it
         }
 
-        $prices = SiteData::prices();
         $now = App::now();
         $gatewayName = (string) App::config('payments.gateway', 'fake');
         $paymentId = Db::insert('payments', [
             'checkout_id'     => $checkout['id'],
             'gateway'         => $gatewayName,
             'method'          => $checkout['pay_method'],
-            'amount_expected' => SiteData::amountFor($checkout),
-            'currency'        => $prices['currency'],
+            'amount_expected' => $quote['amount'],
+            'currency'        => $quote['currency'],
             'status'          => 'created',
             'created_at'      => $now,
             'updated_at'      => $now,

@@ -19,6 +19,7 @@ final class EmailText
         'pay_expires'       => 'This payment link is personal and works for {days} days. Do not forward it.',
         'type_professional' => 'Professional',
         'type_student'      => 'Student',
+        'type_vip'          => 'VIP',
         'lunch_none'        => 'No lunch',
         'lunch_day1'        => 'Lunch day 1',
         'lunch_day2'        => 'Lunch day 2',

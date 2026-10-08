@@ -24,7 +24,9 @@ $cancelled = $count("SELECT COUNT(*) FROM registrations WHERE status = 'cancelle
 $payingNow = $count("SELECT COUNT(*) FROM checkouts WHERE status = 'open' AND expires_at > ?", [\Ismile\App::now()]);
 $profPaid = $count("SELECT COUNT(*) FROM registrations WHERE status IN ('paid','complimentary') AND ticket_type = 'professional'");
 $studPaid = $count("SELECT COUNT(*) FROM registrations WHERE status IN ('paid','complimentary') AND ticket_type = 'student'");
-$money = (int) Db::value("SELECT COALESCE(SUM(amount_confirmed), 0) FROM payments WHERE status = 'paid'");
+$vipPaid = $count("SELECT COUNT(*) FROM registrations WHERE status IN ('paid','complimentary') AND ticket_type = 'vip'");
+$revenue = Db::all("SELECT currency, SUM(amount_confirmed) AS total FROM payments WHERE status = 'paid' GROUP BY currency ORDER BY currency");
+$revenueText = $revenue ? implode(' + ', array_map(static fn (array $row): string => Page::money((int) $row['total'], $row['currency']), $revenue)) : Page::money(0, SiteData::prices()['currency']);
 [$emailScope,$emailParams] = CommunicationQuery::where($user);
 $emailsSent = $count("SELECT COUNT(*) FROM emails e WHERE $emailScope AND (" . CommunicationQuery::STATE_SQL . ") = 'sent'",$emailParams);
 $emailsFailed = $count("SELECT COUNT(*) FROM emails e WHERE $emailScope AND e.status = 'failed'",$emailParams);
@@ -84,7 +86,8 @@ foreach (SiteData::workshops() as $workshop) {
     $used = \Ismile\Office::bookedCount($workshop['id']);
     $workshopCards[] = [$workshop, $used, (int) ($workshop['totalSeats'] ?? 0)];
 }
-$professionalPercent = $profPaid + $studPaid > 0 ? (int) round($profPaid / ($profPaid + $studPaid) * 100) : 0;
+$professionalPercent = $registered > 0 ? (int) round($profPaid / $registered * 100) : 0;
+$studentEndPercent = $registered > 0 ? (int) round(($profPaid + $studPaid) / $registered * 100) : 0;
 $recent = Db::all("SELECT id, ref, first_name, father_name, grandfather_name, ticket_type, status, created_at FROM registrations ORDER BY id DESC LIMIT 6");
 $firstName = explode(' ', trim((string) $user['name']))[0];
 $e = [Page::class, 'e'];
@@ -103,7 +106,7 @@ Page::top('Dashboard', 'index');
 <div data-live-region="dashboard-records">
 <?= Page::stats([
     ['Registered guests', number_format($registered), $comp ? "$paid paid · $comp complimentary" : 'Paid and complimentary tickets', 'users', 'teal'],
-    ['Ticket revenue', Page::money($money, $currency), 'Confirmed ticket payments', 'payments', 'blue'],
+    ['Ticket revenue', $revenueText, 'Confirmed ticket payments, by currency', 'payments', 'blue'],
     ['Workshop bookings', number_format($booked), count($workshopCards) . ' active workshops', 'workshops', 'violet'],
     ['Guests checked in', number_format($arrived), $validTickets . ' valid tickets · ' . $arrivalPercent . '% arrived', 'checkin', 'green'],
 ]) ?>
@@ -124,7 +127,7 @@ Page::top('Dashboard', 'index');
     </section>
     <section class="card">
       <div class="panel-top"><?= Page::panelHeading('Latest registrations', 'The latest people added to your database.', 'ticket') ?><a class="text-action" href="registrations.php">View all <?= Page::navIcon('arrow') ?></a></div>
-      <?php if ($recent): ?><div class="table-wrap"><table><tr><th>Guest</th><th>Ticket</th><th>Status</th><th>Registered</th></tr><?php foreach ($recent as $row): ?><tr><td><div class="guest-cell"><span class="guest-avatar" aria-hidden="true"><?= $e(mb_strtoupper(mb_substr($row['first_name'],0,1))) ?></span><div><a href="registration.php?id=<?= (int) $row['id'] ?>"><b><?= $e(Registrations::fullName($row)) ?></b></a><small><?= $e($row['ref']) ?></small></div></div></td><td><?= $e(ucfirst($row['ticket_type'])) ?></td><td><?= Page::pill($row['status']) ?></td><td><?= Page::when($row['created_at']) ?></td></tr><?php endforeach; ?></table></div>
+      <?php if ($recent): ?><div class="table-wrap"><table><tr><th>Guest</th><th>Ticket</th><th>Status</th><th>Registered</th></tr><?php foreach ($recent as $row): ?><tr><td><div class="guest-cell"><span class="guest-avatar" aria-hidden="true"><?= $e(mb_strtoupper(mb_substr($row['first_name'],0,1))) ?></span><div><a href="registration.php?id=<?= (int) $row['id'] ?>"><b><?= $e(Registrations::fullName($row)) ?></b></a><small><?= $e($row['ref']) ?></small></div></div></td><td><?= $e(($row['ticket_type']==='vip' ? 'VIP' : ucfirst($row['ticket_type']))) ?></td><td><?= Page::pill($row['status']) ?></td><td><?= Page::when($row['created_at']) ?></td></tr><?php endforeach; ?></table></div>
       <?php else: ?><?= Page::emptyState('Your guest list starts here', 'New registrations will appear here as soon as a ticket is issued.', 'registrations') ?><?php if (\Ismile\Auth::can($user, 'edit')): ?><div class="empty-action"><a class="btn ghost" href="registration.php?new=1">Register your first caller</a></div><?php endif; ?><?php endif; ?>
     </section>
     <section class="card">
@@ -142,8 +145,8 @@ Page::top('Dashboard', 'index');
   <aside class="dashboard-side" aria-label="Event overview">
     <section class="card guest-mix">
       <?= Page::panelHeading('Your guests', 'A snapshot of your ticket holders.', 'users') ?>
-      <div class="ticket-donut<?= $registered === 0 ? ' is-empty' : '' ?>" style="--share:<?= $professionalPercent ?>%" role="img" aria-label="<?= $e($profPaid . ' professionals and ' . $studPaid . ' students') ?>"><div><strong><?= number_format($registered) ?></strong><span>registered</span></div></div>
-      <div class="mix-legend"><span><i class="dot teal"></i> Professionals <b><?= number_format($profPaid) ?></b></span><span><i class="dot violet"></i> Students <b><?= number_format($studPaid) ?></b></span></div>
+      <div class="ticket-donut<?= $registered === 0 ? ' is-empty' : '' ?>" style="--share:<?= $professionalPercent ?>%;--student-end:<?= $studentEndPercent ?>%" role="img" aria-label="<?= $e($profPaid . ' professionals, ' . $studPaid . ' students and ' . $vipPaid . ' VIP guests') ?>"><div><strong><?= number_format($registered) ?></strong><span>registered</span></div></div>
+      <div class="mix-legend"><span><i class="dot teal"></i> Professionals <b><?= number_format($profPaid) ?></b></span><span><i class="dot violet"></i> Students <b><?= number_format($studPaid) ?></b></span><span><i class="dot gold"></i> VIP <b><?= number_format($vipPaid) ?></b></span></div>
       <div class="arrival-summary"><span>Arrival progress <b><?= $arrivalPercent ?>%</b></span><div class="track"><i class="teal" style="width:<?= $arrivalPercent ?>%"></i></div><small><?= $arrived ?> of <?= $validTickets ?> valid tickets checked in</small></div>
     </section>
     <section class="card priority-panel">

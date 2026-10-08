@@ -60,7 +60,16 @@ foreach ($migrations as $file) {
         // database without attendance therefore already gets this column.
         $methodAlreadyPresent = $name === '2026-10-07-manual-checkin.sql'
             && Db::value("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'ticket_attendance' AND column_name = 'checkin_method'");
-        if (!$methodAlreadyPresent) {
+        if ($name === '2026-10-09-vip-registration.sql') {
+            $maria = stripos((string) Db::value('SELECT VERSION()'), 'MariaDB') !== false;
+            foreach ($statements($file) as $statement) {
+                preg_match('/^ALTER TABLE (checkouts|registrations)\b/', $statement, $table);
+                if (!$table) throw new RuntimeException('Unexpected VIP upgrade statement.');
+                // Resume an interrupted deployment after either atomic ALTER.
+                if (Db::value("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name=? AND column_name='vip_lunch_day'", [$table[1]])) continue;
+                $run([$maria ? str_replace('DROP CHECK ', 'DROP CONSTRAINT ', $statement) : $statement]);
+            }
+        } elseif (!$methodAlreadyPresent) {
             $run($statements($file));
         }
         echo "done\n";

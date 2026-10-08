@@ -134,7 +134,7 @@ final class Tickets
         $pdf->MultiCell(124, 8, Registrations::fullName($registration), 0, 'L', false, 1);
 
         $rows = [
-            [$words['pdf_ticket_type'], $registration['ticket_type'] === 'student' ? $words['type_student'] : $words['type_professional']],
+            [$words['pdf_ticket_type'], $words['type_' . $registration['ticket_type']]],
             [$words['pdf_lunch'], EmailText::lunchLine($registration)],
             [$words['pdf_reference'], $registration['ref']],
             [$words['pdf_ticket_no'], $ticket['ticket_no']],

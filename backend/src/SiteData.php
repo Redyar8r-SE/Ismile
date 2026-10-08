@@ -19,7 +19,7 @@ final class SiteData
         return is_array($data) ? $data : [];
     }
 
-    /** Prices in IQD. A price of 0 means "not set yet": nobody can pay it. */
+    /** Prices retain their configured currency; no exchange rate is inferred. */
     public static function prices(): array
     {
         $tickets = self::read('tickets');
@@ -27,6 +27,9 @@ final class SiteData
             'currency'     => (string) ($tickets['currency'] ?? 'IQD'),
             'professional' => max(0, (int) ($tickets['professional'] ?? 0)),
             'student'      => max(0, (int) ($tickets['student'] ?? 0)),
+            'vip'          => max(0, (int) ($tickets['vip'] ?? 0)),
+            'vipCurrency'  => (string) ($tickets['vipCurrency'] ?? $tickets['currency'] ?? 'IQD'),
+            'lunchCurrency'=> (string) ($tickets['lunchCurrency'] ?? $tickets['currency'] ?? 'IQD'),
             'lunchDay1'    => max(0, (int) ($tickets['lunchDay1'] ?? 0)),
             'lunchDay2'    => max(0, (int) ($tickets['lunchDay2'] ?? 0)),
         ];
@@ -40,33 +43,55 @@ final class SiteData
         return !Settings::bool('registration_open');
     }
 
-    /** The amount for one registration, worked out on the server only. */
-    public static function amountFor(array $registration): int
+    /** Authoritative totals by currency. The chosen VIP lunch is included. */
+    public static function quoteFor(array $registration): array
     {
         $prices = self::prices();
-        $amount = $registration['ticket_type'] === 'student' ? $prices['student'] : $prices['professional'];
-        if ((int) $registration['lunch_day1'] === 1) {
-            $amount += $prices['lunchDay1'];
+        $type = $registration['ticket_type'];
+        $currency = $type === 'vip' ? $prices['vipCurrency'] : $prices['currency'];
+        $totals = [$currency => $prices[$type] ?? 0];
+        foreach ([1, 2] as $day) {
+            if ((int) $registration['lunch_day' . $day] !== 1
+                || ($type === 'vip' && (int) ($registration['vip_lunch_day'] ?? 0) === $day)) {
+                continue;
+            }
+            $lunchCurrency = $prices['lunchCurrency'];
+            $totals[$lunchCurrency] = ($totals[$lunchCurrency] ?? 0) + $prices['lunchDay' . $day];
         }
-        if ((int) $registration['lunch_day2'] === 1) {
-            $amount += $prices['lunchDay2'];
+        $single = count($totals) === 1;
+        return ['totals' => $totals, 'amount' => $single ? array_values($totals)[0] : null,
+            'currency' => $single ? array_key_first($totals) : null];
+    }
+
+    /** A provider charge requires one currency, configured explicitly. */
+    public static function amountFor(array $registration): int
+    {
+        $quote = self::quoteFor($registration);
+        if ($quote['amount'] === null) {
+            throw new UserError('pay_start_failed');
         }
-        return $amount;
+        return $quote['amount'];
     }
 
     /** True when every price this registration needs has been set (> 0). */
     public static function pricesReadyFor(array $registration): bool
     {
         $prices = self::prices();
-        $ticket = $registration['ticket_type'] === 'student' ? $prices['student'] : $prices['professional'];
+        $type = $registration['ticket_type'];
+        $ticket = $prices[$type] ?? 0;
         if ($ticket <= 0) {
             return false;
         }
-        if ((int) $registration['lunch_day1'] === 1 && $prices['lunchDay1'] <= 0) {
+        if ($type === 'vip' && (!in_array((int) ($registration['vip_lunch_day'] ?? 0), [1, 2], true)
+            || (int) $registration['lunch_day' . (int) $registration['vip_lunch_day']] !== 1)) {
             return false;
         }
-        if ((int) $registration['lunch_day2'] === 1 && $prices['lunchDay2'] <= 0) {
-            return false;
+        foreach ([1, 2] as $day) {
+            if ((int) $registration['lunch_day' . $day] === 1
+                && !($type === 'vip' && (int) $registration['vip_lunch_day'] === $day)
+                && $prices['lunchDay' . $day] <= 0) {
+                return false;
+            }
         }
         return true;
     }

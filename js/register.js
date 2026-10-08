@@ -4,24 +4,27 @@ import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from ".
 import { initNav } from "./components/nav.js?v=93";
 import { initTheme } from "./components/theme.js?v=93";
 import { initFooter } from "./sections/footer.js?v=93";
-import { initRegistration } from "./sections/registration.js?v=93";
+import { initRegistration } from "./sections/registration.js?v=94";
 
 async function start() {
   initNav();
   initTheme();
   try {
-    const [english, footer, tickets] = await Promise.all([
+    const [english, footer, tickets, registrationEnglish] = await Promise.all([
       loadJSON("data/i18n/en.json"),
       loadJSON("data/footer.json"),
       loadJSON("data/tickets.json").catch(() => ({})),
+      loadJSON("data/i18n/registration-en.json?v=94"),
     ]);
-    initI18n(english);
-    const [arabic, kurdish] = await Promise.all([
+    initI18n({...english, ...registrationEnglish});
+    const [arabic, kurdish, registrationArabic, registrationKurdish] = await Promise.all([
       loadJSON("data/i18n/ar.json").catch(() => null),
       loadJSON("data/i18n/ku.json").catch(() => null),
+      loadJSON("data/i18n/registration-ar.json?v=94"),
+      loadJSON("data/i18n/registration-ku.json?v=94"),
     ]);
-    if (arabic) addLanguage("ar", arabic);
-    if (kurdish) addLanguage("ku", kurdish);
+    if (arabic) addLanguage("ar", {...arabic, ...registrationArabic});
+    if (kurdish) addLanguage("ku", {...kurdish, ...registrationKurdish});
     initFooter(footer);
     initRegistration({ tickets });
     initLangSwitch();
@@ -30,7 +33,7 @@ async function start() {
     console.error(error);
     const notice = document.createElement("div");
     notice.className = "load-error";
-    notice.textContent = "Could not load the site data. Open the site through a local server (see README.md).";
+    notice.textContent = "Registration could not load. Please refresh the page, or contact ismile@italk.krd for help.";
     document.body.prepend(notice);
   } finally {
     if (typeof window.siteReady === "function") window.siteReady();

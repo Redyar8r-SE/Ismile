@@ -109,7 +109,7 @@ final class CheckinWorkspace
         foreach (['q','attendance','type','status','lunch','id','specialty','city','university','lang','ambassador','arrival_date','from_time','to_time','staff','sort'] as $key) {
             $filters[$key]=mb_substr(trim(is_string($input[$key]??null) ? $input[$key] : ''),0,$key==='q'?200:160);
         }
-        foreach (['attendance'=>['attended','day1','day2','both','none'],'type'=>['student','professional'],'status'=>['paid','complimentary'],
+        foreach (['attendance'=>['attended','day1','day2','both','none'],'type'=>['student','professional','vip'],'status'=>['paid','complimentary'],
             'lunch'=>['day1','day2','both','any','none'],'id'=>['present','missing','removed'],'specialty'=>array_keys(Registrations::SPECIALTY_NAMES),
             'lang'=>['en','ar','ku'],'sort'=>['name','latest','earliest']] as $key=>$valid) {
             if (!in_array($filters[$key],$valid,true)) $filters[$key]='';
@@ -171,7 +171,7 @@ final class CheckinWorkspace
     {
         $rows=[['Reference','Name','Ticket','Category','Status','Student ID','University','City','Specialty','Lunch Day 1','Lunch Day 2','Day 1 arrival (Iraq time)','Day 1 checked in by','Day 2 arrival (Iraq time)','Day 2 checked in by','Registered','Paid / ticket issued','Language','Ambassador','Phone','Email','Day 1 check-in method','Day 2 check-in method']];
         foreach (self::rows($filters) as $row) {
-            $rows[]=[$row['ref'],Registrations::fullName($row),$row['ticket_no'],ucfirst($row['ticket_type']),$row['status'],self::idStatus($row),$row['university']??'',$row['city'],Registrations::SPECIALTY_NAMES[$row['specialty']]??$row['specialty'],
+            $rows[]=[$row['ref'],Registrations::fullName($row),$row['ticket_no'],($row['ticket_type']==='vip' ? 'VIP' : ucfirst($row['ticket_type'])),$row['status'],self::idStatus($row),$row['university']??'',$row['city'],Registrations::SPECIALTY_NAMES[$row['specialty']]??$row['specialty'],
                 $row['lunch_day1']?'Booked':'Not booked',$row['lunch_day2']?'Booked':'Not booked',$row['day1']??'',$row['staff1']??'',$row['day2']??'',$row['staff2']??'',$row['created_at'],$row['paid_at'],$row['lang'],$row['ambassador_code']??'',$row['phone'],$row['email'],Attendance::methodLabel($row['method1']),Attendance::methodLabel($row['method2'])];
         }
         return $rows;
