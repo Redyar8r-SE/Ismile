@@ -1,4 +1,5 @@
 {
+  "reg_back_site": "Back to home",
   "w_by": "Run by",
   "w_speaker": "Speaker",
   "w_company": "To be announced",
@@ -73,6 +74,7 @@
   "pg_soon_title": "The full program will be announced soon",
   "pg_soon_text": "Sessions, topics, speakers and rooms for both days are being finalised. Check back soon.",
   "reg_sending": "Sending…",
+  "submit": "Continue to payment",
   "reg_to_payment": "Opening the payment page…",
   "reg_closed_title": "Registration opens soon",
   "reg_closed_text": "Online registration is not open yet. Follow iSmile for the opening date, or write to us.",

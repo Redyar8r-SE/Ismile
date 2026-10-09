@@ -90,7 +90,8 @@ final class Checkouts
         if (($lunch1 && !$state['lunch']['day1']) || ($lunch2 && !$state['lunch']['day2'])) {
             throw new UserError('err_lunch_full', null, 409);
         }
-        $payMethod = Validate::oneOf($in['pay'] ?? null, Registrations::PAY_METHODS, 'visa');
+        // The provider chooses the method on its payment page; older forms may still send one.
+        $payMethod = Validate::oneOf($in['pay'] ?? null, Registrations::PAY_METHODS);
         if (($in['terms'] ?? '') !== '1') {
             throw new UserError('err_terms', 'terms');
         }

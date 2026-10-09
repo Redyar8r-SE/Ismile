@@ -5,7 +5,7 @@ import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from ".
 import { initNav } from "./components/nav.js?v=95";
 import { initTheme } from "./components/theme.js?v=95";
 import { initFooter } from "./sections/footer.js?v=95";
-import { initRegistration } from "./sections/registration.js?v=95";
+import { initRegistration } from "./sections/registration.js?v=99";
 
 async function start() {
   initNav();
@@ -24,9 +24,10 @@ async function start() {
     if (arabic) addLanguage("ar", arabic);
     if (kurdish) addLanguage("ku", kurdish);
     initFooter(footer);
-    initRegistration({ tickets });
+    const ready = initRegistration({ tickets });
     initLangSwitch();
     setLang(preferredLang());
+    await ready;
   } catch (error) {
     console.error(error);
     await showLoadError("reg_load_error");

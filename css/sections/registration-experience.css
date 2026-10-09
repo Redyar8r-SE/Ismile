@@ -93,6 +93,33 @@
 .extra-lunch-card:focus-within{outline:2px solid #F3D98B;outline-offset:4px}
 @media(max-width:560px){.extra-lunch-card{padding:17px 15px}.extra-lunch-topline{font-size:8px;letter-spacing:.8px}.extra-lunch-body{gap:12px}.extra-lunch-intro{gap:10px}.extra-lunch-icon{width:35px;height:35px;border-radius:10px}.extra-lunch-icon .xp-icon{width:19px;height:19px}.extra-lunch-copy strong{font-size:13px}.extra-lunch-card .extra-lunch-copy small{font-size:10px}.extra-lunch-cost>strong{font-size:24px}.extra-lunch-cost .extra-plus{font-size:14px}.extra-lunch-card .extra-lunch-cost>small{font-size:8px}.extra-lunch-foot{font-size:10px}}
 
+/* Consent remains one clear, keyboard-accessible choice in the review step. */
+.registration-home{display:inline-flex;align-items:center;gap:9px;margin-top:20px;padding:9px 13px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--teal-ink);font-size:12px;font-weight:600;text-decoration:none;min-height:42px}
+.registration-home svg{width:18px;height:18px;flex:none}
+.registration-home:hover{border-color:var(--teal);background:var(--surface-2)}
+.registration-home:focus-visible{outline:3px solid var(--teal-ink);outline-offset:3px}
+[dir=rtl] .registration-home svg{transform:scaleX(-1)}
+.experience-grid:has(.experience-aside[hidden]){grid-template-columns:minmax(0,1fr)}
+.experience-grid:has(.experience-aside[hidden])>.reg-card{width:100%;max-width:520px;justify-self:center}
+.experience-root .pay-note{margin:0 0 16px;font-size:12px;line-height:1.65}
+.experience-root .terms-card{min-height:76px;padding:18px;border:1px solid var(--line);border-radius:14px;background:var(--surface);gap:14px;color:var(--text);font-size:13px;line-height:1.7;transition:border-color .2s,background-color .2s}
+.experience-root .terms-card span{min-width:0}
+.experience-root .terms-card input{appearance:none;-webkit-appearance:none;position:relative;width:24px;height:24px;min-width:24px;margin:2px 0 0;border:1.5px solid var(--line);border-radius:7px;background:var(--bg);display:grid;place-items:center}
+.experience-root .terms-card input:checked{background:var(--teal);border-color:var(--teal)}
+.experience-root .terms-card input:checked::after{content:"";width:6px;height:11px;border:solid #fff;border-width:0 2px 2px 0;transform:translateY(-1px) rotate(45deg)}
+.experience-root .terms-card:has(input:checked){border-color:var(--teal);background:color-mix(in srgb,var(--teal) 6%,var(--surface))}
+.experience-root .terms-card:focus-within{outline:3px solid var(--teal-ink);outline-offset:3px}
+.experience-root.is-vip .terms-card{background:#241A30;border-color:#6A5078;color:#ECE0F2}
+.experience-root.is-vip .terms-card input{background:#1B1225;border-color:#856B95}
+.experience-root.is-vip .terms-card input:checked{background:#E3C677;border-color:#E3C677}
+.experience-root.is-vip .terms-card input:checked::after{border-color:#2D1B38}
+.experience-root.is-vip .terms-card:has(input:checked){border-color:#D7B768;background:#30213B}
+.experience-root.is-vip .terms-card:focus-within{outline-color:#F3D98B}
+.experience-root .terms-card:has(input[aria-invalid=true]){border-color:var(--danger)}
+.experience-root .terms-error{padding-inline-start:0;margin-top:10px}
+@media(max-width:560px){.experience-root .terms-card{padding:15px;gap:12px;font-size:12px}.experience-root .pay-note{font-size:11px}}
+@media(prefers-reduced-motion:reduce){.experience-root .terms-card{transition:none}}
+
 /* Arabic and Sorani use natural text direction while the brand and money stay readable. */
 .experience-root .brand,.experience-root .hero-brand,.experience-root .wordmark{direction:ltr;unicode-bidi:isolate}
 .choice-price,.vip-price-row>strong,.extra-lunch-cost,.review-total strong,#reviewPrice,.lunch-price{direction:ltr;unicode-bidi:isolate}

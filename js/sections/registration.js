@@ -10,14 +10,9 @@
 // Nothing about the visitor is kept in the browser.
 import { t, getLang, onLangChange } from "../i18n.js?v=95";
 import { formatPrice } from "../utils/money.js?v=95";
-import { initRegistrationExperience } from "./registration-experience.js?v=95";
+import { initRegistrationExperience } from "./registration-experience.js?v=99";
 
 const TOTAL_STEPS = 3;
-
-// The four payment methods Psoola will take. The key is what the server
-// receives; the value is the translation key of the name shown to the visitor.
-const PAY_METHODS = { visa: "pay_visa_t", mastercard: "pay_mastercard_t", fib: "pay_fib_t", fastpay: "pay_fastpay_t" };
-const payMethod = (value) => (value in PAY_METHODS ? value : "visa");
 
 // Which step each field the server may complain about sits on.
 const FIELD_STEP = { terms: 3 };
@@ -43,8 +38,16 @@ export function initRegistration({ tickets = {} } = {}) {
   // Closed with the admin switch (Site content › Registration): the panel
   // "Registration opens soon" is shown and the form is never started.
   if (tickets.registrationClosed === true) {
+    card.classList.remove("is-checking");
+    document.querySelector(".experience-choices").hidden = true;
+    document.querySelector(".experience-grid").hidden = false;
+    document.querySelector(".experience-aside").hidden = true;
     document.querySelectorAll('[name="experience"]').forEach((input) => { input.disabled = true; });
     $("regClosed").hidden = false;
+    $("regClosedTitle").dataset.i18n = "reg_closed_title";
+    $("regClosedText").dataset.i18n = "reg_closed_text";
+    $("regClosedTitle").textContent = t("reg_closed_title");
+    $("regClosedText").textContent = t("reg_closed_text");
     form.hidden = true;
     progress.hidden = true;
     return;
@@ -205,6 +208,7 @@ export function initRegistration({ tickets = {} } = {}) {
       const error = $("termsError");
       error.hidden = terms.checked;
       error.textContent = t("err_terms");
+      terms.setAttribute("aria-invalid", String(!terms.checked));
       if (!terms.checked) terms.focus();
       return terms.checked;
     }
@@ -215,7 +219,10 @@ export function initRegistration({ tickets = {} } = {}) {
   form.addEventListener("input", (event) => {
     const input = event.target;
     if (input.matches("[data-rule]") && input.getAttribute("aria-invalid") === "true") checkField(input);
-    if (input.id === "terms" && input.checked) $("termsError").hidden = true;
+    if (input.id === "terms" && input.checked) {
+      $("termsError").hidden = true;
+      input.removeAttribute("aria-invalid");
+    }
   });
   form.addEventListener("focusout", (event) => {
     const input = event.target;
@@ -296,10 +303,6 @@ export function initRegistration({ tickets = {} } = {}) {
     if (input.id === "p_student_id") {
       renderStudentIdPreview();
       if (input.getAttribute("aria-invalid") === "true") checkField(input);
-    }
-    if (input.name === "pay") {
-      syncChecked("pay");
-      renderReview();
     }
     if (input.name === "lunch") {
       syncChecked("lunch");
@@ -420,7 +423,6 @@ export function initRegistration({ tickets = {} } = {}) {
       rows.push([t("xp_review_included"), t(`xp_${experience.includedDay()}_full`)]);
       rows.push([t("xp_review_followup"), t("xp_review_call").replace("{phone}", isolate($("p_phone").value.trim()))]);
     }
-    rows.push([t("pay_legend"), t(PAY_METHODS[payMethod(checkedValue("pay"))])]);
     fillList($("reviewList"), rows);
     renderOrder();
   }
@@ -479,7 +481,6 @@ export function initRegistration({ tickets = {} } = {}) {
     data.append("ticket", checkedValue("ticket"));
     if (checkedValue("ticket") === "vip") data.append("vip_lunch_day", experience.includedDay() === "day1" ? "1" : "2");
     chosenLunch().forEach((day) => data.append(`lunch_${day.id}`, "1"));
-    data.append("pay", payMethod(checkedValue("pay")));
     data.append("terms", $("terms").checked ? "1" : "0");
     data.append("website", $("regTrap")?.value || "");   // spam trap: people never fill it
     if (student) {
@@ -609,7 +610,7 @@ export function initRegistration({ tickets = {} } = {}) {
     updateAgeButtons();
     form.querySelectorAll('[aria-invalid="true"]').forEach((input) => showError(input, ""));
     $("termsError").hidden = true;
-    ["pay", "ticket", "lunch"].forEach(syncChecked);
+    ["ticket", "lunch"].forEach(syncChecked);
     toggleUniversity();
     lastSuccess = null;
     success.hidden = true;
@@ -654,5 +655,5 @@ export function initRegistration({ tickets = {} } = {}) {
   renderTicketPrices();
   goTo(1, { scroll: false });
   renderAvailability();
-  checkServer();
+  return checkServer();
 }

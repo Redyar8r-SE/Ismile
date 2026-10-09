@@ -119,7 +119,7 @@ CREATE TABLE IF NOT EXISTS checkouts (
   lunch_day1         TINYINT(1)        NOT NULL DEFAULT 0,
   lunch_day2         TINYINT(1)        NOT NULL DEFAULT 0,
   vip_lunch_day      TINYINT UNSIGNED  NULL,                   -- one hosted VIP lunch is included
-  pay_method         ENUM('visa','mastercard','fib','fastpay') NOT NULL DEFAULT 'visa',
+  pay_method         ENUM('visa','mastercard','fib','fastpay') NULL DEFAULT NULL,  -- chosen on the provider's payment page
   university         VARCHAR(160)      NULL,                   -- students
   ambassador_code    VARCHAR(40)       NULL,
   id_photo_id        INT UNSIGNED      NULL,                   -- the student ID photo (student_id_photos)

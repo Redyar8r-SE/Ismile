@@ -9,9 +9,51 @@
 <link rel="stylesheet" href="css/components/brand.css?v=93"><link rel="stylesheet" href="css/sections/hero.css?v=93"><link rel="stylesheet" href="css/sections/register-page.css?v=93">
 <link rel="stylesheet" href="css/layout/header.css?v=93">
 <link rel="stylesheet" href="css/layout/footer.css?v=93">
-<link rel="stylesheet" href="css/sections/registration-experience.css?v=94">
+<link rel="stylesheet" href="css/components/boot.css?v=93">
+<link rel="stylesheet" href="css/sections/registration-experience.css?v=99">
 </head>
 <body>
+
+<div class="siteboot" id="siteboot" aria-hidden="true">
+  <div class="siteboot-box">
+    <div class="siteboot-mark">
+      <svg class="siteboot-ring" viewBox="0 0 88 88"><circle class="siteboot-rail" cx="44" cy="44" r="40"/><circle class="siteboot-arc" cx="44" cy="44" r="40"/></svg>
+      <svg class="siteboot-logo" width="34" height="40" viewBox="0 0 1080 1155" aria-hidden="true"><svg x="0" y="0" width="1080" height="1155" viewBox="0 0 1080 1155" overflow="hidden"><image href="assets/brand/ismile-logo.png" width="2481" height="1155"/></svg></svg>
+    </div>
+  </div>
+</div>
+<noscript><style>#siteboot{display:none}</style></noscript>
+<script>
+(function () {
+  var page = document.documentElement;
+  var lifted = false;
+  page.classList.add("siteboot-on", "site-animations-pending");
+  page.setAttribute("aria-busy", "true");
+  document.body.inert = true;
+  var fallback;
+  var lift = function () {
+    if (lifted) return;
+    lifted = true;
+    clearTimeout(fallback);
+    page.classList.remove("siteboot-on");
+    page.setAttribute("aria-busy", "false");
+    document.body.inert = false;
+    var cover = document.getElementById("siteboot");
+    if (cover) cover.classList.add("is-gone");
+    var duration = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 500;
+    setTimeout(function () {
+      page.classList.remove("site-animations-pending");
+      page.classList.add("site-ready");
+    }, duration);
+  };
+  window.siteReady = lift;
+  // A broken page script must never leave the cover or keyboard lock in place.
+  fallback = setTimeout(lift, 6000);
+  window.addEventListener("pageshow", function (event) {
+    if (event.persisted) lift();
+  });
+})();
+</script>
 
 <div class="experience-root" id="experienceStage">
 <header class="top reg-top experience-header" id="top">
@@ -32,6 +74,7 @@
   </div>
 </header>
 <main class="wrap">
+<a class="registration-home" href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12H4m6-6-6 6 6 6"/></svg><span data-i18n="reg_back_site">Back to home</span></a>
 <div class="reg-page-hero experience-heading">
       <div class="reg-page-hero-copy">
         <p class="section-kicker" data-i18n="reg_kicker">Registration</p>
@@ -52,8 +95,8 @@
         </div>
       </div>
     </div>
-<fieldset class="experience-choices"><legend class="sr-only" data-i18n="xp_choose_ticket">Choose your ticket type</legend><label class="experience-option" data-choice="student"><input type="radio" name="experience" value="student"><span class="choice-icon"><svg class="xp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m2 9 10-5 10 5-10 5zM6 11v5c0 4 12 4 12 0v-5M22 9v8"/></svg></span><span class="choice-copy"><strong data-i18n="xp_student">Student</strong><small data-i18n="xp_student_caption">For dental students</small></span><span class="choice-price" id="tkPriceStudent">30,000 IQD</span><span class="choice-check"><svg class="xp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg></span></label><label class="experience-option" data-choice="professional"><input type="radio" name="experience" value="professional" checked><span class="choice-icon"><svg class="xp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c.8-4 3.8-6 7.5-6s6.7 2 7.5 6"/></svg></span><span class="choice-copy"><strong data-i18n="xp_professional">Professional</strong><small data-i18n="xp_professional_caption">For dental professionals</small></span><span class="choice-price" id="tkPriceProf">40,000 IQD</span><span class="choice-check"><svg class="xp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg></span></label><label class="experience-option" data-choice="vip"><input type="radio" name="experience" value="vip"><span class="choice-icon"><svg class="xp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 6 4 4 5-7 5 7 4-4-2 12H5L3 6ZM5 21h14"/></svg></span><span class="choice-copy"><strong data-i18n="xp_vip">VIP</strong><small data-i18n="xp_vip_caption">The elevated experience</small></span><span class="choice-price" id="tkPriceVIP">$100</span><span class="choice-check"><svg class="xp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg></span></label></fieldset>
-<div class="reg experience-grid">
+<fieldset class="experience-choices" hidden><legend class="sr-only" data-i18n="xp_choose_ticket">Choose your ticket type</legend><label class="experience-option" data-choice="student"><input type="radio" name="experience" value="student"><span class="choice-icon"><svg class="xp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m2 9 10-5 10 5-10 5zM6 11v5c0 4 12 4 12 0v-5M22 9v8"/></svg></span><span class="choice-copy"><strong data-i18n="xp_student">Student</strong><small data-i18n="xp_student_caption">For dental students</small></span><span class="choice-price" id="tkPriceStudent">30,000 IQD</span><span class="choice-check"><svg class="xp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg></span></label><label class="experience-option" data-choice="professional"><input type="radio" name="experience" value="professional"><span class="choice-icon"><svg class="xp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c.8-4 3.8-6 7.5-6s6.7 2 7.5 6"/></svg></span><span class="choice-copy"><strong data-i18n="xp_professional">Professional</strong><small data-i18n="xp_professional_caption">For dental professionals</small></span><span class="choice-price" id="tkPriceProf">40,000 IQD</span><span class="choice-check"><svg class="xp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg></span></label><label class="experience-option" data-choice="vip"><input type="radio" name="experience" value="vip"><span class="choice-icon"><svg class="xp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 6 4 4 5-7 5 7 4-4-2 12H5L3 6ZM5 21h14"/></svg></span><span class="choice-copy"><strong data-i18n="xp_vip">VIP</strong><small data-i18n="xp_vip_caption">The elevated experience</small></span><span class="choice-price" id="tkPriceVIP">$100</span><span class="choice-check"><svg class="xp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg></span></label></fieldset>
+<div class="reg experience-grid" hidden>
 <aside class="experience-aside">
 <section class="vip-experience" id="vipExperience" hidden>
 <div class="vip-topline"><span class="vip-eyebrow"><svg class="xp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 6 4 4 5-7 5 7 4-4-2 12H5L3 6ZM5 21h14"/></svg> <span data-i18n="xp_vip_eyebrow">THE VIP EXPERIENCE</span></span><span class="vip-edition">iSmile</span></div>
@@ -218,39 +261,12 @@
 <p class="vip-extras-note" data-i18n="xp_extras_note">Your chosen lunch is included in the $100 package. Workshop fees are separate.</p>
 </div>
 </div>
-<div class="reg-step" data-step="3" hidden><div class="step-head"><p class="xp-eyebrow" data-i18n="xp_almost_there">ALMOST THERE</p><h3 tabindex="-1" data-i18n="xp_review_title">Your experience, at a glance.</h3><p data-i18n="xp_review_copy">Check your details and package before continuing.</p></div><div class="experience-review"><div class="review-package"><span id="reviewTier" data-i18n="xp_professional">Professional</span><b id="reviewPrice">40,000 IQD</b></div><dl id="reviewList"></dl><dl id="orderList"></dl><div class="review-total"><span data-i18n="order_total">Total</span><strong id="orderTotal"></strong></div><button type="button" class="review-edit" id="editDetails" data-i18n="xp_edit_details">Edit my details</button><button type="button" class="review-edit" id="editLunch" data-i18n="xp_edit_lunch">Edit my lunch</button></div><fieldset class="pay-options">
-              <legend data-i18n="pay_legend">Payment method</legend>
-              <label class="pay-card is-checked">
-                <input type="radio" name="pay" value="visa" checked>
-                <span class="pay-logo" aria-hidden="true"><svg viewBox="0 0 48 16" aria-hidden="true" direction="ltr"><text x="24" y="14" text-anchor="middle" direction="ltr" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-style="italic" font-size="17" fill="#1A1F71" letter-spacing="-0.5">VISA</text></svg></span>
-                <span class="tc-text"><b data-i18n="pay_visa_t">Visa</b><small data-i18n="pay_visa_d">Enter your card details on the secure payment page</small></span>
-                <span class="tc-check" aria-hidden="true"></span>
-              </label>
-              <label class="pay-card">
-                <input type="radio" name="pay" value="mastercard">
-                <span class="pay-logo" aria-hidden="true"><svg viewBox="0 0 40 24" aria-hidden="true"><circle cx="14" cy="12" r="11" fill="#EB001B"/><circle cx="26" cy="12" r="11" fill="#F79E1B"/><path d="M20 3.2a11 11 0 0 1 0 17.6 11 11 0 0 1 0-17.6z" fill="#FF5F00"/></svg></span>
-                <span class="tc-text"><b data-i18n="pay_mastercard_t">MasterCard</b><small data-i18n="pay_mastercard_d">Enter your card details on the secure payment page</small></span>
-                <span class="tc-check" aria-hidden="true"></span>
-              </label>
-              <label class="pay-card">
-                <input type="radio" name="pay" value="fib">
-                <span class="pay-logo" aria-hidden="true"><img src="assets/pay/fib.png" alt="FIB" width="56" height="48"></span>
-                <span class="tc-text"><b data-i18n="pay_fib_t">FIB</b><small data-i18n="pay_fib_d">Opens in your FIB app — approve the payment there</small></span>
-                <span class="tc-check" aria-hidden="true"></span>
-              </label>
-              <label class="pay-card">
-                <input type="radio" name="pay" value="fastpay">
-                <span class="pay-logo" aria-hidden="true"><img src="assets/pay/fastpay.png" alt="FastPay" width="56" height="48"></span>
-                <span class="tc-text"><b data-i18n="pay_fastpay_t">FastPay</b><small data-i18n="pay_fastpay_d">Opens in your FastPay app — approve the payment there</small></span>
-                <span class="tc-check" aria-hidden="true"></span>
-              </label>
-              <p class="pay-note" data-i18n="pay_note">All payments are processed securely by Psoola. Your card or bank details are never entered on this website.</p>
-            </fieldset><label class="terms">
-              <input type="checkbox" id="terms">
+<div class="reg-step" data-step="3" hidden><div class="step-head"><p class="xp-eyebrow" data-i18n="xp_almost_there">ALMOST THERE</p><h3 tabindex="-1" data-i18n="xp_review_title">Your experience, at a glance.</h3><p data-i18n="xp_review_copy">Check your details and package before continuing.</p></div><div class="experience-review"><div class="review-package"><span id="reviewTier" data-i18n="xp_professional">Professional</span><b id="reviewPrice">40,000 IQD</b></div><dl id="reviewList"></dl><dl id="orderList"></dl><div class="review-total"><span data-i18n="order_total">Total</span><strong id="orderTotal"></strong></div><button type="button" class="review-edit" id="editDetails" data-i18n="xp_edit_details">Edit my details</button><button type="button" class="review-edit" id="editLunch" data-i18n="xp_edit_lunch">Edit my lunch</button></div><p class="pay-note" data-i18n="pay_note">All payments are processed securely by Psoola. Your card or bank details are never entered on this website.</p><label class="terms terms-card">
+              <input type="checkbox" id="terms" required aria-describedby="termsError">
               <span data-i18n="terms">I understand that tickets are non-refundable, and I agree to receive my payment link and ticket by email.</span>
             </label>
             <p class="f-error terms-error" id="termsError" hidden></p></div>
-<div class="reg-nav"><button type="button" class="btn btn-outline reg-back is-hidden" id="regBack" data-i18n="back">Back</button><span class="reg-count" id="regCount">Step 1 of 3</span><button type="button" class="btn btn-primary reg-next" id="regNext"><span data-i18n="continue">Continue</span><svg class="xp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6"/></svg></button><button type="submit" class="btn btn-primary reg-next" id="regSubmit" hidden><span data-i18n="submit">Complete registration</span></button></div>
+<div class="reg-nav"><button type="button" class="btn btn-outline reg-back is-hidden" id="regBack" data-i18n="back">Back</button><span class="reg-count" id="regCount">Step 1 of 3</span><button type="button" class="btn btn-primary reg-next" id="regNext"><span data-i18n="continue">Continue</span><svg class="xp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6"/></svg></button><button type="submit" class="btn btn-primary reg-next" id="regSubmit" hidden><span data-i18n="submit">Continue to payment</span></button></div>
 </form><div class="reg-success" id="regSuccess" tabindex="-1" hidden>
           <div class="success-ic" aria-hidden="true"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
           <h3 id="successTitle">You're registered!</h3>
@@ -307,5 +323,5 @@
 <button class="to-top" id="toTop" type="button" aria-label="Back to top" data-i18n-label="to_top" title="Back to top" data-i18n-title="to_top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
 </div>
 
-<script type="module" src="js/register.js?v=95"></script>
+<script type="module" src="js/register.js?v=99"></script>
 </body></html>

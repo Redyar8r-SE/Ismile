@@ -6,6 +6,9 @@ export function initRegistrationExperience({ tickets, onLunchChange, getStep }) 
   if (!stage) return null;
   const form = document.getElementById("regForm");
   const vipPanel = document.getElementById("vipExperience");
+  const choices = document.querySelector(".experience-choices");
+  const grid = document.querySelector(".experience-grid");
+  const aside = document.querySelector(".experience-aside");
   const motion = matchMedia("(prefers-reduced-motion: reduce)");
   const $ = (id) => document.getElementById(id);
   const ticket = () => form.querySelector('[name="ticket"]:checked')?.value || "professional";
@@ -17,6 +20,7 @@ export function initRegistrationExperience({ tickets, onLunchChange, getStep }) 
   let celebrationTimer;
   let observer;
   let opened = false;
+  let hasSelection = false;
   let previousTier = ticket();
   let standardLunch = [...form.querySelectorAll('[name="lunch"]')].filter((input) => input.checked).map((input) => input.value);
 
@@ -102,9 +106,9 @@ export function initRegistrationExperience({ tickets, onLunchChange, getStep }) 
       }
       previousTier = tier;
     }
-    stage.classList.toggle("is-vip", vip);
+    stage.classList.toggle("is-vip", vip && hasSelection);
     stage.dataset.tier = tier;
-    document.querySelector(`[name="experience"][value="${tier}"]`).checked = true;
+    document.querySelector(`[name="experience"][value="${tier}"]`).checked = hasSelection;
     vipPanel.hidden = !vip;
     $("standardExperience").hidden = vip;
     $("standardTitle").textContent = t(student ? "xp_student_heading" : "xp_professional_heading");
@@ -126,6 +130,9 @@ export function initRegistrationExperience({ tickets, onLunchChange, getStep }) 
     if (animate) reveal();
   }
   document.querySelectorAll('[name="experience"]').forEach((input) => input.addEventListener("change", () => {
+    hasSelection = true;
+    grid.hidden = false;
+    aside.hidden = false;
     const selected = input.value === "professional" && $("p_spec").value === "student" ? "student" : input.value;
     const radio = form.querySelector(`[name="ticket"][value="${selected}"]`);
     radio.checked = true;
@@ -154,6 +161,19 @@ export function initRegistrationExperience({ tickets, onLunchChange, getStep }) 
     beforeStep: finishOpening,
     includedDay: () => includedDay,
     availability(data) {
+      const open = data?.open === true;
+      choices.hidden = !open;
+      grid.hidden = open && !hasSelection;
+      aside.hidden = !open;
+      if (!open) {
+        hasSelection = false;
+        stage.classList.remove("is-vip");
+        opened = false;
+        observer?.disconnect();
+        finishOpening();
+        stopCelebration();
+        document.querySelectorAll('[name="experience"]').forEach((input) => { input.checked = false; });
+      }
       availability = { day1: data?.lunch?.day1 !== false, day2: data?.lunch?.day2 !== false };
       if (!availability[includedDay]) includedDay = availability.day1 ? "day1" : "day2";
       const other = includedDay === "day1" ? "day2" : "day1";
@@ -168,7 +188,7 @@ export function initRegistrationExperience({ tickets, onLunchChange, getStep }) 
       vipInput.disabled = data?.open !== true || Number(data?.prices?.vip || 0) <= 0 || (!availability.day1 && !availability.day2);
       document.querySelectorAll('[name="experience"]').forEach((input) => { if (input.value !== "vip") input.disabled = data?.open !== true; });
       syncLunch();
-      if (!opened && data?.open && "IntersectionObserver" in window && !motion.matches) {
+      if (!opened && hasSelection && open && "IntersectionObserver" in window && !motion.matches) {
         document.fonts.ready.then(() => {
           if (opened) return;
           observer = new IntersectionObserver((entries) => { if (entries.some((entry) => entry.isIntersecting)) reveal(); }, { threshold: 0.04, rootMargin: "0px 0px -24px 0px" });

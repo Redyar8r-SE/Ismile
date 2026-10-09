@@ -45,6 +45,14 @@ $check('included day must have a lunch reservation', $rejects(['vip_lunch_day'=>
 $check('VIP still requires consent', $rejects(['terms'=>'0']+$base));
 $check('student ticket still requires university and ID', $rejects(['ticket'=>'student','specialty'=>'student']+$base));
 
+$providerForm = $base;
+unset($providerForm['pay']);
+$providerCheckout = Checkouts::createFromForm($providerForm, null);
+$check('provider may choose the payment method', $providerCheckout['pay_method'] === null);
+$providerStarted = Payments::start($providerCheckout);
+$providerPayment = Db::one('SELECT * FROM payments WHERE checkout_id=? ORDER BY id DESC LIMIT 1', [$providerCheckout['id']]);
+$check('no Visa preset is sent to the provider', $providerStarted['redirect'] !== null && $providerPayment['method'] === null);
+
 foreach ([1,2] as $included) {
     foreach ([false,true] as $extra) {
         $form=['vip_lunch_day'=>(string)$included,'lunch_day1'=>($included===1||$extra)?'1':'0',
