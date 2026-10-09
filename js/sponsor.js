@@ -6,8 +6,8 @@ import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from ".
 import { initNav } from "./components/nav.js?v=95";
 import { initTheme } from "./components/theme.js?v=95";
 import { initFooter } from "./sections/footer.js?v=95";
-import { initSponsorForm } from "./sections/sponsor-form.js?v=95";
-import { initBoothMap } from "./sections/booth-map.js?v=95";
+import { initSponsorForm } from "./sections/sponsor-form.js?v=105";
+import { initBoothMap } from "./sections/booth-map.js?v=103";
 
 async function start() {
   initNav();
@@ -32,7 +32,7 @@ async function start() {
 
     initFooter(footer);
     initSponsorForm(sponsors);
-    initBoothMap(boothPlan);
+    initBoothMap({ ...boothPlan, colors: { ...boothPlan.colors, platinum: "#D9F4FF", gold: "#F3D98B", silver: "#DAE4E8", bronze: "#E8B48A" } });
 
     initLangSwitch();
     setLang(preferredLang());

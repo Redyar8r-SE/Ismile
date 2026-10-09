@@ -10,7 +10,7 @@
 // Nothing about the visitor is kept in the browser.
 import { t, getLang, onLangChange } from "../i18n.js?v=95";
 import { formatPrice } from "../utils/money.js?v=95";
-import { initRegistrationExperience } from "./registration-experience.js?v=99";
+import { initRegistrationExperience } from "./registration-experience.js?v=100";
 
 const TOTAL_STEPS = 3;
 
@@ -58,6 +58,7 @@ export function initRegistration({ tickets = {} } = {}) {
   const nextBtn = $("regNext");
   const submitBtn = $("regSubmit");
   const specialty = $("p_spec");
+  const specialtyOptions = [...specialty.options];
   const age = $("p_age");
   const success = $("regSuccess");
 
@@ -312,15 +313,23 @@ export function initRegistration({ tickets = {} } = {}) {
       syncChecked("ticket");
       toggleUniversity();
     }
-    if (input === specialty && specialty.value === "student" && checkedValue("ticket") !== "vip") {
-      form.querySelector('input[name="ticket"][value="student"]').checked = true;
-      syncChecked("ticket");
-      toggleUniversity();
-    }
   });
+
+  function syncSpecialty() {
+    const tier = checkedValue("ticket");
+    const previous = specialty.value;
+    const options = specialtyOptions.filter((option) => tier === "student"
+      ? option.value === "student"
+      : tier === "professional" ? option.value !== "student" : true);
+    options.forEach((option) => { option.textContent = t(option.dataset.i18n); });
+    specialty.replaceChildren(...options);
+    specialty.value = tier === "student" ? "student" : options.some((option) => option.value === previous) ? previous : "";
+    if (specialty.value) showError(specialty, "");
+  }
 
   // Students add their university and optional ambassador code.
   function toggleUniversity() {
+    syncSpecialty();
     const isStudent = checkedValue("ticket") === "student";
     $("uniWrap").hidden = !isStudent;
     $("ambassadorWrap").hidden = !isStudent;
@@ -627,7 +636,6 @@ export function initRegistration({ tickets = {} } = {}) {
     const [day1, day2] = LUNCH.map((day) => day.price());
     $("lunchPrice1").textContent = priceText(day1, lunchCurrency());
     $("lunchPrice2").textContent = priceText(day2, lunchCurrency());
-    if ($("tkPriceVIP")) $("tkPriceVIP").textContent = priceText(tickets.vipUSD ?? tickets.vip ?? 100, "USD");
     const vipPrice = document.querySelector(".vip-price-row>strong");
     if (vipPrice) vipPrice.textContent = priceText(tickets.vipUSD ?? tickets.vip ?? 100, "USD");
     // One price when both days cost the same, otherwise the lower one as "from".
@@ -639,6 +647,7 @@ export function initRegistration({ tickets = {} } = {}) {
 
   // ---------- Language changes ----------
   onLangChange(() => {
+    syncSpecialty();
     updateCount();
     form.querySelectorAll(".f-error[data-key]").forEach((message) => { message.textContent = t(message.dataset.key); });
     renderTicketPrices();
@@ -651,6 +660,7 @@ export function initRegistration({ tickets = {} } = {}) {
 
   // ---------- Start ----------
   experience = initRegistrationExperience({ tickets, getStep: () => step, onLunchChange: () => { syncChecked("lunch"); updateNextLabel(); if (step === 3) renderReview(); } });
+  toggleUniversity();
   updateAgeButtons();
   renderTicketPrices();
   goTo(1, { scroll: false });

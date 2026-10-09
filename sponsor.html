@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="css/base/base.css?v=93">
 <!-- Components -->
 <link rel="stylesheet" href="css/components/boot.css?v=93">
-<link rel="stylesheet" href="css/components/buttons.css?v=93">
+<link rel="stylesheet" href="css/components/buttons.css?v=100">
 <link rel="stylesheet" href="css/components/brand.css?v=93">
 <link rel="stylesheet" href="css/components/tier-card.css?v=93">
 <!-- Layout -->
@@ -27,10 +27,10 @@
 <link rel="stylesheet" href="css/layout/footer.css?v=93">
 <!-- The form borrows the registration card, stepper and fields. -->
 <link rel="stylesheet" href="css/sections/register.css?v=93">
-<link rel="stylesheet" href="css/sections/sponsor-form.css?v=93">
+<link rel="stylesheet" href="css/sections/sponsor-form.css?v=104">
 <link rel="stylesheet" href="css/sections/booth-map.css?v=93">
 
-<script type="module" src="js/sponsor.js?v=95"></script>
+<script type="module" src="js/sponsor.js?v=105"></script>
 </head>
 <body>
 
@@ -65,10 +65,7 @@
       <svg class="brand-mark" width="34" height="40" viewBox="0 0 1080 1155" aria-hidden="true"><svg x="0" y="0" width="1080" height="1155" viewBox="0 0 1080 1155" overflow="hidden"><image href="assets/brand/ismile-logo.png" width="2481" height="1155"/></svg></svg>
       <span>i<b>Smile</b></span>
     </a>
-    <a class="btn btn-outline spf-back-btn" href="index.html">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
-      <span data-i18n="spf_back_site">Back to the summit</span>
-    </a>
+
     <div class="lang" id="langSwitch" role="group" aria-label="Language" data-i18n-label="a_lang">
       <button type="button" data-lang="en" aria-pressed="true" lang="en">EN</button>
       <button type="button" data-lang="ar" aria-pressed="false" lang="ar">العربية</button>
@@ -84,13 +81,82 @@
 <main>
 <section class="block spf">
   <div class="wrap">
+    <a class="home-back spf-back-btn" href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12H4m6-6-6 6 6 6"/></svg><span data-i18n="reg_back_site">Back to home</span></a>
     <div class="spf-head">
       <p class="section-kicker" data-i18n="spf_kicker">Partnership</p>
       <h1><span class="sponsor-edition-en" data-i18n-edition="spf_title">Become a sponsor at iSmile’s 2<sup class="edition-sup">nd</sup> edition</span><span class="sponsor-edition-translated" data-i18n="spf_title">Become a sponsor at iSmile’s 2nd edition</span></h1>
       <p class="lead" data-i18n="spf_sub">Partner with Iraq's largest and most prestigious dental summit. Tell us which package interests you and who to talk to, and we will send you the full packages, what each one includes and the prices.</p>
     </div>
 
-    <section class="exhibition" id="exhibition" aria-labelledby="exhibitionTitle" data-view="map">
+
+
+    <div class="reg">
+      <!-- Side column -->
+      <aside class="reg-aside">
+        <div class="reg-panel">
+          <h3 data-i18n="spf_why">Why sponsor iSmile</h3>
+          <ul class="spf-points">
+            <li>
+              <span class="spf-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></span>
+              <div><b data-i18n="spf_p1">The largest dental audience in Iraq</b><small data-i18n="spf_p1_d">Two days in front of the dentists and specialists who choose which products they use.</small></div>
+            </li>
+            <li>
+              <span class="spf-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.5-5h15L21 9"/><path d="M4 9h16v11H4z"/><path d="M3 9a3 3 0 006 0 3 3 0 006 0 3 3 0 006 0"/></svg></span>
+              <div><b data-i18n="spf_p2">Exhibition space</b><small data-i18n="spf_p2_d">A booth beside the sessions, where the conversations actually happen.</small></div>
+            </li>
+            <li>
+              <span class="spf-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M8.2 13.5L7 22l5-3 5 3-1.2-8.5"/></svg></span>
+              <div><b data-i18n="spf_p3">Your name on the summit</b><small data-i18n="spf_p3_d">Logo placement on the website, the programme and the venue, by package level.</small></div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="reg-help">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 11-4.2-7.6L21 3l-1.2 4.1A9 9 0 0121 12z"/><path d="M9.5 9.5a2.5 2.5 0 114 2c-.9.6-1.5 1.1-1.5 2M12 17h.01"/></svg>
+          <div><b data-i18n="spf_talk">Rather talk to a person?</b><a id="spfDirect" href="mailto:ismile@italk.krd" dir="ltr">ismile@italk.krd</a></div>
+        </div>
+        <p class="reg-policy">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
+          <span data-i18n="spf_privacy">Your details are used only to send you the packages and to answer you. Nothing is shared with anyone else.</span>
+        </p>
+      </aside>
+
+      <!-- Form card -->
+      <div class="reg-card" id="spfCard">
+        <div class="reg-progress" id="spfProgress">
+          <ol class="stepper" id="spfStepper">
+            <li class="is-active"><span class="st-dot">1</span><span class="st-label" data-i18n="spf_st1">What interests you</span></li>
+            <li><span class="st-dot">2</span><span class="st-label" data-i18n="spf_pack_title">Which package?</span></li>
+            <li><span class="st-dot">3</span><span class="st-label" data-i18n="spf_st2">Your company</span></li>
+          </ol>
+          <div class="st-bar" aria-hidden="true"><i id="spfBar"></i></div>
+        </div>
+
+        <form id="spfForm" novalidate>
+          <!-- Left empty by people, filled in by bots: the server refuses it. -->
+          <div class="reg-trap" aria-hidden="true"><label><span data-i18n="spf_trap">Leave this box empty</span> <input id="spfTrap" type="text" tabindex="-1" autocomplete="nope" data-lpignore="true" data-1p-ignore></label></div>
+          <!-- Step 1: interest and exhibition floor plan -->
+          <div class="reg-step" data-step="1">
+            <div class="step-head">
+              <h2 tabindex="-1" data-i18n="spf_s1_title">What are you interested in?</h2>
+              <p data-i18n="spf_s1_sub">Choose one. You can ask about the other in the message at the end.</p>
+            </div>
+            <div class="type-options">
+              <label class="type-card">
+                <input type="radio" name="spfKind" value="sponsor">
+                <span class="tc-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5L2.6 9.3l6.5-.9z"/></svg></span>
+                <span class="tc-text"><b data-i18n="spf_kind_spon">Sponsorship package</b><small data-i18n="spf_kind_tiers_d">Platinum, Gold, Silver or Bronze: logo placement and visibility.</small></span>
+                <span class="tc-check" aria-hidden="true"></span>
+              </label>
+              <label class="type-card">
+                <input type="radio" name="spfKind" value="booth">
+                <span class="tc-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.5-5h15L21 9"/><path d="M4 9h16v11H4z"/><path d="M3 9a3 3 0 006 0 3 3 0 006 0 3 3 0 006 0"/></svg></span>
+                <span class="tc-text"><b data-i18n="spf_kind_booth">Exhibition booth</b><small data-i18n="spf_kind_booth_d">A stand in the exhibition area, to show your products to dentists.</small></span>
+                <span class="tc-check" aria-hidden="true"></span>
+              </label>
+            </div>
+
+    <section class="exhibition" id="exhibition" aria-labelledby="exhibitionTitle" data-view="map" hidden>
       <div class="exhibition-head">
         <div>
           <p class="section-kicker" data-i18n="bm_kicker">Exhibition floor plan</p>
@@ -147,83 +213,19 @@
       </div>
       <noscript><p data-i18n="bm_no_script">Enable JavaScript to view the numbered map and live booth availability.</p></noscript>
     </section>
+          </div>
 
-    <div class="reg">
-      <!-- Side column -->
-      <aside class="reg-aside">
-        <div class="reg-panel">
-          <h3 data-i18n="spf_why">Why sponsor iSmile</h3>
-          <ul class="spf-points">
-            <li>
-              <span class="spf-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></span>
-              <div><b data-i18n="spf_p1">The largest dental audience in Iraq</b><small data-i18n="spf_p1_d">Two days in front of the dentists and specialists who choose which products they use.</small></div>
-            </li>
-            <li>
-              <span class="spf-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.5-5h15L21 9"/><path d="M4 9h16v11H4z"/><path d="M3 9a3 3 0 006 0 3 3 0 006 0 3 3 0 006 0"/></svg></span>
-              <div><b data-i18n="spf_p2">Exhibition space</b><small data-i18n="spf_p2_d">A booth beside the sessions, where the conversations actually happen.</small></div>
-            </li>
-            <li>
-              <span class="spf-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M8.2 13.5L7 22l5-3 5 3-1.2-8.5"/></svg></span>
-              <div><b data-i18n="spf_p3">Your name on the summit</b><small data-i18n="spf_p3_d">Logo placement on the website, the programme and the venue, by package level.</small></div>
-            </li>
-          </ul>
-        </div>
-
-        <div class="reg-help">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 11-4.2-7.6L21 3l-1.2 4.1A9 9 0 0121 12z"/><path d="M9.5 9.5a2.5 2.5 0 114 2c-.9.6-1.5 1.1-1.5 2M12 17h.01"/></svg>
-          <div><b data-i18n="spf_talk">Rather talk to a person?</b><a id="spfDirect" href="mailto:ismile@italk.krd" dir="ltr">ismile@italk.krd</a></div>
-        </div>
-        <p class="reg-policy">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
-          <span data-i18n="spf_privacy">Your details are used only to send you the packages and to answer you. Nothing is shared with anyone else.</span>
-        </p>
-      </aside>
-
-      <!-- Form card -->
-      <div class="reg-card" id="spfCard">
-        <div class="reg-progress" id="spfProgress">
-          <ol class="stepper" id="spfStepper">
-            <li class="is-active"><span class="st-dot">1</span><span class="st-label" data-i18n="spf_st1">What interests you</span></li>
-            <li><span class="st-dot">2</span><span class="st-label" data-i18n="spf_st2">Your company</span></li>
-          </ol>
-          <div class="st-bar" aria-hidden="true"><i id="spfBar"></i></div>
-        </div>
-
-        <form id="spfForm" novalidate>
-          <!-- Left empty by people, filled in by bots: the server refuses it. -->
-          <div class="reg-trap" aria-hidden="true"><label><span data-i18n="spf_trap">Leave this box empty</span> <input id="spfTrap" type="text" tabindex="-1" autocomplete="nope" data-lpignore="true" data-1p-ignore></label></div>
-          <!-- Step 1: sponsorship or booth, and which package -->
-          <div class="reg-step" data-step="1">
-            <div class="step-head">
-              <h2 tabindex="-1" data-i18n="spf_s1_title">What are you interested in?</h2>
-              <p data-i18n="spf_s1_sub">Choose one. You can ask about the other in the message at the end.</p>
-            </div>
-            <div class="type-options">
-              <label class="type-card is-checked">
-                <input type="radio" name="spfKind" value="sponsor" checked>
-                <span class="tc-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5L2.6 9.3l6.5-.9z"/></svg></span>
-                <span class="tc-text"><b data-i18n="spf_kind_spon">Sponsorship package</b><small data-i18n="spf_kind_tiers_d">Platinum, Gold, Silver or Bronze: logo placement and visibility.</small></span>
-                <span class="tc-check" aria-hidden="true"></span>
-              </label>
-              <label class="type-card">
-                <input type="radio" name="spfKind" value="booth">
-                <span class="tc-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.5-5h15L21 9"/><path d="M4 9h16v11H4z"/><path d="M3 9a3 3 0 006 0 3 3 0 006 0 3 3 0 006 0"/></svg></span>
-                <span class="tc-text"><b data-i18n="spf_kind_booth">Exhibition booth</b><small data-i18n="spf_kind_booth_d">A stand in the exhibition area, to show your products to dentists.</small></span>
-                <span class="tc-check" aria-hidden="true"></span>
-              </label>
-            </div>
-
-            <div id="spfPackWrap">
-              <div class="step-head spf-subhead">
-                <h3 id="spfPackLabel" data-i18n="spf_pack_title">Which package?</h3>
+          <!-- Step 2: sponsorship package -->
+            <div class="reg-step" data-step="2" id="spfPackWrap" hidden>
+              <div class="step-head">
+                <h2 tabindex="-1" id="spfPackLabel" data-i18n="spf_pack_title">Which package?</h2>
                 <p data-i18n="spf_pack_sub">"Not sure yet" is a fine answer. We will send you all of them.</p>
               </div>
               <div class="spf-packs" id="spfPacks" role="radiogroup" aria-labelledby="spfPackLabel"></div>
             </div>
-          </div>
 
-          <!-- Step 2: who you are -->
-          <div class="reg-step" data-step="2" hidden>
+          <!-- Step 3: company details -->
+          <div class="reg-step" data-step="3" hidden>
             <div class="step-head">
               <h2 tabindex="-1" data-i18n="spf_s2_title">Your company</h2>
               <p data-i18n="spf_s2_sub">Enough to send you the packages and to call you back.</p>
@@ -278,7 +280,7 @@
               <span data-i18n="back">Back</span>
             </button>
             <span class="reg-count" id="spfCount"></span>
-            <button type="button" class="btn btn-primary reg-next" id="spfNext">
+            <button type="button" class="btn btn-primary reg-next" id="spfNext" disabled>
               <span data-i18n="continue">Continue</span>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </button>
@@ -311,7 +313,7 @@
             </div>
           </div>
 
-          <a class="btn btn-ghost" href="index.html" data-i18n="spf_back_site">Back to the summit</a>
+          <a class="home-back" href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12H4m6-6-6 6 6 6"/></svg><span data-i18n="reg_back_site">Back to home</span></a>
         </div>
       </div>
     </div>

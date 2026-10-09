@@ -1,6 +1,6 @@
 // The sponsorship and exhibition-booth request form (sponsor.html).
 //
-// Two steps: what the company wants, then who they are. The packages come from
+// Interest and floor plan, sponsorship package, then company details. The packages come from
 // data/sponsors.json, so a tier renamed in the admin is renamed here too.
 //
 // Where the request goes: to the server (api/sponsor.php), which saves it for
@@ -10,7 +10,7 @@
 import { t, tr, getLang, onLangChange } from "../i18n.js?v=95";
 import { isValidPhone } from "./registration.js?v=95";
 
-const TOTAL_STEPS = 2;
+const COMPANY_STEP = 3;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 export function initSponsorForm({ tiers = [], enquiry = {} } = {}) {
@@ -21,21 +21,16 @@ export function initSponsorForm({ tiers = [], enquiry = {} } = {}) {
   const stepperItems = [...$("spfStepper").children];
   const steps = [...form.querySelectorAll(".reg-step")];
   const packBox = $("spfPacks");
-  const packWrap = $("spfPackWrap");
   const backBtn = $("spfBack");
   const nextBtn = $("spfNext");
   const submitBtn = $("spfSubmit");
   const success = $("spfSuccess");
+  const sponsorMap = $("exhibition");
 
   let step = 1;
-  let kind = "booth" === startKind() ? "booth" : "sponsor";
+  let kind = "";
   let pack = "";
-
-  // "Ask about booths" links to sponsor.html#booth, so the visitor lands on the
-  // choice they already made rather than making it twice.
-  function startKind() {
-    return location.hash.replace("#", "").toLowerCase();
-  }
+  const activeSteps = () => kind === "booth" ? [1, COMPANY_STEP] : [1, 2, COMPANY_STEP];
 
   // ---------- The package cards ----------
   // The tiers sit in an even grid. "Not sure yet" is not a package, so it gets
@@ -45,18 +40,23 @@ export function initSponsorForm({ tiers = [], enquiry = {} } = {}) {
       ...tiers.map((tier) => ({ id: tier.id, name: tr(tier.name), note: tr(tier.subtitle), className: tier.className })),
       { id: "unsure", name: t("spf_pack_unsure"), note: t("spf_pack_unsure_d"), className: "spf-pack-any" },
     ];
-    if (!pack) pack = options[0].id;
-
+    const icons = {
+      platinum: '<path d="m6 3-4 6 10 12L22 9l-4-6H6ZM2 9h20M6 3l6 18 6-18M6 3l6 6 6-6"/>',
+      gold: '<path d="m3 6 4 4 5-7 5 7 4-4-2 12H5L3 6ZM5 21h14"/>',
+      silver: '<circle cx="12" cy="8" r="6"/><path d="m8 13-1 9 5-3 5 3-1-9"/>',
+      bronze: '<path d="m8 2 4 7 4-7M5 2l4 8m10-8-4 8"/><circle cx="12" cy="15" r="7"/><path d="m12 11 1.2 2.5 2.8.4-2 2 .5 2.8-2.5-1.3-2.5 1.3.5-2.8-2-2 2.8-.4L12 11Z"/>',
+      unsure: '<path d="m12 3 10 5-10 5L2 8l10-5ZM2 12l10 5 10-5M2 16l10 5 10-5"/>',
+    };
     packBox.innerHTML = options
       .map(
         (option) => `
-        <label class="spf-pack ${option.className}${option.id === pack ? " is-checked" : ""}">
-          <input type="radio" name="spfPack" value="${option.id}"${option.id === pack ? " checked" : ""}>
+        <label class="spf-pack ${esc(option.className || "")}${option.id === pack ? " is-checked" : ""}">
+          <input type="radio" name="spfPack" value="${esc(option.id)}"${option.id === pack ? " checked" : ""}>
+          <span class="spf-pack-top"><span class="spf-pack-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${icons[option.id] || icons.platinum}</svg></span><span class="tc-check" aria-hidden="true"></span></span>
           <span class="spf-pack-text">
-            <span class="spf-pack-name">${option.name}</span>
-            <span class="spf-pack-note">${option.note}</span>
+            <span class="spf-pack-name">${esc(option.name)}</span>
+            <span class="spf-pack-note">${esc(option.note)}</span>
           </span>
-          <span class="tc-check" aria-hidden="true"></span>
         </label>`,
       )
       .join("");
@@ -103,7 +103,7 @@ export function initSponsorForm({ tiers = [], enquiry = {} } = {}) {
   }
 
   function validateDetails() {
-    const fields = [...form.querySelectorAll('[data-step="2"] [data-rule]')];
+    const fields = [...form.querySelectorAll('[data-step="3"] [data-rule]')];
     let firstBad = null;
     fields.forEach((input) => {
       if (!checkField(input) && !firstBad) firstBad = input;
@@ -115,20 +115,30 @@ export function initSponsorForm({ tiers = [], enquiry = {} } = {}) {
   // ---------- Steps ----------
   // quiet: the first render, which must not scroll the page or steal focus.
   function goTo(target, quiet = false) {
-    step = Math.min(Math.max(target, 1), TOTAL_STEPS);
+    const sequence = activeSteps();
+    step = sequence.includes(target) ? target : sequence[0];
+    card.closest(".reg").classList.toggle("spf-show-plan", kind === "sponsor" && step === 1);
+    const position = sequence.indexOf(step);
     steps.forEach((panel) => {
       panel.hidden = Number(panel.dataset.step) !== step;
     });
     stepperItems.forEach((item, index) => {
-      item.classList.toggle("is-active", index === step - 1);
-      item.classList.toggle("is-done", index < step - 1);
+      const number = index + 1;
+      item.hidden = !sequence.includes(number);
+      item.classList.toggle("is-active", number === step);
+      item.classList.toggle("is-done", sequence.indexOf(number) < position && !item.hidden);
+      item.querySelector(".st-dot").textContent = String(sequence.indexOf(number) + 1);
+      if (number === step) item.setAttribute("aria-current", "step");
+      else item.removeAttribute("aria-current");
     });
-    $("spfBar").style.width = `${((step - 1) / (TOTAL_STEPS - 1)) * 100}%`;
+    $("spfStepper").style.setProperty("--spf-step-count", sequence.length);
+    $("spfBar").style.width = `${(position / (sequence.length - 1)) * 100}%`;
     backBtn.classList.toggle("is-hidden", step === 1);
-    nextBtn.hidden = step === TOTAL_STEPS;
-    submitBtn.hidden = step !== TOTAL_STEPS;
-    $("spfCount").textContent = t("step_of").replace("{n}", step).replace("{total}", TOTAL_STEPS);
-    if (step === TOTAL_STEPS) renderReview();
+    nextBtn.hidden = step === COMPANY_STEP;
+    nextBtn.disabled = step === 1 ? !kind : step === 2 ? !pack : false;
+    submitBtn.hidden = step !== COMPANY_STEP;
+    $("spfCount").textContent = t("step_of").replace("{n}", position + 1).replace("{total}", sequence.length);
+    if (step === COMPANY_STEP) renderReview();
     if (quiet) return;
     steps[step - 1].querySelector("h2")?.focus({ preventScroll: true });
     card.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -230,7 +240,7 @@ export function initSponsorForm({ tiers = [], enquiry = {} } = {}) {
     if (answer.ok && answer.ref) return answer.ref;
     const input = answer.field ? $(answer.field) : null;
     if (input) {
-      goTo(2);
+      goTo(Number(input.closest(".reg-step")?.dataset.step) || COMPANY_STEP);
       showError(input, answer.error);
       input.focus();
       return false;
@@ -257,7 +267,7 @@ export function initSponsorForm({ tiers = [], enquiry = {} } = {}) {
   let sending = false;
   async function send(event) {
     event.preventDefault();
-    if (step < TOTAL_STEPS) {
+    if (step !== COMPANY_STEP) {
       nextBtn.click();
       return;
     }
@@ -303,15 +313,15 @@ export function initSponsorForm({ tiers = [], enquiry = {} } = {}) {
       form.querySelectorAll('input[name="spfKind"]').forEach((radio) => {
         radio.closest("label").classList.toggle("is-checked", radio.checked);
       });
-      packWrap.hidden = kind === "booth";
-      const map = document.getElementById("exhibition");
-      if (map) map.hidden = kind === "booth";
+      sponsorMap.hidden = kind !== "sponsor";
+      goTo(1, true);
     }
     if (input.name === "spfPack") {
       pack = input.value;
       packBox.querySelectorAll("label").forEach((label) => {
         label.classList.toggle("is-checked", label.querySelector("input").checked);
       });
+      nextBtn.disabled = false;
     }
   });
 
@@ -324,11 +334,17 @@ export function initSponsorForm({ tiers = [], enquiry = {} } = {}) {
     if (input.dataset?.rule && input.getAttribute("aria-invalid")) checkField(input);
   });
 
-  nextBtn.addEventListener("click", () => goTo(step + 1));
-  backBtn.addEventListener("click", () => goTo(step - 1));
+  nextBtn.addEventListener("click", () => {
+    if (nextBtn.disabled) return;
+    const sequence = activeSteps();
+    goTo(sequence[sequence.indexOf(step) + 1]);
+  });
+  backBtn.addEventListener("click", () => {
+    const sequence = activeSteps();
+    goTo(sequence[sequence.indexOf(step) - 1]);
+  });
   $("spfEdit").addEventListener("click", () => {
-    goTo(2);
-    $("s_company").focus();
+    goTo(kind === "sponsor" ? 2 : 1);
   });
   form.addEventListener("submit", send);
 
@@ -340,25 +356,17 @@ export function initSponsorForm({ tiers = [], enquiry = {} } = {}) {
   }
 
   // ---------- Start ----------
-  const sponsorMap = document.getElementById("exhibition");
-  if (sponsorMap) sponsorMap.hidden = kind === "booth";
-  if (kind === "booth") {
-    const radio = form.querySelector('input[name="spfKind"][value="booth"]');
-    if (radio) {
-      radio.checked = true;
-      form.querySelectorAll('input[name="spfKind"]').forEach((item) => {
-        item.closest("label").classList.toggle("is-checked", item.checked);
-      });
-      packWrap.hidden = true;
-    }
-  }
+  sponsorMap.hidden = kind !== "sponsor";
+  form.querySelectorAll('input[name="spfKind"]').forEach((radio) => {
+    radio.checked = radio.value === kind;
+    radio.closest("label").classList.toggle("is-checked", radio.checked);
+  });
   renderPacks();
   goTo(1, true);
 
   onLangChange(() => {
     renderPacks();
-    $("spfCount").textContent = t("step_of").replace("{n}", step).replace("{total}", TOTAL_STEPS);
-    if (step === TOTAL_STEPS) renderReview();
+    goTo(step, true);
     // Error messages already on screen follow the language too.
     form.querySelectorAll(".f-error[data-key]").forEach((message) => {
       message.textContent = t(message.dataset.key);

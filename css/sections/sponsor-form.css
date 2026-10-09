@@ -11,30 +11,14 @@
    ========================================================== */
 
 /* ---------- Header: brand on one side, everything else on the other ------- */
-.spf-back-btn{
-  margin-inline-start:auto;
-  padding:10px 18px;font-size:14.5px;
-  background:transparent;color:var(--h-text);
-  box-shadow:inset 0 0 0 1.5px var(--h-line);
-  transition:background .2s ease,box-shadow .2s ease,color .3s ease;
-}
-.spf-back-btn:hover{
-  color:var(--h-text);
-  background:color-mix(in srgb,var(--teal) 16%,transparent);
-  box-shadow:inset 0 0 0 1.5px var(--teal);
-}
-.spf-back-btn svg{transition:transform .2s ease}
-.spf-back-btn:hover svg{transform:translateX(-3px)}
-html[dir="rtl"] .spf-back-btn svg{transform:scaleX(-1)}
-html[dir="rtl"] .spf-back-btn:hover svg{transform:scaleX(-1) translateX(-3px)}
-
-@media (max-width:620px){
-  .spf-back-btn span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
-  .spf-back-btn{padding:10px 12px}
-}
+.spf-back-btn{margin-bottom:32px}
+.top .lang{margin-inline-start:auto}
 
 /* ---------- The page heading ---------- */
-.spf{padding-block:52px 80px}
+section.spf{padding-block:20px 80px}
+.spf > .wrap{max-width:1280px}
+.spf .reg{grid-template-columns:340px minmax(0,1fr);gap:26px}
+.spf .reg-card{min-width:0;background:var(--surface);border-radius:18px}
 .spf-head{max-width:60ch;margin-bottom:38px}
 .spf-head h1{font-size:clamp(28px,4.2vw,42px);line-height:1.14;margin:8px 0 14px;letter-spacing:-.01em}
 .sponsor-edition-en .edition-sup{font-size:.62em;line-height:0;vertical-align:.48em;letter-spacing:0}
@@ -54,16 +38,31 @@ html[lang="en"] .sponsor-edition-translated,html:not([lang="en"]) .sponsor-editi
 }
 
 /* ---------- Inside the card ---------- */
-/* Two steps, not three. */
-.spf .stepper{grid-template-columns:repeat(2,1fr)}
+.spf .stepper{width:100%;max-width:calc(var(--spf-step-count,3) * 240px);margin-inline:auto;grid-template-columns:repeat(var(--spf-step-count,3),minmax(0,1fr));gap:20px}
+.spf .stepper li{justify-content:center;align-items:center;font-size:12px;line-height:1.5;gap:10px}
+.spf .stepper .st-label{white-space:normal;overflow:visible;text-overflow:clip;text-align:start;overflow-wrap:anywhere}
+.spf .reg-progress{padding:22px 28px 0;background:var(--bg);border-bottom:1px solid var(--line)}
 .spf .st-bar{margin-top:18px}
 
 /* register.css pads #regForm by name, so this form needs its own padding. */
-#spfForm{padding:28px 32px 30px}
+#spfForm{padding:28px 28px 30px}
+.spf .type-options{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.spf .type-card{padding:20px;gap:12px;border-radius:13px;background:var(--bg)}
+.spf .type-card.is-checked{background:color-mix(in srgb,var(--teal) 7%,var(--bg))}
+.spf .type-card .tc-ic{width:38px;height:38px;border-radius:11px}
+.spf .type-card .tc-ic svg{width:21px;height:21px}
+.spf .type-card .tc-text b{font-size:15px}
+.spf .type-card .tc-text small{font-size:12px;line-height:1.6}
+.spf .type-card .tc-check{width:18px;height:18px}
+.spf .reg-nav .btn{border-radius:10px;font-size:13px;min-height:44px}
+.spf .f label{font-size:12.5px}
+.spf .f input{height:46px;font-size:14px}
+.spf .f textarea{font-size:14px}
+.spf .reg-step{animation:none}
 
 /* The step headings are <h2> here, because this page has no <h1> above them
    other than the page title. They should read exactly like the others. */
-.spf .step-head h2{font-size:22px;line-height:1.25;outline:none}
+.spf .step-head h2{font-size:25px;line-height:1.25;outline:none}
 .spf .step-head h2:focus-visible{outline:2px solid var(--teal);outline-offset:4px;border-radius:4px}
 
 /* A second heading further down a step, above the packages. */
@@ -72,47 +71,113 @@ html[lang="en"] .sponsor-edition-translated,html:not([lang="en"]) .sponsor-editi
 .spf-subhead p{font-size:14.5px;color:var(--muted)}
 
 /* ---------- The packages ---------- */
-/* An even grid, two by two, so four packages never break three-over-two. Each
-   card carries the medal colours of its tier (--m1/--m2 come from
-   tier-card.css); a tier with no colours of its own gets Diamond's.
-   "Not sure yet" is not a package: it takes the full width underneath, with a
-   dashed edge and no colour bar, so it reads as the other kind of answer. */
+/* Four equal cards use each metal's palette. The undecided option sits below
+   the grid as a quiet, full-width alternative. */
 .spf-packs{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:18px}
 
 .spf-pack{
-  --m1:#BFE9F5;--m2:#5FB6D4;
-  position:relative;display:flex;align-items:center;gap:14px;
-  padding:18px 18px 18px 20px;
-  border:1.5px solid var(--line);border-radius:var(--r-md);
-  background:var(--surface);cursor:pointer;overflow:hidden;
+  --m1:#D9F4FF;--m2:#4C849F;--tier-ink:#245F7C;--tier-night-bg:#122F3E;
+  position:relative;display:flex;flex-direction:column;align-items:stretch;gap:16px;
+  padding:22px;
+  border:1px solid color-mix(in srgb,var(--m2) 65%,var(--line));border-radius:14px;
+  background:color-mix(in srgb,var(--m2) 7%,var(--bg));cursor:pointer;overflow:hidden;
   transition:border-color .2s ease,background .2s ease,transform .2s ease,box-shadow .2s ease;
 }
-.spf-pack::before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:linear-gradient(180deg,var(--m1),var(--m2))}
-html[dir="rtl"] .spf-pack::before{inset:0 0 0 auto}
+.spf-pack:not(.spf-pack-any)::before{content:"";position:absolute;inset:0 0 auto;height:3px;background:linear-gradient(90deg,var(--m2),var(--m1),var(--m2))}
+.spf-pack:not(.spf-pack-any){background-image:linear-gradient(135deg,color-mix(in srgb,var(--m1) 12%,transparent),transparent 65%)}
+.spf-pack.tc-plat{--m1:#D9F4FF;--m2:#4C849F;--tier-ink:#245F7C;--tier-night-bg:#122F3E}
+.spf-pack.tc-gold{--m1:#F3D98B;--m2:#AF8A35;--tier-ink:#78580D;--tier-night-bg:#352E1B}
+.spf-pack.tc-silver{--m1:#DAE4E8;--m2:#7C939E;--tier-ink:#425C68;--tier-night-bg:#243139}
+.spf-pack.tc-bronze{--m1:#E8B48A;--m2:#A97450;--tier-ink:#844B27;--tier-night-bg:#39281F}
+.spf-pack-top{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.spf-pack-icon{display:grid;place-items:center;width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,var(--m1),var(--m2));color:#173B4C;box-shadow:0 6px 16px -10px var(--m2)}
+.tc-gold .spf-pack-icon{color:#58400F}
+.tc-silver .spf-pack-icon{color:#344C58}
+.tc-bronze .spf-pack-icon{color:#613819}
+.spf-pack-icon svg{width:26px;height:26px}
 .spf-pack input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
-.spf-pack-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
-.spf-pack-name{font-size:16.5px;font-weight:700;line-height:1.2}
-.spf-pack-note{font-size:13px;line-height:1.4;color:var(--muted)}
+.spf-pack-text{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+.spf-pack-name{font-size:24px;font-weight:700;line-height:1.2;color:var(--tier-ink)}
+.spf-pack-note{font-size:12px;line-height:1.5;color:var(--tier-ink);padding:5px 10px;border:1px solid color-mix(in srgb,var(--m2) 30%,transparent);border-radius:7px;background:color-mix(in srgb,var(--m2) 7%,transparent)}
 .spf-pack .tc-check{flex:none}
 
 .spf-pack:hover{border-color:color-mix(in srgb,var(--m2) 60%,var(--line));transform:translateY(-2px)}
 .spf-pack.is-checked{
   border-color:var(--m2);
-  background:color-mix(in srgb,var(--m2) 9%,var(--bg));
-  box-shadow:0 0 0 3px color-mix(in srgb,var(--m2) 18%,transparent);
+  background:color-mix(in srgb,var(--m2) 12%,var(--bg));
+  box-shadow:inset 0 0 0 1px var(--m2);
 }
 .spf-pack.is-checked .tc-check{border-color:var(--m2);box-shadow:inset 0 0 0 4px var(--bg),inset 0 0 0 12px var(--m2)}
 .spf-pack:focus-within{outline:3px solid var(--teal);outline-offset:2px}
 
 /* Not a package: its own row, dashed, teal when chosen. */
 .spf-pack-any{
+  display:grid;grid-template-columns:30px minmax(0,1fr) 22px;align-items:center;gap:16px;
   grid-column:1/-1;
-  --m2:var(--teal);
-  border-style:dashed;background:transparent;
+  --m2:var(--teal);--tier-ink:var(--teal-ink);--tier-night-bg:var(--bg);
+  padding:18px;border-color:var(--line);background:var(--bg);
 }
-.spf-pack-any::before{display:none}
-.spf-pack-any .spf-pack-name{font-size:15.5px;font-weight:600}
+.spf-pack-any .spf-pack-top{display:contents}
+.spf-pack-any .spf-pack-icon{width:30px;height:30px;background:none;box-shadow:none;color:var(--teal-ink)}
+.spf-pack-any .spf-pack-text{gap:3px}
+.spf-pack-any .spf-pack-note{padding:0;border:0;background:none;color:var(--muted)}
+.spf-pack-any .tc-check{grid-column:3;grid-row:1}
+.spf-pack-any .spf-pack-text{grid-column:2;grid-row:1}
+.spf-pack-any .spf-pack-name{font-size:16px;font-weight:600;color:var(--text)}
 .spf-pack-any.is-checked{border-style:solid}
+:root[data-theme="dark"] .spf-pack{background-color:var(--tier-night-bg);--tier-ink:var(--m1)}
+:root[data-theme="dark"] .spf-pack.is-checked{border-color:var(--m1);box-shadow:inset 0 0 0 1px var(--m1)}
+:root[data-theme="dark"] .spf-pack.is-checked .tc-check{border-color:var(--m1);box-shadow:inset 0 0 0 4px var(--tier-night-bg),inset 0 0 0 12px var(--m1)}
+:root[data-theme="dark"] .spf-pack-any{--m1:var(--teal-ink);--tier-ink:var(--teal-ink)}
+@media(prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) .spf-pack{background-color:var(--tier-night-bg);--tier-ink:var(--m1)}
+  :root:not([data-theme="light"]) .spf-pack-any{--m1:var(--teal-ink);--tier-ink:var(--teal-ink)}
+}
+
+/* The floor plan follows the selected interest within the first step. */
+.spf .exhibition{margin:28px 0 0;padding:18px;border-radius:14px;background:var(--bg);box-shadow:none}
+.spf .exhibition-head{flex-wrap:wrap;gap:12px}
+.spf .exhibition-head h2{font-size:22px}
+.spf .exhibition-head p:not(.section-kicker){font-size:12px}
+.spf .exhibition-overview{margin:16px 0}
+.spf .exhibition-stat{padding:10px 12px;flex-wrap:wrap;gap:6px}
+.spf .exhibition-layout{grid-template-columns:minmax(0,1fr)}
+.spf .exhibition-view-switch{display:flex;gap:4px;width:fit-content;padding:4px;margin-bottom:14px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.spf .exhibition[data-view="map"] .exhibition-table-panel,.spf .exhibition[data-view="table"] .exhibition-map-panel{display:none}
+.spf .exhibition-map-scroll{aspect-ratio:1020/590;flex:none;height:auto;max-height:none}
+.spf .exhibition .tier-platinum{--tier-color:#D9F4FF}
+.spf .exhibition .tier-gold{--tier-color:#F3D98B}
+.spf .exhibition .tier-silver{--tier-color:#DAE4E8}
+.spf .exhibition .tier-bronze{--tier-color:#E8B48A}
+
+/* Give the floor plan the full page width, with the directory beside it. */
+@media (min-width:701px){
+  .spf .reg.spf-show-plan{grid-template-columns:minmax(0,1fr)}
+  .spf .spf-show-plan .reg-aside{display:grid;order:2;position:static;grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
+  .spf .spf-show-plan .reg-aside > .reg-panel{grid-column:1;grid-row:1/3}
+  .spf .spf-show-plan .reg-help,.spf .spf-show-plan .reg-policy{grid-column:2}
+  .spf .exhibition-layout{grid-template-columns:minmax(0,1.08fr) minmax(0,1fr)}
+  .spf .exhibition-view-switch{display:none}
+  .spf .exhibition[data-view] .exhibition-map-panel,.spf .exhibition[data-view] .exhibition-table-panel{display:flex}
+  .spf .exhibition-table-scroll{max-height:380px;flex:1;min-height:0}
+  .spf .exhibition-panel-head{flex-wrap:wrap}
+  .spf .booth-table th,.spf .booth-table td{padding:8px 7px}
+  .spf .booth-table tbody th{font-size:10px}
+  .spf .booth-number{min-width:24px;height:26px;font-size:10px}
+  .spf .booth-table td.booth-size{font-size:10px}
+}
+@media (min-width:701px) and (max-width:1060px){
+  .spf .booth-table thead th:nth-child(1){width:24%}
+  .spf .booth-table thead th:nth-child(2){width:36%}
+  .spf .booth-table thead th:nth-child(3){width:24%}
+  .spf .booth-table thead th:nth-child(4){width:16%}
+  .spf .booth-table tbody th{font-size:9px}
+  .spf .booth-booked-cell{overflow-wrap:anywhere}
+  .spf .booth-none{font-size:9px}
+  .spf .booth-none::before{display:none}
+  .spf .exhibition-map-scroll{flex:1;aspect-ratio:auto;display:flex;align-items:center}
+  .spf #boothMap{width:100%;flex:none}
+}
 
 /* ---------- Why sponsor: the side column ---------- */
 .spf-points{display:grid;gap:18px;margin-top:6px;list-style:none;padding:0}
@@ -142,16 +207,36 @@ html[dir="rtl"] .spf-pack::before{inset:0 0 0 auto}
 .spf .reg-success .btn-ghost:hover{color:var(--teal-ink);background:transparent;text-decoration:underline}
 
 /* ---------- Narrow screens ---------- */
-/* Two steps here, so the small-screen stepper needs two columns, not three. */
-@media (max-width:720px){
-  .spf .stepper{grid-template-columns:auto auto;justify-content:space-between}
+@media (max-width:1060px){
+  .spf .reg{grid-template-columns:minmax(0,1fr)}
+  .spf .reg-aside{display:contents}
+  .spf .type-options{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:700px){
+  .spf .stepper{max-width:calc(var(--spf-step-count,3) * 160px);gap:12px}
+  .spf .stepper li{display:flex;flex-direction:column;justify-content:flex-start;align-items:center;gap:9px;font-size:11px}
+  .spf .stepper .st-label{text-align:center;max-width:15ch}
+  .spf .stepper li:not(.is-active) .st-label{display:inline}
 }
 
 @media (max-width:700px){
-  .spf{padding-block:36px 56px}
+  section.spf{padding-block:20px 56px}
   .spf-head{margin-bottom:28px}
   #spfForm{padding:24px 20px 26px}
   .spf .reg-progress{padding:20px 20px 0}
   .spf-packs{grid-template-columns:1fr}
+  .spf .type-options{grid-template-columns:1fr}
+  .spf .type-card{padding:17px}
+  .spf .exhibition{padding:12px}
+  .spf .exhibition-panel-head{flex-wrap:wrap}
+  .spf .exhibition-stat{padding:9px;align-content:start}
+  .spf .exhibition-stat > span{font-size:10px}
+  .spf .exhibition-legend{gap:8px 12px;font-size:10px}
+  .spf .exhibition-legend > span:last-child{margin-inline-start:0}
+  .spf .step-head h2{font-size:23px}
+  .spf .reg-nav{gap:10px}
+  .spf .reg-nav .btn{padding:10px 12px;font-size:12px}
+  .spf .reg-count{font-size:10px}
+  .spf .fields{grid-template-columns:1fr}
   .spf-send-row .btn{flex:1 1 100%}
 }

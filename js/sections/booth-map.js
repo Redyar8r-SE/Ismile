@@ -17,7 +17,7 @@ export function initBoothMap({ rows: BOOTH_ROWS, colors: TIER_COLORS }) {
   const section = document.getElementById("exhibition");
   const mapView = document.getElementById("boothMapView");
   const tableView = document.getElementById("boothTableView");
-  const narrowLayout = window.matchMedia("(max-width: 900px)");
+  const narrowLayout = window.matchMedia(section.closest("#spfForm") ? "(max-width: 700px)" : "(max-width: 900px)");
   let zoom = 1;
   let booked = new Set();
   let connected = false;

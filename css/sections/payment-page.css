@@ -1,6 +1,6 @@
 /* Payment status page (payment.html) and new student ID photo (student-id.html). */
-.pm-page{padding-top:28px}
-.pm-page .reg-page-back{margin-bottom:18px}
+section.pm-page{padding-top:20px}
+.pm-page .home-back{margin-bottom:18px}
 .pm-card{max-width:620px;margin:0 auto;display:grid;justify-items:center;gap:12px;padding:48px 32px 36px;text-align:center}
 .pm-card h1{font-size:clamp(24px,4.4vw,32px);text-wrap:balance}
 .pm-text{max-width:48ch;color:var(--muted)}

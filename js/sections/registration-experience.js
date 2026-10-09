@@ -20,7 +20,7 @@ export function initRegistrationExperience({ tickets, onLunchChange, getStep }) 
   let celebrationTimer;
   let observer;
   let opened = false;
-  let hasSelection = false;
+  let hasSelection = true;
   let previousTier = ticket();
   let standardLunch = [...form.querySelectorAll('[name="lunch"]')].filter((input) => input.checked).map((input) => input.value);
 
@@ -133,8 +133,7 @@ export function initRegistrationExperience({ tickets, onLunchChange, getStep }) 
     hasSelection = true;
     grid.hidden = false;
     aside.hidden = false;
-    const selected = input.value === "professional" && $("p_spec").value === "student" ? "student" : input.value;
-    const radio = form.querySelector(`[name="ticket"][value="${selected}"]`);
+    const radio = form.querySelector(`[name="ticket"][value="${input.value}"]`);
     radio.checked = true;
     radio.dispatchEvent(new Event("change", { bubbles: true }));
     renderTier(true);

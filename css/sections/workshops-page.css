@@ -10,6 +10,7 @@
 /* ---------- Intro ----------
    The layout, background and animated logo are the register page's
    (.reg-page-intro, .reg-page-hero). Only the phone bar is ours. */
+.wsp-intro{padding-top:20px}
 .wsp-intro .ws-callbar{margin-top:26px;background:var(--bg);color:var(--text)}
 .wsp-intro .ws-callbar-ic{background:var(--teal);color:#fff}
 .wsp-intro .ws-callbar-text b{color:var(--teal-ink)}

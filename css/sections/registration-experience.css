@@ -94,11 +94,7 @@
 @media(max-width:560px){.extra-lunch-card{padding:17px 15px}.extra-lunch-topline{font-size:8px;letter-spacing:.8px}.extra-lunch-body{gap:12px}.extra-lunch-intro{gap:10px}.extra-lunch-icon{width:35px;height:35px;border-radius:10px}.extra-lunch-icon .xp-icon{width:19px;height:19px}.extra-lunch-copy strong{font-size:13px}.extra-lunch-card .extra-lunch-copy small{font-size:10px}.extra-lunch-cost>strong{font-size:24px}.extra-lunch-cost .extra-plus{font-size:14px}.extra-lunch-card .extra-lunch-cost>small{font-size:8px}.extra-lunch-foot{font-size:10px}}
 
 /* Consent remains one clear, keyboard-accessible choice in the review step. */
-.registration-home{display:inline-flex;align-items:center;gap:9px;margin-top:20px;padding:9px 13px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--teal-ink);font-size:12px;font-weight:600;text-decoration:none;min-height:42px}
-.registration-home svg{width:18px;height:18px;flex:none}
-.registration-home:hover{border-color:var(--teal);background:var(--surface-2)}
-.registration-home:focus-visible{outline:3px solid var(--teal-ink);outline-offset:3px}
-[dir=rtl] .registration-home svg{transform:scaleX(-1)}
+.registration-home{margin-top:20px}
 .experience-grid:has(.experience-aside[hidden]){grid-template-columns:minmax(0,1fr)}
 .experience-grid:has(.experience-aside[hidden])>.reg-card{width:100%;max-width:520px;justify-self:center}
 .experience-root .pay-note{margin:0 0 16px;font-size:12px;line-height:1.65}
