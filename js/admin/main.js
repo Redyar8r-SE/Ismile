@@ -1,16 +1,17 @@
 // iSmile admin: edit every text, list and photo on the site, and save to GitHub.
-import { GROUPS, PAGE_TITLES, LANGS, DATA_FILES } from "./fields.js?v=94";
-import * as store from "./store.js?v=93";
-import { upload, imageFromClipboard } from "./images.js?v=93";
-import { buildList, buildProgram, buildTypes, buildSingle } from "./lists.js?v=94";
-import { loadAccounts, makeAccount, check, forget, fileText, ACCOUNTS_FILE } from "./accounts.js?v=93";
+import { GROUPS as BASE_GROUPS, groupsForText, PAGE_TITLES, LANGS, DATA_FILES } from "./fields.js?v=95";
+import * as store from "./store.js?v=95";
+import { upload, imageFromClipboard } from "./images.js?v=95";
+import { buildList, buildProgram, buildTypes, buildSingle } from "./lists.js?v=95";
+import { TEXT_ATTRIBUTES } from "../i18n.js?v=95";
+import { loadAccounts, makeAccount, check, forget, fileText, ACCOUNTS_FILE } from "./accounts.js?v=95";
 
 // Tells the small script in admin.html that the admin code did load, so it
 // does not offer to reload the page.
 window.adminLoaded = true;
 
 const $ = (id) => document.getElementById(id);
-const langPath = (lang) => `data/i18n/${lang}.json`;
+const langPath = (lang) => `data/i18n/site-${lang}.json`;
 
 const state = {
   files: {},        // language code -> whole dictionary
@@ -34,7 +35,8 @@ async function loadJSON(path) {
 // The English text written in the pages is the default for every key.
 // Every page the site has, so text that lives only on the sponsor page can be
 // translated here too.
-const PAGES = ["index.html", "workshops.html", "register.html", "sponsor.html"];
+const PAGES = ["index.html", "workshops.html", "register.html", "sponsor.html", "payment.html"];
+let GROUPS = BASE_GROUPS;
 
 // English that is the same as the page's own wording is not written to
 // en.json: that file only keeps what was really changed here, so the pages
@@ -57,8 +59,11 @@ async function englishFromPage() {
       const key = node.dataset.i18n;
       if (!(key in english)) english[key] = node.textContent.trim();
     });
-    page.querySelectorAll("[data-i18n-ph]").forEach((node) => { english[node.dataset.i18nPh] ??= node.getAttribute("placeholder") || ""; });
-    page.querySelectorAll("[data-i18n-label]").forEach((node) => { english[node.dataset.i18nLabel] ??= node.getAttribute("aria-label") || ""; });
+    for (const [marker, attribute] of TEXT_ATTRIBUTES) {
+      page.querySelectorAll(`[${marker}]`).forEach((node) => {
+        english[node.getAttribute(marker)] ??= node.getAttribute(attribute) || "";
+      });
+    }
     // Each page names its own title key, the same way i18n.js reads it.
     const titleKey = page.documentElement.dataset.titleKey || "page_title";
     english[titleKey] ??= page.querySelector("title")?.textContent.trim() || "";
@@ -79,6 +84,7 @@ async function loadAll() {
     state.files[code] = data;
     state.original[code] = JSON.stringify(data);
   }
+  GROUPS = groupsForText(state.files.en);
   for (const [name, path] of Object.entries(DATA_FILES)) {
     state.data[name] = await loadJSON(path);
     state.dataOriginal[name] = JSON.stringify(state.data[name]);
@@ -886,11 +892,17 @@ async function saveToGitHub() {
     for (const { code, label } of LANGS) {
       if (JSON.stringify(state.files[code]) === state.original[code]) continue;
       const current = await store.readFile(langPath(code));
-      const merged = { ...JSON.parse(current.text), ...state.files[code] };
+      const original = JSON.parse(state.original[code]);
+      const edits = Object.fromEntries(Object.entries(state.files[code])
+        .filter(([key, value]) => value !== original[key]));
+      const merged = { ...JSON.parse(current.text), ...edits };
       const toWrite = code === "en" ? englishToSave(merged) : merged;
       await store.writeText(langPath(code), `${JSON.stringify(toWrite, null, 2)}\n`, `Admin: update ${label} text`);
-      state.files[code] = merged;
-      state.original[code] = JSON.stringify(merged);
+      state.files[code] = code === "en" ? { ...state.pageEnglish, ...merged } : merged;
+      state.original[code] = JSON.stringify(state.files[code]);
+      document.querySelectorAll(`[data-key][data-lang="${code}"]`).forEach((input) => {
+        input.value = state.files[code][input.dataset.key] ?? "";
+      });
     }
     for (const [name, path] of Object.entries(DATA_FILES)) {
       if (JSON.stringify(state.data[name]) === state.dataOriginal[name]) continue;
@@ -928,7 +940,7 @@ function downloadFiles() {
     link.click();
     URL.revokeObjectURL(url);
   };
-  LANGS.forEach(({ code }) => download(`${code}.json`, `${JSON.stringify(code === "en" ? englishToSave(state.files[code]) : state.files[code], null, 2)}\n`));
+  LANGS.forEach(({ code }) => download(`site-${code}.json`, `${JSON.stringify(code === "en" ? englishToSave(state.files[code]) : state.files[code], null, 2)}\n`));
   Object.keys(DATA_FILES).forEach((name) => download(`${name}.json`, `${JSON.stringify(state.data[name], null, 2)}\n`));
   say("Files downloaded: the three language files go in data/i18n/, the rest in data/. Pictures are only saved when you are signed in.", "ok");
 }

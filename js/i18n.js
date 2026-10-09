@@ -1,7 +1,7 @@
 // Translations.
 // English text written in index.html (elements with data-i18n) is collected
-// automatically; extra strings used only by JavaScript live in data/i18n/en.json.
-// Other languages are plain JSON files with the same keys: data/i18n/ar.json.
+// automatically; English overrides and runtime strings live in data/i18n/site-en.json.
+// Other languages use the same keys in site-ar.json and site-ku.json.
 // To add a language: addLanguage("ku", dictionary) then setLang("ku").
 
 const dictionaries = { en: {} };
@@ -9,6 +9,14 @@ const listeners = [];
 const STORAGE_KEY = "ismile-lang";
 const RTL = ["ar", "ku"];
 let currentLang = "en";
+
+export const TEXT_ATTRIBUTES = [
+  ["data-i18n-ph", "placeholder"],
+  ["data-i18n-label", "aria-label"],
+  ["data-i18n-alt", "alt"],
+  ["data-i18n-title", "title"],
+  ["data-i18n-content", "content"],
+];
 
 export function t(key) {
   return dictionaries[currentLang]?.[key] || dictionaries.en[key] || key;
@@ -32,14 +40,12 @@ export function initI18n(extraEnglish) {
     const key = el.dataset.i18n;
     if (!(key in dictionaries.en)) dictionaries.en[key] = el.textContent;
   });
-  document.querySelectorAll("[data-i18n-ph]").forEach((el) => {
-    const key = el.dataset.i18nPh;
-    if (!(key in dictionaries.en)) dictionaries.en[key] = el.placeholder;
-  });
-  document.querySelectorAll("[data-i18n-label]").forEach((el) => {
-    const key = el.dataset.i18nLabel;
-    if (!(key in dictionaries.en)) dictionaries.en[key] = el.getAttribute("aria-label");
-  });
+  for (const [marker, attribute] of TEXT_ATTRIBUTES) {
+    document.querySelectorAll(`[${marker}]`).forEach((el) => {
+      const key = el.getAttribute(marker);
+      if (!(key in dictionaries.en)) dictionaries.en[key] = el.getAttribute(attribute);
+    });
+  }
   // Each page names its own title key (data-title-key on <html>), so a second
   // page does not inherit the home page's title when the language changes.
   const titleKey = document.documentElement.dataset.titleKey || "page_title";
@@ -66,11 +72,23 @@ export function setLang(code) {
   document.querySelectorAll("[data-i18n]").forEach((el) => {
     el.textContent = t(el.dataset.i18n);
   });
-  document.querySelectorAll("[data-i18n-ph]").forEach((el) => {
-    el.placeholder = t(el.dataset.i18nPh);
-  });
-  document.querySelectorAll("[data-i18n-label]").forEach((el) => {
-    el.setAttribute("aria-label", t(el.dataset.i18nLabel));
+  for (const [marker, attribute] of TEXT_ATTRIBUTES) {
+    document.querySelectorAll(`[${marker}]`).forEach((el) => {
+      el.setAttribute(attribute, t(el.getAttribute(marker)));
+    });
+  }
+  // English edition headings retain their existing ordinal superscripts.
+  document.querySelectorAll("[data-i18n-edition]").forEach((el) => {
+    const wording = dictionaries.en[el.dataset.i18nEdition] || "";
+    const parts = wording.split(/(\d+(?:st|nd|rd|th)\b)/g);
+    el.replaceChildren(...parts.flatMap((part) => {
+      const ordinal = /^(\d+)(st|nd|rd|th)$/.exec(part);
+      if (!ordinal) return [document.createTextNode(part)];
+      const suffix = document.createElement("sup");
+      suffix.className = "edition-sup";
+      suffix.textContent = ordinal[2];
+      return [document.createTextNode(ordinal[1]), suffix];
+    }));
   });
   document.querySelectorAll(".lang button").forEach((button) => {
     button.setAttribute("aria-pressed", String(button.dataset.lang === currentLang));

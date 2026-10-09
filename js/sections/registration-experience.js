@@ -1,4 +1,4 @@
-import { t, onLangChange } from "../i18n.js?v=93";
+import { t, onLangChange } from "../i18n.js?v=95";
 
 // Presentation and VIP lunch choices; validation and submission stay in registration.js.
 export function initRegistrationExperience({ tickets, onLunchChange, getStep }) {

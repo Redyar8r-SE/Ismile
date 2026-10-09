@@ -1,8 +1,8 @@
 // Trusted partners grouped by tier, from data/partners.json.
-import { ICONS } from "../config/icons.js?v=93";
-import { initials } from "../utils/initials.js?v=93";
-import { t, tr, onLangChange } from "../i18n.js?v=93";
-import { tCount } from "../utils/count.js?v=93";
+import { ICONS } from "../config/icons.js?v=95";
+import { initials } from "../utils/initials.js?v=95";
+import { t, tr, onLangChange } from "../i18n.js?v=95";
+import { tCount } from "../utils/count.js?v=95";
 
 export function initPartners({ tiers, partners }) {
   const container = document.getElementById("ptiers");
@@ -49,7 +49,7 @@ function tierIcon(tier) {
 
 function renderLogo(p, tier) {
   const mark = p.logo
-    ? `<img src="${p.logo}" alt="${p.name} logo" loading="lazy" data-initials="${initials(p.name)}"${p.round ? ' class="round"' : ""}>`
+    ? `<img src="${p.logo}" alt="${t("logo_alt").replace("{name}", p.name).replaceAll('"', '&quot;')}" loading="lazy" data-initials="${initials(p.name)}"${p.round ? ' class="round"' : ""}>`
     : `<span class="pl-mono">${initials(p.name)}</span>`;
   return `
     <div class="p-logo" data-partner="${partnerKey(p.name)}" data-tier="${tier.name}" aria-label="${p.name}, ${tr(tier.label) || tier.name}">

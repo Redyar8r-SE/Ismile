@@ -62,9 +62,13 @@
   .bx:not(.bx-conf){display:grid;grid-template-columns:42px 1fr;column-gap:14px;row-gap:2px;align-items:start;padding:16px 18px}
   .bx:not(.bx-conf) .bx-ic{grid-row:span 2;width:42px;height:42px;margin:0}
   .bx:not(.bx-conf) h3{font-size:16.5px}
-  .bx-live h3{padding-inline-end:56px}
   .bx:not(.bx-conf) p{grid-column:2}
-  .live-pill{top:16px;inset-inline-end:16px}
+  .bx.bx-live{grid-template-columns:42px minmax(0,1fr);row-gap:8px}
+  .bx.bx-live .bx-ic{grid-column:1;grid-row:1}
+  .bx.bx-live .live-pill{position:static;grid-column:2;grid-row:1;justify-self:end;align-self:center;max-width:100%;overflow-wrap:anywhere}
+  .bx.bx-live .live-pill i{flex-shrink:0}
+  .bx.bx-live h3{grid-column:1 / -1;grid-row:2;padding-inline-end:0;min-width:0}
+  .bx.bx-live p{grid-column:1 / -1;grid-row:3;min-width:0}
 
   .areas{grid-template-columns:1fr;gap:10px}
   .area{flex-direction:row;flex-wrap:wrap;align-items:center;column-gap:14px;padding:16px}

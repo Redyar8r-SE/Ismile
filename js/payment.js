@@ -5,11 +5,11 @@
 // which checks with the payment company, and shows what the server says:
 // checking, paid and registered (with the QR ticket), not completed (with
 // "Try again"), too late (fill in the form again), or cancelled.
-import { loadJSON } from "./utils/load-json.js?v=93";
-import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang, t, onLangChange } from "./i18n.js?v=93";
-import { initNav } from "./components/nav.js?v=93";
-import { initTheme } from "./components/theme.js?v=93";
-import { initFooter } from "./sections/footer.js?v=93";
+import { loadJSON } from "./utils/load-json.js?v=95";
+import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang, t, onLangChange } from "./i18n.js?v=95";
+import { initNav } from "./components/nav.js?v=95";
+import { initTheme } from "./components/theme.js?v=95";
+import { initFooter } from "./sections/footer.js?v=95";
 
 const FAST_TRIES = 40;      // every 3 seconds for the first two minutes
 const SLOW_TRIES = 40;      // then every 15 seconds for ten more minutes
@@ -134,11 +134,11 @@ async function start() {
   initNav();
   initTheme();
   try {
-    const [english, footer] = await Promise.all([loadJSON("data/i18n/en.json"), loadJSON("data/footer.json")]);
+    const [english, footer] = await Promise.all([loadJSON("data/i18n/site-en.json"), loadJSON("data/footer.json")]);
     initI18n(english);
     const [arabic, kurdish] = await Promise.all([
-      loadJSON("data/i18n/ar.json").catch(() => null),
-      loadJSON("data/i18n/ku.json").catch(() => null),
+      loadJSON("data/i18n/site-ar.json").catch(() => null),
+      loadJSON("data/i18n/site-ku.json").catch(() => null),
     ]);
     if (arabic) addLanguage("ar", arabic);
     if (kurdish) addLanguage("ku", kurdish);

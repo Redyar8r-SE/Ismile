@@ -1,5 +1,5 @@
 // The footer links and contact lines, from data/footer.json.
-import { tr, onLangChange } from "../i18n.js?v=93";
+import { tr, onLangChange } from "../i18n.js?v=95";
 
 export function initFooter({ links = [], contact = [] }) {
   const linkBox = document.getElementById("footLinks");
@@ -12,6 +12,11 @@ export function initFooter({ links = [], contact = [] }) {
   const href = (value) => (value.startsWith("#") && !atHome ? `index.html${value}` : value);
 
   function render() {
+    const email = contact.find((item) => item.href?.startsWith("mailto:"));
+    if (email) document.querySelectorAll("[data-contact-email]").forEach((link) => {
+      link.href = email.href;
+      link.textContent = tr(email.text) || email.href.slice(7);
+    });
     linkBox.innerHTML = links
       .map((item) => {
         const label = tr(item.label) || "";

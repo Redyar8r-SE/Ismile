@@ -23,7 +23,7 @@
 <link rel="stylesheet" href="css/sections/register.css?v=93">
 <link rel="stylesheet" href="css/sections/register-page.css?v=93">
 <link rel="stylesheet" href="css/sections/payment-page.css?v=93">
-<script type="module" src="js/payment.js?v=93"></script>
+<script type="module" src="js/payment.js?v=95"></script>
 </head>
 <body>
 <div class="siteboot" id="siteboot" aria-hidden="true">
@@ -60,7 +60,7 @@
 <!-- ============ HEADER ============ -->
 <header class="top reg-top" id="top">
   <div class="wrap">
-    <a class="brand" href="index.html" aria-label="iSmile 2026 home">
+    <a class="brand" href="index.html" aria-label="iSmile 2026 home" data-i18n-label="a_home">
       <svg class="brand-mark" width="34" height="40" viewBox="0 0 1080 1155" aria-hidden="true"><svg x="0" y="0" width="1080" height="1155" viewBox="0 0 1080 1155" overflow="hidden"><image href="assets/brand/ismile-logo.png" width="2481" height="1155"/></svg></svg>
       <span>i<b>Smile</b></span>
     </a>
@@ -92,7 +92,7 @@
       <h1 id="pmTitle">Checking your payment…</h1>
       <p class="pm-text" id="pmText">This usually takes a few seconds. Please keep this page open.</p>
       <div class="pm-ticket" id="pmTicket" hidden>
-        <img id="pmQr" alt="QR code of your ticket" width="240" height="240">
+        <img id="pmQr" alt="QR code of your ticket" data-i18n-alt="pm_qr_alt" width="240" height="240">
         <small data-i18n="pm_ticket_no">Ticket number</small>
         <b id="pmTicketNo" dir="ltr"></b>
       </div>
@@ -101,7 +101,7 @@
         <a class="btn btn-primary" id="pmRetry" href="#" hidden><span data-i18n="pm_retry">Pay now</span></a>
         <a class="btn btn-outline" href="workshops.html" id="pmWorkshops" hidden><span data-i18n="success_ws_btn">See the workshops</span></a>
       </div>
-      <p class="pm-help"><span data-i18n="help_title">Need help registering?</span> <a href="mailto:ismile@italk.krd" dir="ltr">ismile@italk.krd</a></p>
+      <p class="pm-help"><span data-i18n="help_title">Need help registering?</span> <a href="mailto:ismile@italk.krd" data-contact-email dir="ltr">ismile@italk.krd</a></p>
     </div>
   </div>
 </section>
@@ -113,7 +113,7 @@
       <div>
         <a class="brand" href="index.html"><svg class="brand-mark" width="34" height="40" viewBox="0 0 1080 1155" aria-hidden="true"><svg x="0" y="0" width="1080" height="1155" viewBox="0 0 1080 1155" overflow="hidden"><image href="assets/brand/ismile-logo.png" width="2481" height="1155"/></svg></svg><span>i<b>Smile</b></span></a>
         <p class="foot-about" data-i18n="foot_org">iSmile is Iraq’s largest international dental summit, organized by italk Foundation in collaboration with the Kurdistan Dental Association / Slemani Branch.</p>
-        <p class="event-slogan" lang="en" dir="ltr">The Evolution of Dental Art and Science</p>
+        <p class="event-slogan" data-i18n="xp_slogan" dir="auto">The Evolution of Dental Art and Science</p>
       </div>
       <div>
         <h3 data-i18n="foot_links">Summit</h3>
@@ -130,7 +130,7 @@
   </div>
 </footer>
 
-<button class="to-top" id="toTop" type="button" aria-label="Back to top" data-i18n-label="to_top" title="Back to top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+<button class="to-top" id="toTop" type="button" aria-label="Back to top" data-i18n-label="to_top" title="Back to top" data-i18n-title="to_top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
 
 </body>
 </html>

@@ -1,6 +1,6 @@
 // What the admin page can edit.
 //
-// Text fields are keys inside data/i18n/{en,ar,ku}.json. The English value in
+// Text fields are keys inside data/i18n/site-{en,ar,ku}.json. The English value in
 // those files wins over the English written in index.html, so editing here
 // changes all three languages without touching the page markup.
 // A field with no label shows its English text as the label, so new keys never
@@ -513,6 +513,7 @@ export const PAGE_TITLES = {
   workshops: "Workshops page",
   register: "Registration page",
   sponsor: "Sponsor page",
+  payment: "Payment page",
   every: "On every page",
   admin: "This admin",
 };
@@ -611,6 +612,63 @@ export const GROUPS = [
     blocks: [{ type: "security", title: "Sign-in for the admin page", fields: [] }],
   },
 ];
+
+// Discover all current wording, including runtime strings and new page keys.
+// Keep familiar sections while ensuring a new key cannot disappear from admin.
+export function groupsForText(english) {
+  const groups = GROUPS.map((group) => ({
+    ...group,
+    blocks: group.blocks.map((block) => block.type === "text"
+      ? { ...block, fields: block.fields.filter((field) => field.key in english) }
+      : { ...block }),
+  }));
+  const covered = new Set(groups.flatMap((group) => group.blocks
+    .flatMap((block) => block.fields || []).map((field) => field.key)));
+  const remaining = Object.keys(english).filter((key) => !covered.has(key));
+  const wording = (title, keys) => ({
+    type: "text", title,
+    hint: "Keep the English meaning and any placeholders such as {n}, {email} or {price} in each translation.",
+    fields: keys.map((key) => ({ key, label: `${english[key]} · ${key}` })),
+  });
+  const take = (test) => remaining.filter((key) => {
+    if (!test(key)) return false;
+    covered.add(key);
+    return true;
+  });
+  const registration = groups.find((group) => group.id === "registration");
+  const experience = take((key) => key.startsWith("xp_"));
+  const benefits = /(?:access|lounge|hosted|workshop|gift|recognition|badge|footnote|vip_headline|vip_lead|vip_package|vip_eyebrow|one_lunch|rows|private_lounge|home_delivery|show_benefits|hide_benefits)/;
+  const extras = /(?:extras|included|day[12]|lunch_both|optional|add_|extra_day|added|call_|extras_note|unavailable)/;
+  const review = /(?:review|almost_there|edit_|lunch_total)/;
+  const partitions = [
+    ["Ticket selection and experience", experience.filter((key) => !benefits.test(key) && !extras.test(key) && !review.test(key))],
+    ["VIP introduction and benefits", experience.filter((key) => benefits.test(key))],
+    ["VIP lunch and follow-up", experience.filter((key) => !benefits.test(key) && extras.test(key))],
+    ["Experience review", experience.filter((key) => !benefits.test(key) && !extras.test(key) && review.test(key))],
+  ];
+  partitions.forEach(([title, keys]) => { if (keys.length) registration.blocks.push(wording(title, keys)); });
+  const messages = take((key) => /^(?:reg_|err_|photo_not_needed$|link$)/.test(key) && !covered.has(key));
+  if (messages.length) registration.blocks.push(wording("Availability and server messages", messages));
+  const payment = take((key) => key.startsWith("pm_"));
+  groups.splice(groups.findIndex((group) => group.page === "every"), 0, {
+    id: "payment", page: "payment", title: "Payment status", where: "Payment confirmation, retry, expired links and ticket QR code",
+    blocks: [wording("Payment page wording", payment)],
+  });
+  groups.find((group) => group.id === "becomeSponsor").blocks.push(wording("Exhibition map and availability", take((key) => key.startsWith("bm_"))));
+  const fixed = (id, file, listKey, title, fields) => ({
+    id, type: "list", file, listKey, title, fixed: true,
+    itemName: "item", itemFields: fields.map(([key, label]) => ({ key, label, type: "i18n" })),
+    rowInfo: (item) => ({ label: item.name?.en || item.label?.en || item.id || item.name || "" }),
+    hint: "Edit the wording in the three languages. Existing items, prices, availability and identifiers are preserved.",
+  });
+  const sponsors = groups.find((group) => group.id === "sponsors");
+  sponsors.blocks.push(fixed("sponsorTierText", "sponsors", "tiers", "Sponsor tier wording", [["name", "Tier name"], ["subtitle", "Subtitle"]]));
+  sponsors.blocks.push(fixed("partnerTierText", "partners", "tiers", "Trusted partner tier wording", [["label", "Tier label"], ["subtitle", "Subtitle"]]));
+  groups.find((group) => group.id === "workshops").blocks.unshift(fixed("workshopText", "workshops", null, "Workshop titles, companies and speakers", [["title", "Workshop title"], ["company", "Company"], ["speaker", "Speaker"]]));
+  const other = remaining.filter((key) => !covered.has(key));
+  if (other.length) groups.find((group) => group.id === "menu").blocks.push(wording("Additional wording and accessibility", other));
+  return groups;
+}
 
 // Files the list editors read and write.
 export const DATA_FILES = {

@@ -1,7 +1,7 @@
 // The list editors: workshops, sponsor tiers, partners, and the program.
 // main.js passes a small context so this file does not import it back.
-import { LANGS } from "./fields.js?v=94";
-import { WORKSHOP_ICONS } from "../config/icons.js?v=93";
+import { LANGS } from "./fields.js?v=95";
+import { WORKSHOP_ICONS } from "../config/icons.js?v=95";
 
 const el = (tag, className, text) => {
   const node = document.createElement(tag);
@@ -311,7 +311,7 @@ export function buildList(group, section, ctx) {
     box?.scrollIntoView({ behavior: "smooth", block: "center" });
     box?.focus();
   });
-  section.append(add);
+  if (!group.fixed) section.append(add);
 
   // Some lists feed another one (tiers fill the sponsor dropdown).
   function changed() {
@@ -323,7 +323,7 @@ export function buildList(group, section, ctx) {
     const items = ctx.getItems(group);
     list.replaceChildren();
     if (!items.length) {
-      list.append(el("p", "ghint", `Nothing here yet. Press “Add a ${group.itemName}”.`));
+      list.append(el("p", "ghint", group.fixed ? "No items have been announced yet." : `Nothing here yet. Press “Add a ${group.itemName}”.`));
       return;
     }
     items.forEach((item, index) => {
@@ -355,7 +355,7 @@ export function buildList(group, section, ctx) {
         changed();
       });
       tools.append(remove);
-      head.append(tools);
+      if (!group.fixed) head.append(tools);
 
       const body = el("div", "lbody");
       const rowCtx = { ...ctx, rerender: render, markDirty: changed };
@@ -461,6 +461,8 @@ export function buildProgram(section, ctx) {
         item.append(shead, top);
         item.append(fieldRow(session, { key: "title", label: "Session title", type: "i18n" }, { ...ctx, rerender: render }));
         if (session.type !== "break") {
+          item.append(fieldRow(session, { key: "topic", label: "Topic", type: "i18n" }, { ...ctx, rerender: render }));
+          item.append(fieldRow(session, { key: "speaker", label: "Speaker", type: "i18n" }, { ...ctx, rerender: render }));
           item.append(fieldRow(session, { key: "location", label: "Room", type: "i18n" }, { ...ctx, rerender: render }));
         }
         sessions.append(item);

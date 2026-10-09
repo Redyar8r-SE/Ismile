@@ -16,9 +16,9 @@ const dry = process.argv.includes("--dry");
 const repo = resolve(new URL("..", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1"));
 
 // Where each downloaded file belongs.
-const HOME = { en: "data/i18n", ar: "data/i18n", ku: "data/i18n" };
+const HOME = { "site-en": "data/i18n", "site-ar": "data/i18n", "site-ku": "data/i18n" };
 const DATA = ["speakers", "map", "footer", "journey", "projects", "gallery", "workshops",
-              "sponsors", "partners", "program", "admin-accounts"];
+              "sponsors", "partners", "program", "tickets", "admin-accounts"];
 DATA.forEach((name) => { HOME[name] = "data"; });
 
 const downloads = process.env.DOWNLOADS || join(homedir(), "Downloads");

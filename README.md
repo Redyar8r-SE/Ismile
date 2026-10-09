@@ -31,7 +31,9 @@ data/                      Content you edit without touching code
   sponsors.json            Sponsor tiers and open spots
   partners.json            Trusted partners, tier, logo file, logo background
   gallery.json             Photos under the About timeline, with captions
-  i18n/en.json             English strings used by JavaScript
+  i18n/site-en.json        English overrides and strings used by JavaScript
+  i18n/site-ar.json        Arabic translations for every public page
+  i18n/site-ku.json        Sorani Kurdish translations for every public page
 
 assets/logos/              Partner logo images (.webp)
 assets/photos/             Summit photos shown in About
@@ -52,19 +54,23 @@ The header has an **EN / العربية / کوردی** switch. Arabic and Kurdis
 turn the whole page right-to-left and use the Noto Kufi Arabic font. The
 visitor's choice is remembered in their browser.
 
-- **Page text:** text in `index.html`, `register.html`, and `sponsor.html` carries `data-i18n="key"`
-  (`data-i18n-ph` for a field placeholder, `data-i18n-label` for an aria-label).
-  The English text stays in the HTML; the Arabic lives in `data/i18n/ar.json`
-  and the Kurdish in `data/i18n/ku.json`, under the same key.
-- **Strings only JavaScript uses:** `data/i18n/en.json`, `ar.json`, `ku.json`.
+- **Page text:** all five public pages carry `data-i18n="key"` markers
+  (`data-i18n-ph` for placeholders, `data-i18n-label` for aria-labels,
+  `data-i18n-alt` for image descriptions, `data-i18n-title` for tooltips, and
+  `data-i18n-content` for metadata). English stays in HTML unless overridden.
+  All public pages and the admin use the same `data/i18n/site-en.json`,
+  `site-ar.json` and `site-ku.json` files, including registration and VIP text.
+- **Strings only JavaScript uses:** the same three `site-*.json` files.
+  Older language files remain for archived design previews.
 - **Content files** (`program.json`, `workshops.json`, `sponsors.json`,
   `partners.json`): a translatable value is written per language, for example
   `"title": { "en": "Opening ceremony", "ar": "حفل الافتتاح", "ku": "ئاهەنگی کردنەوە" }`.
   A plain string still works and shows in every language.
 - **Adding text:** add the English with a `data-i18n` key, then add the same key
-  to `ar.json` and `ku.json`. A missing key falls back to English, so nothing
-  breaks.
-- To add another language: write `data/i18n/<code>.json`, load it in
+  to `site-ar.json` and `site-ku.json`. New keys automatically appear in the
+  admin; runtime-only text also needs an English key in `site-en.json`.
+  A missing translation falls back to English.
+- To add another language: write `data/i18n/site-<code>.json`, load it in
   `js/main.js` the way Arabic and Kurdish are loaded, and add a button next to
   the others. Right-to-left languages are listed in `RTL` in `js/i18n.js`.
 
@@ -175,7 +181,7 @@ node tools/publish.mjs          # copy, check, commit and push
 ```
 
 It takes the newest matching file out of your Downloads folder — Chrome names
-repeats `en (1).json`, and the newest wins — checks it is valid JSON, puts it
+repeats `site-en (1).json`, and the newest wins — checks it is valid JSON, puts it
 where it belongs, then commits and pushes. Used downloads are renamed
 `.published.json` so an old one cannot undo newer work.
 

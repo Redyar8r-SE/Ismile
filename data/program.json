@@ -43,7 +43,7 @@
       "subtitle": {
         "en": "Conference and workshops",
         "ar": "المؤتمر وورش العمل",
-        "ku": "کۆنفرانس و وۆرکشۆپ"
+        "ku": "کۆنفرانس و وۆرکشۆپەکان"
       },
       "sessions": [
         {
@@ -163,7 +163,7 @@
           "title": {
             "en": "Live clinical procedure",
             "ar": "إجراء سريري مباشر",
-            "ku": "چارەسەری کلینیکیی ڕاستەوخۆ"
+            "ku": "ڕێکاری کلینیکیی ڕاستەوخۆ"
           },
           "location": {
             "en": "Main hall",

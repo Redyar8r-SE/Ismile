@@ -30,7 +30,7 @@
 <link rel="stylesheet" href="css/sections/sponsor-form.css?v=93">
 <link rel="stylesheet" href="css/sections/booth-map.css?v=93">
 
-<script type="module" src="js/sponsor.js?v=93"></script>
+<script type="module" src="js/sponsor.js?v=95"></script>
 </head>
 <body>
 
@@ -61,7 +61,7 @@
 <!-- ============ HEADER ============ -->
 <header class="top" id="top">
   <div class="wrap">
-    <a class="brand" href="index.html" aria-label="iSmile 2026 home">
+    <a class="brand" href="index.html" aria-label="iSmile 2026 home" data-i18n-label="a_home">
       <svg class="brand-mark" width="34" height="40" viewBox="0 0 1080 1155" aria-hidden="true"><svg x="0" y="0" width="1080" height="1155" viewBox="0 0 1080 1155" overflow="hidden"><image href="assets/brand/ismile-logo.png" width="2481" height="1155"/></svg></svg>
       <span>i<b>Smile</b></span>
     </a>
@@ -86,7 +86,7 @@
   <div class="wrap">
     <div class="spf-head">
       <p class="section-kicker" data-i18n="spf_kicker">Partnership</p>
-      <h1><span class="sponsor-edition-en">Become a sponsor at iSmile’s 2<sup class="edition-sup">nd</sup> edition</span><span class="sponsor-edition-translated" data-i18n="spf_title">Become a sponsor at iSmile’s 2nd edition</span></h1>
+      <h1><span class="sponsor-edition-en" data-i18n-edition="spf_title">Become a sponsor at iSmile’s 2<sup class="edition-sup">nd</sup> edition</span><span class="sponsor-edition-translated" data-i18n="spf_title">Become a sponsor at iSmile’s 2nd edition</span></h1>
       <p class="lead" data-i18n="spf_sub">Partner with Iraq's largest and most prestigious dental summit. Tell us which package interests you and who to talk to, and we will send you the full packages, what each one includes and the prices.</p>
     </div>
 
@@ -145,7 +145,7 @@
           </div>
         </div>
       </div>
-      <noscript><p>Enable JavaScript to view the numbered map and live booth availability.</p></noscript>
+      <noscript><p data-i18n="bm_no_script">Enable JavaScript to view the numbered map and live booth availability.</p></noscript>
     </section>
 
     <div class="reg">
@@ -191,7 +191,7 @@
 
         <form id="spfForm" novalidate>
           <!-- Left empty by people, filled in by bots: the server refuses it. -->
-          <div class="reg-trap" aria-hidden="true"><label>Leave this box empty <input id="spfTrap" type="text" tabindex="-1" autocomplete="nope" data-lpignore="true" data-1p-ignore></label></div>
+          <div class="reg-trap" aria-hidden="true"><label><span data-i18n="spf_trap">Leave this box empty</span> <input id="spfTrap" type="text" tabindex="-1" autocomplete="nope" data-lpignore="true" data-1p-ignore></label></div>
           <!-- Step 1: sponsorship or booth, and which package -->
           <div class="reg-step" data-step="1">
             <div class="step-head">
@@ -243,11 +243,11 @@
               </div>
               <div class="f">
                 <label for="s_phone" data-i18n="f_phone">WhatsApp number</label>
-                <input id="s_phone" type="tel" inputmode="tel" dir="ltr" autocomplete="tel" placeholder="0750 123 4567" data-rule="phone">
+                <input id="s_phone" type="tel" inputmode="tel" dir="ltr" autocomplete="tel" placeholder="0750 123 4567" data-i18n-ph="ph_phone" data-rule="phone">
               </div>
               <div class="f">
                 <label for="s_email" data-i18n="f_email">Email</label>
-                <input id="s_email" type="email" inputmode="email" dir="ltr" autocomplete="email" placeholder="name@example.com" data-rule="email">
+                <input id="s_email" type="email" inputmode="email" dir="ltr" autocomplete="email" placeholder="name@example.com" data-i18n-ph="ph_email" data-rule="email">
               </div>
               <div class="f">
                 <label for="s_website"><span data-i18n="spf_f_website">Website or social page</span></label>
@@ -326,7 +326,7 @@
       <div>
         <a class="brand" href="index.html"><svg class="brand-mark" width="34" height="40" viewBox="0 0 1080 1155" aria-hidden="true"><svg x="0" y="0" width="1080" height="1155" viewBox="0 0 1080 1155" overflow="hidden"><image href="assets/brand/ismile-logo.png" width="2481" height="1155"/></svg></svg><span>i<b>Smile</b></span></a>
         <p class="foot-about" data-i18n="foot_org">iSmile is Iraq’s largest international dental summit, organized by italk Foundation in collaboration with the Kurdistan Dental Association / Slemani Branch.</p>
-        <p class="event-slogan" lang="en" dir="ltr">The Evolution of Dental Art and Science</p>
+        <p class="event-slogan" data-i18n="xp_slogan" dir="auto">The Evolution of Dental Art and Science</p>
       </div>
       <div>
         <h3 data-i18n="foot_links">Summit</h3>
@@ -343,7 +343,7 @@
   </div>
 </footer>
 
-<button class="to-top" id="toTop" type="button" aria-label="Back to top" data-i18n-label="to_top" title="Back to top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+<button class="to-top" id="toTop" type="button" aria-label="Back to top" data-i18n-label="to_top" title="Back to top" data-i18n-title="to_top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
 
 </body>
 </html>

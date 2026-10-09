@@ -1,20 +1,21 @@
+import { showLoadError } from "./components/load-error.js?v=95";
 // Entry point: loads the data files, then starts each page section.
-import { loadJSON } from "./utils/load-json.js?v=93";
-import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from "./i18n.js?v=93";
-import { initNav } from "./components/nav.js?v=93";
-import { initTheme } from "./components/theme.js?v=93";
-import { initProgram } from "./sections/program.js?v=93";
-import { initSpeakers } from "./sections/speakers.js?v=93";
-import { initSponsors } from "./sections/sponsors.js?v=93";
-import { initPartners } from "./sections/partners.js?v=93";
-import { initJourney } from "./sections/journey.js?v=93";
-import { initProjects } from "./sections/projects.js?v=93";
-import { initGallery } from "./sections/gallery.js?v=93";
-import { initFooter } from "./sections/footer.js?v=93";
-import { initVenue } from "./sections/venue.js?v=93";
-import { initReveal } from "./utils/reveal.js?v=93";
-import { initReadMore } from "./sections/read-more.js?v=93";
-import { initCountdown } from "./sections/countdown.js?v=93";
+import { loadJSON } from "./utils/load-json.js?v=95";
+import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from "./i18n.js?v=95";
+import { initNav } from "./components/nav.js?v=95";
+import { initTheme } from "./components/theme.js?v=95";
+import { initProgram } from "./sections/program.js?v=95";
+import { initSpeakers } from "./sections/speakers.js?v=95";
+import { initSponsors } from "./sections/sponsors.js?v=95";
+import { initPartners } from "./sections/partners.js?v=95";
+import { initJourney } from "./sections/journey.js?v=95";
+import { initProjects } from "./sections/projects.js?v=95";
+import { initGallery } from "./sections/gallery.js?v=95";
+import { initFooter } from "./sections/footer.js?v=95";
+import { initVenue } from "./sections/venue.js?v=95";
+import { initReveal } from "./utils/reveal.js?v=95";
+import { initReadMore } from "./sections/read-more.js?v=95";
+import { initCountdown } from "./sections/countdown.js?v=95";
 
 async function start() {
   initNav();
@@ -23,7 +24,7 @@ async function start() {
 
   try {
     const [strings, program, speakers, sponsors, partners, journey, projects, gallery, footer, map] = await Promise.all([
-      loadJSON("data/i18n/en.json"),
+      loadJSON("data/i18n/site-en.json"),
       loadJSON("data/program.json"),
       loadJSON("data/speakers.json"),
       loadJSON("data/sponsors.json"),
@@ -38,8 +39,8 @@ async function start() {
     initI18n(strings);
     // A missing or broken translation file must never take the page down.
     const [arabic, kurdish] = await Promise.all([
-      loadJSON("data/i18n/ar.json").catch(() => null),
-      loadJSON("data/i18n/ku.json").catch(() => null),
+      loadJSON("data/i18n/site-ar.json").catch(() => null),
+      loadJSON("data/i18n/site-ku.json").catch(() => null),
     ]);
     if (arabic) addLanguage("ar", arabic);
     if (kurdish) addLanguage("ku", kurdish);
@@ -75,10 +76,7 @@ async function start() {
     ]);
   } catch (error) {
     console.error(error);
-    const notice = document.createElement("div");
-    notice.className = "load-error";
-    notice.textContent = "Could not load the site data. Open the site through a local server (see README.md).";
-    document.body.prepend(notice);
+    await showLoadError("load_error");
   } finally {
     // The page is as ready as it is going to get, so take the cover off. Also
     // on failure: a visitor should see the message, not a ring turning forever.

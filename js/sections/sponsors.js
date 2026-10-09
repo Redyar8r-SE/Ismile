@@ -1,16 +1,16 @@
 // Sponsor tiers: the sponsors already signed, then the open places left,
 // from data/sponsors.json.
-import { ICONS } from "../config/icons.js?v=93";
-import { initials } from "../utils/initials.js?v=93";
-import { t, tr, onLangChange } from "../i18n.js?v=93";
-import { tCount } from "../utils/count.js?v=93";
+import { ICONS } from "../config/icons.js?v=95";
+import { initials } from "../utils/initials.js?v=95";
+import { t, tr, onLangChange } from "../i18n.js?v=95";
+import { tCount } from "../utils/count.js?v=95";
 
 export function initSponsors({ tiers, sponsors = [] }) {
   const container = document.getElementById("sponsorTiers");
 
   function logo(sponsor) {
     const mark = sponsor.logo
-      ? `<img src="${sponsor.logo}" alt="${sponsor.name} logo" loading="lazy"${sponsor.round ? ' class="round"' : ""}>`
+      ? `<img src="${sponsor.logo}" alt="${t("logo_alt").replace("{name}", sponsor.name).replaceAll('"', '&quot;')}" data-name="${sponsor.name.replaceAll('"', '&quot;')}" loading="lazy"${sponsor.round ? ' class="round"' : ""}>`
       : `<span class="pl-mono">${initials(sponsor.name || "")}</span>`;
     return `
       <div class="p-logo">
@@ -40,7 +40,7 @@ export function initSponsors({ tiers, sponsors = [] }) {
     // A logo file that cannot be found falls back to the company initials.
     container.querySelectorAll("img").forEach((img) => {
       img.addEventListener("error", () => {
-        img.outerHTML = `<span class="pl-mono">${initials(img.alt.replace(/ logo$/, ""))}</span>`;
+        img.outerHTML = `<span class="pl-mono">${initials(img.dataset.name)}</span>`;
       });
     });
   }
