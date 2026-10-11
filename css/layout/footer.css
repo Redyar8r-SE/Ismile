@@ -29,12 +29,11 @@ html[dir="rtl"] footer .ltr{text-align:right}
   border-top:1px solid rgba(255,255,255,.12);margin-top:40px;padding-top:20px;
 }
 footer .legal{margin:0;font-size:13px}
-footer .credit{margin:0;font-size:13px;text-align:end}
+footer .credit{margin:0;font-size:13px;text-align:center}
 footer .credit b{color:#fff;font-weight:700}
 footer .credit small{display:block;margin-top:3px;font-size:12px;opacity:.75}
 @media (max-width:640px){
   .footbar{justify-content:center;text-align:center}
-  footer .credit{text-align:center}
 }
 
 .admin-link{margin-inline-start:14px;color:#7FD6D2;font-size:13px}

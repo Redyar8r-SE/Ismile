@@ -1,12 +1,12 @@
-import { showLoadError } from "./components/load-error.js?v=119";
+import { showLoadError } from "./components/load-error.js?v=120";
 // Entry point for workshops.html: the workshop cards, the office number and
 // how booking works. The same header, footer and languages as the main page.
-import { loadJSON } from "./utils/load-json.js?v=119";
-import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from "./i18n.js?v=119";
-import { initNav } from "./components/nav.js?v=119";
-import { initTheme } from "./components/theme.js?v=119";
-import { initFooter } from "./sections/footer.js?v=119";
-import { initWorkshops } from "./sections/workshops.js?v=119";
+import { loadJSON } from "./utils/load-json.js?v=120";
+import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from "./i18n.js?v=120";
+import { initNav } from "./components/nav.js?v=120";
+import { initTheme } from "./components/theme.js?v=120";
+import { initFooter } from "./sections/footer.js?v=120";
+import { initWorkshops } from "./sections/workshops.js?v=120";
 
 async function start() {
   initNav();
