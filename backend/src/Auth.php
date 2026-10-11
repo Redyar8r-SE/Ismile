@@ -94,10 +94,7 @@ final class Auth
         }
         if ($user === null || $user['disabled_at'] !== null || !password_verify($password, $user['password_hash'])) {
             if ($user !== null) {
-                $fails = (int) $user['failed_logins'] + 1;
-                $lock = $fails >= self::MAX_FAILS ? date('Y-m-d H:i:s', time() + self::LOCK_MINUTES * 60) : null;
-                Db::update('admin_users', ['failed_logins' => $lock ? 0 : $fails, 'locked_until' => $lock], 'id = ?', [$user['id']]);
-                if ($lock) {
+                if (self::recordFailure((int) $user['id'])) {
                     Audit::log((int) $user['id'], 'login.locked', 'admin_user', (int) $user['id']);
                     Outbox::queue('alert', null, ['message' => "Your iSmile admin account ($email) was locked for 15 minutes after 5 wrong passwords from address " . App::clientIp() . '. If this was not you, tell the Owner.'], null, $email, 'en');
                 }
@@ -109,6 +106,25 @@ final class Auth
             Db::update('admin_users', ['password_hash' => password_hash($password, PASSWORD_DEFAULT)], 'id = ?', [$user['id']]);
         }
         return $user;
+    }
+
+    /**
+     * Counts one wrong password or phone code, under a row lock so wrong
+     * guesses sent at the same moment are all counted. Returns true when this
+     * one locked the account.
+     */
+    public static function recordFailure(int $id): bool
+    {
+        return Db::transaction(static function () use ($id): bool {
+            $row = Db::one('SELECT failed_logins FROM admin_users WHERE id = ? FOR UPDATE', [$id]);
+            if ($row === null) {
+                return false;
+            }
+            $fails = (int) $row['failed_logins'] + 1;
+            $lock = $fails >= self::MAX_FAILS ? date('Y-m-d H:i:s', time() + self::LOCK_MINUTES * 60) : null;
+            Db::update('admin_users', $lock ? ['failed_logins' => 0, 'locked_until' => $lock] : ['failed_logins' => $fails], 'id = ?', [$id]);
+            return $lock !== null;
+        });
     }
 
     public static function completeLogin(array $user): void

@@ -85,17 +85,28 @@ final class Office
         if ($reason === '') {
             throw new UserError('Write the reason for cancelling.');
         }
-        // A paid workshop is never removed by staff (no refunds): only the Owner.
-        if ($user['role'] !== 'owner' && Db::value("SELECT COUNT(*) FROM workshop_bookings WHERE registration_id = ? AND removed_at IS NULL AND payment_status = 'paid'", [$registration['id']])) {
-            throw new UserError('This person has a PAID workshop. Only the Owner can cancel them (workshop money is not refunded).');
-        }
-        Db::transaction(static function () use ($registration, $user): void {
+        $done = Db::transaction(static function () use ($registration, $user): bool {
+            // Decided on the locked rows (ticket first, as check-in does): a
+            // workshop paid a moment ago counts.
+            Db::all('SELECT id FROM tickets WHERE registration_id = ? FOR UPDATE', [$registration['id']]);
+            if (Db::value('SELECT status FROM registrations WHERE id = ? FOR UPDATE', [$registration['id']]) === 'cancelled') {
+                return false;
+            }
+            $paidWorkshop = Db::value("SELECT COUNT(*) FROM workshop_bookings WHERE registration_id = ? AND removed_at IS NULL AND payment_status = 'paid' FOR UPDATE", [$registration['id']]);
+            // A paid workshop is never removed by staff (no refunds): only the Owner.
+            if ($user['role'] !== 'owner' && $paidWorkshop) {
+                throw new UserError('This person has a PAID workshop. Only the Owner can cancel them (workshop money is not refunded).');
+            }
             $now = App::now();
             Db::run("UPDATE registrations SET status = 'cancelled', updated_at = ? WHERE id = ?", [$now, $registration['id']]);
             Db::run('UPDATE tickets SET cancelled_at = ? WHERE registration_id = ? AND cancelled_at IS NULL', [$now, $registration['id']]);
             // Their workshop seats go back on sale.
             Db::run('UPDATE workshop_bookings SET removed_at = ?, removed_by = ?, updated_at = ? WHERE registration_id = ? AND removed_at IS NULL', [$now, $user['id'], $now, $registration['id']]);
+            return true;
         });
+        if (!$done) {
+            return 'Already cancelled.';
+        }
         SiteData::syncWorkshopSeats();
         Audit::log((int) $user['id'], 'registration.cancel', 'registration', (int) $registration['id'], ['reason' => $reason, 'was' => $registration['status']]);
         $note = $registration['status'] === 'paid' ? ' It was paid: tickets are non-refundable, so no refund is made automatically.' : '';
@@ -178,6 +189,10 @@ final class Office
         // booking the last seat at the same moment cannot both get it.
         [$id, $full] = Db::transaction(static function () use ($registration, $workshop, $user, $in, $price, $payment, $override): array {
             $limit = (int) Db::value('SELECT total_seats FROM workshops WHERE id = ? FOR UPDATE', [$workshop['id']]);
+            // Still registered now (not cancelled a moment ago by someone else)?
+            if (!in_array(Db::value('SELECT status FROM registrations WHERE id = ? LOCK IN SHARE MODE', [$registration['id']]), ['paid', 'complimentary'], true)) {
+                throw new UserError(Registrations::fullName($registration) . ' is not registered (cancelled).');
+            }
             $already = Db::value('SELECT id FROM workshop_bookings WHERE registration_id = ? AND workshop_id = ? AND removed_at IS NULL', [$registration['id'], $workshop['id']]);
             if ($already) {
                 throw new UserError('This person is already booked on that workshop.');
@@ -207,31 +222,43 @@ final class Office
 
     public static function changeWorkshop(int $bookingId, array $user, array $in): string
     {
-        $booking = Db::one('SELECT * FROM workshop_bookings WHERE id = ? AND removed_at IS NULL', [$bookingId]);
-        if ($booking === null) {
-            throw new UserError('Booking not found.');
-        }
         $isOwner = $user['role'] === 'owner';
-        // Money received is never given back. Only the Owner may correct a
-        // mistake (a payment recorded on the wrong person or workshop).
-        $wasPaid = $booking['payment_status'] === 'paid';
-        if (($in['remove'] ?? '') === '1') {
-            if ($wasPaid && !$isOwner) {
-                throw new UserError('This workshop is paid. Workshop money is not refunded, so only the Owner can remove a paid booking.');
+        // Decided on the locked booking, so two staff (or a double press) never
+        // remove and mark paid at the same time, or record a payment twice.
+        [$booking, $payment] = Db::transaction(static function () use ($bookingId, $user, $in, $isOwner): array {
+            $booking = Db::one('SELECT * FROM workshop_bookings WHERE id = ? AND removed_at IS NULL FOR UPDATE', [$bookingId]);
+            if ($booking === null) {
+                throw new UserError('Booking not found.');
             }
-            Db::update('workshop_bookings', ['removed_at' => App::now(), 'removed_by' => $user['id'], 'updated_at' => App::now()], 'id = ?', [$bookingId]);
+            // Money received is never given back. Only the Owner may correct a
+            // mistake (a payment recorded on the wrong person or workshop).
+            $wasPaid = $booking['payment_status'] === 'paid';
+            if (($in['remove'] ?? '') === '1') {
+                if ($wasPaid && !$isOwner) {
+                    throw new UserError('This workshop is paid. Workshop money is not refunded, so only the Owner can remove a paid booking.');
+                }
+                Db::update('workshop_bookings', ['removed_at' => App::now(), 'removed_by' => $user['id'], 'updated_at' => App::now()], 'id = ?', [$bookingId]);
+                return [$booking, null];
+            }
+            $payment = self::workshopPayment($in + ['payment_status' => $booking['payment_status']], (int) $booking['price_agreed'], $user);
+            if ($wasPaid && $payment['payment_status'] !== 'paid' && !$isOwner) {
+                throw new UserError('This workshop is already paid. Workshop money is not refunded; only the Owner can correct a mistake.');
+            }
+            if ($wasPaid && $payment['payment_status'] === 'paid') {
+                return [$booking, []];
+            }
+            Db::update('workshop_bookings', $payment + ['updated_at' => App::now()], 'id = ?', [$bookingId]);
+            return [$booking, $payment];
+        });
+        $wasPaid = $booking['payment_status'] === 'paid';
+        if ($payment === null) {
             SiteData::syncWorkshopSeats();
             Audit::log((int) $user['id'], 'workshop.remove', 'registration', (int) $booking['registration_id'], ['workshop' => $booking['workshop_id'], 'booking' => $bookingId, 'was_paid' => $wasPaid]);
             return 'Workshop removed. The seat is free again on the website.' . ($wasPaid ? ' The money is not refunded.' : '');
         }
-        $payment = self::workshopPayment($in + ['payment_status' => $booking['payment_status']], (int) $booking['price_agreed'], $user);
-        if ($wasPaid && $payment['payment_status'] !== 'paid' && !$isOwner) {
-            throw new UserError('This workshop is already paid. Workshop money is not refunded; only the Owner can correct a mistake.');
-        }
-        if ($wasPaid && $payment['payment_status'] === 'paid') {
+        if ($payment === []) {
             return 'Already paid. Nothing changed.';
         }
-        Db::update('workshop_bookings', $payment + ['updated_at' => App::now()], 'id = ?', [$bookingId]);
         Audit::log((int) $user['id'], 'workshop.payment', 'registration', (int) $booking['registration_id'], ['booking' => $bookingId, 'from' => $booking['payment_status']] + $payment);
         return match ($payment['payment_status']) {
             'paid' => 'Workshop marked PAID: ' . number_format((int) $booking['price_agreed']) . ' IQD received.',

@@ -50,11 +50,13 @@ final class Certificates
             if ($registrationId!==null && !$ids) throw new UserError('A certificate requires recorded attendance and an active ticket.');
             $counts=['queued'=>0,'skipped'=>0];
             foreach ($ids as $id) {
-                // Same lock order as admission. Concurrent button presses queue once.
+                // Same lock order as admission. Concurrent button presses queue once:
+                // the email check below is a locking read, so it sees the email the
+                // other press just queued (a plain read would see an older snapshot).
                 $ticket=Db::one('SELECT * FROM tickets WHERE registration_id=? FOR UPDATE',[$id['id']]);
                 $registration=Db::one('SELECT * FROM registrations WHERE id=? FOR UPDATE',[$id['id']]);
                 if (!self::rows((int)$id['id']) || !Validate::email($registration['email'])) { $counts['skipped']++; continue; }
-                $existing=Db::value("SELECT id FROM emails WHERE kind='certificate' AND registration_id=? AND to_email=? AND (status='pending' OR (status='sent' AND COALESCE(provider_message_id,'') NOT LIKE 'skipped:%' AND ?=0)) LIMIT 1",[$id['id'],$registration['email'],$resend?1:0]);
+                $existing=Db::value("SELECT id FROM emails WHERE kind='certificate' AND registration_id=? AND to_email=? AND (status='pending' OR (status='sent' AND COALESCE(provider_message_id,'') NOT LIKE 'skipped:%' AND ?=0)) LIMIT 1 LOCK IN SHARE MODE",[$id['id'],$registration['email'],$resend?1:0]);
                 if ($existing) { $counts['skipped']++; continue; }
                 $emailId=Outbox::queue('certificate',$registration);
                 Audit::log((int)$user['id'],'certificate.email','registration',(int)$id['id'],['email_id'=>$emailId,'to'=>$registration['email'],'resend'=>$resend]);

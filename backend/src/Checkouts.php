@@ -43,6 +43,12 @@ final class Checkouts
      */
     public static function createFromForm(array $in, ?array $photo): array
     {
+        // The same form sent again (a dropped connection, a second press) is the
+        // form already kept: no second form, payment or photo.
+        $attempt = self::attemptKey($in['attempt'] ?? null);
+        if ($attempt !== null && ($kept = Db::one('SELECT * FROM checkouts WHERE client_attempt = ?', [$attempt])) !== null) {
+            return $kept;
+        }
         $lang = Lang::pick($in['lang'] ?? 'en');
         $state = Registrations::publicState($lang);
         if (!$state['open']) {
@@ -130,9 +136,13 @@ final class Checkouts
             throw new UserError($error->key, 'p_student_id');
         }
         try {
-            return self::insert($row + ['source' => 'website', 'created_ip' => App::clientIp(), 'terms_accepted_at' => App::now()], self::WEBSITE_HOURS * 3600);
+            return self::insert($row + ['source' => 'website', 'created_ip' => App::clientIp(), 'terms_accepted_at' => App::now(), 'client_attempt' => $attempt], self::WEBSITE_HOURS * 3600);
         } catch (\Throwable $error) {
             IdPhotos::delete($row['id_photo_id']);
+            // Both copies of a form sent twice at the same moment: the first one won.
+            if ($attempt !== null && ($kept = Db::one('SELECT * FROM checkouts WHERE client_attempt = ?', [$attempt])) !== null) {
+                return $kept;
+            }
             throw $error;
         }
     }
@@ -217,6 +227,12 @@ final class Checkouts
         return $day;
     }
 
+    /** The attempt key a website form sends (random, from the browser), or null. */
+    public static function attemptKey(mixed $value): ?string
+    {
+        return is_string($value) && preg_match('/^[A-Za-z0-9-]{16,64}$/', $value) ? $value : null;
+    }
+
     /** A reference used by no form and no registration. */
     public static function newReference(): string
     {
@@ -241,7 +257,8 @@ final class Checkouts
                 ]);
                 return self::find($id);
             } catch (\PDOException $error) {
-                if (($error->errorInfo[1] ?? 0) !== 1062) {   // only a reference clash is retried
+                // Only a reference clash is retried (not the same attempt key twice).
+                if (($error->errorInfo[1] ?? 0) !== 1062 || str_contains($error->getMessage(), 'uq_checkout_attempt')) {
                     throw $error;
                 }
             }

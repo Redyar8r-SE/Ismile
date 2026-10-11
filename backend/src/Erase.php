@@ -92,23 +92,26 @@ final class Erase
     {
         self::requireMainOwner($user);
         return Db::transaction(static function () use ($id, $typed, $user): string {
+            // Locked in the same order as check-in (ticket, then person), and every
+            // row copied is locked, so the copy is exactly what gets deleted.
+            Db::all('SELECT id FROM tickets WHERE registration_id = ? FOR UPDATE', [$id]);
             $registration = Db::one('SELECT * FROM registrations WHERE id = ? FOR UPDATE', [$id])
                 ?? throw new UserError('Registration not found.');
             self::requireTyped($typed, $registration['ref']);
-            $tickets = Db::all('SELECT * FROM tickets WHERE registration_id = ?', [$id]);
+            $tickets = Db::all('SELECT * FROM tickets WHERE registration_id = ? FOR UPDATE', [$id]);
             $ticketIds = array_map('intval', array_column($tickets, 'id'));
-            $checkouts = Db::all('SELECT * FROM checkouts WHERE registration_id = ? OR ref = ?', [$id, $registration['ref']]);
+            $checkouts = Db::all('SELECT * FROM checkouts WHERE registration_id = ? OR ref = ? FOR UPDATE', [$id, $registration['ref']]);
             $checkoutIds = array_map('intval', array_column($checkouts, 'id'));
             $photoIds = array_values(array_unique(array_filter(array_map('intval', [$registration['id_photo_id'], ...array_column($checkouts, 'id_photo_id')]))));
             $snapshot = [
                 'registrations'     => [$registration],
                 'tickets'           => $tickets,
                 'ticket_attendance' => self::rowsIn('ticket_attendance', 'ticket_id', $ticketIds),
-                'certificates'      => Db::all('SELECT * FROM certificates WHERE registration_id = ?', [$id]),
-                'workshop_bookings' => Db::all('SELECT * FROM workshop_bookings WHERE registration_id = ?', [$id]),
-                'payments'          => Db::all('SELECT * FROM payments WHERE registration_id = ?' . ($checkoutIds ? ' OR checkout_id IN (' . self::marks($checkoutIds) . ')' : ''), [$id, ...$checkoutIds]),
+                'certificates'      => Db::all('SELECT * FROM certificates WHERE registration_id = ? FOR UPDATE', [$id]),
+                'workshop_bookings' => Db::all('SELECT * FROM workshop_bookings WHERE registration_id = ? FOR UPDATE', [$id]),
+                'payments'          => Db::all('SELECT * FROM payments WHERE registration_id = ?' . ($checkoutIds ? ' OR checkout_id IN (' . self::marks($checkoutIds) . ')' : '') . ' FOR UPDATE', [$id, ...$checkoutIds]),
                 'checkouts'         => $checkouts,
-                'emails'            => Db::all('SELECT * FROM emails WHERE registration_id = ?' . ($checkoutIds ? ' OR checkout_id IN (' . self::marks($checkoutIds) . ')' : ''), [$id, ...$checkoutIds]),
+                'emails'            => Db::all('SELECT * FROM emails WHERE registration_id = ?' . ($checkoutIds ? ' OR checkout_id IN (' . self::marks($checkoutIds) . ')' : '') . ' FOR UPDATE', [$id, ...$checkoutIds]),
                 'student_id_photos' => self::rowsIn('student_id_photos', 'id', $photoIds),
             ];
             self::keep('registration', $registration['ref'], Registrations::fullName($registration), $snapshot, $user);
@@ -148,8 +151,8 @@ final class Erase
             unset($request['reserved_booth']);
             $snapshot = [
                 'sponsor_requests' => [$request],
-                'sponsor_calls'    => Db::all('SELECT * FROM sponsor_calls WHERE request_id = ?', [$id]),
-                'emails'           => Db::all('SELECT * FROM emails WHERE sponsor_request_id = ?', [$id]),
+                'sponsor_calls'    => Db::all('SELECT * FROM sponsor_calls WHERE request_id = ? FOR UPDATE', [$id]),
+                'emails'           => Db::all('SELECT * FROM emails WHERE sponsor_request_id = ? FOR UPDATE', [$id]),
             ];
             self::keep($request['kind'] === 'booth' ? 'booth' : 'sponsor', $request['ref'], $request['company'], $snapshot, $user);
             Db::run('DELETE FROM sponsor_calls WHERE request_id = ?', [$id]);
@@ -194,7 +197,7 @@ final class Erase
 
     private static function rowsIn(string $table, string $column, array $ids): array
     {
-        return $ids ? Db::all("SELECT * FROM $table WHERE $column IN (" . self::marks($ids) . ')', $ids) : [];
+        return $ids ? Db::all("SELECT * FROM $table WHERE $column IN (" . self::marks($ids) . ') FOR UPDATE', $ids) : [];
     }
 
     private static function marks(array $ids): string

@@ -41,11 +41,11 @@ Page::action(static function () use ($user): string {
         case 'delete':
             return Erase::account((int) $target['id'], (string) ($_POST['confirm_email'] ?? ''), $user);
         case 'disable':
-            Db::run('UPDATE admin_users SET disabled_at = NOW() WHERE id = ?', [$target['id']]);
+            Db::run('UPDATE admin_users SET disabled_at = NOW() WHERE id = ? AND email NOT LIKE \'%@deleted.invalid\'', [$target['id']]);
             Audit::log((int) $user['id'], 'user.disable', 'admin_user', (int) $target['id']);
             return "{$target['email']} can no longer sign in.";
         case 'enable':
-            Db::run('UPDATE admin_users SET disabled_at = NULL, failed_logins = 0, locked_until = NULL WHERE id = ?', [$target['id']]);
+            Db::run('UPDATE admin_users SET disabled_at = NULL, failed_logins = 0, locked_until = NULL WHERE id = ? AND email NOT LIKE \'%@deleted.invalid\'', [$target['id']]);
             Audit::log((int) $user['id'], 'user.enable', 'admin_user', (int) $target['id']);
             return "{$target['email']} can sign in again.";
         case 'role':
@@ -53,7 +53,7 @@ Page::action(static function () use ($user): string {
             if (!in_array($role, Auth::ROLES, true)) {
                 throw new UserError('Unknown role.');
             }
-            Db::run('UPDATE admin_users SET role = ? WHERE id = ?', [$role, $target['id']]);
+            Db::run('UPDATE admin_users SET role = ? WHERE id = ? AND email NOT LIKE \'%@deleted.invalid\'', [$role, $target['id']]);
             Audit::log((int) $user['id'], 'user.role', 'admin_user', (int) $target['id'], ['from' => $target['role'], 'to' => $role]);
             return "Role changed to $role.";
         case 'password':
@@ -61,12 +61,12 @@ Page::action(static function () use ($user): string {
             if (!Auth::validPassword($password)) {
                 throw new UserError('The password needs at least 12 characters.');
             }
-            Db::run('UPDATE admin_users SET password_hash = ?, failed_logins = 0, locked_until = NULL WHERE id = ?', [password_hash($password, PASSWORD_DEFAULT), $target['id']]);
+            Db::run('UPDATE admin_users SET password_hash = ?, failed_logins = 0, locked_until = NULL WHERE id = ? AND email NOT LIKE \'%@deleted.invalid\'', [password_hash($password, PASSWORD_DEFAULT), $target['id']]);
             Auth::endOtherSessions((int) $target['id']);
             Audit::log((int) $user['id'], 'user.password', 'admin_user', (int) $target['id']);
             return "New password set for {$target['email']}. They are signed out everywhere else.";
         case 'reset2fa':
-            Db::run('UPDATE admin_users SET totp_secret = NULL, totp_enabled = 0, totp_last_step = NULL WHERE id = ?', [$target['id']]);
+            Db::run('UPDATE admin_users SET totp_secret = NULL, totp_enabled = 0, totp_last_step = NULL WHERE id = ? AND email NOT LIKE \'%@deleted.invalid\'', [$target['id']]);
             Auth::endOtherSessions((int) $target['id']);
             Audit::log((int) $user['id'], 'user.reset_2fa', 'admin_user', (int) $target['id']);
             return "Phone code reset for {$target['email']}. They set it up again at their next sign-in.";

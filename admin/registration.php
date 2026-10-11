@@ -39,6 +39,7 @@ if (isset($_GET['new'])) {
     if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         try {
             \Ismile\Auth::checkCsrf();
+            Page::useOnce();
             if (($_POST['do'] ?? '') === 'free') {
                 $created = Office::createComplimentary($user, $_POST);
                 Page::flash('ok', 'Registered ' . $created['ref'] . ' with a free ticket. The ticket is on its way by email.');
@@ -61,7 +62,7 @@ if (isset($_GET['new'])) {
     if ($inCheckin) echo CheckinWorkspace::navigation('register', $user, $workspaceDay);
     ?>
     <form method="post" class="card stack caller-form" id="caller-form">
-      <?= Page::csrfField() ?>
+      <?= Page::csrfField() ?><?= Page::onceField() ?>
       <p class="muted">Enter the caller's details and send a payment link. They receive their ticket after paying. Fields marked * are required.</p>
       <fieldset class="form-section">
         <legend>1. Caller details</legend>

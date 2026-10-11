@@ -287,6 +287,32 @@ final class Page
         return '<input type="hidden" name="csrf" value="' . self::e(Auth::csrf()) . '">';
     }
 
+    /** A one-time key for forms that create something (a booking, a free ticket, a Pay-now link). */
+    public static function onceField(): string
+    {
+        return '<input type="hidden" name="once" value="' . bin2hex(random_bytes(12)) . '">';
+    }
+
+    /**
+     * Refuses a create form sent a second time (a resend, a second press): it is
+     * made once. The session is locked for the whole request, so two copies
+     * arriving together are checked one after the other.
+     */
+    public static function useOnce(): void
+    {
+        Auth::startSession();
+        $key = (string) ($_POST['once'] ?? '');
+        if (!preg_match('/^[0-9a-f]{24}$/', $key)) {
+            return;   // a page opened before this key existed still works
+        }
+        $used = (array) ($_SESSION['once'] ?? []);
+        if (isset($used[$key])) {
+            throw new UserError('This form was already sent once. Check the list before sending it again.');
+        }
+        $used[$key] = time();
+        $_SESSION['once'] = array_slice($used, -50, null, true);
+    }
+
     public static function e(mixed $text): string
     {
         return Security::e($text);

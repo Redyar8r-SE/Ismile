@@ -5,11 +5,11 @@
 // which checks with the payment company, and shows what the server says:
 // checking, paid and registered (with the QR ticket), not completed (with
 // "Try again"), too late (fill in the form again), or cancelled.
-import { loadJSON } from "./utils/load-json.js?v=116";
-import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang, t, onLangChange } from "./i18n.js?v=116";
-import { initNav } from "./components/nav.js?v=116";
-import { initTheme } from "./components/theme.js?v=116";
-import { initFooter } from "./sections/footer.js?v=116";
+import { loadJSON } from "./utils/load-json.js?v=117";
+import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang, t, onLangChange } from "./i18n.js?v=117";
+import { initNav } from "./components/nav.js?v=117";
+import { initTheme } from "./components/theme.js?v=117";
+import { initFooter } from "./sections/footer.js?v=117";
 
 const FAST_TRIES = 40;      // every 3 seconds for the first two minutes
 const SLOW_TRIES = 40;      // then every 15 seconds for ten more minutes
@@ -26,6 +26,22 @@ function initPayment() {
   let view = { state: "checking", title: "pm_checking_title", text: "pm_checking_text" };
   let status = null;
   let tries = 0;
+
+  // "Try again" opens the payment once: a second press while it loads waits
+  // for the first instead of asking for another payment page.
+  $("pmRetry").addEventListener("click", (event) => {
+    const retry = event.currentTarget;
+    if (retry.dataset.busy) {
+      event.preventDefault();
+      return;
+    }
+    retry.dataset.busy = "1";
+    retry.setAttribute("aria-disabled", "true");
+    setTimeout(() => {
+      delete retry.dataset.busy;
+      retry.removeAttribute("aria-disabled");
+    }, 15000);
+  });
 
   function render() {
     card.dataset.state = view.state;
@@ -57,7 +73,7 @@ function initPayment() {
     let answer;
     try {
       const url = `api/status.php?r=${encodeURIComponent(ref)}&k=${encodeURIComponent(key)}${paymentId ? `&p=${encodeURIComponent(paymentId)}` : ""}`;
-      const response = await fetch(url, { cache: "no-store", headers: { Accept: "application/json" } });
+      const response = await fetch(url, { cache: "no-store", headers: { Accept: "application/json" }, signal: AbortSignal.timeout(10000) });
       answer = await response.json();
     } catch {
       answer = null;

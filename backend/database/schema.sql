@@ -128,10 +128,12 @@ CREATE TABLE IF NOT EXISTS checkouts (
   registration_id    INT UNSIGNED      NULL,                   -- set when paid
   created_by         INT UNSIGNED      NULL,                   -- the staff member, for a phone registration
   created_ip         VARCHAR(45)       NULL,
+  client_attempt     VARCHAR(64)       NULL,                   -- the website form's attempt key: a resend returns this form
   created_at         DATETIME          NOT NULL,
   expires_at         DATETIME          NOT NULL,               -- after this, it cannot be paid any more
   PRIMARY KEY (id),
   UNIQUE KEY uq_checkout_ref (ref),
+  UNIQUE KEY uq_checkout_attempt (client_attempt),
   KEY k_checkout_status_expires (status, expires_at),          -- clean-up job, "paying now" holds
   CONSTRAINT fk_checkout_created_by FOREIGN KEY (created_by) REFERENCES admin_users (id),
   CONSTRAINT fk_checkout_photo      FOREIGN KEY (id_photo_id) REFERENCES student_id_photos (id) ON DELETE SET NULL,
@@ -450,6 +452,7 @@ CREATE TABLE IF NOT EXISTS sponsor_requests (
   next_call_at   DATETIME      NULL,                           -- when to call them again
   notes          TEXT          NULL,
   created_ip     VARCHAR(45)   NULL,
+  client_attempt VARCHAR(64)   NULL,                           -- the website form's attempt key: a resend returns this request
   created_at     DATETIME      NOT NULL,
   updated_at     DATETIME      NOT NULL,
   cancelled_at   DATETIME      NULL,
@@ -458,6 +461,7 @@ CREATE TABLE IF NOT EXISTS sponsor_requests (
   PRIMARY KEY (id),
   UNIQUE KEY uq_sponsor_ref (ref),
   UNIQUE KEY uq_sponsor_reserved_booth (reserved_booth),
+  UNIQUE KEY uq_sponsor_attempt (client_attempt),
   KEY k_sponsor_status (status, created_at),
   KEY k_sponsor_package (kind, package_id, status),            -- places taken per package
   KEY k_sponsor_next_call (next_call_at),                      -- "calls due today"

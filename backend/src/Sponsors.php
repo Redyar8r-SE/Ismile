@@ -75,13 +75,23 @@ final class Sponsors
             'lang' => $lang, 'status' => 'new', 'created_ip' => App::clientIp(),
             'created_at' => $now, 'updated_at' => $now,
         ];
+        // The same form sent again (a dropped connection, a second press) is the
+        // request already saved: no second request and no second emails.
+        $attempt = Checkouts::attemptKey($in['attempt'] ?? null);
+        $kept = static fn (): ?array => $attempt !== null && ($id = Db::value('SELECT id FROM sponsor_requests WHERE client_attempt = ?', [$attempt])) ? self::find((int) $id) : null;
+        if ($existing = $kept()) {
+            return $existing;
+        }
         $id = null;
         for ($try = 0; $try < 5 && $id === null; $try++) {
             try {
-                $id = Db::insert('sponsor_requests', $row + ['ref' => Security::reference('SPN26', 5)]);
+                $id = Db::insert('sponsor_requests', $row + ['ref' => Security::reference('SPN26', 5), 'client_attempt' => $attempt]);
             } catch (\PDOException $error) {
                 if (($error->errorInfo[1] ?? 0) !== 1062) {
                     throw $error;
+                }
+                if (str_contains($error->getMessage(), 'uq_sponsor_attempt') && ($existing = $kept())) {
+                    return $existing;   // sent twice at the same moment: the first one won
                 }
             }
         }
@@ -198,6 +208,21 @@ final class Sponsors
             ];
         }
         return $out;
+    }
+
+    /**
+     * A package's places and confirmed companies, for confirming one more.
+     * The package row is locked and the count is a locking read, so two staff
+     * confirming the last place at the same moment are taken one after the other.
+     */
+    private static function placesLocked(string $packageId): ?array
+    {
+        $package = Db::one('SELECT name_en, places FROM sponsor_packages WHERE id = ? FOR UPDATE', [$packageId]);
+        if ($package === null) {
+            return null;
+        }
+        $confirmed = (int) Db::value("SELECT COUNT(*) FROM sponsor_requests WHERE package_id = ? AND status = 'confirmed' LOCK IN SHARE MODE", [$packageId]);
+        return ['name' => (string) $package['name_en'], 'spots' => (int) $package['places'], 'confirmed' => $confirmed];
     }
 
     // ---------------- the phone calls ----------------
@@ -379,6 +404,12 @@ final class Sponsors
         }
         Db::transaction(static function () use ($requestId, $in, $user): void {
             $request = Db::one('SELECT * FROM sponsor_requests WHERE id = ? FOR UPDATE', [$requestId]) ?? throw new UserError('Request not found.');
+            // The form remembers when the booking was opened. If someone saved a
+            // call, a payment or other details since, saving this older form
+            // would quietly undo their change: refuse, and show the new values.
+            if (isset($in['loaded_at']) && (string) $in['loaded_at'] !== (string) $request['updated_at']) {
+                throw new UserError('Someone changed this booking while you were editing it. Check the details below and save again.');
+            }
             $packageId = Validate::text($in['package_id'] ?? '', 40);
             if ($request['kind']==='booth') $packageId=SponsorPackages::standardBooth()['id']??'';
             $package = SponsorPackages::find($packageId);
@@ -386,7 +417,7 @@ final class Sponsors
                 throw new UserError('That package is not for ' . ($request['kind'] === 'booth' ? 'exhibition booths.' : 'sponsors.'));
             }
             if ($package && $packageId !== $request['package_id'] && $request['status'] === 'confirmed') {
-                $spot = self::spots()[$packageId];
+                $spot = self::placesLocked($packageId);
                 if ($spot['spots'] > 0 && $spot['confirmed'] >= $spot['spots'] && $user['role'] !== 'owner') {
                     throw new UserError("All {$spot['spots']} {$spot['name']} places are taken. (The Owner can do it.)");
                 }
@@ -530,7 +561,7 @@ final class Sponsors
                     throw new UserError('Record the full remaining balance before confirming this booking.');
                 }
                 if ($request['package_id']) {
-                    $spot = self::spots()[$request['package_id']] ?? null;
+                    $spot = self::placesLocked((string) $request['package_id']);
                     if ($spot && $spot['spots'] > 0 && $spot['confirmed'] >= $spot['spots'] && !($override && $isOwner)) {
                         throw new UserError("All {$spot['spots']} {$spot['name']} places are already confirmed. (The Owner can override.)");
                     }

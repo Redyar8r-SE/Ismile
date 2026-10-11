@@ -199,8 +199,8 @@ if ($ensureAt !== false) {
         || $user['locked_until'] !== null || $user['role'] !== 'owner') {
         Db::run(
             'UPDATE admin_users SET password_hash = ?, role = ?, failed_logins = 0, locked_until = NULL, disabled_at = NULL,'
-            . ' session_version = session_version + 1 WHERE id = ?',
-            [password_hash($password, PASSWORD_DEFAULT), 'owner', $user['id']]
+            . ' session_version = session_version + 1 WHERE id = ? AND email = ?',   // never a row deleted meanwhile
+            [password_hash($password, PASSWORD_DEFAULT), 'owner', $user['id'], $email]
         );
         echo "Owner account #{$user['id']}: password set from the secret, unlocked, switched on.\n";
     } else {

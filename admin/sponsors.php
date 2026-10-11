@@ -37,6 +37,7 @@ if (Page::query('new') === '1') {
     if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         try {
             Auth::checkCsrf();
+            Page::useOnce();
             if (($_POST['do'] ?? '') !== 'create_booking') {
                 throw new UserError('Unknown action.');
             }
@@ -60,7 +61,7 @@ if (Page::query('new') === '1') {
     Page::top($title, $kind==='booth'?'booths':'sponsors', '<a class="btn ghost" href="'.$pageFile.'">&larr; Back to '.($kind==='booth'?'booths':'sponsors').'</a>');
     ?>
     <form method="post" class="card stack" id="staffBookingForm"<?= $kind==='sponsor'?' data-booth-picker':'' ?>>
-      <?= Page::csrfField() ?><input type="hidden" name="do" value="create_booking">
+      <?= Page::csrfField() ?><?= Page::onceField() ?><input type="hidden" name="do" value="create_booking">
       <?= Page::panelHeading($title, 'Record a company booking made by phone or directly with your team.', 'sponsors') ?>
       <div class="row3">
         <label>Company name<input name="company" required minlength="2" maxlength="160" autocomplete="organization" value="<?= $value('company') ?>"></label>
@@ -318,7 +319,7 @@ if ($id > 0 && ($request = Sponsors::find($id))) {
           <p class="flash warn">The existing booth <?= $e($request['booth_number']) ?> does not belong to this package. Choose its matching package and booth number before saving, or choose “No booth reserved” to release it.</p>
         <?php endif; ?>
         <p class="muted"><?= $isBooth?'Standard booth is the only exhibition category. Update the company, agreed price and payment details here.':'Assign a numbered map position to this sponsor. Declined, waiting-list and cancelled bookings do not reserve the map.' ?></p>
-        <form method="post" class="stack" id="bookingDetailsForm"<?= !$isBooth?' data-booth-picker':'' ?>><?= Page::csrfField() ?><input type="hidden" name="do" value="details">
+        <form method="post" class="stack" id="bookingDetailsForm"<?= !$isBooth?' data-booth-picker':'' ?>><?= Page::csrfField() ?><input type="hidden" name="loaded_at" value="<?= $e((string) $request['updated_at']) ?>"><input type="hidden" name="do" value="details">
           <div class="row3">
             <label>Company name<input name="company" required minlength="2" maxlength="160" value="<?= $e($edit['company']) ?>"></label>
             <label>Contact person<input name="contact" required minlength="2" maxlength="120" value="<?= $e($edit['contact_name']) ?>"></label>

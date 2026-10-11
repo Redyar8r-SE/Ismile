@@ -7,8 +7,8 @@
 // the admin and emails the company and the team. Where there is no server (the
 // GitHub Pages copy), the last screen hands the filled-in request to WhatsApp
 // or email instead, already written out, so a request is never lost.
-import { t, tr, getLang, onLangChange } from "../i18n.js?v=116";
-import { isValidPhone } from "./registration.js?v=116";
+import { t, tr, getLang, onLangChange } from "../i18n.js?v=117";
+import { isValidPhone } from "./registration.js?v=117";
 
 const COMPANY_STEP = 3;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -218,6 +218,7 @@ export function initSponsorForm({ tiers = [], enquiry = {} } = {}) {
       city: $("s_city").value.trim(),
       note: $("s_note").value.trim(),
       hp: $("spfTrap")?.value || "",
+      attempt,
     };
   }
 
@@ -269,6 +270,12 @@ export function initSponsorForm({ tiers = [], enquiry = {} } = {}) {
   }
 
   let sending = false;
+  // One key per version of the form: sending it again (a slow or dropped
+  // connection) returns the request already saved, never a second one.
+  const newAttempt = () => crypto.randomUUID?.() || `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}${Math.random().toString(36).slice(2)}`;
+  let attempt = newAttempt();
+  form.addEventListener("input", () => { attempt = newAttempt(); });
+  form.addEventListener("change", () => { attempt = newAttempt(); });
   async function send(event) {
     event.preventDefault();
     if (step !== COMPANY_STEP) {

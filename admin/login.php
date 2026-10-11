@@ -40,15 +40,22 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 throw new UserError('That took too long. Sign in again.');
             }
             $user = Db::one('SELECT * FROM admin_users WHERE id = ? AND disabled_at IS NULL', [$pending]);
+            // A locked account takes no codes, and codes are limited per account
+            // (not only per session), so many sessions cannot guess together.
+            if ($user !== null && $user['locked_until'] !== null && strtotime($user['locked_until']) > time()) {
+                unset($_SESSION['pending_uid'], $_SESSION['pending_at']);
+                throw new UserError('This account is locked for 15 minutes after too many wrong codes.');
+            }
+            if (!\Ismile\RateLimit::hit('totp:' . $pending, 10, 900)) {
+                throw new UserError('Too many codes tried. Wait 15 minutes.');
+            }
             // A code already used (even seconds ago) is refused: someone who saw it cannot reuse it.
             $step = $user === null ? null : Totp::matchStep((string) $user['totp_secret'], (string) ($_POST['code'] ?? ''), (int) ($user['totp_last_step'] ?? -1));
             if ($step === null) {
                 $askCode = true;
                 if ($user) {
-                    Db::run('UPDATE admin_users SET failed_logins = failed_logins + 1 WHERE id = ?', [$user['id']]);
                     Audit::log((int) $user['id'], 'login.bad_code', 'admin_user', (int) $user['id']);
-                    if ((int) $user['failed_logins'] + 1 >= 5) {
-                        Db::run('UPDATE admin_users SET failed_logins = 0, locked_until = ? WHERE id = ?', [date('Y-m-d H:i:s', time() + 900), $user['id']]);
+                    if (Auth::recordFailure((int) $user['id'])) {
                         unset($_SESSION['pending_uid']);
                         $askCode = false;
                         throw new UserError('This account is locked for 15 minutes after too many wrong codes.');

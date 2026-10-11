@@ -89,7 +89,9 @@ document.addEventListener("DOMContentLoaded", () => {
       } catch {
         if (current !== revision || stopped) return;
         status.textContent = "Search unavailable. Check your connection and try again.";
-        regions.forEach(region => region.removeAttribute("aria-busy"));
+        // Leave the last results usable, and let the page's own updates resume.
+        regions.forEach(region => { region.inert = false; region.removeAttribute("aria-busy"); });
+        form.dataset.searchDirty = "false";
       } finally { clearTimeout(timeout); }
     };
     input.addEventListener("input", event => {
@@ -138,7 +140,7 @@ document.addEventListener("DOMContentLoaded", () => {
         : field.type !== "hidden" && field.value !== field.defaultValue);
   };
   // Without marked regions: the blocks of the main area with no typing fields.
-  const blocks = root => [...root.children].filter(el => !el.matches(".flash, script, .page-heading") && !el.querySelector("input:not([type=hidden]):not([type=submit]):not([type=button]), textarea, select, [contenteditable]"));
+  const blocks = root => [...root.children].filter(el => !el.matches(".flash, script, .page-heading, .instant-search-status") && !el.querySelector("input:not([type=hidden]):not([type=submit]):not([type=button]), textarea, select, [contenteditable]"));
   const swap = (region, html) => {
     if (previous.get(region) === html || region.innerHTML === html || inUse(region)) return;
     const focusedLink = region.contains(document.activeElement) ? document.activeElement.closest("a[href]")?.getAttribute("href") : null;
@@ -535,3 +537,15 @@ document.addEventListener("DOMContentLoaded", () => {
   document.addEventListener("click", event => { if (picker.open && !picker.contains(event.target)) picker.open = false; });
   picker.addEventListener("keydown", event => { if (event.key === "Escape") { picker.open = false; picker.querySelector("summary").focus(); } });
 });
+
+// A form is sent once: a double click or Enter-then-click on "Send Pay now",
+// "Free ticket", "Record payment"… never posts it twice. Downloads that do not
+// leave the page are released again after a few seconds.
+document.addEventListener("submit", event => {
+  const form = event.target;
+  if (event.defaultPrevented || form.method.toLowerCase() !== "post") return;
+  if (form.dataset.sending) { event.preventDefault(); return; }
+  form.dataset.sending = "1";
+  setTimeout(() => delete form.dataset.sending, 8000);
+});
+window.addEventListener("pageshow", () => document.querySelectorAll("form[data-sending]").forEach(form => delete form.dataset.sending));

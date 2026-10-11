@@ -8,9 +8,9 @@
 // server (GitHub Pages) or registration is closed, the form is not shown at
 // all, so nobody can believe they registered when nothing was saved.
 // Nothing about the visitor is kept in the browser.
-import { t, getLang, onLangChange } from "../i18n.js?v=116";
-import { formatPrice } from "../utils/money.js?v=116";
-import { initRegistrationExperience } from "./registration-experience.js?v=116";
+import { t, getLang, onLangChange } from "../i18n.js?v=117";
+import { formatPrice } from "../utils/money.js?v=117";
+import { initRegistrationExperience } from "./registration-experience.js?v=117";
 
 const TOTAL_STEPS = 3;
 
@@ -66,6 +66,14 @@ export function initRegistration({ tickets = {} } = {}) {
 
   let lastSuccess = null;
   let sending = false;
+  let lastStatusUrl = "";
+  // One key per version of the form: sending the same form again (after a
+  // dropped connection) returns the form the server already kept, so nobody
+  // gets two payments. Any change to the form makes a new key.
+  const newAttempt = () => crypto.randomUUID?.() || `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}${Math.random().toString(36).slice(2)}`;
+  let attempt = newAttempt();
+  form.addEventListener("input", () => { attempt = newAttempt(); });
+  form.addEventListener("change", () => { attempt = newAttempt(); });
   // What the server says: open or not, prices, lunch days left. null = no server.
   let server = null;
   let serverChecked = false;
@@ -495,6 +503,7 @@ export function initRegistration({ tickets = {} } = {}) {
     const data = new FormData();
     const student = checkedValue("ticket") === "student";
     data.append("lang", getLang());
+    data.append("attempt", attempt);
     data.append("first_name", $("p_first").value.trim());
     data.append("father_name", $("p_second").value.trim());
     data.append("grandfather_name", $("p_third").value.trim());
@@ -574,6 +583,10 @@ export function initRegistration({ tickets = {} } = {}) {
     }
   }
 
+  window.addEventListener("pageshow", (event) => {
+    if (event.persisted && sending && lastStatusUrl) window.location.replace(lastStatusUrl);
+  });
+
   async function submitRegistration() {
     if (sending) return;
     setSending(true);
@@ -600,6 +613,7 @@ export function initRegistration({ tickets = {} } = {}) {
     // person is registered only once the payment is confirmed. The form stays
     // disabled so a second press cannot send it twice.
     submitBtn.querySelector("span").textContent = t("reg_to_payment");
+    lastStatusUrl = result.statusUrl;
     if (result.redirect) {
       window.location.assign(result.redirect);
       return;
