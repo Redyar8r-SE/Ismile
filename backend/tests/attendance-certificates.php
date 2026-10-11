@@ -207,9 +207,9 @@ $check('bulk certificates render one page per guest', preg_match_all('/\/Type \/
 $headers = ['Reference','Name','Email','Phone','City','Ticket','Day 1','Day 2','Certificate','University','Notes'];
 $report = PdfReport::make('iSmile guest directory', [$headers, ['ISM26-DEMO','Sara Ahmed Hassan','sample@example.invalid','+9647501112233','Sulaimani','Professional','09:00','09:05','ISM26-C-DEMO','','sample notes']]);
 file_put_contents(App::storage('tmp/report-test.pdf'), $report);
-$check('wide PDF report retains all columns in readable groups', preg_match_all('/\/Type \/Page\b/', $report) === 2);
+$check('wide PDF report keeps all columns in one table on one page', preg_match_all('/\/Type \/Page\b/', $report) === 1);
 $bundle=PdfReport::bundle(['Guests'=>[$headers], 'Attendance'=>[['Name','Day 1','Day 2'],['Sara','09:00','09:05']]]);
-$check('combined event PDF has a contents page and separate sections', preg_match_all('/\/Type \/Page\b/', $bundle)===4);
+$check('combined event PDF has a contents page and separate sections', preg_match_all('/\/Type \/Page\b/', $bundle)===3);
 $student = $make('Narin');
 $image=imagecreatetruecolor(300,180); imagefill($image,0,0,imagecolorallocate($image,240,245,246));
 imagestring($image,5,25,70,'SAMPLE STUDENT ID',imagecolorallocate($image,18,48,47));

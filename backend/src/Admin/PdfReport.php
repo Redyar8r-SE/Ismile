@@ -68,7 +68,7 @@ final class PdfReport
         return $pdf->Output('', 'S');
     }
 
-    /** Wide exports are split into readable column groups with the reference repeated. */
+    /** One report: every column in one table, on A4 or (for many columns) A3 landscape. */
     public static function make(string $title, array $rows): string
     {
         $title = self::cleanTitle($title);
@@ -102,32 +102,38 @@ final class PdfReport
     {
         if (count($rows[0] ?? []) === 1) $subtitle = (string) array_shift($rows)[0];
         $headers = array_shift($rows) ?? [];
-        // Each part repeats the first column, and the name too when the first is just "#".
-        $fixed = ($headers[0] ?? '') === '#' && count($headers) > 2 ? [0, 1] : [0];
-        $groups = count($headers) <= 8 ? [array_keys($headers)] : array_map(static fn ($keys) => [...$fixed, ...$keys], array_chunk(array_slice(array_keys($headers), count($fixed)), 8 - count($fixed)));
-        foreach ($groups as $groupIndex => $keys) {
-            $pdf->setDocTitle($title);
-            $pdf->AddPage();
-            $meta = [($subtitle ?? 'iSmile 2026'), number_format(count($rows)) . (count($rows) === 1 ? ' record' : ' records')];
-            if (count($groups) > 1) $meta[] = 'Columns, part ' . ($groupIndex + 1) . ' of ' . count($groups);
-            self::titleBlock($pdf, $title, implode('  ·  ', $meta));
-            $pdf->SetFont('dejavusans', '', 8);
-            $widths = self::widths($keys, $headers, $rows);
-            $html = '<table cellpadding="3.5"><thead><tr style="background-color:#004e89;color:#ffffff">';
-            foreach ($keys as $key) $html .= '<th width="' . $widths[$key] . '%" style="border-right:0.2mm solid #ffffff"><b>' . Security::e($headers[$key]) . '</b></th>';
-            $html .= '</tr></thead><tbody>';
-            foreach ($rows as $index => $row) {
-                $html .= '<tr nobr="true" style="background-color:' . ($index % 2 ? '#f4f7f8' : '#ffffff') . '">';
-                foreach ($keys as $key) $html .= '<td width="' . $widths[$key] . '%" style="border-bottom:0.2mm solid #c9d3d8;color:#0f2a3d">' . nl2br(Security::e($row[$key] ?? '')) . '</td>';
-                $html .= '</tr>';
-            }
-            if (!$rows) $html .= '<tr><td colspan="' . count($keys) . '" style="color:#60717d"><i>No records.</i></td></tr>';
-            $pdf->writeHTML($html . '</tbody></table>');
-            $pdf->SetFont('dejavusans', '', 7.5);
-            $pdf->SetTextColor(...self::MUTED);
-            $pdf->Ln(3);
-            $pdf->Cell(0, 5, 'End of report · ' . number_format(count($rows)) . (count($rows) === 1 ? ' record' : ' records'), 0, 1, 'R');
+        // One table with every column: more than 13 columns use an A3 page.
+        $keys = array_keys($headers);
+        $columns = count($keys);
+        // Each column must fit its longest word: pick the largest text that allows it.
+        $format = $columns <= 13 ? 'A4' : 'A3';
+        $usable = ($format === 'A4' ? 297 : 420) - 28;
+        $stats = self::stats($keys, $headers, $rows);
+        $longestWords = array_sum(array_map(static fn (array $stat): int => $stat[0], $stats));
+        [$size, $padding] = $columns <= 9 ? [8, 3.5] : [7, 2];
+        while ($size > 5.5 && $longestWords * 0.22 * $size + $columns * 2 * $padding > $usable) {
+            $size -= 0.5;
         }
+        $pdf->setDocTitle($title);
+        $pdf->AddPage('L', $format);
+        $meta = [($subtitle ?? 'iSmile 2026'), number_format(count($rows)) . (count($rows) === 1 ? ' record' : ' records')];
+        self::titleBlock($pdf, $title, implode('  ·  ', $meta));
+        $pdf->SetFont('dejavusans', '', $size);
+        $widths = self::widths($stats, $size, $padding, $usable);
+        $html = '<table cellpadding="' . $padding . '"><thead><tr style="background-color:#004e89;color:#ffffff">';
+        foreach ($keys as $key) $html .= '<th width="' . $widths[$key] . '%" style="border-right:0.2mm solid #ffffff"><b>' . Security::e($headers[$key]) . '</b></th>';
+        $html .= '</tr></thead><tbody>';
+        foreach ($rows as $index => $row) {
+            $html .= '<tr nobr="true" style="background-color:' . ($index % 2 ? '#f4f7f8' : '#ffffff') . '">';
+            foreach ($keys as $key) $html .= '<td width="' . $widths[$key] . '%" style="border-bottom:0.2mm solid #c9d3d8;color:#0f2a3d">' . nl2br(Security::e($row[$key] ?? '')) . '</td>';
+            $html .= '</tr>';
+        }
+        if (!$rows) $html .= '<tr><td colspan="' . count($keys) . '" style="color:#60717d"><i>No records.</i></td></tr>';
+        $pdf->writeHTML($html . '</tbody></table>');
+        $pdf->SetFont('dejavusans', '', 7.5);
+        $pdf->SetTextColor(...self::MUTED);
+        $pdf->Ln(3);
+        $pdf->Cell(0, 5, 'End of report · ' . number_format(count($rows)) . (count($rows) === 1 ? ' record' : ' records'), 0, 1, 'R');
     }
 
     /** A TCPDF with the iSmile letterhead and the confidential footer on every page. */
@@ -217,20 +223,43 @@ final class PdfReport
         $pdf->SetTextColor(...self::INK);
     }
 
-    /** Column widths (percent) from the longest values, so short columns stay narrow. */
-    private static function widths(array $keys, array $headers, array $rows): array
+    /** Per column: [longest single word, longest line] in characters (headings count bold). */
+    private static function stats(array $keys, array $headers, array $rows): array
     {
-        $weights = [];
+        $words = static fn (string $text): int => max(0, ...array_map('mb_strlen', preg_split('/\s+/u', $text) ?: ['']));
+        $stats = [];
         foreach ($keys as $key) {
-            $longest = mb_strlen((string) $headers[$key]);
+            $word = (int) ceil($words((string) $headers[$key]) * 1.15);
+            $line = mb_strlen((string) $headers[$key]);
             foreach ($rows as $row) {
-                foreach (explode("
-", (string) ($row[$key] ?? '')) as $line) $longest = max($longest, mb_strlen($line));
+                $value = (string) ($row[$key] ?? '');
+                $word = max($word, $words($value));
+                foreach (preg_split('/\R/u', $value) ?: [] as $part) $line = max($line, mb_strlen($part));
             }
-            $weights[$key] = max(3, min(34, $longest));
+            $stats[$key] = [max(3, min($word, 26)), $line];
         }
-        $total = array_sum($weights) ?: 1;
-        return array_map(static fn (int $weight): string => number_format($weight / $total * 100, 2, '.', ''), $weights);
+        return $stats;
+    }
+
+    /**
+     * Column widths (percent): first each column gets room for its longest word,
+     * so words never break in the middle; the space left goes to longer text.
+     */
+    private static function widths(array $stats, float $size, float $padding, float $usable): array
+    {
+        $char = 0.22 * $size;   // mm per character, with a little margin, in DejaVu Sans
+        $base = array_map(static fn (array $stat): float => $stat[0] * $char + 2 * $padding, $stats);
+        $more = array_map(static fn (array $stat): float => max(0, min($stat[1], 40) - $stat[0]) * $char, $stats);
+        $spare = $usable - array_sum($base);
+        $share = array_sum($more) > 0 ? max(0, $spare) / array_sum($more) : 0;
+        $widths = [];
+        foreach ($base as $key => $width) {
+            $widths[$key] = $width + $more[$key] * min(1, $share);
+        }
+        // Whatever is still left is spread evenly, so the table fills the page.
+        $left = max(0, $usable - array_sum($widths));
+        $total = array_sum($widths) + $left ?: 1;
+        return array_map(static fn (float $width): string => number_format(($width + $left / count($widths)) / $total * 100, 2, '.', ''), $widths);
     }
 
     /** "Ismile Registrations" (from the file name) reads as "Registrations". */
