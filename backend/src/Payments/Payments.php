@@ -79,39 +79,76 @@ final class Payments
         if (!$priceFromGateway && $quote['amount'] === null) {
             return ['redirect' => null, 'error' => 'pay_start_failed'];
         }
-        // An attempt made in the last few minutes is reused, so repeated clicks
-        // (or an email scanner opening the link) never pile up payments at the company.
-        $recent = Db::one("SELECT * FROM payments WHERE checkout_id = ? AND status = 'waiting' AND redirect_url IS NOT NULL AND created_at > ? ORDER BY id DESC LIMIT 1",
-            [$checkout['id'], date('Y-m-d H:i:s', time() - self::REUSE_MINUTES * 60)]);
-        if ($recent !== null && ($priceFromGateway || ((int) $recent['amount_expected'] === $quote['amount'] && $recent['currency'] === $quote['currency']))) {
-            return ['redirect' => $recent['redirect_url'], 'error' => null];
+        // An earlier attempt may have been paid already (its message not yet
+        // here): ask the company first, so nobody is sent to pay twice.
+        foreach (Db::all("SELECT * FROM payments WHERE checkout_id = ? AND status IN ('created','waiting') AND provider_payment_id IS NOT NULL ORDER BY id DESC LIMIT 5", [$checkout['id']]) as $open) {
+            if (self::check($open) === 'paid') {
+                throw new UserError('pay_already', null, 409);
+            }
         }
-        // Places held by people paying right now count too, so the last seats
-        // and lunches are not sold twice.
-        if (Registrations::isFull(true, (int) $checkout['id'])) {
-            throw new UserError('reg_full', null, 409);
-        }
-        if (Registrations::lunchFullFor($checkout, true)) {
-            throw new UserError('lunch_full', null, 409);   // the lunch they chose is full: register again without it
+        // One attempt at a time per form, decided under the form's lock: a
+        // double click, a second tab or an email scanner opening the link at
+        // the same moment all end on the same payment page.
+        $deadline = time() + 25;
+        while (true) {
+            $claim = Db::transaction(static function () use ($checkout, $gatewayName, $priceFromGateway, $quote): array {
+                $form = Db::one('SELECT * FROM checkouts WHERE id = ? FOR UPDATE', [$checkout['id']]);
+                if ($form === null || $form['status'] === 'paid' || $form['registration_id'] !== null) {
+                    throw new UserError('pay_already', null, 409);
+                }
+                if (!Checkouts::isOpen($form)) {
+                    throw new UserError('pay_expired', null, 409);
+                }
+                // An attempt made in the last few minutes is reused.
+                $recent = Db::one("SELECT * FROM payments WHERE checkout_id = ? AND status = 'waiting' AND redirect_url IS NOT NULL AND created_at > ? ORDER BY id DESC LIMIT 1",
+                    [$checkout['id'], date('Y-m-d H:i:s', time() - self::REUSE_MINUTES * 60)]);
+                if ($recent !== null && ($priceFromGateway || ((int) $recent['amount_expected'] === $quote['amount'] && $recent['currency'] === $quote['currency']))) {
+                    return ['redirect' => $recent['redirect_url']];
+                }
+                // Another request is asking the company for a page right now: wait for it.
+                if (Db::value("SELECT id FROM payments WHERE checkout_id = ? AND status = 'created' AND created_at > ? LIMIT 1", [$checkout['id'], date('Y-m-d H:i:s', time() - 60)])) {
+                    return ['wait' => true];
+                }
+                // Places held by people paying right now count too, so the last seats
+                // and lunches are not sold twice.
+                if (Registrations::isFull(true, (int) $checkout['id'])) {
+                    throw new UserError('reg_full', null, 409);
+                }
+                if (Registrations::lunchFullFor($form, true)) {
+                    throw new UserError('lunch_full', null, 409);   // the lunch they chose is full: register again without it
+                }
+                // Psoola: a provisional figure from PSOOLA's listed prices until its
+                // answer gives the real total (1 IQD when even the list is unavailable);
+                // only an attempt that never reached PSOOLA keeps it.
+                $expected = $priceFromGateway
+                    ? (PsoolaPrices::estimate($form) ?? ['amount' => 1, 'currency' => 'IQD'])
+                    : ['amount' => $quote['amount'], 'currency' => $quote['currency']];
+                $now = App::now();
+                return ['payment' => Db::insert('payments', [
+                    'checkout_id'     => $checkout['id'],
+                    'gateway'         => $gatewayName,
+                    'method'          => $form['pay_method'],
+                    'amount_expected' => $expected['amount'],
+                    'currency'        => $expected['currency'],
+                    'status'          => 'created',
+                    'created_at'      => $now,
+                    'updated_at'      => $now,
+                ])];
+            });
+            if (isset($claim['redirect'])) {
+                return ['redirect' => $claim['redirect'], 'error' => null];
+            }
+            if (isset($claim['payment'])) {
+                $paymentId = $claim['payment'];
+                break;
+            }
+            if (time() >= $deadline) {
+                return ['redirect' => null, 'error' => 'pay_start_failed'];
+            }
+            usleep(500000);
         }
 
-        // Psoola: a provisional figure from PSOOLA's listed prices until its
-        // answer gives the real total (1 IQD when even the list is unavailable);
-        // only an attempt that never reached PSOOLA keeps it.
-        $expected = $priceFromGateway
-            ? (PsoolaPrices::estimate($checkout) ?? ['amount' => 1, 'currency' => 'IQD'])
-            : ['amount' => $quote['amount'], 'currency' => $quote['currency']];
-        $now = App::now();
-        $paymentId = Db::insert('payments', [
-            'checkout_id'     => $checkout['id'],
-            'gateway'         => $gatewayName,
-            'method'          => $checkout['pay_method'],
-            'amount_expected' => $expected['amount'],
-            'currency'        => $expected['currency'],
-            'status'          => 'created',
-            'created_at'      => $now,
-            'updated_at'      => $now,
-        ]);
+        // The company is asked outside any lock (it can take many seconds).
         $payment = self::find($paymentId);
         $payment['_return_url'] = Links::statusUrl($checkout) . '&p=' . $paymentId;
 
@@ -164,93 +201,106 @@ final class Payments
     /** Records one answer from the payment company. Returns the attempt's new status. */
     private static function apply(int $paymentId, array $result): string
     {
-        $afterwards = [];
-        $status = Db::transaction(static function () use ($paymentId, $result, &$afterwards): string {
-            $payment = Db::one('SELECT * FROM payments WHERE id = ? FOR UPDATE', [$paymentId]);
-            if ($payment === null) {
-                return 'missing';
-            }
-            $closedEarlier = in_array($payment['status'], ['failed', 'expired'], true);
-            if (!in_array($payment['status'], ['created', 'waiting'], true) && !($closedEarlier && $result['status'] === 'paid')) {
-                return $payment['status'];                    // already decided: a repeat changes nothing
-            }
-            $now = App::now();
-            Db::run('UPDATE payments SET raw_status = ?, checks = checks + 1, updated_at = ? WHERE id = ?', [mb_substr($result['raw'], 0, 60000), $now, $paymentId]);
-
-            if ($result['status'] === 'waiting') {
-                if (strtotime($payment['created_at']) < time() - self::EXPIRE_AFTER_HOURS * 3600) {
-                    Db::run("UPDATE payments SET status = 'expired', updated_at = ? WHERE id = ?", [$now, $paymentId]);
-                    return 'expired';
+        return Db::transaction(static function () use ($paymentId, $result): string {
+            $afterwards = [];
+            $status = self::record($paymentId, $result, $afterwards);
+            // Emails and alerts are queued in the same transaction as the change
+            // (the timed job sends the emails table later): both happen or neither,
+            // so a retry after a crash never loses a ticket email or an alert.
+            foreach ($afterwards as $job) {
+                if ($job[0] === 'ticket') {
+                    // PSOOLA issues and emails the ticket itself: no iSmile ticket email.
+                    if ($job[2] !== 'psoola') {
+                        Outbox::queue('ticket', Registrations::find($job[1]));
+                    }
+                    Audit::log(null, 'payment.confirmed', 'payment', $paymentId);
+                } elseif ($job[0] === 'alert') {
+                    Outbox::alert($job[1]);
+                    Audit::log(null, 'payment.flagged', 'payment', $paymentId, $job[1]);
                 }
-                return 'waiting';
             }
-
-            if ($result['status'] === 'failed' || $result['status'] === 'expired') {
-                Db::run('UPDATE payments SET status = ?, updated_at = ? WHERE id = ?', [$result['status'], $now, $paymentId]);
-                return $result['status'];
-            }
-
-            // ---- "paid" from the company itself ----
-            $amount = $result['amount'];
-            $currency = strtoupper((string) $result['currency']);
-            if ($amount === null || (int) $amount !== (int) $payment['amount_expected'] || $currency !== strtoupper($payment['currency'])) {
-                Db::run("UPDATE payments SET status = 'mismatch', amount_confirmed = ?, confirmed_at = ?, updated_at = ?, last_error = ? WHERE id = ?", [
-                    $amount, $now, $now, "Expected {$payment['amount_expected']} {$payment['currency']}, company confirmed " . ($amount ?? '?') . " $currency", $paymentId,
-                ]);
-                $afterwards[] = ['alert', "Payment #$paymentId: the confirmed amount does not match. Held for Finance; the person was NOT registered."];
-                return 'mismatch';
-            }
-
-            $checkout = $payment['checkout_id'] ? Db::one('SELECT * FROM checkouts WHERE id = ? FOR UPDATE', [$payment['checkout_id']]) : null;
-            if ($checkout === null && $payment['registration_id'] !== null) {
-                $checkout = ['registration_id' => $payment['registration_id'], 'ref' => (string) Db::value('SELECT ref FROM registrations WHERE id = ?', [$payment['registration_id']])];
-            }
-            if ($checkout === null) {
-                Db::run("UPDATE payments SET status = 'mismatch', amount_confirmed = ?, confirmed_at = ?, updated_at = ?, last_error = ? WHERE id = ?", [
-                    $amount, $now, $now, 'Paid, but the form it belonged to no longer exists. Finance: contact Psoola for the payer.', $paymentId,
-                ]);
-                $afterwards[] = ['alert', "Payment #$paymentId was paid, but its form was already deleted. Held for Finance; nobody was registered."];
-                return 'mismatch';
-            }
-            if ($checkout['registration_id'] !== null) {
-                // This form was already paid by another attempt: never a second
-                // ticket. Kept on record for Finance (iSmile does not refund).
-                Db::run("UPDATE payments SET status = 'duplicate', registration_id = ?, amount_confirmed = ?, confirmed_at = ?, updated_at = ?, last_error = ? WHERE id = ?", [
-                    $checkout['registration_id'], $amount, $now, $now, 'Paid twice: no second ticket. Finance: contact the person.', $paymentId,
-                ]);
-                $afterwards[] = ['alert', "Payment #$paymentId for {$checkout['ref']} is a second payment for the same person. No second ticket was made; contact the person."];
-                return 'duplicate';
-            }
-
-            // Paid in full: the person is registered now, and only now.
-            $registrationId = Checkouts::toRegistration($checkout, $now);
-            Db::run("UPDATE payments SET status = 'paid', registration_id = ?, amount_confirmed = ?, confirmed_at = ?, updated_at = ? WHERE id = ?", [$registrationId, $amount, $now, $now, $paymentId]);
-            Tickets::issue($registrationId, 'payment', $paymentId, null);
-            $afterwards[] = ['ticket', $registrationId, $payment['gateway']];
-            // The person has paid, so they get their ticket. If this went over a
-            // limit (two people paying for the last place at the same moment),
-            // the Owner is told at once to talk to the venue or the caterer.
-            $over = Registrations::overCapacity();
-            if ($over !== []) {
-                $afterwards[] = ['alert', "Payment #$paymentId for {$checkout['ref']} went over a limit: " . implode('; ', $over) . '. The ticket was issued; check with the venue/caterer.'];
-            }
-            return 'paid';
+            return $status;
         });
+    }
 
-        // Emails and alerts go out only after the database change is committed.
-        foreach ($afterwards as $job) {
-            if ($job[0] === 'ticket') {
-                // PSOOLA issues and emails the ticket itself: no iSmile ticket email.
-                if ($job[2] !== 'psoola') {
-                    Outbox::queue('ticket', Registrations::find($job[1]));
-                }
-                Audit::log(null, 'payment.confirmed', 'payment', $paymentId);
-            } elseif ($job[0] === 'alert') {
-                Outbox::alert($job[1]);
-                Audit::log(null, 'payment.flagged', 'payment', $paymentId, $job[1]);
-            }
+    /** The decision itself, inside apply()'s transaction. */
+    private static function record(int $paymentId, array $result, array &$afterwards): string
+    {
+        // Locks in one order everywhere (the form, then its payments), so two
+        // messages for the same person never deadlock each other.
+        $formId = Db::value('SELECT checkout_id FROM payments WHERE id = ?', [$paymentId]);
+        if ($formId) {
+            Db::one('SELECT id FROM checkouts WHERE id = ? FOR UPDATE', [$formId]);
         }
-        return $status;
+        $payment = Db::one('SELECT * FROM payments WHERE id = ? FOR UPDATE', [$paymentId]);
+        if ($payment === null) {
+            return 'missing';
+        }
+        $closedEarlier = in_array($payment['status'], ['failed', 'expired'], true);
+        if (!in_array($payment['status'], ['created', 'waiting'], true) && !($closedEarlier && $result['status'] === 'paid')) {
+            return $payment['status'];                    // already decided: a repeat changes nothing
+        }
+        $now = App::now();
+        Db::run('UPDATE payments SET raw_status = ?, checks = checks + 1, updated_at = ? WHERE id = ?', [mb_substr($result['raw'], 0, 60000), $now, $paymentId]);
+
+        if ($result['status'] === 'waiting') {
+            if (strtotime($payment['created_at']) < time() - self::EXPIRE_AFTER_HOURS * 3600) {
+                Db::run("UPDATE payments SET status = 'expired', updated_at = ? WHERE id = ?", [$now, $paymentId]);
+                return 'expired';
+            }
+            return 'waiting';
+        }
+
+        if ($result['status'] === 'failed' || $result['status'] === 'expired') {
+            Db::run('UPDATE payments SET status = ?, updated_at = ? WHERE id = ?', [$result['status'], $now, $paymentId]);
+            return $result['status'];
+        }
+
+        // ---- "paid" from the company itself ----
+        $amount = $result['amount'];
+        $currency = strtoupper((string) $result['currency']);
+        if ($amount === null || (int) $amount !== (int) $payment['amount_expected'] || $currency !== strtoupper($payment['currency'])) {
+            Db::run("UPDATE payments SET status = 'mismatch', amount_confirmed = ?, confirmed_at = ?, updated_at = ?, last_error = ? WHERE id = ?", [
+                $amount, $now, $now, "Expected {$payment['amount_expected']} {$payment['currency']}, company confirmed " . ($amount ?? '?') . " $currency", $paymentId,
+            ]);
+            $afterwards[] = ['alert', "Payment #$paymentId: the confirmed amount does not match. Held for Finance; the person was NOT registered."];
+            return 'mismatch';
+        }
+
+        $checkout = $payment['checkout_id'] ? Db::one('SELECT * FROM checkouts WHERE id = ? FOR UPDATE', [$payment['checkout_id']]) : null;
+        if ($checkout === null && $payment['registration_id'] !== null) {
+            $checkout = ['registration_id' => $payment['registration_id'], 'ref' => (string) Db::value('SELECT ref FROM registrations WHERE id = ?', [$payment['registration_id']])];
+        }
+        if ($checkout === null) {
+            Db::run("UPDATE payments SET status = 'mismatch', amount_confirmed = ?, confirmed_at = ?, updated_at = ?, last_error = ? WHERE id = ?", [
+                $amount, $now, $now, 'Paid, but the form it belonged to no longer exists. Finance: contact Psoola for the payer.', $paymentId,
+            ]);
+            $afterwards[] = ['alert', "Payment #$paymentId was paid, but its form was already deleted. Held for Finance; nobody was registered."];
+            return 'mismatch';
+        }
+        if ($checkout['registration_id'] !== null) {
+            // This form was already paid by another attempt: never a second
+            // ticket. Kept on record for Finance (iSmile does not refund).
+            Db::run("UPDATE payments SET status = 'duplicate', registration_id = ?, amount_confirmed = ?, confirmed_at = ?, updated_at = ?, last_error = ? WHERE id = ?", [
+                $checkout['registration_id'], $amount, $now, $now, 'Paid twice: no second ticket. Finance: contact the person.', $paymentId,
+            ]);
+            $afterwards[] = ['alert', "Payment #$paymentId for {$checkout['ref']} is a second payment for the same person. No second ticket was made; contact the person."];
+            return 'duplicate';
+        }
+
+        // Paid in full: the person is registered now, and only now.
+        $registrationId = Checkouts::toRegistration($checkout, $now);
+        Db::run("UPDATE payments SET status = 'paid', registration_id = ?, amount_confirmed = ?, confirmed_at = ?, updated_at = ? WHERE id = ?", [$registrationId, $amount, $now, $now, $paymentId]);
+        Tickets::issue($registrationId, 'payment', $paymentId, null);
+        $afterwards[] = ['ticket', $registrationId, $payment['gateway']];
+        // The person has paid, so they get their ticket. If this went over a
+        // limit (two people paying for the last place at the same moment),
+        // the Owner is told at once to talk to the venue or the caterer.
+        $over = Registrations::overCapacity();
+        if ($over !== []) {
+            $afterwards[] = ['alert', "Payment #$paymentId for {$checkout['ref']} went over a limit: " . implode('; ', $over) . '. The ticket was issued; check with the venue/caterer.'];
+        }
+        return 'paid';
     }
 
     /**
@@ -275,6 +325,12 @@ final class Payments
             Db::update('webhook_log', ['outcome' => 'gateway not ready'], 'id = ?', [$logId]);
             return ['status' => 503, 'outcome' => 'gateway not ready'];
         }
+        if ($providerId === '') {
+            // Signed by the company, but about no payment session (another kind
+            // of event): accepted, so the company does not resend it forever.
+            Db::update('webhook_log', ['signature_ok' => 1, 'outcome' => 'ignored: no payment session'], 'id = ?', [$logId]);
+            return ['status' => 200, 'outcome' => 'ignored'];
+        }
         if ($providerId === null) {
             Db::update('webhook_log', ['outcome' => 'REJECTED: signature'], 'id = ?', [$logId]);
             App::log('warning', 'Webhook with a bad signature', ['ip' => App::clientIp()]);
@@ -291,9 +347,11 @@ final class Payments
             // Finance is told, so money is never silently ignored.
             $outcome = 'unknown payment';
             try {
+                // Finance is told once per payment, not on every resend of the message.
+                $alerted = (bool) Db::value("SELECT COUNT(*) FROM webhook_log WHERE provider_payment_id = ? AND outcome = 'unknown payment, PAID: Finance alerted'", [$providerId]);
                 if ((self::gateway($gatewayName)->fetchStatus($providerId)['status'] ?? '') === 'paid') {
                     $outcome = 'unknown payment, PAID: Finance alerted';
-                    Outbox::alert("The payment company reports payment $providerId as PAID, but it matches no form here. Check it with Psoola; nobody was registered.");
+                    if (!$alerted) Outbox::alert("The payment company reports payment $providerId as PAID, but it matches no form here. Check it with Psoola; nobody was registered.");
                 }
             } catch (\Throwable) {
                 // the company could not be asked; the log keeps the message
@@ -326,8 +384,31 @@ final class Payments
                 $counts['failed'] = ($counts['failed'] ?? 0) + 1;
                 continue;
             }
-            $status = self::check($payment);
+            try {
+                $status = self::check($payment);
+            } catch (\Throwable $error) {
+                // One bad answer (or a lock timeout) never stops the rest of the run.
+                App::log('error', 'Payment check failed', ['payment' => $payment['id'], 'error' => $error->getMessage()]);
+                $status = 'error';
+            }
             $counts[$status] = ($counts[$status] ?? 0) + 1;
+        }
+        // Attempts we closed (declined, or no answer in 24 hours) can still be
+        // paid on the company's page. Ask again every 30 minutes for 7 days, so a
+        // payment whose message was lost is still recorded.
+        $closed = Db::all("SELECT * FROM payments WHERE status IN ('failed','expired') AND provider_payment_id IS NOT NULL AND created_at > ? AND updated_at < ? ORDER BY id LIMIT 50",
+            [date('Y-m-d H:i:s', time() - 7 * 86400), date('Y-m-d H:i:s', time() - 1800)]);
+        foreach ($closed as $payment) {
+            try {
+                $status = self::check($payment, true);
+            } catch (\Throwable $error) {
+                App::log('error', 'Late payment check failed', ['payment' => $payment['id'], 'error' => $error->getMessage()]);
+                $status = 'error';
+            }
+            Db::run("UPDATE payments SET updated_at = ? WHERE id = ? AND status IN ('failed','expired')", [App::now(), $payment['id']]);
+            if ($status === 'paid') {
+                $counts['paid late'] = ($counts['paid late'] ?? 0) + 1;
+            }
         }
         return $counts;
     }

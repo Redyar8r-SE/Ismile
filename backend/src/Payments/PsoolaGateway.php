@@ -145,7 +145,8 @@ final class PsoolaGateway implements Gateway
         }
         $data = json_decode($body, true);
         $sessionId = is_array($data) && is_array($data['data'] ?? null) ? ($data['data']['sessionId'] ?? null) : null;
-        return is_string($sessionId) && $sessionId !== '' ? $sessionId : null;
+        // '' = correctly signed, but about no payment session (another kind of event).
+        return is_string($sessionId) && $sessionId !== '' ? $sessionId : '';
     }
 
     // ---- pure helpers (public for backend/tests/psoola-gateway.php) ----

@@ -30,7 +30,8 @@ interface Gateway
 
     /**
      * Checks the message really came from the payment company.
-     * Returns the payment id it is about, or null when it is not genuine.
+     * Returns the payment id it is about, '' when it is genuine but about no
+     * payment, or null when it is not genuine.
      */
     public function readWebhook(array $headers, string $body): ?string;
 }

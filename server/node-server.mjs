@@ -121,6 +121,16 @@ export function createAppServer() {
         await handleApi(req, res, url);
         return;
       }
+      // The database admin lives on its own address; links to /admin/... here
+      // (the "Database" button in admin.html) go there.
+      if (url.pathname === "/admin" || url.pathname.startsWith("/admin/")) {
+        const target = new URL(
+          url.pathname + url.search,
+          process.env.DATABASE_ADMIN_URL || "https://api.ismile.krd",
+        );
+        res.writeHead(302, { Location: target.href, "Cache-Control": "no-store" }).end();
+        return;
+      }
 
       const override = contentFile(CONTENT_ROOT, url.pathname.slice(1));
       if (url.pathname === "/data/sponsors.json" && req.method === "GET") {

@@ -275,7 +275,7 @@ $check('readWebhook works with the lower-cased headers Payments passes', $gatewa
 $check('readWebhook refuses a bad signature', $gateway->readWebhook(['x-psoola-signature' => $sign(time(), $body, 'forged')], $body) === null);
 $check('readWebhook refuses a missing signature', $gateway->readWebhook([], $body) === null);
 $noSession = json_encode(['id' => 'evt_2', 'type' => 'order.paid', 'data' => ['status' => 'paid']]);
-$check('readWebhook refuses a signed message without a session id', $gateway->readWebhook(['x-psoola-signature' => $sign(time(), $noSession)], $noSession) === null);
+$check('readWebhook accepts a signed message without a session id as nothing to do', $gateway->readWebhook(['x-psoola-signature' => $sign(time(), $noSession)], $noSession) === '');
 
 // ---------------- creating a checkout session ----------------
 $registration = [
