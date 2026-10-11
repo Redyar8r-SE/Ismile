@@ -28,7 +28,10 @@ export function initSponsorForm({ tiers = [], enquiry = {} } = {}) {
   const sponsorMap = $("exhibition");
 
   let step = 1;
-  let kind = "";
+  // The homepage buttons link to sponsor.html#sponsor or #booth, so the
+  // visitor lands on the choice they already made rather than making it twice.
+  const startKind = location.hash.replace("#", "").toLowerCase();
+  let kind = ["sponsor", "booth"].includes(startKind) ? startKind : "";
   let pack = "";
   const activeSteps = () => kind === "booth" ? [1, COMPANY_STEP] : [1, 2, COMPANY_STEP];
 
@@ -117,7 +120,7 @@ export function initSponsorForm({ tiers = [], enquiry = {} } = {}) {
   function goTo(target, quiet = false) {
     const sequence = activeSteps();
     step = sequence.includes(target) ? target : sequence[0];
-    card.closest(".reg").classList.toggle("spf-show-plan", kind === "sponsor" && step === 1);
+    card.closest(".reg").classList.toggle("spf-show-plan", Boolean(kind) && step === 1);
     const position = sequence.indexOf(step);
     steps.forEach((panel) => {
       panel.hidden = Number(panel.dataset.step) !== step;
@@ -313,7 +316,7 @@ export function initSponsorForm({ tiers = [], enquiry = {} } = {}) {
       form.querySelectorAll('input[name="spfKind"]').forEach((radio) => {
         radio.closest("label").classList.toggle("is-checked", radio.checked);
       });
-      sponsorMap.hidden = kind !== "sponsor";
+      sponsorMap.hidden = !kind;
       goTo(1, true);
     }
     if (input.name === "spfPack") {
@@ -356,7 +359,7 @@ export function initSponsorForm({ tiers = [], enquiry = {} } = {}) {
   }
 
   // ---------- Start ----------
-  sponsorMap.hidden = kind !== "sponsor";
+  sponsorMap.hidden = !kind;
   form.querySelectorAll('input[name="spfKind"]').forEach((radio) => {
     radio.checked = radio.value === kind;
     radio.closest("label").classList.toggle("is-checked", radio.checked);

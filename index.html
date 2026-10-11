@@ -32,7 +32,8 @@
 <link rel="stylesheet" href="css/sections/about.css?v=93">
 <link rel="stylesheet" href="css/sections/gallery.css?v=93">
 <link rel="stylesheet" href="css/sections/experience.css?v=95">
-<link rel="stylesheet" href="css/sections/program.css?v=93">
+<link rel="stylesheet" href="css/sections/program.css?v=95">
+<link rel="stylesheet" href="css/sections/booth-map.css?v=93">
 <link rel="stylesheet" href="css/sections/speakers.css?v=93">
 <link rel="stylesheet" href="css/sections/sponsors.css?v=93">
 <link rel="stylesheet" href="css/sections/partners.css?v=93">
@@ -40,7 +41,7 @@
 <link rel="stylesheet" href="css/sections/register-page.css?v=93">
 <link rel="stylesheet" href="css/sections/venue.css?v=93">
 
-<script type="module" src="js/main.js?v=95"></script>
+<script type="module" src="js/main.js?v=97"></script>
 </head>
 <body>
 
@@ -399,9 +400,31 @@
     <div class="prog-head">
       <div><h2 data-i18n="prog_title">Program</h2><p class="lead" data-i18n="prog_sub">Session topics and speakers will be announced soon.</p></div>
     </div>
-    <div class="days" id="dayTabs" role="tablist" aria-label="Program day" data-i18n-label="a_days"></div>
-    <div class="day-meta" id="dayMeta"></div>
-    <div class="sched" id="sched" role="tabpanel"></div>
+    <!-- Program first, then the map. The map is only a picture of the hall:
+         no live availability and nothing to book (that is on sponsor.html). -->
+    <div class="prog-switch" role="group" aria-label="Program or map" data-i18n-label="pg_switch">
+      <button type="button" id="progListBtn" aria-controls="progList" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/></svg><span data-i18n="pg_tab_program">Program</span></button>
+      <button type="button" id="progMapBtn" aria-controls="progMap" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 4-6 2.5v13L9 17l6 3 6-2.5v-13L15 7 9 4Z"/><path d="M9 4v13m6-10v13"/></svg><span data-i18n="pg_tab_map">Map</span></button>
+    </div>
+    <div id="progList">
+      <div class="days" id="dayTabs" role="tablist" aria-label="Program day" data-i18n-label="a_days"></div>
+      <div class="day-meta" id="dayMeta"></div>
+      <div class="sched" id="sched" role="tabpanel"></div>
+    </div>
+    <div class="prog-map exhibition" id="progMap" hidden>
+      <div class="prog-map-head">
+        <div><h3 data-i18n="pg_map_title">Exhibition floor plan</h3><p data-i18n="pg_map_text">The 44 numbered booths in the exhibition hall at Grand Millennium Sulaimani.</p></div>
+        <div class="exhibition-legend" aria-label="Booth tiers" data-i18n-label="bm_tiers">
+          <span><i class="tier-platinum"></i><span data-i18n="bm_platinum">Platinum</span></span>
+          <span><i class="tier-gold"></i><span data-i18n="bm_gold">Gold</span></span>
+          <span><i class="tier-silver"></i><span data-i18n="bm_silver">Silver</span></span>
+          <span><i class="tier-bronze"></i><span data-i18n="bm_bronze">Bronze</span></span>
+        </div>
+      </div>
+      <div class="exhibition-map-scroll prog-map-scroll">
+        <div id="progMapPlan"></div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -435,7 +458,7 @@
   <div class="wrap">
     <div class="spon-head">
       <div><h2 data-i18n="spon_title">Sponsors</h2><p class="lead" data-i18n="spon_sub">The partners who make Iraq's largest dental summit possible.</p></div>
-      <a class="btn btn-primary" href="sponsor.html" data-i18n="spon_cta">Become a sponsor</a>
+      <a class="btn btn-primary" href="sponsor.html#sponsor" data-i18n="spon_cta">Become a sponsor</a>
     </div>
     <div class="tiers" id="sponsorTiers"></div>
 
@@ -460,13 +483,13 @@
         <div class="co-top"><span class="co-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17 2 2a1 1 0 0 0 3-3"/><path d="m14 14 2.5 2.5a1 1 0 0 0 3-3l-3.9-3.9a3 3 0 0 0-4.2 0l-.9.9a1 1 0 0 1-3-3l2.8-2.8a5.8 5.8 0 0 1 7.1-.9l.5.3a2 2 0 0 0 1.4.2L21 4"/><path d="m21 3 1 11h-2M3 3 2 14l6.5 6.5a1 1 0 0 0 3-3M3 4h8"/></svg></span><span class="co-index" aria-hidden="true">01</span></div>
         <h3 data-i18n="co1">Become a sponsor</h3>
         <p data-i18n="co1p">Diamond, Platinum, Gold, Silver and Exhibitor packages.</p>
-        <div class="co-action"><a class="btn btn-primary btn-sm" href="sponsor.html"><span data-i18n="co1b">Request the packages</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
+        <div class="co-action"><a class="btn btn-primary btn-sm" href="sponsor.html#sponsor"><span data-i18n="co1b">Request the packages</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
       </article>
       <article class="co co-exhibition">
         <div class="co-top"><span class="co-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V8l8-4 8 4v12M2.5 20h19"/><path d="M8 20v-5h8v5M8 9h.01M12 9h.01M16 9h.01"/></svg></span><span class="co-index" aria-hidden="true">02</span></div>
         <h3 data-i18n="co2">Book an exhibition booth</h3>
         <p data-i18n="co2p">Show your products to dentists from across Iraq and the region.</p>
-        <div class="co-action"><a class="btn btn-ghost btn-sm" href="sponsor.html"><span data-i18n="co2b">Ask about booths</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
+        <div class="co-action"><a class="btn btn-ghost btn-sm" href="sponsor.html#booth"><span data-i18n="co2b">Ask about booths</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
       </article>
     </div>
   </div>

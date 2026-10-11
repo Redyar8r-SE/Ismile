@@ -5,6 +5,7 @@ import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from ".
 import { initNav } from "./components/nav.js?v=95";
 import { initTheme } from "./components/theme.js?v=95";
 import { initProgram } from "./sections/program.js?v=95";
+import { initProgramMap } from "./sections/program-map.js?v=2";
 import { initSpeakers } from "./sections/speakers.js?v=95";
 import { initSponsors } from "./sections/sponsors.js?v=95";
 import { initPartners } from "./sections/partners.js?v=95";
@@ -23,7 +24,7 @@ async function start() {
   initCountdown();
 
   try {
-    const [strings, program, speakers, sponsors, partners, journey, projects, gallery, footer, map] = await Promise.all([
+    const [strings, program, speakers, sponsors, partners, journey, projects, gallery, footer, map, boothPlan] = await Promise.all([
       loadJSON("data/i18n/site-en.json"),
       loadJSON("data/program.json"),
       loadJSON("data/speakers.json"),
@@ -34,6 +35,7 @@ async function start() {
       loadJSON("data/gallery.json"),
       loadJSON("data/footer.json"),
       loadJSON("data/map.json"),
+      loadJSON("data/booth-tiers.json"),
     ]);
 
     initI18n(strings);
@@ -46,6 +48,7 @@ async function start() {
     if (kurdish) addLanguage("ku", kurdish);
 
     initProgram(program);
+    initProgramMap({ ...boothPlan, colors: { ...boothPlan.colors, platinum: "#D9F4FF", gold: "#F3D98B", silver: "#DAE4E8", bronze: "#E8B48A" } });
     initSpeakers(speakers);
     initSponsors(sponsors);
     initPartners(partners);
@@ -69,7 +72,7 @@ async function start() {
       all("#journey > li"), all("#galleryGrid > li"),
       all(".org-card"), all(".org-top, .org-card > p, .medx-rest, .medx-toggle"), all(".medx-card"), all(".org-facts li"), all(".vm2 > .vm-card"),
       all(".bento > .bx"), all(".areas > .area"),
-      all("#dayTabs, #dayMeta, #sched"),
+      all(".prog-switch, #dayTabs, #dayMeta, #sched"),
       all(".reg-invite-card"),
       all("#spGrid > *"), all("#sponsorTiers > *"), all("#ptiers > *, .p-cta"),
       all(".co-grid > .co"), all(".venue-card"),

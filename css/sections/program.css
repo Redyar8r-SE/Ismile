@@ -88,3 +88,27 @@
 .tba-n{grid-row:span 2;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--teal);color:#fff;font-weight:800;font-size:17px}
 .tba-day b{font-size:17px}
 .tba-day small{font-size:14px;color:#8FE3DF;font-weight:600}
+
+/* Map / Program switch: the map is the plain exhibition floor plan */
+.prog-switch{display:inline-grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:28px;padding:6px;border:1.5px solid var(--line);border-radius:16px;background:var(--surface-2)}
+.prog-switch button{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-width:160px;padding:13px 26px;border:0;border-radius:11px;background:transparent;color:var(--text);font:700 17px var(--font);cursor:pointer;transition:background .2s,color .2s,box-shadow .2s}
+.prog-switch button svg{width:21px;height:21px;flex:none}
+.prog-switch button:hover{background:color-mix(in srgb,var(--teal) 12%,transparent)}
+.prog-switch button[aria-pressed="true"]{background:var(--teal);color:#fff;box-shadow:0 8px 22px color-mix(in srgb,var(--teal) 35%,transparent)}
+.prog-switch button:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+.prog-map.exhibition{margin:24px 0 0;padding:22px}
+.prog-map[hidden],#progList[hidden]{display:none}
+.prog-map-head{display:flex;justify-content:space-between;align-items:end;gap:14px 24px;flex-wrap:wrap;margin-bottom:16px}
+.prog-map-head h3{font-size:20px;margin:0 0 6px}
+.prog-map-head p{color:var(--muted);font-size:14px;line-height:1.6;margin:0;max-width:60ch}
+.prog-map-head .exhibition-legend{margin:0;font-size:13px}
+.prog-map-head .exhibition-legend > span:last-child{margin-inline-start:0}
+/* The whole hall at once: no scroll box, the drawing shrinks to fit the width */
+.prog-map .prog-map-scroll{max-height:none;height:auto;aspect-ratio:auto;overflow:hidden;border:1px solid var(--line);border-radius:14px}
+.prog-map .prog-map-scroll .booth-map-svg{width:100%}
+.prog-map .map-booth{cursor:default}
+@media (max-width:620px){
+  .prog-switch{display:grid;width:100%}
+  .prog-switch button{min-width:0;padding:12px 10px;font-size:15px}
+  .prog-map.exhibition{padding:14px 10px}
+}
