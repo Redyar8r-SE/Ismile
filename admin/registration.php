@@ -11,6 +11,7 @@ use Ismile\Admin\Page;
 use Ismile\Admin\CheckinWorkspace;
 use Ismile\Auth;
 use Ismile\Db;
+use Ismile\Erase;
 use Ismile\Links;
 use Ismile\Office;
 use Ismile\Outbox;
@@ -113,6 +114,19 @@ if ($registration === null) {
 }
 $id = (int) $registration['id'];
 $back = 'registration.php?id=' . $id . $workspaceQuery;
+
+// ---------- Delete for good (main Owner only) ----------
+// The page is gone afterwards, so this returns to the list instead.
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && ($_POST['do'] ?? '') === 'erase') {
+    try {
+        Auth::checkCsrf();
+        Page::flash('ok', Erase::registration($id, (string) ($_POST['confirm_ref'] ?? ''), $user));
+        Page::redirect($listUrl);
+    } catch (UserError $error) {
+        Page::flash('error', $error->key);
+        Page::redirect($back . '#deleteRecord');
+    }
+}
 
 // ---------- Actions ----------
 Page::action(static function () use ($registration, $user, $canEdit): string {
@@ -305,6 +319,17 @@ if ($inCheckin) echo CheckinWorkspace::navigation('guests', $user, $workspaceDay
     <?php endif; ?>
   </div>
 </div>
+
+<?php if (Erase::isMainOwner($user)): ?>
+<section class="card danger" id="deleteRecord">
+  <h2>Delete for good (main Owner)</h2>
+  <p class="muted small">Removes this person, their ticket, check-ins, certificate, workshop seats, payment records, emails and ID photo. Use Cancel above to keep the history instead. A full copy is kept in the database table <code>deleted_records</code>.</p>
+  <form method="post" class="stack"><?= Page::csrfField() ?><input type="hidden" name="do" value="erase">
+    <label><span>Type <b dir="ltr"><?= $e($registration['ref']) ?></b> to confirm</span><input name="confirm_ref" required autocomplete="off" dir="ltr" placeholder="<?= $e($registration['ref']) ?>"></label>
+    <div class="form-actions danger-actions"><button class="btn red" data-confirm="Delete <?= $e($registration['ref']) ?> for good? This cannot be undone from the admin.">Delete for good</button></div>
+  </form>
+</section>
+<?php endif; ?>
 
 <div class="card">
   <h2>History</h2>

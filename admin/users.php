@@ -10,6 +10,7 @@ use Ismile\Admin\Page;
 use Ismile\Audit;
 use Ismile\Auth;
 use Ismile\Db;
+use Ismile\Erase;
 use Ismile\UserError;
 
 $user = Page::guard('owner');
@@ -31,6 +32,10 @@ Page::action(static function () use ($user): string {
     }
     if ((int) $target['id'] === (int) $user['id'] && in_array($do, ['disable', 'role'], true)) {
         throw new UserError('You cannot disable or change your own account.');
+    }
+    // The main Owner's account is changed only by the main Owner.
+    if (Erase::isMainOwnerAccount($target) && (int) $target['id'] !== (int) $user['id']) {
+        throw new UserError('This is the main Owner account. Only the main Owner can change it.');
     }
     switch ($do) {
         case 'disable':
@@ -94,18 +99,20 @@ Page::top('Users', 'users', '<a class="btn" href="#add-person">' . Page::navIcon
   <?php foreach ($users as $row): ?>
   <tr class="<?= $row['disabled_at'] ? 'row-grey' : '' ?>">
     <td><div class="team-member"><span class="team-avatar" aria-hidden="true"><?= $e(mb_strtoupper(mb_substr($row['name'],0,1))) ?></span><div><b><?= $e($row['name']) ?></b><small dir="ltr"><?= $e($row['email']) ?></small><span class="pill <?= $row['disabled_at'] ? 'grey':'green' ?>"><?= $row['disabled_at'] ? 'Disabled' : 'Active' ?></span><?php if ((int)$row['id']===(int)$user['id']): ?><span class="team-you">You</span><?php endif; ?></div></div></td>
-    <td><?php if ((int)$row['id']===(int)$user['id']): ?><span class="team-role"><?= Page::navIcon($roleGuide[$row['role']][0]) ?><?= $e($roleGuide[$row['role']][1]) ?></span><small class="field-hint">Your own role stays protected.</small><?php else: ?><form method="post" class="inline-form team-role-form"><?= Page::csrfField() ?><input type="hidden" name="do" value="role"><input type="hidden" name="id" value="<?= (int) $row['id'] ?>">
+    <?php $protected = Erase::isMainOwnerAccount($row) && (int)$row['id']!==(int)$user['id']; ?>
+    <td><?php if ((int)$row['id']===(int)$user['id'] || $protected): ?><span class="team-role"><?= Page::navIcon($roleGuide[$row['role']][0]) ?><?= $e($roleGuide[$row['role']][1]) ?></span><small class="field-hint"><?= $protected ? 'Main Owner: protected.' : (Erase::isMainOwner($user) ? 'Main Owner: only you can delete records.' : 'Your own role stays protected.') ?></small><?php else: ?><form method="post" class="inline-form team-role-form"><?= Page::csrfField() ?><input type="hidden" name="do" value="role"><input type="hidden" name="id" value="<?= (int) $row['id'] ?>">
       <select name="role" aria-label="<?= $e('Role for ' . $row['name']) ?>"><?php foreach (Auth::ROLES as $role): ?><option value="<?= $role ?>"<?= $role === $row['role'] ? ' selected' : '' ?>><?= $e($roleGuide[$role][1]) ?></option><?php endforeach; ?></select><button class="btn small ghost">Set role</button></form><?php endif; ?></td>
     <td><span class="security-status <?= (int)$row['totp_enabled'] ? 'enabled':'pending' ?>"><?= Page::navIcon('security') ?><span><?= (int)$row['totp_enabled'] ? 'Phone code on' : 'Phone code off' ?></span></span><small class="field-hint"><?= in_array($row['role'], Auth::NEEDS_TWO_FACTOR, true) ? 'Required for this role' : 'Optional for this role' ?></small></td>
     <td><span class="team-last-login"><?= $row['last_login_at'] ? Page::when($row['last_login_at']) : 'Not signed in yet' ?></span></td>
     <td class="table-action-cell"><div class="row-actions">
+      <?php if ($protected): ?><span class="muted small">Only the main Owner can change this account.</span><?php else: ?>
       <details class="edit account-menu"><summary class="btn small ghost"><?= Page::navIcon('settings') ?><span>Manage account</span></summary><form method="post" class="stack"><?= Page::csrfField() ?><input type="hidden" name="id" value="<?= (int) $row['id'] ?>"><input type="hidden" name="do" value="password"><label>New password<input type="password" name="password" placeholder="12 or more characters" minlength="12" required autocomplete="new-password"></label><div class="form-actions compact"><button class="btn small">Set password</button></div></form>
       <form method="post" class="account-security-action"><?= Page::csrfField() ?><input type="hidden" name="id" value="<?= (int) $row['id'] ?>"><input type="hidden" name="do" value="reset2fa"><button class="btn small ghost" data-confirm="Reset this person's phone code?">Reset phone code</button></form>
       <?php if ((int)$row['id']!==(int)$user['id']): ?><div class="row-danger-actions"><?php if ($row['disabled_at']): ?>
         <form method="post"><?= Page::csrfField() ?><input type="hidden" name="id" value="<?= (int) $row['id'] ?>"><input type="hidden" name="do" value="enable"><button class="btn small green">Enable</button></form>
       <?php else: ?>
         <form method="post"><?= Page::csrfField() ?><input type="hidden" name="id" value="<?= (int) $row['id'] ?>"><input type="hidden" name="do" value="disable"><button class="btn small red" data-confirm="Disable this account? Their history stays.">Disable</button></form>
-      <?php endif; ?></div><?php endif; ?></details>
+      <?php endif; ?></div><?php endif; ?></details><?php endif; ?>
     </div></td>
   </tr>
   <?php endforeach; ?>

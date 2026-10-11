@@ -16,6 +16,7 @@ use Ismile\App;
 use Ismile\Auth;
 use Ismile\BoothPlan;
 use Ismile\Db;
+use Ismile\Erase;
 use Ismile\SponsorPackages;
 use Ismile\Sponsors;
 use Ismile\UserError;
@@ -102,6 +103,18 @@ if (Page::query('new') === '1') {
 }
 $back = ($id > 0 ? $pageFile.'?id=' . $id : $pageFile)
     . (str_starts_with((string) ($_POST['do'] ?? ''), 'pk_') ? '#packages' : '');
+
+// Delete for good (main Owner only); the booking page is gone afterwards.
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && ($_POST['do'] ?? '') === 'erase' && $id > 0) {
+    try {
+        Auth::checkCsrf();
+        Page::flash('ok', Erase::sponsorRequest($id, (string) ($_POST['confirm_ref'] ?? ''), $user));
+        Page::redirect($pageFile);
+    } catch (UserError $error) {
+        Page::flash('error', $error->key);
+        Page::redirect($back . '#deleteRecord');
+    }
+}
 
 $detailsInput = null;
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && ($_POST['do'] ?? '') === 'details') {
@@ -369,6 +382,15 @@ if ($id > 0 && ($request = Sponsors::find($id))) {
       <?php foreach ($history as $item): ?><li><b><?= Page::when($item['created_at']) ?></b> · <?= $e($item['name'] ?? 'system') ?> · <?= $e($item['action']) ?> <span class="muted small"><?= $e((string) $item['details']) ?></span></li><?php endforeach; ?>
       <?php if (!$history): ?><li class="muted">No changes yet.</li><?php endif; ?>
     </ul></div>
+    <?php if (Erase::isMainOwner($user)): ?>
+    <section class="card danger" id="deleteRecord"><h2>Delete for good (main Owner)</h2>
+      <p class="muted small">Removes this booking with its calls and emails<?= $isBooth ? '' : ', and frees its map position' ?>. Use Cancel booking above to keep the history instead. A full copy is kept in the database table <code>deleted_records</code>.</p>
+      <form method="post" class="stack"><?= Page::csrfField() ?><input type="hidden" name="do" value="erase">
+        <label><span>Type <b dir="ltr"><?= $e($request['ref']) ?></b> to confirm</span><input name="confirm_ref" required autocomplete="off" dir="ltr" placeholder="<?= $e($request['ref']) ?>"></label>
+        <div class="form-actions danger-actions"><button class="btn red" data-confirm="Delete <?= $e($request['ref']) ?> (<?= $e($request['company']) ?>) for good? This cannot be undone from the admin.">Delete for good</button></div>
+      </form>
+    </section>
+    <?php endif; ?>
     <?php
     Page::bottom();
     exit;
