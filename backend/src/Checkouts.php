@@ -153,16 +153,42 @@ final class Checkouts
      * The office fills in a caller's details. The caller is registered only
      * after paying: they get an email with their personal payment link.
      */
-    public static function createFromOffice(array $in, array $user): array
+    public static function createFromOffice(array $in, array $user, ?array $photo = null): array
     {
         $row = self::officeRow($in);
         if (!SiteData::pricesReadyFor($row)) {
             throw new UserError('The ticket prices are not set yet, so this caller cannot pay.');
         }
-        $checkout = self::insert($row + ['source' => 'office', 'created_by' => (int) $user['id'], 'created_ip' => 'office'], max(1, Settings::int('pay_link_days')) * 86400);
+        $row['id_photo_id'] = self::officePhoto($row, $photo);
+        try {
+            $checkout = self::insert($row + ['source' => 'office', 'created_by' => (int) $user['id'], 'created_ip' => 'office'], max(1, Settings::int('pay_link_days')) * 86400);
+        } catch (\Throwable $error) {
+            IdPhotos::delete($row['id_photo_id']);
+            throw $error;
+        }
         Outbox::queueForCheckout('pay_now', $checkout);
         Audit::log((int) $user['id'], 'checkout.phone', 'checkout', (int) $checkout['id'], ['ref' => $checkout['ref']]);
         return $checkout;
+    }
+
+    /**
+     * A student's ID photo, uploaded by the office (sent by the student, for
+     * example on WhatsApp). Required for a student ticket, as on the website.
+     */
+    public static function officePhoto(array $row, ?array $photo): ?int
+    {
+        if ($row['ticket_type'] !== 'student') {
+            return null;
+        }
+        try {
+            return IdPhotos::store($photo);
+        } catch (UserError $error) {
+            throw new UserError(match ($error->key) {
+                'err_student_id_size' => 'The student ID photo is too big (8 MB at most). Send a smaller photo.',
+                'err_student_id_type' => 'The student ID photo must be a JPG, PNG or WebP picture.',
+                default => "Attach the student's ID photo (they can send it to you on WhatsApp).",
+            });
+        }
     }
 
     /** The details the office types in for a caller, checked. */

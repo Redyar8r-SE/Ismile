@@ -41,11 +41,11 @@ if (isset($_GET['new'])) {
             \Ismile\Auth::checkCsrf();
             Page::useOnce();
             if (($_POST['do'] ?? '') === 'free') {
-                $created = Office::createComplimentary($user, $_POST);
+                $created = Office::createComplimentary($user, $_POST, $_FILES['student_id'] ?? null);
                 Page::flash('ok', 'Registered ' . $created['ref'] . ' with a free ticket. The ticket is on its way by email.');
                 Page::redirect('registration.php?id=' . $created['id'] . $workspaceQuery);
             }
-            $checkout = \Ismile\Checkouts::createFromOffice($_POST, $user);
+            $checkout = \Ismile\Checkouts::createFromOffice($_POST, $user, $_FILES['student_id'] ?? null);
             Page::flash('ok', 'A "Pay now" email is on its way to ' . $checkout['email'] . ' (' . $checkout['ref'] . '). ' . Registrations::fullName($checkout)
                 . ' is registered as soon as they pay; nothing is saved as a registration before that. The link works for ' . max(1, \Ismile\Settings::int('pay_link_days')) . ' day(s).');
             Page::redirect($inCheckin ? CheckinWorkspace::url('register', $workspaceDay) : 'registration.php?new=1');
@@ -61,7 +61,7 @@ if (isset($_GET['new'])) {
     Page::top($inCheckin ? 'Check-in · Register' : 'Register a caller (phone)', $inCheckin ? 'checkin' : 'registrations', '<a class="btn ghost" href="' . Page::e($listUrl) . '">&larr; ' . ($inCheckin ? 'Guest list' : 'All registrations') . '</a>');
     if ($inCheckin) echo CheckinWorkspace::navigation('register', $user, $workspaceDay);
     ?>
-    <form method="post" class="card stack caller-form" id="caller-form">
+    <form method="post" class="card stack caller-form" id="caller-form" enctype="multipart/form-data">
       <?= Page::csrfField() ?><?= Page::onceField() ?>
       <p class="muted">Enter the caller's details and send a payment link. They receive their ticket after paying. Fields marked * are required.</p>
       <fieldset class="form-section">
@@ -82,6 +82,7 @@ if (isset($_GET['new'])) {
         <div class="row3" id="caller-student-fields">
           <label>University (required for students)<input name="university" id="caller-university" maxlength="160" value="<?= $value('university') ?>"<?= $student ? ' required' : '' ?>></label>
           <label>Ambassador code (optional)<input name="ambassador" maxlength="40" value="<?= $value('ambassador') ?>" placeholder="e.g. AMB-SARA" autocomplete="off"></label>
+          <label>Student ID photo (required for students)<input type="file" name="student_id" id="caller-student-id" accept="image/jpeg,image/png,image/webp"<?= $student ? ' required' : '' ?>><small class="field-hint">A clear photo of the student card, JPG, PNG or WebP, 8 MB at most. Ask the student to send it on WhatsApp.</small></label>
         </div>
       </fieldset>
       <fieldset class="form-section">

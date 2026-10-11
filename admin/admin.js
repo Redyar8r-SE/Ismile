@@ -357,6 +357,8 @@ document.addEventListener("DOMContentLoaded", () => {
     fields.hidden = !studentTicket;
     fields.querySelectorAll("input").forEach((input) => { input.disabled = !studentTicket; });
     university.required = studentTicket;
+    const photo = document.getElementById("caller-student-id");
+    if (photo) photo.required = studentTicket;
     const vipFields = document.getElementById("caller-vip-lunch");
     const vipDay = form.querySelector('[name="vip_lunch_day"]');
     if (vipFields && vipDay) {

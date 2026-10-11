@@ -118,7 +118,7 @@ final class Office
      * speaker's assistant...). The only way into the registrations without a
      * payment; logged with who and why.
      */
-    public static function createComplimentary(array $user, array $in): array
+    public static function createComplimentary(array $user, array $in, ?array $photo = null): array
     {
         if ($user['role'] !== 'owner') {
             throw new UserError('Only the Owner can give a free ticket.');
@@ -128,8 +128,23 @@ final class Office
             throw new UserError('Write the reason for the free ticket.');
         }
         $row = Checkouts::officeRow($in);
+        $row['id_photo_id'] = Checkouts::officePhoto($row, $photo);
         $now = App::now();
-        $id = Db::transaction(static function () use ($row, $user, $reason, $now): int {
+        try {
+            $id = self::insertComplimentary($row, $user, $reason, $now);
+        } catch (\Throwable $error) {
+            IdPhotos::delete($row['id_photo_id']);
+            throw $error;
+        }
+        Audit::log((int) $user['id'], 'ticket.complimentary', 'registration', $id, ['reason' => $reason]);
+        $registration = Registrations::find($id);
+        Outbox::queue('ticket', $registration);
+        return $registration;
+    }
+
+    private static function insertComplimentary(array $row, array $user, string $reason, string $now): int
+    {
+        return Db::transaction(static function () use ($row, $user, $reason, $now): int {
             $duplicateOf = Db::value("SELECT id FROM registrations WHERE (email = ? OR phone = ?) AND status <> 'cancelled' LIMIT 1", [$row['email'], $row['phone']]);
             $id = Db::insert('registrations', ['pay_method' => null] + $row + [
                 'ref' => Checkouts::newReference(), 'status' => 'complimentary', 'comp_reason' => $reason,
@@ -139,10 +154,6 @@ final class Office
             Tickets::issue($id, 'complimentary', null, (int) $user['id']);
             return $id;
         });
-        Audit::log((int) $user['id'], 'ticket.complimentary', 'registration', $id, ['reason' => $reason]);
-        $registration = Registrations::find($id);
-        Outbox::queue('ticket', $registration);
-        return $registration;
     }
 
     public static function saveNotes(array $registration, array $user, string $notes): string
