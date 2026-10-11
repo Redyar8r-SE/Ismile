@@ -121,11 +121,15 @@ switch ($what) {
         $list = \Ismile\Admin\Lists::pick((string) ($_GET['list'] ?? ''));
         if ($list === 'studentids' && !Auth::can($user, 'photos')) Page::redirect('lists.php?list=students');
         $columns = \Ismile\Admin\Lists::columns($list);
-        $rows[] = [\Ismile\Admin\Lists::ALL[$list][0]];
+        // The same filters as on the Lists page, named under the title.
+        $filters = \Ismile\Admin\Lists::filters($_GET);
+        $applied = array_column(\Ismile\Admin\Lists::describe($list, $filters), 'label');
+        $only = static fn (array $people): array => \Ismile\Admin\Lists::filter($list, $people, $filters);
+        $rows[] = [\Ismile\Admin\Lists::ALL[$list][0] . ($applied ? ' · Filtered: ' . implode(' · ', $applied) : '')];
         $number = 0;
         if (isset(\Ismile\Admin\Lists::COMPANY_LISTS[$list])) {
             $rows[] = array_merge(['#', 'Company'], array_values($columns));
-            foreach (\Ismile\Admin\Lists::rows($list) as $row) {
+            foreach ($only(\Ismile\Admin\Lists::rows($list)) as $row) {
                 $cells = [++$number, $row['company']];
                 foreach (array_keys($columns) as $key) {
                     $cells[] = (string) ($row[$key] ?? '');
@@ -138,7 +142,7 @@ switch ($what) {
         if ($list === 'workshops') {
             $rows[] = array_merge(['Workshop', '#', 'Name'], array_values($columns));
             foreach (\Ismile\Admin\Lists::workshopGroups() as ['workshop' => $workshop, 'people' => $people]) {
-                foreach (array_values($people) as $i => $row) {
+                foreach (array_values($only($people)) as $i => $row) {
                     $cells = [SiteData::workshopName($workshop), $i + 1, Registrations::fullName($row)];
                     foreach (array_keys($columns) as $key) {
                         $cells[] = $key === 'workshop_paid' ? (['paid' => 'PAID', 'complimentary' => 'FREE'][$row['workshop_paid']] ?? 'NOT PAID') : (string) ($row[$key] ?? '');
@@ -150,10 +154,14 @@ switch ($what) {
             break;
         }
         $rows[] = array_merge(['#', 'Name', 'Paid?'], array_values($columns));
-        foreach (\Ismile\Admin\Lists::rows($list) as $row) {
+        foreach ($only(\Ismile\Admin\Lists::rows($list)) as $row) {
             $cells = [++$number, Registrations::fullName($row), in_array($row['status'], ['paid', 'complimentary'], true) ? 'PAID' : 'NOT PAID'];
             foreach (array_keys($columns) as $key) {
-                $cells[] = $key === 'lunch' ? trim(($row['lunch_day1'] ? 'Day 1 ' : '') . ($row['lunch_day2'] ? 'Day 2' : '')) : (string) ($row[$key] ?? '');
+                $cells[] = match ($key) {
+                    'lunch' => trim(($row['lunch_day1'] ? 'Day 1 ' : '') . ($row['lunch_day2'] ? 'Day 2' : '')),
+                    'ambassador_code' => \Ismile\Admin\Lists::ambassadorCode($row),
+                    default => (string) ($row[$key] ?? ''),
+                };
             }
             $rows[] = $cells;
         }
@@ -168,7 +176,7 @@ Audit::log((int) $user['id'], 'export', null, null, ['what' => $what, 'rows' => 
 
 if (($_GET['format'] ?? '') === 'pdf') {
     $pdf = $what === 'list' && $list === 'studentids'
-        ? PdfReport::studentIds(\Ismile\Admin\Lists::rows($list))
+        ? PdfReport::studentIds(\Ismile\Admin\Lists::filter($list, \Ismile\Admin\Lists::rows($list), \Ismile\Admin\Lists::filters($_GET)))
         : PdfReport::make(ucwords(str_replace('-', ' ', $name)), $rows);
     header('Content-Type: application/pdf');
     header('Content-Disposition: attachment; filename="' . $name . '-' . date('Y-m-d-Hi') . '.pdf"');

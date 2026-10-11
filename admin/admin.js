@@ -502,3 +502,28 @@ document.addEventListener("DOMContentLoaded", () => {
 document.addEventListener("click", (event) => {
   if (event.target.closest("[data-print]")) window.print();
 });
+
+// Lists: the ambassador picker (find by name or code, label, close outside).
+document.addEventListener("DOMContentLoaded", () => {
+  const picker = document.querySelector(".amb-picker");
+  if (!picker) return;
+  const find = picker.querySelector("[data-amb-find]");
+  const summary = picker.querySelector("[data-amb-summary]");
+  const options = [...picker.querySelectorAll(".amb-option")];
+  find.addEventListener("input", () => {
+    const words = find.value.trim().toLowerCase();
+    options.forEach(option => { option.hidden = Boolean(words) && !option.dataset.ambText.includes(words); });
+  });
+  // Typing in the finder only filters the menu; it is not a list filter.
+  find.addEventListener("change", event => event.stopPropagation());
+  find.addEventListener("keydown", event => { if (event.key === "Enter") event.preventDefault(); });
+  const value = document.querySelector("[data-amb-value]");
+  // Runs before the form's own change handler, so the search sends the new value.
+  picker.addEventListener("change", () => {
+    const picked = options.filter(option => option.querySelector("input").checked);
+    value.value = picked.map(option => option.querySelector("input").value).join(",");
+    summary.textContent = !picked.length ? "All ambassadors" : picked.length > 1 ? `${picked.length} ambassadors` : picked[0].querySelector("b").textContent;
+  });
+  document.addEventListener("click", event => { if (picker.open && !picker.contains(event.target)) picker.open = false; });
+  picker.addEventListener("keydown", event => { if (event.key === "Escape") { picker.open = false; picker.querySelector("summary").focus(); } });
+});
