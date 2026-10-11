@@ -69,17 +69,21 @@ final class Payments
         if (!Settings::bool('registration_open') || !SiteData::pricesReadyFor($checkout)) {
             throw new UserError('reg_closed', null, 409);
         }
+        $gatewayName = (string) App::config('payments.gateway', 'fake');
+        // Psoola is the price authority: it prices the cart itself (in IQD,
+        // converting the USD lunch at its own rate), and its total becomes the
+        // attempt's amount. Every other gateway charges iSmile's own quote.
+        $priceFromGateway = $gatewayName === 'psoola';
         $quote = SiteData::quoteFor($checkout);
-        // Psoola must define settlement for a cart containing USD and IQD.
         // Never add currencies together or silently convert the visitor's price.
-        if ($quote['amount'] === null) {
+        if (!$priceFromGateway && $quote['amount'] === null) {
             return ['redirect' => null, 'error' => 'pay_start_failed'];
         }
         // An attempt made in the last few minutes is reused, so repeated clicks
         // (or an email scanner opening the link) never pile up payments at the company.
         $recent = Db::one("SELECT * FROM payments WHERE checkout_id = ? AND status = 'waiting' AND redirect_url IS NOT NULL AND created_at > ? ORDER BY id DESC LIMIT 1",
             [$checkout['id'], date('Y-m-d H:i:s', time() - self::REUSE_MINUTES * 60)]);
-        if ($recent !== null && (int) $recent['amount_expected'] === $quote['amount'] && $recent['currency'] === $quote['currency']) {
+        if ($recent !== null && ($priceFromGateway || ((int) $recent['amount_expected'] === $quote['amount'] && $recent['currency'] === $quote['currency']))) {
             return ['redirect' => $recent['redirect_url'], 'error' => null];
         }
         // Places held by people paying right now count too, so the last seats
@@ -91,14 +95,19 @@ final class Payments
             throw new UserError('lunch_full', null, 409);   // the lunch they chose is full: register again without it
         }
 
+        // Psoola: a provisional figure from PSOOLA's listed prices until its
+        // answer gives the real total (1 IQD when even the list is unavailable);
+        // only an attempt that never reached PSOOLA keeps it.
+        $expected = $priceFromGateway
+            ? (PsoolaPrices::estimate($checkout) ?? ['amount' => 1, 'currency' => 'IQD'])
+            : ['amount' => $quote['amount'], 'currency' => $quote['currency']];
         $now = App::now();
-        $gatewayName = (string) App::config('payments.gateway', 'fake');
         $paymentId = Db::insert('payments', [
             'checkout_id'     => $checkout['id'],
             'gateway'         => $gatewayName,
             'method'          => $checkout['pay_method'],
-            'amount_expected' => $quote['amount'],
-            'currency'        => $quote['currency'],
+            'amount_expected' => $expected['amount'],
+            'currency'        => $expected['currency'],
             'status'          => 'created',
             'created_at'      => $now,
             'updated_at'      => $now,
@@ -108,13 +117,18 @@ final class Payments
 
         try {
             $created = self::gateway($gatewayName)->createPayment($payment, $checkout);
+            if ($priceFromGateway && (!is_int($created['amount'] ?? null) || $created['amount'] <= 0 || !preg_match('/^[A-Z]{3}$/', (string) ($created['currency'] ?? '')))) {
+                throw new GatewayNotReady('The payment company did not say what it will charge.');
+            }
         } catch (\Throwable $error) {
             Db::update('payments', ['status' => 'failed', 'last_error' => mb_substr($error->getMessage(), 0, 500), 'updated_at' => App::now()], 'id = ?', [$paymentId]);
             App::log('error', 'Could not start a payment', ['payment' => $paymentId, 'error' => $error->getMessage()]);
             return ['redirect' => null, 'error' => 'pay_start_failed'];
         }
 
-        Db::update('payments', [
+        // The exact amount Payments::apply later requires the company to confirm.
+        $fixed = $priceFromGateway ? ['amount_expected' => $created['amount'], 'currency' => $created['currency']] : [];
+        Db::update('payments', $fixed + [
             'provider_payment_id' => $created['id'],
             'redirect_url'        => $created['redirect_url'],
             'raw_create'          => $created['raw'],
@@ -212,7 +226,7 @@ final class Payments
             $registrationId = Checkouts::toRegistration($checkout, $now);
             Db::run("UPDATE payments SET status = 'paid', registration_id = ?, amount_confirmed = ?, confirmed_at = ?, updated_at = ? WHERE id = ?", [$registrationId, $amount, $now, $now, $paymentId]);
             Tickets::issue($registrationId, 'payment', $paymentId, null);
-            $afterwards[] = ['ticket', $registrationId];
+            $afterwards[] = ['ticket', $registrationId, $payment['gateway']];
             // The person has paid, so they get their ticket. If this went over a
             // limit (two people paying for the last place at the same moment),
             // the Owner is told at once to talk to the venue or the caterer.
@@ -226,7 +240,10 @@ final class Payments
         // Emails and alerts go out only after the database change is committed.
         foreach ($afterwards as $job) {
             if ($job[0] === 'ticket') {
-                Outbox::queue('ticket', Registrations::find($job[1]));
+                // PSOOLA issues and emails the ticket itself: no iSmile ticket email.
+                if ($job[2] !== 'psoola') {
+                    Outbox::queue('ticket', Registrations::find($job[1]));
+                }
                 Audit::log(null, 'payment.confirmed', 'payment', $paymentId);
             } elseif ($job[0] === 'alert') {
                 Outbox::alert($job[1]);

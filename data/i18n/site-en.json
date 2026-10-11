@@ -95,6 +95,7 @@
   "pm_slow_text": "Your bank is taking longer than usual. You can close this page: we email your ticket as soon as the payment is confirmed.",
   "pm_paid_title": "You are in! Welcome to iSmile 2026",
   "pm_paid_text": "Your ticket has been emailed to you. You can also show this QR code at the entrance.",
+  "pm_paid_psoola_text": "PSOOLA has emailed your ticket to you. Show the ticket from that email at the entrance.",
   "pm_failed_title": "Payment not completed",
   "pm_failed_text": "No money was taken for this attempt. Your registration is saved: you can try again now.",
   "pm_unpaid_title": "Payment not received yet",

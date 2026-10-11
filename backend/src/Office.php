@@ -54,8 +54,11 @@ final class Office
         if ($nameChanged && $ticket && $ticket['cancelled_at'] === null) {
             // A new version: the old QR (with the old name) stops working at the door.
             Db::run('UPDATE tickets SET version = version + 1 WHERE id = ?', [$ticket['id']]);
-            Outbox::queue('ticket', Registrations::find((int) $registration['id']));
             Audit::log((int) $user['id'], 'ticket.reissued', 'registration', (int) $registration['id']);
+            if (Tickets::issuedByPsoola($ticket)) {
+                return 'Saved. This ticket was issued and emailed by PSOOLA: change the name on PSOOLA too.';
+            }
+            Outbox::queue('ticket', Registrations::find((int) $registration['id']));
             return 'Saved. The name changed, so the ticket was reissued and emailed again (the old QR no longer works).';
         }
         return 'Saved.';
@@ -65,6 +68,9 @@ final class Office
     {
         if (!in_array($registration['status'], ['paid', 'complimentary'], true)) {
             throw new UserError('Only a paid or complimentary registration has a ticket to send.');
+        }
+        if (Tickets::issuedByPsoola(Tickets::forRegistration((int) $registration['id']))) {
+            throw new UserError('This ticket was issued and emailed by PSOOLA. Resend it from PSOOLA.');
         }
         Outbox::queue('ticket', $registration);
         Audit::log((int) $user['id'], 'ticket.resend', 'registration', (int) $registration['id'], ['to' => $registration['email']]);

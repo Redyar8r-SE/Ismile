@@ -63,6 +63,10 @@ final class EmailTemplates
         if ($ticket === null || $ticket['cancelled_at'] !== null || !in_array($registration['status'], ['paid', 'complimentary'], true)) {
             return null;
         }
+        // PSOOLA emailed this guest's ticket; a second, different ticket would confuse them.
+        if (Tickets::issuedByPsoola($ticket)) {
+            return null;
+        }
         $w = EmailText::words();
         $name = Registrations::fullName($registration);
         $vars = ['{ref}' => $registration['ref'], '{name}' => $name, '{ticket}' => $ticket['ticket_no']];

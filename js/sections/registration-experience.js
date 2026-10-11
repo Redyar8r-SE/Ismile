@@ -1,4 +1,5 @@
-import { t, onLangChange } from "../i18n.js?v=95";
+import { t, onLangChange } from "../i18n.js?v=109";
+import { formatPrice } from "../utils/money.js?v=109";
 
 // Presentation and VIP lunch choices; validation and submission stay in registration.js.
 export function initRegistrationExperience({ tickets, onLunchChange, getStep }) {
@@ -10,6 +11,8 @@ export function initRegistrationExperience({ tickets, onLunchChange, getStep }) 
   const grid = document.querySelector(".experience-grid");
   const aside = document.querySelector(".experience-aside");
   const motion = matchMedia("(prefers-reduced-motion: reduce)");
+  // data/tickets.json prices VIP and lunch in USD; PSOOLA's prices (from the server) are IQD.
+  const money = (amount, currency) => (currency || "USD") === "USD" ? `$${Number(amount)}` : formatPrice(amount);
   const $ = (id) => document.getElementById(id);
   const ticket = () => form.querySelector('[name="ticket"]:checked')?.value || "professional";
   let includedDay = "day1";
@@ -79,7 +82,7 @@ export function initRegistrationExperience({ tickets, onLunchChange, getStep }) 
   }
   function updateExtras() {
     const other = includedDay === "day1" ? "day2" : "day1";
-    const price = `$${Number(tickets[other === "day1" ? "lunchDay1" : "lunchDay2"] ?? 40)}`;
+    const price = money(tickets[other === "day1" ? "lunchDay1" : "lunchDay2"] ?? 40, tickets.lunchCurrency);
     $("extraLunchTitle").textContent = t(`xp_add_${other}`);
     $("extraLunchDescription").textContent = t(`xp_${other}_full`);
     $("extraLunchPrice").textContent = price;
@@ -124,7 +127,8 @@ export function initRegistrationExperience({ tickets, onLunchChange, getStep }) 
     heading.querySelector("h3").textContent = t(vip ? "xp_vip_details_title" : "s2_title_p");
     heading.querySelector("p").textContent = t(vip ? "xp_vip_details_copy" : "s2_sub");
     $("reviewTier").textContent = t(vip ? "xp_review_vip" : student ? "xp_student" : "xp_professional");
-    $("reviewPrice").textContent = vip ? `$${tickets.vipUSD ?? tickets.vip ?? 100}` : `${Number(tickets[tier] || 0).toLocaleString("en-US")} ${t("cur_iqd")}`;
+    const vipUSD = (tickets.vipCurrency || "USD") === "USD";
+    $("reviewPrice").textContent = vip ? money(vipUSD ? (tickets.vipUSD ?? tickets.vip ?? 100) : tickets.vip, tickets.vipCurrency) : `${Number(tickets[tier] || 0).toLocaleString("en-US")} ${t("cur_iqd")}`;
     syncLunch();
     stopCelebration();
     if (animate) reveal();

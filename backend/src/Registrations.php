@@ -133,6 +133,12 @@ final class Registrations
     public static function publicState(string $lang): array
     {
         $prices = SiteData::prices();
+        // With the Psoola gateway the page shows PSOOLA's prices (IQD), which
+        // are what the visitor is charged; data/tickets.json if PSOOLA is unreachable.
+        $psoola = Payments\PsoolaPrices::get();
+        if ($psoola !== null) {
+            $prices = Payments\PsoolaPrices::asSitePrices($psoola);
+        }
         $reason = null;
         if (!self::isOpen()) {
             $reason = 'closed';

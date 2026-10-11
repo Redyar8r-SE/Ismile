@@ -16,7 +16,10 @@ interface Gateway
     /**
      * @param array $payment      the payments row (amount_expected, currency, method...)
      * @param array $registration the registrations row
-     * @return array{id: string, redirect_url: string, raw: string}
+     * A gateway that sets the price itself (Psoola) also returns the amount
+     * and currency of the payment it created; that becomes amount_expected.
+     *
+     * @return array{id: string, redirect_url: string, raw: string, amount?: int, currency?: string}
      */
     public function createPayment(array $payment, array $registration): array;
 

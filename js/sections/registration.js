@@ -8,9 +8,9 @@
 // server (GitHub Pages) or registration is closed, the form is not shown at
 // all, so nobody can believe they registered when nothing was saved.
 // Nothing about the visitor is kept in the browser.
-import { t, getLang, onLangChange } from "../i18n.js?v=95";
-import { formatPrice } from "../utils/money.js?v=95";
-import { initRegistrationExperience } from "./registration-experience.js?v=101";
+import { t, getLang, onLangChange } from "../i18n.js?v=109";
+import { formatPrice } from "../utils/money.js?v=109";
+import { initRegistrationExperience } from "./registration-experience.js?v=109";
 
 const TOTAL_STEPS = 3;
 
@@ -75,8 +75,11 @@ export function initRegistration({ tickets = {} } = {}) {
   const checkedValue = (name) => form.querySelector(`input[name="${name}"]:checked`)?.value;
   const optionText = (select) => select.options[select.selectedIndex]?.textContent.trim() || "";
   const isHidden = (el) => Boolean(el.closest("[hidden]:not(.reg-step)"));
-  const ticketPrice = () => checkedValue("ticket") === "vip" ? Number(tickets.vipUSD ?? tickets.vip ?? 100) : Number(tickets[checkedValue("ticket") === "student" ? "student" : "professional"]) || 0;
-  const ticketCurrency = () => checkedValue("ticket") === "vip" ? "USD" : tickets.currency || "IQD";
+  // VIP is priced in USD by data/tickets.json, in IQD when the server sends PSOOLA's prices.
+  const vipCurrency = () => tickets.vipCurrency || "USD";
+  const vipAmount = () => Number(vipCurrency() === "USD" ? (tickets.vipUSD ?? tickets.vip ?? 100) : tickets.vip) || 0;
+  const ticketPrice = () => checkedValue("ticket") === "vip" ? vipAmount() : Number(tickets[checkedValue("ticket") === "student" ? "student" : "professional"]) || 0;
+  const ticketCurrency = () => checkedValue("ticket") === "vip" ? vipCurrency() : tickets.currency || "IQD";
   const lunchCurrency = () => tickets.lunchCurrency || tickets.currency || "IQD";
   const priceText = (amount, currency) => currency === "USD" ? `$${Number(amount).toLocaleString("en-US")}` : formatPrice(amount);
   // Lunch is optional and per day: none, one or both.
@@ -637,7 +640,7 @@ export function initRegistration({ tickets = {} } = {}) {
     $("lunchPrice1").textContent = priceText(day1, lunchCurrency());
     $("lunchPrice2").textContent = priceText(day2, lunchCurrency());
     const vipPrice = document.querySelector(".vip-price-row>strong");
-    if (vipPrice) vipPrice.textContent = priceText(tickets.vipUSD ?? tickets.vip ?? 100, "USD");
+    if (vipPrice) vipPrice.textContent = priceText(vipAmount(), vipCurrency());
     // One price when both days cost the same, otherwise the lower one as "from".
     const prices = [day1, day2].filter(Boolean);
     if ($("tkPriceLunch")) $("tkPriceLunch").textContent = new Set(prices).size > 1 || prices.length === 1
