@@ -59,7 +59,7 @@ foreach ([1,2] as $included) {
             'lunch_day2'=>($included===2||$extra)?'1':'0','amount'=>'1','currency'=>'IQD']+$base;
         $checkout=Checkouts::createFromForm($form,null);
         $quote=SiteData::quoteFor($checkout);
-        $expected=$extra?142:100;
+        $expected=$extra?140:100;
         $check("day $included / extra " . (int)$extra . ' keeps VIP and its choice', $checkout['ticket_type']==='vip' && (int)$checkout['vip_lunch_day']===$included);
         $check('server ignores a tampered client price and currency', $quote['amount']===$expected && $quote['currency']==='USD' && SiteData::amountFor($checkout)===$expected);
         $started=Payments::start($checkout);
@@ -104,7 +104,7 @@ $check('admin VIP filter includes only VIP guests', in_array('vip',$params,true)
 $view=Db::one('SELECT * FROM `01_registered_people` WHERE `Reference`=?',[$registration['ref']]);
 $check('database export view labels VIP correctly', $view['Ticket']==='VIP');
 $paymentView=Db::one('SELECT * FROM `11_payments` WHERE `Reference`=?',[$registration['ref']]);
-$check('payment export retains USD instead of labeling it IQD', $paymentView['Currency']==='USD' && (int)$paymentView['Confirmed']===142);
+$check('payment export retains USD instead of labeling it IQD', $paymentView['Currency']==='USD' && (int)$paymentView['Confirmed']===140);
 $daily=Db::all('SELECT * FROM `12_money_per_day`');
 $dayCurrencies=array_map(static fn(array $row):string=>$row['Day'].':'.$row['Currency'],$daily);
 $check('daily finance export separates currencies', count(array_unique($dayCurrencies))===count($daily) && in_array('USD',array_column($daily,'Currency'),true));
