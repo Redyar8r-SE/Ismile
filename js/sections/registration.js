@@ -8,9 +8,9 @@
 // server (GitHub Pages) or registration is closed, the form is not shown at
 // all, so nobody can believe they registered when nothing was saved.
 // Nothing about the visitor is kept in the browser.
-import { t, getLang, onLangChange } from "../i18n.js?v=109";
-import { formatPrice } from "../utils/money.js?v=109";
-import { initRegistrationExperience } from "./registration-experience.js?v=109";
+import { t, getLang, onLangChange } from "../i18n.js?v=110";
+import { formatPrice } from "../utils/money.js?v=110";
+import { initRegistrationExperience } from "./registration-experience.js?v=110";
 
 const TOTAL_STEPS = 3;
 
@@ -82,10 +82,20 @@ export function initRegistration({ tickets = {} } = {}) {
   const ticketCurrency = () => checkedValue("ticket") === "vip" ? vipCurrency() : tickets.currency || "IQD";
   const lunchCurrency = () => tickets.lunchCurrency || tickets.currency || "IQD";
   const priceText = (amount, currency) => currency === "USD" ? `$${Number(amount).toLocaleString("en-US")}` : formatPrice(amount);
+  // What visitors see next to VIP and lunch: the dollar prices in data/tickets.json,
+  // kept before the server's prices arrive. PSOOLA charges in dinars at its rate
+  // of the day, so only the total (what is charged) uses the server's IQD prices.
+  const shown = {
+    vip: Number(tickets.vipUSD ?? tickets.vip ?? 100) || 0,
+    vipCurrency: tickets.vipCurrency || "USD",
+    lunchDay1: Number(tickets.lunchDay1) || 0,
+    lunchDay2: Number(tickets.lunchDay2) || 0,
+    lunchCurrency: tickets.lunchCurrency || tickets.currency || "IQD",
+  };
   // Lunch is optional and per day: none, one or both.
   const LUNCH = [
-    { id: "day1", price: () => Number(tickets.lunchDay1) || 0, label: "order_lunch_d1", short: "lunch_d1" },
-    { id: "day2", price: () => Number(tickets.lunchDay2) || 0, label: "order_lunch_d2", short: "lunch_d2" },
+    { id: "day1", price: () => Number(tickets.lunchDay1) || 0, shown: () => shown.lunchDay1, label: "order_lunch_d1", short: "lunch_d1" },
+    { id: "day2", price: () => Number(tickets.lunchDay2) || 0, shown: () => shown.lunchDay2, label: "order_lunch_d2", short: "lunch_d2" },
   ];
   const chosenLunch = () => LUNCH.filter((day) => form.querySelector(`input[name="lunch"][value="${day.id}"]`).checked);
 
@@ -445,17 +455,21 @@ export function initRegistration({ tickets = {} } = {}) {
     const student = checkedValue("ticket") === "student";
     const vip = checkedValue("ticket") === "vip";
     return [
-      { id: `ticket-${checkedValue("ticket")}`, label: t(vip ? "xp_review_vip" : student ? "order_ticket_student" : "order_ticket_prof"), price: ticketPrice(), currency: ticketCurrency() },
-      ...chosenLunch().filter((day) => !vip || day.id !== experience?.includedDay()).map((day) => ({ id: `lunch-${day.id}`, label: t(day.label), price: day.price(), currency: lunchCurrency() })),
+      { id: `ticket-${checkedValue("ticket")}`, label: t(vip ? "xp_review_vip" : student ? "order_ticket_student" : "order_ticket_prof"), price: ticketPrice(), currency: ticketCurrency(),
+        shownPrice: vip ? shown.vip : ticketPrice(), shownCurrency: vip ? shown.vipCurrency : ticketCurrency() },
+      ...chosenLunch().filter((day) => !vip || day.id !== experience?.includedDay()).map((day) => ({ id: `lunch-${day.id}`, label: t(day.label), price: day.price(), currency: lunchCurrency(),
+        shownPrice: day.shown(), shownCurrency: shown.lunchCurrency })),
     ];
   }
 
   function renderOrder() {
     const lines = orderLines();
-    fillList($("orderList"), lines.map((line) => [line.label, priceText(line.price, line.currency)]));
+    fillList($("orderList"), lines.map((line) => [line.label, priceText(line.shownPrice, line.shownCurrency)]));
     const totals = new Map();
     lines.forEach((line) => totals.set(line.currency, (totals.get(line.currency) || 0) + line.price));
     $("orderTotal").textContent = [...totals].map(([currency, amount]) => isolate(priceText(amount, currency))).join(" + ");
+    // Dollar prices above, a dinar total: say why the numbers differ.
+    $("orderTotalNote").hidden = !lines.some((line) => line.shownCurrency !== line.currency);
   }
 
   // ---------- Submit ----------
@@ -636,16 +650,16 @@ export function initRegistration({ tickets = {} } = {}) {
   function renderTicketPrices() {
     $("tkPriceProf").textContent = formatPrice(tickets.professional);
     $("tkPriceStudent").textContent = formatPrice(tickets.student);
-    const [day1, day2] = LUNCH.map((day) => day.price());
-    $("lunchPrice1").textContent = priceText(day1, lunchCurrency());
-    $("lunchPrice2").textContent = priceText(day2, lunchCurrency());
+    const [day1, day2] = LUNCH.map((day) => day.shown());
+    $("lunchPrice1").textContent = priceText(day1, shown.lunchCurrency);
+    $("lunchPrice2").textContent = priceText(day2, shown.lunchCurrency);
     const vipPrice = document.querySelector(".vip-price-row>strong");
-    if (vipPrice) vipPrice.textContent = priceText(vipAmount(), vipCurrency());
+    if (vipPrice) vipPrice.textContent = priceText(shown.vip, shown.vipCurrency);
     // One price when both days cost the same, otherwise the lower one as "from".
     const prices = [day1, day2].filter(Boolean);
     if ($("tkPriceLunch")) $("tkPriceLunch").textContent = new Set(prices).size > 1 || prices.length === 1
-      ? t("lunch_from").replace("{price}", formatPrice(Math.min(...prices)))
-      : formatPrice(day1);
+      ? t("lunch_from").replace("{price}", priceText(Math.min(...prices), shown.lunchCurrency))
+      : priceText(day1, shown.lunchCurrency);
   }
 
   // ---------- Language changes ----------
@@ -662,7 +676,7 @@ export function initRegistration({ tickets = {} } = {}) {
   });
 
   // ---------- Start ----------
-  experience = initRegistrationExperience({ tickets, getStep: () => step, onLunchChange: () => { syncChecked("lunch"); updateNextLabel(); if (step === 3) renderReview(); } });
+  experience = initRegistrationExperience({ tickets, shown, getStep: () => step, onLunchChange: () => { syncChecked("lunch"); updateNextLabel(); if (step === 3) renderReview(); } });
   toggleUniversity();
   updateAgeButtons();
   renderTicketPrices();

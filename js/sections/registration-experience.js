@@ -1,8 +1,8 @@
-import { t, onLangChange } from "../i18n.js?v=109";
-import { formatPrice } from "../utils/money.js?v=109";
+import { t, onLangChange } from "../i18n.js?v=110";
+import { formatPrice } from "../utils/money.js?v=110";
 
 // Presentation and VIP lunch choices; validation and submission stay in registration.js.
-export function initRegistrationExperience({ tickets, onLunchChange, getStep }) {
+export function initRegistrationExperience({ tickets, shown, onLunchChange, getStep }) {
   const stage = document.getElementById("experienceStage");
   if (!stage) return null;
   const form = document.getElementById("regForm");
@@ -82,7 +82,8 @@ export function initRegistrationExperience({ tickets, onLunchChange, getStep }) 
   }
   function updateExtras() {
     const other = includedDay === "day1" ? "day2" : "day1";
-    const price = money(tickets[other === "day1" ? "lunchDay1" : "lunchDay2"] ?? 40, tickets.lunchCurrency);
+    // The dollar price visitors see; the total on the last step is what PSOOLA charges.
+    const price = money(shown[other === "day1" ? "lunchDay1" : "lunchDay2"] || 40, shown.lunchCurrency);
     $("extraLunchTitle").textContent = t(`xp_add_${other}`);
     $("extraLunchDescription").textContent = t(`xp_${other}_full`);
     $("extraLunchPrice").textContent = price;
@@ -127,8 +128,7 @@ export function initRegistrationExperience({ tickets, onLunchChange, getStep }) 
     heading.querySelector("h3").textContent = t(vip ? "xp_vip_details_title" : "s2_title_p");
     heading.querySelector("p").textContent = t(vip ? "xp_vip_details_copy" : "s2_sub");
     $("reviewTier").textContent = t(vip ? "xp_review_vip" : student ? "xp_student" : "xp_professional");
-    const vipUSD = (tickets.vipCurrency || "USD") === "USD";
-    $("reviewPrice").textContent = vip ? money(vipUSD ? (tickets.vipUSD ?? tickets.vip ?? 100) : tickets.vip, tickets.vipCurrency) : `${Number(tickets[tier] || 0).toLocaleString("en-US")} ${t("cur_iqd")}`;
+    $("reviewPrice").textContent = vip ? money(shown.vip, shown.vipCurrency) : `${Number(tickets[tier] || 0).toLocaleString("en-US")} ${t("cur_iqd")}`;
     syncLunch();
     stopCelebration();
     if (animate) reveal();

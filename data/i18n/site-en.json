@@ -294,5 +294,6 @@
   "pg_tab_map": "Map",
   "pg_tab_program": "Program",
   "pg_map_title": "Exhibition floor plan",
-  "pg_map_text": "The 44 numbered booths in the exhibition hall at Grand Millennium Sulaimani."
+  "pg_map_text": "The 44 numbered booths in the exhibition hall at Grand Millennium Sulaimani.",
+  "order_total_note": "Paid in Iraqi dinars: Psoola converts the dollar prices at its exchange rate of the day."
 }
