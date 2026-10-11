@@ -14,7 +14,6 @@ $e=[Page::class,'e'];
 Page::top('Registration · '.CheckinWorkspace::TABS[$tab][0],'checkin');
 echo CheckinWorkspace::navigation($tab,$user,$day);
 if ($tab==='report') {
-    echo '<div class="live-report-toolbar"><div><span class="live-report-badge"><i></i> Live report</span><span class="muted small">Updates every 15 seconds</span></div><div><span data-live-report-status role="status" aria-live="polite">Updated '.date('H:i:s').' · Iraq time</span><button type="button" class="btn small ghost" data-live-report-refresh>Refresh now</button></div></div>';
     echo '<div data-live-report data-source="checkin-report.php'.($day?'?day='.$day:'').'">'.RegistrationReport::render(RegistrationReport::snapshot(),$user,$day).'</div>';
     Page::bottom(); exit;
 }

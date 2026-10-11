@@ -271,9 +271,10 @@ final class Page
     }
 
     /** Read-only regions update in place while the user keeps their filters. */
+    /** Pages update themselves every 10 seconds (admin.js); there is no box to show for it. */
     public static function liveUpdates(): string
     {
-        return '<div class="live-report-toolbar no-print" data-live-directory><div><span class="live-report-badge"><i></i> Live updates</span><span class="muted small">New records appear automatically</span></div><div><span data-live-directory-status role="status" aria-live="polite">Checking for updates every 5 seconds</span><button type="button" class="btn small ghost" data-live-directory-refresh>Update now</button></div></div>';
+        return '';
     }
 
     public static function bottom(): void

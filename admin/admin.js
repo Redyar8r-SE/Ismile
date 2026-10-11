@@ -113,72 +113,80 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// Live directories: replace only read-only results, preserving search forms.
+// Every admin page stays current: every 10 seconds the page is fetched again and
+// only the parts that changed are swapped in, quietly. Pages with marked regions
+// (data-live-region) swap those; other pages swap each block of the main area
+// that has nothing to type in. Nothing is swapped while it is being used: a
+// focused or changed field, an open menu, selected text, a camera.
 document.addEventListener("DOMContentLoaded", () => {
-  const toolbar = document.querySelector("[data-live-directory]");
-  if (!toolbar) return;
-  const regions = [...document.querySelectorAll("[data-live-region]")];
-  const status = toolbar.querySelector("[data-live-directory-status]");
-  const refresh = toolbar.querySelector("[data-live-directory-refresh]");
-  const badge = toolbar.querySelector(".live-report-badge");
+  const main = document.getElementById("main-content");
+  if (!main || !document.body.classList.contains("admin-shell") || document.querySelector("[data-live-report], [data-no-live], video")) return;
+  const marked = [...document.querySelectorAll("[data-live-region]")];
   const previous = new Map();
   let pending = false, stopped = false, timer, controller;
+  const typing = el => el.matches?.("input:not([type=hidden]):not([type=submit]):not([type=button]), textarea, select, [contenteditable]");
+  // A part may be swapped only when nothing in it is in use.
+  const inUse = region => {
+    const focused = document.activeElement;
+    if (focused && region.contains(focused) && typing(focused)) return true;
+    const selection = window.getSelection();
+    if (selection && !selection.isCollapsed && (region.contains(selection.anchorNode) || region.contains(selection.focusNode))) return true;
+    if (region.querySelector("details[open]:not([data-live-key]), dialog[open], video, canvas")) return true;
+    return [...region.querySelectorAll("input, textarea, select")].some(field =>
+      field.type === "checkbox" || field.type === "radio" ? field.checked !== field.defaultChecked
+        : field.tagName === "SELECT" ? [...field.options].some(option => option.selected !== option.defaultSelected)
+        : field.type !== "hidden" && field.value !== field.defaultValue);
+  };
+  // Without marked regions: the blocks of the main area with no typing fields.
+  const blocks = root => [...root.children].filter(el => !el.matches(".flash, script, .page-heading") && !el.querySelector("input:not([type=hidden]):not([type=submit]):not([type=button]), textarea, select, [contenteditable]"));
+  const swap = (region, html) => {
+    if (previous.get(region) === html || region.innerHTML === html || inUse(region)) return;
+    const focusedLink = region.contains(document.activeElement) ? document.activeElement.closest("a[href]")?.getAttribute("href") : null;
+    const opened = [...region.querySelectorAll("details[open][data-live-key]")].map(el => el.dataset.liveKey);
+    const scrolls = [...region.querySelectorAll(".table-wrap")].map(el => [el.scrollLeft, el.scrollTop]);
+    region.innerHTML = html;
+    for (const detail of region.querySelectorAll("details[data-live-key]")) detail.open = opened.includes(detail.dataset.liveKey);
+    region.querySelectorAll(".table-wrap").forEach((el, i) => { if (scrolls[i]) [el.scrollLeft, el.scrollTop] = scrolls[i]; });
+    if (focusedLink) [...region.querySelectorAll("a[href]")].find(el => el.getAttribute("href") === focusedLink)?.focus({ preventScroll: true });
+    previous.set(region, html);
+  };
   const update = async () => {
     if (pending || stopped || document.hidden || document.querySelector('[data-instant-search][data-search-dirty="true"]')) return;
     const requestUrl = location.href;
     pending = true;
-    refresh.disabled = true;
     controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000);
     try {
       const response = await fetch(location.href, { credentials: "same-origin", cache: "no-store", signal: controller.signal, headers: { Accept: "text/html" } });
-      if (response.redirected || response.status === 401 || response.status === 403) {
-        stopped = true;
-        clearInterval(timer);
-        throw new Error("session");
-      }
-      if (!response.ok || !response.headers.get("content-type")?.includes("text/html")) throw new Error("unavailable");
+      if (response.redirected || response.status === 401 || response.status === 403) { stopped = true; clearInterval(timer); return; }
+      if (!response.ok || !response.headers.get("content-type")?.includes("text/html")) return;
       const page = new DOMParser().parseFromString(await response.text(), "text/html");
       if (location.href !== requestUrl || document.querySelector('[data-instant-search][data-search-dirty="true"]')) return;
-      if (!page.querySelector("[data-live-directory]")) throw new Error("unavailable");
-      const replacements = regions.map(region => page.querySelector(`[data-live-region="${region.dataset.liveRegion}"]`));
-      if (replacements.some(region => !region)) throw new Error("unavailable");
-      regions.forEach((region, index) => {
-        const html = replacements[index].innerHTML;
-        // Keep keyboard focus and text selection while the user interacts.
-        const selection = window.getSelection();
-        const focused = region.contains(document.activeElement) ? document.activeElement : null;
-        if (focused?.matches("input, textarea, select, [contenteditable]") || (selection && !selection.isCollapsed && (region.contains(selection.anchorNode) || region.contains(selection.focusNode)))) return;
-        if (previous.get(region) === html) return;
-        const focusedDetail = focused?.closest("details[data-live-key]")?.dataset.liveKey;
-        const focusedLink = focused?.closest("a[href]")?.getAttribute("href");
-        const opened = [...region.querySelectorAll("details[open][data-live-key]")].map(el => el.dataset.liveKey);
-        const scrolls = [...region.querySelectorAll(".table-wrap")].map(el => [el.scrollLeft, el.scrollTop]);
-        region.innerHTML = html;
-        for (const detail of region.querySelectorAll("details[data-live-key]")) detail.open = opened.includes(detail.dataset.liveKey);
-        region.querySelectorAll(".table-wrap").forEach((el, i) => { if (scrolls[i]) [el.scrollLeft, el.scrollTop] = scrolls[i]; });
-        if (focusedDetail) [...region.querySelectorAll("details[data-live-key]")].find(el => el.dataset.liveKey === focusedDetail)?.querySelector("summary")?.focus({ preventScroll: true });
-        else if (focusedLink) [...region.querySelectorAll("a[href]")].find(el => el.getAttribute("href") === focusedLink)?.focus({ preventScroll: true });
-        previous.set(region, html);
-      });
-      status.textContent = "Updated " + new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Baghdad", hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(new Date()) + " · Iraq time";
-      badge.classList.remove("offline");
-    } catch (error) {
-      if (location.href !== requestUrl || document.querySelector('[data-instant-search][data-search-dirty="true"]')) return;
-      status.textContent = error.message === "session" ? "Session ended. Sign in again to see live updates." : "Connection interrupted. Keeping your current list and retrying automatically.";
-      badge.classList.add("offline");
+      const fresh = page.getElementById("main-content");
+      if (!fresh || !page.body.classList.contains("admin-shell")) return;
+      if (marked.length) {
+        marked.forEach(region => {
+          const replacement = page.querySelector(`[data-live-region="${region.dataset.liveRegion}"]`);
+          if (replacement) swap(region, replacement.innerHTML);
+        });
+        return;
+      }
+      const now = blocks(main), next = blocks(fresh);
+      // Only when the page still has the same shape; otherwise wait for a real visit.
+      if (now.length !== next.length || now.some((el, i) => el.tagName !== next[i].tagName || el.className !== next[i].className)) return;
+      now.forEach((el, i) => swap(el, next[i].innerHTML));
+    } catch {
+      // Offline or busy: keep what is on the screen and try again next time.
     } finally {
       clearTimeout(timeout);
       pending = false;
-      refresh.disabled = stopped;
     }
   };
-  refresh.addEventListener("click", update);
   document.addEventListener("admin:search-start", () => { previous.clear(); controller?.abort(); });
-  timer = setInterval(update, 5000);
+  timer = setInterval(update, 10000);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) update(); });
   window.addEventListener("pagehide", () => { stopped = true; clearInterval(timer); controller?.abort(); });
-  window.addEventListener("pageshow", event => { if (event.persisted) { stopped = false; timer = setInterval(update, 5000); update(); } });
+  window.addEventListener("pageshow", event => { if (event.persisted) { stopped = false; clearInterval(timer); timer = setInterval(update, 10000); update(); } });
 });
 
 // Live attendance report: refresh committed arrivals without leaving the page.
@@ -206,7 +214,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const update = async () => {
     if (pending || stopped || document.hidden) return;
     pending = true;
-    refresh.disabled = true;
+    if (refresh) refresh.disabled = true;
     controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000);
     try {
@@ -220,21 +228,21 @@ document.addEventListener("DOMContentLoaded", () => {
       applySeries();
       for (const key of openDetails) report.querySelector(`[data-report-detail="${key}"]`)?.setAttribute("open", "");
       if (focusedDay) report.querySelector(`[data-chart-day="${focusedDay}"]`)?.focus({ preventScroll: true });
-      status.textContent = `Updated ${data.updated_at.slice(11)} · Iraq time`;
-      badge.classList.remove("offline");
+      if (status) status.textContent = `Updated ${data.updated_at.slice(11)} · Iraq time`;
+      badge?.classList.remove("offline");
     } catch {
-      if (!stopped) {
+      if (!stopped && status) {
         status.textContent = "Live update unavailable. Showing the last successful report; retrying automatically.";
-        badge.classList.add("offline");
+        badge?.classList.add("offline");
       }
     } finally {
       clearTimeout(timeout);
       pending = false;
-      refresh.disabled = false;
+      if (refresh) refresh.disabled = false;
     }
   };
-  refresh.addEventListener("click", update);
-  const timer = setInterval(update, 15000);
+  refresh?.addEventListener("click", update);
+  const timer = setInterval(update, 10000);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) update(); });
   window.addEventListener("pagehide", () => { stopped = true; clearInterval(timer); controller?.abort(); });
   window.addEventListener("pageshow", event => { if (event.persisted) window.location.reload(); });
