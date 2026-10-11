@@ -101,4 +101,18 @@ $check('a copy of the booking and its call is kept', $sponsorCopy['sponsor_reque
 Erase::sponsorRequest((int) $booth['id'], $booth['ref'], $main);
 $check('a booth booking is kept as kind booth', (bool) Db::value("SELECT COUNT(*) FROM deleted_records WHERE kind = 'booth' AND ref = ?", [$booth['ref']]));
 
+// Team accounts.
+$arman = $account("arman-$tag@test.invalid", 'owner');
+$check('a second Owner cannot delete an account', $rejects(static fn () => Erase::account((int) $arman['id'], $arman['email'], $other)));
+$check('an account needs its email typed', $rejects(static fn () => Erase::account((int) $arman['id'], 'wrong@test.invalid', $main)));
+$check('the main Owner account can never be deleted', $rejects(static fn () => Erase::account((int) $main['id'], $main['email'], $main)));
+Erase::account((int) $arman['id'], strtoupper($arman['email']), $main);
+$gone = Db::one('SELECT * FROM admin_users WHERE id = ?', [$arman['id']]);
+$check('the account cannot sign in and leaves the list', Erase::isDeletedAccount($gone) && $gone['disabled_at'] !== null && $gone['role'] === 'checkin'
+    && !Db::value('SELECT COUNT(*) FROM admin_users WHERE email = ?', [$arman['email']]) && (int) $gone['totp_enabled'] === 0);
+$check('its name stays for the history', str_starts_with($gone['name'], 'owner') && str_ends_with($gone['name'], '(deleted)'));
+$check('the deploy knows not to make it again', Erase::wasDeleted($arman['email']) && Erase::wasDeleted(' ' . strtoupper($arman['email'])) && !Erase::wasDeleted($other['email']));
+$check('a deleted account cannot be deleted twice', $rejects(static fn () => Erase::account((int) $arman['id'], $gone['email'], $main)));
+$check('the address can be used for a new account', (bool) Auth::createUser($arman['email'], 'Arman again', 'checkin', bin2hex(random_bytes(12))));
+
 echo "$passed checks passed\n";

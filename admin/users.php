@@ -27,7 +27,7 @@ Page::action(static function () use ($user): string {
         return "Account created for $email. Give them the password in person, not in a chat.";
     }
     $target = Db::one('SELECT * FROM admin_users WHERE id = ?', [(int) ($_POST['id'] ?? 0)]);
-    if ($target === null) {
+    if ($target === null || Erase::isDeletedAccount($target)) {
         throw new UserError('Account not found.');
     }
     if ((int) $target['id'] === (int) $user['id'] && in_array($do, ['disable', 'role'], true)) {
@@ -38,6 +38,8 @@ Page::action(static function () use ($user): string {
         throw new UserError('This is the main Owner account. Only the main Owner can change it.');
     }
     switch ($do) {
+        case 'delete':
+            return Erase::account((int) $target['id'], (string) ($_POST['confirm_email'] ?? ''), $user);
         case 'disable':
             Db::run('UPDATE admin_users SET disabled_at = NOW() WHERE id = ?', [$target['id']]);
             Audit::log((int) $user['id'], 'user.disable', 'admin_user', (int) $target['id']);
@@ -72,7 +74,8 @@ Page::action(static function () use ($user): string {
     throw new UserError('Unknown action.');
 }, 'users.php');
 
-$users = Db::all('SELECT * FROM admin_users ORDER BY disabled_at IS NOT NULL, role, name');
+// Deleted accounts stay only as names in the history, not in this list.
+$users = Db::all("SELECT * FROM admin_users WHERE email NOT LIKE '%@deleted.invalid' ORDER BY disabled_at IS NOT NULL, role, name");
 $e = [Page::class, 'e'];
 $active = array_filter($users, static fn (array $row): bool => !$row['disabled_at']);
 $secured = count(array_filter($active, static fn (array $row): bool => (bool) $row['totp_enabled']));
@@ -112,7 +115,11 @@ Page::top('Users', 'users', '<a class="btn" href="#add-person">' . Page::navIcon
         <form method="post"><?= Page::csrfField() ?><input type="hidden" name="id" value="<?= (int) $row['id'] ?>"><input type="hidden" name="do" value="enable"><button class="btn small green">Enable</button></form>
       <?php else: ?>
         <form method="post"><?= Page::csrfField() ?><input type="hidden" name="id" value="<?= (int) $row['id'] ?>"><input type="hidden" name="do" value="disable"><button class="btn small red" data-confirm="Disable this account? Their history stays.">Disable</button></form>
-      <?php endif; ?></div><?php endif; ?></details><?php endif; ?>
+      <?php endif; ?></div>
+      <?php if (Erase::isMainOwner($user)): ?><form method="post" class="stack account-delete"><?= Page::csrfField() ?><input type="hidden" name="id" value="<?= (int) $row['id'] ?>"><input type="hidden" name="do" value="delete">
+        <label><span>Delete this account: type <b dir="ltr"><?= $e($row['email']) ?></b></span><input name="confirm_email" required autocomplete="off" dir="ltr" placeholder="<?= $e($row['email']) ?>"></label>
+        <div class="form-actions compact"><button class="btn small red" data-confirm="Delete <?= $e($row['email']) ?>? They can never sign in again and leave the team list. Their past actions stay in the history.">Delete account</button></div></form><?php endif; ?>
+      <?php endif; ?></details><?php endif; ?>
     </div></td>
   </tr>
   <?php endforeach; ?>

@@ -42,6 +42,51 @@ final class Erase
         return $shown . ($domain !== '' ? '@' . $domain : '');
     }
 
+    /**
+     * A team account, gone from the Team page and from sign-in. Check-ins, calls
+     * and the history still point at it, so the row stays as "Name (deleted)"
+     * with a made-up address; the old address can be used again.
+     */
+    public static function account(int $id, string $typed, array $user): string
+    {
+        self::requireMainOwner($user);
+        return Db::transaction(static function () use ($id, $typed, $user): string {
+            $account = Db::one('SELECT * FROM admin_users WHERE id = ? FOR UPDATE', [$id]) ?? throw new UserError('Account not found.');
+            if (self::isDeletedAccount($account)) {
+                throw new UserError('This account is already deleted.');
+            }
+            if ((int) $account['id'] === (int) $user['id'] || self::isMainOwnerAccount($account)) {
+                throw new UserError('The main Owner account cannot be deleted.');
+            }
+            if (strtolower(trim($typed)) !== strtolower($account['email'])) {
+                throw new UserError('Nothing was deleted. Type the email ' . $account['email'] . ' exactly to confirm.');
+            }
+            Db::run(
+                "UPDATE admin_users SET email = ?, name = ?, role = 'checkin', password_hash = ?, totp_secret = NULL, totp_enabled = 0,"
+                . ' totp_last_step = NULL, failed_logins = 0, locked_until = NULL, disabled_at = COALESCE(disabled_at, NOW()),'
+                . ' session_version = session_version + 1 WHERE id = ?',
+                ['deleted-' . $id . '@deleted.invalid', mb_substr($account['name'], 0, 109) . ' (deleted)', password_hash(bin2hex(random_bytes(32)), PASSWORD_DEFAULT), $id]
+            );
+            // The deploy reads this to never make a deleted Owner account again.
+            Audit::log((int) $user['id'], 'user.delete', 'admin_user', $id, ['email' => strtolower($account['email']), 'name' => $account['name'], 'role' => $account['role']]);
+            return $account['email'] . ' is deleted: it cannot sign in and is gone from the team list. Its past actions stay in the history.';
+        });
+    }
+
+    public static function isDeletedAccount(array $account): bool
+    {
+        return str_ends_with((string) ($account['email'] ?? ''), '@deleted.invalid');
+    }
+
+    /** True when the main Owner deleted an account with this email (the deploy will not make it again). */
+    public static function wasDeleted(string $email): bool
+    {
+        // Matches "email":"x@y" inside the logged JSON; % and _ are escaped for LIKE.
+        $pair = '"email":' . json_encode(strtolower(trim($email)), JSON_UNESCAPED_UNICODE);
+        $needle = '%' . addcslashes($pair, '%_\\') . '%';
+        return (bool) Db::value("SELECT COUNT(*) FROM audit_log WHERE action = 'user.delete' AND details LIKE ?", [$needle]);
+    }
+
     /** One paid person with their ticket, check-ins, certificate, workshops, payments, emails and ID photo. */
     public static function registration(int $id, string $typed, array $user): string
     {

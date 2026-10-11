@@ -165,6 +165,9 @@ if ($ownerAt !== false) {
     if (Db::value('SELECT id FROM admin_users WHERE email = ?', [strtolower($email)])) {
         exit("An account for $email already exists.\n");
     }
+    if (\Ismile\Erase::wasDeleted($email)) {
+        exit("The main Owner deleted the account $email; it is not made again.\n");
+    }
     $password = $askPassword('ISMILE_OWNER_PASSWORD', $email);
     if (!Auth::validPassword($password)) {
         exit("The password must have at least 12 characters.\n");
@@ -185,6 +188,10 @@ if ($ensureAt !== false) {
         exit(1);
     }
     $user = Db::one('SELECT * FROM admin_users WHERE email = ?', [$email]);
+    if ($user === null && \Ismile\Erase::wasDeleted($email)) {
+        echo "Owner account $email: deleted by the main Owner, so it is not made again.\n";
+        exit(0);
+    }
     if ($user === null) {
         $id = Auth::createUser($email, 'Owner', 'owner', $password);
         echo "Owner account made (#$id).\n";
