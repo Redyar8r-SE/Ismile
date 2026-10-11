@@ -29,6 +29,7 @@
 .reg-help svg{flex:none;width:24px;height:24px;color:#7FD6D2}
 .reg-help b{display:block;font-size:14.5px}
 .reg-help a{font-size:14px;color:#CFE7E8;text-decoration:none}
+.reg-help div a{display:block;width:fit-content;margin-top:2px}
 .reg-help a:hover{color:#fff;text-decoration:underline}
 .reg-policy{display:flex;align-items:center;gap:8px;padding-inline:4px;font-size:13px;color:var(--muted)}
 .reg-policy svg{flex:none;width:15px;height:15px}
