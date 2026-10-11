@@ -8,9 +8,9 @@
 // server (GitHub Pages) or registration is closed, the form is not shown at
 // all, so nobody can believe they registered when nothing was saved.
 // Nothing about the visitor is kept in the browser.
-import { t, getLang, onLangChange } from "../i18n.js?v=113";
-import { formatPrice } from "../utils/money.js?v=113";
-import { initRegistrationExperience } from "./registration-experience.js?v=113";
+import { t, getLang, onLangChange } from "../i18n.js?v=114";
+import { formatPrice } from "../utils/money.js?v=114";
+import { initRegistrationExperience } from "./registration-experience.js?v=114";
 
 const TOTAL_STEPS = 3;
 
@@ -491,7 +491,7 @@ export function initRegistration({ tickets = {} } = {}) {
 
   // Everything the server needs, read straight from the fields. The server
   // checks it all again and sets the price itself.
-  function formData() {
+  async function formData() {
     const data = new FormData();
     const student = checkedValue("ticket") === "student";
     data.append("lang", getLang());
@@ -513,7 +513,10 @@ export function initRegistration({ tickets = {} } = {}) {
       data.append("university", $("p_uni").value.trim());
       data.append("ambassador", $("p_ambassador").value.trim());
       const photo = $("p_student_id").files?.[0];
-      if (photo) data.append("student_id", photo);
+      if (photo) {
+        const small = await shrinkPhoto(photo);
+        data.append("student_id", small, small === photo ? photo.name : "student-id.jpg");
+      }
     }
     return data;
   }
@@ -540,13 +543,44 @@ export function initRegistration({ tickets = {} } = {}) {
     error.hidden = false;
   }
 
+  // A phone photo of a student ID is often 2 to 5 MB, but ismile.krd takes
+  // about 1 MB per request. The server keeps at most 2000 px on the long side
+  // anyway, so the photo is redrawn here first (turned upright, as a JPEG) and
+  // made smaller step by step until it fits. Anything that cannot be redrawn
+  // is sent as it is.
+  async function shrinkPhoto(file) {
+    const LIMIT = 850 * 1024;
+    if (!/^image\/(jpeg|png|webp)$/i.test(file.type) || typeof createImageBitmap !== "function") return file;
+    if (file.size <= LIMIT && file.type === "image/jpeg") return file;
+    try {
+      const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+      let best = null;
+      for (const [side, quality] of [[2000, 0.85], [2000, 0.72], [1600, 0.72], [1280, 0.7]]) {
+        const scale = Math.min(1, side / Math.max(bitmap.width, bitmap.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+        canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+        const context = canvas.getContext("2d");
+        context.fillStyle = "#fff";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+        best = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
+        if (best && best.size <= LIMIT) break;
+      }
+      bitmap.close?.();
+      return best && best.size < file.size ? best : file;
+    } catch {
+      return file;
+    }
+  }
+
   async function submitRegistration() {
     if (sending) return;
     setSending(true);
     $("termsError").hidden = true;
     let result = null;
     try {
-      const response = await fetch("api/register.php", { method: "POST", body: formData(), headers: { Accept: "application/json" } });
+      const response = await fetch("api/register.php", { method: "POST", body: await formData(), headers: { Accept: "application/json" } });
       result = await response.json();
     } catch {
       result = { ok: false, error: "err_server" };
