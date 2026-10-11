@@ -15,22 +15,22 @@
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=Noto+Kufi+Arabic:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <!-- Base -->
-<link rel="stylesheet" href="css/base/tokens.css?v=114">
-<link rel="stylesheet" href="css/base/base.css?v=114">
+<link rel="stylesheet" href="css/base/tokens.css?v=115">
+<link rel="stylesheet" href="css/base/base.css?v=115">
 <!-- Components -->
-<link rel="stylesheet" href="css/components/boot.css?v=114">
-<link rel="stylesheet" href="css/components/buttons.css?v=114">
-<link rel="stylesheet" href="css/components/brand.css?v=114">
-<link rel="stylesheet" href="css/components/tier-card.css?v=114">
+<link rel="stylesheet" href="css/components/boot.css?v=115">
+<link rel="stylesheet" href="css/components/buttons.css?v=115">
+<link rel="stylesheet" href="css/components/brand.css?v=115">
+<link rel="stylesheet" href="css/components/tier-card.css?v=115">
 <!-- Layout -->
-<link rel="stylesheet" href="css/layout/header.css?v=114">
-<link rel="stylesheet" href="css/layout/footer.css?v=114">
+<link rel="stylesheet" href="css/layout/header.css?v=115">
+<link rel="stylesheet" href="css/layout/footer.css?v=115">
 <!-- The form borrows the registration card, stepper and fields. -->
-<link rel="stylesheet" href="css/sections/register.css?v=114">
-<link rel="stylesheet" href="css/sections/sponsor-form.css?v=114">
-<link rel="stylesheet" href="css/sections/booth-map.css?v=114">
+<link rel="stylesheet" href="css/sections/register.css?v=115">
+<link rel="stylesheet" href="css/sections/sponsor-form.css?v=115">
+<link rel="stylesheet" href="css/sections/booth-map.css?v=115">
 
-<script type="module" src="js/sponsor.js?v=114"></script>
+<script type="module" src="js/sponsor.js?v=115"></script>
 </head>
 <body>
 
@@ -159,16 +159,16 @@
     <section class="exhibition" id="exhibition" aria-labelledby="exhibitionTitle" data-view="map" hidden>
       <div class="exhibition-head">
         <div>
-          <p class="section-kicker" data-i18n="bm_kicker">Exhibition floor plan</p>
+          <p class="section-kicker exhibition-kicker"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4 3 6.5v13.5l6-2.5 6 2.5 6-2.5V4l-6 2.5L9 4Zm0 0v13.5m6-11v13.5"/></svg><span data-i18n="bm_kicker">Exhibition floor plan</span></p>
           <h2 id="exhibitionTitle" data-i18n="bm_title">Own an iSmile experience</h2>
           <p data-i18n="bm_intro">Explore the 44 numbered booths. Reserved spaces appear in red on the map and in the table.</p>
         </div>
         <span class="exhibition-live" id="boothLive" role="status" data-i18n="bm_connecting">Connecting to availability…</span>
       </div>
       <div class="exhibition-overview" aria-label="Availability summary" data-i18n-label="bm_summary_label">
-        <div class="exhibition-stat"><span data-i18n="bm_total">Numbered booths</span><strong>44</strong></div>
-        <div class="exhibition-stat stat-available"><span data-i18n="bm_available">Available</span><strong id="boothAvailableCount">—</strong></div>
-        <div class="exhibition-stat stat-booked"><span data-i18n="bm_booked">Booked</span><strong id="boothBookedCount">—</strong></div>
+        <div class="exhibition-stat stat-total"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9h14M5 15h14M10 4 8 20M16 4l-2 16"/></svg><span data-i18n="bm_total">Numbered booths</span></span><strong>44</strong></div>
+        <div class="exhibition-stat stat-available"><span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.7 2.7L16 9.8"/></svg><span data-i18n="bm_available">Available</span></span><strong id="boothAvailableCount">—</strong><i class="exhibition-bar" aria-hidden="true"><b id="boothAvailableBar"></b></i></div>
+        <div class="exhibition-stat stat-booked"><span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6m0-6-6 6"/></svg><span data-i18n="bm_booked">Booked</span></span><strong id="boothBookedCount">—</strong><i class="exhibition-bar" aria-hidden="true"><b id="boothBookedBar"></b></i></div>
       </div>
       <div class="exhibition-legend" aria-label="Booth tiers" data-i18n-label="bm_tiers">
         <span><i class="tier-platinum"></i><span data-i18n="bm_platinum">Platinum</span></span>
@@ -199,11 +199,7 @@
         <div class="exhibition-table-panel" id="boothTablePanel">
           <div class="exhibition-panel-head"><div><p class="exhibition-eyebrow" data-i18n="bm_directory">Booth directory</p><h3 data-i18n="bm_table_title">Numbers &amp; sizes</h3><p class="exhibition-hint" data-i18n="bm_table_hint">Compare the tiers, sizes and bookings. Select a booth number to find it on the map.</p></div></div>
           <div class="exhibition-table-scroll" tabindex="0" role="region" aria-label="Booth tiers, numbers, sizes and live bookings" data-i18n-label="bm_table_caption">
-            <table class="booth-table">
-              <caption class="sr-only" data-i18n="bm_table_caption">Booth tiers, numbers, sizes and live bookings</caption>
-              <thead><tr><th scope="col" data-i18n="bm_tier">Tier</th><th scope="col" data-i18n="bm_numbers">Booths</th><th scope="col" data-i18n="bm_size">Size (W × L)</th><th scope="col" data-i18n="bm_booked">Booked</th></tr></thead>
-              <tbody id="boothTableBody"></tbody>
-            </table>
+            <div class="booth-groups" id="boothTableBody"></div>
           </div>
           <div class="exhibition-table-footer">
             <p class="exhibition-footnote" data-i18n="bm_size_note">W = width · L = length · Sizes in meters. Booths 1, 6 and 24: width only.</p>

@@ -137,20 +137,12 @@ html[lang="en"] .sponsor-edition-translated,html:not([lang="en"]) .sponsor-editi
 }
 
 /* The floor plan follows the selected interest within the first step. */
-.spf .exhibition{margin:28px 0 0;padding:18px;border-radius:14px;background:var(--bg);box-shadow:none}
+.spf .exhibition{margin:28px 0 0;box-shadow:none}
 .spf .exhibition-head{flex-wrap:wrap;gap:12px}
-.spf .exhibition-head h2{font-size:22px}
-.spf .exhibition-head p:not(.section-kicker){font-size:12px}
-.spf .exhibition-overview{margin:16px 0}
-.spf .exhibition-stat{padding:10px 12px;flex-wrap:wrap;gap:6px}
 .spf .exhibition-layout{grid-template-columns:minmax(0,1fr)}
-.spf .exhibition-view-switch{display:flex;gap:4px;width:fit-content;padding:4px;margin-bottom:14px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.spf .exhibition-view-switch{display:flex;gap:4px;width:fit-content;padding:4px;margin-bottom:14px;border:1px solid var(--ex-line);border-radius:12px;background:var(--ex-card)}
 .spf .exhibition[data-view="map"] .exhibition-table-panel,.spf .exhibition[data-view="table"] .exhibition-map-panel{display:none}
 .spf .exhibition-map-scroll{aspect-ratio:1020/590;flex:none;height:auto;max-height:none}
-.spf .exhibition .tier-platinum{--tier-color:#D9F4FF}
-.spf .exhibition .tier-gold{--tier-color:#F3D98B}
-.spf .exhibition .tier-silver{--tier-color:#DAE4E8}
-.spf .exhibition .tier-bronze{--tier-color:#E8B48A}
 
 /* Give the floor plan the full page width, with the directory beside it. */
 @media (min-width:701px){
@@ -161,22 +153,10 @@ html[lang="en"] .sponsor-edition-translated,html:not([lang="en"]) .sponsor-editi
   .spf .exhibition-layout{grid-template-columns:minmax(0,1.08fr) minmax(0,1fr)}
   .spf .exhibition-view-switch{display:none}
   .spf .exhibition[data-view] .exhibition-map-panel,.spf .exhibition[data-view] .exhibition-table-panel{display:flex}
-  .spf .exhibition-table-scroll{max-height:380px;flex:1;min-height:0}
   .spf .exhibition-panel-head{flex-wrap:wrap}
-  .spf .booth-table th,.spf .booth-table td{padding:8px 7px}
-  .spf .booth-table tbody th{font-size:10px}
-  .spf .booth-number{min-width:24px;height:26px;font-size:10px}
-  .spf .booth-table td.booth-size{font-size:10px}
+  .spf .booth-number{min-width:30px;height:28px;font-size:12px}
 }
 @media (min-width:701px) and (max-width:1060px){
-  .spf .booth-table thead th:nth-child(1){width:24%}
-  .spf .booth-table thead th:nth-child(2){width:36%}
-  .spf .booth-table thead th:nth-child(3){width:24%}
-  .spf .booth-table thead th:nth-child(4){width:16%}
-  .spf .booth-table tbody th{font-size:9px}
-  .spf .booth-booked-cell{overflow-wrap:anywhere}
-  .spf .booth-none{font-size:9px}
-  .spf .booth-none::before{display:none}
   .spf .exhibition-map-scroll{flex:1;aspect-ratio:auto;display:flex;align-items:center}
   .spf #boothMap{width:100%;flex:none}
 }
@@ -229,12 +209,7 @@ html[lang="en"] .sponsor-edition-translated,html:not([lang="en"]) .sponsor-editi
   .spf-packs{grid-template-columns:1fr}
   .spf .type-options{grid-template-columns:1fr}
   .spf .type-card{padding:17px}
-  .spf .exhibition{padding:12px}
   .spf .exhibition-panel-head{flex-wrap:wrap}
-  .spf .exhibition-stat{padding:9px;align-content:start}
-  .spf .exhibition-stat > span{font-size:10px}
-  .spf .exhibition-legend{gap:8px 12px;font-size:10px}
-  .spf .exhibition-legend > span:last-child{margin-inline-start:0}
   .spf .step-head h2{font-size:23px}
   .spf .reg-nav{gap:10px}
   .spf .reg-nav .btn{padding:10px 12px;font-size:12px}

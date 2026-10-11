@@ -1,8 +1,8 @@
 // Program: day tabs + schedule, from data/program.json.
-import { ICONS } from "../config/icons.js?v=114";
-import { t, tr, onLangChange } from "../i18n.js?v=114";
-import { tCount } from "../utils/count.js?v=114";
-import { show } from "../utils/time.js?v=114";
+import { ICONS } from "../config/icons.js?v=115";
+import { t, tr, onLangChange } from "../i18n.js?v=115";
+import { tCount } from "../utils/count.js?v=115";
+import { show } from "../utils/time.js?v=115";
 
 export function initProgram({ types, days, toBeAnnounced }) {
   const tabs = document.getElementById("dayTabs");

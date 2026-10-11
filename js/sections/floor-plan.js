@@ -1,12 +1,17 @@
 // The exhibition floor plan drawing, shared by the live booth map on
 // sponsor.html and the plain map in the homepage Program section.
-import { t } from "../i18n.js?v=114";
+import { t } from "../i18n.js?v=115";
 
 const escape = (value) => String(value).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
 // interactive: the booths are buttons (sponsor.html). Off, they are only
 // coloured shapes with a hover title, and nothing can be picked or booked.
-export function floorPlanSVG({ booths, colors, label, booked = new Set(), selected = null, interactive = true }) {
+// gatePills: draw Entrance and Exit as coloured pills (sponsor.html).
+export function floorPlanSVG({ booths, colors, label, booked = new Set(), selected = null, interactive = true, gatePills = false }) {
+  const gate = (x, y, text, kind) => {
+    const width = Math.max(78, text.length * 11 + 30);
+    return `${gatePills ? `<rect class="plan-gate-pill plan-gate-pill-${kind}" x="${x - width / 2}" y="${y - 13}" width="${width}" height="26" rx="13"/>` : ""}<text class="plan-gate-label plan-gate-label-${kind}" x="${x}" y="${y}">${escape(text)}</text>`;
+  };
   return `<svg class="booth-map-svg" viewBox="25 230 1020 590" xmlns="http://www.w3.org/2000/svg" role="group" aria-label="${escape(t("bm_map_label"))}">
       <defs><pattern id="boothPlanGrid" width="24" height="24" patternUnits="userSpaceOnUse"><circle class="plan-dot" cx="1" cy="1" r="1"/></pattern></defs>
       <g aria-hidden="true">
@@ -23,9 +28,9 @@ export function floorPlanSVG({ booths, colors, label, booked = new Set(), select
         <path class="plan-route" d="M183 435 128 520 Q365 662 638 637 L612 494M518 413l-6 219"/>
         <text class="plan-brand" x="815" y="469">iSmile</text>
         <text class="plan-label" x="815" y="496">${escape(t("bm_hall"))}</text>
-        <text class="plan-gate-label" x="546" y="270">${escape(t("bm_entrance"))}</text>
+        ${gate(546, 270, t("bm_entrance"), "in")}
         <path class="plan-gate-arrow plan-gate-in" d="M546 289v49m-10-10 10 10 10-10"/>
-        <text class="plan-gate-label" x="285" y="253">${escape(t("bm_exit"))}</text>
+        ${gate(285, 253, t("bm_exit"), "out")}
         <path class="plan-gate-arrow plan-gate-out" d="m251 313 23-41m-14 5 14-5 4 14"/>
       </g>
       ${booths.map((booth) => {

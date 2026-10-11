@@ -1,6 +1,6 @@
-import { t, onLangChange } from "../i18n.js?v=114";
-import { buildBooths } from "../config/booth-layout.js?v=114";
-import { floorPlanSVG } from "./floor-plan.js?v=114";
+import { t, onLangChange } from "../i18n.js?v=115";
+import { buildBooths } from "../config/booth-layout.js?v=115";
+import { floorPlanSVG } from "./floor-plan.js?v=115";
 
 export function initBoothMap({ rows: BOOTH_ROWS, colors: TIER_COLORS }) {
   const BOOTHS = buildBooths(BOOTH_ROWS);
@@ -12,6 +12,8 @@ export function initBoothMap({ rows: BOOTH_ROWS, colors: TIER_COLORS }) {
   const viewport = document.getElementById("boothMapScroll");
   const availableCount = document.getElementById("boothAvailableCount");
   const bookedCount = document.getElementById("boothBookedCount");
+  const availableBar = document.getElementById("boothAvailableBar");
+  const bookedBar = document.getElementById("boothBookedBar");
   const zoomIn = document.getElementById("boothZoomIn");
   const zoomOut = document.getElementById("boothZoomOut");
   const zoomReset = document.getElementById("boothZoomReset");
@@ -46,21 +48,23 @@ export function initBoothMap({ rows: BOOTH_ROWS, colors: TIER_COLORS }) {
     return `<button type="button" class="booth-number${booked.has(number) ? " is-booked" : ""}${selected === number ? " is-selected" : ""}" data-booth="${number}" aria-label="${escape(label(booth))}" aria-pressed="${selected === number}">${number}</button>`;
   }
 
+  // One tinted group per tier: its numbers row by row, each with its size.
   function renderTable() {
-    table.innerHTML = BOOTH_ROWS.map((row, index) => {
-      const sameTier = BOOTH_ROWS.filter((item) => item.tier === row.tier);
-      const first = index === BOOTH_ROWS.findIndex((item) => item.tier === row.tier);
-      const count = sameTier.reduce((sum, item) => sum + item.numbers.length, 0);
-      const taken = row.numbers.filter((number) => booked.has(number));
-      return `<tr class="tier-${row.tier}${first ? " tier-start" : ""}">${first ? `<th scope="rowgroup" rowspan="${sameTier.length}" class="tier-${row.tier}">${escape(t(`bm_${row.tier}`))}<small>${count} ${escape(t("bm_booths"))}</small></th>` : ""}
-        <td><div class="booth-numbers">${row.numbers.map(button).join("")}</div></td>
-        <td class="booth-size"><span class="booth-mobile-label">${escape(t("bm_size"))}</span><span dir="ltr">${escape(row.size)}</span></td>
-        <td class="booth-booked-cell${taken.length ? " has-bookings" : ""}"><span class="booth-mobile-label">${escape(t("bm_booked"))}</span>${!connected ? escape(t("bm_unknown_short")) : taken.length ? `<div class="booth-numbers">${taken.map(button).join("")}</div>` : `<span class="booth-none">${escape(t("bm_none"))}</span>`}</td></tr>`;
+    const tiers = [...new Set(BOOTH_ROWS.map((row) => row.tier))];
+    table.innerHTML = tiers.map((tier) => {
+      const rows = BOOTH_ROWS.filter((row) => row.tier === tier);
+      const count = rows.reduce((sum, row) => sum + row.numbers.length, 0);
+      const taken = rows.reduce((sum, row) => sum + row.numbers.filter((number) => booked.has(number)).length, 0);
+      const state = !connected ? `<span class="booth-group-state">${escape(t("bm_unknown_short"))}</span>` : taken ? `<span class="booth-group-state is-booked">${taken} ${escape(t("bm_booked"))}</span>` : "";
+      return `<section class="booth-group tier-${tier}" aria-label="${escape(t(`bm_${tier}`))}">
+        <div class="booth-group-head"><i aria-hidden="true"></i><strong>${escape(t(`bm_${tier}`))}</strong><small>${count} ${escape(t("bm_booths"))}</small>${state}</div>
+        ${rows.map((row) => `<div class="booth-row"><div class="booth-numbers">${row.numbers.map(button).join("")}</div><span class="booth-size"><span class="sr-only">${escape(t("bm_size"))}: </span><span dir="ltr">${escape(row.size)}</span></span></div>`).join("")}
+      </section>`;
     }).join("");
   }
 
   function renderMap() {
-    map.innerHTML = floorPlanSVG({ booths: BOOTHS, colors: TIER_COLORS, label, booked, selected });
+    map.innerHTML = floorPlanSVG({ booths: BOOTHS, colors: TIER_COLORS, label, booked, selected, gatePills: true });
   }
 
   function updateAvailability() {
@@ -75,11 +79,13 @@ export function initBoothMap({ rows: BOOTH_ROWS, colors: TIER_COLORS }) {
     renderTable();
     if (focus) table.querySelector(`[data-booth="${focus}"]`)?.focus({ preventScroll: true });
     live.removeAttribute("data-i18n");
-    live.textContent = connected ? t("bm_live_short") : attempted ? t("bm_unavailable") : t("bm_connecting");
+    live.textContent = connected ? t("bm_live") : attempted ? t("bm_unavailable") : t("bm_connecting");
     live.classList.toggle("is-live", connected);
     live.classList.toggle("is-unavailable", attempted && !connected);
     availableCount.textContent = connected ? String(BOOTHS.length - booked.size) : "—";
     bookedCount.textContent = connected ? String(booked.size) : "—";
+    availableBar.style.width = connected ? `${(BOOTHS.length - booked.size) / BOOTHS.length * 100}%` : "0%";
+    bookedBar.style.width = connected ? `${booked.size / BOOTHS.length * 100}%` : "0%";
     updateDetails();
   }
 

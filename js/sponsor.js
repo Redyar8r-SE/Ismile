@@ -1,13 +1,13 @@
-import { showLoadError } from "./components/load-error.js?v=114";
+import { showLoadError } from "./components/load-error.js?v=115";
 // Entry point for sponsor.html: the sponsorship and booth request form.
 // The same header, footer and languages as the main page, and nothing else.
-import { loadJSON } from "./utils/load-json.js?v=114";
-import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from "./i18n.js?v=114";
-import { initNav } from "./components/nav.js?v=114";
-import { initTheme } from "./components/theme.js?v=114";
-import { initFooter } from "./sections/footer.js?v=114";
-import { initSponsorForm } from "./sections/sponsor-form.js?v=114";
-import { initBoothMap } from "./sections/booth-map.js?v=114";
+import { loadJSON } from "./utils/load-json.js?v=115";
+import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from "./i18n.js?v=115";
+import { initNav } from "./components/nav.js?v=115";
+import { initTheme } from "./components/theme.js?v=115";
+import { initFooter } from "./sections/footer.js?v=115";
+import { initSponsorForm } from "./sections/sponsor-form.js?v=115";
+import { initBoothMap } from "./sections/booth-map.js?v=115";
 
 async function start() {
   initNav();
@@ -32,7 +32,7 @@ async function start() {
 
     initFooter(footer);
     initSponsorForm(sponsors);
-    initBoothMap({ ...boothPlan, colors: { ...boothPlan.colors, platinum: "#D9F4FF", gold: "#F3D98B", silver: "#DAE4E8", bronze: "#E8B48A" } });
+    initBoothMap({ ...boothPlan, colors: { ...boothPlan.colors, platinum: "#5EEAD4", gold: "#FBBF24", silver: "#A5B4FC", bronze: "#FB923C" } });
 
     initLangSwitch();
     setLang(preferredLang());
