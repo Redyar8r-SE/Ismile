@@ -15,33 +15,33 @@
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=Noto+Kufi+Arabic:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <!-- Base -->
-<link rel="stylesheet" href="css/base/tokens.css?v=110">
-<link rel="stylesheet" href="css/base/base.css?v=110">
+<link rel="stylesheet" href="css/base/tokens.css?v=111">
+<link rel="stylesheet" href="css/base/base.css?v=111">
 <!-- Components -->
-<link rel="stylesheet" href="css/components/boot.css?v=110">
-<link rel="stylesheet" href="css/components/buttons.css?v=110">
-<link rel="stylesheet" href="css/components/brand.css?v=110">
-<link rel="stylesheet" href="css/components/tier-card.css?v=110">
-<link rel="stylesheet" href="css/components/reveal.css?v=110">
+<link rel="stylesheet" href="css/components/boot.css?v=111">
+<link rel="stylesheet" href="css/components/buttons.css?v=111">
+<link rel="stylesheet" href="css/components/brand.css?v=111">
+<link rel="stylesheet" href="css/components/tier-card.css?v=111">
+<link rel="stylesheet" href="css/components/reveal.css?v=111">
 <!-- Layout -->
-<link rel="stylesheet" href="css/layout/header.css?v=110">
-<link rel="stylesheet" href="css/layout/footer.css?v=110">
+<link rel="stylesheet" href="css/layout/header.css?v=111">
+<link rel="stylesheet" href="css/layout/footer.css?v=111">
 <!-- Sections (in page order) -->
-<link rel="stylesheet" href="css/sections/hero.css?v=110">
-<link rel="stylesheet" href="css/sections/stats.css?v=110">
-<link rel="stylesheet" href="css/sections/about.css?v=110">
-<link rel="stylesheet" href="css/sections/gallery.css?v=110">
-<link rel="stylesheet" href="css/sections/experience.css?v=110">
-<link rel="stylesheet" href="css/sections/program.css?v=110">
-<link rel="stylesheet" href="css/sections/booth-map.css?v=110">
-<link rel="stylesheet" href="css/sections/speakers.css?v=110">
-<link rel="stylesheet" href="css/sections/sponsors.css?v=110">
-<link rel="stylesheet" href="css/sections/partners.css?v=110">
-<link rel="stylesheet" href="css/sections/companies.css?v=110">
-<link rel="stylesheet" href="css/sections/register-page.css?v=110">
-<link rel="stylesheet" href="css/sections/venue.css?v=110">
+<link rel="stylesheet" href="css/sections/hero.css?v=111">
+<link rel="stylesheet" href="css/sections/stats.css?v=111">
+<link rel="stylesheet" href="css/sections/about.css?v=111">
+<link rel="stylesheet" href="css/sections/gallery.css?v=111">
+<link rel="stylesheet" href="css/sections/experience.css?v=111">
+<link rel="stylesheet" href="css/sections/program.css?v=111">
+<link rel="stylesheet" href="css/sections/booth-map.css?v=111">
+<link rel="stylesheet" href="css/sections/speakers.css?v=111">
+<link rel="stylesheet" href="css/sections/sponsors.css?v=111">
+<link rel="stylesheet" href="css/sections/partners.css?v=111">
+<link rel="stylesheet" href="css/sections/companies.css?v=111">
+<link rel="stylesheet" href="css/sections/register-page.css?v=111">
+<link rel="stylesheet" href="css/sections/venue.css?v=111">
 
-<script type="module" src="js/main.js?v=110"></script>
+<script type="module" src="js/main.js?v=111"></script>
 </head>
 <body>
 
@@ -411,18 +411,38 @@
       <div class="day-meta" id="dayMeta"></div>
       <div class="sched" id="sched" role="tabpanel"></div>
     </div>
-    <div class="prog-map exhibition" id="progMap" hidden>
-      <div class="prog-map-head">
-        <div><h3 data-i18n="pg_map_title">Exhibition floor plan</h3><p data-i18n="pg_map_text">The 44 numbered booths in the exhibition hall at Grand Millennium Sulaimani.</p></div>
-        <div class="exhibition-legend" aria-label="Booth tiers" data-i18n-label="bm_tiers">
-          <span><i class="tier-platinum"></i><span data-i18n="bm_platinum">Platinum</span></span>
-          <span><i class="tier-gold"></i><span data-i18n="bm_gold">Gold</span></span>
-          <span><i class="tier-silver"></i><span data-i18n="bm_silver">Silver</span></span>
-          <span><i class="tier-bronze"></i><span data-i18n="bm_bronze">Bronze</span></span>
+    <!-- A guide to the hall: tier colours only, no availability and nothing to
+         book (booking and the live map are on sponsor.html). -->
+    <div class="prog-map" id="progMap" hidden>
+      <div class="pm-head">
+        <div class="pm-title">
+          <p class="pm-kicker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg><span data-i18n="pm_kicker">Exhibition hall · Grand Millennium Sulaimani</span></p>
+          <h3 data-i18n="pm_title">Find your way around the expo</h3>
+          <p class="pm-text" data-i18n="pm_text">44 numbered booths in four colours. Walk in from the main entrance and follow the aisle around the hall.</p>
+        </div>
+        <div class="pm-stats">
+          <div><b>44</b><span data-i18n="pm_booths">booths</span></div>
+          <div><b>4</b><span data-i18n="pm_tiers">tiers</span></div>
+          <div><b>2</b><span data-i18n="pm_days">days</span></div>
         </div>
       </div>
-      <div class="exhibition-map-scroll prog-map-scroll">
-        <div id="progMapPlan"></div>
+      <div class="pm-stage">
+        <div class="pm-plan">
+          <div id="progMapPlan"></div>
+          <span class="pm-tag pm-in" style="left:51.7%;top:6.1%"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg><span data-i18n="pm_entrance">Entrance</span></span>
+          <span class="pm-tag pm-out" style="left:24.1%;top:3%"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg><span data-i18n="pm_exit">Exit</span></span>
+          <span class="pm-aisle" style="left:45.2%;top:65.9%" data-i18n="pm_aisle">Main aisle</span>
+        </div>
+      </div>
+      <div class="pm-legend" aria-label="Booth tiers" data-i18n-label="bm_tiers">
+        <div class="pm-chip pm-platinum"><i aria-hidden="true"></i><span><b data-i18n="bm_platinum">Platinum</b><small data-i18n="pm_platinum_d">6 booths · 4 × 2 m</small></span></div>
+        <div class="pm-chip pm-gold"><i aria-hidden="true"></i><span><b data-i18n="bm_gold">Gold</b><small data-i18n="pm_gold_d">7 booths · 2.5 – 4.6 m</small></span></div>
+        <div class="pm-chip pm-silver"><i aria-hidden="true"></i><span><b data-i18n="bm_silver">Silver</b><small data-i18n="pm_silver_d">21 booths · 2.5 × 2 m</small></span></div>
+        <div class="pm-chip pm-bronze"><i aria-hidden="true"></i><span><b data-i18n="bm_bronze">Bronze</b><small data-i18n="pm_bronze_d">10 booths · 2.5 × 2 m</small></span></div>
+      </div>
+      <div class="pm-foot">
+        <p><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span data-i18n="pm_note">A guide to the hall. Booth availability and booking are on the sponsor page.</span></p>
+        <a class="pm-book" href="sponsor.html#booth"><span data-i18n="pm_book">Book a booth</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
       </div>
     </div>
   </div>

@@ -1,6 +1,6 @@
 // The exhibition floor plan drawing, shared by the live booth map on
 // sponsor.html and the plain map in the homepage Program section.
-import { t } from "../i18n.js?v=110";
+import { t } from "../i18n.js?v=111";
 
 const escape = (value) => String(value).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
@@ -24,9 +24,9 @@ export function floorPlanSVG({ booths, colors, label, booked = new Set(), select
         <text class="plan-brand" x="815" y="469">iSmile</text>
         <text class="plan-label" x="815" y="496">${escape(t("bm_hall"))}</text>
         <text class="plan-gate-label" x="546" y="270">${escape(t("bm_entrance"))}</text>
-        <path class="plan-gate-arrow" d="M546 289v49m-10-10 10 10 10-10"/>
+        <path class="plan-gate-arrow plan-gate-in" d="M546 289v49m-10-10 10 10 10-10"/>
         <text class="plan-gate-label" x="285" y="253">${escape(t("bm_exit"))}</text>
-        <path class="plan-gate-arrow" d="m251 313 23-41m-14 5 14-5 4 14"/>
+        <path class="plan-gate-arrow plan-gate-out" d="m251 313 23-41m-14 5 14-5 4 14"/>
       </g>
       ${booths.map((booth) => {
         const x = booth.points.reduce((sum, point) => sum + point[0], 0) / booth.points.length;

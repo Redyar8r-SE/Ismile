@@ -1,11 +1,11 @@
-import { showLoadError } from "./components/load-error.js?v=110";
+import { showLoadError } from "./components/load-error.js?v=111";
 // Registration page: shared navigation, translations, footer, and form.
-import { loadJSON } from "./utils/load-json.js?v=110";
-import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from "./i18n.js?v=110";
-import { initNav } from "./components/nav.js?v=110";
-import { initTheme } from "./components/theme.js?v=110";
-import { initFooter } from "./sections/footer.js?v=110";
-import { initRegistration } from "./sections/registration.js?v=110";
+import { loadJSON } from "./utils/load-json.js?v=111";
+import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from "./i18n.js?v=111";
+import { initNav } from "./components/nav.js?v=111";
+import { initTheme } from "./components/theme.js?v=111";
+import { initFooter } from "./sections/footer.js?v=111";
+import { initRegistration } from "./sections/registration.js?v=111";
 
 async function start() {
   initNav();

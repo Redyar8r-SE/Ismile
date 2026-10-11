@@ -96,19 +96,75 @@
 .prog-switch button:hover{background:color-mix(in srgb,var(--teal) 12%,transparent)}
 .prog-switch button[aria-pressed="true"]{background:var(--teal);color:#fff;box-shadow:0 8px 22px color-mix(in srgb,var(--teal) 35%,transparent)}
 .prog-switch button:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
-.prog-map.exhibition{margin:24px 0 0;padding:22px}
 .prog-map[hidden],#progList[hidden]{display:none}
-.prog-map-head{display:flex;justify-content:space-between;align-items:end;gap:14px 24px;flex-wrap:wrap;margin-bottom:16px}
-.prog-map-head h3{font-size:20px;margin:0 0 6px}
-.prog-map-head p{color:var(--muted);font-size:14px;line-height:1.6;margin:0;max-width:60ch}
-.prog-map-head .exhibition-legend{margin:0;font-size:13px}
-.prog-map-head .exhibition-legend > span:last-child{margin-inline-start:0}
-/* The whole hall at once: no scroll box, the drawing shrinks to fit the width */
-.prog-map .prog-map-scroll{max-height:none;height:auto;aspect-ratio:auto;overflow:hidden;border:1px solid var(--line);border-radius:14px}
-.prog-map .prog-map-scroll .booth-map-svg{width:100%}
+/* Program › Map: a colourful guide to the hall (dark in both themes). Tier
+   colours only: no availability and nothing to select. */
+.prog-map{
+  --pm-bg:#07161C;--pm-card:#0C2129;--pm-line:#1E4552;--pm-ink:#EAF7F8;--pm-muted:#8FB0BA;--pm-teal:#2DD4BF;--pm-coral:#FB7185;--pm-dark:#06222A;
+  --pm-platinum:#5EEAD4;--pm-gold:#FBBF24;--pm-silver:#A5B4FC;--pm-bronze:#FB923C;
+  --plan-bg:transparent;--plan-floor:#12313C;--plan-room:#183D4A;--plan-wall:#5F8794;--plan-wall-strong:#7FA9B6;--plan-ink:var(--pm-dark);--plan-accent:var(--pm-teal);
+  margin-top:24px;padding:40px 40px 36px;border-radius:28px;background:var(--pm-bg);color:var(--pm-ink);display:grid;gap:28px;box-shadow:0 30px 70px -40px #04121880
+}
+.pm-head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px 32px}
+.pm-title{min-width:0}
+.pm-kicker{display:flex;align-items:center;gap:8px;margin:0 0 10px;color:var(--pm-teal);font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.pm-kicker svg{width:16px;height:16px;flex:none}
+.prog-map h3{margin:0 0 10px;font-size:clamp(26px,3.2vw,38px);font-weight:800;letter-spacing:-.02em;line-height:1.15;color:var(--pm-ink)}
+.pm-text{margin:0;color:var(--pm-muted);font-size:16px;line-height:1.5;max-width:62ch}
+.pm-stats{display:flex;gap:10px;flex:none}
+.pm-stats div{display:grid;justify-items:center;gap:2px;padding:12px 18px;border:1px solid var(--pm-line);border-radius:14px;background:var(--pm-card)}
+.pm-stats b{font-size:28px;font-weight:800;line-height:1.1}
+.pm-stats span{color:var(--pm-muted);font-size:12px;font-weight:600}
+.pm-stage{padding:26px 30px;border:1px solid var(--pm-line);border-radius:22px;background:radial-gradient(120% 140% at 50% 45%,#10303A,#0A1D24)}
+.pm-plan{position:relative;max-width:1020px;margin:0 auto;direction:ltr}
+.pm-plan .booth-map-svg{width:100%}
+.prog-map .plan-dot,.prog-map .plan-gate-label,.prog-map .plan-background{display:none}
+.prog-map .plan-floor{stroke-width:3}
+.prog-map .plan-route{stroke:var(--pm-teal);opacity:.45;stroke-width:3}
+.prog-map .plan-brand{fill:#7FA9B6;opacity:.5;font-size:34px}
+.prog-map .plan-label{fill:var(--pm-muted);font-weight:700}
+.prog-map .plan-gate-arrow{stroke-width:5}
+.prog-map .plan-gate-out{stroke:var(--pm-coral)}
 .prog-map .map-booth{cursor:default}
+.prog-map .map-booth polygon{fill:var(--booth-color);stroke:var(--plan-floor);stroke-width:2.4}
+.prog-map .map-booth .booth-outline{display:none}
+.prog-map .map-booth text{font-size:17px;font-weight:800;fill:var(--pm-dark)}
+.pm-tag,.pm-aisle{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;pointer-events:none}
+.pm-tag{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;color:var(--pm-dark);font-size:13px;font-weight:800;letter-spacing:.05em;text-transform:uppercase}
+.pm-tag svg{width:14px;height:14px}
+.pm-in{background:var(--pm-teal)}.pm-out{background:var(--pm-coral)}
+.pm-aisle{padding:3px 8px;border-radius:6px;background:#2DD4BF1F;color:var(--pm-teal);font-size:11px;font-weight:700}
+.pm-legend{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.pm-chip{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:14px;background:var(--pm-card);border-inline-start:4px solid var(--c)}
+.pm-chip i{width:22px;height:22px;border-radius:6px;background:var(--c);flex:none}
+.pm-chip span{display:grid;gap:1px;min-width:0}
+.pm-chip b{font-size:16px;font-weight:700}
+.pm-chip small{color:var(--pm-muted);font-size:13px}
+.pm-platinum{--c:var(--pm-platinum)}.pm-gold{--c:var(--pm-gold)}.pm-silver{--c:var(--pm-silver)}.pm-bronze{--c:var(--pm-bronze)}
+.pm-foot{display:flex;justify-content:space-between;align-items:center;gap:16px 24px}
+.pm-foot p{display:flex;align-items:center;gap:10px;margin:0;color:var(--pm-muted);font-size:14px;line-height:1.5}
+.pm-foot p svg{width:18px;height:18px;flex:none}
+.pm-book{display:inline-flex;align-items:center;gap:10px;flex:none;padding:14px 22px;border-radius:14px;background:var(--pm-teal);color:var(--pm-dark);font-size:16px;font-weight:800;text-decoration:none;box-shadow:0 10px 28px #2DD4BF40;transition:transform .2s,box-shadow .2s}
+.pm-book svg{width:18px;height:18px}
+.pm-book:hover{transform:translateY(-2px);box-shadow:0 14px 32px #2DD4BF59}
+.pm-book:focus-visible{outline:3px solid var(--pm-ink);outline-offset:3px}
+html[dir="rtl"] .pm-book svg{transform:scaleX(-1)}
+@media (max-width:900px){
+  .pm-head{flex-direction:column;align-items:flex-start}
+  .pm-legend{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
 @media (max-width:620px){
   .prog-switch{display:grid;width:100%}
   .prog-switch button{min-width:0;padding:12px 10px;font-size:15px}
-  .prog-map.exhibition{padding:14px 10px}
+  .prog-map{padding:22px 14px 18px;gap:18px;border-radius:20px}
+  .pm-text{font-size:14px}
+  .pm-stats{width:100%}.pm-stats div{flex:1;padding:10px 8px}.pm-stats b{font-size:22px}
+  .pm-stage{padding:12px 8px;border-radius:16px}
+  .pm-tag{font-size:8.5px;padding:2px 6px;gap:3px;letter-spacing:.03em}.pm-tag svg{display:none}
+  .pm-out{top:1%!important}
+  .pm-aisle{display:none}
+  .pm-legend{grid-template-columns:minmax(0,1fr);gap:8px}
+  .pm-chip{padding:10px 12px;gap:10px}.pm-chip b{font-size:15px}.pm-chip small{font-size:12.5px}
+  .pm-foot{flex-direction:column;align-items:stretch}
+  .pm-book{justify-content:center}
 }

@@ -1,5 +1,5 @@
-import { t, onLangChange } from "../i18n.js?v=110";
-import { formatPrice } from "../utils/money.js?v=110";
+import { t, onLangChange } from "../i18n.js?v=111";
+import { formatPrice } from "../utils/money.js?v=111";
 
 // Presentation and VIP lunch choices; validation and submission stay in registration.js.
 export function initRegistrationExperience({ tickets, shown, onLunchChange, getStep }) {
