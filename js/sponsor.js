@@ -6,7 +6,7 @@ import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from ".
 import { initNav } from "./components/nav.js?v=95";
 import { initTheme } from "./components/theme.js?v=95";
 import { initFooter } from "./sections/footer.js?v=95";
-import { initSponsorForm } from "./sections/sponsor-form.js?v=106";
+import { initSponsorForm } from "./sections/sponsor-form.js?v=107";
 import { initBoothMap } from "./sections/booth-map.js?v=104";
 
 async function start() {

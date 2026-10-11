@@ -85,12 +85,14 @@ html[lang="en"] .sponsor-edition-translated,html:not([lang="en"]) .sponsor-editi
 }
 .spf-pack:not(.spf-pack-any)::before{content:"";position:absolute;inset:0 0 auto;height:3px;background:linear-gradient(90deg,var(--m2),var(--m1),var(--m2))}
 .spf-pack:not(.spf-pack-any){background-image:linear-gradient(135deg,color-mix(in srgb,var(--m1) 12%,transparent),transparent 65%)}
+.spf-pack.tc-dia{--m1:#E6FBFF;--m2:#2E9FCF;--tier-ink:#0F5C80;--tier-night-bg:#0F3446}
 .spf-pack.tc-plat{--m1:#D9F4FF;--m2:#4C849F;--tier-ink:#245F7C;--tier-night-bg:#122F3E}
 .spf-pack.tc-gold{--m1:#F3D98B;--m2:#AF8A35;--tier-ink:#78580D;--tier-night-bg:#352E1B}
 .spf-pack.tc-silver{--m1:#DAE4E8;--m2:#7C939E;--tier-ink:#425C68;--tier-night-bg:#243139}
 .spf-pack.tc-bronze{--m1:#E8B48A;--m2:#A97450;--tier-ink:#844B27;--tier-night-bg:#39281F}
 .spf-pack-top{display:flex;align-items:center;justify-content:space-between;gap:16px}
 .spf-pack-icon{display:grid;place-items:center;width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,var(--m1),var(--m2));color:#173B4C;box-shadow:0 6px 16px -10px var(--m2)}
+.tc-dia .spf-pack-icon{color:#06425E}
 .tc-gold .spf-pack-icon{color:#58400F}
 .tc-silver .spf-pack-icon{color:#344C58}
 .tc-bronze .spf-pack-icon{color:#613819}

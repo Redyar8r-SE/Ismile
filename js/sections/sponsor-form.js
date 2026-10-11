@@ -44,6 +44,7 @@ export function initSponsorForm({ tiers = [], enquiry = {} } = {}) {
       { id: "unsure", name: t("spf_pack_unsure"), note: t("spf_pack_unsure_d"), className: "spf-pack-any" },
     ];
     const icons = {
+      diamond: '<path d="M6 3h12l4 6-10 12L2 9l4-6ZM2 9h20M10 3 8 9l4 12 4-12-2-6"/>',
       platinum: '<path d="m6 3-4 6 10 12L22 9l-4-6H6ZM2 9h20M6 3l6 18 6-18M6 3l6 6 6-6"/>',
       gold: '<path d="m3 6 4 4 5-7 5 7 4-4-2 12H5L3 6ZM5 21h14"/>',
       silver: '<circle cx="12" cy="8" r="6"/><path d="m8 13-1 9 5-3 5 3-1-9"/>',

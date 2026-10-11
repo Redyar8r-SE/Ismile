@@ -5,6 +5,7 @@
 .tierc{--m1:#BFE9F5;--m2:#5FB6D4;position:relative;background:var(--bg);border:1px solid var(--line);border-radius:var(--r-lg);padding:22px 24px 24px;overflow:hidden}
 .tierc::before{content:"";position:absolute;inset:0 0 auto;height:3px;background:linear-gradient(90deg,var(--m1),var(--m2))}
 
+.tc-dia{--m1:#E6FBFF;--m2:#38B6E8}
 .tc-gold{--m1:#F3D98B;--m2:#C9A227}
 .tc-silver{--m1:#F0F2F3;--m2:#77838A}
 .tc-plat{--m1:#D9F4FF;--m2:#3D91B8}
@@ -17,6 +18,7 @@
 .medal{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(145deg,var(--m1),var(--m2));color:#fff;flex:none;box-shadow:0 8px 20px -10px var(--m2)}
 .medal svg{width:24px;height:24px}
 .tc-plat .medal{color:#0A4C6C}
+.tc-dia .medal{color:#06425E}
 .tc-silver .medal{color:#445159}
 .tc-count{margin-inline-start:auto;font-size:13px;font-weight:600;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:5px 12px;white-space:nowrap}
 

@@ -6,6 +6,7 @@ import { handler } from "../netlify/functions/api.mjs";
 import { boothAvailability } from "./booths.mjs";
 import { contentFile, contentRequest } from "./content-store.mjs";
 import { registrationRequest } from "./registration.mjs";
+import { sponsorsFile } from "./sponsor-tiers.mjs";
 import { loadEnvFile, resolveStaticFile, sendFile } from "./static.mjs";
 import { websiteState } from "./website-state.mjs";
 
@@ -115,6 +116,14 @@ export function createAppServer() {
       }
 
       const override = contentFile(CONTENT_ROOT, url.pathname.slice(1));
+      if (url.pathname === "/data/sponsors.json" && req.method === "GET") {
+        const local =
+          override && existsSync(override) ? override : path.join(ROOT, "data/sponsors.json");
+        const result = await sponsorsFile(local);
+        res.writeHead(result.statusCode, result.headers);
+        res.end(result.body);
+        return;
+      }
       if (override && existsSync(override)) {
         res.setHeader("Cache-Control", "no-store");
         sendFile(res, override, req);
