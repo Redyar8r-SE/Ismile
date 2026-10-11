@@ -5,7 +5,7 @@
   "vip": 100,
   "vipCurrency": "USD",
   "lunchCurrency": "USD",
-  "lunchDay1": 42,
-  "lunchDay2": 42,
+  "lunchDay1": 40,
+  "lunchDay2": 40,
   "registrationClosed": false
 }

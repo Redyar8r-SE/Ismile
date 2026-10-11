@@ -79,7 +79,7 @@ export function initRegistrationExperience({ tickets, onLunchChange, getStep }) 
   }
   function updateExtras() {
     const other = includedDay === "day1" ? "day2" : "day1";
-    const price = `$${Number(tickets[other === "day1" ? "lunchDay1" : "lunchDay2"] ?? 42)}`;
+    const price = `$${Number(tickets[other === "day1" ? "lunchDay1" : "lunchDay2"] ?? 40)}`;
     $("extraLunchTitle").textContent = t(`xp_add_${other}`);
     $("extraLunchDescription").textContent = t(`xp_${other}_full`);
     $("extraLunchPrice").textContent = price;

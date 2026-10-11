@@ -82,7 +82,7 @@ $check('phone registration preserves a student guest choosing VIP', $office['tic
 
 $standard=Checkouts::createFromForm(['ticket'=>'professional','vip_lunch_day'=>'2']+$base,null);
 $quote=SiteData::quoteFor($standard);
-$check('standard ticket and USD lunch remain separate', $quote['totals']===['IQD'=>40000,'USD'=>42] && $quote['amount']===null && $quote['currency']===null);
+$check('standard ticket and USD lunch remain separate', $quote['totals']===['IQD'=>40000,'USD'=>40] && $quote['amount']===null && $quote['currency']===null);
 $check('standard tickets cannot claim an included VIP lunch', $standard['vip_lunch_day']===null);
 $check('mixed-currency cart is never sent as a converted charge', Payments::start($standard)['redirect']===null && !Db::value('SELECT id FROM payments WHERE checkout_id=?',[$standard['id']]));
 $normal=Checkouts::createFromForm(['ticket'=>'professional','lunch_day1'=>'0']+$base,null);

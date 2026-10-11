@@ -84,7 +84,7 @@ if (isset($_GET['new'])) {
       </fieldset>
       <fieldset class="form-section">
         <legend>3. Lunch</legend>
-        <label id="caller-vip-lunch"<?= !$vip ? ' hidden' : '' ?>>VIP included lunch<select name="vip_lunch_day"<?= !$vip ? ' disabled' : '' ?>><option value="1"<?= $selected('vip_lunch_day','1','1') ?>>Day 1 · 20 November</option><option value="2"<?= $selected('vip_lunch_day','2','1') ?>>Day 2 · 21 November</option></select><small>VIP is $100 with one lunch included. The other day is $42. Call the guest to arrange home badge delivery.</small></label>
+        <label id="caller-vip-lunch"<?= !$vip ? ' hidden' : '' ?>>VIP included lunch<select name="vip_lunch_day"<?= !$vip ? ' disabled' : '' ?>><option value="1"<?= $selected('vip_lunch_day','1','1') ?>>Day 1 · 20 November</option><option value="2"<?= $selected('vip_lunch_day','2','1') ?>>Day 2 · 21 November</option></select><small>VIP is $100 with one lunch included. The other day is $40. Call the guest to arrange home badge delivery.</small></label>
         <div class="checks"><label class="inline"><input type="checkbox" name="lunch_day1" value="1"<?= ($_POST['lunch_day1'] ?? '') === '1' ? ' checked' : '' ?>> Lunch day 1</label><label class="inline"><input type="checkbox" name="lunch_day2" value="1"<?= ($_POST['lunch_day2'] ?? '') === '1' ? ' checked' : '' ?>> Lunch day 2</label></div>
       </fieldset>
       <div class="form-actions"><a class="btn ghost" href="<?= $e($listUrl) ?>">Cancel</a><button class="btn" name="do" value="pay_link">Send payment link</button></div>

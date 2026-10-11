@@ -10,7 +10,7 @@
 // Nothing about the visitor is kept in the browser.
 import { t, getLang, onLangChange } from "../i18n.js?v=95";
 import { formatPrice } from "../utils/money.js?v=95";
-import { initRegistrationExperience } from "./registration-experience.js?v=100";
+import { initRegistrationExperience } from "./registration-experience.js?v=101";
 
 const TOTAL_STEPS = 3;
 
