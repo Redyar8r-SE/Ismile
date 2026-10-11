@@ -163,7 +163,7 @@ final class Checkouts
         $grandfather = Validate::text($in['grandfather_name'] ?? '', 60);
         foreach ([$first, $father, $grandfather] as $part) {
             if (!Validate::namePart($part)) {
-                throw new UserError('First, father\'s and grandfather\'s name are needed (2+ letters each).');
+                throw new UserError('First, second and last name are needed (2+ letters each).');
             }
         }
         $phone = Validate::phone(Validate::text($in['phone'] ?? '', 30));

@@ -64,7 +64,7 @@ if (isset($_GET['new'])) {
       <p class="muted">Enter the caller's details and send a payment link. They receive their ticket after paying. Fields marked * are required.</p>
       <fieldset class="form-section">
         <legend>1. Caller details</legend>
-        <div class="row3"><label>First name *<input name="first_name" maxlength="60" value="<?= $value('first_name') ?>" autocomplete="given-name" required></label><label>Father's name *<input name="father_name" maxlength="60" value="<?= $value('father_name') ?>" required></label><label>Grandfather's name *<input name="grandfather_name" maxlength="60" value="<?= $value('grandfather_name') ?>" required></label></div>
+        <div class="row3"><label>First name *<input name="first_name" maxlength="60" value="<?= $value('first_name') ?>" autocomplete="given-name" required></label><label>Second name *<input name="father_name" maxlength="60" value="<?= $value('father_name') ?>" required></label><label>Last name *<input name="grandfather_name" maxlength="60" value="<?= $value('grandfather_name') ?>" required></label></div>
         <div class="row3"><label>Phone *<input type="tel" name="phone" dir="ltr" autocomplete="tel" value="<?= $value('phone') ?>" required placeholder="0750 123 4567"></label><label>Email *<input type="email" name="email" dir="ltr" autocomplete="email" maxlength="190" value="<?= $value('email') ?>" required></label><label>City<input name="city" maxlength="80" value="<?= $value('city') ?>" autocomplete="address-level2"></label></div>
       </fieldset>
       <fieldset class="form-section">
@@ -189,7 +189,7 @@ if ($inCheckin) echo CheckinWorkspace::navigation('guests', $user, $workspaceDay
       <summary class="btn ghost small">Edit name, email or phone</summary>
       <form method="post" class="stack">
         <?= Page::csrfField() ?><input type="hidden" name="do" value="edit">
-        <div class="row3"><label>First<input name="first_name" value="<?= $e($registration['first_name']) ?>" required></label><label>Father<input name="father_name" value="<?= $e($registration['father_name']) ?>" required></label><label>Grandfather<input name="grandfather_name" value="<?= $e($registration['grandfather_name']) ?>" required></label></div>
+        <div class="row3"><label>First<input name="first_name" value="<?= $e($registration['first_name']) ?>" required></label><label>Second<input name="father_name" value="<?= $e($registration['father_name']) ?>" required></label><label>Last<input name="grandfather_name" value="<?= $e($registration['grandfather_name']) ?>" required></label></div>
         <div class="row3"><label>Email<input name="email" dir="ltr" value="<?= $e($registration['email']) ?>" required></label><label>Phone<input name="phone" dir="ltr" value="<?= $e($registration['phone']) ?>" required></label><label>City<input name="city" value="<?= $e($registration['city']) ?>"></label></div>
         <p class="muted small">Changing the name reissues the ticket and emails it again (the name goes on the certificate). Every change is logged.</p>
         <div class="form-actions"><button class="btn">Save details</button></div>
