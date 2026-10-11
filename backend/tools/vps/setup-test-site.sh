@@ -350,6 +350,33 @@ SQL
   touch "$BASE/.test-data-cleared-1"
   echo "Test data deleted (people, forms, payments, tickets, emails, bookings, sponsor requests)."
 fi
+# ONCE, when this server first runs as LIVE (the Owner's wish, 11 Oct 2026):
+# delete what the pretend gateway made — people, forms, payments, tickets,
+# check-ins, certificates, their workshop bookings and their emails — so real
+# registrations start again at T26-00001. Kept: accounts, sponsor packages,
+# sponsor requests and booth bookings, workshops, ambassadors, settings,
+# audit log. The deploy saved a database backup just before this.
+if [ ! -f "$BASE/.live-start-cleared-1" ] \
+  && php -r 'exit(((include $argv[1])["env"] ?? "") === "live" ? 0 : 1);' "$BACKEND/config.php" \
+  && mariadb -N "$DB" -e "SHOW TABLES LIKE 'registrations'" | grep -q registrations; then
+  mariadb "$DB" <<'SQL'
+SET FOREIGN_KEY_CHECKS = 0;
+DELETE FROM emails WHERE registration_id IS NOT NULL OR checkout_id IS NOT NULL;
+TRUNCATE TABLE ticket_attendance;
+TRUNCATE TABLE certificates;
+TRUNCATE TABLE workshop_bookings;
+TRUNCATE TABLE tickets;
+TRUNCATE TABLE payments;
+TRUNCATE TABLE webhook_log;
+TRUNCATE TABLE registrations;
+TRUNCATE TABLE checkouts;
+TRUNCATE TABLE student_id_photos;
+TRUNCATE TABLE rate_limits;
+SET FOREIGN_KEY_CHECKS = 1;
+SQL
+  touch "$BASE/.live-start-cleared-1"
+  echo "Going live: test people, forms, payments, tickets, check-ins and their bookings deleted (sponsors, booths, workshops, accounts kept)."
+fi
 PHP=php ISMILE_SITE="$SITE" ISMILE_BACKEND_DIR="$BACKEND" bash "$REPO/backend/tools/deploy.sh" test
 # Accounts that still have the old made-up password (printed in public logs) get the new one.
 if [ -n "$OLD_OWNER_PASS" ]; then
