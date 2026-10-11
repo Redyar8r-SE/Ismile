@@ -32,7 +32,6 @@ if ($inCheckin) echo CheckinWorkspace::navigation('certificate',$user,isset($_GE
 $e = [Page::class, 'e'];
 $detailContext = $inCheckin ? '&workspace=checkin' . (isset($_GET['day']) && in_array((int)$_GET['day'],[1,2],true) ? '&day='.(int)$_GET['day'] : '') : '';
 ?>
-<?= Page::liveUpdates() ?>
 <p class="muted small">Certificates are emailed only when you press an email button. Each guest receives their own PDF. Bulk sending skips certificates already sent or waiting to send. <?php if(App::config('mail.driver')==='log'): ?>Local preview: emails and PDF attachments are saved on this computer.<?php else: ?>Queued emails are delivered by the email job; check the Communication center for progress.<?php endif; ?></p>
 <div data-live-region="certificate-totals">
 <?= Page::stats([

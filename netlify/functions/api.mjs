@@ -141,6 +141,17 @@ async function verify(ticket) {
   return payload.exp > Math.floor(Date.now() / 1000) ? payload : null;
 }
 
+/**
+ * A sign-in ticket for someone the database already signed in (its one-time
+ * "Site content" pass, checked by the server before calling this).
+ * @param {string} email
+ */
+export async function sessionFor(email) {
+  const exp = Math.floor(Date.now() / 1000) + SESSION_HOURS * 3600;
+  const tidy = email.trim().toLowerCase();
+  return { token: await sign({ email: tidy, exp }), email: tidy, exp, repo: repo() };
+}
+
 // ---------- GitHub ----------
 const repo = () => process.env.GITHUB_REPO || "";
 const branch = () => process.env.GITHUB_BRANCH || "main";
@@ -202,12 +213,7 @@ export async function handler(event) {
       if (delayMs > 0) await new Promise((r) => setTimeout(r, delayMs)); // slow down guessing
       return json(401, { error: "Wrong email or password." }, origin);
     }
-    const exp = Math.floor(Date.now() / 1000) + SESSION_HOURS * 3600;
-    return json(
-      200,
-      { token: await sign({ email: email.trim().toLowerCase(), exp }), email, exp, repo: repo() },
-      origin,
-    );
+    return json(200, await sessionFor(email), origin);
   }
 
   const session = await verify((event.headers.authorization || "").replace(/^Bearer /, ""));

@@ -8,8 +8,8 @@ use Ismile\SiteData;
 
 $user = Page::guard('content');
 $e = [Page::class, 'e'];
-$editor = Page::contentEditorUrl();
-$edit = static fn (string $group): string => $editor . '#' . rawurlencode($group);
+// Through editor.php, so the editor opens already signed in (no second password).
+$edit = static fn (string $group): string => 'editor.php?group=' . rawurlencode($group);
 $speakers = SiteData::read('speakers');
 $speakerCount = count(array_filter($speakers, static function ($speaker): bool {
     if (!is_array($speaker)) return false;
@@ -19,7 +19,7 @@ $speakerCount = count(array_filter($speakers, static function ($speaker): bool {
 $sponsors = SiteData::read('sponsors');
 $partners = SiteData::read('partners');
 $brandCount = count($sponsors['sponsors'] ?? []) + count($partners['partners'] ?? $partners);
-Page::top('Site content', 'content', '<a class="btn ghost" href="../index.html" target="_blank" rel="noopener">' . Page::navIcon('external') . '<span>Preview website</span></a><a class="btn" href="' . $e($editor) . '">' . Page::navIcon('content') . '<span>Open editor</span></a>');
+Page::top('Site content', 'content', '<a class="btn ghost" href="../index.html" target="_blank" rel="noopener">' . Page::navIcon('external') . '<span>Preview website</span></a><a class="btn" href="editor.php">' . Page::navIcon('content') . '<span>Open editor</span></a>');
 ?>
 <section class="content-welcome">
   <div><span class="section-eyebrow">The iSmile experience</span><h2>Make every first impression count.</h2><p>A beautiful event starts before guests arrive. Keep your story, speakers and event details clear and welcoming.</p><a class="btn" href="<?= $e($edit('hero')) ?>"><span>Edit the homepage</span><?= Page::navIcon('arrow') ?></a></div>

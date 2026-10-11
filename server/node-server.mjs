@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { handler } from "../netlify/functions/api.mjs";
 import { boothAvailability } from "./booths.mjs";
 import { contentFile, contentRequest } from "./content-store.mjs";
+import { editorHandoff } from "./editor-handoff.mjs";
 import { registrationRequest } from "./registration.mjs";
 import { sponsorRequest } from "./sponsor.mjs";
 import { sponsorsFile } from "./sponsor-tiers.mjs";
@@ -89,6 +90,12 @@ export function createAppServer() {
       const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
       if (url.pathname === "/api/register.php") {
         const result = await registrationRequest(req);
+        res.writeHead(result.statusCode, result.headers);
+        res.end(result.body);
+        return;
+      }
+      if (url.pathname === "/api/handoff") {
+        const result = await editorHandoff(req);
         res.writeHead(result.statusCode, result.headers);
         res.end(result.body);
         return;

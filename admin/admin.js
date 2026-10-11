@@ -195,9 +195,6 @@ document.addEventListener("DOMContentLoaded", () => {
 document.addEventListener("DOMContentLoaded", () => {
   const report = document.querySelector("[data-live-report]");
   if (!report) return;
-  const status = document.querySelector("[data-live-report-status]");
-  const refresh = document.querySelector("[data-live-report-refresh]");
-  const badge = document.querySelector(".live-report-badge");
   const hiddenDays = new Set();
   let pending = false, stopped = false, controller;
   const applySeries = () => {
@@ -216,7 +213,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const update = async () => {
     if (pending || stopped || document.hidden) return;
     pending = true;
-    if (refresh) refresh.disabled = true;
     controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000);
     try {
@@ -230,20 +226,13 @@ document.addEventListener("DOMContentLoaded", () => {
       applySeries();
       for (const key of openDetails) report.querySelector(`[data-report-detail="${key}"]`)?.setAttribute("open", "");
       if (focusedDay) report.querySelector(`[data-chart-day="${focusedDay}"]`)?.focus({ preventScroll: true });
-      if (status) status.textContent = `Updated ${data.updated_at.slice(11)} · Iraq time`;
-      badge?.classList.remove("offline");
     } catch {
-      if (!stopped && status) {
-        status.textContent = "Live update unavailable. Showing the last successful report; retrying automatically.";
-        badge?.classList.add("offline");
-      }
+      // Offline or busy: keep the last report on screen and try again next time.
     } finally {
       clearTimeout(timeout);
       pending = false;
-      if (refresh) refresh.disabled = false;
     }
   };
-  refresh?.addEventListener("click", update);
   const timer = setInterval(update, 10000);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) update(); });
   window.addEventListener("pagehide", () => { stopped = true; clearInterval(timer); controller?.abort(); });

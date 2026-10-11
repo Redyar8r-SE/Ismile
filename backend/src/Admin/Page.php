@@ -270,13 +270,6 @@ final class Page
         unset($_SESSION['flash']);
     }
 
-    /** Read-only regions update in place while the user keeps their filters. */
-    /** Pages update themselves every 10 seconds (admin.js); there is no box to show for it. */
-    public static function liveUpdates(): string
-    {
-        return '';
-    }
-
     public static function bottom(): void
     {
         echo '</main>' . (self::$user ? '</div>' : '') . '</body></html>';

@@ -1,10 +1,10 @@
 // iSmile admin: edit every text, list and photo on the site, and save to GitHub.
-import { GROUPS as BASE_GROUPS, groupsForText, PAGE_TITLES, LANGS, DATA_FILES } from "./fields.js?v=117";
-import * as store from "./store.js?v=117";
-import { upload, imageFromClipboard } from "./images.js?v=117";
-import { buildList, buildProgram, buildTypes, buildSingle } from "./lists.js?v=117";
-import { TEXT_ATTRIBUTES } from "../i18n.js?v=117";
-import { loadAccounts, makeAccount, check, forget, fileText, ACCOUNTS_FILE } from "./accounts.js?v=117";
+import { GROUPS as BASE_GROUPS, groupsForText, PAGE_TITLES, LANGS, DATA_FILES } from "./fields.js?v=118";
+import * as store from "./store.js?v=118";
+import { upload, imageFromClipboard } from "./images.js?v=118";
+import { buildList, buildProgram, buildTypes, buildSingle } from "./lists.js?v=118";
+import { TEXT_ATTRIBUTES } from "../i18n.js?v=118";
+import { loadAccounts, makeAccount, check, forget, fileText, ACCOUNTS_FILE } from "./accounts.js?v=118";
 
 // Tells the small script in admin.html that the admin code did load, so it
 // does not offer to reload the page.
@@ -984,10 +984,25 @@ async function start() {
   };
   const uncover = () => document.body.classList.remove("checking");
 
+  // Opened from the database's "Site content": its one-time pass signs this
+  // person in, so neither password screen is needed. The pass leaves the
+  // address at once (it must not stay in the history).
+  const pass = new URLSearchParams(location.search).get("handoff");
+  let handedOver = false;
+  if (pass) {
+    history.replaceState(null, "", location.pathname + location.hash);
+    cover("Signing you in from the database…");
+    await store.init();
+    handedOver = await store.handOff(pass).then(() => true, (error) => {
+      say(error.message, "bad");
+      return false;
+    });
+  }
+
   state.accounts = await loadAccounts();
   // Decide first, reveal second: the admin must never flash up before the
   // login screen covers it.
-  if (state.accounts.length) {
+  if (state.accounts.length && !handedOver) {
     document.body.classList.add("lock-on");
     uncover();                                // let the login screen through
     await askForPassword();

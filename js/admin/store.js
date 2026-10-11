@@ -6,7 +6,7 @@
 //   "key"    — no server answers, so the browser talks to GitHub itself with a
 //              key you paste once. Quicker to set up; the key lives in this
 //              browser, so whoever uses this computer can save to the site.
-import * as gh from "./github.js?v=117";
+import * as gh from "./github.js?v=118";
 
 const SESSION_KEY = "ismile-admin-session";
 const state = { mode: "key", api: "", token: "", email: "", repo: "", problem: "" };
@@ -75,7 +75,7 @@ async function call(path, options = {}) {
     },
   });
   const data = await response.json().catch(() => ({}));
-  if (response.status === 401 && path !== "login") {
+  if (response.status === 401 && path !== "login" && path !== "handoff") {
     state.token = "";
     keep(null);
     throw new Error("Your sign-in ended. Please sign in again.");
@@ -87,6 +87,17 @@ async function call(path, options = {}) {
 // ---------- signing in ----------
 export async function signIn(email, password) {
   const data = await call("login", { method: "POST", body: JSON.stringify({ email, password }) });
+  state.token = data.token;
+  state.email = data.email;
+  state.repo = data.repo || state.repo;
+  keep({ token: data.token, email: data.email, repo: state.repo, exp: data.exp });
+  return data.email;
+}
+
+// Signed in already in the database: its one-time "Site content" pass opens
+// the editor without a second password (the server checks the pass).
+export async function handOff(pass) {
+  const data = await call("handoff", { method: "POST", body: JSON.stringify({ pass }) });
   state.token = data.token;
   state.email = data.email;
   state.repo = data.repo || state.repo;

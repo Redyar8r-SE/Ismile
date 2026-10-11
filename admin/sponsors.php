@@ -431,7 +431,6 @@ Page::top($kind==='booth'?'Booths':'Sponsors', $kind==='booth'?'booths':'sponsor
   <?php if($kind==='sponsor'): ?><a class="btn ghost" target="_blank" rel="noopener" href="<?= $e(App::url('sponsor.html#exhibition')) ?>"><?= Page::navIcon('external') ?>View sponsor map</a><?php else: ?><span class="booth-category-note">One category: Standard booth</span><?php endif; ?>
   <?php if ($callsDue): ?><a class="btn red" href="<?= $pageFile ?>?due=1"><?= Page::navIcon('phone') ?><span>Calls due</span><span class="count"><?= $callsDue ?></span></a><?php endif; ?>
 </div>
-<?= Page::liveUpdates() ?>
 <div data-live-region="booking-overview">
 <?= Page::stats([
     [$kind==='booth' ? 'Booth enquiries':'Sponsor enquiries',number_format($kindCounts[$kind] ?? 0),'All requests in this category','sponsors','blue'],

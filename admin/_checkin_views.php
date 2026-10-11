@@ -40,7 +40,6 @@ $advanced=false;
 foreach(['id','specialty','status','city','university','lang','ambassador','arrival_date','from_time','to_time','staff'] as $key) if($filters[$key]!=='') $advanced=true;
 $canContact=Auth::can($user,'registrations');
 ?>
-<?= Page::liveUpdates() ?>
 <div data-live-region="guest-totals">
 <?= Page::stats([
     ['Registered guests',number_format((int)$summary['guests']),'All active paid and complimentary tickets','users','blue'],

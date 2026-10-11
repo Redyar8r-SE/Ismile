@@ -42,7 +42,6 @@ $select = static function (string $name, array $options, string $current): strin
     return $html . '</select></label>';
 };
 ?>
-<?= Page::liveUpdates() ?>
 <div data-live-region="registration-totals">
 <?= Page::stats([
     ['Registered guests', number_format((int)$overview['registered']), 'Paid and complimentary tickets', 'users', 'teal'],

@@ -91,7 +91,6 @@ $ambNames = array_column($options['ambassadors'], 'name', 'code');
 $pickedLabel = !$pickedAmb ? 'All ambassadors' : (count($pickedAmb) > 1 ? count($pickedAmb) . ' ambassadors'
     : ($pickedAmb[0] === '-' ? 'No ambassador' : (($ambNames[$pickedAmb[0]] ?? '') !== '' ? $ambNames[$pickedAmb[0]] : $pickedAmb[0])));
 ?>
-<?= Page::liveUpdates() ?>
 <div class="list-workspace"><nav class="list-library no-print" aria-label="Customer lists" data-live-region="list-library">
   <span class="library-caption">YOUR CUSTOMER LISTS</span>
   <?php foreach (Lists::ALL as $key => [$label]): if ($key === 'studentids' && !$canPhotos) { continue; } ?>

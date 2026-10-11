@@ -92,4 +92,17 @@ $extra = Db::one('SELECT * FROM admin_users WHERE id = ?', [Auth::createUser("ol
 Erase::account((int) $extra['id'], $extra['email'], $owner);
 $check('the deploy knows a deleted owner must not come back', Erase::wasDeleted($extra['email']));
 
+// ---- "Site content": a one-time pass opens the editor signed in ----
+$pass = \Ismile\EditorHandoff::issue($owner);
+$check('the database pass names its owner', \Ismile\EditorHandoff::redeem($pass) === $owner['email']);
+$check('the same pass never works twice', \Ismile\EditorHandoff::redeem($pass) === null);
+$forged = \Ismile\EditorHandoff::issue($owner);
+$check('a changed pass is refused', \Ismile\EditorHandoff::redeem(substr($forged, 0, -2) . 'xx') === null && \Ismile\EditorHandoff::redeem('nonsense') === null);
+$staff = Db::one('SELECT * FROM admin_users WHERE id = ?', [$staffId]);
+$check('staff without website access get no pass', $rejects(static fn () => \Ismile\EditorHandoff::issue($staff)));
+$late = \Ismile\EditorHandoff::issue($owner);
+Db::run("UPDATE admin_users SET role = 'checkin' WHERE id = ?", [$owner['id']]);
+$check('a pass stops working when the person loses website access', \Ismile\EditorHandoff::redeem($late) === null);
+Db::run("UPDATE admin_users SET role = 'owner' WHERE id = ?", [$owner['id']]);
+
 echo "$passed checks passed\n";
