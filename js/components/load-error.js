@@ -1,5 +1,5 @@
 // Localize the existing error notice even when a page's content fails to load.
-import { onLangChange, t } from "../i18n.js?v=112";
+import { onLangChange, t } from "../i18n.js?v=113";
 
 const fallback = {
   load_error: "Could not load the site data. Open the site through a local server (see README.md).",
