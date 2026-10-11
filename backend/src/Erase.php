@@ -1,8 +1,8 @@
 <?php
 // Deleting a registration or a sponsor/booth booking for good. Only the main
-// Owner (config main_owner_email, the account from the server's secrets) may do
-// it, one record at a time, after typing its reference. Every row that goes is
-// first copied, as JSON, into deleted_records, so nothing is lost by accident.
+// Owner, redyar8r@gmail.com, may do it (not other Owners or admins), one record
+// at a time, after typing its reference. Every row that goes is first copied,
+// as JSON, into deleted_records, so nothing is lost by accident.
 
 declare(strict_types=1);
 
@@ -10,19 +10,19 @@ namespace Ismile;
 
 final class Erase
 {
-    /** The main Owner: an Owner account whose email is the one in config.php. */
+    /** The owner's own sign-in; fixed here so no setting or other admin can move it. */
+    public const MAIN_OWNER = 'redyar8r@gmail.com';
+
+    /** The main Owner's account, while it is switched on. */
     public static function isMainOwner(array $user): bool
     {
-        $main = strtolower(trim((string) App::config('main_owner_email', '')));
-        return $main !== '' && ($user['role'] ?? '') === 'owner' && ($user['disabled_at'] ?? null) === null
-            && strtolower(trim((string) ($user['email'] ?? ''))) === $main;
+        return self::isMainOwnerAccount($user) && ($user['disabled_at'] ?? null) === null;
     }
 
     /** True for the main Owner's own account row (protected on the Users page). */
     public static function isMainOwnerAccount(array $account): bool
     {
-        $main = strtolower(trim((string) App::config('main_owner_email', '')));
-        return $main !== '' && strtolower(trim((string) ($account['email'] ?? ''))) === $main;
+        return strtolower(trim((string) ($account['email'] ?? ''))) === self::MAIN_OWNER;
     }
 
     /** For an Owner who cannot delete: why not (shown instead of the delete box). */
@@ -31,11 +31,7 @@ final class Erase
         if (($user['role'] ?? '') !== 'owner' || self::isMainOwner($user)) {
             return null;
         }
-        $main = strtolower(trim((string) App::config('main_owner_email', '')));
-        if ($main === '') {
-            return 'Deleting is switched off: the main Owner is not set on the server yet (the API_OWNER_EMAIL secret, applied on the next deploy).';
-        }
-        return 'Only the main Owner (' . self::mask($main) . ') can delete records. You are signed in as ' . self::mask((string) ($user['email'] ?? '')) . '.';
+        return 'Only the main Owner (' . self::MAIN_OWNER . ') can delete records. You are signed in as ' . self::mask((string) ($user['email'] ?? '')) . '.';
     }
 
     /** r•••••r@gmail.com: enough to recognise an address without showing it. */

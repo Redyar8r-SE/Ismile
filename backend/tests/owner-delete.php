@@ -30,23 +30,20 @@ $check = static function (string $name, bool $ok) use (&$passed): void {
 $rejects = static function (callable $work): bool {
     try { $work(); return false; } catch (UserError) { return true; }
 };
-$config = require getenv('ISMILE_CONFIG');
 $tag = bin2hex(random_bytes(4));
-$mainEmail = "main-$tag@test.invalid";
-App::boot(['main_owner_email' => strtoupper($mainEmail)] + $config);
+$mainEmail = Erase::MAIN_OWNER;
 
 $account = static fn (string $email, string $role): array => Db::one('SELECT * FROM admin_users WHERE id = ?', [Auth::createUser($email, $role, $role, bin2hex(random_bytes(12)))]);
 $main = $account($mainEmail, 'owner');
 $other = $account("other-$tag@test.invalid", 'owner');
 $office = $account("office-$tag@test.invalid", 'registration');
 
-$check('the main Owner is recognised, ignoring capital letters', Erase::isMainOwner($main));
+$check('only redyar8r@gmail.com is the main Owner', Erase::MAIN_OWNER === 'redyar8r@gmail.com' && Erase::isMainOwner($main));
+$check('capital letters in the address do not matter', Erase::isMainOwner(['email' => ' Redyar8r@Gmail.com '] + $main));
 $check('a second Owner is not the main Owner', !Erase::isMainOwner($other) && !Erase::isMainOwnerAccount($other));
 $check('a disabled main Owner cannot delete', !Erase::isMainOwner(['disabled_at' => '2026-10-11 00:00:00'] + $main));
-$check('the main Owner email with another role cannot delete', !Erase::isMainOwner(['role' => 'registration'] + $main));
-App::boot($config);
-$check('without main_owner_email nobody can delete', !Erase::isMainOwner($main));
-App::boot(['main_owner_email' => $mainEmail] + $config);
+$check('a second Owner is told who can delete', str_contains((string) Erase::lockedReason($other), 'redyar8r@gmail.com'));
+$check('office staff see no delete box', Erase::lockedReason($office) === null && !Erase::isMainOwner($office));
 
 // A paid registration, through the fake gateway, with a check-in.
 Settings::set('registration_open', '1');

@@ -394,17 +394,6 @@ fi
 touch "$BASE/.passwords-renewed-1"
 if [ -n "${OWNER_EMAIL:-}" ]; then
   OWNER_EMAIL="$(printf '%s' "$OWNER_EMAIL" | tr 'A-Z' 'a-z' | tr -d ' \r\n')"
-  # This account is the main Owner: the only one who can delete records, and
-  # no other account can disable it or change its role.
-  ISMILE_MAIN_OWNER="$OWNER_EMAIL" php -r '
-    $path = $argv[1];
-    $cfg = include $path;
-    if (($cfg["main_owner_email"] ?? "") !== getenv("ISMILE_MAIN_OWNER")) {
-        $cfg["main_owner_email"] = getenv("ISMILE_MAIN_OWNER");
-        file_put_contents($path, "<?php\nreturn " . var_export($cfg, true) . ";\n");
-        echo "Main Owner set: the Owner account from the secrets can delete records.\n";
-    }
-  ' "$BACKEND/config.php"
   if [ -n "${OWNER_PASSWORD:-}" ]; then
     # Checked on every run: the account always has the secret's password.
     ISMILE_OWNER_PASSWORD="$OWNER_PASSWORD" php "$BACKEND/tools/install.php" --ensure-owner "$OWNER_EMAIL" | tail -1
