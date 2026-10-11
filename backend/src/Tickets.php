@@ -43,6 +43,19 @@ final class Tickets
         return Db::one('SELECT * FROM tickets WHERE registration_id = ?', [$registrationId]);
     }
 
+    /**
+     * True when the ticket came from a payment through PSOOLA: PSOOLA issued
+     * and emailed the guest's ticket itself, so iSmile sends no ticket email
+     * and shows no iSmile QR. The record stays for the admin and check-in.
+     */
+    public static function issuedByPsoola(?array $ticket): bool
+    {
+        if ($ticket === null || $ticket['source'] !== 'payment' || $ticket['payment_id'] === null) {
+            return false;
+        }
+        return Db::value('SELECT gateway FROM payments WHERE id = ?', [$ticket['payment_id']]) === 'psoola';
+    }
+
     /** What the QR code contains, e.g. ISM26:T26-00012:1:Xy3... */
     public static function qrPayload(array $ticket): string
     {

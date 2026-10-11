@@ -70,6 +70,9 @@ Api::run(static function (): void {
 
     $ticket = Tickets::forRegistration((int) $registration['id']);
     $hasTicket = $ticket !== null && $ticket['cancelled_at'] === null && in_array($registration['status'], ['paid', 'complimentary'], true);
+    // PSOOLA emailed the ticket itself: the page says so instead of showing an iSmile QR.
+    $byPsoola = $hasTicket && Tickets::issuedByPsoola($ticket);
+    $hasTicket = $hasTicket && !$byPsoola;
     Api::json(200, [
         'ok'        => true,
         'ref'       => $registration['ref'],
@@ -83,5 +86,6 @@ Api::run(static function (): void {
         'payment'   => 'paid',
         'ticketNo'  => $hasTicket ? $ticket['ticket_no'] : null,
         'qr'        => $hasTicket ? 'api/qr.php?r=' . rawurlencode($registration['ref']) . '&k=' . rawurlencode($key) . '&v=' . $ticket['version'] : null,
+        'ticketIssuer' => $byPsoola ? 'psoola' : 'ismile',
     ]);
 });

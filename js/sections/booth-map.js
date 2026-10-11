@@ -1,5 +1,5 @@
-import { t, onLangChange } from "../i18n.js?v=95";
-import { buildBooths } from "../config/booth-layout.js?v=95";
+import { t, onLangChange } from "../i18n.js?v=106";
+import { buildBooths } from "../config/booth-layout.js?v=106";
 
 export function initBoothMap({ rows: BOOTH_ROWS, colors: TIER_COLORS }) {
   const BOOTHS = buildBooths(BOOTH_ROWS);

@@ -45,14 +45,44 @@ return [
     // ---- Payments ----
     // 'fake'   : a pretend payment page on our own site, for building and testing
     //            before Psoola sends its documents. Never use on the live site.
-    // 'psoola' : the real Psoola API (filled in when their documents arrive).
+    // 'psoola' : PSOOLA's sales-partner API. PSOOLA's checkout page takes the
+    //            money and PSOOLA issues and emails the ticket itself; iSmile
+    //            keeps the registration but sends no ticket email of its own.
     'payments' => [
         'gateway' => 'fake',
         'psoola'  => [
-            'api_base'       => '',   // from Psoola's documentation
-            'api_key'        => '',   // test key on test.ismile.krd, live key on ismile.krd
-            'merchant_id'    => '',
+            // PSOOLA's partner API address, without /api/... and without a
+            // slash at the end: https://actions.psoola.com (live),
+            // https://stage-actions.psoola.com (PSOOLA staging),
+            // http://127.0.0.1:3211 (local PSOOLA).
+            'api_base'       => '',
+            // The partner API key PSOOLA gives you: psk_<env>_<keyId>_<secret>.
+            // Test key on test.ismile.krd, live key on ismile.krd.
+            'api_key'        => '',
+            'merchant_id'    => '',   // not used by the v1 partner API
+            // Signs PSOOLA's webhooks (X-Psoola-Signature). Give PSOOLA the
+            // webhook address https://<this site>/api/webhook.php.
             'webhook_secret' => '',
+            // The PSOOLA event and show iSmile 2026 is sold as.
+            'event_id'       => '',
+            'show_id'        => '',
+            // PSOOLA ticket type ids, one per iSmile ticket. PSOOLA is the
+            // price authority (all IQD): what a visitor pays is the total
+            // PSOOLA returns for the session, and with this gateway the
+            // registration page shows PSOOLA's prices (api/psoola-prices.php,
+            // cached 5 minutes) instead of data/tickets.json.
+            'ticket_types'   => [
+                'professional' => '',
+                'student'      => '',
+                'vip'          => '',
+            ],
+            // PSOOLA add-on ids for the lunch days (bought once per ticket).
+            // A VIP's included lunch day is never sent; only an extra paid
+            // day is, because PSOOLA cannot yet express "one of two free".
+            'add_ons'        => [
+                'lunchDay1' => '',
+                'lunchDay2' => '',
+            ],
         ],
         // Used only by the fake gateway to sign its pretend webhooks.
         'fake_secret' => 'local-fake-gateway-secret',
