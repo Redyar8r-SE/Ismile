@@ -329,6 +329,8 @@ if ($inCheckin) echo CheckinWorkspace::navigation('guests', $user, $workspaceDay
     <div class="form-actions danger-actions"><button class="btn red" data-confirm="Delete <?= $e($registration['ref']) ?> for good? This cannot be undone from the admin.">Delete for good</button></div>
   </form>
 </section>
+<?php elseif ($locked = Erase::lockedReason($user)): ?>
+<section class="card" id="deleteRecord"><h2>Delete for good</h2><p class="muted small"><?= $e($locked) ?></p></section>
 <?php endif; ?>
 
 <div class="card">

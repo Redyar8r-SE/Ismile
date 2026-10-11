@@ -25,6 +25,27 @@ final class Erase
         return $main !== '' && strtolower(trim((string) ($account['email'] ?? ''))) === $main;
     }
 
+    /** For an Owner who cannot delete: why not (shown instead of the delete box). */
+    public static function lockedReason(array $user): ?string
+    {
+        if (($user['role'] ?? '') !== 'owner' || self::isMainOwner($user)) {
+            return null;
+        }
+        $main = strtolower(trim((string) App::config('main_owner_email', '')));
+        if ($main === '') {
+            return 'Deleting is switched off: the main Owner is not set on the server yet (the API_OWNER_EMAIL secret, applied on the next deploy).';
+        }
+        return 'Only the main Owner (' . self::mask($main) . ') can delete records. You are signed in as ' . self::mask((string) ($user['email'] ?? '')) . '.';
+    }
+
+    /** r•••••r@gmail.com: enough to recognise an address without showing it. */
+    private static function mask(string $email): string
+    {
+        [$name, $domain] = array_pad(explode('@', $email, 2), 2, '');
+        $shown = mb_strlen($name) <= 2 ? mb_substr($name, 0, 1) . '•' : mb_substr($name, 0, 1) . str_repeat('•', mb_strlen($name) - 2) . mb_substr($name, -1);
+        return $shown . ($domain !== '' ? '@' . $domain : '');
+    }
+
     /** One paid person with their ticket, check-ins, certificate, workshops, payments, emails and ID photo. */
     public static function registration(int $id, string $typed, array $user): string
     {

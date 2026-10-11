@@ -390,6 +390,8 @@ if ($id > 0 && ($request = Sponsors::find($id))) {
         <div class="form-actions danger-actions"><button class="btn red" data-confirm="Delete <?= $e($request['ref']) ?> (<?= $e($request['company']) ?>) for good? This cannot be undone from the admin.">Delete for good</button></div>
       </form>
     </section>
+    <?php elseif ($locked = Erase::lockedReason($user)): ?>
+    <section class="card" id="deleteRecord"><h2>Delete for good</h2><p class="muted small"><?= $e($locked) ?></p></section>
     <?php endif; ?>
     <?php
     Page::bottom();
