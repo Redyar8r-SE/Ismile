@@ -96,7 +96,7 @@ $check('automatic name, phone, reference and ticket lookup available', str_conta
 $check('Registration navigation has all four requested tabs', str_contains($html, '>Check-in</span>') && str_contains($html, '>Attended</span>') && str_contains($html, '>Guest list</span>') && str_contains($html, '>Report</span>'));
 $check('Day 2 check-in page renders', strlen($render('checkin', 'day=2')) > 1000);
 $html = $render('checkin', 'tab=attended');
-$check('arrival times and staff filters available', str_contains($html, 'Day 1 arrival') && str_contains($html, 'Day 2 arrival') && str_contains($html, 'Checked in by') && str_contains($html, 'data-live-directory'));
+$check('arrival times and staff filters available', str_contains($html, 'Day 1 arrival') && str_contains($html, 'Day 2 arrival') && str_contains($html, 'Checked in by') && str_contains($html, 'data-live-region'));
 $html = $render('checkin', 'tab=guests');
 $check('guest categories, IDs, lunch and attendance filters available', str_contains($html, 'Student ID') && str_contains($html, 'Lunch booked') && str_contains($html, 'Professional') && str_contains($html, 'Event attendance'));
 $html = $render('checkin', 'tab=report');
