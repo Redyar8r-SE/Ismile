@@ -297,17 +297,12 @@
   "pg_map_text": "The 44 numbered booths in the exhibition hall at Grand Millennium Sulaimani.",
   "order_total_note": "Paid in Iraqi dinars: Psoola converts the dollar prices at its exchange rate of the day.",
   "pm_title": "Find your way around the expo",
-  "pm_text": "44 numbered booths in four colours. Walk in from the main entrance and follow the aisle around the hall.",
+  "pm_text": "44 numbered booths. Walk in from the main entrance and follow the aisle around the hall.",
   "pm_booths": "booths",
-  "pm_tiers": "tiers",
   "pm_days": "days",
   "pm_entrance": "Entrance",
   "pm_exit": "Exit",
   "pm_aisle": "Main aisle",
-  "pm_platinum_d": "6 booths · 4 × 2 m",
-  "pm_gold_d": "7 booths · 2.5 – 4.6 m",
-  "pm_silver_d": "21 booths · 2.5 × 2 m",
-  "pm_bronze_d": "10 booths · 2.5 × 2 m",
   "pm_note": "A guide to the hall. Booth availability and booking are on the sponsor page.",
   "pm_book": "Book a booth"
 }

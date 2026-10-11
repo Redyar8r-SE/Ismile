@@ -1,22 +1,22 @@
-import { showLoadError } from "./components/load-error.js?v=111";
+import { showLoadError } from "./components/load-error.js?v=112";
 // Entry point: loads the data files, then starts each page section.
-import { loadJSON } from "./utils/load-json.js?v=111";
-import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from "./i18n.js?v=111";
-import { initNav } from "./components/nav.js?v=111";
-import { initTheme } from "./components/theme.js?v=111";
-import { initProgram } from "./sections/program.js?v=111";
-import { initProgramMap } from "./sections/program-map.js?v=111";
-import { initSpeakers } from "./sections/speakers.js?v=111";
-import { initSponsors } from "./sections/sponsors.js?v=111";
-import { initPartners } from "./sections/partners.js?v=111";
-import { initJourney } from "./sections/journey.js?v=111";
-import { initProjects } from "./sections/projects.js?v=111";
-import { initGallery } from "./sections/gallery.js?v=111";
-import { initFooter } from "./sections/footer.js?v=111";
-import { initVenue } from "./sections/venue.js?v=111";
-import { initReveal } from "./utils/reveal.js?v=111";
-import { initReadMore } from "./sections/read-more.js?v=111";
-import { initCountdown } from "./sections/countdown.js?v=111";
+import { loadJSON } from "./utils/load-json.js?v=112";
+import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from "./i18n.js?v=112";
+import { initNav } from "./components/nav.js?v=112";
+import { initTheme } from "./components/theme.js?v=112";
+import { initProgram } from "./sections/program.js?v=112";
+import { initProgramMap } from "./sections/program-map.js?v=112";
+import { initSpeakers } from "./sections/speakers.js?v=112";
+import { initSponsors } from "./sections/sponsors.js?v=112";
+import { initPartners } from "./sections/partners.js?v=112";
+import { initJourney } from "./sections/journey.js?v=112";
+import { initProjects } from "./sections/projects.js?v=112";
+import { initGallery } from "./sections/gallery.js?v=112";
+import { initFooter } from "./sections/footer.js?v=112";
+import { initVenue } from "./sections/venue.js?v=112";
+import { initReveal } from "./utils/reveal.js?v=112";
+import { initReadMore } from "./sections/read-more.js?v=112";
+import { initCountdown } from "./sections/countdown.js?v=112";
 
 async function start() {
   initNav();
@@ -48,7 +48,7 @@ async function start() {
     if (kurdish) addLanguage("ku", kurdish);
 
     initProgram(program);
-    initProgramMap({ ...boothPlan, colors: { platinum: "#5EEAD4", gold: "#FBBF24", silver: "#A5B4FC", bronze: "#FB923C" } });
+    initProgramMap(boothPlan);
     initSpeakers(speakers);
     initSponsors(sponsors);
     initPartners(partners);
