@@ -39,7 +39,7 @@ mkdir -p "$SITE" "$BACKEND"
 
 # ---- Backend first (outside the web folder), so the new pages never run
 #      against old backend code ----
-for item in src cron database tools tests bootstrap.php composer.json composer.lock config.sample.php .htaccess; do
+for item in src assets cron database tools tests bootstrap.php composer.json composer.lock config.sample.php .htaccess; do
   [ -e "$REPO/backend/$item" ] && cp -R "$REPO/backend/$item" "$BACKEND/"
 done
 mkdir -p "$BACKEND/storage"

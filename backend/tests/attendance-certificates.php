@@ -209,7 +209,7 @@ $report = PdfReport::make('iSmile guest directory', [$headers, ['ISM26-DEMO','Sa
 file_put_contents(App::storage('tmp/report-test.pdf'), $report);
 $check('wide PDF report retains all columns in readable groups', preg_match_all('/\/Type \/Page\b/', $report) === 2);
 $bundle=PdfReport::bundle(['Guests'=>[$headers], 'Attendance'=>[['Name','Day 1','Day 2'],['Sara','09:00','09:05']]]);
-$check('combined event PDF includes separate sections', preg_match_all('/\/Type \/Page\b/', $bundle)===3);
+$check('combined event PDF has a contents page and separate sections', preg_match_all('/\/Type \/Page\b/', $bundle)===4);
 $student = $make('Narin');
 $image=imagecreatetruecolor(300,180); imagefill($image,0,0,imagecolorallocate($image,240,245,246));
 imagestring($image,5,25,70,'SAMPLE STUDENT ID',imagecolorallocate($image,18,48,47));
@@ -219,7 +219,7 @@ Db::run("UPDATE registrations SET ticket_type='student', specialty='student', un
 $student=Registrations::find((int)$student['id']);
 $idPdf=PdfReport::studentIds([$student]);
 file_put_contents(App::storage('tmp/student-id-test.pdf'),$idPdf);
-$check('student ID PDF includes the protected photo', str_contains($idPdf,'/Subtype /Image'));
+$check('student ID PDF includes the protected photo beside the letterhead logo', preg_match_all('/\/Subtype \/Image/', $idPdf) === 2);
 Db::run("UPDATE registrations SET lunch_day1=1,lunch_day2=0,city='Filter Test City',ambassador_code='FILTER-TEST',lang='ku' WHERE id=?",[$student['id']]);
 $studentTicket=Tickets::forRegistration((int)$student['id']);
 Attendance::checkIn(Tickets::qrPayload($studentTicket),1,$staff);
