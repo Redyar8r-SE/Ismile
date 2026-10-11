@@ -7,8 +7,8 @@
 // the admin and emails the company and the team. Where there is no server (the
 // GitHub Pages copy), the last screen hands the filled-in request to WhatsApp
 // or email instead, already written out, so a request is never lost.
-import { t, tr, getLang, onLangChange } from "../i18n.js?v=115";
-import { isValidPhone } from "./registration.js?v=115";
+import { t, tr, getLang, onLangChange } from "../i18n.js?v=116";
+import { isValidPhone } from "./registration.js?v=116";
 
 const COMPANY_STEP = 3;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -37,7 +37,7 @@ export function initSponsorForm({ tiers = [], enquiry = {} } = {}) {
 
   // ---------- The package cards ----------
   // The tiers sit in an even grid. "Not sure yet" is not a package, so it gets
-  // a row of its own underneath and a quieter shape.
+  // a quieter shape: a row of its own, or the gap beside an odd last tier.
   function renderPacks() {
     const options = [
       ...tiers.map((tier) => ({ id: tier.id, name: tr(tier.name), note: tr(tier.subtitle), className: tier.className })),

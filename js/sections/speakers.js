@@ -1,7 +1,7 @@
 // Speakers grid, from data/speakers.json.
 // Empty fields (null) show "Coming soon" placeholders.
-import { t, tr, onLangChange } from "../i18n.js?v=115";
-import { ICONS } from "../config/icons.js?v=115";
+import { t, tr, onLangChange } from "../i18n.js?v=116";
+import { ICONS } from "../config/icons.js?v=116";
 
 export function initSpeakers(speakers) {
   const grid = document.getElementById("spGrid");

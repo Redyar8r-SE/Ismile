@@ -127,6 +127,13 @@ html[lang="en"] .sponsor-edition-translated,html:not([lang="en"]) .sponsor-editi
 .spf-pack-any .spf-pack-text{grid-column:2;grid-row:1}
 .spf-pack-any .spf-pack-name{font-size:16px;font-weight:600;color:var(--text)}
 .spf-pack-any.is-checked{border-style:solid}
+/* An odd number of packages leaves a gap beside the last one: fill it. */
+.spf-pack-any:nth-child(even){grid-column:auto;grid-template-columns:48px minmax(0,1fr) 22px;grid-template-rows:auto 1fr;align-items:start;padding:22px}
+.spf-pack-any:nth-child(even) .spf-pack-icon{grid-row:1;grid-column:1;width:48px;height:48px;border:1px dashed color-mix(in srgb,var(--teal) 45%,var(--line));border-radius:14px}
+.spf-pack-any:nth-child(even) .spf-pack-text{grid-column:1/-1;grid-row:2;align-self:start;gap:6px}
+.spf-pack-any:nth-child(even) .spf-pack-name{font-size:22px;font-weight:700}
+.spf-pack-any:nth-child(even) .tc-check{align-self:center}
+.spf-pack-note:empty{display:none}
 :root[data-theme="dark"] .spf-pack{background-color:var(--tier-night-bg);--tier-ink:var(--m1)}
 :root[data-theme="dark"] .spf-pack.is-checked{border-color:var(--m1);box-shadow:inset 0 0 0 1px var(--m1)}
 :root[data-theme="dark"] .spf-pack.is-checked .tc-check{border-color:var(--m1);box-shadow:inset 0 0 0 4px var(--tier-night-bg),inset 0 0 0 12px var(--m1)}
