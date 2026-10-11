@@ -94,13 +94,14 @@ $check('the deploy knows a deleted owner must not come back', Erase::wasDeleted(
 
 // ---- students added by the office need their ID photo, as on the website ----
 $student = ['first_name' => 'Lana', 'father_name' => 'Kamal', 'grandfather_name' => 'Aziz', 'phone' => '07501239876',
-    'email' => "student-$tag@test.invalid", 'specialty' => 'student', 'ticket' => 'student', 'university' => 'University of Salahaddin', 'lang' => 'en'];
+    'email' => "student-$tag@test.invalid", 'specialty' => 'student', 'ticket' => 'student', 'university' => 'University of Salahaddin', 'stage' => '4', 'lang' => 'en'];
 $forms = (int) Db::value('SELECT COUNT(*) FROM checkouts');
 $message = '';
 try { Checkouts::createFromOffice($student, $owner); } catch (UserError $error) { $message = $error->key; }
 $check('a phone student without an ID photo is refused, in plain words', str_contains($message, 'ID photo') && (int) Db::value('SELECT COUNT(*) FROM checkouts') === $forms);
 $check('a free student ticket also needs the ID photo', $rejects(static fn () => Office::createComplimentary($owner, $student + ['comp_reason' => 'Test'])));
 $check('a photo that was not really uploaded is refused', $rejects(static fn () => Checkouts::createFromOffice($student, $owner, ['error' => UPLOAD_ERR_OK, 'tmp_name' => __FILE__, 'size' => 10, 'name' => 'x.jpg', 'type' => 'image/jpeg'])));
+$check('a 2nd-stage student is refused by the office too', $rejects(static fn () => Checkouts::createFromOffice(['stage' => '2'] + $student, $owner)));
 $check('non-students need no photo', Checkouts::officePhoto(['ticket_type' => 'professional'], null) === null);
 
 // ---- "Site content": a one-time pass opens the editor signed in ----

@@ -8,9 +8,9 @@
 // server (GitHub Pages) or registration is closed, the form is not shown at
 // all, so nobody can believe they registered when nothing was saved.
 // Nothing about the visitor is kept in the browser.
-import { t, getLang, onLangChange } from "../i18n.js?v=120";
-import { formatPrice } from "../utils/money.js?v=120";
-import { initRegistrationExperience } from "./registration-experience.js?v=120";
+import { t, getLang, onLangChange } from "../i18n.js?v=121";
+import { formatPrice } from "../utils/money.js?v=121";
+import { initRegistrationExperience } from "./registration-experience.js?v=121";
 
 const TOTAL_STEPS = 3;
 
@@ -21,6 +21,8 @@ const FIELD_STEP = { terms: 3 };
 // Nothing uses them any more, so they are removed from any device that has them.
 try { localStorage.removeItem("ismile-attendee"); } catch { /* storage blocked: nothing kept */ }
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+// Student tickets are for dental students from this stage up (the server checks it too).
+const FIRST_STUDENT_STAGE = 3;
 
 // Iraqi mobiles (0750 123 4567 / +964 750 123 4567) or any international number starting with +
 export function isValidPhone(value) {
@@ -151,6 +153,8 @@ export function initRegistration({ tickets = {} } = {}) {
       error = "err_name";
     } else if (rule === "age" && (!Number.isInteger(Number(value)) || Number(value) < 16 || Number(value) > 120)) {
       error = "err_age";
+    } else if (rule === "stage" && Number(value) < FIRST_STUDENT_STAGE) {
+      error = "err_stage_low";
     }
     showError(input, error);
     return !error;
@@ -250,6 +254,8 @@ export function initRegistration({ tickets = {} } = {}) {
     const input = event.target;
     if (input.matches("[data-rule]") && input.value.trim()) checkField(input);
   });
+  // A stage below 3rd is said at once, not only when pressing Next.
+  $("p_stage").addEventListener("change", () => checkField($("p_stage")));
 
   // Replace the browser's bright native number arrows with controls that
   // match the registration form and keep the value inside the allowed range.
@@ -353,12 +359,15 @@ export function initRegistration({ tickets = {} } = {}) {
     syncSpecialty();
     const isStudent = checkedValue("ticket") === "student";
     $("uniWrap").hidden = !isStudent;
+    $("stageWrap").hidden = !isStudent;
+    $("p_stage").disabled = !isStudent;
     $("ambassadorWrap").hidden = !isStudent;
     $("studentIdWrap").hidden = !isStudent;
     $("p_ambassador").disabled = !isStudent;
     $("p_student_id").disabled = !isStudent;
     if (!isStudent) {
       showError($("p_uni"), "");
+      showError($("p_stage"), "");
       showError($("p_ambassador"), "");
       showError($("p_student_id"), "");
       renderStudentIdPreview();
@@ -444,6 +453,7 @@ export function initRegistration({ tickets = {} } = {}) {
     rows.push([t("f_ticket"), t(checkedValue("ticket") === "vip" ? "xp_vip" : checkedValue("ticket") === "student" ? "ticket_student" : "ticket_prof")]);
     if (checkedValue("ticket") === "student") {
       rows.push([t("f_uni"), $("p_uni").value.trim()]);
+      rows.push([t("f_stage"), t(`stage_${$("p_stage").value}`)]);
       if ($("p_ambassador").value.trim()) rows.push([t("f_ambassador"), $("p_ambassador").value.trim()]);
       if ($("p_student_id").files?.[0]) rows.push([t("f_student_id"), $("p_student_id").files[0].name]);
     }
@@ -520,6 +530,7 @@ export function initRegistration({ tickets = {} } = {}) {
     data.append("website", $("regTrap")?.value || "");   // spam trap: people never fill it
     if (student) {
       data.append("university", $("p_uni").value.trim());
+      data.append("stage", $("p_stage").value);
       data.append("ambassador", $("p_ambassador").value.trim());
       const photo = $("p_student_id").files?.[0];
       if (photo) {

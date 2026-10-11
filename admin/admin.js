@@ -355,8 +355,10 @@ document.addEventListener("DOMContentLoaded", () => {
     ticket.querySelector('[value="professional"]').disabled = dentalStudent;
     const studentTicket = ticket.value === "student";
     fields.hidden = !studentTicket;
-    fields.querySelectorAll("input").forEach((input) => { input.disabled = !studentTicket; });
+    fields.querySelectorAll("input, select").forEach((input) => { input.disabled = !studentTicket; });
     university.required = studentTicket;
+    const stage = document.getElementById("caller-stage");
+    if (stage) stage.required = studentTicket;
     const photo = document.getElementById("caller-student-id");
     if (photo) photo.required = studentTicket;
     const vipFields = document.getElementById("caller-vip-lunch");

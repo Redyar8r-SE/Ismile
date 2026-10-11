@@ -78,9 +78,10 @@ if (isset($_GET['new'])) {
           </select></label>
           <label>Ticket *<select name="ticket" id="caller-ticket"><option value="professional"<?= !$student && !$vip ? ' selected' : '' ?>>Professional</option><option value="student"<?= $student ? ' selected' : '' ?>>Student</option><option value="vip"<?= $vip ? ' selected' : '' ?>>VIP</option></select></label>
         </div>
-        <p class="muted small" id="caller-ticket-note">Dental students receive a student ticket. For student tickets, record the university after checking the ID.</p>
+        <p class="muted small" id="caller-ticket-note">Dental students receive a student ticket (3rd stage and above). For student tickets, record the university and stage after checking the ID.</p>
         <div class="row3" id="caller-student-fields">
           <label>University (required for students)<input name="university" id="caller-university" maxlength="160" value="<?= $value('university') ?>"<?= $student ? ' required' : '' ?>></label>
+          <label>Stage (3rd and above)<select name="stage" id="caller-stage"<?= $student ? ' required' : '' ?>><option value="">Choose the stage</option><?php foreach (range(\Ismile\Checkouts::FIRST_STUDENT_STAGE, \Ismile\Checkouts::LAST_STUDENT_STAGE) as $stage): ?><option value="<?= $stage ?>"<?= $selected('stage', (string) $stage) ?>><?= $e(\Ismile\Registrations::stageName($stage)) ?></option><?php endforeach; ?></select></label>
           <label>Ambassador code (optional)<input name="ambassador" maxlength="40" value="<?= $value('ambassador') ?>" placeholder="e.g. AMB-SARA" autocomplete="off"></label>
           <label>Student ID photo (required for students)<input type="file" name="student_id" id="caller-student-id" accept="image/jpeg,image/png,image/webp"<?= $student ? ' required' : '' ?>><small class="field-hint">A clear photo of the student card, JPG, PNG or WebP, 8 MB at most. Ask the student to send it on WhatsApp.</small></label>
         </div>
@@ -234,7 +235,7 @@ if ($inCheckin) echo CheckinWorkspace::navigation('guests', $user, $workspaceDay
 
     <?php if ($registration['ticket_type'] === 'student'): ?>
       <h2>Student</h2>
-      <p>University: <b><?= $e($registration['university'] ?? '') ?></b><?= $registration['ambassador_code'] ? ' · ambassador code <code>' . $e($registration['ambassador_code']) . '</code>' : '' ?></p>
+      <p>University: <b><?= $e($registration['university'] ?? '') ?></b><?= $registration['study_stage'] ? ' · <b>' . $e(\Ismile\Registrations::stageName((int) $registration['study_stage'])) . '</b>' : '' ?><?= $registration['ambassador_code'] ? ' · ambassador code <code>' . $e($registration['ambassador_code']) . '</code>' : '' ?></p>
       <?php if ($registration['id_photo_id'] && Auth::can($user, 'photos')): $photoInfo = \Ismile\IdPhotos::info((int) $registration['id_photo_id']); ?>
         <p class="muted small">Student ID photo, stored in the database (sent with the form <?= Page::when($photoInfo['uploaded_at'] ?? null) ?>, <?= $photoInfo ? round($photoInfo['bytes'] / 1024) . ' KB' : '' ?>). Accepted automatically when they paid; click to see it full size:</p>
         <a href="photo.php?id=<?= $id ?>" target="_blank" rel="noopener"><img class="idphoto" src="photo.php?id=<?= $id ?>" alt="Student ID photo"></a>

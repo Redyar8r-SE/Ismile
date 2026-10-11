@@ -11,6 +11,12 @@ namespace Ismile;
 final class Registrations
 {
     public const SPECIALTIES = ['gp', 'spec', 'omfs', 'lab', 'acad', 'student'];
+    /** "3rd stage": a student's stage, as the office reads it. */
+    public static function stageName(int $stage): string
+    {
+        return $stage . (match ($stage) { 1 => 'st', 2 => 'nd', 3 => 'rd', default => 'th' }) . ' stage';
+    }
+
     public const SPECIALTY_NAMES = [
         'gp' => 'General dentist',
         'spec' => 'Specialist',

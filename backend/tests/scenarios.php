@@ -286,11 +286,15 @@ try {
     section('Students: send the ID photo, pay, registered (no approval step)');
     $bad = App::storage('tmp/virus.jpg');
     file_put_contents($bad, "MZ\x90\x00 this is really a program " . str_repeat('x', 500));
-    $answer = register(form(['specialty' => 'student', 'university' => 'Uni of Sulaimani', 'student_id' => new CURLFile($bad, 'image/jpeg', 'id.jpg')]));
+    $answer = register(form(['specialty' => 'student', 'stage' => '4', 'university' => 'Uni of Sulaimani', 'student_id' => new CURLFile($bad, 'image/jpeg', 'id.jpg')]));
     check('a renamed program as "ID photo" is refused', $answer['status'] === 422 && ($answer['json']['error'] ?? '') === 'err_student_id_type' && ($answer['json']['field'] ?? '') === 'p_student_id');
-    $answer = register(form(['specialty' => 'student', 'university' => 'Uni of Sulaimani']));
+    $answer = register(form(['specialty' => 'student', 'stage' => '4', 'university' => 'Uni of Sulaimani']));
     check('a student without a photo is refused', ($answer['json']['error'] ?? '') === 'err_student_id');
-    $answer = register(form(['specialty' => 'student', 'ticket' => 'professional', 'university' => 'Uni of Sulaimani', 'ambassador' => 'AMB-7', 'student_id' => new CURLFile($jpeg, 'image/jpeg', 'id.jpg')]));
+    $answer = register(form(['specialty' => 'student', 'university' => 'Uni of Sulaimani']));
+    check('a student must say which stage they are in', ($answer['json']['error'] ?? '') === 'err_required' && ($answer['json']['field'] ?? '') === 'p_stage');
+    $answer = register(form(['specialty' => 'student', 'stage' => '2', 'university' => 'Uni of Sulaimani']));
+    check('student tickets are for 3rd stage and above', ($answer['json']['error'] ?? '') === 'err_stage_low' && ($answer['json']['field'] ?? '') === 'p_stage');
+    $answer = register(form(['specialty' => 'student', 'stage' => '4', 'ticket' => 'professional', 'university' => 'Uni of Sulaimani', 'ambassador' => 'AMB-7', 'student_id' => new CURLFile($jpeg, 'image/jpeg', 'id.jpg')]));
     $studentForm = checkoutByRef((string) ($answer['json']['ref'] ?? ''));
     check('"dental student" always gets the student ticket', ($studentForm['ticket_type'] ?? '') === 'student');
     check('a student goes straight to payment, like everyone', str_contains((string) ($answer['json']['redirect'] ?? ''), 'fake-psoola.php') && (int) lastPaymentOf($studentForm)['amount_expected'] === $prices['student']);
@@ -308,7 +312,7 @@ try {
 
     // ------------------------------------------------------------------
     section('Forms not paid are deleted');
-    $answer = register(form(['specialty' => 'student', 'university' => 'Uni of Duhok', 'student_id' => new CURLFile($jpeg, 'image/jpeg', 'id.jpg')]));
+    $answer = register(form(['specialty' => 'student', 'stage' => '4', 'university' => 'Uni of Duhok', 'student_id' => new CURLFile($jpeg, 'image/jpeg', 'id.jpg')]));
     $gone = checkoutByRef((string) $answer['json']['ref']);
     fakePay((string) $answer['json']['redirect'], 'fail');
     Db::run('UPDATE checkouts SET expires_at = ? WHERE id = ?', [date('Y-m-d H:i:s', time() - 60), $gone['id']]);

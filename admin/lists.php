@@ -62,6 +62,7 @@ $cell = static function (string $key, array $row) use ($e, $canPhotos): string {
         'amount_paid' => $row['amount_paid'] !== null ? number_format((int) $row['amount_paid']) : '–',
         'form_status' => Page::pill((string) $row['form_status']),
         'sponsor_status' => Page::pill((string) $row['sponsor_status']),
+        'study_stage' => $row['study_stage'] ? $e(Registrations::stageName((int) $row['study_stage'])) : '<span class="muted">–</span>',
         'ambassador_code' => Lists::ambassadorCode($row) !== '' ? '<span class="amb-code">' . $e(Lists::ambassadorCode($row)) . '</span>' : '<span class="muted">–</span>',
         'id_photo' => $row['id_photo'] !== 'stored' ? '<span class="muted">none</span>' : ($canPhotos ? '<a href="photo.php?id=' . (int) $row['id'] . '" target="_blank" rel="noopener">✓ see photo</a>' : '✓ stored'),
         'package' => $row['package'] !== null ? $e((string) $row['package']) : '<span class="muted">not chosen</span>',

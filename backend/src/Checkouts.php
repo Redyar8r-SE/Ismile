@@ -103,11 +103,19 @@ final class Checkouts
         }
 
         $university = null;
+        $stage = null;
         $ambassador = null;
         if ($ticket === 'student') {
             $university = Validate::text($in['university'] ?? '', 160);
             if ($university === '') {
                 throw new UserError('err_required', 'p_uni');
+            }
+            $stage = self::studentStage($in['stage'] ?? null);
+            if ($stage === null) {
+                throw new UserError('err_required', 'p_stage');
+            }
+            if ($stage < self::FIRST_STUDENT_STAGE) {
+                throw new UserError('err_stage_low', 'p_stage');
             }
             $ambassador = Validate::text($in['ambassador'] ?? '', 40) ?: null;
             if ($ambassador !== null && !preg_match('/^[\p{L}\p{N}\-_. ]{1,40}$/u', $ambassador)) {
@@ -121,7 +129,7 @@ final class Checkouts
             'specialty' => $specialty, 'lang' => $lang, 'ticket_type' => $ticket,
             'lunch_day1' => $lunch1 ? 1 : 0, 'lunch_day2' => $lunch2 ? 1 : 0, 'pay_method' => $payMethod,
             'vip_lunch_day' => $vipDay,
-            'university' => $university, 'ambassador_code' => $ambassador,
+            'university' => $university, 'study_stage' => $stage, 'ambassador_code' => $ambassador,
         ];
         if (!SiteData::pricesReadyFor($row)) {
             throw new UserError('reg_closed', null, 409);
@@ -219,11 +227,16 @@ final class Checkouts
             $ticket = 'student';   // same rule as the website form
         }
         $university = null;
+        $stage = null;
         $ambassador = null;
         if ($ticket === 'student') {
             $university = Validate::text($in['university'] ?? '', 160);
             if ($university === '') {
                 throw new UserError('Write the student\'s university.');
+            }
+            $stage = self::studentStage($in['stage'] ?? null);
+            if ($stage === null || $stage < self::FIRST_STUDENT_STAGE) {
+                throw new UserError('Choose the student\'s stage. Student tickets are for 3rd stage and above.');
             }
             $ambassador = Validate::text($in['ambassador'] ?? '', 40) ?: null;
             if ($ambassador !== null && !preg_match('/^[\p{L}\p{N}\-_. ]{1,40}$/u', $ambassador)) {
@@ -238,7 +251,7 @@ final class Checkouts
             'phone' => $phone, 'email' => $email, 'city' => Validate::text($in['city'] ?? '', 80) ?: '-',
             'gender' => 'prefer-not', 'age' => null, 'specialty' => $specialty, 'lang' => 'en',
             'ticket_type' => $ticket, 'lunch_day1' => $lunch1 ? 1 : 0, 'lunch_day2' => $lunch2 ? 1 : 0, 'vip_lunch_day' => $vipDay,
-            'pay_method' => 'visa', 'university' => $university, 'ambassador_code' => $ambassador, 'id_photo_id' => null,
+            'pay_method' => 'visa', 'university' => $university, 'study_stage' => $stage, 'ambassador_code' => $ambassador, 'id_photo_id' => null,
         ];
     }
 
@@ -251,6 +264,18 @@ final class Checkouts
             throw new UserError('err_required');
         }
         return $day;
+    }
+
+    /** Student tickets are for dental students from this stage up. */
+    public const FIRST_STUDENT_STAGE = 3;
+
+    /** The last stage of dental college. */
+    public const LAST_STUDENT_STAGE = 5;
+
+    /** A student's stage (1st to 5th), or null when none was chosen. */
+    public static function studentStage(mixed $value): ?int
+    {
+        return is_string($value) && preg_match('/^[1-5]$/', $value) ? (int) $value : null;
     }
 
     /** The attempt key a website form sends (random, from the browser), or null. */
@@ -302,7 +327,7 @@ final class Checkouts
     {
         $duplicateOf = Db::value("SELECT id FROM registrations WHERE (email = ? OR phone = ?) AND status <> 'cancelled' LIMIT 1", [$checkout['email'], $checkout['phone']]);
         $fields = ['ref', 'first_name', 'father_name', 'grandfather_name', 'phone', 'email', 'city', 'gender', 'age', 'specialty', 'lang',
-            'ticket_type', 'lunch_day1', 'lunch_day2', 'vip_lunch_day', 'pay_method', 'university', 'ambassador_code', 'id_photo_id', 'view_nonce', 'created_by', 'created_ip', 'created_at', 'terms_accepted_at'];
+            'ticket_type', 'lunch_day1', 'lunch_day2', 'vip_lunch_day', 'pay_method', 'university', 'study_stage', 'ambassador_code', 'id_photo_id', 'view_nonce', 'created_by', 'created_ip', 'created_at', 'terms_accepted_at'];
         $row = array_intersect_key($checkout, array_flip($fields));
         $id = Db::insert('registrations', $row + [
             'status' => 'paid', 'possible_duplicate' => $duplicateOf ? 1 : 0, 'paid_at' => $paidAt, 'updated_at' => $paidAt,

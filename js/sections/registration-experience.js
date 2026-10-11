@@ -1,5 +1,5 @@
-import { t, onLangChange } from "../i18n.js?v=120";
-import { formatPrice } from "../utils/money.js?v=120";
+import { t, onLangChange } from "../i18n.js?v=121";
+import { formatPrice } from "../utils/money.js?v=121";
 
 // Presentation and VIP lunch choices; validation and submission stay in registration.js.
 export function initRegistrationExperience({ tickets, shown, onLunchChange, getStep }) {
@@ -117,6 +117,7 @@ export function initRegistrationExperience({ tickets, shown, onLunchChange, getS
     $("standardExperience").hidden = vip;
     $("standardTitle").textContent = t(student ? "xp_student_heading" : "xp_professional_heading");
     $("standardCopy").textContent = t(student ? "xp_student_copy" : "xp_professional_copy");
+    $("studentRule").hidden = !student;
     $("standardLunch").hidden = vip;
     $("vipExtras").hidden = !vip;
     $("extrasStepLabel").textContent = t(vip ? "xp_vip_extras_step" : "st_lunch");

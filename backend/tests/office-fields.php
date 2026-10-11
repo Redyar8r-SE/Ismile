@@ -36,15 +36,17 @@ $rejects = static function (array $in): bool {
     }
 };
 foreach (Registrations::SPECIALTIES as $specialty) {
-    $row = Checkouts::officeRow(['specialty' => $specialty, 'university' => 'Test University'] + $caller);
+    $row = Checkouts::officeRow(['specialty' => $specialty, 'university' => 'Test University', 'stage' => '4'] + $caller);
     $check("stores specialty $specialty", $row['specialty'] === $specialty);
 }
+$check('a student keeps their stage', Checkouts::officeRow(['specialty' => 'student', 'university' => 'Test University', 'stage' => '5'] + $caller)['study_stage'] === 5);
+$check('a student must give a stage of 3rd or above', $rejects(['specialty' => 'student', 'university' => 'Test University'] + $caller) && $rejects(['specialty' => 'student', 'university' => 'Test University', 'stage' => '2'] + $caller) && $rejects(['specialty' => 'student', 'university' => 'Test University', 'stage' => '6'] + $caller));
 $missing = $caller;
 unset($missing['specialty']);
 $check('requires an explicit specialty', $rejects($missing));
 $check('rejects an unknown specialty', $rejects(['specialty' => 'unknown'] + $caller));
 $check('rejects an empty specialty', $rejects(['specialty' => ''] + $caller));
-$student = ['specialty' => 'student', 'university' => 'University of Sulaimani', 'ambassador' => 'AMB-SARA'] + $caller;
+$student = ['specialty' => 'student', 'university' => 'University of Sulaimani', 'ambassador' => 'AMB-SARA', 'stage' => '3'] + $caller;
 $row = Checkouts::officeRow($student);
 $check('dental student always receives a student ticket', $row['ticket_type'] === 'student');
 $check('keeps university and ambassador code for students', $row['university'] === $student['university'] && $row['ambassador_code'] === 'AMB-SARA');
