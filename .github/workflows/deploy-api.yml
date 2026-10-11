@@ -8,6 +8,9 @@
 #   API_RESEND_KEY      optional: send the emails for real through Resend
 #   API_BREVO_KEY       optional: send through Brevo instead (wins over Resend)
 #   API_MAIL_FROM       optional: the sender (default onboarding@resend.dev)
+#   API_PSOOLA_CONFIG   optional: PSOOLA's settings as one JSON object (keys,
+#                       event/show/ticket/add-on ids, "active": true to take
+#                       real payments). Written into config.php, never printed.
 # The log is public (public repository): passwords are never printed.
 name: Deploy API (api.ismile.krd)
 
@@ -70,9 +73,10 @@ jobs:
           RESEND_KEY: ${{ secrets.API_RESEND_KEY }}
           BREVO_KEY: ${{ secrets.API_BREVO_KEY }}
           MAIL_FROM: ${{ secrets.API_MAIL_FROM }}
+          PSOOLA_CONFIG: ${{ secrets.API_PSOOLA_CONFIG }}
           QUIET_SECRETS: "1"
         with:
-          envs: OWNER_EMAIL,OWNER_PASSWORD,SITE_PASSWORD,RESEND_KEY,BREVO_KEY,MAIL_FROM,QUIET_SECRETS
+          envs: OWNER_EMAIL,OWNER_PASSWORD,SITE_PASSWORD,RESEND_KEY,BREVO_KEY,MAIL_FROM,PSOOLA_CONFIG,QUIET_SECRETS
           host: ${{ env.DEPLOY_HOST }}
           username: ${{ env.DEPLOY_USER }}
           password: ${{ env.DEPLOY_PASSWORD }}

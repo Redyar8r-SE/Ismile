@@ -279,6 +279,45 @@ ISMILE_RESEND_KEY="${RESEND_KEY:-}" ISMILE_BREVO_KEY="${BREVO_KEY:-}" ISMILE_MAI
 return " . var_export($cfg, true) . ";
 ");
 ' "$BACKEND/config.php"
+# PSOOLA: the settings PSOOLA gave (GitHub secret API_PSOOLA_CONFIG, one JSON
+# object) are written into config.php; the database, secret and other server
+# values stay as they are. Payments only switch to PSOOLA when it says
+# "active": true; until then the keys are stored and the gateway is unchanged.
+# Nothing secret is printed.
+if [ -n "${PSOOLA_CONFIG:-}" ]; then
+  ISMILE_PSOOLA_CONFIG="$PSOOLA_CONFIG" php -r '
+    $path = $argv[1];
+    $cfg = include $path;
+    $in = json_decode((string) getenv("ISMILE_PSOOLA_CONFIG"), true);
+    $text = static fn ($v): bool => is_string($v) && $v !== "";
+    $ids = static fn ($v, array $keys): bool => is_array($v) && array_reduce($keys, static fn ($ok, $k) => $ok && is_string($v[$k] ?? null) && $v[$k] !== "", true);
+    if (!is_array($in) || !$text($in["api_key"] ?? null) || !$text($in["webhook_secret"] ?? null)
+        || !preg_match("~^https://[a-z0-9.-]+$~", (string) ($in["api_base"] ?? ""))
+        || !$text($in["event_id"] ?? null) || !$text($in["show_id"] ?? null)
+        || !$ids($in["ticket_types"] ?? null, ["professional", "student", "vip"])
+        || !$ids($in["add_ons"] ?? null, ["lunchDay1", "lunchDay2"])) {
+        fwrite(STDERR, "PSOOLA settings: API_PSOOLA_CONFIG is incomplete or not valid JSON; nothing changed.\n");
+        exit(1);
+    }
+    $cfg["payments"]["psoola"] = [
+        "api_base" => rtrim($in["api_base"], "/"), "api_key" => $in["api_key"],
+        "merchant_id" => (string) ($in["merchant_id"] ?? ""), "webhook_secret" => $in["webhook_secret"],
+        "event_id" => $in["event_id"], "show_id" => $in["show_id"],
+        "ticket_types" => array_intersect_key($in["ticket_types"], array_flip(["professional", "student", "vip"])),
+        "add_ons" => array_intersect_key($in["add_ons"], array_flip(["lunchDay1", "lunchDay2"])),
+    ];
+    if (($in["active"] ?? false) === true) {
+        $cfg["payments"]["gateway"] = "psoola";
+        $cfg["env"] = "live";
+        echo "PSOOLA settings stored. Payments: PSOOLA (real money), environment: live.\n";
+    } else {
+        echo "PSOOLA settings stored. Payments unchanged (" . ($cfg["payments"]["gateway"] ?? "fake") . "): set \"active\": true to switch to PSOOLA.\n";
+    }
+    file_put_contents($path, "<?php\nreturn " . var_export($cfg, true) . ";\n");
+  ' "$BACKEND/config.php"
+else
+  echo "PSOOLA settings: none given (API_PSOOLA_CONFIG secret not set); payments unchanged."
+fi
 chown root:www-data "$BACKEND/config.php"
 chmod 640 "$BACKEND/config.php"
 
