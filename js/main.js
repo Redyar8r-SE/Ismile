@@ -1,22 +1,22 @@
-import { showLoadError } from "./components/load-error.js?v=118";
+import { showLoadError } from "./components/load-error.js?v=119";
 // Entry point: loads the data files, then starts each page section.
-import { loadJSON } from "./utils/load-json.js?v=118";
-import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from "./i18n.js?v=118";
-import { initNav } from "./components/nav.js?v=118";
-import { initTheme } from "./components/theme.js?v=118";
-import { initProgram } from "./sections/program.js?v=118";
-import { initProgramMap } from "./sections/program-map.js?v=118";
-import { initSpeakers } from "./sections/speakers.js?v=118";
-import { initSponsors } from "./sections/sponsors.js?v=118";
-import { initPartners } from "./sections/partners.js?v=118";
-import { initJourney } from "./sections/journey.js?v=118";
-import { initProjects } from "./sections/projects.js?v=118";
-import { initGallery } from "./sections/gallery.js?v=118";
-import { initFooter } from "./sections/footer.js?v=118";
-import { initVenue } from "./sections/venue.js?v=118";
-import { initReveal } from "./utils/reveal.js?v=118";
-import { initReadMore } from "./sections/read-more.js?v=118";
-import { initCountdown } from "./sections/countdown.js?v=118";
+import { loadJSON } from "./utils/load-json.js?v=119";
+import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from "./i18n.js?v=119";
+import { initNav } from "./components/nav.js?v=119";
+import { initTheme } from "./components/theme.js?v=119";
+import { initProgram } from "./sections/program.js?v=119";
+import { initProgramMap } from "./sections/program-map.js?v=119";
+import { initSpeakers } from "./sections/speakers.js?v=119";
+import { initSponsors } from "./sections/sponsors.js?v=119";
+import { initPartners } from "./sections/partners.js?v=119";
+import { initJourney } from "./sections/journey.js?v=119";
+import { initProjects } from "./sections/projects.js?v=119";
+import { initGallery } from "./sections/gallery.js?v=119";
+import { initFooter } from "./sections/footer.js?v=119";
+import { initVenue } from "./sections/venue.js?v=119";
+import { initReveal } from "./utils/reveal.js?v=119";
+import { initReadMore } from "./sections/read-more.js?v=119";
+import { initCountdown } from "./sections/countdown.js?v=119";
 
 async function start() {
   initNav();
