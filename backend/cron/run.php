@@ -9,7 +9,8 @@
 //           runs on another server (content_source_url), then sends the
 //           emails that are due (tickets go out within a minute)
 // five    : asks the payment company about payments still waiting (lost
-//           webhooks), deletes forms that were not paid in time, raises alerts
+//           webhooks), copies PSOOLA's gate scans into the attendance,
+//           deletes forms that were not paid in time, raises alerts
 // nightly : backs up the database, deletes ID photos after the summit,
 //           tidies old counters
 //
@@ -26,6 +27,7 @@ use Ismile\IdPhotos;
 use Ismile\Mail\MailerFactory;
 use Ismile\Outbox;
 use Ismile\Payments\Payments;
+use Ismile\Payments\PsoolaCheckIns;
 use Ismile\RateLimit;
 use Ismile\Registrations;
 use Ismile\Settings;
@@ -62,6 +64,17 @@ try {
 
     if ($job === 'five') {
         $report['payments'] = Payments::checkWaiting();
+
+        // PSOOLA scans the tickets at the door: its check-ins become attendance
+        // (Attended list, Report, certificates). One failure never stops the rest.
+        if (PsoolaCheckIns::active()) {
+            try {
+                $report['psoola_checkins'] = PsoolaCheckIns::sync();
+            } catch (\Throwable $error) {
+                App::log('error', 'Psoola check-ins could not be copied', ['error' => $error->getMessage()]);
+                $report['psoola_checkins'] = 'error';
+            }
+        }
 
         // Forms not paid in time are closed, and deleted two days later with
         // their student ID photo: nobody is kept who did not pay.

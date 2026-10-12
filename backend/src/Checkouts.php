@@ -180,6 +180,28 @@ final class Checkouts
     }
 
     /**
+     * The office sells a ticket for cash at the desk. The form is made here and
+     * sold at once (Payments::sellForCash); no payment link is sent. A form the
+     * company did not sell is closed like any unpaid form.
+     */
+    public static function createForCash(array $in, array $user, ?array $photo = null): array
+    {
+        $row = ['pay_method' => 'cash'] + self::officeRow($in);
+        if (!SiteData::pricesReadyFor($row)) {
+            throw new UserError('The ticket prices are not set yet, so nothing can be sold.');
+        }
+        $row['id_photo_id'] = self::officePhoto($row, $photo);
+        try {
+            $checkout = self::insert($row + ['source' => 'office', 'created_by' => (int) $user['id'], 'created_ip' => 'office'], max(1, Settings::int('pay_link_days')) * 86400);
+        } catch (\Throwable $error) {
+            IdPhotos::delete($row['id_photo_id']);
+            throw $error;
+        }
+        Audit::log((int) $user['id'], 'checkout.cash', 'checkout', (int) $checkout['id'], ['ref' => $checkout['ref']]);
+        return $checkout;
+    }
+
+    /**
      * A student's ID photo, uploaded by the office (sent by the student, for
      * example on WhatsApp). Required for a student ticket, as on the website.
      */

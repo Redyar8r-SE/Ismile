@@ -94,6 +94,24 @@ webhook. Until then the test site uses the pretend gateway
 lose the webhook, close the page. Give Psoola this webhook address:
 `https://ismile.krd/api/webhook.php`.
 
+**Cash sales** (Registrations › Register (phone or cash) › Paid by cash; the
+Owner and the Registration role): PSOOLA's `POST /orders` issues the ticket at
+once and emails the QR. The person is registered only after `Payments::check`
+hears "paid" for PSOOLA's own total, exactly like a card payment; they are
+saved with the payment method `cash`. iSmile owes PSOOLA the ticket price. A
+lost answer is looked up by our reference, so a retry never sells twice.
+
+**Psoola orders** (menu, Payments access) reads `GET /orders` live: card and
+cash totals, the ticket email status, tickets used at the door, and any sale
+with no matching registration. Ticket links are never shown or stored.
+
+**Check-in is PSOOLA's gate.** The 5-minute job (and "Refresh from Psoola" in
+Registration) copies `GET /check-ins` into `ticket_attendance` with the method
+`psoola`, so Attended, Guest list, Report and certificates keep working. A free
+ticket (iSmile QR, which PSOOLA's gate cannot read) is marked attended in the
+Guest list. Checks: `php backend/tests/psoola-gateway.php [--database]` and
+`ISMILE_CONFIG=… php backend/tests/cash-sales.php` (an `ismile_cash_test_*` DB).
+
 ## Emails
 
 `mail.driver = log` writes emails to `storage/outbox/` as files (testing).

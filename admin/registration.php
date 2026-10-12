@@ -1,7 +1,8 @@
 <?php
 // One registered (paid) person: every detail, the payment, ticket, emails,
 // workshops and history, and the buttons the office needs. ?new=1 registers
-// a caller by phone (a "Pay now" link, or a free ticket from the Owner).
+// someone by phone or at the desk: a "Pay now" link, a cash sale (PSOOLA
+// issues and emails the ticket at once), or a free ticket from the Owner.
 
 declare(strict_types=1);
 
@@ -29,9 +30,9 @@ $listUrl = $inCheckin ? CheckinWorkspace::url('guests', $workspaceDay) : 'regist
 $workspaceQuery = $inCheckin ? '&workspace=checkin' . ($workspaceDay ? '&day=' . $workspaceDay : '') : '';
 if ($inCheckin && isset($_GET['new'])) Page::redirect('registration.php?new=1');
 
-// ---------- A caller registers by phone ----------
-// They are registered only after paying: they get a "Pay now" email. Only the
-// Owner can register someone directly, with a free ticket.
+// ---------- Register by phone or cash ----------
+// They are registered only after paying: a "Pay now" email, or a cash sale
+// that PSOOLA confirms at once. Only the Owner can give a free ticket.
 if (isset($_GET['new'])) {
     if (!$canEdit) {
         Page::redirect('registrations.php');
@@ -40,6 +41,17 @@ if (isset($_GET['new'])) {
         try {
             \Ismile\Auth::checkCsrf();
             Page::useOnce();
+            if (($_POST['do'] ?? '') === 'cash') {
+                $checkout = \Ismile\Checkouts::createForCash($_POST, $user, $_FILES['student_id'] ?? null);
+                $sale = \Ismile\Payments\Payments::sellForCash($checkout, $user);
+                $price = number_format($sale['amount']) . ' ' . $sale['currency'];
+                if ($sale['status'] === 'paid' && $sale['registration_id']) {
+                    Page::flash('ok', 'Sold for cash: ' . $price . '. Collect this amount. ' . Registrations::fullName($checkout) . ' is registered (' . $checkout['ref'] . ') and Psoola is emailing the ticket with the QR to ' . $checkout['email'] . '.');
+                    Page::redirect('registration.php?id=' . $sale['registration_id'] . $workspaceQuery);
+                }
+                Page::flash('ok', 'Psoola made the cash sale (' . $price . '). Collect this amount. The registration of ' . $checkout['ref'] . ' finishes within 5 minutes, when Psoola confirms it again.');
+                Page::redirect('registrations.php');
+            }
             if (($_POST['do'] ?? '') === 'free') {
                 $created = Office::createComplimentary($user, $_POST, $_FILES['student_id'] ?? null);
                 Page::flash('ok', 'Registered ' . $created['ref'] . ' with a free ticket. The ticket is on its way by email.');
@@ -51,6 +63,9 @@ if (isset($_GET['new'])) {
             Page::redirect($inCheckin ? CheckinWorkspace::url('register', $workspaceDay) : 'registration.php?new=1');
         } catch (UserError $error) {
             Page::flash('error', $error->key);
+        } catch (\Ismile\Payments\GatewayNotReady $error) {
+            \Ismile\App::log('error', 'Register by phone or cash failed', ['error' => $error->getMessage()]);
+            Page::flash('error', 'The payment company is not ready, so nothing was sold or sent. (The detail is in the server log.)');
         }
     }
     $e = [Page::class, 'e'];
@@ -58,14 +73,14 @@ if (isset($_GET['new'])) {
     $selected = static fn (string $key, string $option, string $default = ''): string => ($_POST[$key] ?? $default) === $option ? ' selected' : '';
     $vip = ($_POST['ticket'] ?? '') === 'vip';
     $student = !$vip && (($_POST['specialty'] ?? '') === 'student' || ($_POST['ticket'] ?? '') === 'student');
-    Page::top($inCheckin ? 'Check-in · Register' : 'Register a caller (phone)', $inCheckin ? 'checkin' : 'registrations', '<a class="btn ghost" href="' . Page::e($listUrl) . '">&larr; ' . ($inCheckin ? 'Guest list' : 'All registrations') . '</a>');
+    Page::top($inCheckin ? 'Check-in · Register' : 'Register by phone or cash', $inCheckin ? 'checkin' : 'registrations', '<a class="btn ghost" href="' . Page::e($listUrl) . '">&larr; ' . ($inCheckin ? 'Guest list' : 'All registrations') . '</a>');
     if ($inCheckin) echo CheckinWorkspace::navigation('register', $user, $workspaceDay);
     ?>
     <form method="post" class="card stack caller-form" id="caller-form" enctype="multipart/form-data">
       <?= Page::csrfField() ?><?= Page::onceField() ?>
-      <p class="muted">Enter the caller's details and send a payment link. They receive their ticket after paying. Fields marked * are required.</p>
+      <p class="muted">Enter the person's details. Then send a <b>payment link</b> (they pay on Psoola), or, when they paid you in <b>cash</b>, sell the ticket now: Psoola issues it at once and emails the QR. Fields marked * are required.</p>
       <fieldset class="form-section">
-        <legend>1. Caller details</legend>
+        <legend>1. Person's details</legend>
         <div class="row3"><label>First name *<input name="first_name" maxlength="60" value="<?= $value('first_name') ?>" autocomplete="given-name" required></label><label>Second name *<input name="father_name" maxlength="60" value="<?= $value('father_name') ?>" required></label><label>Last name *<input name="grandfather_name" maxlength="60" value="<?= $value('grandfather_name') ?>" required></label></div>
         <div class="row3"><label>Phone *<input type="tel" name="phone" dir="ltr" autocomplete="tel" value="<?= $value('phone') ?>" required placeholder="0750 123 4567"></label><label>Email *<input type="email" name="email" dir="ltr" autocomplete="email" maxlength="190" value="<?= $value('email') ?>" required></label><label>City<input name="city" maxlength="80" value="<?= $value('city') ?>" autocomplete="address-level2"></label></div>
       </fieldset>
@@ -91,7 +106,8 @@ if (isset($_GET['new'])) {
         <label id="caller-vip-lunch"<?= !$vip ? ' hidden' : '' ?>>VIP included lunch<select name="vip_lunch_day"<?= !$vip ? ' disabled' : '' ?>><option value="1"<?= $selected('vip_lunch_day','1','1') ?>>Day 1 · 20 November</option><option value="2"<?= $selected('vip_lunch_day','2','1') ?>>Day 2 · 21 November</option></select><small>VIP is $100 with one lunch included. The other day is $40. Call the guest to arrange home badge delivery.</small></label>
         <div class="checks"><label class="inline"><input type="checkbox" name="lunch_day1" value="1"<?= ($_POST['lunch_day1'] ?? '') === '1' ? ' checked' : '' ?>> Lunch day 1</label><label class="inline"><input type="checkbox" name="lunch_day2" value="1"<?= ($_POST['lunch_day2'] ?? '') === '1' ? ' checked' : '' ?>> Lunch day 2</label></div>
       </fieldset>
-      <div class="form-actions"><a class="btn ghost" href="<?= $e($listUrl) ?>">Cancel</a><button class="btn" name="do" value="pay_link">Send payment link</button></div>
+      <div class="form-actions"><a class="btn ghost" href="<?= $e($listUrl) ?>">Cancel</a><button class="btn" name="do" value="pay_link">Send payment link</button><button class="btn green" name="do" value="cash" data-confirm="Paid by cash: sell this ticket now? Psoola issues the ticket at once and emails the QR to this email. Take the cash price shown next. iSmile pays Psoola the ticket price, and the sale cannot be undone here.">Paid by cash</button></div>
+      <p class="muted small">Paid by cash: Psoola sets the price (shown after the sale, with lunch). The person is registered as paid by cash, and the money appears in Payments and Psoola orders.</p>
     </form>
       <?php if ($user['role'] === 'owner'): ?>
         <details class="card more owner-ticket"<?= ($_POST['do'] ?? '') === 'free' ? ' open' : '' ?>>
@@ -222,7 +238,9 @@ if ($inCheckin) echo CheckinWorkspace::navigation('guests', $user, $workspaceDay
       <?php $attendance = Db::all('SELECT event_day, checked_in_at FROM ticket_attendance WHERE ticket_id=? ORDER BY event_day', [$ticket['id']]); ?>
       <?php foreach ([1,2] as $eventDay): $arrival = array_values(array_filter($attendance, static fn($a) => (int)$a['event_day']===$eventDay))[0] ?? null; ?><p>Day <?= $eventDay ?>: <?= $arrival ? Page::pill('arrived') . ' ' . Page::when($arrival['checked_in_at']) : 'Not checked in' ?></p><?php endforeach; ?>
       <?php if ($attendance && Auth::can($user, 'certificates')): ?><p><a class="btn green" href="certificate-download.php?id=<?= $id ?>">Download certificate (PDF)</a></p><?php else: ?><p class="muted small">Certificate available after attendance. Payment alone does not qualify.</p><?php endif; ?>
-      <?php if ($canEdit): ?>
+      <?php if (Tickets::issuedByPsoola($ticket)): ?>
+      <p class="muted small">Psoola issued this ticket and emailed it with the QR<?= $registration['pay_method'] === 'cash' ? ' (cash sale)' : '' ?>. To send it again, use the Psoola partner portal. Psoola scans it at the door.</p>
+      <?php elseif ($canEdit): ?>
       <form method="post" class="form-actions"><?= Page::csrfField() ?><input type="hidden" name="do" value="resend_ticket"><button class="btn">Resend ticket</button></form>
       <?php endif; ?>
     <?php elseif ($ticket): ?>

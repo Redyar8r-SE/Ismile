@@ -119,7 +119,7 @@ CREATE TABLE IF NOT EXISTS checkouts (
   lunch_day1         TINYINT(1)        NOT NULL DEFAULT 0,
   lunch_day2         TINYINT(1)        NOT NULL DEFAULT 0,
   vip_lunch_day      TINYINT UNSIGNED  NULL,                   -- one hosted VIP lunch is included
-  pay_method         ENUM('visa','mastercard','fib','fastpay') NULL DEFAULT NULL,  -- chosen on the provider's payment page
+  pay_method         ENUM('visa','mastercard','fib','fastpay','cash') NULL DEFAULT NULL,  -- chosen on the provider's payment page; cash = sold by the office
   university         VARCHAR(160)      NULL,                   -- students
   study_stage        TINYINT UNSIGNED  NULL,                   -- students: their stage (3rd and above)
   ambassador_code    VARCHAR(40)       NULL,
@@ -171,7 +171,7 @@ CREATE TABLE IF NOT EXISTS registrations (
   lunch_day1         TINYINT(1)        NOT NULL DEFAULT 0,
   lunch_day2         TINYINT(1)        NOT NULL DEFAULT 0,
   vip_lunch_day      TINYINT UNSIGNED  NULL,                   -- one hosted VIP lunch is included
-  pay_method         ENUM('visa','mastercard','fib','fastpay') NULL,   -- NULL for a free ticket
+  pay_method         ENUM('visa','mastercard','fib','fastpay','cash') NULL,   -- NULL for a free ticket; cash = sold by the office
   -- students: kept as a record (no approval step)
   university         VARCHAR(160)      NULL,
   study_stage        TINYINT UNSIGNED  NULL,                   -- students: their stage (3rd and above)
@@ -236,7 +236,7 @@ CREATE TABLE IF NOT EXISTS payments (
   registration_id      INT UNSIGNED       NULL,                -- the registration this payment created or belongs to
   gateway              ENUM('fake','psoola') NOT NULL,         -- fake = the pretend gateway on the test site
   provider_payment_id  VARCHAR(120)       NULL,                -- Psoola's id for this payment
-  method               ENUM('visa','mastercard','fib','fastpay') NULL,
+  method               ENUM('visa','mastercard','fib','fastpay','cash') NULL,   -- cash = a PSOOLA cash sale (POST /orders)
   amount_expected      INT UNSIGNED       NOT NULL,            -- set by the server when the attempt is made
   currency             CHAR(3)            NOT NULL DEFAULT 'IQD',
   amount_confirmed     INT UNSIGNED       NULL,                -- what Psoola itself confirmed
@@ -302,7 +302,7 @@ CREATE TABLE IF NOT EXISTS ticket_attendance (
   event_day TINYINT UNSIGNED NOT NULL,
   checked_in_at DATETIME NOT NULL,
   checked_in_by INT UNSIGNED NULL,
-  checkin_method ENUM('signed_qr','manual_lookup') NOT NULL DEFAULT 'signed_qr',
+  checkin_method ENUM('signed_qr','manual_lookup','psoola') NOT NULL DEFAULT 'signed_qr',   -- psoola = scanned at PSOOLA's gate
   PRIMARY KEY (id),
   UNIQUE KEY uq_attendance_ticket_day (ticket_id, event_day),
   KEY k_attendance_day_time (event_day, checked_in_at),

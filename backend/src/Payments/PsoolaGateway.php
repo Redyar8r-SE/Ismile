@@ -1,9 +1,12 @@
 <?php
 // The real Psoola connection: PSOOLA's sales-partner API (v1).
 //
-//   A  createPayment  POST /api/partner/v1/checkout-sessions
-//   C  fetchStatus    GET  /api/partner/v1/checkout-sessions/{id}
-//   B  readWebhook    X-Psoola-Signature: t=<unix>,v1=<hex HMAC-SHA256(secret, t.body)>
+//   A  createPayment   POST /api/partner/v1/checkout-sessions
+//   C  fetchStatus     GET  /api/partner/v1/checkout-sessions/{id}   (cash orders too: one id space)
+//   B  readWebhook     X-Psoola-Signature: t=<unix>,v1=<hex HMAC-SHA256(secret, t.body)>
+//      createCashSale  POST /api/partner/v1/orders       a cash sale: paid tickets issued at once
+//      listOrders      GET  /api/partner/v1/orders       the confirmed sales (card and cash)
+//      listCheckIns    GET  /api/partner/v1/check-ins    tickets scanned at PSOOLA's gate
 //
 // PSOOLA sells the iSmile tickets on its own checkout page and issues and
 // emails the ticket itself; iSmile keeps the registration (Payments::apply).
@@ -20,7 +23,7 @@ namespace Ismile\Payments;
 use Ismile\App;
 use Ismile\Registrations;
 
-final class PsoolaGateway implements Gateway
+final class PsoolaGateway implements Gateway, CashSales
 {
     /** A webhook signed longer ago (or further ahead) than this is refused. */
     public const SIGNATURE_TOLERANCE_SECONDS = 300;
@@ -53,24 +56,7 @@ final class PsoolaGateway implements Gateway
     public function createPayment(array $payment, array $registration): array
     {
         $this->ready();
-        $eventId = (string) App::config('payments.psoola.event_id', '');
-        $showId = (string) App::config('payments.psoola.show_id', '');
-        if ($eventId === '' || $showId === '') {
-            throw new GatewayNotReady('Psoola is not configured yet (payments.psoola.event_id / show_id in config.php).');
-        }
-        $body = [
-            'eventId'          => $eventId,
-            'showId'           => $showId,
-            'items'            => self::items($registration, (array) App::config('payments.psoola.ticket_types', []), (array) App::config('payments.psoola.add_ons', [])),
-            'buyer'            => [
-                'email' => (string) $registration['email'],
-                'phone' => (string) $registration['phone'],   // already E.164 (Validate::phone)
-                'name'  => Registrations::fullName($registration),
-            ],
-            'locale'           => self::locale((string) ($registration['lang'] ?? 'en')),
-            'partnerReference' => (string) $registration['ref'],
-            'returnUrl'        => (string) $payment['_return_url'],
-        ];
+        $body = $this->orderBody($registration) + ['returnUrl' => (string) $payment['_return_url']];
         // One key per attempt: a retried request returns the same session, never a second order.
         $answer = $this->request('POST', 'api/partner/v1/checkout-sessions', $body, ['Idempotency-Key: ismile-payment-' . (int) $payment['id']]);
         if (!in_array($answer['status'], [200, 201], true)) {
@@ -95,6 +81,122 @@ final class PsoolaGateway implements Gateway
             throw new GatewayNotReady("Psoola session $id does not contain the ticket and lunches iSmile asked for.");
         }
         return ['id' => $id, 'redirect_url' => $url, 'raw' => $answer['body'], 'amount' => $total, 'currency' => $currency];
+    }
+
+    /**
+     * A cash sale (POST /orders): the office took the money, PSOOLA issues the
+     * tickets at once, records them as a cash sale and emails them. iSmile owes
+     * PSOOLA the ticket price. Same body as a checkout session, without returnUrl.
+     */
+    public function createCashSale(array $payment, array $checkout): array
+    {
+        $this->ready();
+        $body = $this->orderBody($checkout);
+        // One key per attempt, never shared with a checkout session (that would be a 409).
+        $answer = $this->request('POST', 'api/partner/v1/orders', $body, ['Idempotency-Key: ismile-cash-' . (int) $payment['id']]);
+        if ($answer['status'] >= 500) {
+            // A server error says nothing about whether the sale was made: the caller looks it up.
+            throw new GatewayNotReady('Psoola cash sale unanswered: ' . self::describeError($answer));
+        }
+        if (!in_array($answer['status'], [200, 201], true)) {
+            throw new PsoolaRefused(self::friendlyError($answer), self::describeError($answer));
+        }
+        $json = $answer['json'] ?? [];
+        $id = is_string($json['id'] ?? null) ? $json['id'] : '';
+        $total = $json['order']['totalAmount'] ?? null;
+        $currency = strtoupper((string) ($json['order']['currency'] ?? ''));
+        if ($id === '' || !is_int($total) || $total <= 0 || !preg_match('/^[A-Z]{3}$/', $currency)) {
+            throw new GatewayNotReady('Psoola answered the cash sale without an order id, total or currency.');
+        }
+        if (isset($json['order']['items']) && !self::sameItems($body['items'], $json['order']['items'])) {
+            App::log('error', 'Psoola cash sale has different items', ['order' => $id, 'ref' => $checkout['ref'] ?? null]);
+        }
+        return ['id' => $id, 'raw' => self::withoutLinks($answer['body']), 'amount' => $total, 'currency' => $currency];
+    }
+
+    /**
+     * The newest PSOOLA order with this partnerReference, or null when there is
+     * none. Used when a cash sale's answer was lost: the order may exist anyway.
+     *
+     * @return ?array{id: string, raw: string, amount: int, currency: string}
+     */
+    public function findByReference(string $reference): ?array
+    {
+        $this->ready();
+        $answer = $this->request('GET', 'api/partner/v1/checkout-sessions?' . http_build_query(['partnerReference' => $reference]));
+        if ($answer['status'] === 404) {
+            return null;
+        }
+        $json = $answer['json'] ?? [];
+        $id = is_string($json['id'] ?? null) ? $json['id'] : '';
+        $total = $json['order']['totalAmount'] ?? null;
+        $currency = strtoupper((string) ($json['order']['currency'] ?? ''));
+        if ($answer['status'] !== 200 || $id === '' || ($json['partnerReference'] ?? null) !== $reference || !is_int($total) || !preg_match('/^[A-Z]{3}$/', $currency)) {
+            throw new GatewayNotReady('Psoola lookup by reference failed: ' . self::describeError($answer));
+        }
+        return ['id' => $id, 'raw' => self::withoutLinks($answer['body']), 'amount' => $total, 'currency' => $currency];
+    }
+
+    /**
+     * One page of the confirmed sales (newest first, paid only).
+     *
+     * @return array{orders: list<array>, next: ?string}
+     */
+    public function listOrders(?string $cursor = null, int $limit = 100): array
+    {
+        return $this->page('orders', 'orders', $cursor, $limit);
+    }
+
+    /**
+     * One page of the tickets scanned at PSOOLA's gate. A page can be short
+     * (even empty) while more follow: keep going until next is null.
+     *
+     * @return array{checkIns: list<array>, next: ?string}
+     */
+    public function listCheckIns(?string $cursor = null, int $limit = 100): array
+    {
+        return $this->page('check-ins', 'checkIns', $cursor, $limit);
+    }
+
+    private function page(string $path, string $key, ?string $cursor, int $limit): array
+    {
+        $this->ready();
+        $query = ['limit' => max(1, min(100, $limit))];
+        $eventId = (string) App::config('payments.psoola.event_id', '');
+        if ($eventId !== '') {
+            $query['eventId'] = $eventId;
+        }
+        if ($cursor !== null && $cursor !== '') {
+            $query['cursor'] = $cursor;
+        }
+        $answer = $this->request('GET', 'api/partner/v1/' . $path . '?' . http_build_query($query));
+        if ($answer['status'] !== 200 || !is_array($answer['json'][$key] ?? null)) {
+            throw new GatewayNotReady("Psoola $path list failed: " . self::describeError($answer));
+        }
+        $next = $answer['json']['nextCursor'] ?? null;
+        return [$key => array_values(array_filter($answer['json'][$key], 'is_array')), 'next' => is_string($next) && $next !== '' ? $next : null];
+    }
+
+    /** What a checkout session and a cash sale both send: the event, the items and the buyer. */
+    private function orderBody(array $form): array
+    {
+        $eventId = (string) App::config('payments.psoola.event_id', '');
+        $showId = (string) App::config('payments.psoola.show_id', '');
+        if ($eventId === '' || $showId === '') {
+            throw new GatewayNotReady('Psoola is not configured yet (payments.psoola.event_id / show_id in config.php).');
+        }
+        return [
+            'eventId'          => $eventId,
+            'showId'           => $showId,
+            'items'            => self::items($form, (array) App::config('payments.psoola.ticket_types', []), (array) App::config('payments.psoola.add_ons', [])),
+            'buyer'            => [
+                'email' => (string) $form['email'],
+                'phone' => (string) $form['phone'],   // already E.164 (Validate::phone)
+                'name'  => Registrations::fullName($form),
+            ],
+            'locale'           => self::locale((string) ($form['lang'] ?? 'en')),
+            'partnerReference' => (string) $form['ref'],
+        ];
     }
 
     /** The event as PSOOLA's partner API lists it (ticket types, add-ons, IQD prices). */
@@ -124,7 +226,7 @@ final class PsoolaGateway implements Gateway
         if (($json['id'] ?? null) !== $providerPaymentId) {
             throw new GatewayNotReady('Psoola answered about a different session.');
         }
-        return self::mapStatus($json) + ['raw' => $answer['body']];
+        return self::mapStatus($json) + ['raw' => self::withoutLinks($answer['body'])];
     }
 
     public function readWebhook(array $headers, string $body): ?string
@@ -274,6 +376,40 @@ final class PsoolaGateway implements Gateway
             }
         }
         return false;
+    }
+
+    /**
+     * PSOOLA's answer without the buyer's ticket link: PSOOLA asks that ticket
+     * links are never logged or stored.
+     */
+    public static function withoutLinks(string $body): string
+    {
+        $json = json_decode($body, true);
+        if (!is_array($json) || !array_key_exists('ticketsUrl', $json)) {
+            return $body;
+        }
+        unset($json['ticketsUrl']);
+        return (string) json_encode($json, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+    /** A refused cash sale, in words for the office. */
+    public static function friendlyError(array $answer): string
+    {
+        $code = (string) ($answer['json']['error']['code'] ?? '');
+        $message = (string) ($answer['json']['error']['message'] ?? '');
+        $requestId = (string) ($answer['json']['requestId'] ?? '');
+        $text = match ($code) {
+            'INSUFFICIENT_INVENTORY'   => 'Psoola says this ticket or lunch is sold out.',
+            'SALES_CLOSED'             => 'Psoola says ticket sales are closed for this event.',
+            'LIMIT_EXCEEDED'           => 'Psoola says this phone number already has the most tickets allowed.',
+            'DIRECT_ISSUE_NOT_ENABLED' => 'Psoola has not turned on cash sales for iSmile.',
+            'EVENT_NOT_ENABLED'        => 'Psoola has paused this event for iSmile.',
+            'TICKET_TYPE_NOT_AVAILABLE', 'ADD_ON_NOT_AVAILABLE' => 'Psoola says this ticket or lunch cannot be sold right now.',
+            'RATE_LIMITED', 'TOO_MANY_OPEN_SESSIONS' => 'Psoola is busy. Wait a minute and press the button again.',
+            'INVALID_REQUEST'          => 'Psoola refused the details' . ($message !== '' ? ': ' . $message : '.'),
+            default                    => 'Psoola did not accept the cash sale' . ($message !== '' ? ': ' . $message : '.'),
+        };
+        return $text . ' Nothing was sold and no ticket was made.' . ($requestId !== '' ? " (Psoola request $requestId)" : '');
     }
 
     private static function describeError(array $answer): string

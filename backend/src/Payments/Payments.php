@@ -176,6 +176,101 @@ final class Payments
     }
 
     /**
+     * A cash sale by the office: the money was taken at the desk, so the
+     * company issues and emails the ticket at once (PSOOLA: POST /orders) and
+     * iSmile owes it the ticket price. The person is registered by the same
+     * rule as every payment: only after check() asked the company and heard
+     * "paid" for exactly the amount it set.
+     *
+     * @return array{status: string, registration_id: ?int, amount: int, currency: string}
+     */
+    public static function sellForCash(array $checkout, array $user): array
+    {
+        // The Settings switch is the emergency stop for cash sales too.
+        if (!Settings::bool('registration_open') || !SiteData::pricesReadyFor($checkout)) {
+            throw new UserError('Registration is closed in Settings (or the prices are not set), so nothing can be sold.');
+        }
+        $gatewayName = (string) App::config('payments.gateway', 'fake');
+        $gateway = self::gateway($gatewayName);
+        if (!$gateway instanceof CashSales) {
+            throw new UserError('Cash sales are not available with this payment company.');
+        }
+        $priceFromGateway = $gatewayName === 'psoola';
+        $quote = SiteData::quoteFor($checkout);
+        if (!$priceFromGateway && $quote['amount'] === null) {
+            throw new UserError('The test site cannot price this ticket (it mixes IQD and USD).');
+        }
+        $paymentId = Db::transaction(static function () use ($checkout, $gatewayName, $priceFromGateway, $quote): int {
+            $form = Db::one('SELECT * FROM checkouts WHERE id = ? FOR UPDATE', [$checkout['id']]);
+            if ($form === null || $form['status'] === 'paid' || $form['registration_id'] !== null) {
+                throw new UserError('This person is already registered.');
+            }
+            if (Registrations::isFull(true, (int) $checkout['id'])) {
+                throw new UserError('Registration is full: no places are left.');
+            }
+            if (Registrations::lunchFullFor($form, true)) {
+                throw new UserError('The lunch day you chose is full. Untick it and try again.');
+            }
+            $expected = $priceFromGateway
+                ? (PsoolaPrices::estimate($form) ?? ['amount' => 1, 'currency' => 'IQD'])
+                : ['amount' => $quote['amount'], 'currency' => $quote['currency']];
+            $now = App::now();
+            return Db::insert('payments', [
+                'checkout_id'     => $checkout['id'],
+                'gateway'         => $gatewayName,
+                'method'          => 'cash',
+                'amount_expected' => $expected['amount'],
+                'currency'        => $expected['currency'],
+                'status'          => 'created',
+                'created_at'      => $now,
+                'updated_at'      => $now,
+            ]);
+        });
+
+        // The company is asked outside any lock.
+        $payment = self::find($paymentId);
+        try {
+            $sale = $gateway->createCashSale($payment, $checkout);
+        } catch (PsoolaRefused $refused) {
+            Db::update('payments', ['status' => 'failed', 'last_error' => mb_substr($refused->detail, 0, 500), 'updated_at' => App::now()], 'id = ?', [$paymentId]);
+            throw new UserError($refused->getMessage());
+        } catch (\Throwable $error) {
+            // The answer may be lost although the sale was made: look it up by
+            // our reference, so trying again can never sell the ticket twice.
+            $sale = null;
+            if ($gateway instanceof PsoolaGateway) {
+                try {
+                    $sale = $gateway->findByReference((string) $checkout['ref']);
+                } catch (\Throwable) {
+                    $sale = null;
+                }
+            }
+            if ($sale === null) {
+                Db::update('payments', ['status' => 'failed', 'last_error' => mb_substr($error->getMessage(), 0, 500), 'updated_at' => App::now()], 'id = ?', [$paymentId]);
+                App::log('error', 'Cash sale failed', ['payment' => $paymentId, 'error' => $error->getMessage()]);
+                throw new UserError('Psoola could not be reached, so nothing was sold. Try again in a minute.');
+            }
+        }
+
+        // PSOOLA sets the price: its total is the amount check() must hear back.
+        Db::update('payments', ($priceFromGateway ? ['amount_expected' => $sale['amount'], 'currency' => $sale['currency']] : []) + [
+            'provider_payment_id' => $sale['id'],
+            'raw_create'          => $sale['raw'],
+            'status'              => 'waiting',
+            'updated_at'          => App::now(),
+        ], 'id = ?', [$paymentId]);
+        $status = self::check(self::find($paymentId));
+        $payment = self::find($paymentId);
+        Audit::log((int) $user['id'], 'payment.cash', 'payment', $paymentId, ['ref' => $checkout['ref'], 'amount' => (int) $payment['amount_expected'], 'currency' => $payment['currency'], 'status' => $status]);
+        return [
+            'status'          => $status,
+            'registration_id' => $status === 'paid' ? (int) $payment['registration_id'] : null,
+            'amount'          => (int) $payment['amount_expected'],
+            'currency'        => (string) $payment['currency'],
+        ];
+    }
+
+    /**
      * Asks the payment company about one attempt (connection C) and records
      * the answer. Safe to call any number of times.
      *

@@ -69,7 +69,8 @@ http_response_code((int) $next['status']);
 header('Content-Type: application/json');
 echo $next['body'];
 PHP);
-$stub = proc_open([PHP_BINARY, '-S', "127.0.0.1:$port", $work . '/stub/router.php'], [1 => ['file', '/dev/null', 'w'], 2 => ['file', '/dev/null', 'w']], $pipes);
+$nowhere = PHP_OS_FAMILY === 'Windows' ? 'NUL' : '/dev/null';
+$stub = proc_open([PHP_BINARY, '-S', "127.0.0.1:$port", $work . '/stub/router.php'], [1 => ['file', $nowhere, 'w'], 2 => ['file', $nowhere, 'w']], $pipes);
 register_shutdown_function(static function () use ($stub): void {
     proc_terminate($stub);
 });
@@ -342,6 +343,59 @@ $respond(500, 'oops');
 $check('an error decides nothing (asked again later)', $throws(fn () => $gateway->fetchStatus('ses_mine')));
 $respond(404, ['error' => ['code' => 'NOT_FOUND', 'message' => 'No session'], 'requestId' => 'req_4']);
 $check('an unknown session decides nothing either', $throws(fn () => $gateway->fetchStatus('ses_mine'), GatewayNotReady::class, 'NOT_FOUND'));
+$respond(200, ['id' => 'ord_cash', 'status' => 'paid', 'channel' => 'direct', 'ticketsUrl' => 'https://psoola.test/tickets/secret-link', 'order' => ['totalAmount' => 40000, 'currency' => 'IQD']]);
+$check('the ticket link in a status answer is never kept', !str_contains($gateway->fetchStatus('ord_cash')['raw'], 'secret-link'));
+
+// ---------------- a cash sale (POST /orders) ----------------
+$cashOrder = static fn (int $total, int $status = 201, ?array $items = null): array => [$status, [
+    'id' => 'ord_cash', 'status' => 'paid', 'channel' => 'direct', 'checkoutUrl' => null, 'ticketsUrl' => 'https://psoola.test/tickets/secret-link',
+    'partnerReference' => 'ISM26-ABC123', 'paidAt' => time() * 1000, 'emailStatus' => 'queued',
+    'order' => ['totalAmount' => $total, 'currency' => 'IQD', 'ticketCount' => 1, 'items' => $items ?? $ordered(['ao_lunch1'])],
+]];
+$respond(...$cashOrder(95020));
+$sale = $gateway->createCashSale($payment, $registration);
+$sent = $lastRequest();
+$json = json_decode($sent['body'], true);
+$check('a cash sale is POST /api/partner/v1/orders', $sent['method'] === 'POST' && $sent['uri'] === '/api/partner/v1/orders');
+$check("a cash sale returns PSOOLA's order id and total", $sale['id'] === 'ord_cash' && $sale['amount'] === 95020 && $sale['currency'] === 'IQD');
+$check('a cash sale has its own Idempotency-Key, never a checkout one', ($sent['headers']['idempotency-key'] ?? '') === 'ismile-cash-77');
+$check('a cash sale sends the same event, items and buyer, without returnUrl', !array_key_exists('returnUrl', $json)
+    && $json['items'] === [['ticketTypeId' => 'tt_pro', 'quantity' => 1, 'addOnIds' => ['ao_lunch1']]]
+    && $json['buyer']['phone'] === '+9647501234567' && $json['partnerReference'] === 'ISM26-ABC123' && $json['locale'] === 'ckb');
+$check('the ticket link of a cash sale is not kept', !str_contains($sale['raw'], 'secret-link') && json_decode($sale['raw'], true)['id'] === 'ord_cash');
+$respond(...$cashOrder(95020, 200));
+$check('an idempotent replay of a cash sale (200) is accepted', $gateway->createCashSale($payment, $registration)['id'] === 'ord_cash');
+$respond(422, ['error' => ['code' => 'LIMIT_EXCEEDED', 'message' => 'Over the per-person limit'], 'requestId' => 'req_7']);
+$check('a refused cash sale is explained for the office', $throws(fn () => $gateway->createCashSale($payment, $registration), \Ismile\Payments\PsoolaRefused::class, 'most tickets allowed'));
+$respond(403, ['error' => ['code' => 'DIRECT_ISSUE_NOT_ENABLED', 'message' => 'Not enabled'], 'requestId' => 'req_8']);
+$check('cash sales switched off at PSOOLA are explained', $throws(fn () => $gateway->createCashSale($payment, $registration), \Ismile\Payments\PsoolaRefused::class, 'not turned on cash sales'));
+$respond(201, ['id' => 'ord_cash', 'order' => ['totalAmount' => 0, 'currency' => 'IQD']]);
+$check('a cash sale without a valid total is refused', $throws(fn () => $gateway->createCashSale($payment, $registration), GatewayNotReady::class, 'total'));
+
+// ---------------- finding a sale whose answer was lost ----------------
+$respond(200, ['id' => 'ord_cash', 'status' => 'paid', 'partnerReference' => 'ISM26-ABC123', 'ticketsUrl' => 'https://psoola.test/tickets/secret-link', 'order' => ['totalAmount' => 95020, 'currency' => 'IQD']]);
+$found = $gateway->findByReference('ISM26-ABC123');
+$sent = $lastRequest();
+$check('a lost sale is looked up by our reference', $sent['method'] === 'GET' && $sent['uri'] === '/api/partner/v1/checkout-sessions?partnerReference=ISM26-ABC123'
+    && $found !== null && $found['id'] === 'ord_cash' && $found['amount'] === 95020 && !str_contains($found['raw'], 'secret-link'));
+$respond(404, ['error' => ['code' => 'NOT_FOUND', 'message' => 'None'], 'requestId' => 'req_5']);
+$check('no sale with that reference: nothing was sold', $gateway->findByReference('ISM26-ABC123') === null);
+$respond(200, ['id' => 'ord_other', 'status' => 'paid', 'partnerReference' => 'ISM26-OTHER1', 'order' => ['totalAmount' => 95020, 'currency' => 'IQD']]);
+$check('a sale for another reference is not believed', $throws(fn () => $gateway->findByReference('ISM26-ABC123')));
+
+// ---------------- the sales list and the gate scans ----------------
+$respond(200, ['orders' => [['id' => 'ord_1', 'channel' => 'checkout'], 'junk', ['id' => 'ord_2', 'channel' => 'direct']], 'nextCursor' => 'cur_2']);
+$list = $gateway->listOrders();
+$sent = $lastRequest();
+$check('GET /orders asks for this event, 100 at a time', $sent['method'] === 'GET' && $sent['uri'] === '/api/partner/v1/orders?limit=100&eventId=evt_ismile');
+$check('the sales list keeps the orders and the next page', array_column($list['orders'], 'id') === ['ord_1', 'ord_2'] && $list['next'] === 'cur_2');
+$respond(200, ['checkIns' => [], 'nextCursor' => null]);
+$scans = $gateway->listCheckIns('cur_9');
+$sent = $lastRequest();
+$check('GET /check-ins sends the page cursor', $sent['uri'] === '/api/partner/v1/check-ins?limit=100&eventId=evt_ismile&cursor=cur_9');
+$check('an empty last page of scans ends the list', $scans === ['checkIns' => [], 'next' => null]);
+$respond(401, ['error' => ['code' => 'UNAUTHORIZED', 'message' => 'Missing key'], 'requestId' => 'req_6']);
+$check('a refused list is an error, never an empty list', $throws(fn () => $gateway->listOrders(), GatewayNotReady::class, 'UNAUTHORIZED'));
 
 // ---------------- a full paid registration (isolated database) ----------------
 if ($database) {
@@ -397,6 +451,49 @@ if ($database) {
         && Db::value('SELECT status FROM payments WHERE checkout_id = ? ORDER BY id DESC LIMIT 1', [$wrong['id']]) === 'failed');
     $bad = Payments::handleWebhook('psoola', ['X-Psoola-Signature' => $sign(time(), $webhook, 'forged')], $webhook);
     $check('a forged webhook is refused', $bad['status'] === 401);
+
+    // ---- a cash sale at the desk: PSOOLA issues and emails the ticket ----
+    $respondTo = static function (string $route, int $status, array $body) use ($work): void {
+        $routes = json_decode((string) @file_get_contents($work . '/stub/next.json'), true) ?: [];
+        $routes[$route] = ['status' => $status, 'body' => json_encode($body)];
+        file_put_contents($work . '/stub/next.json', json_encode($routes));
+    };
+    $desk = Db::one('SELECT * FROM admin_users WHERE id = ?', [\Ismile\Auth::createUser('desk-' . bin2hex(random_bytes(3)) . '@test.invalid', 'Desk', 'registration', bin2hex(random_bytes(12)))]);
+    $cashForm = static fn (): array => Checkouts::createForCash(['first_name' => 'Karwan', 'father_name' => 'Ali', 'grandfather_name' => 'Omar',
+        'phone' => '+9647' . random_int(100000000, 999999999), 'email' => 'cash-' . bin2hex(random_bytes(3)) . '@example.invalid',
+        'specialty' => 'gp', 'ticket' => 'professional', 'lunch_day1' => '1'], $desk);
+    $paidOrder = static fn (string $id, string $ref): array => ['id' => $id, 'status' => 'paid', 'channel' => 'direct', 'partnerReference' => $ref,
+        'ticketsUrl' => 'https://psoola.test/tickets/secret-link', 'order' => ['totalAmount' => 95020, 'currency' => 'IQD', 'ticketCount' => 1, 'items' => $ordered(['ao_lunch1'])]];
+
+    $cash = $cashForm();
+    $respondTo('POST /api/partner/v1/orders', 201, $paidOrder('ord_cash1', $cash['ref']));
+    $respond(200, $paidOrder('ord_cash1', $cash['ref']));
+    $sale = Payments::sellForCash($cash, $desk);
+    $cashRow = Db::one('SELECT * FROM payments WHERE checkout_id = ?', [$cash['id']]);
+    $cashReg = $sale['registration_id'] ? Registrations::find($sale['registration_id']) : null;
+    $check('a cash sale through PSOOLA registers the person as paid by cash', $sale['status'] === 'paid' && $cashReg !== null && $cashReg['pay_method'] === 'cash');
+    $check("the cash payment is PSOOLA's total, confirmed", $cashRow['method'] === 'cash' && $cashRow['gateway'] === 'psoola' && $cashRow['provider_payment_id'] === 'ord_cash1'
+        && (int) $cashRow['amount_confirmed'] === 95020 && $sale['amount'] === 95020);
+    $check('PSOOLA sends the cash ticket: iSmile queues no ticket email', Tickets::issuedByPsoola(Tickets::forRegistration((int) $cashReg['id']))
+        && (int) Db::value("SELECT COUNT(*) FROM emails WHERE kind = 'ticket' AND registration_id = ?", [$cashReg['id']]) === 0);
+    $check('the cash ticket link is not stored', !str_contains((string) $cashRow['raw_create'] . (string) $cashRow['raw_status'], 'secret-link'));
+
+    // The answer to POST /orders is lost: the sale is found by its reference, never made twice.
+    $lost = $cashForm();
+    $respondTo('POST /api/partner/v1/orders', 500, ['error' => ['code' => 'INTERNAL_ERROR', 'message' => 'Timeout']]);
+    $respondTo('GET /api/partner/v1/checkout-sessions', 200, $paidOrder('ord_lost', $lost['ref']));
+    $respond(200, $paidOrder('ord_lost', $lost['ref']));
+    $found = Payments::sellForCash($lost, $desk);
+    $check('a cash sale whose answer was lost is found and registered once', $found['status'] === 'paid'
+        && Db::value('SELECT provider_payment_id FROM payments WHERE checkout_id = ?', [$lost['id']]) === 'ord_lost'
+        && (int) Db::value('SELECT COUNT(*) FROM payments WHERE checkout_id = ?', [$lost['id']]) === 1);
+
+    // PSOOLA says no: nothing is sold and nobody is registered.
+    $refused = $cashForm();
+    $respondTo('POST /api/partner/v1/orders', 409, ['error' => ['code' => 'INSUFFICIENT_INVENTORY', 'message' => 'Sold out'], 'requestId' => 'req_s']);
+    $check('a cash sale PSOOLA refuses is explained to the office', $throws(fn () => Payments::sellForCash($refused, $desk), UserError::class, 'sold out'));
+    $check('a refused cash sale registers nobody', Registrations::findByRef($refused['ref']) === null
+        && Db::value('SELECT status FROM payments WHERE checkout_id = ?', [$refused['id']]) === 'failed');
 }
 
 echo "$passed checks passed.\n";

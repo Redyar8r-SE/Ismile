@@ -21,6 +21,7 @@ final class Page
         'registrations' => ['Registrations', 'registrations'],
         'lists'         => ['Lists', 'registrations'],
         'payments'      => ['Payments', 'payments'],
+        'psoola-orders' => ['Psoola orders', 'payments'],
         'workshops'     => ['Workshops', 'workshops'],
         'sponsors'      => ['Sponsors', 'sponsors'],
         'booths'        => ['Booths', 'sponsors'],
@@ -46,6 +47,7 @@ final class Page
             'sponsors' => '<path d="M4 21V8l8-5 8 5v13M2 21h20M9 21v-5h6v5M8 9h1m6 0h1m-8 4h1m6 0h1"/>',
             'booths' => '<rect x="3" y="8" width="18" height="13" rx="2"/><path d="M3 8l3-5h12l3 5M8 8v13m8-13v13M3 13h18"/>',
             'checkin' => '<path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5M8 12l3 3 5-6"/>',
+            'psoola-orders' => '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
             'certificates' => '<circle cx="12" cy="9" r="6"/><path d="m8 14-2 7 6-3 6 3-2-7m-7-6 2 2 3-4"/>',
             'settings' => '<path d="m9 3-.7 2.2-2 .9L4 5.6 2 9l1.7 1.6v2.8L2 15l2 3.4 2.3-.5 2 .9L9 21h6l.7-2.2 2-.9 2.3.5 2-3.4-1.7-1.6v-2.8L22 9l-2-3.4-2.3.5-2-.9L15 3Z"/><circle cx="12" cy="12" r="3"/>',
             'users' => '<circle cx="9" cy="8" r="3"/><path d="M3 21v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 0 1 0 6m2 4a5 5 0 0 1 3 4v2"/>',
@@ -208,7 +210,6 @@ final class Page
         // The version follows the files' date, so a change is never hidden by the browser's cache.
         $v = static fn (string $file): int => (int) @filemtime(App::siteFile('admin/' . $file)) ?: 1;
         echo '<link rel="stylesheet" href="admin.css?v=' . $v('admin.css') . '"><script src="admin.js?v=' . $v('admin.js') . '" defer></script></head><body class="' . ($user ? 'admin-shell' : 'database-auth') . '" data-page="' . self::e($current) . '">';
-        if ($current === 'checkin') echo '<script src="vendor/jsQR.js" defer></script>';
         if ($user) {
             echo '<a class="skip-link" href="#main-content">Skip to content</a>';
             echo '<aside class="sidebar" id="admin-sidebar" aria-label="Database navigation">';
@@ -216,7 +217,7 @@ final class Page
             echo '<nav class="sidebar-nav" aria-label="Database pages">';
             $groups = [
                 'Workspace' => ['index'],
-                'Event operations' => ['registrations', 'lists', 'payments', 'workshops', 'sponsors', 'booths', 'checkin', 'certificates'],
+                'Event operations' => ['registrations', 'lists', 'payments', 'psoola-orders', 'workshops', 'sponsors', 'booths', 'checkin', 'certificates'],
                 'Database' => ['communications', 'settings', 'users', 'backups'],
             ];
             foreach ($groups as $group => $files) {
@@ -250,10 +251,11 @@ final class Page
             'registrations' => 'Look after every guest, from their first call to their event ticket.',
             'lists' => 'Find the right people and prepare clear lists for your team.',
             'payments' => 'Review payments, follow up on issues and keep every amount accounted for.',
+            'psoola-orders' => 'Every sale Psoola recorded for iSmile, card and cash, read live from Psoola and matched to your registrations.',
             'workshops' => 'Organise workshops, manage bookings and keep track of available seats.',
             'sponsors' => 'Build your partnerships and keep every conversation moving forward.',
             'booths' => 'Manage Standard booth bookings, agreed amounts, payments and follow-up calls.',
-            'checkin' => 'Welcome every guest. Follow attendance, lunch bookings and live event reports.',
+            'checkin' => 'Psoola scans the tickets at the door. Follow who attended, the guest list and the live event report.',
             'settings' => 'Make the database work for your team. Manage registration, emails and ambassador codes.',
             'users' => 'Give your team the right access to support a smooth event.',
             'content' => 'Bring your event to life. Manage the words, photos and details your guests see.',
@@ -261,7 +263,7 @@ final class Page
             'backups' => 'Keep a copy of your event records. Check your latest successful backup and download it securely.',
             default => $user ? '' : 'Welcome to your iSmile workspace. Sign in to continue.',
         };
-        $section = $current === 'index' ? 'Overview' : (in_array($current, ['registrations', 'lists', 'payments', 'workshops', 'sponsors', 'booths', 'checkin'], true) ? 'Event operations' : 'Database');
+        $section = $current === 'index' ? 'Overview' : (in_array($current, ['registrations', 'lists', 'payments', 'psoola-orders', 'workshops', 'sponsors', 'booths', 'checkin'], true) ? 'Event operations' : 'Database');
         echo '<main class="page" id="main-content" tabindex="-1"><div class="page-heading"><div class="page-heading-copy">' . ($user ? '<div class="page-title-row"><span class="page-symbol">' . self::navIcon($current !== '' ? $current : 'security') . '</span><div><span class="page-kicker">' . $section . '</span><h1>' . self::e($title) . '</h1></div></div>' : '<h1>' . self::e($title) . '</h1>') . ($description !== '' ? '<p>' . self::e($description) . '</p>' : '') . '</div>' . ($actions !== '' ? '<div class="page-actions no-print">' . $actions . '</div>' : '') . '</div>';
         Auth::startSession();
         foreach ($_SESSION['flash'] ?? [] as [$kind, $message]) {

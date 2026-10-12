@@ -1105,3 +1105,16 @@ body[data-page=backups] .page-symbol{background:#e9f4ee;color:#418165;border-col
 .list-results table.name-list td code,.list-results .amb-code{white-space:nowrap}
 .list-results table.name-list td:nth-child(2){min-width:190px}
 .table-wrap td code{white-space:nowrap}
+
+/* Registration workspace: PSOOLA scans the tickets at the door */
+.psoola-gate{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px;border-left:5px solid var(--teal);background:linear-gradient(90deg,var(--teal-l),transparent 70%)}
+.psoola-gate b{font-size:1.05rem}.psoola-gate p{margin:4px 0 0;color:var(--muted)}
+.guest-attendance-days .manual-checkin-form{gap:8px;margin-top:8px}.guest-attendance-days .manual-checkin-verification{font-size:.85rem}
+
+/* Psoola orders */
+.psoola-orders td small{display:block;color:var(--muted)}
+.psoola-channel{display:inline-block;padding:3px 10px;border-radius:999px;font-weight:700;font-size:.8rem;background:var(--teal-l);color:var(--teal-d)}
+.psoola-channel.cash{background:var(--green-l);color:var(--green-d)}
+.psoola-mail{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.78rem;font-weight:700;background:var(--teal-l);color:var(--teal-d)}
+.psoola-mail.bad{background:var(--red-l);color:var(--red-d)}
+.psoola-missing{color:var(--red-d);font-weight:700}

@@ -10,8 +10,9 @@ use Ismile\Registrations;
 
 final class CheckinWorkspace
 {
+    // PSOOLA scans the tickets at the door (copied in by PsoolaCheckIns), so
+    // there is no iSmile scanner tab: the workspace opens on Attended.
     public const TABS = [
-        'checkin' => ['Check-in', 'checkin', 'checkin'],
         'attended' => ['Attended', 'check', 'checkin'],
         'guests' => ['Guest list', 'users', 'checkin'],
         'report' => ['Report', 'lists', 'checkin'],
@@ -19,7 +20,7 @@ final class CheckinWorkspace
 
     public static function pick(string $tab): string
     {
-        return isset(self::TABS[$tab]) ? $tab : 'checkin';
+        return isset(self::TABS[$tab]) ? $tab : 'attended';
     }
 
     public static function navigation(string $active, array $user, ?int $day = null): string
@@ -147,7 +148,7 @@ final class CheckinWorkspace
         $filters=self::filters($filters);
         [$where,$params]=self::where($filters['q'],$filters['attendance'],$filters);
         $paging=$limit!==null?' LIMIT '.max(1,min(100,$limit)).' OFFSET '.max(0,$offset):'';
-        return Db::all('SELECT r.*,t.ticket_no,a1.checked_in_at AS day1,a2.checked_in_at AS day2,a1.checkin_method AS method1,a2.checkin_method AS method2,u1.name AS staff1,u2.name AS staff2,c.certificate_no FROM '.self::from()." WHERE $where ORDER BY ".self::order($filters['sort'],$filters['attendance']).$paging,$params);
+        return Db::all('SELECT r.*,t.id AS ticket_id,t.version AS ticket_version,t.source AS ticket_source,t.ticket_no,a1.checked_in_at AS day1,a2.checked_in_at AS day2,a1.checkin_method AS method1,a2.checkin_method AS method2,u1.name AS staff1,u2.name AS staff2,c.certificate_no FROM '.self::from()." WHERE $where ORDER BY ".self::order($filters['sort'],$filters['attendance']).$paging,$params);
     }
 
     public static function options(): array

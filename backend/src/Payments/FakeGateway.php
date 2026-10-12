@@ -13,7 +13,7 @@ namespace Ismile\Payments;
 use Ismile\App;
 use Ismile\Security;
 
-final class FakeGateway implements Gateway
+final class FakeGateway implements Gateway, CashSales
 {
     public function __construct()
     {
@@ -48,6 +48,23 @@ final class FakeGateway implements Gateway
         ]);
         $redirect = App::url('api/fake-psoola.php?id=' . rawurlencode($id) . '&s=' . Security::sign('fake:' . $id));
         return ['id' => $id, 'redirect_url' => $redirect, 'raw' => json_encode(['id' => $id])];
+    }
+
+    /** A cash sale: paid at once, like PSOOLA's POST /orders. */
+    public function createCashSale(array $payment, array $checkout): array
+    {
+        $id = 'FAKE-' . strtoupper(bin2hex(random_bytes(6)));
+        self::save($id, [
+            'id'        => $id,
+            'amount'    => (int) $payment['amount_expected'],
+            'currency'  => (string) $payment['currency'],
+            'method'    => 'cash',
+            'reference' => (string) $checkout['ref'],
+            'status'    => 'paid',
+            'paid'      => (int) $payment['amount_expected'],
+            'return'    => '',
+        ]);
+        return ['id' => $id, 'raw' => (string) json_encode(['id' => $id, 'status' => 'paid', 'channel' => 'direct']), 'amount' => (int) $payment['amount_expected'], 'currency' => (string) $payment['currency']];
     }
 
     public function fetchStatus(string $providerPaymentId): array

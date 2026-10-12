@@ -97,7 +97,7 @@ final class EmailTemplates
         if ($registration['status'] === 'complimentary') {
             $mine[] = [$w['row_paid'], $w['free_ticket']];
         } else {
-            $methods = ['visa' => 'Visa', 'mastercard' => 'Mastercard', 'fib' => 'FIB', 'fastpay' => 'FastPay'];
+            $methods = ['visa' => 'Visa', 'mastercard' => 'Mastercard', 'fib' => 'FIB', 'fastpay' => 'FastPay', 'cash' => 'Cash'];
             $mine[] = [$w['row_paid'], $paid !== null ? '<span dir="ltr">' . number_format((int) $paid['amount_confirmed']) . ' ' . S::e($paid['currency']) . '</span>' : '–', true];
             if ($registration['pay_method']) {
                 $mine[] = [$w['row_paid_by'], $methods[$registration['pay_method']] ?? $registration['pay_method']];

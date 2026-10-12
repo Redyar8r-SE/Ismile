@@ -34,6 +34,8 @@ final class Settings
         // Not on the Settings page: the prices the timed job last saw, so any
         // change to data/tickets.json is noticed, logged and announced.
         'prices_seen'           => '',
+        // Not on the Settings page: when PSOOLA's gate scans were last copied in.
+        'psoola_checkins_synced_at' => '',
     ];
 
     private static ?array $cache = null;

@@ -7,7 +7,7 @@ final class Attendance
 {
     public static function methodLabel(?string $method): string
     {
-        return match ($method) { 'signed_qr' => 'QR check-in', 'manual_lookup' => 'Manual check-in (identity confirmed)', default => '' };
+        return match ($method) { 'signed_qr' => 'QR check-in', 'manual_lookup' => 'Manual check-in (identity confirmed)', 'psoola' => 'Scanned at the Psoola gate', default => '' };
     }
 
     public static function currentDay(?string $date = null): ?int
