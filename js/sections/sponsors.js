@@ -1,9 +1,8 @@
 // Sponsor tiers: the sponsors already signed, then the open places left,
 // from data/sponsors.json.
-import { ICONS } from "../config/icons.js?v=122";
-import { initials } from "../utils/initials.js?v=122";
-import { t, tr, onLangChange } from "../i18n.js?v=122";
-import { tCount } from "../utils/count.js?v=122";
+import { ICONS } from "../config/icons.js?v=123";
+import { initials } from "../utils/initials.js?v=123";
+import { t, tr, onLangChange } from "../i18n.js?v=123";
 
 export function initSponsors({ tiers, sponsors = [] }) {
   const container = document.getElementById("sponsorTiers");
@@ -25,7 +24,7 @@ export function initSponsors({ tiers, sponsors = [] }) {
         const mine = sponsors.filter((s) => s.tier === tier.id);
         const free = Math.max(0, Number(tier.spots) || 0);
         const slot = `<a class="logo-slot" href="#companies" aria-label="${t("spon_slot")}"><span class="slot-plus">${ICONS.plus}</span><span class="slot-text">${t("spon_slot")}</span></a>`;
-        const sub = [tr(tier.subtitle), free ? tCount("spon_spots", free) : ""].filter(Boolean).join(" · ");
+        const sub = tr(tier.subtitle);
         return `
           <div class="swall ${tier.className}">
             <div class="sw-label">

@@ -1,6 +1,6 @@
 // Prices are whole dinars. Digits stay Latin in every language so a total
 // reads the same on the payment link and on the page.
-import { t } from "../i18n.js?v=122";
+import { t } from "../i18n.js?v=123";
 
 export function formatPrice(amount) {
   const value = Number(amount);
