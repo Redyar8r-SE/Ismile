@@ -10,7 +10,7 @@ use Ismile\Auth;
 use Ismile\Db;
 use Ismile\Admin\PdfReport;
 
-$pages = ['index','checkin','registrations','certificates','sponsors','booths','lists','communications','payments','workshops','settings','users','backups','content'];
+$pages = ['index','checkin','registrations','certificates','sponsors','booths','lists','communications','payments','psoola-orders','workshops','settings','users','backups','content'];
 if (($argv[1] ?? '') === '--render') {
     $page = $argv[2] ?? '';
     if (!in_array($page, $pages, true)) throw new RuntimeException('Unknown verification page.');
@@ -90,17 +90,22 @@ foreach ($pages as $page) {
     $html = $render($page);
     $check('deployed page renders: ' . $page, strlen($html) > 1000);
 }
+// PSOOLA scans the tickets at the door: no iSmile scanner tab, the workspace opens on Attended.
 $html = $render('checkin', 'day=1');
-$check('Scan QR button visible and local decoder included', (bool) preg_match('/<button\b[^>]*id="scanCamera"[^>]*>/', $html, $button) && !preg_match('/\bhidden\b/', $button[0]) && str_contains($html, 'vendor/jsQR.js'));
-$check('automatic name, phone, reference and ticket lookup available', str_contains($html, 'data-instant-search') && str_contains($html, 'Name, phone, reference or ticket number'));
-$check('Registration navigation has all four requested tabs', str_contains($html, '>Check-in</span>') && str_contains($html, '>Attended</span>') && str_contains($html, '>Guest list</span>') && str_contains($html, '>Report</span>'));
-$check('Day 2 check-in page renders', strlen($render('checkin', 'day=2')) > 1000);
+$check('Registration navigation has Attended, Guest list and Report, and no scanner tab', !str_contains($html, '>Check-in</span>') && !str_contains($html, 'id="scanCamera"')
+    && str_contains($html, '>Attended</span>') && str_contains($html, '>Guest list</span>') && str_contains($html, '>Report</span>'));
+$check('PSOOLA gate note shown, with Refresh from Psoola when this site sells through PSOOLA', str_contains($html, 'Psoola scans the tickets at the door')
+    && (!\Ismile\Payments\PsoolaCheckIns::active() || str_contains($html, 'value="psoola_sync"')));
+$check('automatic name, reference and ticket lookup available', str_contains($html, 'data-instant-search') && str_contains($html, 'Name, reference or ticket number'));
+$check('Day 2 attendance page renders', strlen($render('checkin', 'day=2')) > 1000);
 $html = $render('checkin', 'tab=attended');
 $check('arrival times and staff filters available', str_contains($html, 'Day 1 arrival') && str_contains($html, 'Day 2 arrival') && str_contains($html, 'Checked in by') && str_contains($html, 'data-live-region'));
 $html = $render('checkin', 'tab=guests');
-$check('guest categories, IDs, lunch and attendance filters available', str_contains($html, 'Student ID') && str_contains($html, 'Lunch booked') && str_contains($html, 'Professional') && str_contains($html, 'Event attendance'));
+$check('guest categories, IDs, lunch and attendance filters available', str_contains($html, 'Student ID') && str_contains($html, 'Lunch booked') && str_contains($html, 'Dentist') && str_contains($html, 'Event attendance'));
 $html = $render('checkin', 'tab=report');
 $check('live graph and Latest arrivals available', str_contains($html, 'data-live-report') && str_contains($html, 'report-chart-card') && str_contains($html, 'Latest arrivals'));
+$html = $render('psoola-orders');
+$check('Psoola orders page renders (live list, or a clear note when unavailable)', str_contains($html, 'Psoola orders') && (str_contains($html, 'Sales recorded by Psoola') || str_contains($html, 'Psoola orders are not available')));
 $html = $render('certificates');
 $check('certificate delivery remains manual', str_contains($html, 'Check-in never sends certificate emails.') && str_contains($html, 'Download attendance report (PDF)'));
 $check('PDF report generator works', str_starts_with(PdfReport::bundle(['Deployment check'=>[['Status'],['Verified']]]), '%PDF-'));
