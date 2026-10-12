@@ -673,7 +673,8 @@ FROM registrations r WHERE r.status IN ('paid','complimentary') AND r.lunch_day2
 -- Registered students (the ID photos are seen in the admin).
 CREATE OR REPLACE SQL SECURITY DEFINER VIEW `04_students` AS
 SELECT CONCAT_WS(' ', r.first_name, r.father_name, r.grandfather_name) AS `Full name`, r.phone AS `Phone`,
-       r.university AS `University`, r.ambassador_code AS `Ambassador code`,
+       r.university AS `University`, IF(r.study_stage IS NULL, NULL, CONCAT(r.study_stage, ELT(LEAST(r.study_stage, 4), 'st', 'nd', 'rd', 'th'), ' stage')) AS `Stage`,
+       r.ambassador_code AS `Ambassador code`,
        IF(r.id_photo_id IS NULL, 'No', 'Yes') AS `ID photo stored`, r.ref AS `Reference`
 FROM registrations r WHERE r.ticket_type = 'student' AND r.status IN ('paid','complimentary');
 

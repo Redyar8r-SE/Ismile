@@ -297,6 +297,7 @@ try {
     $answer = register(form(['specialty' => 'student', 'stage' => '4', 'ticket' => 'professional', 'university' => 'Uni of Sulaimani', 'ambassador' => 'AMB-7', 'student_id' => new CURLFile($jpeg, 'image/jpeg', 'id.jpg')]));
     $studentForm = checkoutByRef((string) ($answer['json']['ref'] ?? ''));
     check('"dental student" always gets the student ticket', ($studentForm['ticket_type'] ?? '') === 'student');
+    check('the form keeps the stage the student chose', (int) ($studentForm['study_stage'] ?? 0) === 4);
     check('a student goes straight to payment, like everyone', str_contains((string) ($answer['json']['redirect'] ?? ''), 'fake-psoola.php') && (int) lastPaymentOf($studentForm)['amount_expected'] === $prices['student']);
     $photoRow = Db::one('SELECT * FROM student_id_photos WHERE id = ?', [(int) ($studentForm['id_photo_id'] ?? 0)]);
     check('the ID photo is stored IN the database (a real JPEG, with its size and fingerprint)', $photoRow !== null && str_starts_with($photoRow['image'], "\xFF\xD8")
@@ -307,6 +308,8 @@ try {
     $student = registrationByRef($studentForm['ref']);
     check('paid → registered, with university, code and the same ID photo', ($student['status'] ?? '') === 'paid' && $student['university'] === 'Uni of Sulaimani' && $student['ambassador_code'] === 'AMB-7'
         && (int) $student['id_photo_id'] === (int) $studentForm['id_photo_id'] && Checkouts::find((int) $studentForm['id'])['id_photo_id'] === null);
+    check('…and the registration keeps their stage (4th stage)', (int) $student['study_stage'] === 4);
+    check('the database list 04_students shows the stage', Db::value('SELECT `Stage` FROM `04_students` WHERE `Reference` = ?', [$student['ref']]) === '4th stage');
     $photoPage = http('GET', "$base/admin/photo.php?id={$student['id']}");
     check('the admin photo page needs a sign-in', $photoPage['status'] === 303 && str_contains((string) $photoPage['location'], 'login.php'));
 
