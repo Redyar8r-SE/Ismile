@@ -1,9 +1,9 @@
 // Sponsor tiers: the sponsors already signed, then the open places left,
 // from data/sponsors.json.
-import { ICONS } from "../config/icons.js?v=121";
-import { initials } from "../utils/initials.js?v=121";
-import { t, tr, onLangChange } from "../i18n.js?v=121";
-import { tCount } from "../utils/count.js?v=121";
+import { ICONS } from "../config/icons.js?v=122";
+import { initials } from "../utils/initials.js?v=122";
+import { t, tr, onLangChange } from "../i18n.js?v=122";
+import { tCount } from "../utils/count.js?v=122";
 
 export function initSponsors({ tiers, sponsors = [] }) {
   const container = document.getElementById("sponsorTiers");
@@ -13,7 +13,7 @@ export function initSponsors({ tiers, sponsors = [] }) {
       ? `<img src="${sponsor.logo}" alt="${t("logo_alt").replace("{name}", sponsor.name).replaceAll('"', '&quot;')}" data-name="${sponsor.name.replaceAll('"', '&quot;')}" loading="lazy"${sponsor.round ? ' class="round"' : ""}>`
       : `<span class="pl-mono">${initials(sponsor.name || "")}</span>`;
     return `
-      <div class="p-logo">
+      <div class="p-logo" title="${sponsor.name.replaceAll('"', '&quot;')}">
         <div class="pl-frame" style="background:${sponsor.bg || "#fff"}">${mark}</div>
         <span class="pl-name">${sponsor.name}</span>
       </div>`;
@@ -24,15 +24,17 @@ export function initSponsors({ tiers, sponsors = [] }) {
       .map((tier) => {
         const mine = sponsors.filter((s) => s.tier === tier.id);
         const free = Math.max(0, Number(tier.spots) || 0);
-        const slot = `<a class="logo-slot" href="#companies"><span class="slot-plus">${ICONS.plus}</span><span>${t("spon_slot")}</span></a>`;
+        const slot = `<a class="logo-slot" href="#companies" aria-label="${t("spon_slot")}"><span class="slot-plus">${ICONS.plus}</span><span class="slot-text">${t("spon_slot")}</span></a>`;
+        const sub = [tr(tier.subtitle), free ? tCount("spon_spots", free) : ""].filter(Boolean).join(" · ");
         return `
-          <div class="tierc ${tier.className}">
-            <div class="tc-top">
-              <span class="medal">${tierIcon(tier)}</span>
-              <div><h3>${tr(tier.name)}</h3><p>${tr(tier.subtitle)}</p></div>
-              ${free ? `<span class="tc-count">${tCount("spon_spots", free)}</span>` : ""}
+          <div class="swall ${tier.className}">
+            <div class="sw-label">
+              <span class="sw-line"></span>
+              <h3 class="sw-pill">${tierIcon(tier)}<span>${tr(tier.name)}</span></h3>
+              <span class="sw-line"></span>
             </div>
-            <div class="tc-slots">${mine.map(logo).join("")}${slot.repeat(free)}</div>
+            ${sub ? `<p class="sw-sub">${sub}</p>` : ""}
+            <div class="sw-logos">${mine.map(logo).join("")}${slot.repeat(free)}</div>
           </div>`;
       })
       .join("");

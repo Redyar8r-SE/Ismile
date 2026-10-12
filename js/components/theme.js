@@ -1,17 +1,14 @@
 // Light / dark switch.
-// No choice saved yet -> the site follows the visitor's device.
-// Once they choose, the choice is remembered in their browser only.
+// The site opens in dark. A visitor who picks light (or dark again) with the
+// switch keeps that choice, remembered in their browser only.
 const KEY = "ismile-theme";
 
-const systemDark = () => window.matchMedia?.("(prefers-color-scheme: dark)").matches;
 const saved = () => {
   try { return localStorage.getItem(KEY); } catch { return null; }
 };
 
 export function currentTheme() {
-  const choice = saved();
-  if (choice === "light" || choice === "dark") return choice;
-  return systemDark() ? "dark" : "light";
+  return saved() === "light" ? "light" : "dark";
 }
 
 function apply(theme, button) {
@@ -30,10 +27,5 @@ export function initTheme() {
     const next = currentTheme() === "dark" ? "light" : "dark";
     try { localStorage.setItem(KEY, next); } catch { /* private browsing */ }
     apply(next, button);
-  });
-
-  // Follow the device while the visitor has not chosen anything themselves.
-  window.matchMedia?.("(prefers-color-scheme: dark)").addEventListener?.("change", () => {
-    if (!saved()) apply(currentTheme(), button);
   });
 }

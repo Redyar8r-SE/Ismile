@@ -1,58 +1,95 @@
 /* ==========================================================
-   Sponsors: Diamond / Gold / Silver open logo slots
-   (card frame comes from components/tier-card.css)
+   Sponsors: the sponsor wall
+   Every level has its own box size and shine in its own colour:
+   Diamond biggest and brightest, then Platinum, Gold, Silver, Bronze.
    ========================================================== */
 .spon-head{display:flex;justify-content:space-between;align-items:end;gap:24px;flex-wrap:wrap}
-.tiers{display:grid;gap:18px;margin-top:36px}
-.tiers .tierc{border:1.5px solid color-mix(in srgb,var(--m2) 72%,var(--line));box-shadow:0 18px 40px -36px var(--m2)}
-.tiers .tierc::before{height:4px}
-.tiers .medal{box-shadow:0 9px 22px -10px var(--m2),0 0 0 1px color-mix(in srgb,var(--m2) 45%,transparent)}
-.tiers .tc-count{color:color-mix(in srgb,var(--m2) 78%,var(--text));border-color:color-mix(in srgb,var(--m2) 55%,var(--line));background:color-mix(in srgb,var(--m2) 10%,var(--bg))}
+.tiers{display:grid;gap:52px;margin-top:44px}
 
-.tc-slots{display:grid;gap:12px}
-.tc-dia .tc-slots,.tc-plat .tc-slots{grid-template-columns:repeat(2,minmax(0,1fr))}
-.tc-gold .tc-slots{grid-template-columns:repeat(3,minmax(0,1fr))}
-.tc-silver .tc-slots{grid-template-columns:repeat(5,minmax(0,1fr))}
-.tc-exhibitor .tc-slots{grid-template-columns:repeat(5,minmax(0,1fr))}
-
-.logo-slot{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border-radius:var(--r-md);background:linear-gradient(180deg,color-mix(in srgb,var(--m2) 7%,var(--surface)),var(--surface));border:1.5px dashed color-mix(in srgb,var(--m2) 68%,var(--line));color:var(--muted);text-decoration:none;font-size:13px;font-weight:500;transition:border-color .2s,background .2s,color .2s,transform .2s}
-.logo-slot:hover{border-style:solid;border-color:var(--m2);color:var(--text);background:color-mix(in srgb,var(--m2) 8%,var(--surface))}
-.tc-dia .logo-slot{height:140px;font-size:14px}
-.tc-plat .logo-slot{height:124px;font-size:14px}
-.tc-gold .logo-slot{height:112px}
-.tc-silver .logo-slot{height:88px}
-.tc-exhibitor .logo-slot{height:88px}
-
-.slot-plus{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--m2) 18%,transparent);color:var(--m2)}
-.slot-plus svg{width:16px;height:16px}
-.tc-silver .slot-plus{width:26px;height:26px}
-.tc-exhibitor .slot-plus{width:26px;height:26px}
-
-@media (max-width:860px){
-  .tc-gold .tc-slots{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .tc-silver .tc-slots{grid-template-columns:repeat(3,minmax(0,1fr))}
-  .tc-exhibitor .tc-slots{grid-template-columns:repeat(3,minmax(0,1fr))}
-  .tc-gold .logo-slot:last-child:nth-child(odd){grid-column:span 2}
+/* Level colours. --c1 / --c / --c3: border from light to deep,
+   --tint / --tint2: inside of a box, --glow: the shine around it,
+   --pill-*: the level badge. Light mode first, dark mode below. */
+.swall{
+  --c1:#9EE3E0;--c:var(--teal);--c3:#0E7F7B;
+  --tint:color-mix(in srgb,var(--teal) 8%,var(--bg));--tint2:var(--bg);
+  --glow:0 6px 16px color-mix(in srgb,var(--teal) 18%,transparent);
+  --plus:var(--c);--label:var(--muted);
+  --pill-a:var(--c3);--pill-b:var(--c);--pill-glow:0 6px 16px color-mix(in srgb,var(--teal) 30%,transparent);
+  --bw:1.2px;--w:130px;--h:72px;--gap:12px;--n:5;
 }
+.swall.tc-dia{--c1:#8FDDF7;--c:#2BA8E0;--c3:#0B6FA4;--tint:#E6F7FE;--tint2:#FFFFFF;--glow:0 10px 34px #2BA8E040;--plus:#1E9BD7;--label:#0B5E8A;--pill-a:#2B9BD8;--pill-b:#67D4F5;--pill-glow:0 8px 32px #2BA8E070;--bw:2.2px;--w:300px;--h:170px;--gap:18px;--n:2}
+.swall.tc-plat{--c1:#E3EAF0;--c:#9AACBA;--c3:#5E7383;--tint:#F1F5F8;--tint2:#FFFFFF;--glow:0 8px 24px #6E849633;--plus:#6B8091;--label:#4B5F6E;--pill-a:#7D90A0;--pill-b:#D3DDE5;--pill-glow:0 6px 22px #6E849655;--bw:1.8px;--w:250px;--h:140px;--gap:18px;--n:3}
+.swall.tc-gold{--c1:#F6D77E;--c:#E0A82E;--c3:#A8741A;--tint:#FFF5D9;--tint2:#FFFFFF;--glow:0 6px 16px #E0A82E33;--plus:#C88A1C;--label:#8A5D10;--pill-a:#C88A1C;--pill-b:#F2C14E;--pill-glow:0 5px 18px #E0A82E55;--bw:1.5px;--w:160px;--h:92px;--gap:18px;--n:4}
+.swall.tc-silver{--c1:#D5DEE4;--c:#A3B3BE;--c3:#7E919C;--tint:#F3F6F8;--tint2:#FFFFFF;--glow:0 3px 10px #7E919C24;--plus:#7E919C;--label:#5C6D78;--pill-a:#6E8492;--pill-b:#AFC0CA;--pill-glow:0 4px 12px #7E919C38;--bw:1.2px;--w:118px;--h:62px;--gap:12px;--n:5}
+.swall.tc-bronze{--c1:#EBC3A6;--c:#C97A4C;--c3:#9C5530;--tint:#FCEFE7;--tint2:#FFFFFF;--glow:0 3px 9px #C97A4C26;--plus:#C97A4C;--label:#8A4A26;--pill-a:#9E5A33;--pill-b:#D9895A;--pill-glow:0 4px 11px #C97A4C38;--bw:1.2px;--w:100px;--h:52px;--gap:12px;--n:6}
+
+:root[data-theme="dark"] .swall.tc-dia{--c1:#C9F1FF;--c:#67D4F5;--c3:#2B9BD8;--tint:#67D4F52E;--tint2:#67D4F508;--glow:0 12px 40px #67D4F55C;--plus:#67D4F5;--label:#D6F4FF;--pill-glow:0 8px 36px #67D4F588}
+:root[data-theme="dark"] .swall.tc-plat{--c1:#FFFFFF;--c:#DCE6EE;--c3:#8FA3B3;--tint:#F4F8FB33;--tint2:#DCE6EE0A;--glow:0 10px 28px #E6EEF440;--plus:#E6EEF4;--label:#EEF4F8;--pill-a:#8FA3B3;--pill-b:#E6EEF4;--pill-glow:0 6px 26px #E6EEF470}
+:root[data-theme="dark"] .swall.tc-gold{--c1:#FFE7A3;--c:#F2C14E;--c3:#B8862A;--tint:#F2C14E2B;--tint2:#F2C14E06;--glow:0 6px 18px #F2C14E33;--plus:#F2C14E;--label:#F7DE9C;--pill-glow:0 6px 22px #F2C14E70}
+:root[data-theme="dark"] .swall.tc-silver{--c1:#DCE5EB;--c:#AFC0CA;--c3:#7E919C;--tint:#D5E0E71C;--tint2:#AFC0CA06;--glow:0 3px 10px #C4D3DC24;--plus:#D5E0E7;--label:#CFDAE0;--pill-glow:0 4px 12px #C4D3DC38}
+:root[data-theme="dark"] .swall.tc-bronze{--c1:#EDBB98;--c:#D9895A;--c3:#A55E36;--tint:#E8A07A1C;--tint2:#D9895A06;--glow:0 3px 9px #E0905F26;--plus:#F0B48E;--label:#EBB896;--pill-glow:0 4px 11px #E0905F38}
+
+/* Level badge between two fading lines */
+.sw-label{display:flex;align-items:center;gap:20px}
+.sw-line{flex:1;height:2px;border-radius:2px;background:linear-gradient(90deg,transparent,var(--c))}
+.sw-line:last-child{background:linear-gradient(90deg,var(--c),transparent)}
+html[dir="rtl"] .sw-line{transform:scaleX(-1)}
+.sw-pill{display:inline-flex;align-items:center;gap:10px;margin:0;padding:9px 20px;border-radius:999px;background:linear-gradient(90deg,var(--pill-a),var(--pill-b));color:#0B1F27;font-size:15px;font-weight:800;letter-spacing:.12em;line-height:1.2;text-transform:uppercase;white-space:nowrap;box-shadow:var(--pill-glow)}
+.sw-pill svg{width:18px;height:18px;flex:none}
+.tc-dia .sw-pill{padding:13px 28px;font-size:21px}
+.tc-dia .sw-pill svg{width:22px;height:22px}
+html[dir="rtl"] .sw-pill{letter-spacing:0}
+.sw-sub{margin:12px 0 0;text-align:center;font-size:14px;color:var(--muted)}
+.sw-logos{display:flex;flex-wrap:wrap;justify-content:center;gap:var(--gap);margin-top:22px}
+.tc-plat .sw-logos{max-width:790px;margin-inline:auto}
+
+/* Every box, signed sponsor or open place, gets the level's border and shine */
+.swall .sw-logos>*{width:var(--w);max-width:100%;height:var(--h);border-radius:16px;border:var(--bw) solid transparent;background:linear-gradient(135deg,var(--tint),var(--tint2)) padding-box,linear-gradient(var(--bg),var(--bg)) padding-box,linear-gradient(135deg,var(--c1),var(--c),var(--c3)) border-box;box-shadow:var(--glow);transition:transform .2s,box-shadow .2s,filter .2s}
+.swall .sw-logos>*:hover{transform:translateY(-3px);filter:brightness(1.05);box-shadow:var(--glow),0 0 0 1px var(--c)}
+.tc-silver .sw-logos>*,.tc-bronze .sw-logos>*{border-radius:12px}
+
+.logo-slot{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--label);text-decoration:none;font-size:13px;font-weight:600}
+.tc-dia .logo-slot{font-size:14px}
+.slot-plus{display:grid;place-items:center;color:var(--plus)}
+.slot-plus svg{width:22px;height:22px}
+.tc-silver .slot-plus svg,.tc-bronze .slot-plus svg{width:16px;height:16px}
+.tc-silver .slot-text,.tc-bronze .slot-text{display:none}
+
+/* Sponsors already signed */
+.swall .sw-logos>.p-logo{display:flex;flex-direction:column;align-items:center;flex:none;height:var(--h);gap:6px;padding:8px;text-align:center}
+.swall .sw-logos>.p-logo:hover{border-color:transparent;background:linear-gradient(135deg,var(--tint),var(--tint2)) padding-box,linear-gradient(var(--bg),var(--bg)) padding-box,linear-gradient(135deg,var(--c1),var(--c),var(--c3)) border-box}
+.tc-dia .sw-logos>.p-logo{padding:12px;gap:10px}
+.sw-logos .pl-name{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:700;color:var(--text)}
+.tc-dia .sw-logos .pl-name{font-size:15px}
+.tc-silver .sw-logos .pl-name,.tc-bronze .sw-logos .pl-name{display:none}
+.swall .sw-logos .pl-mono{width:auto;height:min(48px,calc(var(--h) - 18px));aspect-ratio:1;background:linear-gradient(145deg,var(--c1),var(--c3))}
+.tc-silver .sw-logos .pl-mono,.tc-bronze .sw-logos .pl-mono{font-size:10px}
+.tc-silver .sw-logos>.p-logo,.tc-bronze .sw-logos>.p-logo{padding:5px}
+
+/* Phones: a set number of boxes per row, still smaller at each level */
 @media (max-width:560px){
-  .tiers .tc-top{display:grid;grid-template-columns:44px minmax(0,1fr);align-items:center;gap:5px 12px}
-  .tiers .medal{grid-row:1/span 2}
-  .tiers .tc-count{grid-column:2;margin-inline-start:0;justify-self:start;max-width:100%;padding:4px 10px;font-size:11px;white-space:normal}
-  .tc-dia .tc-slots,.tc-plat .tc-slots{grid-template-columns:minmax(0,1fr)}
-  .tc-dia .logo-slot,.tc-plat .logo-slot{height:110px}
-  .tc-silver .tc-slots{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .tc-exhibitor .tc-slots{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .tc-silver .logo-slot:last-child:nth-child(odd){grid-column:span 2}
-  .tc-exhibitor .logo-slot:last-child:nth-child(odd){grid-column:span 2}
+  .tiers{gap:36px;margin-top:32px}
+  .sw-label{gap:10px}
+  .sw-pill{padding:7px 14px;font-size:13px;gap:8px}
+  .sw-pill svg{width:15px;height:15px}
+  .tc-dia .sw-pill{padding:10px 20px;font-size:16px}
+  .tc-dia .sw-pill svg{width:18px;height:18px}
+  .sw-sub{font-size:13px}
+  .sw-logos{margin-top:16px}
+  .swall .sw-logos>*{width:calc((100% - (var(--n) - 1) * var(--gap)) / var(--n))}
+  .swall.tc-dia{--gap:12px;--h:112px}
+  .swall.tc-plat{--gap:10px;--h:76px}
+  .swall.tc-gold{--gap:8px;--h:56px}
+  .swall.tc-silver{--gap:6px;--h:40px}
+  .swall.tc-bronze{--gap:6px;--h:32px}
+  .tc-dia .logo-slot{font-size:12.5px}
+  .tc-plat .logo-slot{font-size:11px;gap:5px}
+  .tc-gold .slot-text{display:none}
+  .tc-plat .slot-plus svg{width:18px;height:18px}
+  .tc-gold .slot-plus svg{width:16px;height:16px}
+  .tc-silver .slot-plus svg,.tc-bronze .slot-plus svg{width:13px;height:13px}
+  .tc-dia .sw-logos .pl-name{font-size:12.5px}
+  .tc-plat .sw-logos .pl-name,.tc-gold .sw-logos .pl-name{display:none}
+  .swall .sw-logos>.p-logo{padding:5px}
+  .tc-silver .sw-logos>*,.tc-bronze .sw-logos>*{border-radius:9px}
 }
-
-/* Sponsors already signed, shown beside the open places */
-.tc-slots .p-logo{min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:10px;text-align:center;border-radius:var(--r-md);background:linear-gradient(180deg,color-mix(in srgb,var(--m2) 7%,var(--surface)),var(--surface) 42%);border:1.5px solid color-mix(in srgb,var(--m2) 70%,var(--line));padding:10px;box-shadow:inset 0 3px color-mix(in srgb,var(--m1) 75%,transparent);transition:border-color .2s,transform .2s,background .2s,box-shadow .2s}
-.tc-slots .p-logo:hover{border-color:var(--m2);transform:translateY(-3px);background:color-mix(in srgb,var(--m2) 10%,var(--surface));box-shadow:inset 0 3px var(--m2),0 14px 24px -20px var(--m2)}
-.tc-dia .tc-slots .p-logo{height:140px}
-.tc-plat .tc-slots .p-logo{height:124px}
-.tc-gold .tc-slots .p-logo{height:112px}
-.tc-silver .tc-slots .p-logo{height:88px;gap:6px}
-.tc-silver .tc-slots .pl-name{font-size:11.5px}
-.tc-exhibitor .tc-slots .p-logo{height:88px;gap:6px}
-.tc-exhibitor .tc-slots .pl-name{font-size:11.5px}
