@@ -94,7 +94,7 @@ webhook. Until then the test site uses the pretend gateway
 lose the webhook, close the page. Give Psoola this webhook address:
 `https://ismile.krd/api/webhook.php`.
 
-**Cash sales** (Registrations › Register (phone or cash) › Paid by cash; the
+**Cash sales** (Registrations › Register (cash) › Paid by cash; the
 Owner and the Registration role): PSOOLA's `POST /orders` issues the ticket at
 once and emails the QR. The person is registered only after `Payments::check`
 hears "paid" for PSOOLA's own total, exactly like a card payment; they are

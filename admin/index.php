@@ -96,7 +96,7 @@ Page::top('Dashboard', 'index');
 <section class="dashboard-hero">
   <div class="hero-copy"><span class="welcome-label">A GREAT EVENT STARTS HERE</span><h2>Welcome back, <?= $e($firstName) ?>.</h2><p>A little clarity for your day. Every guest, every detail, one beautiful workspace.</p>
     <div class="hero-actions">
-      <?php if (\Ismile\Auth::can($user, 'edit')): ?><a class="btn" href="registration.php?new=1">+ Register (phone or cash)</a><?php endif; ?>
+      <?php if (\Ismile\Auth::can($user, 'edit')): ?><a class="btn" href="registration.php?new=1">+ Register (cash)</a><?php endif; ?>
       <a class="btn ghost" href="registrations.php">View registrations <?= Page::navIcon('arrow') ?></a>
     </div>
   </div>

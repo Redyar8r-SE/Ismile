@@ -31,7 +31,7 @@ $rows = Db::all(
 $cities = array_column(Db::all('SELECT DISTINCT city FROM registrations ORDER BY city LIMIT 200'), 'city');
 
 $overview = Db::one("SELECT COALESCE(SUM(status IN ('paid','complimentary')),0) AS registered, COALESCE(SUM(status IN ('paid','complimentary') AND ticket_type = 'professional'),0) AS professionals, COALESCE(SUM(status IN ('paid','complimentary') AND ticket_type = 'student'),0) AS students, COALESCE(SUM(status IN ('paid','complimentary') AND ticket_type = 'vip'),0) AS vip, COALESCE(SUM(status = 'cancelled'),0) AS cancelled FROM registrations");
-Page::top('Registrations', 'registrations', Auth::can($user,'edit') ? '<a class="btn" href="registration.php?new=1">+ Register (phone or cash)</a>' : '');
+Page::top('Registrations', 'registrations', Auth::can($user,'edit') ? '<a class="btn" href="registration.php?new=1">+ Register (cash)</a>' : '');
 $e = [Page::class, 'e'];
 $select = static function (string $name, array $options, string $current): string {
     $label = ['type'=>'Ticket type', 'status'=>'Registration status', 'lunch'=>'Lunch', 'city'=>'City', 'lang'=>'Language', 'dup'=>'Duplicates', 'email'=>'Email delivery', 'attendance'=>'Attendance'][$name] ?? $name;

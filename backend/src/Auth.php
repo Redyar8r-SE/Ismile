@@ -19,7 +19,7 @@ final class Auth
     public const ROLES = ['owner', 'registration', 'finance', 'content', 'checkin'];
     public const ROLE_NAMES = [
         'owner'        => 'Owner (everything)',
-        'registration' => 'Registration (registrations, approvals, workshops, export)',
+        'registration' => 'Registration (register people paid by cash, registrations, lists, export)',
         'finance'      => 'Finance (payments, money checks, exports)',
         'content'      => 'Content (site text only)',
         'checkin'      => 'Check-in (arrivals, attendance, guest list and totals)',
@@ -179,11 +179,11 @@ final class Auth
             'registrations' => ['registration', 'finance'],
             'edit'          => ['registration'],
             'payments'      => ['finance'],
-            'workshops'     => ['registration'],
+            'workshops'     => [],                       // the Owner books workshops
             'sponsors'      => ['registration', 'finance'],
-            'checkin'       => ['registration', 'checkin'],
+            'checkin'       => ['checkin'],
             'export'        => ['registration', 'finance'],
-            'certificates'  => ['registration', 'finance'],
+            'certificates'  => ['finance'],
             'photos'        => ['registration'],
             'content'       => ['content'],
             'communications' => ['registration', 'finance'],
