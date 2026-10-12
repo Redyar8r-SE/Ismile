@@ -81,7 +81,7 @@ $active = array_filter($users, static fn (array $row): bool => !$row['disabled_a
 $secured = count(array_filter($active, static fn (array $row): bool => (bool) $row['totp_enabled']));
 $roleGuide = [
     'owner' => ['settings', 'Owner', 'Full access to the event, settings, team and website.'],
-    'registration' => ['registrations', 'Registration', 'Registers people paid by cash, looks after guests, lists and exports.'],
+    'registration' => ['registrations', 'Registration', 'Registers people paid by cash and changes only the people they added. Sees registrations and lists.'],
     'finance' => ['payments', 'Finance', 'Payments, money checks and financial exports.'],
     'content' => ['content', 'Content', 'Website wording, photos and content.'],
     'checkin' => ['checkin', 'Check-in', 'Find tickets, scan QR codes and welcome guests.'],

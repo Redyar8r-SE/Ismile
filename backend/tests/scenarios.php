@@ -553,7 +553,7 @@ try {
     // ------------------------------------------------------------------
     section('Sponsors and exhibition: packages, calls, money');
     $owner = ['id' => $adminId, 'role' => 'owner', 'name' => 'Checks'];
-    $staff = ['id' => $adminId, 'role' => 'registration'];
+    $staff = ['id' => $adminId, 'role' => 'finance'];   // Finance works with sponsors (Registration no longer does)
     $fails = static function (callable $work): bool {
         try {
             $work();

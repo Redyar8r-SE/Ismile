@@ -63,6 +63,32 @@ $check('registration closed: a cash sale is refused', $rejects(static fn () => P
 $check('registration closed: nothing was sold', (int) Db::value('SELECT COUNT(*) FROM payments WHERE checkout_id = ?', [$closed['id']]) === 0);
 Settings::set('registration_open', '1');
 
+// ---- Registration staff change only the people they added; only the Owner cancels or gives free tickets ----
+$otherDesk = Db::one('SELECT * FROM admin_users WHERE id = ?', [Auth::createUser("desk2-$tag@test.invalid", 'Second desk', 'registration', bin2hex(random_bytes(12)))]);
+$owner = Db::one('SELECT * FROM admin_users WHERE id = ?', [Auth::createUser("owner-$tag@test.invalid", 'Owner', 'owner', bin2hex(random_bytes(12)))]);
+$finance = ['id' => 0, 'role' => 'finance'];
+$check('the desk that added the person may change them', \Ismile\Office::canChange($staff, $registration));
+$check('another Registration user may not change them', !\Ismile\Office::canChange($otherDesk, $registration));
+$check('the Owner may change anyone', \Ismile\Office::canChange($owner, $registration));
+$check('Finance may not change registrations', !\Ismile\Office::canChange($finance, $registration));
+$website = Db::one("SELECT * FROM registrations WHERE created_by IS NULL LIMIT 1") ?? ['created_by' => null];
+$check('nobody but the Owner changes a person who registered on the website', !\Ismile\Office::canChange($staff, $website) && \Ismile\Office::canChange($owner, $website));
+$check('Registration staff cannot cancel, even their own', $rejects(static fn () => \Ismile\Office::cancel(Registrations::find((int) $registration['id']), $staff, 'Test')));
+$check('a refused cancel leaves the person registered', Registrations::find((int) $registration['id'])['status'] === 'paid');
+$check('Registration staff cannot give a free ticket', $rejects(static fn () => \Ismile\Office::createComplimentary($staff, ['comp_reason' => 'x'] + $form)));
+$check('Registration has no Sponsors, Booths, Communication center, Workshops, attendance or certificates',
+    !Auth::can($staff, 'sponsors') && !Auth::can($staff, 'communications') && !Auth::can($staff, 'workshops') && !Auth::can($staff, 'checkin') && !Auth::can($staff, 'certificates')
+    && Auth::can($staff, 'registrations') && Auth::can($staff, 'edit'));
+$check('Registration staff need the phone code', Auth::needsTwoFactor($staff));
+// The Owner's "Added by" filter.
+[$where, $params] = \Ismile\Admin\RegistrationQuery::where(['by' => (string) $staff['id']]);
+$mine = array_map('intval', array_column(Db::all('SELECT r.id FROM ' . \Ismile\Admin\RegistrationQuery::from() . " WHERE $where", $params), 'id'));
+$check('"Added by" a desk lists exactly the people that desk added', $mine === [(int) $registration['id']]);
+[$where, $params] = \Ismile\Admin\RegistrationQuery::where(['by' => 'website']);
+$check('"Added by: the website" never lists a desk sale', !in_array((int) $registration['id'], array_map('intval', array_column(Db::all('SELECT r.id FROM ' . \Ismile\Admin\RegistrationQuery::from() . " WHERE $where", $params), 'id')), true));
+[$where, $params] = \Ismile\Admin\RegistrationQuery::where(['by' => "1 OR 1=1"]);
+$check('a made-up "Added by" value is ignored, not trusted', !str_contains($where, 'OR 1=1') && !in_array("1 OR 1=1", $params, true));
+
 // ---- PSOOLA's answers: ticket links are never kept, refusals are explained ----
 $stored = PsoolaGateway::withoutLinks('{"id":"ord_1","status":"paid","ticketsUrl":"https://psoola.example/t/secret","order":{"totalAmount":40000}}');
 $check('the ticket link is removed before an answer is stored', !str_contains($stored, 'secret') && str_contains($stored, '"ord_1"') && str_contains($stored, '40000'));

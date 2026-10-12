@@ -23,18 +23,20 @@ $perPage = 50;
 $pageNo = min(100000, max(1, (int) ($_GET['page'] ?? 1)));
 $offset = ($pageNo - 1) * $perPage;
 $rows = Db::all(
-    "SELECT r.*, t.ticket_no, t.checked_in_at,
+    "SELECT r.*, t.ticket_no, t.checked_in_at, ab.name AS added_by_name,
             (SELECT COUNT(*) FROM emails e WHERE e.registration_id = r.id AND e.status = 'failed') AS failed_emails
      FROM " . RegistrationQuery::from() . " WHERE $where ORDER BY r.id DESC LIMIT $perPage OFFSET $offset",
     $params
 );
 $cities = array_column(Db::all('SELECT DISTINCT city FROM registrations ORDER BY city LIMIT 200'), 'city');
+// Everyone who has added a registration (or may), for the "Added by" filter.
+$adders = array_column(Db::all("SELECT id, name FROM admin_users WHERE role IN ('owner','registration') OR id IN (SELECT DISTINCT created_by FROM registrations WHERE created_by IS NOT NULL) ORDER BY name"), 'name', 'id');
 
 $overview = Db::one("SELECT COALESCE(SUM(status IN ('paid','complimentary')),0) AS registered, COALESCE(SUM(status IN ('paid','complimentary') AND ticket_type = 'professional'),0) AS professionals, COALESCE(SUM(status IN ('paid','complimentary') AND ticket_type = 'student'),0) AS students, COALESCE(SUM(status IN ('paid','complimentary') AND ticket_type = 'vip'),0) AS vip, COALESCE(SUM(status = 'cancelled'),0) AS cancelled FROM registrations");
 Page::top('Registrations', 'registrations', Auth::can($user,'edit') ? '<a class="btn" href="registration.php?new=1">+ Register (cash)</a>' : '');
 $e = [Page::class, 'e'];
 $select = static function (string $name, array $options, string $current): string {
-    $label = ['type'=>'Ticket type', 'status'=>'Registration status', 'lunch'=>'Lunch', 'city'=>'City', 'lang'=>'Language', 'dup'=>'Duplicates', 'email'=>'Email delivery', 'attendance'=>'Attendance'][$name] ?? $name;
+    $label = ['type'=>'Ticket type', 'status'=>'Registration status', 'lunch'=>'Lunch', 'city'=>'City', 'lang'=>'Language', 'dup'=>'Duplicates', 'email'=>'Email delivery', 'attendance'=>'Attendance', 'by'=>'Added by'][$name] ?? $name;
     $html = '<label class="filter-field"><span>' . Page::e($label) . '</span><select name="' . $name . '">';
     foreach ($options as $value => $label) {
         $html .= '<option value="' . Page::e($value) . '"' . ((string) $value === $current ? ' selected' : '') . '>' . Page::e($label) . '</option>';
@@ -61,6 +63,7 @@ $select = static function (string $name, array $options, string $current): strin
   <?= $select('lang', ['' => 'Any language', 'en' => 'English', 'ar' => 'Arabic', 'ku' => 'Kurdish'], $in['lang']) ?>
   <?= $select('dup', ['' => 'All', '1' => 'Possible duplicates'], $in['dup']) ?>
   <?= $select('email', ['' => 'Any email state', 'failed' => 'Email failed'], $in['email']) ?>
+  <?= $select('by', ['' => 'Anyone', 'website' => 'The website (online)', 'team' => 'Any team member'] + $adders, $in['by']) ?>
   <?= $select('attendance', ['' => 'Any attendance', 'attended' => 'Attended either day', 'day1' => 'Attended Day 1', 'day2' => 'Attended Day 2', 'both' => 'Attended both days', 'none' => 'Never attended'], $in['attendance']) ?>
   <div class="form-actions filter-actions"><a class="btn ghost" href="registrations.php">Clear filters</a><button class="btn">Search</button></div>
 </form>
@@ -78,7 +81,7 @@ $select = static function (string $name, array $options, string $current): strin
 
 <div class="table-wrap">
 <table>
-  <tr><th>Reference</th><th>Name</th><th>Phone</th><th>Ticket</th><th>Lunch</th><th>Status</th><th>Ticket no.</th><th>Registered</th></tr>
+  <tr><th>Reference</th><th>Name</th><th>Phone</th><th>Ticket</th><th>Lunch</th><th>Status</th><th>Ticket no.</th><th>Added by</th><th>Registered</th></tr>
   <?php foreach ($rows as $row): ?>
   <tr data-registration-result>
     <td><a href="registration.php?id=<?= (int) $row['id'] ?>"><code><?= $e($row['ref']) ?></code></a>
@@ -89,10 +92,11 @@ $select = static function (string $name, array $options, string $current): strin
     <td><?= $row['lunch_day1'] ? 'D1 ' : '' ?><?= $row['lunch_day2'] ? 'D2' : '' ?><?= !$row['lunch_day1'] && !$row['lunch_day2'] ? '–' : '' ?></td>
     <td><?= Page::pill($row['status']) ?><?= $row['failed_emails'] ? ' ' . Page::pill('failed') . '<small> email</small>' : '' ?></td>
     <td><?= $row['ticket_no'] ? '<code>' . $e($row['ticket_no']) . '</code>' . ($row['checked_in_at'] ? ' ' . Page::pill('arrived') : '') : '–' ?></td>
+    <td><?php if ($row['created_by'] === null): ?><span class="muted">Website</span><?php else: ?><b><?= $e($row['added_by_name'] ?? 'Removed account') ?></b><?php if ($row['pay_method'] === 'cash'): ?><br><span class="added-by-tag cash">Cash</span><?php elseif ($row['status'] === 'complimentary'): ?><br><span class="added-by-tag">Free ticket</span><?php endif; ?><?php endif; ?></td>
     <td><?= Page::when($row['created_at']) ?></td>
   </tr>
   <?php endforeach; ?>
-  <?php if (!$rows): ?><tr><td colspan="8" class="muted"><?= Page::emptyState('No guests in this view yet', 'Try another search or clear the filters. New tickets appear here after registration.', 'registrations') ?></td></tr><?php endif; ?>
+  <?php if (!$rows): ?><tr><td colspan="9" class="muted"><?= Page::emptyState('No guests in this view yet', 'Try another search or clear the filters. New tickets appear here after registration.', 'registrations') ?></td></tr><?php endif; ?>
 </table>
 </div>
 </section>

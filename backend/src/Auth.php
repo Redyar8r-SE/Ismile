@@ -19,7 +19,7 @@ final class Auth
     public const ROLES = ['owner', 'registration', 'finance', 'content', 'checkin'];
     public const ROLE_NAMES = [
         'owner'        => 'Owner (everything)',
-        'registration' => 'Registration (register people paid by cash, registrations, lists, export)',
+        'registration' => 'Registration (register people paid by cash; changes only the people they added)',
         'finance'      => 'Finance (payments, money checks, exports)',
         'content'      => 'Content (site text only)',
         'checkin'      => 'Check-in (arrivals, attendance, guest list and totals)',
@@ -181,13 +181,13 @@ final class Auth
             'edit'          => ['registration'],
             'payments'      => ['finance'],
             'workshops'     => [],                       // the Owner books workshops
-            'sponsors'      => ['registration', 'finance'],
+            'sponsors'      => ['finance'],
             'checkin'       => ['checkin'],
             'export'        => ['registration', 'finance'],
             'certificates'  => ['finance'],
             'photos'        => ['registration'],
             'content'       => ['content'],
-            'communications' => ['registration', 'finance'],
+            'communications' => ['finance'],
         ];
         return in_array($user['role'], $allowed[$area] ?? [], true);
     }

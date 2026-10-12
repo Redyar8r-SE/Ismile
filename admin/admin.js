@@ -375,6 +375,40 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
   };
+  // The student ID box: the chosen photo's name, size and a preview; over 8 MB is refused here already.
+  const idPhoto = document.getElementById("caller-student-id");
+  const idBox = document.getElementById("caller-id-upload");
+  if (idPhoto && idBox) {
+    const fileLine = idBox.querySelector(".id-upload-file");
+    const preview = idBox.querySelector(".id-upload-preview");
+    const image = preview.querySelector("img");
+    let previewUrl = null;
+    const showPhoto = () => {
+      const file = idPhoto.files && idPhoto.files[0];
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      previewUrl = null;
+      const megabytes = file ? (file.size < 1048576 ? `${Math.max(1, Math.round(file.size / 1024))} KB` : `${(file.size / 1048576).toFixed(1)} MB`) : "";
+      const tooBig = Boolean(file) && file.size > 8 * 1048576;
+      idBox.classList.toggle("has-file", Boolean(file) && !tooBig);
+      idBox.classList.toggle("too-big", tooBig);
+      idPhoto.setCustomValidity(tooBig ? "The photo must be 8 MB at most." : "");
+      fileLine.textContent = !file ? fileLine.dataset.empty
+        : tooBig ? `${file.name} is ${megabytes}: too large. Choose a photo of 8 MB at most.`
+        : `✓ ${file.name} · ${megabytes}. Click to choose another photo.`;
+      if (file && !tooBig && file.type.startsWith("image/")) {
+        previewUrl = URL.createObjectURL(file);
+        image.src = previewUrl;
+        preview.hidden = false;
+      } else {
+        image.removeAttribute("src");
+        preview.hidden = true;
+      }
+    };
+    idPhoto.addEventListener("change", showPhoto);
+    ["dragenter", "dragover"].forEach((type) => idBox.addEventListener(type, () => idBox.classList.add("dragging")));
+    ["dragleave", "drop"].forEach((type) => idBox.addEventListener(type, () => idBox.classList.remove("dragging")));
+    showPhoto();
+  }
   specialty.addEventListener("change", sync);
   ticket.addEventListener("change", sync);
   form.querySelector('[name="vip_lunch_day"]')?.addEventListener("change", sync);

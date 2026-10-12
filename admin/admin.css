@@ -1118,3 +1118,33 @@ body[data-page=backups] .page-symbol{background:#e9f4ee;color:#418165;border-col
 .psoola-mail{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.78rem;font-weight:700;background:var(--teal-l);color:var(--teal-d)}
 .psoola-mail.bad{background:var(--red-l);color:var(--red-d)}
 .psoola-missing{color:var(--red-d);font-weight:700}
+
+/* Register (cash): the student ID photo box, full width under the student fields */
+.id-upload{grid-column:1/-1;position:relative;display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;gap:16px;padding:18px 20px;border:2px dashed #9fc7d6;border-radius:14px;background:#fff;cursor:pointer;transition:border-color .2s,background .2s,box-shadow .2s}
+.id-upload:hover,.id-upload.dragging,.id-upload:focus-within{border-color:var(--teal);background:var(--teal-l);box-shadow:0 0 0 4px #16a6a11a}
+.id-upload input[type=file]{position:absolute;inset:0;width:100%;height:100%;min-height:0;opacity:0;cursor:pointer;z-index:2}
+.id-upload-icon{width:54px;height:54px;border-radius:14px;display:grid;place-items:center;background:var(--teal-l);color:var(--teal-d)}
+.id-upload-icon svg{width:30px;height:30px}
+.id-upload-text{display:grid;gap:4px;min-width:0}
+.id-upload-text b{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:15px;color:var(--ink)}
+.id-upload-text em{font-style:normal;font-size:11px;font-weight:700;letter-spacing:.2px;padding:3px 10px;border-radius:999px;background:#fff1de;color:#9a5300}
+.id-upload-text small{font-size:12.5px;font-weight:400;line-height:1.5;color:var(--muted)}
+.id-upload-file{font-size:13px;font-weight:600;color:#5d7486;overflow-wrap:anywhere}
+.id-upload-preview img{display:block;width:96px;height:64px;object-fit:cover;border-radius:9px;border:2px solid #fff;box-shadow:0 2px 10px #0c335326}
+.id-upload-button{pointer-events:none;white-space:nowrap}
+.id-upload.has-file{border-style:solid;border-color:var(--green);background:var(--green-l)}
+.id-upload.has-file .id-upload-icon{background:#fff;color:var(--green-d)}
+.id-upload.has-file .id-upload-file{color:var(--green-d)}
+.id-upload.too-big{border-style:solid;border-color:var(--red);background:var(--red-l)}
+.id-upload.too-big .id-upload-file{color:var(--red-d)}
+@media(max-width:600px){
+  .id-upload{grid-template-columns:auto minmax(0,1fr);padding:16px;gap:12px}
+  .id-upload-preview,.id-upload-button{grid-column:1/-1}
+  .id-upload-button{justify-self:stretch;text-align:center}
+  .id-upload-preview img{width:100%;height:auto;max-height:180px}
+}
+
+/* Registrations: who added each person */
+.added-by-tag{display:inline-block;margin-top:3px;padding:1px 8px;border-radius:999px;font-size:11px;font-weight:700;background:#f1edfb;color:#5b3fb0}
+.added-by-tag.cash{background:var(--green-l);color:var(--green-d)}
+.read-only-note{margin:12px 0 0;padding:8px 12px;border-radius:9px;background:#f4f7fa}

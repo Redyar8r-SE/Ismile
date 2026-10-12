@@ -10,6 +10,19 @@ namespace Ismile;
 
 final class Office
 {
+    /**
+     * Who may change a registration: the Owner anyone, Registration staff only
+     * the people they added themselves (a cash sale at their desk).
+     */
+    public static function canChange(array $user, array $registration): bool
+    {
+        if ($user['role'] === 'owner') {
+            return true;
+        }
+        return Auth::can($user, 'edit') && $registration['created_by'] !== null
+            && (int) $registration['created_by'] === (int) $user['id'];
+    }
+
     /** Fixes name, email or phone. A name change reissues the ticket (the name is on the certificate). */
     public static function editContact(array $registration, array $user, array $in): string
     {
@@ -79,6 +92,9 @@ final class Office
 
     public static function cancel(array $registration, array $user, string $reason): string
     {
+        if ($user['role'] !== 'owner') {
+            throw new UserError('Only the Owner can cancel a registration.');
+        }
         if ($registration['status'] === 'cancelled') {
             return 'Already cancelled.';
         }

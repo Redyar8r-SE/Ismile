@@ -36,7 +36,7 @@ try {
     $check('content staff land on their Database overview',Page::home(['role'=>'content'])==='content.php');
     App::boot($config);
     foreach (Auth::ROLES as $role) {
-        $check("communication access for $role",Auth::can(['role'=>$role],'communications')===in_array($role,['owner','registration','finance'],true));
+        $check("communication access for $role",Auth::can(['role'=>$role],'communications')===in_array($role,['owner','finance'],true));
     }
     [$scope,$params]=CommunicationQuery::where(['role'=>'registration'],['status'=>'failed','kind'=>'alert','q'=>"x' OR 1=1 --"]);
     $check('staff never gains alert access through filters',str_contains($scope,"e.kind <> 'alert'") && !str_contains($scope,"x' OR"));

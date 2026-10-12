@@ -69,10 +69,10 @@ switch ($what) {
         }
         [$where, $params] = RegistrationQuery::where($in);
         $from = RegistrationQuery::from();
-        $rows[] = ['Reference', 'First name', 'Second name', 'Last name', 'Phone', 'Email', 'City', 'Ticket', 'Specialty', 'University', 'Stage', 'Lunch day 1', 'Lunch day 2', 'Status', 'Ticket no.', 'Day 1 arrival', 'Day 2 arrival', 'Certificate', 'Language', 'Form sent', 'Paid'];
-        foreach (Db::all('SELECT r.*, t.ticket_no, (SELECT a.checked_in_at FROM ticket_attendance a WHERE a.ticket_id=t.id AND a.event_day=1) AS day1, (SELECT a.checked_in_at FROM ticket_attendance a WHERE a.ticket_id=t.id AND a.event_day=2) AS day2, (SELECT c.certificate_no FROM certificates c WHERE c.registration_id=r.id) AS certificate_no FROM ' . $from . " WHERE $where ORDER BY r.first_name, r.father_name", $params) as $row) {
+        $rows[] = ['Reference', 'First name', 'Second name', 'Last name', 'Phone', 'Email', 'City', 'Ticket', 'Specialty', 'University', 'Stage', 'Lunch day 1', 'Lunch day 2', 'Status', 'Ticket no.', 'Day 1 arrival', 'Day 2 arrival', 'Certificate', 'Language', 'Form sent', 'Paid', 'Added by'];
+        foreach (Db::all('SELECT r.*, t.ticket_no, ab.name AS added_by_name, (SELECT a.checked_in_at FROM ticket_attendance a WHERE a.ticket_id=t.id AND a.event_day=1) AS day1, (SELECT a.checked_in_at FROM ticket_attendance a WHERE a.ticket_id=t.id AND a.event_day=2) AS day2, (SELECT c.certificate_no FROM certificates c WHERE c.registration_id=r.id) AS certificate_no FROM ' . $from . " WHERE $where ORDER BY r.first_name, r.father_name", $params) as $row) {
             $rows[] = [$row['ref'], $row['first_name'], $row['father_name'], $row['grandfather_name'], $row['phone'], $row['email'], $row['city'], \Ismile\Registrations::ticketName($row['ticket_type']), $row['specialty'], $row['university'] ?? '', $row['study_stage'] ? \Ismile\Registrations::stageName((int) $row['study_stage']) : '',
-                $row['lunch_day1'] ? 'yes' : '', $row['lunch_day2'] ? 'yes' : '', $row['status'], $row['ticket_no'] ?? '', $row['day1'] ?? '', $row['day2'] ?? '', $row['certificate_no'] ?? '', $row['lang'], $row['created_at'], $row['paid_at'] ?? ''];
+                $row['lunch_day1'] ? 'yes' : '', $row['lunch_day2'] ? 'yes' : '', $row['status'], $row['ticket_no'] ?? '', $row['day1'] ?? '', $row['day2'] ?? '', $row['certificate_no'] ?? '', $row['lang'], $row['created_at'], $row['paid_at'] ?? '', $row['created_by'] === null ? 'Website' : ($row['added_by_name'] ?? 'Removed account')];
         }
         $name = 'ismile-registrations';
         break;

@@ -8,7 +8,7 @@ namespace Ismile\Admin;
 
 final class RegistrationQuery
 {
-    public const FILTERS = ['q', 'type', 'status', 'lunch', 'city', 'lang', 'email', 'dup', 'attendance'];
+    public const FILTERS = ['q', 'type', 'status', 'lunch', 'city', 'lang', 'email', 'dup', 'attendance', 'by'];
 
     /** @return array{0: string, 1: array} WHERE clause and its values */
     public static function where(array $in): array
@@ -72,12 +72,22 @@ final class RegistrationQuery
         if (($in['dup'] ?? '') === '1') {
             $where[] = 'r.possible_duplicate = 1';
         }
+        // Who added them: the website (the person themselves), any team member, or one of them.
+        $by = (string) ($in['by'] ?? '');
+        if ($by === 'website') {
+            $where[] = 'r.created_by IS NULL';
+        } elseif ($by === 'team') {
+            $where[] = 'r.created_by IS NOT NULL';
+        } elseif (ctype_digit($by) && (int) $by > 0) {
+            $where[] = 'r.created_by = ?';
+            $params[] = (int) $by;
+        }
         return [implode(' AND ', $where), $params];
     }
 
     public static function from(): string
     {
-        return 'registrations r LEFT JOIN tickets t ON t.registration_id = r.id';
+        return 'registrations r LEFT JOIN tickets t ON t.registration_id = r.id LEFT JOIN admin_users ab ON ab.id = r.created_by';
     }
 
     /** The current filters as a query string (for paging and the export link). */

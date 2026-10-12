@@ -120,7 +120,7 @@ if ($database) {
         $check($role . ' cannot create staff bookings', $rejects(static fn () => Sponsors::createByStaff($staffInput, ['id' => $ownerId, 'role' => $role])));
     }
     $sponsorInput = array_replace($staffInput, ['kind' => 'sponsor', 'package_id' => 'gold', 'company' => 'Office sponsor', 'booth_number' => '43', 'paid_how' => 'cash']);
-    $manualSponsor = Sponsors::createByStaff($sponsorInput, ['id' => $ownerId, 'role' => 'registration']);
+    $manualSponsor = Sponsors::createByStaff($sponsorInput, ['id' => $ownerId, 'role' => 'finance']);
     $check('Registration can add a sponsorship with a booth', $manualSponsor['kind'] === 'sponsor' && $manualSponsor['package_id'] === 'gold' && Sponsors::bookedBooths() === [43, 44]);
     $check('full received payment starts at Paid with exact amount and method', $manualSponsor['status'] === 'paid' && (int) $manualSponsor['amount_paid'] === 6000000 && $manualSponsor['paid_how'] === 'cash' && $manualSponsor['paid_at'] !== null);
     $noStand = Sponsors::createByStaff(array_replace($sponsorInput, ['company' => 'Office sponsor without a stand', 'booth_number' => '', 'paid_how' => '', 'amount_agreed' => '']), ['id' => $ownerId, 'role' => 'finance']);
@@ -139,7 +139,7 @@ if ($database) {
     $check('existing booking cannot move to a wrong-tier booth', $rejects(static fn () => Sponsors::saveDetails((int) $manualSponsor['id'], ['package_id' => 'platinum', 'booth_number' => '8'], $owner)));
     $check('failed tier change preserves the original booking', Sponsors::find((int) $manualSponsor['id'])['package_id'] === 'gold' && Sponsors::find((int) $manualSponsor['id'])['booth_number'] === '43');
     $upgradeId = (int) $manualSponsor['id'];
-    $registration = ['id' => $ownerId, 'role' => 'registration'];
+    $registration = ['id' => $ownerId, 'role' => 'finance'];
     $finance = ['id' => $ownerId, 'role' => 'finance'];
     $upgrade = [
         'package_id' => 'platinum', 'booth_number' => '37', 'amount_agreed' => '9000000',

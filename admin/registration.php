@@ -95,7 +95,17 @@ if (isset($_GET['new'])) {
           <label>University (required for students)<input name="university" id="caller-university" maxlength="160" value="<?= $value('university') ?>"<?= $student ? ' required' : '' ?>></label>
           <label>Stage (3rd and above)<select name="stage" id="caller-stage"<?= $student ? ' required' : '' ?>><option value="">Choose the stage</option><?php foreach (range(\Ismile\Checkouts::FIRST_STUDENT_STAGE, \Ismile\Checkouts::LAST_STUDENT_STAGE) as $stage): ?><option value="<?= $stage ?>"<?= $selected('stage', (string) $stage) ?>><?= $e(\Ismile\Registrations::stageName($stage)) ?></option><?php endforeach; ?></select></label>
           <label>Ambassador code (optional)<input name="ambassador" maxlength="40" value="<?= $value('ambassador') ?>" placeholder="e.g. AMB-SARA" autocomplete="off"></label>
-          <label>Student ID photo (required for students)<input type="file" name="student_id" id="caller-student-id" accept="image/jpeg,image/png,image/webp"<?= $student ? ' required' : '' ?>><small class="field-hint">A clear photo of the student card, JPG, PNG or WebP, 8 MB at most. Ask the student to send it on WhatsApp.</small></label>
+          <label class="id-upload" id="caller-id-upload">
+            <input type="file" name="student_id" id="caller-student-id" accept="image/jpeg,image/png,image/webp"<?= $student ? ' required' : '' ?> aria-describedby="caller-id-hint">
+            <span class="id-upload-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="11" r="2.2"/><path d="M5.8 16.2c.6-1.6 1.8-2.4 3.2-2.4s2.6.8 3.2 2.4M14.5 10h4M14.5 13.5h3"/></svg></span>
+            <span class="id-upload-text">
+              <b>Student ID photo <em>Required for students</em></b>
+              <small id="caller-id-hint">A clear photo of the student card · JPG, PNG or WebP, 8 MB at most. Ask the student to send it on WhatsApp.</small>
+              <span class="id-upload-file" data-empty="No photo chosen yet. Click here or drop the photo on this box.">No photo chosen yet. Click here or drop the photo on this box.</span>
+            </span>
+            <span class="id-upload-preview" hidden><img alt="The chosen student ID photo"></span>
+            <span class="btn ghost id-upload-button" aria-hidden="true">Choose photo</span>
+          </label>
         </div>
       </fieldset>
       <fieldset class="form-section">
@@ -129,6 +139,9 @@ if ($registration === null) {
     exit;
 }
 $id = (int) $registration['id'];
+// The Owner changes anyone; Registration staff only the people they added.
+$canChange = Office::canChange($user, $registration);
+$addedBy = $registration['created_by'] !== null ? Db::value('SELECT name FROM admin_users WHERE id = ?', [$registration['created_by']]) : null;
 $back = 'registration.php?id=' . $id . $workspaceQuery;
 
 // ---------- Delete for good (main Owner only) ----------
@@ -145,14 +158,17 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && ($_POST['do'] ?? '') ===
 }
 
 // ---------- Actions ----------
-Page::action(static function () use ($registration, $user, $canEdit): string {
+Page::action(static function () use ($registration, $user, $canChange): string {
     $do = (string) ($_POST['do'] ?? '');
-    $needsEdit = ['edit', 'cancel', 'notes', 'workshop_add', 'workshop_change', 'resend_ticket', 'resend_email'];
+    $needsEdit = ['edit', 'notes', 'workshop_add', 'workshop_change', 'resend_ticket', 'resend_email'];
+    if ($do === 'cancel' && $user['role'] !== 'owner') {
+        throw new UserError('Only the Owner can cancel a registration.');
+    }
     if (in_array($do, ['workshop_add', 'workshop_change'], true) && !Auth::can($user, 'workshops')) {
         throw new UserError('Only the Owner books workshops.');
     }
-    if (in_array($do, $needsEdit, true) && !$canEdit) {
-        throw new UserError('Your role cannot change registrations.');
+    if (in_array($do, $needsEdit, true) && !$canChange) {
+        throw new UserError('You can change only the people you added yourself.');
     }
     $fresh = Registrations::find((int) $registration['id']);
     return match ($do) {
@@ -216,8 +232,10 @@ if ($inCheckin) echo CheckinWorkspace::navigation('guests', $user, $workspaceDay
       <dt>No-refund terms</dt><dd><?= $registration['terms_accepted_at'] ? 'accepted on the website, ' . Page::when($registration['terms_accepted_at']) : '<span class="muted">registered by the office</span>' ?></dd>
       <dt>Language</dt><dd><?= $e($registration['lang']) ?></dd>
       <dt>Form sent</dt><dd><?= Page::when($registration['created_at']) ?></dd>
+      <dt>Added by</dt><dd><?= $registration['created_by'] === null ? '<span class="muted">The website (the person registered online)</span>' : '<b>' . $e($addedBy ?? 'A removed account') . '</b>' . ($registration['pay_method'] === 'cash' ? ' · cash sale' : ($registration['status'] === 'complimentary' ? ' · free ticket' : '')) ?></dd>
     </dl>
-    <?php if ($canEdit): ?>
+    <?php if (!$canChange && Auth::can($user, 'edit')): ?><p class="muted small read-only-note">Read only: you can change only the people you added yourself.</p><?php endif; ?>
+    <?php if ($canChange): ?>
     <details class="edit">
       <summary class="btn ghost small">Edit name, email or phone</summary>
       <form method="post" class="stack">
@@ -240,7 +258,7 @@ if ($inCheckin) echo CheckinWorkspace::navigation('guests', $user, $workspaceDay
       <?php if ($attendance && Auth::can($user, 'certificates')): ?><p><a class="btn green" href="certificate-download.php?id=<?= $id ?>">Download certificate (PDF)</a></p><?php else: ?><p class="muted small">Certificate available after attendance. Payment alone does not qualify.</p><?php endif; ?>
       <?php if (Tickets::issuedByPsoola($ticket)): ?>
       <p class="muted small">Psoola issued this ticket and emailed it with the QR<?= $registration['pay_method'] === 'cash' ? ' (cash sale)' : '' ?>. To send it again, use the Psoola partner portal. Psoola scans it at the door.</p>
-      <?php elseif ($canEdit): ?>
+      <?php elseif ($canChange): ?>
       <form method="post" class="form-actions"><?= Page::csrfField() ?><input type="hidden" name="do" value="resend_ticket"><button class="btn">Resend ticket</button></form>
       <?php endif; ?>
     <?php elseif ($ticket): ?>
@@ -314,7 +332,7 @@ if ($inCheckin) echo CheckinWorkspace::navigation('guests', $user, $workspaceDay
     <tr><td><?= $e($email['kind']) ?></td><td dir="ltr"><?= $e($email['to_email']) ?></td>
       <td><?= Page::pill($email['status']) ?><?= $email['last_error'] ? '<br><small class="muted">' . $e($email['last_error']) . '</small>' : '' ?></td>
       <td><?= (int) $email['attempts'] ?></td><td><?= Page::when($email['sent_at']) ?></td>
-      <td class="table-action-cell"><?php if ($canEdit): ?><form method="post"><?= Page::csrfField() ?><input type="hidden" name="do" value="resend_email"><input type="hidden" name="email_id" value="<?= (int) $email['id'] ?>"><button class="btn small ghost">Send again</button></form><?php endif; ?></td></tr>
+      <td class="table-action-cell"><?php if ($canChange): ?><form method="post"><?= Page::csrfField() ?><input type="hidden" name="do" value="resend_email"><input type="hidden" name="email_id" value="<?= (int) $email['id'] ?>"><button class="btn small ghost">Send again</button></form><?php endif; ?></td></tr>
     <?php endforeach; ?>
     <?php if (!$emails): ?><tr><td colspan="6" class="muted">No emails.</td></tr><?php endif; ?>
   </table></div>
@@ -325,20 +343,22 @@ if ($inCheckin) echo CheckinWorkspace::navigation('guests', $user, $workspaceDay
   <div class="card">
     <h2>Notes</h2>
     <form method="post" class="stack"><?= Page::csrfField() ?><input type="hidden" name="do" value="notes">
-      <textarea name="notes" rows="4" <?= $canEdit ? '' : 'readonly' ?>><?= $e($registration['notes'] ?? '') ?></textarea>
-      <?php if ($canEdit): ?><div class="form-actions"><button class="btn">Save notes</button></div><?php endif; ?>
+      <textarea name="notes" rows="4" <?= $canChange ? '' : 'readonly' ?>><?= $e($registration['notes'] ?? '') ?></textarea>
+      <?php if ($canChange): ?><div class="form-actions"><button class="btn">Save notes</button></div><?php endif; ?>
     </form>
   </div>
+  <?php if ($user['role'] === 'owner'): ?>
   <div class="card danger">
     <h2>Cancel</h2>
     <p class="muted small">Tickets are non-refundable: cancelling stops the ticket at the door and frees workshop seats; no money is returned.</p>
-    <?php if ($canEdit && $registration['status'] !== 'cancelled'): ?>
+    <?php if ($registration['status'] !== 'cancelled'): ?>
     <form method="post" class="stack"><?= Page::csrfField() ?><input type="hidden" name="do" value="cancel">
       <label>Reason for cancelling<input name="reason" required></label>
       <div class="form-actions danger-actions"><button class="btn red" data-confirm="Cancel this registration? The ticket will stop working at the door. Tickets are non-refundable.">Cancel registration</button></div>
     </form>
     <?php endif; ?>
   </div>
+  <?php endif; ?>
 </div>
 
 <?php if (Erase::isMainOwner($user)): ?>
