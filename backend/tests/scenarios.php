@@ -509,8 +509,8 @@ try {
     Db::update('admin_users', ['role' => 'registration', 'totp_last_step' => null], 'id = ?', [$loginId]);
     $optionalStep = intdiv(time(), 30);
     $optional = $signIn(Totp::code($loginSecret, $optionalStep));
-    check('Registration staff with a phone code enabled must use it to sign in', $optional['in']);
-    check('optional phone codes cannot be reused', !$signIn(Totp::code($loginSecret, $optionalStep))['in']);
+    check('Registration staff sign in with password + phone code', $optional['in']);
+    check('Registration phone codes cannot be reused', !$signIn(Totp::code($loginSecret, $optionalStep))['in']);
     Db::update('admin_users', ['disabled_at' => App::now()], 'id = ?', [$loginId]);
 
     // ------------------------------------------------------------------

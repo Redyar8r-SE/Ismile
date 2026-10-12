@@ -24,7 +24,8 @@ final class Auth
         'content'      => 'Content (site text only)',
         'checkin'      => 'Check-in (arrivals, attendance, guest list and totals)',
     ];
-    public const NEEDS_TWO_FACTOR = ['owner', 'finance'];
+    // Registration takes cash and makes real PSOOLA tickets, so it needs the phone code too.
+    public const NEEDS_TWO_FACTOR = ['owner', 'finance', 'registration'];
 
     private const IDLE_SECONDS = 1800;
     private const MAX_SECONDS = 43200;
