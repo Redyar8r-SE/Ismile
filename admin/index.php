@@ -126,7 +126,7 @@ Page::top('Dashboard', 'index');
     </section>
     <section class="card">
       <div class="panel-top"><?= Page::panelHeading('Latest registrations', 'The latest people added to your database.', 'ticket') ?><a class="text-action" href="registrations.php">View all <?= Page::navIcon('arrow') ?></a></div>
-      <?php if ($recent): ?><div class="table-wrap"><table><tr><th>Guest</th><th>Ticket</th><th>Status</th><th>Registered</th></tr><?php foreach ($recent as $row): ?><tr><td><div class="guest-cell"><span class="guest-avatar" aria-hidden="true"><?= $e(mb_strtoupper(mb_substr($row['first_name'],0,1))) ?></span><div><a href="registration.php?id=<?= (int) $row['id'] ?>"><b><?= $e(Registrations::fullName($row)) ?></b></a><small><?= $e($row['ref']) ?></small></div></div></td><td><?= $e(($row['ticket_type']==='vip' ? 'VIP' : ucfirst($row['ticket_type']))) ?></td><td><?= Page::pill($row['status']) ?></td><td><?= Page::when($row['created_at']) ?></td></tr><?php endforeach; ?></table></div>
+      <?php if ($recent): ?><div class="table-wrap"><table><tr><th>Guest</th><th>Ticket</th><th>Status</th><th>Registered</th></tr><?php foreach ($recent as $row): ?><tr><td><div class="guest-cell"><span class="guest-avatar" aria-hidden="true"><?= $e(mb_strtoupper(mb_substr($row['first_name'],0,1))) ?></span><div><a href="registration.php?id=<?= (int) $row['id'] ?>"><b><?= $e(Registrations::fullName($row)) ?></b></a><small><?= $e($row['ref']) ?></small></div></div></td><td><?= $e(\Ismile\Registrations::ticketName($row['ticket_type'])) ?></td><td><?= Page::pill($row['status']) ?></td><td><?= Page::when($row['created_at']) ?></td></tr><?php endforeach; ?></table></div>
       <?php else: ?><?= Page::emptyState('Your guest list starts here', 'New registrations will appear here as soon as a ticket is issued.', 'registrations') ?><?php if (\Ismile\Auth::can($user, 'edit')): ?><div class="empty-action"><a class="btn ghost" href="registration.php?new=1">Register your first caller</a></div><?php endif; ?><?php endif; ?>
     </section>
     <section class="card">
@@ -145,7 +145,7 @@ Page::top('Dashboard', 'index');
     <section class="card guest-mix">
       <?= Page::panelHeading('Your guests', 'A snapshot of your ticket holders.', 'users') ?>
       <div class="ticket-donut<?= $registered === 0 ? ' is-empty' : '' ?>" style="--share:<?= $professionalPercent ?>%;--student-end:<?= $studentEndPercent ?>%" role="img" aria-label="<?= $e($profPaid . ' professionals, ' . $studPaid . ' students and ' . $vipPaid . ' VIP guests') ?>"><div><strong><?= number_format($registered) ?></strong><span>registered</span></div></div>
-      <div class="mix-legend"><span><i class="dot teal"></i> Professionals <b><?= number_format($profPaid) ?></b></span><span><i class="dot violet"></i> Students <b><?= number_format($studPaid) ?></b></span><span><i class="dot gold"></i> VIP <b><?= number_format($vipPaid) ?></b></span></div>
+      <div class="mix-legend"><span><i class="dot teal"></i> Dentists <b><?= number_format($profPaid) ?></b></span><span><i class="dot violet"></i> Students <b><?= number_format($studPaid) ?></b></span><span><i class="dot gold"></i> VIP <b><?= number_format($vipPaid) ?></b></span></div>
       <div class="arrival-summary"><span>Arrival progress <b><?= $arrivalPercent ?>%</b></span><div class="track"><i class="teal" style="width:<?= $arrivalPercent ?>%"></i></div><small><?= $arrived ?> of <?= $validTickets ?> valid tickets checked in</small></div>
     </section>
     <section class="card priority-panel">

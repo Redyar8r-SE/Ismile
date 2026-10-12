@@ -632,7 +632,7 @@ SELECT
   r.phone                                                            AS `Phone`,
   r.email                                                            AS `Email`,
   r.city                                                             AS `City`,
-  CASE r.ticket_type WHEN 'student' THEN 'Student' WHEN 'vip' THEN 'VIP' ELSE 'Professional' END           AS `Ticket`,
+  CASE r.ticket_type WHEN 'student' THEN 'Student' WHEN 'vip' THEN 'VIP' ELSE 'Dentist' END           AS `Ticket`,
   r.university                                                       AS `University`,
   IF(r.lunch_day1 = 1, 'Yes', '')                                    AS `Lunch day 1`,
   IF(r.lunch_day2 = 1, 'Yes', '')                                    AS `Lunch day 2`,
@@ -662,12 +662,12 @@ WHERE r.status IN ('paid','complimentary') AND t.cancelled_at IS NULL;
 -- The caterer's lists.
 CREATE OR REPLACE SQL SECURITY DEFINER VIEW `02_lunch_day_1` AS
 SELECT CONCAT_WS(' ', r.first_name, r.father_name, r.grandfather_name) AS `Full name`, r.phone AS `Phone`,
-       CASE r.ticket_type WHEN 'student' THEN 'Student' WHEN 'vip' THEN 'VIP' ELSE 'Professional' END AS `Ticket`, r.ref AS `Reference`
+       CASE r.ticket_type WHEN 'student' THEN 'Student' WHEN 'vip' THEN 'VIP' ELSE 'Dentist' END AS `Ticket`, r.ref AS `Reference`
 FROM registrations r WHERE r.status IN ('paid','complimentary') AND r.lunch_day1 = 1;
 
 CREATE OR REPLACE SQL SECURITY DEFINER VIEW `03_lunch_day_2` AS
 SELECT CONCAT_WS(' ', r.first_name, r.father_name, r.grandfather_name) AS `Full name`, r.phone AS `Phone`,
-       CASE r.ticket_type WHEN 'student' THEN 'Student' WHEN 'vip' THEN 'VIP' ELSE 'Professional' END AS `Ticket`, r.ref AS `Reference`
+       CASE r.ticket_type WHEN 'student' THEN 'Student' WHEN 'vip' THEN 'VIP' ELSE 'Dentist' END AS `Ticket`, r.ref AS `Reference`
 FROM registrations r WHERE r.status IN ('paid','complimentary') AND r.lunch_day2 = 1;
 
 -- Registered students (the ID photos are seen in the admin).
@@ -831,7 +831,7 @@ SELECT
   c.phone                                                            AS `Phone`,
   c.email                                                            AS `Email`,
   c.city                                                             AS `City`,
-  CASE c.ticket_type WHEN 'student' THEN 'Student' WHEN 'vip' THEN 'VIP' ELSE 'Professional' END           AS `Ticket`,
+  CASE c.ticket_type WHEN 'student' THEN 'Student' WHEN 'vip' THEN 'VIP' ELSE 'Dentist' END           AS `Ticket`,
   c.university                                                       AS `University`,
   IF(c.lunch_day1 = 1, 'Yes', '')                                    AS `Lunch day 1`,
   IF(c.lunch_day2 = 1, 'Yes', '')                                    AS `Lunch day 2`,

@@ -103,7 +103,7 @@ $e = [Page::class, 'e'];
       $bookings = Db::all('SELECT workshop_id, payment_status FROM workshop_bookings WHERE registration_id = ? AND removed_at IS NULL', [$row['id']]); ?>
   <div class="card person <?= !$hasTicket ? 'bad' : ($row['checked_in_at'] ? 'warn' : 'good') ?>">
     <h2><?= $e(Registrations::fullName($row)) ?></h2>
-    <p><code><?= $e($row['ref']) ?></code> · <?= Page::pill($row['status']) ?> <?= $e($row['ticket_type']) ?> · <code><?= $e($row['ticket_no'] ?? 'no ticket') ?></code>
+    <p><code><?= $e($row['ref']) ?></code> · <?= Page::pill($row['status']) ?> <?= $e(\Ismile\Registrations::ticketName($row['ticket_type'])) ?> · <code><?= $e($row['ticket_no'] ?? 'no ticket') ?></code>
       <?= $row['lunch_day1'] ? ' · lunch D1' : '' ?><?= $row['lunch_day2'] ? ' · lunch D2' : '' ?>
       · <span dir="ltr"><?= $e($showPhones ? $row['phone'] : '•••• ' . substr($row['phone'], -4)) ?></span></p>
     <?php foreach ($bookings as $booking): $workshop = SiteData::workshop($booking['workshop_id']); ?>

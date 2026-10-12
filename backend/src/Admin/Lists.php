@@ -258,7 +258,7 @@ final class Lists
     public static function describe(string $list, array $filters): array
     {
         $names = [
-            'ticket' => ['professional' => 'Professional', 'student' => 'Student', 'vip' => 'VIP'],
+            'ticket' => \Ismile\Registrations::TICKET_NAMES,
             'lunch' => ['day1' => 'Day 1', 'day2' => 'Day 2', 'both' => 'Both days', 'none' => 'No lunch'],
             'arrived' => ['day1' => 'Day 1', 'day2' => 'Day 2', 'none' => 'Not yet'],
             'cert' => ['yes' => 'Issued', 'no' => 'Not yet'], 'payment' => ['paid' => 'Paid', 'waiting' => 'Waiting', 'expired' => 'Expired'],

@@ -55,6 +55,7 @@ Page::top('Lists', 'lists', Auth::can($user, 'export') ? '<a class="btn green" h
 $e = [Page::class, 'e'];
 $cell = static function (string $key, array $row) use ($e, $canPhotos): string {
     return match ($key) {
+        'ticket_type' => $e(\Ismile\Registrations::ticketName((string) $row['ticket_type'])),
         'ref', 'ticket_no' => $row[$key] ? '<code>' . $e($row[$key]) . '</code>' : '–',
         'paid_at', 'created_at' => Page::when($row[$key]),
         'lunch' => trim(($row['lunch_day1'] ? 'Day 1 ' : '') . ($row['lunch_day2'] ? 'Day 2' : '')) ?: '–',
@@ -71,7 +72,7 @@ $cell = static function (string $key, array $row) use ($e, $canPhotos): string {
         default => $e((string) ($row[$key] ?? '')),
     };
 };
-// A row of choices that look like one control ("All · Professional · Student · VIP").
+// A row of choices that look like one control ("All · Dentist · Student · VIP").
 $segments = static function (string $name, string $label, array $choices) use ($e, $filters): string {
     $html = '<fieldset class="filter-seg"><legend>' . $e($label) . '</legend><div>';
     foreach ($choices as $value => $text) {
@@ -121,7 +122,7 @@ $pickedLabel = !$pickedAmb ? 'All ambassadors' : (count($pickedAmb) > 1 ? count(
       <a class="filter-clear" href="lists.php?list=<?= $e($current) ?>">Clear all</a>
     </div>
     <div class="filter-quick">
-      <?php if (isset($offers['ticket'])) echo $segments('ticket', 'Ticket', ['' => 'All', 'professional' => 'Professional', 'student' => 'Student', 'vip' => 'VIP']); ?>
+      <?php if (isset($offers['ticket'])) echo $segments('ticket', 'Ticket', ['' => 'All'] + \Ismile\Registrations::TICKET_NAMES); ?>
       <?php if (isset($offers['lunch'])) echo $segments('lunch', 'Lunch', ['' => 'Any', 'day1' => 'Day 1', 'day2' => 'Day 2', 'both' => 'Both', 'none' => 'None']); ?>
       <?php if (isset($offers['arrived'])) echo $segments('arrived', 'Arrived', ['' => 'Any', 'day1' => 'Day 1', 'day2' => 'Day 2', 'none' => 'Not yet']); ?>
       <?php if (isset($offers['payment'])) echo $segments('payment', 'Payment', ['' => 'All', 'paid' => 'Paid', 'waiting' => 'Waiting', 'expired' => 'Expired']); ?>

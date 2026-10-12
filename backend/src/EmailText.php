@@ -17,7 +17,7 @@ final class EmailText
         'no_reply'          => 'This email was sent by the iSmile 2026 registration system.',
         'pay_button'        => 'Pay now',
         'pay_expires'       => 'This payment link is personal and works for {days} days. Do not forward it.',
-        'type_professional' => 'Professional',
+        'type_professional' => 'Dentist',
         'type_student'      => 'Student',
         'type_vip'          => 'VIP',
         'lunch_none'        => 'No lunch',

@@ -45,7 +45,7 @@ $select = static function (string $name, array $options, string $current): strin
 <div data-live-region="registration-totals">
 <?= Page::stats([
     ['Registered guests', number_format((int)$overview['registered']), 'Paid and complimentary tickets', 'users', 'teal'],
-    ['Professionals', number_format((int)$overview['professionals']), 'Registered professional guests', 'registrations', 'blue'],
+    ['Dentists', number_format((int)$overview['professionals']), 'Registered dentist guests', 'registrations', 'blue'],
     ['Students', number_format((int)$overview['students']), 'Registered student guests', 'workshops', 'violet'],
     ['VIP guests', number_format((int)$overview['vip']), 'Registered VIP guests', 'ticket', 'gold'],
     ['Cancelled', number_format((int)$overview['cancelled']), 'Cancelled registrations', 'close', 'gold'],
@@ -54,7 +54,7 @@ $select = static function (string $name, array $options, string $current): strin
 <form class="filters card filter-panel" method="get" data-instant-search data-search-regions="registration-totals registration-directory">
   <?= Page::panelHeading('Find the right guest', 'Search your directory or narrow it down with the filters below.', 'search') ?>
   <label class="filter-field filter-search"><span>Name, phone, email or reference</span><input type="search" name="q" value="<?= $e($in['q']) ?>" placeholder="Search your guests…" autofocus></label>
-  <?= $select('type', ['' => 'Any ticket', 'professional' => 'Professional', 'student' => 'Student', 'vip' => 'VIP'], $in['type']) ?>
+  <?= $select('type', ['' => 'Any ticket'] + \Ismile\Registrations::TICKET_NAMES, $in['type']) ?>
   <?= $select('status', ['' => 'Registered (paid + free)', 'paid' => 'Paid', 'complimentary' => 'Free ticket', 'cancelled' => 'Cancelled'], $in['status']) ?>
   <?= $select('lunch', ['' => 'Any lunch', 'day1' => 'Lunch day 1', 'day2' => 'Lunch day 2', 'none' => 'No lunch'], $in['lunch']) ?>
   <?= $select('city', ['' => 'Any city'] + array_combine($cities, $cities), $in['city']) ?>
@@ -85,7 +85,7 @@ $select = static function (string $name, array $options, string $current): strin
       <?= $row['possible_duplicate'] ? ' <span class="pill violet" title="Same email or phone as another registration">duplicate?</span>' : '' ?></td>
     <td><div class="guest-cell"><span class="guest-avatar" aria-hidden="true"><?= $e(mb_strtoupper(mb_substr($row['first_name'],0,1))) ?></span><div><a href="registration.php?id=<?= (int) $row['id'] ?>"><b><?= $e(Registrations::fullName($row)) ?></b></a><small><?= Page::paidBadge($row['status']) ?></small></div></div></td>
     <td dir="ltr"><?= $e($row['phone']) ?></td>
-    <td><?= $e($row['ticket_type']) ?><br><small class="muted"><?= $e(Registrations::SPECIALTY_NAMES[$row['specialty']] ?? $row['specialty']) ?></small><?= $row['university'] ? '<br><small class="muted">' . $e($row['university']) . '</small>' : '' ?></td>
+    <td><?= $e(\Ismile\Registrations::ticketName($row['ticket_type'])) ?><br><small class="muted"><?= $e(Registrations::SPECIALTY_NAMES[$row['specialty']] ?? $row['specialty']) ?></small><?= $row['university'] ? '<br><small class="muted">' . $e($row['university']) . '</small>' : '' ?></td>
     <td><?= $row['lunch_day1'] ? 'D1 ' : '' ?><?= $row['lunch_day2'] ? 'D2' : '' ?><?= !$row['lunch_day1'] && !$row['lunch_day2'] ? '–' : '' ?></td>
     <td><?= Page::pill($row['status']) ?><?= $row['failed_emails'] ? ' ' . Page::pill('failed') . '<small> email</small>' : '' ?></td>
     <td><?= $row['ticket_no'] ? '<code>' . $e($row['ticket_no']) . '</code>' . ($row['checked_in_at'] ? ' ' . Page::pill('arrived') : '') : '–' ?></td>

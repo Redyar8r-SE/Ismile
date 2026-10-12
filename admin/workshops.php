@@ -125,7 +125,7 @@ $e = [Page::class, 'e'];
   <div class="person-row">
     <div class="person-head">
       <b class="big-name"><?= $e(Registrations::fullName($person)) ?></b> <?= Page::paidBadge($person['status']) ?>
-      <span class="muted" dir="ltr"><?= $e($person['phone']) ?></span> · <code><?= $e($person['ref']) ?></code> · <?= $e($person['ticket_type']) ?>
+      <span class="muted" dir="ltr"><?= $e($person['phone']) ?></span> · <code><?= $e($person['ref']) ?></code> · <?= $e(\Ismile\Registrations::ticketName($person['ticket_type'])) ?>
       <a href="registration.php?id=<?= (int) $person['id'] ?>">open</a>
     </div>
     <?php if ($booked): ?>

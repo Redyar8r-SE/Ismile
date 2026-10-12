@@ -76,7 +76,7 @@ if (isset($_GET['new'])) {
             <option value="">Choose specialty</option>
             <?php foreach (Registrations::SPECIALTY_NAMES as $key => $label): ?><option value="<?= $e($key) ?>"<?= $selected('specialty', $key) ?>><?= $e($label) ?></option><?php endforeach; ?>
           </select></label>
-          <label>Ticket *<select name="ticket" id="caller-ticket"><option value="professional"<?= !$student && !$vip ? ' selected' : '' ?>>Professional</option><option value="student"<?= $student ? ' selected' : '' ?>>Student</option><option value="vip"<?= $vip ? ' selected' : '' ?>>VIP</option></select></label>
+          <label>Ticket *<select name="ticket" id="caller-ticket"><option value="professional"<?= !$student && !$vip ? ' selected' : '' ?>>Dentist</option><option value="student"<?= $student ? ' selected' : '' ?>>Student</option><option value="vip"<?= $vip ? ' selected' : '' ?>>VIP</option></select></label>
         </div>
         <p class="muted small" id="caller-ticket-note">Dental students receive a student ticket (3rd stage and above). For student tickets, record the university and stage after checking the ID.</p>
         <div class="row3" id="caller-student-fields">
@@ -193,7 +193,7 @@ if ($inCheckin) echo CheckinWorkspace::navigation('guests', $user, $workspaceDay
       <dt>City</dt><dd><?= $e($registration['city']) ?></dd>
       <dt>Gender / age</dt><dd><?= $e($registration['gender']) ?> / <?= $e($registration['age'] ?? '–') ?></dd>
       <dt>Specialty</dt><dd><?= $e(Registrations::SPECIALTY_NAMES[$registration['specialty']] ?? $registration['specialty']) ?></dd>
-      <dt>Ticket</dt><dd><?= $e($registration['ticket_type']) ?></dd>
+      <dt>Ticket</dt><dd><?= $e(\Ismile\Registrations::ticketName($registration['ticket_type'])) ?></dd>
       <dt>Lunch</dt><dd><?= $registration['lunch_day1'] ? 'Day 1 ' : '' ?><?= $registration['lunch_day2'] ? 'Day 2' : '' ?><?= !$registration['lunch_day1'] && !$registration['lunch_day2'] ? 'None' : '' ?></dd>
       <dt>Paid</dt><dd><?= Page::paidBadge($registration['status']) ?> <?= $paidAmount !== null ? Page::money($paidAmount, $paidPayment['currency']) : '' ?> <?= $registration['pay_method'] ? $e(strtoupper($registration['pay_method'])) : '' ?> · <?= Page::when($registration['paid_at']) ?></dd>
       <?php if ($registration['ticket_type'] === 'vip'): ?><dt>VIP included lunch</dt><dd>Day <?= (int) $registration['vip_lunch_day'] ?> · Call to arrange home badge delivery.</dd><?php endif; ?>

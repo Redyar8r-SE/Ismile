@@ -25,6 +25,14 @@ final class Registrations
         'acad' => 'Academic or researcher',
         'student' => 'Dental student',
     ];
+    /** What each ticket type is called on screen. 'professional' is the Dentist package. */
+    public const TICKET_NAMES = ['professional' => 'Dentist', 'student' => 'Student', 'vip' => 'VIP'];
+
+    public static function ticketName(?string $type): string
+    {
+        return self::TICKET_NAMES[(string) $type] ?? ucfirst((string) $type);
+    }
+
     public const GENDERS = ['female', 'male', 'other', 'prefer-not'];
     public const PAY_METHODS = ['visa', 'mastercard', 'fib', 'fastpay'];
 

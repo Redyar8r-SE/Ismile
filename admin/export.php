@@ -33,7 +33,7 @@ switch ($what) {
                 $cells = [$i+1, $companyList ? $row['company'] : Registrations::fullName($row)];
                 if ($key==='workshops') $cells[]=$row['workshop_name'];
                 foreach (array_keys($columns) as $column) {
-                    $cells[] = $column==='lunch' ? trim(($row['lunch_day1'] ? 'Day 1 ' : '') . ($row['lunch_day2'] ? 'Day 2' : '')) : (string)($row[$column] ?? '');
+                    $cells[] = $column==='lunch' ? trim(($row['lunch_day1'] ? 'Day 1 ' : '') . ($row['lunch_day2'] ? 'Day 2' : '')) : ($column==='ticket_type' ? Registrations::ticketName($row['ticket_type']) : (string)($row[$column] ?? ''));
                 }
                 $sheet[]=$cells;
             }
@@ -71,7 +71,7 @@ switch ($what) {
         $from = RegistrationQuery::from();
         $rows[] = ['Reference', 'First name', 'Second name', 'Last name', 'Phone', 'Email', 'City', 'Ticket', 'Specialty', 'University', 'Stage', 'Lunch day 1', 'Lunch day 2', 'Status', 'Ticket no.', 'Day 1 arrival', 'Day 2 arrival', 'Certificate', 'Language', 'Form sent', 'Paid'];
         foreach (Db::all('SELECT r.*, t.ticket_no, (SELECT a.checked_in_at FROM ticket_attendance a WHERE a.ticket_id=t.id AND a.event_day=1) AS day1, (SELECT a.checked_in_at FROM ticket_attendance a WHERE a.ticket_id=t.id AND a.event_day=2) AS day2, (SELECT c.certificate_no FROM certificates c WHERE c.registration_id=r.id) AS certificate_no FROM ' . $from . " WHERE $where ORDER BY r.first_name, r.father_name", $params) as $row) {
-            $rows[] = [$row['ref'], $row['first_name'], $row['father_name'], $row['grandfather_name'], $row['phone'], $row['email'], $row['city'], $row['ticket_type'], $row['specialty'], $row['university'] ?? '', $row['study_stage'] ? \Ismile\Registrations::stageName((int) $row['study_stage']) : '',
+            $rows[] = [$row['ref'], $row['first_name'], $row['father_name'], $row['grandfather_name'], $row['phone'], $row['email'], $row['city'], \Ismile\Registrations::ticketName($row['ticket_type']), $row['specialty'], $row['university'] ?? '', $row['study_stage'] ? \Ismile\Registrations::stageName((int) $row['study_stage']) : '',
                 $row['lunch_day1'] ? 'yes' : '', $row['lunch_day2'] ? 'yes' : '', $row['status'], $row['ticket_no'] ?? '', $row['day1'] ?? '', $row['day2'] ?? '', $row['certificate_no'] ?? '', $row['lang'], $row['created_at'], $row['paid_at'] ?? ''];
         }
         $name = 'ismile-registrations';
@@ -145,7 +145,7 @@ switch ($what) {
                 foreach (array_values($only($people)) as $i => $row) {
                     $cells = [SiteData::workshopName($workshop), $i + 1, Registrations::fullName($row)];
                     foreach (array_keys($columns) as $key) {
-                        $cells[] = $key === 'workshop_paid' ? (['paid' => 'PAID', 'complimentary' => 'FREE'][$row['workshop_paid']] ?? 'NOT PAID') : (string) ($row[$key] ?? '');
+                        $cells[] = $key === 'workshop_paid' ? (['paid' => 'PAID', 'complimentary' => 'FREE'][$row['workshop_paid']] ?? 'NOT PAID') : ($key === 'ticket_type' ? Registrations::ticketName($row['ticket_type']) : (string) ($row[$key] ?? ''));
                     }
                     $rows[] = $cells;
                 }
@@ -160,6 +160,7 @@ switch ($what) {
                 $cells[] = match ($key) {
                     'lunch' => trim(($row['lunch_day1'] ? 'Day 1 ' : '') . ($row['lunch_day2'] ? 'Day 2' : '')),
                     'ambassador_code' => \Ismile\Admin\Lists::ambassadorCode($row),
+                    'ticket_type' => Registrations::ticketName($row['ticket_type']),
                     default => (string) ($row[$key] ?? ''),
                 };
             }
