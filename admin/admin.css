@@ -1148,3 +1148,56 @@ body[data-page=backups] .page-symbol{background:#e9f4ee;color:#418165;border-col
 .added-by-tag{display:inline-block;margin-top:3px;padding:1px 8px;border-radius:999px;font-size:11px;font-weight:700;background:#f1edfb;color:#5b3fb0}
 .added-by-tag.cash{background:var(--green-l);color:var(--green-d)}
 .read-only-note{margin:12px 0 0;padding:8px 12px;border-radius:9px;background:#f4f7fa}
+
+/* ---------- Register (cash): packages, lunch cards and the running total ---------- */
+.cash-layout{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:24px;align-items:start}
+.cash-layout .caller-form{max-width:none}
+.cash-panel{position:sticky;top:24px;display:grid;gap:16px;min-width:0}
+.cash-panel .card{margin:0}
+.cash-prices{display:grid;gap:12px;padding:22px}
+.cash-prices>p{margin:-4px 0 0}
+.cash-prices-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.cash-prices-head h2{margin:0;font-size:17px;font-weight:800}
+.cash-live{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:20px;background:var(--green-l);color:var(--green-d);font-size:11px;font-weight:700}
+.cash-live i{width:7px;height:7px;border-radius:50%;background:var(--green)}
+.cash-package{--c:var(--teal);--cd:var(--teal-d);--cl:var(--teal-l);display:flex;align-items:center;gap:14px;width:100%;padding:13px 15px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);font:inherit;text-align:left;cursor:pointer;transition:border-color .15s,background .15s,box-shadow .15s}
+.cash-package.tone-blue{--c:var(--blue);--cd:var(--blue-d);--cl:var(--blue-l)}
+.cash-package.tone-gold,.cash-package.tone-lunch{--c:var(--gold);--cd:var(--gold-d);--cl:var(--gold-l)}
+.cash-package:not(.is-static):hover{border-color:var(--c);box-shadow:0 4px 14px -8px var(--c)}
+.cash-package:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+.cash-package.is-on{background:var(--cl);border:2px solid var(--c);padding:12px 14px}
+.cash-package.tone-lunch{background:#fff8ea;border-color:#f3ddb0;cursor:default}
+.cash-package-icon{flex:none;display:grid;place-items:center;width:44px;height:44px;border-radius:12px;background:var(--cl);color:var(--cd)}
+.cash-package.is-on .cash-package-icon{background:var(--c);color:#fff}
+.cash-package-icon svg{width:22px;height:22px}
+.cash-package-text{display:grid;gap:1px;flex:1;min-width:0}
+.cash-package-text b{font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px}
+.cash-package-text em{display:none;font-style:normal;font-size:10px;font-weight:700;color:#fff;background:var(--c);padding:1px 8px;border-radius:20px}
+.cash-package.is-on .cash-package-text em{display:inline-block}
+.cash-package-text small{color:var(--muted);font-size:12px}
+.cash-package>strong{flex:none;font-size:16px;font-weight:800;color:var(--cd)}
+.cash-total{display:grid;gap:12px;padding:22px;background:linear-gradient(200deg,#e8f6fd,#cfeaf8);border-color:#9ed3ec;box-shadow:0 10px 28px -14px #2f7bd866}
+.cash-total-label{margin:0;font-size:11px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--teal-d)}
+.cash-lines{list-style:none;margin:0;padding:0 0 12px;display:grid;gap:8px;border-bottom:1px solid #a9d6ec}
+.cash-lines li{display:flex;justify-content:space-between;gap:12px;font-size:14px;color:var(--muted)}
+.cash-lines b{color:var(--ink);white-space:nowrap}
+.cash-total-amount{margin:0;font-size:44px;line-height:1;font-weight:800;color:#0b4f7a;letter-spacing:-1px;overflow-wrap:anywhere}
+.cash-total-amount.is-waiting{font-size:26px}
+.cash-total-amount small{font-size:18px;color:var(--teal-d);letter-spacing:0}
+.cash-total-note{margin:0;padding:12px;border-radius:10px;background:#ffffffb3;color:var(--ink);line-height:1.5}
+.legend-note{font-weight:600;color:var(--muted)}
+.lunch-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:16px}
+.lunch-card{display:flex;align-items:center;gap:14px;padding:15px 17px;border:1px solid #c9d8e4;border-radius:12px;background:#fff;cursor:pointer;font-weight:400;transition:border-color .15s,background .15s}
+.lunch-card:hover{border-color:var(--teal)}
+.lunch-card.is-on{background:var(--teal-l);border:2px solid var(--teal);padding:14px 16px}
+.lunch-card input{flex:none;width:22px;height:22px;margin:0;accent-color:var(--teal-d);cursor:pointer}
+.lunch-card-text{display:grid;flex:1;min-width:0}
+.lunch-card-text b{font-size:15px}
+.lunch-card-text small,.lunch-card-price small{color:var(--muted);font-size:12px}
+.lunch-card-price{display:grid;justify-items:end;text-align:right}
+.lunch-card-price b{font-size:16px;font-weight:800;white-space:nowrap}
+.lunch-card.is-on .lunch-card-price b{color:var(--teal-d)}
+.lunch-card.is-included .lunch-card-price b{color:var(--gold-d);font-size:13px}
+.lunch-vip-note{margin:0;color:var(--gold-d);font-weight:600}
+.btn.cash-pay{background:var(--teal-d);padding:12px 22px;font-weight:700}
+@media(max-width:1100px){.cash-layout{grid-template-columns:1fr}.cash-panel{position:static}}

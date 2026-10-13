@@ -374,7 +374,58 @@ document.addEventListener("DOMContentLoaded", () => {
         if (included) input.checked = true;
       });
     }
+    showTotal();
   };
+  // The cash total as staff choose: PSOOLA's prices (data-prices), the same sum
+  // as PsoolaPrices::estimate. PSOOLA's answer at the sale stays the real amount.
+  let prices = null;
+  try { prices = form.dataset.prices ? JSON.parse(form.dataset.prices) : null; } catch (error) { prices = null; }
+  const pay = document.getElementById("caller-pay");
+  const lines = document.getElementById("cash-lines");
+  const total = document.getElementById("cash-total");
+  const money = (amount) => `${amount.toLocaleString("en-US")} ${prices.currency}`;
+  const ticketNames = { professional: "Dentist ticket", student: "Student ticket", vip: "VIP ticket" };
+  function showTotal() {
+    const type = ticket.value;
+    const vipDay = type === "vip" ? Number(form.querySelector('[name="vip_lunch_day"]')?.value || 0) : 0;
+    document.querySelectorAll("[data-pick-ticket]").forEach((card) => {
+      const on = card.dataset.pickTicket === type;
+      card.classList.toggle("is-on", on);
+      card.setAttribute("aria-pressed", on ? "true" : "false");
+      card.disabled = Boolean(ticket.querySelector(`[value="${card.dataset.pickTicket}"]`)?.disabled);
+    });
+    const items = [[ticketNames[type] || "Ticket", prices ? prices[type] : null]];
+    [1, 2].forEach((day) => {
+      const box = form.querySelector(`[name="lunch_day${day}"]`);
+      const included = day === vipDay;
+      box.closest(".lunch-card")?.classList.toggle("is-on", box.checked);
+      box.closest(".lunch-card")?.classList.toggle("is-included", included);
+      const price = form.querySelector(`[data-lunch-price="${day}"]`);
+      if (price && prices) price.textContent = included ? "Included with VIP" : `${box.checked ? "+ " : ""}${money(prices["lunch" + day])}`;
+      if (box.checked) items.push([`Lunch day ${day}${included ? " (with VIP)" : ""}`, included ? 0 : (prices ? prices["lunch" + day] : null)]);
+    });
+    if (!lines || !total) return;
+    lines.replaceChildren(...items.map(([name, amount]) => {
+      const row = document.createElement("li");
+      const left = document.createElement("span");
+      const right = document.createElement("b");
+      left.textContent = name;
+      right.textContent = amount === null ? "–" : amount === 0 ? "Included" : money(amount);
+      row.append(left, right);
+      return row;
+    }));
+    if (!prices) return;
+    const sum = items.reduce((all, [, amount]) => all + (amount || 0), 0);
+    const unit = document.createElement("small");
+    unit.textContent = prices.currency;
+    total.replaceChildren(`${sum.toLocaleString("en-US")} `, unit);
+    if (pay) pay.textContent = `Paid by cash · ${money(sum)}`;
+  }
+  document.querySelectorAll("[data-pick-ticket]").forEach((card) => card.addEventListener("click", () => {
+    if (card.disabled) return;
+    ticket.value = card.dataset.pickTicket;
+    ticket.dispatchEvent(new Event("change"));
+  }));
   // The student ID box: the chosen photo's name, size and a preview; over 8 MB is refused here already.
   const idPhoto = document.getElementById("caller-student-id");
   const idBox = document.getElementById("caller-id-upload");

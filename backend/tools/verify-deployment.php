@@ -10,7 +10,7 @@ use Ismile\Auth;
 use Ismile\Db;
 use Ismile\Admin\PdfReport;
 
-$pages = ['index','checkin','registrations','certificates','sponsors','booths','lists','communications','payments','psoola-orders','workshops','settings','users','backups','content'];
+$pages = ['index','checkin','registrations','certificates','sponsors','booths','lists','communications','payments','psoola-orders','registration','workshops','settings','users','backups','content'];
 if (($argv[1] ?? '') === '--render') {
     $page = $argv[2] ?? '';
     if (!in_array($page, $pages, true)) throw new RuntimeException('Unknown verification page.');
@@ -106,6 +106,8 @@ $html = $render('checkin', 'tab=report');
 $check('live graph and Latest arrivals available', str_contains($html, 'data-live-report') && str_contains($html, 'report-chart-card') && str_contains($html, 'Latest arrivals'));
 $html = $render('psoola-orders');
 $check('Psoola orders page renders (live list, or a clear note when unavailable)', str_contains($html, 'Psoola orders') && (str_contains($html, 'Sales recorded by Psoola') || str_contains($html, 'Psoola orders are not available')));
+$html = $render('registration', 'new=1');
+$check('Register (cash) shows packages, lunch cards and the total to collect', str_contains($html, 'Packages &amp; prices') && str_contains($html, 'id="cash-total"') && str_contains($html, 'class="lunch-card"') && str_contains($html, 'Paid by cash'));
 $html = $render('certificates');
 $check('certificate delivery remains manual', str_contains($html, 'Check-in never sends certificate emails.') && str_contains($html, 'Download attendance report (PDF)'));
 $check('PDF report generator works', str_starts_with(PdfReport::bundle(['Deployment check'=>[['Status'],['Verified']]]), '%PDF-'));

@@ -70,10 +70,33 @@ if (isset($_GET['new'])) {
     $selected = static fn (string $key, string $option, string $default = ''): string => ($_POST[$key] ?? $default) === $option ? ' selected' : '';
     $vip = ($_POST['ticket'] ?? '') === 'vip';
     $student = !$vip && (($_POST['specialty'] ?? '') === 'student' || ($_POST['ticket'] ?? '') === 'student');
+    // Prices for the "Packages & prices" panel and the running total. PSOOLA's
+    // IQD prices when it answers (cached five minutes); the total is a preview,
+    // the amount charged is always the total PSOOLA returns for the sale.
+    $psoola = \Ismile\Payments\PsoolaPrices::get();
+    $site = SiteData::prices();
+    $label = static fn (int $amount, string $currency): string => $amount <= 0 ? '–' : ($currency === 'USD' ? '$' . number_format($amount) : number_format($amount) . ' ' . $currency);
+    $shown = [
+        'professional' => $psoola ? $label($psoola['ticketTypes']['professional'], $psoola['currency']) : $label($site['professional'], $site['currency']),
+        'student'      => $psoola ? $label($psoola['ticketTypes']['student'], $psoola['currency']) : $label($site['student'], $site['currency']),
+        'vip'          => $psoola ? $label($psoola['ticketTypes']['vip'], $psoola['currency']) : $label($site['vip'], $site['vipCurrency']),
+        'lunch1'       => $psoola ? $label($psoola['lunch']['day1'], $psoola['currency']) : $label($site['lunchDay1'], $site['lunchCurrency']),
+        'lunch2'       => $psoola ? $label($psoola['lunch']['day2'], $psoola['currency']) : $label($site['lunchDay2'], $site['lunchCurrency']),
+    ];
+    // The dollar price under PSOOLA's dinar price (the site's own price list).
+    $vipUsd = $psoola && $site['vipCurrency'] !== $psoola['currency'] ? $label($site['vip'], $site['vipCurrency']) . ' · ' : '';
+    $lunchUsd = static fn (int $day): string => $psoola && $site['lunchCurrency'] !== $psoola['currency'] ? $label($site['lunchDay' . $day], $site['lunchCurrency']) . ' / day' : 'per day';
+    $priceData = $psoola ? json_encode([
+        'currency' => $psoola['currency'],
+        'professional' => $psoola['ticketTypes']['professional'], 'student' => $psoola['ticketTypes']['student'], 'vip' => $psoola['ticketTypes']['vip'],
+        'lunch1' => $psoola['lunch']['day1'], 'lunch2' => $psoola['lunch']['day2'],
+    ]) : '';
     Page::top($inCheckin ? 'Check-in · Register' : 'Register (cash)', $inCheckin ? 'checkin' : 'registrations', '<a class="btn ghost" href="' . Page::e($listUrl) . '">&larr; ' . ($inCheckin ? 'Guest list' : 'All registrations') . '</a>');
     if ($inCheckin) echo CheckinWorkspace::navigation('register', $user, $workspaceDay);
     ?>
-    <form method="post" class="card stack caller-form" id="caller-form" enctype="multipart/form-data">
+    <div class="cash-layout">
+    <div class="cash-main">
+    <form method="post" class="card stack caller-form" id="caller-form" enctype="multipart/form-data" data-prices="<?= $e((string) $priceData) ?>">
       <?= Page::csrfField() ?><?= Page::onceField() ?>
       <p class="muted">For a person who pays you in <b>cash</b>: enter their details and press <b>Paid by cash</b>. Psoola issues the ticket at once and emails the QR. Fields marked * are required.</p>
       <fieldset class="form-section">
@@ -109,12 +132,20 @@ if (isset($_GET['new'])) {
         </div>
       </fieldset>
       <fieldset class="form-section">
-        <legend>3. Lunch</legend>
+        <legend>3. Lunch <span class="legend-note">· optional, per day</span></legend>
         <label id="caller-vip-lunch"<?= !$vip ? ' hidden' : '' ?>>VIP included lunch<select name="vip_lunch_day"<?= !$vip ? ' disabled' : '' ?>><option value="1"<?= $selected('vip_lunch_day','1','1') ?>>Day 1 · 20 November</option><option value="2"<?= $selected('vip_lunch_day','2','1') ?>>Day 2 · 21 November</option></select><small>VIP is $100 with one lunch included. The other day is $40. Call the guest to arrange home badge delivery.</small></label>
-        <div class="checks"><label class="inline"><input type="checkbox" name="lunch_day1" value="1"<?= ($_POST['lunch_day1'] ?? '') === '1' ? ' checked' : '' ?>> Lunch day 1</label><label class="inline"><input type="checkbox" name="lunch_day2" value="1"<?= ($_POST['lunch_day2'] ?? '') === '1' ? ' checked' : '' ?>> Lunch day 2</label></div>
+        <div class="lunch-cards">
+          <?php foreach ([1 => 'Friday 20 Nov', 2 => 'Saturday 21 Nov'] as $day => $date): ?>
+          <label class="lunch-card"><input type="checkbox" name="lunch_day<?= $day ?>" value="1"<?= ($_POST['lunch_day' . $day] ?? '') === '1' ? ' checked' : '' ?>>
+            <span class="lunch-card-text"><b>Lunch day <?= $day ?></b><small><?= $e($date) ?></small></span>
+            <span class="lunch-card-price"><b data-lunch-price="<?= $day ?>"><?= $e($shown['lunch' . $day]) ?></b><small data-lunch-sub="<?= $day ?>"><?= $e($lunchUsd($day)) ?></small></span>
+          </label>
+          <?php endforeach; ?>
+        </div>
+        <p class="lunch-vip-note small"><span aria-hidden="true">♛</span> VIP tickets include one lunch day free. That day shows “Included with VIP” instead of a price.</p>
       </fieldset>
-      <div class="form-actions"><a class="btn ghost" href="<?= $e($listUrl) ?>">Cancel</a><button class="btn green" name="do" value="cash" data-confirm="Paid by cash: sell this ticket now? Psoola issues the ticket at once and emails the QR to this email. Take the cash price shown next. iSmile pays Psoola the ticket price, and the sale cannot be undone here.">Paid by cash</button></div>
-      <p class="muted small">Psoola sets the price (shown after the sale, with lunch). The person is registered as paid by cash, and the money appears in Payments and Psoola orders.</p>
+      <div class="form-actions"><a class="btn ghost" href="<?= $e($listUrl) ?>">Cancel</a><button class="btn cash-pay" name="do" value="cash" id="caller-pay" data-confirm="Paid by cash: sell this ticket now? Psoola issues the ticket at once and emails the QR to this email. Collect the total shown. iSmile pays Psoola the ticket price, and the sale cannot be undone here.">Paid by cash</button></div>
+      <p class="muted small">The person is registered as paid by cash, and the money appears in Payments and Psoola orders.</p>
     </form>
       <?php if ($user['role'] === 'owner'): ?>
         <details class="card more owner-ticket"<?= ($_POST['do'] ?? '') === 'free' ? ' open' : '' ?>>
@@ -125,6 +156,39 @@ if (isset($_GET['new'])) {
           </div>
         </details>
       <?php endif; ?>
+    </div>
+    <aside class="cash-panel" aria-label="Packages, prices and total">
+      <section class="card cash-prices">
+        <div class="cash-prices-head"><h2>Packages &amp; prices</h2><?php if ($psoola): ?><span class="cash-live"><i aria-hidden="true"></i>Live from Psoola</span><?php endif; ?></div>
+        <p class="muted small">Click a package to choose it as the ticket.</p>
+        <?php foreach ([
+            ['professional', 'Dentist', 'Professionals', 'teal', '<path d="M11 2v2M5 2v2M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1"/><path d="M8 15a6 6 0 0 0 12 0v-3"/><circle cx="20" cy="10" r="2"/>'],
+            ['student', 'Student', '3rd stage and above', 'blue', '<path d="M21.42 10.92a1 1 0 0 0-.02-1.84L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.83l8.57 3.91a2 2 0 0 0 1.66 0z"/><path d="M22 10v6M6 12.5V16a6 3 0 0 0 12 0v-3.5"/>'],
+            ['vip', 'VIP', $vipUsd . '1 lunch free', 'gold', '<path d="M11.56 3.27a.5.5 0 0 1 .88 0l2.95 5.61a1 1 0 0 0 1.52.29l4.28-3.67a.5.5 0 0 1 .8.52l-2.83 10.25a1 1 0 0 1-.96.73H5.81a1 1 0 0 1-.96-.73L2.01 6.02a.5.5 0 0 1 .8-.52l4.28 3.67a1 1 0 0 0 1.52-.29z"/><path d="M5 21h14"/>'],
+        ] as [$key, $name, $sub, $tone, $icon]): ?>
+        <button type="button" class="cash-package tone-<?= $tone ?>" data-pick-ticket="<?= $key ?>" aria-pressed="false">
+          <span class="cash-package-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><?= $icon ?></svg></span>
+          <span class="cash-package-text"><b><?= $e($name) ?> <em>Selected</em></b><small><?= $e($sub) ?></small></span>
+          <strong><?= $e($shown[$key]) ?></strong>
+        </button>
+        <?php endforeach; ?>
+        <div class="cash-package tone-lunch is-static">
+          <span class="cash-package-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg></span>
+          <span class="cash-package-text"><b>Lunch</b><small><?= $e($lunchUsd(1)) ?></small></span>
+          <strong><?= $e($shown['lunch1'] === $shown['lunch2'] ? $shown['lunch1'] : $shown['lunch1'] . ' / ' . $shown['lunch2']) ?></strong>
+        </div>
+      </section>
+      <section class="card cash-total" aria-live="polite">
+        <p class="cash-total-label">This sale</p>
+        <ul class="cash-lines" id="cash-lines"></ul>
+        <p class="cash-total-label">Total to collect</p>
+        <p class="cash-total-amount<?= $psoola ? '' : ' is-waiting' ?>" id="cash-total"><?= $psoola ? '–' : 'After the sale' ?></p>
+        <p class="cash-total-note small"><?= $psoola
+            ? 'Psoola confirms the final amount when you press Paid by cash. Prices refresh from Psoola every 5 minutes.'
+            : 'Psoola cannot be reached for prices right now, so the amount to collect is shown after the sale.' ?></p>
+      </section>
+    </aside>
+    </div>
     <?php
     Page::bottom();
     exit;
