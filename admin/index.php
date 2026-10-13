@@ -25,7 +25,9 @@ $payingNow = $count("SELECT COUNT(*) FROM checkouts WHERE status = 'open' AND ex
 $profPaid = $count("SELECT COUNT(*) FROM registrations WHERE status IN ('paid','complimentary') AND ticket_type = 'professional'");
 $studPaid = $count("SELECT COUNT(*) FROM registrations WHERE status IN ('paid','complimentary') AND ticket_type = 'student'");
 $vipPaid = $count("SELECT COUNT(*) FROM registrations WHERE status IN ('paid','complimentary') AND ticket_type = 'vip'");
-$revenue = Db::all("SELECT currency, SUM(amount_confirmed) AS total FROM payments WHERE status = 'paid' GROUP BY currency ORDER BY currency");
+// Money of cancelled registrations is left out (the Payments page still shows all money received).
+$revenue = Db::all("SELECT p.currency, SUM(p.amount_confirmed) AS total FROM payments p LEFT JOIN registrations r ON r.id = p.registration_id
+                    WHERE p.status = 'paid' AND (r.id IS NULL OR r.status <> 'cancelled') GROUP BY p.currency ORDER BY p.currency");
 $revenueText = $revenue ? implode(' + ', array_map(static fn (array $row): string => Page::money((int) $row['total'], $row['currency']), $revenue)) : Page::money(0, SiteData::prices()['currency']);
 [$emailScope,$emailParams] = CommunicationQuery::where($user);
 $emailsSent = $count("SELECT COUNT(*) FROM emails e WHERE $emailScope AND (" . CommunicationQuery::STATE_SQL . ") = 'sent'",$emailParams);
@@ -105,7 +107,7 @@ Page::top('Dashboard', 'index');
 <div data-live-region="dashboard-records">
 <?= Page::stats([
     ['Registered guests', number_format($registered), $comp ? "$paid paid · $comp complimentary" : 'Paid and complimentary tickets', 'users', 'teal'],
-    ['Ticket revenue', $revenueText, 'Confirmed ticket payments, by currency', 'payments', 'blue'],
+    ['Ticket revenue', $revenueText, 'Confirmed ticket payments, cancelled not counted', 'payments', 'blue'],
     ['Workshop bookings', number_format($booked), count($workshopCards) . ' active workshops', 'workshops', 'violet'],
     ['Guests checked in', number_format($arrived), $validTickets . ' valid tickets · ' . $arrivalPercent . '% arrived', 'checkin', 'green'],
 ]) ?>
