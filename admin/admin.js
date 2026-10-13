@@ -334,11 +334,202 @@ document.addEventListener("DOMContentLoaded", () => {
   sync();
 });
 
-// "Are you sure?" before buttons that cancel, remove or disable something.
-document.addEventListener("click", (event) => {
-  const button = event.target.closest("[data-confirm]");
-  if (button && !window.confirm(button.dataset.confirm)) event.preventDefault();
-});
+// "Are you sure?" before buttons that delete, cancel, remove, hide or disable
+// something: one window for the whole database (Page::confirm fills it). The
+// colour shows how serious it is; "type the reference" boxes must match first.
+(() => {
+  const icons = {
+    trash: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
+    "ticket-x": '<path d="M3 8a2 2 0 0 0 0 4 2 2 0 0 0 0 4v2h18v-2a2 2 0 0 1 0-4 2 2 0 0 1 0-4V6H3z"/><path d="m10 10 4 4M14 10l-4 4"/>',
+    gift: '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v9h14v-9M7.5 8a2.5 2.5 0 0 1 0-5C10 3 12 8 12 8s2-5 4.5-5a2.5 2.5 0 0 1 0 5"/>',
+    "eye-off": '<path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c5 0 9 4.5 10 7a13 13 0 0 1-3 4.2M6.6 6.6A13 13 0 0 0 2 12c1 2.5 5 7 10 7a9.7 9.7 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
+    "user-x": '<circle cx="9" cy="8" r="4"/><path d="M2 21c1-4 3.8-6 7-6s6 2 7 6M17 8l4 4M21 8l-4 4"/>',
+    "circle-x": '<circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/>',
+    undo: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>',
+    phone: '<rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/>',
+    user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c1.2-4 4.3-6 8-6s6.8 2 8 6"/>',
+    users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.9-3.6 3.5-5.5 6.5-5.5s5.6 1.9 6.5 5.5M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c1.9.7 3 2.5 3.5 5.2"/>',
+    hash: '<path d="M5 9h14M5 15h14M10 3 8 21M16 3l-2 18"/>',
+    ticket: '<path d="M3 8a2 2 0 0 0 0 4 2 2 0 0 0 0 4v2h18v-2a2 2 0 0 1 0-4 2 2 0 0 1 0-4V6H3z"/><path d="M14 6v12" stroke-dasharray="2 2"/>',
+    cash: '<rect x="2.5" y="6" width="19" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.6"/><path d="M6 12h.01M18 12h.01"/>',
+    ban: '<circle cx="12" cy="12" r="9"/><path d="m5.7 5.7 12.6 12.6"/>',
+    calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+    tag: '<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.2"/>',
+    building: '<rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M9 7h1M14 7h1M9 11h1M14 11h1M9 15h1M14 15h1M10 21v-3h4v3"/>',
+    history: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>',
+    mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>',
+    shield: '<path d="M12 3 4 6v6c0 4.5 3.4 8 8 9 4.6-1 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/>',
+    info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
+    bulb: '<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V17h5v-1.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3"/>',
+    x: '<path d="m7 7 10 10M17 7 7 17"/>',
+    check: '<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>',
+  };
+  const svg = (name) => {
+    const holder = document.createElement("span");
+    holder.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[name] || icons.info}</svg>`;
+    return holder.firstChild;
+  };
+  const make = (tag, className, text) => {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  };
+  const defaults = {
+    red: ["Yes, delete", "No, keep it"],
+    gold: ["Yes, continue", "No, go back"],
+    violet: ["Yes, continue", "No, go back"],
+    blue: ["Yes, continue", "No, go back"],
+  };
+  let box = null;
+
+  // The Register (cash) form's own facts, for "Give a free ticket?".
+  const callerFacts = (form) => {
+    // form.elements also has fields outside the form tag (form="caller-form"), like the reason.
+    const value = (name) => (form.elements.namedItem(name)?.value || "").trim();
+    const ticket = form.elements.namedItem("ticket");
+    const name = [value("first_name"), value("father_name"), value("grandfather_name")].filter(Boolean).join(" ");
+    const facts = [["user", name || "Name not typed yet"]];
+    if (ticket) facts.push(["ticket", ticket.options[ticket.selectedIndex]?.text || ticket.value]);
+    facts.push(["info", value("comp_reason") ? `Reason: ${value("comp_reason")}` : "No reason typed yet"]);
+    return facts;
+  };
+
+  const build = () => {
+    box = make("dialog", "confirm-box");
+    box.setAttribute("aria-labelledby", "confirm-box-title");
+    box.addEventListener("click", (event) => {
+      if (event.target !== box) return;
+      const edge = box.getBoundingClientRect();
+      if (event.clientX < edge.left || event.clientX > edge.right || event.clientY < edge.top || event.clientY > edge.bottom) box.close();
+    });
+    document.body.append(box);
+  };
+
+  const open = (button) => {
+    let data;
+    try { data = JSON.parse(button.dataset.confirmBox || "null"); } catch (error) { data = null; }
+    data = data || { tone: "gold", icon: "info", title: button.dataset.confirm, text: "", facts: [] };
+    if (!box) build();
+    const tone = defaults[data.tone] ? data.tone : "blue";
+    const form = button.form;
+    box.className = `confirm-box tone-${tone}`;
+    box.replaceChildren();
+    const head = make("div", "confirm-head");
+    const icon = make("span", "confirm-icon");
+    icon.append(svg(data.icon));
+    const title = make("h2", "", data.title);
+    title.id = "confirm-box-title";
+    head.append(icon, title);
+    if (data.text) head.append(make("p", "confirm-text", data.text));
+    const body = make("div", "confirm-body");
+    const facts = data.form === "caller" && form ? callerFacts(form) : (data.facts || []);
+    if (facts.length) {
+      const list = make("ul", "confirm-facts");
+      facts.forEach(([name, text]) => {
+        const row = make("li");
+        row.append(svg(name), make("span", "", text));
+        list.append(row);
+      });
+      body.append(list);
+    }
+    if (data.deletes && data.deletes.length) {
+      const deletes = make("div", "confirm-deletes");
+      deletes.append(make("p", "confirm-label", "What will be deleted"));
+      const chips = make("div", "confirm-chips");
+      data.deletes.forEach((text) => {
+        const chip = make("span", "confirm-chip");
+        chip.append(svg("x"), make("span", "", text));
+        chips.append(chip);
+      });
+      deletes.append(chips);
+      body.append(deletes);
+    }
+    if (data.tip) {
+      const tip = make("p", "confirm-tip");
+      tip.append(svg("bulb"), make("span", "", data.tip));
+      body.append(tip);
+    }
+    const [yesText, noText] = defaults[tone];
+    const yes = make("button", `btn confirm-yes`);
+    yes.type = "button";
+    yes.append(svg(data.icon), make("span", "", data.yes || yesText));
+    let typed = null;
+    if (data.type) {
+      const label = make("label", "confirm-type");
+      const words = make("span", "confirm-type-label");
+      words.append("Type ", make("b", "", data.type), " to confirm");
+      typed = make("input");
+      typed.type = "text";
+      typed.autocomplete = "off";
+      typed.spellcheck = false;
+      typed.dir = "ltr";
+      typed.placeholder = data.type;
+      const match = make("span", "confirm-match");
+      match.append(svg("check"), make("span", "", "Matches"));
+      const field = make("span", "confirm-type-field");
+      field.append(typed, match);
+      label.append(words, field);
+      body.append(label);
+      const same = () => typed.value.trim().toLowerCase() === String(data.type).trim().toLowerCase();
+      typed.addEventListener("input", () => {
+        label.classList.toggle("is-match", same());
+        yes.disabled = !same();
+      });
+      typed.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") { event.preventDefault(); if (same()) yes.click(); }
+      });
+      yes.disabled = true;
+    }
+    if (data.note) {
+      const note = make("p", "confirm-note");
+      note.append(svg(tone === "red" ? "shield" : "info"), make("span", "", data.note));
+      body.append(note);
+    }
+    const actions = make("div", "confirm-actions");
+    const no = make("button", "btn ghost", data.no || noText);
+    no.type = "button";
+    no.addEventListener("click", () => box.close());
+    yes.addEventListener("click", () => {
+      if (yes.disabled) return;
+      if (typed && data.field && form) {
+        const target = form.querySelector(`[name="${data.field}"]`);
+        if (target) target.value = typed.value.trim();
+      }
+      yes.disabled = true;
+      box.close();
+      if (form && typeof form.requestSubmit === "function") {
+        form.requestSubmit(button);
+      } else {
+        button.dataset.confirmed = "1";
+        button.click();
+      }
+    });
+    actions.append(no, yes);
+    box.append(make("span", "confirm-strip"), head);
+    if (body.childNodes.length) box.append(body);
+    box.append(actions);
+    box.showModal();
+    (typed || no).focus();
+  };
+
+  document.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-confirm]");
+    if (!button) return;
+    if (button.dataset.confirmed === "1") {
+      delete button.dataset.confirmed;
+      return;
+    }
+    event.preventDefault();
+    // Show the form's own "please fill this in" first (e.g. a cancel reason).
+    if (button.form && !button.form.reportValidity()) return;
+    if (typeof HTMLDialogElement === "undefined") {
+      if (window.confirm(button.dataset.confirm)) { button.dataset.confirmed = "1"; button.click(); }
+      return;
+    }
+    open(button);
+  });
+})();
 
 // Phone registrations use the same student-ticket rule as the public form.
 document.addEventListener("DOMContentLoaded", () => {

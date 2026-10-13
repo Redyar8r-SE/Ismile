@@ -191,10 +191,10 @@ $e = [Page::class, 'e'];
             <?= $fieldsFor($w) ?><div class="form-actions"><button class="btn">Save workshop</button></div></form>
         </details>
         <form method="post" class="inline-form"><?= Page::csrfField() ?><input type="hidden" name="ws" value="<?= $e($w['id']) ?>">
-          <?php if ($w['status'] === 'active'): ?><button class="btn small gold" name="do" value="ws_hide" data-confirm="Hide this workshop? It leaves the website and takes no new bookings. People already booked stay.">Hide</button>
+          <?php if ($w['status'] === 'active'): ?><button class="btn small gold" name="do" value="ws_hide"<?= Page::confirm('gold', 'eye-off', 'Hide this workshop?', 'It leaves the website and takes no new bookings.', [['calendar', SiteData::workshopName($w)], ['users', 'People already booked stay (' . (int) $w['booked'] . ')']], ['yes' => 'Yes, hide it', 'no' => 'No, keep it visible']) ?>>Hide</button>
           <?php else: ?><button class="btn small green" name="do" value="ws_show">Show again</button><?php endif; ?>
           <?php if ((int) Db::value('SELECT COUNT(*) FROM workshop_bookings WHERE workshop_id = ?', [$w['id']]) === 0): ?>
-            <div class="row-danger-actions"><button class="btn small red" name="do" value="ws_delete" data-confirm="Delete this workshop for good?">Delete</button></div>
+            <div class="row-danger-actions"><button class="btn small red" name="do" value="ws_delete"<?= Page::confirm('red', 'trash', 'Delete this workshop for good?', 'It is removed from the database and the website. This cannot be undone.', [['calendar', SiteData::workshopName($w)], ['users', 'No one is booked on it']], ['yes' => 'Yes, delete', 'no' => 'No, keep it']) ?>>Delete</button></div>
           <?php endif; ?>
         </form>
       </div></td>

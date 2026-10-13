@@ -109,6 +109,7 @@ $check('Psoola orders page renders (live list, or a clear note when unavailable)
 $html = $render('registration', 'new=1');
 $check('Register (cash) shows packages, lunch cards and the total to collect', str_contains($html, 'Packages &amp; prices') && str_contains($html, 'id="cash-total"') && str_contains($html, 'class="lunch-card"') && str_contains($html, 'Paid by cash'));
 $check('Paid by cash first asks "Did you receive the cash?"', str_contains($html, 'id="cash-confirm"') && str_contains($html, 'Did you receive the cash?') && str_contains($html, 'Yes, sell the ticket'));
+$check('Every "Are you sure?" uses the iSmile window (free ticket shown as an example)', str_contains($html, 'data-confirm-box=') && str_contains($html, 'Give a free ticket?') && str_contains((string) @file_get_contents(is_file(App::siteFile('admin/admin.js')) ? App::siteFile('admin/admin.js') : dirname(__DIR__, 2) . '/admin/admin.js'), 'confirm-box'));
 $html = $render('lists', 'list=registered');
 $check('Registered list offers the Sale type filter (cash, card, free)', str_contains($html, '<legend>Sale type</legend>') && str_contains($html, 'name="sale" value="cash"') && str_contains($html, 'Card (online)'));
 $html = $render('certificates');

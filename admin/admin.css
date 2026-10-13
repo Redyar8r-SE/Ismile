@@ -1230,3 +1230,46 @@ body[data-page=backups] .page-symbol{background:#e9f4ee;color:#418165;border-col
 .cash-confirm-actions .btn svg{width:19px;height:19px}
 .cash-confirm-actions .btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
 @media(max-width:560px){.cash-confirm{padding:24px 18px}.cash-confirm-details div{grid-template-columns:1fr;gap:0}.cash-confirm-actions{grid-template-columns:1fr}.cash-confirm-actions .btn.cash-pay{order:-1}}
+
+/* "Are you sure?" window for every delete, cancel, remove, hide and undo (admin.js) */
+.confirm-box{--c:var(--teal-d);--cd:var(--teal-d);--cl:var(--teal-l);--ring:#bfe7ee;width:min(500px,calc(100% - 32px));max-height:calc(100% - 32px);overflow:auto;padding:0;border:0;border-radius:20px;background:#fff;color:var(--ink);box-shadow:0 30px 80px -20px #0b2a4599}
+.confirm-box.tone-red{--c:var(--red);--cd:var(--red-d);--cl:var(--red-l);--ring:#f5c6bc}
+.confirm-box.tone-gold{--c:var(--gold);--cd:var(--gold-d);--cl:var(--gold-l);--ring:#f3dda9}
+.confirm-box.tone-violet{--c:var(--violet);--cd:var(--violet-d);--cl:var(--violet-l);--ring:#cfc8f6}
+.confirm-box::backdrop{background:#0d2c46b3;backdrop-filter:blur(4px)}
+.confirm-box[open]{display:flex;flex-direction:column}
+.confirm-strip{display:block;flex:none;height:6px;background:var(--c)}
+.confirm-head{display:grid;justify-items:center;gap:8px;padding:24px 28px 16px;text-align:center}
+.confirm-icon{display:grid;place-items:center;width:60px;height:60px;border-radius:50%;background:var(--cl);border:4px solid var(--ring);color:var(--cd)}
+.confirm-box.tone-red .confirm-icon,.confirm-box.tone-violet .confirm-icon{color:var(--c)}
+.confirm-icon svg{width:28px;height:28px}
+.confirm-head h2{margin:0;font-size:21px;font-weight:800;line-height:1.3;color:#0b3a5c}
+.confirm-text{margin:0;color:var(--muted);line-height:1.5}
+.confirm-body{display:grid;gap:14px;padding:0 28px}
+.confirm-facts{list-style:none;margin:0;padding:14px 16px;display:grid;gap:9px;border:1px solid var(--line);border-radius:12px;background:#f7fafd}
+.confirm-facts li{display:flex;align-items:center;gap:10px;font-weight:600;overflow-wrap:anywhere}
+.confirm-facts svg{width:16px;height:16px;flex:none;color:var(--cd)}
+.confirm-label{margin:0 0 8px;font-size:11px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--red-d)}
+.confirm-chips{display:flex;flex-wrap:wrap;gap:8px}
+.confirm-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:20px;background:var(--red-l);color:var(--red-d);font-size:12px;font-weight:700}
+.confirm-chip svg{width:12px;height:12px}
+.confirm-tip{display:flex;align-items:center;gap:10px;margin:0;padding:12px 14px;border-radius:12px;background:var(--gold-l);color:var(--gold-d);font-size:13px;font-weight:600;line-height:1.45}
+.confirm-tip svg{width:18px;height:18px;flex:none}
+.confirm-type{display:grid;gap:8px;font-weight:600}
+.confirm-type-label b{color:var(--red-d);font-weight:800}
+.confirm-type-field{position:relative;display:block}
+.confirm-type-field input{width:100%;padding:12px 104px 12px 14px;border:2px solid #cddce7;font-size:15px;font-weight:700}
+.confirm-type.is-match input{border-color:var(--green)}
+.confirm-match{position:absolute;right:14px;top:50%;transform:translateY(-50%);display:none;align-items:center;gap:5px;color:var(--green-d);font-size:12px;font-weight:700}
+.confirm-match svg{width:16px;height:16px;color:var(--green)}
+.confirm-type.is-match .confirm-match{display:inline-flex}
+.confirm-note{display:flex;align-items:center;gap:8px;margin:0;color:var(--muted);font-size:12.5px}
+.confirm-note svg{width:15px;height:15px;flex:none}
+.confirm-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:20px 28px 26px}
+.confirm-actions .btn{min-height:50px;font-size:15px;font-weight:700}
+.confirm-actions .confirm-yes{background:var(--c);box-shadow:none}
+.confirm-actions .confirm-yes:hover{filter:brightness(.93)}
+.confirm-actions .confirm-yes svg{width:18px;height:18px}
+.confirm-actions .confirm-yes:disabled{opacity:.45;cursor:not-allowed;filter:none}
+@media(max-width:520px){.confirm-head{padding:20px 18px 14px}.confirm-body{padding:0 18px}.confirm-actions{grid-template-columns:1fr;padding:18px}.confirm-actions .confirm-yes{order:-1}}
+.confirm-box.tone-gold .confirm-yes{color:#3a2a06}

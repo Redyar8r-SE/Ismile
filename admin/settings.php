@@ -155,7 +155,7 @@ Page::top('Settings', 'settings', '<a class="btn ghost" href="#ambassadors">' . 
         <td><b><?= (int) $row['uses'] ?></b></td>
         <td class="table-action-cell"><form method="post" class="inline-form">
           <?= Page::csrfField() ?><input type="hidden" name="do" value="ambassador_delete"><input type="hidden" name="ambassador_id" value="<?= (int) $row['id'] ?>">
-          <button class="btn red small" aria-label="<?= $e('Delete ambassador code ' . $row['code']) ?>" data-confirm="<?= $e('Delete code ' . $row['code'] . ' for ' . $row['owner_name'] . '? Existing registrations keep their code. This deletion is recorded in the activity log.') ?>"><?= Page::navIcon('close') ?><span>Delete</span></button>
+          <button class="btn red small" aria-label="<?= $e('Delete ambassador code ' . $row['code']) ?>"<?= Page::confirm('red', 'trash', 'Delete this ambassador code?', 'New students can no longer use it.', [['tag', $row['code'] . ' · ' . $row['owner_name']], ['users', (int) $row['uses'] === 0 ? 'No students used it yet' : (int) $row['uses'] . ((int) $row['uses'] === 1 ? ' student' : ' students') . ' used it: they keep their code']], ['note' => 'This deletion is recorded in the activity log.', 'yes' => 'Yes, delete code', 'no' => 'No, keep it']) ?>><?= Page::navIcon('close') ?><span>Delete</span></button>
         </form></td>
       </tr>
       <?php endforeach; ?>

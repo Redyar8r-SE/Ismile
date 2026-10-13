@@ -172,7 +172,7 @@ if (isset($_GET['new'])) {
           <summary>Owner: issue a complimentary ticket</summary>
           <label>Reason (required for a free ticket)<input name="comp_reason" form="caller-form" maxlength="255" value="<?= $value('comp_reason') ?>" placeholder="e.g. Diamond sponsor staff"></label>
           <div class="form-actions">
-          <button class="btn violet" form="caller-form" name="do" value="free" data-confirm="Register this person with a FREE ticket now? It is logged with your name and the reason.">Register with a free ticket</button>
+          <button class="btn violet" form="caller-form" name="do" value="free"<?= Page::confirm('violet', 'gift', 'Give a free ticket?', 'This person is registered with a FREE ticket now, and the ticket is emailed.', [], ['form' => 'caller', 'note' => 'Logged with your name and the reason.', 'yes' => 'Yes, give free ticket', 'no' => 'No, go back']) ?>>Register with a free ticket</button>
           </div>
         </details>
       <?php endif; ?>
@@ -435,10 +435,13 @@ if ($inCheckin) echo CheckinWorkspace::navigation('guests', $user, $workspaceDay
   <div class="card danger">
     <h2>Cancel</h2>
     <p class="muted small">Tickets are non-refundable: cancelling stops the ticket at the door and frees workshop seats; no money is returned.</p>
-    <?php if ($registration['status'] !== 'cancelled'): ?>
+    <?php if ($registration['status'] !== 'cancelled'):
+      // The person, for the "Are you sure?" windows below.
+      $who = ['user', Registrations::fullName($registration) . ' · ' . $registration['ref']];
+      $ticketFact = ['ticket', Registrations::ticketName($registration['ticket_type']) . ($ticket ? ' · ' . $ticket['ticket_no'] : '')]; ?>
     <form method="post" class="stack"><?= Page::csrfField() ?><input type="hidden" name="do" value="cancel">
       <label>Reason for cancelling<input name="reason" required></label>
-      <div class="form-actions danger-actions"><button class="btn red" data-confirm="Cancel this registration? The ticket will stop working at the door. Tickets are non-refundable.">Cancel registration</button></div>
+      <div class="form-actions danger-actions"><button class="btn red"<?= Page::confirm('gold', 'ticket-x', 'Cancel this registration?', 'The ticket stops working at the door and workshop seats are freed.', [$who, $ticketFact, ['ban', 'Tickets are non-refundable: no money is returned']], ['note' => 'The record and payment history are kept.', 'yes' => 'Yes, cancel it', 'no' => 'No, keep the ticket']) ?>>Cancel registration</button></div>
     </form>
     <?php endif; ?>
   </div>
@@ -449,9 +452,21 @@ if ($inCheckin) echo CheckinWorkspace::navigation('guests', $user, $workspaceDay
 <section class="card danger" id="deleteRecord">
   <h2>Delete for good (main Owner)</h2>
   <p class="muted small">Removes this person, their ticket, check-ins, certificate, workshop seats, payment records, emails and ID photo. Use Cancel above to keep the history instead. A full copy is kept in the database table <code>deleted_records</code>.</p>
-  <form method="post" class="stack"><?= Page::csrfField() ?><input type="hidden" name="do" value="erase">
-    <label><span>Type <b dir="ltr"><?= $e($registration['ref']) ?></b> to confirm</span><input name="confirm_ref" required autocomplete="off" dir="ltr" placeholder="<?= $e($registration['ref']) ?>"></label>
-    <div class="form-actions danger-actions"><button class="btn red" data-confirm="Delete <?= $e($registration['ref']) ?> for good? This cannot be undone from the admin.">Delete for good</button></div>
+  <?php
+    $paidRow = null;
+    foreach ($payments as $payment) { if ($payment['status'] === 'paid') { $paidRow = $payment; break; } }
+    $paidFact = ['cash', $registration['status'] === 'complimentary' ? 'Free ticket'
+        : ($paidRow ? Page::money((int) ($paidRow['amount_confirmed'] ?? $paidRow['amount_expected']), $paidRow['currency']) . ($paidRow['method'] ? ' · ' . ($paidRow['method'] === 'cash' ? 'Cash' : 'Card (online)') : '') : ucfirst($registration['status']))
+        . ($registration['paid_at'] ? ' · ' . date('j M', strtotime($registration['paid_at'])) : '')];
+    $eraseBox = Page::confirm('red', 'trash', 'Delete this person for good?', 'Everything about this guest is removed from the database. This cannot be undone from the admin.',
+        [['user', Registrations::fullName($registration)], ['hash', $registration['ref']], ['ticket', Registrations::ticketName($registration['ticket_type']) . ($ticket ? ' · ' . $ticket['ticket_no'] : '')], $paidFact],
+        ['deletes' => ['Ticket & QR', 'Check-ins', 'Certificate', 'Workshop seats', 'Payment records', 'Emails', 'Student ID photo'],
+         'tip' => $registration['status'] !== 'cancelled' ? 'Only want to stop the ticket? Use Cancel registration instead. It keeps the history and the money record.' : null,
+         'type' => $registration['ref'], 'field' => 'confirm_ref',
+         'note' => 'Only the main Owner can do this. A full copy is kept in deleted_records.', 'yes' => 'Yes, delete for good', 'no' => 'No, keep this person']);
+  ?>
+  <form method="post" class="stack"><?= Page::csrfField() ?><input type="hidden" name="do" value="erase"><input type="hidden" name="confirm_ref" value="">
+    <div class="form-actions danger-actions"><button class="btn red"<?= $eraseBox ?>>Delete for good</button></div>
   </form>
 </section>
 <?php elseif ($locked = Erase::lockedReason($user)): ?>

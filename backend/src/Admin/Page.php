@@ -277,6 +277,19 @@ final class Page
         echo '</main>' . (self::$user ? '</div>' : '') . '</body></html>';
     }
 
+    /**
+     * The "Are you sure?" window for a button (admin.js shows it). Tone: red =
+     * delete for good, gold = cancel/remove/hide/undo, violet = free ticket,
+     * blue = normal. Facts are [icon, text] rows. $more: yes, no, note, tip,
+     * deletes (list), type + field (the text to type and the input it fills),
+     * form ('caller': facts read from the Register (cash) form).
+     */
+    public static function confirm(string $tone, string $icon, string $title, string $text, array $facts = [], array $more = []): string
+    {
+        $box = ['tone' => $tone, 'icon' => $icon, 'title' => $title, 'text' => $text, 'facts' => $facts] + $more;
+        return ' data-confirm="' . self::e($title) . '" data-confirm-box="' . self::e((string) json_encode($box, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) . '"';
+    }
+
     public static function csrfField(): string
     {
         return '<input type="hidden" name="csrf" value="' . self::e(Auth::csrf()) . '">';
@@ -390,6 +403,11 @@ final class Page
         $open = '<form method="post" class="inline-form"' . ($action !== '' ? ' action="' . self::e($action) . '"' : '') . '>' . self::csrfField()
             . '<input type="hidden" name="do" value="workshop_change"><input type="hidden" name="booking" value="' . (int) $booking['id'] . '"><input type="hidden" name="rid" value="' . (int) $booking['registration_id'] . '">';
         $html = '<div class="row-actions booking-actions">';
+        $workshop = SiteData::workshop((string) $booking['workshop_id']);
+        $facts = [['calendar', $workshop ? SiteData::workshopName($workshop) : (string) $booking['workshop_id']]];
+        if (!empty($booking['first_name'])) {
+            array_unshift($facts, ['user', Registrations::fullName($booking)]);
+        }
         if ($booking['payment_status'] !== 'paid') {
             $html .= $open . '<input type="hidden" name="payment_status" value="paid">'
                 . '<input name="amount_paid" aria-label="Workshop amount received" inputmode="numeric" size="9" placeholder="' . number_format((int) $booking['price_agreed']) . '" required>'
@@ -397,10 +415,10 @@ final class Page
                 . '<div class="form-actions compact"><button class="btn small green">' . self::navIcon('check') . '<span>Mark paid</span></button></div></form>';
         }
         if ($paid && $isOwner) {
-            $html .= '<div class="row-secondary-actions">' . $open . '<input type="hidden" name="payment_status" value="unpaid"><button class="btn small ghost" data-confirm="Undo this payment? Only for a mistake: workshop money is not refunded.">Undo (mistake)</button></form></div>';
+            $html .= '<div class="row-secondary-actions">' . $open . '<input type="hidden" name="payment_status" value="unpaid"><button class="btn small ghost"' . self::confirm('gold', 'undo', 'Undo this workshop payment?', 'Only for a mistake: the booking goes back to not paid.', [...$facts, ['cash', self::money((int) $booking['amount_paid']) . ($booking['paid_how'] ? ' · ' . $booking['paid_how'] : '')]], ['note' => 'Workshop money is not refunded.', 'yes' => 'Yes, undo payment', 'no' => 'No, keep it paid']) . '>Undo (mistake)</button></form></div>';
         }
         if (!$paid || $isOwner) {
-            $html .= '<div class="row-danger-actions">' . $open . '<input type="hidden" name="remove" value="1"><button class="btn small red" data-confirm="Remove this workshop booking? The seat becomes free on the website.' . ($paid ? ' The money is NOT refunded.' : '') . '">Remove</button></form></div>';
+            $html .= '<div class="row-danger-actions">' . $open . '<input type="hidden" name="remove" value="1"><button class="btn small red"' . self::confirm('gold', 'user-x', 'Remove this workshop booking?', 'The seat becomes free on the website.', [...$facts, ...($paid ? [['ban', 'The money is NOT refunded']] : [])], ['yes' => 'Yes, remove', 'no' => 'No, keep the booking']) . '>Remove</button></form></div>';
         }
         return $html . '</div>';
     }

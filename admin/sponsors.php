@@ -270,7 +270,7 @@ if ($id > 0 && ($request = Sponsors::find($id))) {
             <?php if ($isOwner): ?><label class="inline"><input type="checkbox" name="override" value="1"> Confirm anyway (Owner)</label><?php endif; ?><?php endif; ?>
           <div class="form-actions"><button class="btn green big-btn"><?= Page::navIcon('check') ?><span>Confirm <?= $e($request['company']) ?></span></button></div>
         </form>
-        <?php if ($isOwner): ?><form method="post" class="form-actions danger-actions"><?= Page::csrfField() ?><input type="hidden" name="do" value="unpay"><button class="btn small ghost" data-confirm="Remove this payment? Only if it was recorded by mistake.">Payment recorded by mistake? Undo it (Owner)</button></form><?php endif; ?>
+        <?php if ($isOwner): ?><form method="post" class="form-actions danger-actions"><?= Page::csrfField() ?><input type="hidden" name="do" value="unpay"><button class="btn small ghost"<?= Page::confirm('gold', 'undo', 'Undo the last payment?', 'Only if it was recorded by mistake. The last payment is removed and that amount is due again.', [['building', $request['company'] . ' · ' . $request['ref']], ['cash', Page::money((int) $request['amount_paid']) . ' paid so far' . (($how = Sponsors::PAID_HOW[$request['paid_how']] ?? '') !== '' ? ' · ' . $how : '')]], ['note' => 'Earlier payments stay recorded.', 'yes' => 'Yes, undo payment', 'no' => 'No, keep it']) ?>>Payment recorded by mistake? Undo it (Owner)</button></form><?php endif; ?>
       <?php elseif ($request['status'] === 'confirmed'): ?>
         <h2 class="icon-label"><?= Page::navIcon('check') ?><span>Done: <?= $e($request['company']) ?> is confirmed</span></h2>
         <p class="lead-line">Paid <b><?= Page::money((int) $request['amount_paid']) ?></b>.</p>
@@ -289,7 +289,7 @@ if ($id > 0 && ($request = Sponsors::find($id))) {
     </div>
 
     <?php if(!in_array($request['status'],['declined','cancelled'],true) && ($request['amount_paid']===null || $isOwner)): ?>
-    <section class="card booking-cancel-card" id="cancelBooking"><div><?= Page::panelHeading('Cancel booking','If the company changes its mind, cancel the booking and keep its history.','close') ?></div><form method="post" class="booking-cancel-form"><?= Page::csrfField() ?><input type="hidden" name="do" value="cancel"><label>Cancellation reason<textarea name="reason" required maxlength="500" rows="2" placeholder="For example: company withdrew after agreeing the amount"></textarea></label><button class="btn red" data-confirm="Cancel this booking? Any sponsor map reservation will be released. The record and payment history will be kept.">Cancel booking</button></form></section>
+    <section class="card booking-cancel-card" id="cancelBooking"><div><?= Page::panelHeading('Cancel booking','If the company changes its mind, cancel the booking and keep its history.','close') ?></div><form method="post" class="booking-cancel-form"><?= Page::csrfField() ?><input type="hidden" name="do" value="cancel"><label>Cancellation reason<textarea name="reason" required maxlength="500" rows="2" placeholder="For example: company withdrew after agreeing the amount"></textarea></label><button class="btn red"<?= Page::confirm('gold', 'circle-x', 'Cancel this booking?', $isBooth ? 'The booth booking is cancelled.' : 'The booking is cancelled and its sponsor map place is released.', [['building', $request['company'] . ' · ' . $request['ref']], ...($package ? [['tag', $package['name_en']]] : [])], ['note' => 'The record and payment history are kept.', 'yes' => 'Yes, cancel booking', 'no' => 'No, keep the booking']) ?>>Cancel booking</button></form></section>
     <?php endif; ?>
 
     <?php if ($due): ?><div class="flash warn icon-label"><?= Page::navIcon('phone') ?><span>A call is due since <?= Page::when($request['next_call_at']) ?>.</span></div><?php endif; ?>
@@ -386,9 +386,13 @@ if ($id > 0 && ($request = Sponsors::find($id))) {
     <?php if (Erase::isMainOwner($user)): ?>
     <section class="card danger" id="deleteRecord"><h2>Delete for good (main Owner)</h2>
       <p class="muted small">Removes this booking with its calls and emails<?= $isBooth ? '' : ', and frees its map position' ?>. Use Cancel booking above to keep the history instead. A full copy is kept in the database table <code>deleted_records</code>.</p>
-      <form method="post" class="stack"><?= Page::csrfField() ?><input type="hidden" name="do" value="erase">
-        <label><span>Type <b dir="ltr"><?= $e($request['ref']) ?></b> to confirm</span><input name="confirm_ref" required autocomplete="off" dir="ltr" placeholder="<?= $e($request['ref']) ?>"></label>
-        <div class="form-actions danger-actions"><button class="btn red" data-confirm="Delete <?= $e($request['ref']) ?> (<?= $e($request['company']) ?>) for good? This cannot be undone from the admin.">Delete for good</button></div>
+      <form method="post" class="stack"><?= Page::csrfField() ?><input type="hidden" name="do" value="erase"><input type="hidden" name="confirm_ref" value="">
+        <div class="form-actions danger-actions"><button class="btn red"<?= Page::confirm('red', 'trash', 'Delete this booking for good?', 'Everything about this booking is removed from the database. This cannot be undone from the admin.',
+          [['building', $request['company']], ['hash', $request['ref']], ...($package ? [['tag', $package['name_en']]] : []), ['cash', (int) $request['amount_paid'] > 0 ? Page::money((int) $request['amount_paid']) . ' paid' : 'Nothing paid']],
+          ['deletes' => [$isBooth ? 'Booth booking' : 'Sponsor booking', 'Calls', 'Emails', ...($isBooth ? [] : ['Map position'])],
+           'tip' => $request['status'] !== 'cancelled' ? 'Only want to stop it? Use Cancel booking instead. It keeps the history.' : null,
+           'type' => $request['ref'], 'field' => 'confirm_ref',
+           'note' => 'Only the main Owner can do this. A full copy is kept in deleted_records.', 'yes' => 'Yes, delete for good', 'no' => 'No, keep this booking']) ?>>Delete for good</button></div>
       </form>
     </section>
     <?php elseif ($locked = Erase::lockedReason($user)): ?>
@@ -509,9 +513,9 @@ Page::top($kind==='booth'?'Booths':'Sponsors', $kind==='booth'?'booths':'sponsor
             <?= $fieldsFor($p) ?><div class="form-actions"><button class="btn">Save package</button></div></form>
         </details>
         <form method="post" class="inline-form"><?= Page::csrfField() ?><input type="hidden" name="package" value="<?= $e($p['id']) ?>">
-          <?php if ($p['status'] === 'active'): ?><button class="btn small gold" name="do" value="pk_hide" data-confirm="Hide this package? It leaves the website and the form. Companies already on it stay.">Hide</button>
+          <?php if ($p['status'] === 'active'): ?><button class="btn small gold" name="do" value="pk_hide"<?= Page::confirm('gold', 'eye-off', 'Hide this package?', 'It leaves the website and the sponsor form.', [['tag', $p['name_en']], ['users', 'Companies already on it stay (' . (int) $p['requests'] . ')']], ['yes' => 'Yes, hide it', 'no' => 'No, keep it visible']) ?>>Hide</button>
           <?php else: ?><button class="btn small green" name="do" value="pk_show">Show again</button><?php endif; ?>
-          <?php if ((int) $p['requests'] === 0): ?><div class="row-danger-actions"><button class="btn small red" name="do" value="pk_delete" data-confirm="Delete this package for good?">Delete</button></div><?php endif; ?>
+          <?php if ((int) $p['requests'] === 0): ?><div class="row-danger-actions"><button class="btn small red" name="do" value="pk_delete"<?= Page::confirm('red', 'trash', 'Delete this package for good?', 'It is removed from the database and the website. This cannot be undone.', [['tag', $p['name_en']], ['users', 'No company asked for it']], ['yes' => 'Yes, delete', 'no' => 'No, keep it']) ?>>Delete</button></div><?php endif; ?>
         </form>
       </div></td>
     </tr>
