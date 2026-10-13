@@ -144,9 +144,29 @@ if (isset($_GET['new'])) {
         </div>
         <p class="lunch-vip-note small"><span aria-hidden="true">♛</span> VIP tickets include one lunch day free. That day shows “Included with VIP” instead of a price.</p>
       </fieldset>
-      <div class="form-actions"><a class="btn ghost" href="<?= $e($listUrl) ?>">Cancel</a><button class="btn cash-pay" name="do" value="cash" id="caller-pay" data-confirm="Paid by cash: sell this ticket now? Psoola issues the ticket at once and emails the QR to this email. Collect the total shown. iSmile pays Psoola the ticket price, and the sale cannot be undone here.">Paid by cash</button></div>
+      <div class="form-actions"><a class="btn ghost" href="<?= $e($listUrl) ?>">Cancel</a><button class="btn cash-pay" name="do" value="cash" id="caller-pay">Paid by cash</button></div>
       <p class="muted small">The person is registered as paid by cash, and the money appears in Payments and Psoola orders.</p>
     </form>
+    <!-- "Did you receive the cash?": opened by Paid by cash, filled from the form (admin.js). -->
+    <dialog class="cash-confirm" id="cash-confirm" aria-labelledby="cash-confirm-title">
+      <span class="cash-confirm-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.6"/><path d="M6 12h.01M18 12h.01"/></svg></span>
+      <h2 id="cash-confirm-title">Did you receive the cash?</h2>
+      <p class="cash-confirm-sub">Check the details with the guest before you sell. This cannot be undone here.</p>
+      <dl class="cash-confirm-details">
+        <div><dt><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.2-4 4.3-6 8-6s6.8 2 8 6"/></svg>Guest</dt><dd data-confirm-field="name"></dd></div>
+        <div><dt><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A17 17 0 0 1 3 5a2 2 0 0 1 2-2"/></svg>Phone</dt><dd data-confirm-field="phone" dir="ltr"></dd></div>
+        <div><dt><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>Ticket email</dt><dd data-confirm-field="email" dir="ltr"></dd></div>
+        <div><dt><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8a2 2 0 0 0 0 4v0a2 2 0 0 0 0 4v1a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-1a2 2 0 0 1 0-4 2 2 0 0 1 0-4V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z"/><path d="M14 6v12" stroke-dasharray="2 2"/></svg>Ticket</dt><dd data-confirm-field="ticket"></dd></div>
+        <div><dt><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 21V3c-2 1-3 4-3 7h3"/></svg>Lunch</dt><dd data-confirm-field="lunch"></dd></div>
+      </dl>
+      <div class="cash-confirm-amount"><span>Collect in cash</span><b data-confirm-field="total"></b></div>
+      <label class="cash-confirm-check"><input type="checkbox" id="cash-confirm-received"><span data-confirm-field="received">I have received the cash from this guest.</span></label>
+      <p class="cash-confirm-info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>Psoola issues the ticket at once and emails the QR to the email above.</p>
+      <div class="cash-confirm-actions">
+        <button type="button" class="btn ghost" data-confirm-back>No, go back</button>
+        <button type="button" class="btn cash-pay" id="cash-confirm-yes" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg>Yes, sell the ticket</button>
+      </div>
+    </dialog>
       <?php if ($user['role'] === 'owner'): ?>
         <details class="card more owner-ticket"<?= ($_POST['do'] ?? '') === 'free' ? ' open' : '' ?>>
           <summary>Owner: issue a complimentary ticket</summary>

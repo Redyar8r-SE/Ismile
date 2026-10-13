@@ -398,6 +398,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const total = document.getElementById("cash-total");
   const money = (amount) => `${amount.toLocaleString("en-US")} ${prices.currency}`;
   const ticketNames = { professional: "Dentist ticket", student: "Student ticket", vip: "VIP ticket" };
+  let saleTotal = null;
   function showTotal() {
     const type = ticket.value;
     const vipDay = type === "vip" ? Number(form.querySelector('[name="vip_lunch_day"]')?.value || 0) : 0;
@@ -429,6 +430,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }));
     if (!prices) return;
     const sum = items.reduce((all, [, amount]) => all + (amount || 0), 0);
+    saleTotal = sum;
     const unit = document.createElement("small");
     unit.textContent = prices.currency;
     total.replaceChildren(`${sum.toLocaleString("en-US")} `, unit);
@@ -472,6 +474,61 @@ document.addEventListener("DOMContentLoaded", () => {
     ["dragenter", "dragover"].forEach((type) => idBox.addEventListener(type, () => idBox.classList.add("dragging")));
     ["dragleave", "drop"].forEach((type) => idBox.addEventListener(type, () => idBox.classList.remove("dragging")));
     showPhoto();
+  }
+  // "Did you receive the cash?": Paid by cash opens it; the sale is sent only
+  // after staff tick that the money was received and press "Yes, sell the ticket".
+  const confirmBox = document.getElementById("cash-confirm");
+  if (pay && confirmBox && typeof confirmBox.showModal === "function") {
+    const received = document.getElementById("cash-confirm-received");
+    const yes = document.getElementById("cash-confirm-yes");
+    const field = (name) => confirmBox.querySelector(`[data-confirm-field="${name}"]`);
+    const value = (name) => (form.querySelector(`[name="${name}"]`)?.value || "").trim();
+    let confirmed = false;
+    pay.addEventListener("click", (event) => {
+      if (confirmed) return;
+      event.preventDefault();
+      if (!form.reportValidity()) return;
+      const vipDay = ticket.value === "vip" ? Number(value("vip_lunch_day") || 0) : 0;
+      const days = { 1: "Day 1 · Friday 20 Nov", 2: "Day 2 · Saturday 21 Nov" };
+      const lunch = [1, 2].filter((day) => form.querySelector(`[name="lunch_day${day}"]`).checked)
+        .map((day) => days[day] + (day === vipDay ? " (with VIP)" : ""));
+      field("name").textContent = [value("first_name"), value("father_name"), value("grandfather_name")].filter(Boolean).join(" ");
+      field("phone").textContent = value("phone");
+      field("email").textContent = value("email");
+      field("ticket").textContent = (ticketNames[ticket.value] || "Ticket").replace(" ticket", "");
+      field("lunch").textContent = lunch.length ? lunch.join("\n") : "No lunch";
+      const amount = field("total");
+      if (prices && saleTotal !== null) {
+        const unit = document.createElement("small");
+        unit.textContent = prices.currency;
+        amount.replaceChildren(`${saleTotal.toLocaleString("en-US")} `, unit);
+        amount.classList.remove("is-waiting");
+        field("received").textContent = `I have received ${money(saleTotal)} in cash from this guest.`;
+      } else {
+        amount.textContent = "Shown after the sale";
+        amount.classList.add("is-waiting");
+        field("received").textContent = "I have received the cash from this guest.";
+      }
+      received.checked = false;
+      yes.disabled = true;
+      confirmBox.showModal();
+    });
+    received.addEventListener("change", () => { yes.disabled = !received.checked; });
+    confirmBox.querySelector("[data-confirm-back]").addEventListener("click", () => confirmBox.close());
+    // A click on the dark area around the window also goes back.
+    confirmBox.addEventListener("click", (event) => {
+      if (event.target !== confirmBox) return;
+      const box = confirmBox.getBoundingClientRect();
+      if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) confirmBox.close();
+    });
+    yes.addEventListener("click", () => {
+      if (!received.checked) return;
+      confirmed = true;
+      yes.disabled = true;
+      confirmBox.close();
+      if (typeof form.requestSubmit === "function") form.requestSubmit(pay);
+      else pay.click();
+    });
   }
   specialty.addEventListener("change", sync);
   ticket.addEventListener("change", sync);

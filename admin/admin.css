@@ -1201,3 +1201,32 @@ body[data-page=backups] .page-symbol{background:#e9f4ee;color:#418165;border-col
 .lunch-vip-note{margin:0;color:var(--gold-d);font-weight:600}
 .btn.cash-pay{background:var(--teal-d);padding:12px 22px;font-weight:700}
 @media(max-width:1100px){.cash-layout{grid-template-columns:1fr}.cash-panel{position:static}}
+/* "Did you receive the cash?" before a cash sale */
+.cash-confirm{width:min(560px,calc(100% - 32px));max-height:calc(100% - 32px);overflow:auto;padding:32px 30px 28px;border:0;border-radius:22px;background:#fff;color:var(--ink);box-shadow:0 30px 80px -20px #0b2a4599;text-align:center}
+.cash-confirm::backdrop{background:#0d2c46b3;backdrop-filter:blur(4px)}
+.cash-confirm[open]{display:grid;gap:16px}
+.cash-confirm h2{margin:0;font-size:24px;font-weight:800;color:#0b3a5c}
+.cash-confirm-icon{justify-self:center;display:grid;place-items:center;width:66px;height:66px;border-radius:50%;background:var(--teal-l);border:3px solid #bfe9ef;color:var(--teal-d)}
+.cash-confirm-icon svg{width:30px;height:30px}
+.cash-confirm-sub{margin:-8px 0 0;color:var(--muted)}
+.cash-confirm-details{margin:0;padding:16px 18px;display:grid;gap:10px;border:1px solid var(--line);border-radius:14px;background:#f7fafd;text-align:left}
+.cash-confirm-details div{display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;align-items:center}
+.cash-confirm-details dt{display:flex;align-items:center;gap:9px;color:var(--muted)}
+.cash-confirm-details dt svg{width:17px;height:17px;flex:none}
+.cash-confirm-details dd{margin:0;font-weight:700;overflow-wrap:anywhere;white-space:pre-line}
+.cash-confirm-amount{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:16px 20px;border:1px solid #9ed3ec;border-radius:14px;background:linear-gradient(200deg,#e8f6fd,#cfeaf8);text-align:left}
+.cash-confirm-amount span{font-size:12px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:var(--teal-d)}
+.cash-confirm-amount b{font-size:34px;line-height:1.1;font-weight:800;color:#0b4f7a;letter-spacing:-.5px}
+.cash-confirm-amount b small{font-size:15px;color:var(--teal-d);letter-spacing:0}
+.cash-confirm-amount b.is-waiting{font-size:17px;letter-spacing:0}
+.cash-confirm-check{display:flex;align-items:center;gap:12px;padding:14px 16px;border:2px solid var(--line);border-radius:14px;cursor:pointer;font-weight:700;text-align:left;transition:border-color .15s,background .15s}
+.cash-confirm-check:hover,.cash-confirm-check:has(input:checked){border-color:var(--teal)}
+.cash-confirm-check:has(input:checked){background:#f2fbfc}
+.cash-confirm-check input{width:24px;height:24px;margin:0}
+.cash-confirm-info{margin:-4px 0 0;display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;text-align:left}
+.cash-confirm-info svg{width:16px;height:16px;flex:none}
+.cash-confirm-actions{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:4px}
+.cash-confirm-actions .btn{min-height:52px;font-size:16px;font-weight:700}
+.cash-confirm-actions .btn svg{width:19px;height:19px}
+.cash-confirm-actions .btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+@media(max-width:560px){.cash-confirm{padding:24px 18px}.cash-confirm-details div{grid-template-columns:1fr;gap:0}.cash-confirm-actions{grid-template-columns:1fr}.cash-confirm-actions .btn.cash-pay{order:-1}}
