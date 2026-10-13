@@ -348,11 +348,24 @@ document.addEventListener("DOMContentLoaded", () => {
   const ticket = form.querySelector('[name="ticket"]');
   const fields = document.getElementById("caller-student-fields");
   const university = form.querySelector('[name="university"]');
-  const sync = () => {
-    const dentalStudent = specialty.value === "student";
-    if (dentalStudent && ticket.value !== "vip") ticket.value = "student";
-    // Keep the select enabled so its value is included in the submitted form.
-    ticket.querySelector('[value="professional"]').disabled = dentalStudent;
+  // Ticket and specialty follow each other: a Student ticket means a dental
+  // student, and a Dentist ticket cannot be a dental student. VIP takes any.
+  const studentOption = specialty.querySelector('[value="student"]');
+  const sync = (event) => {
+    const from = event && event.target;
+    if (from === specialty) {
+      if (specialty.value === "student" && ticket.value !== "vip") ticket.value = "student";
+      else if (specialty.value !== "student" && ticket.value === "student") ticket.value = "professional";
+    } else if (ticket.value === "student") {
+      specialty.value = "student";
+    } else if (ticket.value === "professional" && specialty.value === "student") {
+      specialty.value = "";
+    }
+    const dentistTicket = ticket.value === "professional";
+    if (studentOption) {
+      studentOption.hidden = dentistTicket;
+      studentOption.disabled = dentistTicket;
+    }
     const studentTicket = ticket.value === "student";
     fields.hidden = !studentTicket;
     fields.querySelectorAll("input, select").forEach((input) => { input.disabled = !studentTicket; });
