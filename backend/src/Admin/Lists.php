@@ -25,6 +25,9 @@ final class Lists
         'cancelled'  => ['Cancelled', 'Registrations that were cancelled (no refunds are made).'],
     ];
 
+    /** The "Sale type" filter: how the ticket was sold. */
+    public const SALE_TYPES = ['cash' => 'Cash', 'card' => 'Card (online)', 'free' => 'Free ticket'];
+
     /** Lists of companies (sponsor requests), not of people. */
     public const COMPANY_LISTS = ['sponsors' => 'sponsor', 'exhibition' => 'booth'];
 
@@ -119,7 +122,7 @@ final class Lists
             'q' => $text('q', 120), 'ticket' => $pick('ticket', ['professional', 'student', 'vip']),
             'lunch' => $pick('lunch', ['day1', 'day2', 'both', 'none']), 'arrived' => $pick('arrived', ['day1', 'day2', 'none']),
             'cert' => $pick('cert', ['yes', 'no']), 'payment' => $pick('payment', ['paid', 'waiting', 'expired']),
-            'source' => $pick('source', ['website', 'office']), 'wpaid' => $pick('wpaid', ['yes', 'no']),
+            'source' => $pick('source', ['website', 'office']), 'sale' => $pick('sale', ['cash', 'card', 'free']), 'wpaid' => $pick('wpaid', ['yes', 'no']),
             'status' => $text('status', 30), 'package' => $text('package', 80), 'calls' => $pick('calls', ['due', 'overdue']),
             'city' => $text('city', 80), 'specialty' => $pick('specialty', array_keys(\Ismile\Registrations::SPECIALTY_NAMES)),
             'university' => $text('university', 160), 'from' => $date('from'), 'to' => $date('to'),
@@ -139,11 +142,11 @@ final class Lists
         $people = ['q', 'ticket', 'city', 'specialty', 'university', 'from', 'to', 'amb', 'sort'];
         return match ($list) {
             'forms'                  => [...$people, 'lunch', 'payment', 'source'],
-            'lunch1', 'lunch2'       => [...$people, 'arrived'],
-            'attendance'             => [...$people, 'lunch', 'arrived', 'cert'],
+            'lunch1', 'lunch2'       => [...$people, 'arrived', 'sale'],
+            'attendance'             => [...$people, 'lunch', 'arrived', 'cert', 'sale'],
             'cancelled'              => [...$people, 'lunch'],
-            'students', 'studentids' => [...array_values(array_diff($people, ['ticket'])), 'lunch', 'arrived'],
-            default                  => [...$people, 'lunch', 'arrived'],
+            'students', 'studentids' => [...array_values(array_diff($people, ['ticket'])), 'lunch', 'arrived', 'sale'],
+            default                  => [...$people, 'lunch', 'arrived', 'sale'],
         };
     }
 
@@ -153,6 +156,13 @@ final class Lists
         $active = array_intersect_key($filters, array_flip(self::available($list)));
         unset($active['sort']);
         return array_filter($active, static fn ($value): bool => $value !== '' && $value !== []);
+    }
+
+    /** How the ticket was sold: cash (office, Psoola cash sale), card (paid online through Psoola) or free (Owner). */
+    public static function saleType(array $row): string
+    {
+        if (($row['pay_method'] ?? null) === 'cash') return 'cash';
+        return ($row['status'] ?? '') === 'complimentary' ? 'free' : 'card';
     }
 
     public static function ambassadorCode(array $row): string
@@ -187,6 +197,7 @@ final class Lists
             if (isset($f['cert']) && empty($r['certificate_no']) === ($f['cert'] === 'yes')) return false;
             if (isset($f['payment']) && ($r['form_status'] ?? '') !== $f['payment']) return false;
             if (isset($f['source']) && ($r['source'] ?? '') !== $f['source']) return false;
+            if (isset($f['sale']) && self::saleType($r) !== $f['sale']) return false;
             if (isset($f['wpaid']) && in_array($r['workshop_paid'] ?? '', ['paid', 'complimentary'], true) !== ($f['wpaid'] === 'yes')) return false;
             if (isset($f['status']) && ($r['sponsor_status'] ?? '') !== $f['status']) return false;
             if (isset($f['package']) && ($f['package'] === '-' ? ($r['package'] ?? null) !== null : (string) ($r['package'] ?? '') !== $f['package'])) return false;
@@ -262,11 +273,11 @@ final class Lists
             'lunch' => ['day1' => 'Day 1', 'day2' => 'Day 2', 'both' => 'Both days', 'none' => 'No lunch'],
             'arrived' => ['day1' => 'Day 1', 'day2' => 'Day 2', 'none' => 'Not yet'],
             'cert' => ['yes' => 'Issued', 'no' => 'Not yet'], 'payment' => ['paid' => 'Paid', 'waiting' => 'Waiting', 'expired' => 'Expired'],
-            'source' => ['website' => 'Website', 'office' => 'Office'], 'wpaid' => ['yes' => 'Paid', 'no' => 'Not paid'],
+            'source' => ['website' => 'Website', 'office' => 'Office'], 'sale' => self::SALE_TYPES, 'wpaid' => ['yes' => 'Paid', 'no' => 'Not paid'],
             'calls' => ['due' => 'Due today', 'overdue' => 'Overdue'], 'specialty' => \Ismile\Registrations::SPECIALTY_NAMES,
         ];
         $labels = ['q' => 'Search', 'ticket' => 'Ticket', 'lunch' => 'Lunch', 'arrived' => 'Arrived', 'cert' => 'Certificate', 'payment' => 'Payment',
-            'source' => 'Sent from', 'wpaid' => 'Workshop', 'status' => 'Status', 'package' => 'Package', 'calls' => 'Calls', 'city' => 'City',
+            'source' => 'Sent from', 'sale' => 'Sale type', 'wpaid' => 'Workshop', 'status' => 'Status', 'package' => 'Package', 'calls' => 'Calls', 'city' => 'City',
             'specialty' => 'Specialty', 'university' => 'University', 'from' => 'From', 'to' => 'To', 'amb' => 'Ambassador'];
         $out = [];
         foreach (self::active($list, $filters) as $key => $value) {

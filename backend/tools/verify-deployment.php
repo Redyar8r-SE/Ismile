@@ -108,6 +108,8 @@ $html = $render('psoola-orders');
 $check('Psoola orders page renders (live list, or a clear note when unavailable)', str_contains($html, 'Psoola orders') && (str_contains($html, 'Sales recorded by Psoola') || str_contains($html, 'Psoola orders are not available')));
 $html = $render('registration', 'new=1');
 $check('Register (cash) shows packages, lunch cards and the total to collect', str_contains($html, 'Packages &amp; prices') && str_contains($html, 'id="cash-total"') && str_contains($html, 'class="lunch-card"') && str_contains($html, 'Paid by cash'));
+$html = $render('lists', 'list=registered');
+$check('Registered list offers the Sale type filter (cash, card, free)', str_contains($html, '<legend>Sale type</legend>') && str_contains($html, 'name="sale" value="cash"') && str_contains($html, 'Card (online)'));
 $html = $render('certificates');
 $check('certificate delivery remains manual', str_contains($html, 'Check-in never sends certificate emails.') && str_contains($html, 'Download attendance report (PDF)'));
 $check('PDF report generator works', str_starts_with(PdfReport::bundle(['Deployment check'=>[['Status'],['Verified']]]), '%PDF-'));

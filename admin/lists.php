@@ -125,6 +125,7 @@ $pickedLabel = !$pickedAmb ? 'All ambassadors' : (count($pickedAmb) > 1 ? count(
       <?php if (isset($offers['ticket'])) echo $segments('ticket', 'Ticket', ['' => 'All'] + \Ismile\Registrations::TICKET_NAMES); ?>
       <?php if (isset($offers['lunch'])) echo $segments('lunch', 'Lunch', ['' => 'Any', 'day1' => 'Day 1', 'day2' => 'Day 2', 'both' => 'Both', 'none' => 'None']); ?>
       <?php if (isset($offers['arrived'])) echo $segments('arrived', 'Arrived', ['' => 'Any', 'day1' => 'Day 1', 'day2' => 'Day 2', 'none' => 'Not yet']); ?>
+      <?php if (isset($offers['sale'])) echo $segments('sale', 'Sale type', ['' => 'All'] + Lists::SALE_TYPES); ?>
       <?php if (isset($offers['payment'])) echo $segments('payment', 'Payment', ['' => 'All', 'paid' => 'Paid', 'waiting' => 'Waiting', 'expired' => 'Expired']); ?>
       <?php if (isset($offers['wpaid'])) echo $segments('wpaid', 'Workshop paid', ['' => 'All', 'yes' => 'Paid', 'no' => 'Not paid']); ?>
       <?php if (isset($offers['calls'])) echo $segments('calls', 'Calls', ['' => 'All', 'due' => 'Due today', 'overdue' => 'Overdue']); ?>
