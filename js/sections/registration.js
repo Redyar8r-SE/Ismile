@@ -8,9 +8,9 @@
 // server (GitHub Pages) or registration is closed, the form is not shown at
 // all, so nobody can believe they registered when nothing was saved.
 // Nothing about the visitor is kept in the browser.
-import { t, getLang, onLangChange } from "../i18n.js?v=127";
-import { formatPrice } from "../utils/money.js?v=127";
-import { initRegistrationExperience } from "./registration-experience.js?v=127";
+import { t, getLang, onLangChange } from "../i18n.js?v=128";
+import { formatPrice } from "../utils/money.js?v=128";
+import { initRegistrationExperience } from "./registration-experience.js?v=128";
 
 const TOTAL_STEPS = 3;
 
@@ -21,8 +21,6 @@ const FIELD_STEP = { terms: 3 };
 // Nothing uses them any more, so they are removed from any device that has them.
 try { localStorage.removeItem("ismile-attendee"); } catch { /* storage blocked: nothing kept */ }
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-// Student tickets are for dental students from this stage up (the server checks it too).
-const FIRST_STUDENT_STAGE = 3;
 
 // Iraqi mobiles (0750 123 4567 / +964 750 123 4567) or any international number starting with +
 export function isValidPhone(value) {
@@ -153,8 +151,6 @@ export function initRegistration({ tickets = {} } = {}) {
       error = "err_name";
     } else if (rule === "age" && (!Number.isInteger(Number(value)) || Number(value) < 16 || Number(value) > 120)) {
       error = "err_age";
-    } else if (rule === "stage" && Number(value) < FIRST_STUDENT_STAGE) {
-      error = "err_stage_low";
     }
     showError(input, error);
     return !error;
@@ -254,7 +250,7 @@ export function initRegistration({ tickets = {} } = {}) {
     const input = event.target;
     if (input.matches("[data-rule]") && input.value.trim()) checkField(input);
   });
-  // A stage below 3rd is said at once, not only when pressing Next.
+  // Choosing a stage clears its "required" message at once.
   $("p_stage").addEventListener("change", () => checkField($("p_stage")));
 
   // Replace the browser's bright native number arrows with controls that

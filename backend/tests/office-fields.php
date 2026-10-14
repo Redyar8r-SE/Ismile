@@ -40,7 +40,10 @@ foreach (Registrations::SPECIALTIES as $specialty) {
     $check("stores specialty $specialty", $row['specialty'] === $specialty);
 }
 $check('a student keeps their stage', Checkouts::officeRow(['specialty' => 'student', 'university' => 'Test University', 'stage' => '5'] + $caller)['study_stage'] === 5);
-$check('a student must give a stage of 3rd or above', $rejects(['specialty' => 'student', 'university' => 'Test University'] + $caller) && $rejects(['specialty' => 'student', 'university' => 'Test University', 'stage' => '2'] + $caller) && $rejects(['specialty' => 'student', 'university' => 'Test University', 'stage' => '6'] + $caller));
+foreach (['1', '2'] as $early) {
+    $check("a student in stage $early may register", Checkouts::officeRow(['specialty' => 'student', 'university' => 'Test University', 'stage' => $early] + $caller)['study_stage'] === (int) $early);
+}
+$check('a student must give a stage from 1st to 5th', $rejects(['specialty' => 'student', 'university' => 'Test University'] + $caller) && $rejects(['specialty' => 'student', 'university' => 'Test University', 'stage' => '0'] + $caller) && $rejects(['specialty' => 'student', 'university' => 'Test University', 'stage' => '6'] + $caller));
 $missing = $caller;
 unset($missing['specialty']);
 $check('requires an explicit specialty', $rejects($missing));

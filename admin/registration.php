@@ -113,10 +113,10 @@ if (isset($_GET['new'])) {
           </select></label>
           <label>Ticket *<select name="ticket" id="caller-ticket"><option value="professional"<?= !$student && !$vip ? ' selected' : '' ?>>Dentist</option><option value="student"<?= $student ? ' selected' : '' ?>>Student</option><option value="vip"<?= $vip ? ' selected' : '' ?>>VIP</option></select></label>
         </div>
-        <p class="muted small" id="caller-ticket-note">Dental students receive a student ticket (3rd stage and above). For student tickets, record the university and stage after checking the ID.</p>
+        <p class="muted small" id="caller-ticket-note">Dental students in any stage (1st to 5th) receive a student ticket. For student tickets, record the university and stage after checking the ID.</p>
         <div class="row3" id="caller-student-fields">
           <label>University (required for students)<input name="university" id="caller-university" maxlength="160" value="<?= $value('university') ?>"<?= $student ? ' required' : '' ?>></label>
-          <label>Stage (3rd and above)<select name="stage" id="caller-stage"<?= $student ? ' required' : '' ?>><option value="">Choose the stage</option><?php foreach (range(\Ismile\Checkouts::FIRST_STUDENT_STAGE, \Ismile\Checkouts::LAST_STUDENT_STAGE) as $stage): ?><option value="<?= $stage ?>"<?= $selected('stage', (string) $stage) ?>><?= $e(\Ismile\Registrations::stageName($stage)) ?></option><?php endforeach; ?></select></label>
+          <label>Stage<select name="stage" id="caller-stage"<?= $student ? ' required' : '' ?>><option value="">Choose the stage</option><?php foreach (range(\Ismile\Checkouts::FIRST_STUDENT_STAGE, \Ismile\Checkouts::LAST_STUDENT_STAGE) as $stage): ?><option value="<?= $stage ?>"<?= $selected('stage', (string) $stage) ?>><?= $e(\Ismile\Registrations::stageName($stage)) ?></option><?php endforeach; ?></select></label>
           <label>Ambassador code (optional)<input name="ambassador" maxlength="40" value="<?= $value('ambassador') ?>" placeholder="e.g. AMB-SARA" autocomplete="off"></label>
           <label class="id-upload" id="caller-id-upload">
             <input type="file" name="student_id" id="caller-student-id" accept="image/jpeg,image/png,image/webp"<?= $student ? ' required' : '' ?> aria-describedby="caller-id-hint">
@@ -183,7 +183,7 @@ if (isset($_GET['new'])) {
         <p class="muted small">Click a package to choose it as the ticket.</p>
         <?php foreach ([
             ['professional', 'Dentist', 'Professionals', 'teal', '<path d="M11 2v2M5 2v2M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1"/><path d="M8 15a6 6 0 0 0 12 0v-3"/><circle cx="20" cy="10" r="2"/>'],
-            ['student', 'Student', '3rd stage and above', 'blue', '<path d="M21.42 10.92a1 1 0 0 0-.02-1.84L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.83l8.57 3.91a2 2 0 0 0 1.66 0z"/><path d="M22 10v6M6 12.5V16a6 3 0 0 0 12 0v-3.5"/>'],
+            ['student', 'Student', 'Every stage, 1st to 5th', 'blue', '<path d="M21.42 10.92a1 1 0 0 0-.02-1.84L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.83l8.57 3.91a2 2 0 0 0 1.66 0z"/><path d="M22 10v6M6 12.5V16a6 3 0 0 0 12 0v-3.5"/>'],
             ['vip', 'VIP', $vipUsd . '1 lunch free', 'gold', '<path d="M11.56 3.27a.5.5 0 0 1 .88 0l2.95 5.61a1 1 0 0 0 1.52.29l4.28-3.67a.5.5 0 0 1 .8.52l-2.83 10.25a1 1 0 0 1-.96.73H5.81a1 1 0 0 1-.96-.73L2.01 6.02a.5.5 0 0 1 .8-.52l4.28 3.67a1 1 0 0 0 1.52-.29z"/><path d="M5 21h14"/>'],
         ] as [$key, $name, $sub, $tone, $icon]): ?>
         <button type="button" class="cash-package tone-<?= $tone ?>" data-pick-ticket="<?= $key ?>" aria-pressed="false">

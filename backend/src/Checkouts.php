@@ -114,9 +114,6 @@ final class Checkouts
             if ($stage === null) {
                 throw new UserError('err_required', 'p_stage');
             }
-            if ($stage < self::FIRST_STUDENT_STAGE) {
-                throw new UserError('err_stage_low', 'p_stage');
-            }
             $ambassador = Validate::text($in['ambassador'] ?? '', 40) ?: null;
             if ($ambassador !== null && !preg_match('/^[\p{L}\p{N}\-_. ]{1,40}$/u', $ambassador)) {
                 throw new UserError('err_code', 'p_ambassador');
@@ -257,8 +254,8 @@ final class Checkouts
                 throw new UserError('Write the student\'s university.');
             }
             $stage = self::studentStage($in['stage'] ?? null);
-            if ($stage === null || $stage < self::FIRST_STUDENT_STAGE) {
-                throw new UserError('Choose the student\'s stage. Student tickets are for 3rd stage and above.');
+            if ($stage === null) {
+                throw new UserError('Choose the student\'s stage (1st to 5th).');
             }
             $ambassador = Validate::text($in['ambassador'] ?? '', 40) ?: null;
             if ($ambassador !== null && !preg_match('/^[\p{L}\p{N}\-_. ]{1,40}$/u', $ambassador)) {
@@ -288,8 +285,8 @@ final class Checkouts
         return $day;
     }
 
-    /** Student tickets are for dental students from this stage up. */
-    public const FIRST_STUDENT_STAGE = 3;
+    /** Student tickets are for dental students in every stage, from the first. */
+    public const FIRST_STUDENT_STAGE = 1;
 
     /** The last stage of dental college. */
     public const LAST_STUDENT_STAGE = 5;

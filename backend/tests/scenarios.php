@@ -292,8 +292,8 @@ try {
     check('a student without a photo is refused', ($answer['json']['error'] ?? '') === 'err_student_id');
     $answer = register(form(['specialty' => 'student', 'university' => 'Uni of Sulaimani']));
     check('a student must say which stage they are in', ($answer['json']['error'] ?? '') === 'err_required' && ($answer['json']['field'] ?? '') === 'p_stage');
-    $answer = register(form(['specialty' => 'student', 'stage' => '2', 'university' => 'Uni of Sulaimani']));
-    check('student tickets are for 3rd stage and above', ($answer['json']['error'] ?? '') === 'err_stage_low' && ($answer['json']['field'] ?? '') === 'p_stage');
+    $answer = register(form(['specialty' => 'student', 'stage' => '1', 'university' => 'Uni of Sulaimani']));
+    check('a 1st stage student may register (only the ID photo is still missing)', ($answer['json']['error'] ?? '') === 'err_student_id');
     $answer = register(form(['specialty' => 'student', 'stage' => '4', 'ticket' => 'professional', 'university' => 'Uni of Sulaimani', 'ambassador' => 'AMB-7', 'student_id' => new CURLFile($jpeg, 'image/jpeg', 'id.jpg')]));
     $studentForm = checkoutByRef((string) ($answer['json']['ref'] ?? ''));
     check('"dental student" always gets the student ticket', ($studentForm['ticket_type'] ?? '') === 'student');

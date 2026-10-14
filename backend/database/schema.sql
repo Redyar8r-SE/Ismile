@@ -121,7 +121,7 @@ CREATE TABLE IF NOT EXISTS checkouts (
   vip_lunch_day      TINYINT UNSIGNED  NULL,                   -- one hosted VIP lunch is included
   pay_method         ENUM('visa','mastercard','fib','fastpay','cash') NULL DEFAULT NULL,  -- chosen on the provider's payment page; cash = sold by the office
   university         VARCHAR(160)      NULL,                   -- students
-  study_stage        TINYINT UNSIGNED  NULL,                   -- students: their stage (3rd and above)
+  study_stage        TINYINT UNSIGNED  NULL,                   -- students: their stage (1st to 5th)
   ambassador_code    VARCHAR(40)       NULL,
   id_photo_id        INT UNSIGNED      NULL,                   -- the student ID photo (student_id_photos)
   terms_accepted_at  DATETIME          NULL,                   -- ticked "tickets are non-refundable" (website form)
@@ -174,7 +174,7 @@ CREATE TABLE IF NOT EXISTS registrations (
   pay_method         ENUM('visa','mastercard','fib','fastpay','cash') NULL,   -- NULL for a free ticket; cash = sold by the office
   -- students: kept as a record (no approval step)
   university         VARCHAR(160)      NULL,
-  study_stage        TINYINT UNSIGNED  NULL,                   -- students: their stage (3rd and above)
+  study_stage        TINYINT UNSIGNED  NULL,                   -- students: their stage (1st to 5th)
   ambassador_code    VARCHAR(40)       NULL,                   -- as typed; unknown codes are shown in Settings
   id_photo_id        INT UNSIGNED      NULL,                   -- the student ID photo; NULL after it is deleted (90 days after the summit)
   id_photo_deleted_at DATETIME         NULL,
