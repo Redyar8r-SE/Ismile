@@ -65,29 +65,29 @@
     {
       "name": "Vanest",
       "tier": "diamond",
-      "logo": "assets/sponsors/vanest.webp",
-      "bg": "#0136A2",
+      "logo": "assets/sponsors/vanest-1c.webp",
+      "bg": "#163B5E",
       "tile": true
     },
     {
       "name": "VARSA",
       "tier": "diamond",
-      "logo": "assets/sponsors/varsa.webp",
-      "bg": "#0136A2",
+      "logo": "assets/sponsors/varsa-1c.webp",
+      "bg": "#163B5E",
       "tile": true
     },
     {
       "name": "British Smile Design Dental Clinic",
       "tier": "diamond",
-      "logo": "assets/sponsors/british-smile-design.webp",
-      "bg": "#0136A2",
+      "logo": "assets/sponsors/british-smile-design-1c.webp",
+      "bg": "#163B5E",
       "tile": true
     },
     {
       "name": "Tupel 3D & J Dental Care",
       "tier": "diamond",
-      "logo": "assets/sponsors/tupel-3d-j-dental-care.webp",
-      "bg": "#0136A2",
+      "logo": "assets/sponsors/tupel-3d-j-dental-care-1c.webp",
+      "bg": "#163B5E",
       "tile": true
     }
   ],

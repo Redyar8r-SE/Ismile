@@ -46,9 +46,9 @@ html[dir="rtl"] .sw-pill{letter-spacing:0}
 .swall.tc-dia .sw-logos>*{width:min(var(--w),calc((100% - var(--gap)) / 2))}
 
 /* Diamond badge and lines in the same blue as the Diamond sponsors' boxes */
-.tc-dia .sw-pill{color:#fff;border:2.5px solid transparent;background:linear-gradient(180deg,#FFFFFF38,#FFFFFF00 45%) padding-box,url(../../assets/sponsors/diamond-background.webp) center/cover padding-box,linear-gradient(135deg,#FFFFFF,#7FCBFF 45%,#2F7BFF) border-box;box-shadow:0 0 44px #2F8BFFCC,0 0 14px #7FCBFF99,inset 0 2px 10px #FFFFFF59}
-.tc-dia .sw-line{background:linear-gradient(90deg,transparent,#7FCBFF)}
-.tc-dia .sw-line:last-child{background:linear-gradient(90deg,#7FCBFF,transparent)}
+.tc-dia .sw-pill{color:#fff;border:2.5px solid transparent;background:linear-gradient(180deg,#FFFFFF38,#FFFFFF00 45%) padding-box,url(../../assets/sponsors/diamond-background-1c.webp) center/cover padding-box,linear-gradient(135deg,#E6F8FF,#67D4F5 45%,#2B9BD8) border-box;box-shadow:0 0 36px #3DB4F0AA,0 0 12px #9FE2FA77,inset 0 2px 10px #FFFFFF59}
+.tc-dia .sw-line{background:linear-gradient(90deg,transparent,#67D4F5)}
+.tc-dia .sw-line:last-child{background:linear-gradient(90deg,#67D4F5,transparent)}
 
 /* Every box, signed sponsor or open place, gets the level's border and shine */
 .swall .sw-logos>*{width:var(--w);max-width:100%;height:var(--h);border-radius:16px;border:var(--bw) solid transparent;background:linear-gradient(135deg,var(--tint),var(--tint2)) padding-box,linear-gradient(var(--bg),var(--bg)) padding-box,linear-gradient(135deg,var(--c1),var(--c),var(--c3)) border-box;box-shadow:var(--glow);transition:transform .2s,box-shadow .2s,filter .2s}
@@ -74,11 +74,11 @@ html[dir="rtl"] .sw-pill{letter-spacing:0}
 .tc-silver .sw-logos>.p-logo,.tc-bronze .sw-logos>.p-logo{padding:5px}
 
 /* A finished logo picture with its own background fills the whole box and keeps
-   its 9:5 shape on every screen, with a white-to-blue border and a strong blue shine. */
-.swall .sw-logos>.p-logo.is-tile,.swall .sw-logos>.p-logo.is-tile:hover{height:auto;aspect-ratio:9/5;padding:0;overflow:hidden;border:3px solid transparent;background:linear-gradient(#0136A2,#0136A2) padding-box,linear-gradient(135deg,#FFFFFF,#7FCBFF 45%,#2F7BFF) border-box;box-shadow:0 0 70px #2F8BFFE6,0 0 24px #7FCBFFB3}
-.swall .sw-logos>.p-logo.is-tile:hover{box-shadow:0 0 84px #2F8BFF,0 0 30px #9FD8FF}
+   its 9:5 shape on every screen, with a white-to-cyan border and a cyan-blue shine. */
+.swall .sw-logos>.p-logo.is-tile,.swall .sw-logos>.p-logo.is-tile:hover{height:auto;aspect-ratio:9/5;padding:0;overflow:hidden;border:3px solid transparent;background:linear-gradient(#163B5E,#163B5E) padding-box,linear-gradient(135deg,#E6F8FF,#67D4F5 45%,#2B9BD8) border-box;box-shadow:0 0 60px #3DB4F0AA,0 0 18px #9FE2FA88}
+.swall .sw-logos>.p-logo.is-tile:hover{box-shadow:0 0 76px #3DB4F0DD,0 0 24px #9FE2FA}
 .p-logo.is-tile .pl-frame{border-radius:13px;box-shadow:none}
-.p-logo.is-tile .pl-frame::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 2px 14px #FFFFFF59;pointer-events:none}
+.p-logo.is-tile .pl-frame::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 2px 14px #FFFFFF40;pointer-events:none}
 .p-logo.is-tile .pl-frame img{inset:0;width:100%;height:100%;object-fit:cover}
 .sw-logos .p-logo.is-tile .pl-name{display:none}
 
