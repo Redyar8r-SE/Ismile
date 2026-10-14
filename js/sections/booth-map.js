@@ -1,6 +1,6 @@
-import { t, onLangChange } from "../i18n.js?v=123";
-import { buildBooths } from "../config/booth-layout.js?v=123";
-import { floorPlanSVG } from "./floor-plan.js?v=123";
+import { t, onLangChange } from "../i18n.js?v=124";
+import { buildBooths } from "../config/booth-layout.js?v=124";
+import { floorPlanSVG } from "./floor-plan.js?v=124";
 
 export function initBoothMap({ rows: BOOTH_ROWS, colors: TIER_COLORS }) {
   const BOOTHS = buildBooths(BOOTH_ROWS);

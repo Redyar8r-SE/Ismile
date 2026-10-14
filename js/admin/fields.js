@@ -51,6 +51,7 @@ const PARTS = [
       { key: "logo", label: "Logo", type: "image" },
       { key: "bg", label: "Logo background", type: "color" },
       { key: "round", label: "Round logo", type: "checkbox" },
+      { key: "tile", label: "Logo picture fills the whole box (has its own background)", type: "checkbox" },
     ],
   },
   {
