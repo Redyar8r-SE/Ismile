@@ -8,9 +8,9 @@
 // server (GitHub Pages) or registration is closed, the form is not shown at
 // all, so nobody can believe they registered when nothing was saved.
 // Nothing about the visitor is kept in the browser.
-import { t, getLang, onLangChange } from "../i18n.js?v=125";
-import { formatPrice } from "../utils/money.js?v=125";
-import { initRegistrationExperience } from "./registration-experience.js?v=125";
+import { t, getLang, onLangChange } from "../i18n.js?v=126";
+import { formatPrice } from "../utils/money.js?v=126";
+import { initRegistrationExperience } from "./registration-experience.js?v=126";
 
 const TOTAL_STEPS = 3;
 
