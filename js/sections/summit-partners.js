@@ -1,7 +1,7 @@
 // Summit partners (official, scientific, accreditation), from data/summit-partners.json.
 // The section stays hidden while the list is empty.
-import { t, tr, onLangChange } from "../i18n.js?v=129";
-import { ICONS } from "../config/icons.js?v=129";
+import { t, tr, onLangChange } from "../i18n.js?v=130";
+import { ICONS } from "../config/icons.js?v=130";
 
 // Each kind has its own colour stripe and icon; anything else is a plain partner.
 const KINDS = {

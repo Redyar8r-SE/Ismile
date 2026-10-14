@@ -1,6 +1,6 @@
 // The exhibition floor plan drawing, shared by the live booth map on
 // sponsor.html and the plain map in the homepage Program section.
-import { t } from "../i18n.js?v=129";
+import { t } from "../i18n.js?v=130";
 
 const escape = (value) => String(value).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 

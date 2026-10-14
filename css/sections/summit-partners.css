@@ -5,7 +5,10 @@
    ========================================================== */
 .summit-partners{
   --spn-gold:#A87412;--spn-teal:#0E7F7B;--spn-blue:#1D5FBF;
+  /* Top and bottom fade into the page colour, so Speakers above and
+     Sponsors below meet it without a hard line. */
   background:
+    linear-gradient(180deg,var(--bg) 0,transparent 160px,transparent calc(100% - 160px),var(--bg) 100%),
     radial-gradient(ellipse 60% 90% at 12% 50%,color-mix(in srgb,var(--teal) 16%,transparent),transparent 70%),
     linear-gradient(120deg,var(--bg),var(--surface));
 }

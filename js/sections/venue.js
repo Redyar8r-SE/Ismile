@@ -1,6 +1,6 @@
 // Venue: "Copy address" and "Get directions" (uses the visitor's location when allowed).
-import { t } from "../i18n.js?v=129";
-import { mapTarget } from "../utils/maps.js?v=129";
+import { t } from "../i18n.js?v=130";
+import { mapTarget } from "../utils/maps.js?v=130";
 
 // Where the map points. Set in the admin (data/map.json): a place name, or
 // exact coordinates when the name is not precise enough.
