@@ -15,33 +15,34 @@
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=Noto+Kufi+Arabic:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <!-- Base -->
-<link rel="stylesheet" href="css/base/tokens.css?v=128">
-<link rel="stylesheet" href="css/base/base.css?v=128">
+<link rel="stylesheet" href="css/base/tokens.css?v=129">
+<link rel="stylesheet" href="css/base/base.css?v=129">
 <!-- Components -->
-<link rel="stylesheet" href="css/components/boot.css?v=128">
-<link rel="stylesheet" href="css/components/buttons.css?v=128">
-<link rel="stylesheet" href="css/components/brand.css?v=128">
-<link rel="stylesheet" href="css/components/tier-card.css?v=128">
-<link rel="stylesheet" href="css/components/reveal.css?v=128">
+<link rel="stylesheet" href="css/components/boot.css?v=129">
+<link rel="stylesheet" href="css/components/buttons.css?v=129">
+<link rel="stylesheet" href="css/components/brand.css?v=129">
+<link rel="stylesheet" href="css/components/tier-card.css?v=129">
+<link rel="stylesheet" href="css/components/reveal.css?v=129">
 <!-- Layout -->
-<link rel="stylesheet" href="css/layout/header.css?v=128">
-<link rel="stylesheet" href="css/layout/footer.css?v=128">
+<link rel="stylesheet" href="css/layout/header.css?v=129">
+<link rel="stylesheet" href="css/layout/footer.css?v=129">
 <!-- Sections (in page order) -->
-<link rel="stylesheet" href="css/sections/hero.css?v=128">
-<link rel="stylesheet" href="css/sections/stats.css?v=128">
-<link rel="stylesheet" href="css/sections/about.css?v=128">
-<link rel="stylesheet" href="css/sections/gallery.css?v=128">
-<link rel="stylesheet" href="css/sections/experience.css?v=128">
-<link rel="stylesheet" href="css/sections/program.css?v=128">
-<link rel="stylesheet" href="css/sections/booth-map.css?v=128">
-<link rel="stylesheet" href="css/sections/speakers.css?v=128">
-<link rel="stylesheet" href="css/sections/sponsors.css?v=128">
-<link rel="stylesheet" href="css/sections/partners.css?v=128">
-<link rel="stylesheet" href="css/sections/companies.css?v=128">
-<link rel="stylesheet" href="css/sections/register-page.css?v=128">
-<link rel="stylesheet" href="css/sections/venue.css?v=128">
+<link rel="stylesheet" href="css/sections/hero.css?v=129">
+<link rel="stylesheet" href="css/sections/stats.css?v=129">
+<link rel="stylesheet" href="css/sections/about.css?v=129">
+<link rel="stylesheet" href="css/sections/gallery.css?v=129">
+<link rel="stylesheet" href="css/sections/experience.css?v=129">
+<link rel="stylesheet" href="css/sections/program.css?v=129">
+<link rel="stylesheet" href="css/sections/booth-map.css?v=129">
+<link rel="stylesheet" href="css/sections/speakers.css?v=129">
+<link rel="stylesheet" href="css/sections/summit-partners.css?v=129">
+<link rel="stylesheet" href="css/sections/sponsors.css?v=129">
+<link rel="stylesheet" href="css/sections/partners.css?v=129">
+<link rel="stylesheet" href="css/sections/companies.css?v=129">
+<link rel="stylesheet" href="css/sections/register-page.css?v=129">
+<link rel="stylesheet" href="css/sections/venue.css?v=129">
 
-<script type="module" src="js/main.js?v=128"></script>
+<script type="module" src="js/main.js?v=129"></script>
 </head>
 <body>
 
@@ -466,6 +467,17 @@
     <h2 data-i18n="sp_title">Speakers</h2>
     <p class="lead" data-i18n="sp_sub">Distinguished local and international speakers will be announced one by one.</p>
     <div class="sp-grid" id="spGrid"></div>
+  </div>
+</section>
+
+<!-- ============ SUMMIT PARTNERS (rendered from data/summit-partners.json) ============ -->
+<section class="block summit-partners" id="partners" hidden>
+  <div class="wrap spn-wrap">
+    <div class="spn-head">
+      <h2 data-i18n="spn_title">Summit Partners</h2>
+      <p class="lead" data-i18n="spn_sub">The institutions that stand behind iSmile and help it continue, year after year.</p>
+    </div>
+    <ul class="spn-list" id="spnList"></ul>
   </div>
 </section>
 

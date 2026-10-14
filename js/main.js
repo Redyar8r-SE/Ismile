@@ -1,22 +1,23 @@
-import { showLoadError } from "./components/load-error.js?v=128";
+import { showLoadError } from "./components/load-error.js?v=129";
 // Entry point: loads the data files, then starts each page section.
-import { loadJSON } from "./utils/load-json.js?v=128";
-import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from "./i18n.js?v=128";
-import { initNav } from "./components/nav.js?v=128";
-import { initTheme } from "./components/theme.js?v=128";
-import { initProgram } from "./sections/program.js?v=128";
-import { initProgramMap } from "./sections/program-map.js?v=128";
-import { initSpeakers } from "./sections/speakers.js?v=128";
-import { initSponsors } from "./sections/sponsors.js?v=128";
-import { initPartners } from "./sections/partners.js?v=128";
-import { initJourney } from "./sections/journey.js?v=128";
-import { initProjects } from "./sections/projects.js?v=128";
-import { initGallery } from "./sections/gallery.js?v=128";
-import { initFooter } from "./sections/footer.js?v=128";
-import { initVenue } from "./sections/venue.js?v=128";
-import { initReveal } from "./utils/reveal.js?v=128";
-import { initReadMore } from "./sections/read-more.js?v=128";
-import { initCountdown } from "./sections/countdown.js?v=128";
+import { loadJSON } from "./utils/load-json.js?v=129";
+import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from "./i18n.js?v=129";
+import { initNav } from "./components/nav.js?v=129";
+import { initTheme } from "./components/theme.js?v=129";
+import { initProgram } from "./sections/program.js?v=129";
+import { initProgramMap } from "./sections/program-map.js?v=129";
+import { initSpeakers } from "./sections/speakers.js?v=129";
+import { initSponsors } from "./sections/sponsors.js?v=129";
+import { initPartners } from "./sections/partners.js?v=129";
+import { initSummitPartners } from "./sections/summit-partners.js?v=129";
+import { initJourney } from "./sections/journey.js?v=129";
+import { initProjects } from "./sections/projects.js?v=129";
+import { initGallery } from "./sections/gallery.js?v=129";
+import { initFooter } from "./sections/footer.js?v=129";
+import { initVenue } from "./sections/venue.js?v=129";
+import { initReveal } from "./utils/reveal.js?v=129";
+import { initReadMore } from "./sections/read-more.js?v=129";
+import { initCountdown } from "./sections/countdown.js?v=129";
 
 async function start() {
   initNav();
@@ -24,10 +25,12 @@ async function start() {
   initCountdown();
 
   try {
-    const [strings, program, speakers, sponsors, partners, journey, projects, gallery, footer, map, boothPlan] = await Promise.all([
+    const [strings, program, speakers, summitPartners, sponsors, partners, journey, projects, gallery, footer, map, boothPlan] = await Promise.all([
       loadJSON("data/i18n/site-en.json"),
       loadJSON("data/program.json"),
       loadJSON("data/speakers.json"),
+      // A missing partner file only hides that section.
+      loadJSON("data/summit-partners.json").catch(() => null),
       loadJSON("data/sponsors.json"),
       loadJSON("data/partners.json"),
       loadJSON("data/journey.json"),
@@ -50,6 +53,7 @@ async function start() {
     initProgram(program);
     initProgramMap(boothPlan);
     initSpeakers(speakers);
+    initSummitPartners(summitPartners);
     initSponsors(sponsors);
     initPartners(partners);
     initJourney(journey);
@@ -68,13 +72,13 @@ async function start() {
     // the lists.
     const all = (s) => document.querySelectorAll(s);
     initReveal([
-      all(".ab-head, .gal-head, .exp-head, .areas-head, .prog-head, #speakers .wrap > h2, #speakers .wrap > .lead, .spon-head, .tp-head, #companies .wrap > h2, #companies .wrap > .lead, .venue-head"),
+      all(".ab-head, .gal-head, .exp-head, .areas-head, .prog-head, #speakers .wrap > h2, #speakers .wrap > .lead, .spn-head, .spon-head, .tp-head, #companies .wrap > h2, #companies .wrap > .lead, .venue-head"),
       all("#journey > li"), all("#galleryGrid > li"),
       all(".org-card"), all(".org-top, .org-card > p, .medx-rest, .medx-toggle"), all(".medx-card"), all(".org-facts li"), all(".vm2 > .vm-card"),
       all(".bento > .bx"), all(".areas > .area"),
       all(".prog-switch, #dayTabs, #dayMeta, #sched"),
       all(".reg-invite-card"),
-      all("#spGrid > *"), all("#sponsorTiers > *"), all("#ptiers > *, .p-cta"),
+      all("#spGrid > *"), all("#spnList > *"), all("#sponsorTiers > *"), all("#ptiers > *, .p-cta"),
       all(".co-grid > .co"), all(".venue-card"),
     ]);
   } catch (error) {

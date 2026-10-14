@@ -1,0 +1,60 @@
+/* ==========================================================
+   Summit partners: title on the left, partner rows on the right.
+   Each row has a colour stripe for its kind (official, scientific,
+   accreditation). Phones stack the title above the rows.
+   ========================================================== */
+.summit-partners{
+  --spn-gold:#A87412;--spn-teal:#0E7F7B;--spn-blue:#1D5FBF;
+  background:
+    radial-gradient(ellipse 60% 90% at 12% 50%,color-mix(in srgb,var(--teal) 16%,transparent),transparent 70%),
+    linear-gradient(120deg,var(--bg),var(--surface));
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]) .summit-partners{--spn-gold:#E3B95B;--spn-teal:#3CC4BF;--spn-blue:#7FB2FF}
+}
+:root[data-theme="dark"] .summit-partners{--spn-gold:#E3B95B;--spn-teal:#3CC4BF;--spn-blue:#7FB2FF}
+
+.spn-wrap{display:grid;grid-template-columns:minmax(0,400px) minmax(0,1fr);gap:64px;align-items:center}
+.spn-head::before{content:"";display:block;width:56px;height:4px;border-radius:4px;background:var(--teal);margin-bottom:20px}
+.spn-head h2{font-size:clamp(40px,5vw,60px);line-height:1.04}
+/* English breaks into "Summit / Partners"; Kurdish and Arabic keep their words whole */
+html:not([dir="rtl"]) .spn-head h2{max-width:8ch}
+.spn-head .lead{font-size:18px;line-height:1.55}
+
+.spn-list{list-style:none;margin:0;padding:0;display:grid;gap:16px}
+.spn-row{
+  --acc:var(--spn-teal);
+  position:relative;display:grid;grid-template-columns:200px minmax(0,1fr);gap:26px;align-items:center;
+  min-height:132px;padding:14px 28px 14px 45px;border-radius:20px;
+  border:1px solid color-mix(in srgb,var(--teal) 25%,var(--line));
+  background:linear-gradient(90deg,color-mix(in srgb,var(--teal) 14%,var(--surface)),var(--surface));
+}
+.spn-row::before{content:"";position:absolute;inset-block:14px;inset-inline-start:14px;width:5px;border-radius:5px;background:var(--acc)}
+[dir="rtl"] .spn-row{padding:14px 45px 14px 28px;background:linear-gradient(270deg,color-mix(in srgb,var(--teal) 14%,var(--surface)),var(--surface))}
+.spn-row.is-official{--acc:var(--spn-gold)}
+.spn-row.is-accreditation{--acc:var(--spn-blue)}
+
+.spn-logos{height:104px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;gap:10px;padding:8px 12px}
+.spn-logos img{max-width:100%;max-height:86px;object-fit:contain}
+.spn-logos.is-pair img{max-width:calc(50% - 11px);max-height:48px}
+.spn-sep{flex:none;width:1px;height:36px;background:#D3E6E6}
+
+.spn-text{display:grid;gap:7px;min-width:0}
+.spn-role{display:flex;align-items:center;gap:8px;margin:0;color:var(--acc);font-size:12px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;line-height:1.35}
+.spn-role svg{flex:none;width:16px;height:16px}
+[dir="rtl"] .spn-role{letter-spacing:0;font-size:13px}
+.spn-text h3{font-size:22px;line-height:1.25}
+.spn-note{margin:0;color:var(--muted);font-size:13.5px}
+.spn-note{text-align:left}
+[dir="rtl"] .spn-note{text-align:right}
+
+@media (max-width:900px){
+  .spn-wrap{grid-template-columns:1fr;gap:32px}
+  html:not([dir="rtl"]) .spn-head h2{max-width:none}
+}
+@media (max-width:560px){
+  .spn-row,[dir="rtl"] .spn-row{grid-template-columns:1fr;gap:16px;padding:14px 18px 20px 37px}
+  [dir="rtl"] .spn-row{padding:14px 37px 20px 18px}
+  .spn-logos{height:110px}
+  .spn-text h3{font-size:20px}
+}

@@ -55,6 +55,20 @@ const PARTS = [
     ],
   },
   {
+    id: "summitPartnerList", title: "Summit partners", kind: "list", file: "summit-partners", listKey: "partners",
+    hint: "The section between Speakers and Sponsors: the official, scientific and accreditation partners. Pick the kind for its colour and icon. Add a second logo when two organisations share one place (like CAPP & ADA). The note is a small line under the name, for example the name in another language.",
+    itemName: "partner",
+    newItem: () => ({ kind: "partner", role: { en: "", ar: "", ku: "" }, name: { en: "", ar: "", ku: "" }, note: { en: "", ar: "", ku: "" }, logo: null, logo2: null }),
+    itemFields: [
+      { key: "kind", label: "Kind (colour and icon)", type: "select", options: [["official", "Official partner (gold)"], ["scientific", "Scientific partner (teal)"], ["accreditation", "Accreditation (blue)"], ["partner", "Other partner (teal)"]] },
+      { key: "role", label: "Role, e.g. Scientific Partner", type: "i18n" },
+      { key: "name", label: "Name", type: "i18n" },
+      { key: "note", label: "Small line under the name (optional)", type: "i18n" },
+      { key: "logo", label: "Logo", type: "image" },
+      { key: "logo2", label: "Second logo (optional)", type: "image" },
+    ],
+  },
+  {
     id: "partnerList", title: "Trusted partners", kind: "list", file: "partners", listKey: "partners",
     hint: "Companies that supported iSmile before. Add the logo with the photo button.",
     itemName: "partner",
@@ -276,6 +290,11 @@ const PARTS = [
       ["sp_title", "Section title"], ["sp_sub", "Section text"],
       ["sp_name", "Placeholder name"], ["sp_role", "Placeholder specialty"], ["sp_soon", "Badge on empty photos"],
     ]),
+  },
+  {
+    id: "summitPartnersText", title: "Summit partners — words",
+    hint: "The heading next to the partner list.",
+    fields: many([["spn_title", "Section title"], ["spn_sub", "Section text"]]),
   },
   {
     id: "sponsorsText", title: "Sponsors — words",
@@ -553,6 +572,10 @@ export const GROUPS = [
     blocks: [special("speakers", "speakers", "The speakers"), text("speakersText", "Wording and placeholders")],
   },
   {
+    id: "summitPartners", page: "home", title: "Summit partners", where: "Between Speakers and Sponsors: official, scientific and accreditation partners",
+    blocks: [list("summitPartnerList", "Partners"), text("summitPartnersText", "Wording")],
+  },
+  {
     id: "sponsors", page: "home", title: "Sponsors & partners", where: "The sponsor logos and the trusted partner logos",
     blocks: [
       list("sponsorList", "Sponsors with a logo"),
@@ -683,5 +706,6 @@ export const DATA_FILES = {
   tickets: "data/tickets.json",
   sponsors: "data/sponsors.json",
   partners: "data/partners.json",
+  "summit-partners": "data/summit-partners.json",
   program: "data/program.json",
 };

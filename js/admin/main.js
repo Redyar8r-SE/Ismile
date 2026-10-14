@@ -1,10 +1,10 @@
 // iSmile admin: edit every text, list and photo on the site, and save to GitHub.
-import { GROUPS as BASE_GROUPS, groupsForText, PAGE_TITLES, LANGS, DATA_FILES } from "./fields.js?v=128";
-import * as store from "./store.js?v=128";
-import { upload, imageFromClipboard } from "./images.js?v=128";
-import { buildList, buildProgram, buildTypes, buildSingle } from "./lists.js?v=128";
-import { TEXT_ATTRIBUTES } from "../i18n.js?v=128";
-import { loadAccounts, makeAccount, check, forget, fileText, ACCOUNTS_FILE } from "./accounts.js?v=128";
+import { GROUPS as BASE_GROUPS, groupsForText, PAGE_TITLES, LANGS, DATA_FILES } from "./fields.js?v=129";
+import * as store from "./store.js?v=129";
+import { upload, imageFromClipboard } from "./images.js?v=129";
+import { buildList, buildProgram, buildTypes, buildSingle } from "./lists.js?v=129";
+import { TEXT_ATTRIBUTES } from "../i18n.js?v=129";
+import { loadAccounts, makeAccount, check, forget, fileText, ACCOUNTS_FILE } from "./accounts.js?v=129";
 
 // Tells the small script in admin.html that the admin code did load, so it
 // does not offer to reload the page.
@@ -515,6 +515,7 @@ const listContext = {
   optionsFor: (group, field) => {
     const label = (value) => (value && typeof value === "object" ? value.en || value.ar || value.ku : value) || "";
     // Partners match their tier by its English name; sponsors match by id.
+    if (Array.isArray(field.options)) return field.options;
     if (field.optionsFrom === "tiers") return (state.data[group.file].tiers || []).map((tier) => [tier.name, label(tier.name)]);
     if (field.optionsFrom === "sponsorTiers") return (state.data.sponsors.tiers || []).map((tier) => [tier.id, label(tier.name)]);
     return [];
@@ -831,7 +832,7 @@ async function connect(token) {
 const PART_NAMES = {
   en: "English text", ar: "Arabic text", ku: "Kurdish text",
   speakers: "Speakers", journey: "Years on the timeline", projects: "italk projects", gallery: "Photos from 2021",
-  workshops: "Workshops", sponsors: "Sponsors and tiers", partners: "Trusted partners",
+  workshops: "Workshops", sponsors: "Sponsors and tiers", partners: "Trusted partners", "summit-partners": "Summit partners",
   program: "Program days and sessions",
 };
 

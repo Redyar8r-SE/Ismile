@@ -1,0 +1,28 @@
+{
+  "partners": [
+    {
+      "kind": "official",
+      "role": { "en": "Official Partner of the Summit", "ar": "الشريك الرسمي للقمة", "ku": "هاوبەشی فەرمیی لووتکە" },
+      "name": { "en": "Kurdistan Dental Association", "ar": "نقابة أطباء الأسنان في كوردستان", "ku": "سەندیکای پزیشکانی ددانی کوردستان" },
+      "note": { "en": "سەندیکای پزیشکانی ددانی کوردستان", "ar": "Kurdistan Dental Association", "ku": "Kurdistan Dental Association" },
+      "logo": "assets/partners/kda-2026.webp",
+      "logo2": null
+    },
+    {
+      "kind": "scientific",
+      "role": { "en": "Scientific Partner", "ar": "الشريك العلمي", "ku": "هاوبەشی زانستی" },
+      "name": { "en": "University of Sulaimani", "ar": "جامعة السليمانية", "ku": "زانکۆی سلێمانی" },
+      "note": { "en": "زانکۆی سلێمانی", "ar": "University of Sulaimani", "ku": "University of Sulaimani" },
+      "logo": "assets/partners/uos-2026.webp",
+      "logo2": null
+    },
+    {
+      "kind": "accreditation",
+      "role": { "en": "Joint Accreditation Provider Partner", "ar": "شريك مزوّد الاعتماد المشترك", "ku": "هاوبەشی دابینکەری ئیعتیمادی هاوبەش" },
+      "name": { "en": "CAPP & ADA", "ar": "CAPP و ADA", "ku": "CAPP و ADA" },
+      "note": { "en": "Continuing-education accreditation", "ar": "اعتماد التعليم الطبي المستمر", "ku": "ئیعتیمادی خوێندنی بەردەوامی پزیشکی" },
+      "logo": "assets/partners/capp-2026.webp",
+      "logo2": "assets/partners/ada-2026.webp"
+    }
+  ]
+}
