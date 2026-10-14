@@ -18,7 +18,6 @@
 :root[data-theme="dark"] .summit-partners{--spn-gold:#E3B95B;--spn-teal:#3CC4BF;--spn-blue:#7FB2FF}
 
 .spn-wrap{display:grid;grid-template-columns:minmax(0,400px) minmax(0,1fr);gap:64px;align-items:center}
-.spn-head::before{content:"";display:block;width:56px;height:4px;border-radius:4px;background:var(--teal);margin-bottom:20px}
 .spn-head h2{font-size:clamp(40px,5vw,60px);line-height:1.04}
 /* English breaks into "Summit / Partners"; Kurdish and Arabic keep their words whole */
 html:not([dir="rtl"]) .spn-head h2{max-width:8ch}
