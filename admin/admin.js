@@ -888,3 +888,16 @@ document.addEventListener("submit", event => {
   setTimeout(() => delete form.dataset.sending, 8000);
 });
 window.addEventListener("pageshow", () => document.querySelectorAll("form[data-sending]").forEach(form => delete form.dataset.sending));
+
+// Viewer accounts: fields in forms that would change data cannot be typed in.
+document.addEventListener("DOMContentLoaded", () => {
+  if (!document.body.classList.contains("view-only")) return;
+  const lock = root => root.querySelectorAll('main form[method="post" i] :is(input, select, textarea)').forEach(field => {
+    if (field.type === "hidden") return;
+    field.tabIndex = -1;
+    if (field.tagName === "SELECT" || field.type === "checkbox" || field.type === "radio") field.disabled = true;
+    else field.readOnly = true;
+  });
+  lock(document);
+  new MutationObserver(() => lock(document)).observe(document.querySelector("main") || document.body, { childList: true, subtree: true });
+});

@@ -16,16 +16,20 @@ namespace Ismile;
 
 final class Auth
 {
-    public const ROLES = ['owner', 'registration', 'finance', 'content', 'checkin'];
+    public const ROLES = ['owner', 'registration', 'finance', 'content', 'checkin', 'viewer'];
     public const ROLE_NAMES = [
         'owner'        => 'Owner (everything)',
         'registration' => 'Registration (register people paid by cash; changes only the people they added)',
         'finance'      => 'Finance (payments, money checks, exports)',
         'content'      => 'Content (site text only)',
         'checkin'      => 'Check-in (arrivals, attendance, guest list and totals)',
+        'viewer'       => 'Viewer (sees every event page, changes nothing)',
     ];
     // Registration takes cash and makes real PSOOLA tickets, so it needs the phone code too.
-    public const NEEDS_TWO_FACTOR = ['owner', 'finance', 'registration'];
+    // The Viewer sees people's details and the money, so it does as well.
+    public const NEEDS_TWO_FACTOR = ['owner', 'finance', 'registration', 'viewer'];
+    // What a Viewer may still send: signing out and setting up their own phone code.
+    private const VIEWER_MAY_POST = ['login.php', 'logout.php', 'two-factor.php'];
 
     private const IDLE_SECONDS = 1800;
     private const MAX_SECONDS = 43200;
@@ -175,21 +179,35 @@ final class Auth
         if ($user['role'] === 'owner') {
             return true;
         }
+        // The Viewer opens every event page but never 'edit' or 'content' (the
+        // website editor). Whatever it sends is refused by viewerMayPost().
         $allowed = [
-            'dashboard'     => ['registration', 'finance'],
-            'registrations' => ['registration', 'finance'],
+            'dashboard'     => ['registration', 'finance', 'viewer'],
+            'registrations' => ['registration', 'finance', 'viewer'],
             'edit'          => ['registration'],
-            'payments'      => ['finance'],
-            'workshops'     => [],                       // the Owner books workshops
-            'sponsors'      => ['finance'],
-            'checkin'       => ['checkin'],
-            'export'        => ['registration', 'finance'],
-            'certificates'  => ['finance'],
-            'photos'        => ['registration'],
+            'payments'      => ['finance', 'viewer'],
+            'workshops'     => ['viewer'],               // the Owner books workshops
+            'sponsors'      => ['finance', 'viewer'],
+            'checkin'       => ['checkin', 'viewer'],
+            'export'        => ['registration', 'finance', 'viewer'],
+            'certificates'  => ['finance', 'viewer'],
+            'photos'        => ['registration', 'viewer'],
             'content'       => ['content'],
-            'communications' => ['finance'],
+            'communications' => ['finance', 'viewer'],
         ];
         return in_array($user['role'], $allowed[$area] ?? [], true);
+    }
+
+    /** True for a look-only account. */
+    public static function viewOnly(array $user): bool
+    {
+        return $user['role'] === 'viewer';
+    }
+
+    /** False when a Viewer sends something that would change data on this page. */
+    public static function viewerMayPost(array $user, string $script): bool
+    {
+        return !self::viewOnly($user) || in_array(basename($script), self::VIEWER_MAY_POST, true);
     }
 
     public static function csrf(): string
@@ -207,6 +225,15 @@ final class Auth
         if ($sent === '' || !hash_equals(self::csrf(), $sent)) {
             Audit::log(self::$user['id'] ?? null, 'csrf.rejected', null, null, ['uri' => $_SERVER['REQUEST_URI'] ?? '']);
             throw new UserError('This form has expired. Go back, reload the page and try again.', null, 400);
+        }
+        // Second lock behind Page::guard(): every change checks this token first.
+        if (self::$user !== null && !self::viewerMayPost(self::$user, (string) ($_SERVER['SCRIPT_NAME'] ?? ''))) {
+            try {
+                Audit::log((int) self::$user['id'], 'viewer.blocked', null, null, ['uri' => $_SERVER['REQUEST_URI'] ?? '']);
+            } catch (\Throwable) {
+                // The refusal matters more than the history line.
+            }
+            throw new UserError('View only: your account can look at everything but cannot change anything.', null, 403);
         }
     }
 

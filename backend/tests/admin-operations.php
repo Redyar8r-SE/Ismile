@@ -36,8 +36,22 @@ try {
     $check('content staff land on their Database overview',Page::home(['role'=>'content'])==='content.php');
     App::boot($config);
     foreach (Auth::ROLES as $role) {
-        $check("communication access for $role",Auth::can(['role'=>$role],'communications')===in_array($role,['owner','finance'],true));
+        $check("communication access for $role",Auth::can(['role'=>$role],'communications')===in_array($role,['owner','finance','viewer'],true));
     }
+    $viewer=['role'=>'viewer','id'=>1];
+    foreach (['dashboard','registrations','payments','workshops','sponsors','checkin','export','certificates','photos','communications'] as $area) {
+        $check("viewer can open $area",Auth::can($viewer,$area));
+    }
+    foreach (['edit','content','owner'] as $area) $check("viewer cannot use $area",!Auth::can($viewer,$area));
+    $check('viewer needs the phone code',Auth::needsTwoFactor($viewer));
+    $check('viewer starts on the dashboard',Page::home($viewer)==='index.php');
+    $check('viewer is look-only',Auth::viewOnly($viewer) && !Auth::viewOnly(['role'=>'finance']));
+    foreach (['/admin/registration.php','/admin/sponsors.php','/admin/checkin.php','/admin/users.php','/admin/settings.php','/admin/payments.php','registration.php'] as $script) {
+        $check("viewer cannot send changes to $script",!Auth::viewerMayPost($viewer,$script));
+    }
+    foreach (['/admin/logout.php','/admin/two-factor.php','/admin/login.php'] as $script) $check("viewer may still use $script",Auth::viewerMayPost($viewer,$script));
+    foreach (['owner','registration','finance','content','checkin'] as $role) $check("$role keeps sending changes",Auth::viewerMayPost(['role'=>$role],'/admin/registration.php'));
+    $check('viewer has a role description',isset(Auth::ROLE_NAMES['viewer']));
     [$scope,$params]=CommunicationQuery::where(['role'=>'registration'],['status'=>'failed','kind'=>'alert','q'=>"x' OR 1=1 --"]);
     $check('staff never gains alert access through filters',str_contains($scope,"e.kind <> 'alert'") && !str_contains($scope,"x' OR"));
     $check('filter values are passed as parameters',in_array('failed',$params,true) && in_array('alert',$params,true));

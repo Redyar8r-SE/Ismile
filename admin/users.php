@@ -85,6 +85,7 @@ $roleGuide = [
     'finance' => ['payments', 'Finance', 'Payments, money checks and financial exports.'],
     'content' => ['content', 'Content', 'Website wording, photos and content.'],
     'checkin' => ['checkin', 'Check-in', 'Find tickets, scan QR codes and welcome guests.'],
+    'viewer' => ['view', 'Viewer', 'Sees every event page (people, payments, sponsors, check-in) but cannot change anything.'],
 ];
 Page::top('Users', 'users', '<a class="btn" href="#add-person">' . Page::navIcon('users') . '<span>Add a person</span></a>');
 ?>

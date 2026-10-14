@@ -25,6 +25,8 @@ if (($argv[1] ?? '') === '--render') {
     if (!$owner) throw new RuntimeException('An enabled Owner account is required.');
     // A process-local rendering context, without signing in or updating an account.
     $owner['totp_enabled'] = 1;
+    // --render page query viewer: the same page as a look-only Viewer would see it.
+    if (($argv[4] ?? '') === 'viewer') $owner['role'] = 'viewer';
     (new ReflectionProperty(Auth::class, 'user'))->setValue(null, $owner);
     $file = App::siteFile('admin/' . $page . '.php');
     if (!is_file($file)) $file = dirname(__DIR__, 2) . '/admin/' . $page . '.php';
@@ -69,10 +71,11 @@ $check('one admission per ticket per day', (int) Db::value('SELECT COUNT(*) FROM
 $check('only one active Standard booth type', (int) Db::value("SELECT COUNT(*) FROM sponsor_packages WHERE kind='booth' AND status='active'") <= 1 && (int) Db::value("SELECT COUNT(*) FROM sponsor_packages WHERE kind='booth' AND status='active' AND (id<>'booth-standard' OR booth_tier IS NOT NULL)") === 0);
 $check('only sponsors reserve numbered map spaces', (int) Db::value("SELECT COUNT(*) FROM sponsor_requests WHERE kind='booth' AND reserved_booth IS NOT NULL") === 0);
 
-$render = static function (string $page, string $query = ''): string {
+$render = static function (string $page, string $query = '', string $as = ''): string {
     $command = [PHP_BINARY];
     if ($ini = php_ini_loaded_file()) array_push($command, '-c', $ini);
     array_push($command, __FILE__, '--render', $page, $query);
+    if ($as !== '') $command[] = $as;
     $process = proc_open($command, [0 => ['pipe','r'], 1 => ['pipe','w'], 2 => ['pipe','w']], $pipes);
     if (!is_resource($process)) throw new RuntimeException('Could not start page verification.');
     fclose($pipes[0]);
@@ -114,5 +117,13 @@ $html = $render('lists', 'list=registered');
 $check('Registered list offers the Sale type filter (cash, card, free)', str_contains($html, '<legend>Sale type</legend>') && str_contains($html, 'name="sale" value="cash"') && str_contains($html, 'Card (online)'));
 $html = $render('certificates');
 $check('certificate delivery remains manual', str_contains($html, 'Check-in never sends certificate emails.') && str_contains($html, 'Download attendance report (PDF)'));
+// Viewer: opens every event page in view-only mode, never the Owner pages or the website editor.
+foreach (['index','registrations','lists','payments','psoola-orders','workshops','sponsors','booths','checkin','certificates','communications'] as $page) {
+    $html = $render($page, '', 'viewer');
+    $check('Viewer sees ' . $page . ' in view-only mode', str_contains($html, 'class="admin-shell view-only"') && str_contains($html, 'View only.') && !str_contains($html, '<h2>Not allowed</h2>'));
+}
+foreach (['users','settings','backups','content'] as $page) {
+    $check('Viewer cannot open ' . $page, str_contains($render($page, '', 'viewer'), '<h2>Not allowed</h2>'));
+}
 $check('PDF report generator works', str_starts_with(PdfReport::bundle(['Deployment check'=>[['Status'],['Verified']]]), '%PDF-'));
 echo "Deployment verification complete: $passed read-only checks passed. No guests admitted or certificate emails sent.\n";

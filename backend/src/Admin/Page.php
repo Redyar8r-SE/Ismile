@@ -7,6 +7,7 @@ declare(strict_types=1);
 namespace Ismile\Admin;
 
 use Ismile\App;
+use Ismile\Audit;
 use Ismile\Auth;
 use Ismile\Office;
 use Ismile\Registrations;
@@ -56,6 +57,7 @@ final class Page
             'menu' => '<path d="M4 6h16M4 12h16M4 18h16"/>',
             'close' => '<path d="m6 6 12 12M18 6 6 18"/>',
             'search' => '<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/>',
+            'view' => '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
             'mail' => '<rect x="3" y="5" width="18" height="14" rx="3"/><path d="m3 7 9 6 9-6"/>',
             'communications' => '<rect x="3" y="5" width="18" height="14" rx="3"/><path d="m3 7 9 6 9-6"/>',
             'backups' => '<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 4 16 4 16 0V5M4 12c0 4 16 4 16 0"/>',
@@ -136,6 +138,23 @@ final class Page
             exit;
         }
         self::$user = $user;
+        // A Viewer looks only: anything sent to change data stops here, before the page runs.
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'GET' && ($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'HEAD'
+            && !Auth::viewerMayPost($user, (string) ($_SERVER['SCRIPT_NAME'] ?? ''))) {
+            try {
+                Audit::log((int) $user['id'], 'viewer.blocked', null, null, ['uri' => $_SERVER['REQUEST_URI'] ?? '']);
+            } catch (\Throwable) {
+                // The refusal matters more than the history line.
+            }
+            http_response_code(403);
+            if (str_contains((string) ($_SERVER['HTTP_ACCEPT'] ?? ''), 'application/json')) {
+                header('Content-Type: application/json');
+                echo '{"ok":false,"error":"view_only"}';
+                exit;
+            }
+            self::flash('error', 'View only: your account can look at everything but cannot change anything.');
+            self::redirect((string) ($_SERVER['REQUEST_URI'] ?? self::home($user)));
+        }
         return $user;
     }
 
@@ -209,7 +228,7 @@ final class Page
         echo '<meta name="robots" content="noindex"><title>' . self::e($title) . ' · iSmile Database</title><link rel="icon" href="../assets/favicon-32.png?v=1" type="image/png" sizes="32x32">';
         // The version follows the files' date, so a change is never hidden by the browser's cache.
         $v = static fn (string $file): int => (int) @filemtime(App::siteFile('admin/' . $file)) ?: 1;
-        echo '<link rel="stylesheet" href="admin.css?v=' . $v('admin.css') . '"><script src="admin.js?v=' . $v('admin.js') . '" defer></script></head><body class="' . ($user ? 'admin-shell' : 'database-auth') . '" data-page="' . self::e($current) . '">';
+        echo '<link rel="stylesheet" href="admin.css?v=' . $v('admin.css') . '"><script src="admin.js?v=' . $v('admin.js') . '" defer></script></head><body class="' . ($user ? 'admin-shell' . (self::viewOnlyHere() ? ' view-only' : '') : 'database-auth') . '" data-page="' . self::e($current) . '">';
         if ($user) {
             echo '<a class="skip-link" href="#main-content">Skip to content</a>';
             echo '<aside class="sidebar" id="admin-sidebar" aria-label="Database navigation">';
@@ -270,6 +289,15 @@ final class Page
             echo '<div class="flash ' . ($kind === 'ok' ? 'ok' : 'err') . '" role="' . ($kind === 'ok' ? 'status' : 'alert') . '">' . self::e($message) . '</div>';
         }
         unset($_SESSION['flash']);
+        if (self::viewOnlyHere()) {
+            echo '<div class="flash view-only-note" role="note">' . self::navIcon('view') . '<span><b>View only.</b> You can look at everything, but you cannot add, change or delete anything.</span></div>';
+        }
+    }
+
+    /** A Viewer on a page whose forms would change data (their buttons are hidden by admin.js). */
+    private static function viewOnlyHere(): bool
+    {
+        return self::$user && !Auth::viewerMayPost(self::$user, (string) ($_SERVER['SCRIPT_NAME'] ?? ''));
     }
 
     public static function bottom(): void
