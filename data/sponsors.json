@@ -84,9 +84,16 @@
       "tile": true
     },
     {
-      "name": "Tupel 3D & J Dental Care",
+      "name": "Tupel 3D",
       "tier": "diamond",
-      "logo": "assets/sponsors/tupel-3d-j-dental-care-o10.webp",
+      "logo": "assets/sponsors/tupel-3d-o10.webp",
+      "bg": "#18363F",
+      "tile": true
+    },
+    {
+      "name": "J Dental Care",
+      "tier": "diamond",
+      "logo": "assets/sponsors/j-dental-care-o10.webp",
       "bg": "#18363F",
       "tile": true
     }

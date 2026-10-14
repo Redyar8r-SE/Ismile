@@ -42,8 +42,10 @@ html[dir="rtl"] .sw-pill{letter-spacing:0}
 .sw-sub{margin:12px 0 0;text-align:center;font-size:14px;color:var(--muted)}
 .sw-logos{display:flex;flex-wrap:wrap;justify-content:center;gap:var(--gap);margin-top:22px}
 .tc-plat .sw-logos{max-width:790px;margin-inline:auto}
-.tc-dia .sw-logos{max-width:760px;margin-inline:auto}
-.swall.tc-dia .sw-logos>*{width:min(var(--w),calc((100% - var(--gap)) / 2))}
+.tc-dia .sw-logos{max-width:1130px;margin-inline:auto}
+/* Diamond: three boxes per row on a computer, two on smaller screens */
+.swall.tc-dia .sw-logos>*{width:min(var(--w),calc((100% - 2 * var(--gap)) / 3))}
+@media (max-width:900px){.swall.tc-dia .sw-logos>*{width:min(var(--w),calc((100% - var(--gap)) / 2))}}
 
 /* Diamond badge: the same dark glass with the faint background as the Diamond boxes */
 .tc-dia .sw-pill{color:#fff;text-shadow:0 1px 3px #0B253066;border:2px solid transparent;background:linear-gradient(180deg,#FFFFFF22,#FFFFFF00 50%) padding-box,linear-gradient(135deg,#1F4754A6,#13262EA6) padding-box,url(../../assets/sponsors/diamond-background-1c.webp) center/cover padding-box,linear-gradient(135deg,#E6F8FF,#67D4F5 50%,#2B9BD8) border-box;box-shadow:0 0 30px #67D4F555,inset 0 2px 10px #FFFFFF33}
