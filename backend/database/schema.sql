@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS admin_users (
   id               INT UNSIGNED      NOT NULL AUTO_INCREMENT,
   email            VARCHAR(190)      NOT NULL,                 -- stored lower-case
   name             VARCHAR(120)      NOT NULL,
-  role             ENUM('owner','registration','finance','content','checkin','viewer') NOT NULL,
+  role             ENUM('owner','registration','finance','content','checkin','viewer','sponsors') NOT NULL,
   password_hash    VARCHAR(255)      NOT NULL,                 -- bcrypt/argon, never the password
   totp_secret      VARCHAR(64)       NULL,                     -- the phone-code key
   totp_enabled     TINYINT(1)        NOT NULL DEFAULT 0,

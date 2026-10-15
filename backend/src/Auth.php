@@ -16,7 +16,7 @@ namespace Ismile;
 
 final class Auth
 {
-    public const ROLES = ['owner', 'registration', 'finance', 'content', 'checkin', 'viewer'];
+    public const ROLES = ['owner', 'registration', 'finance', 'content', 'checkin', 'viewer', 'sponsors'];
     public const ROLE_NAMES = [
         'owner'        => 'Owner (everything)',
         'registration' => 'Registration (register people paid by cash; changes only the people they added)',
@@ -24,10 +24,12 @@ final class Auth
         'content'      => 'Content (site text only)',
         'checkin'      => 'Check-in (arrivals, attendance, guest list and totals)',
         'viewer'       => 'Viewer (sees every event page, changes nothing)',
+        'sponsors'     => 'Sponsors (sponsor and booth bookings and map places only)',
     ];
     // Registration takes cash and makes real PSOOLA tickets, so it needs the phone code too.
     // The Viewer sees people's details and the money, so it does as well.
-    public const NEEDS_TWO_FACTOR = ['owner', 'finance', 'registration', 'viewer'];
+    // Sponsors sees company contacts and records sponsor payments, like Finance.
+    public const NEEDS_TWO_FACTOR = ['owner', 'finance', 'registration', 'viewer', 'sponsors'];
     // What a Viewer may still send: signing out and setting up their own phone code.
     private const VIEWER_MAY_POST = ['login.php', 'logout.php', 'two-factor.php'];
 
@@ -187,7 +189,7 @@ final class Auth
             'edit'          => ['registration'],
             'payments'      => ['finance', 'viewer'],
             'workshops'     => ['viewer'],               // the Owner books workshops
-            'sponsors'      => ['finance', 'viewer'],
+            'sponsors'      => ['finance', 'viewer', 'sponsors'],
             'checkin'       => ['checkin', 'viewer'],
             'export'        => ['registration', 'finance', 'viewer'],
             'certificates'  => ['finance', 'viewer'],

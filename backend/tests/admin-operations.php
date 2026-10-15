@@ -52,6 +52,13 @@ try {
     foreach (['/admin/logout.php','/admin/two-factor.php','/admin/login.php'] as $script) $check("viewer may still use $script",Auth::viewerMayPost($viewer,$script));
     foreach (['owner','registration','finance','content','checkin'] as $role) $check("$role keeps sending changes",Auth::viewerMayPost(['role'=>$role],'/admin/registration.php'));
     $check('viewer has a role description',isset(Auth::ROLE_NAMES['viewer']));
+    $sponsorsRole=['role'=>'sponsors','id'=>1];
+    $check('sponsors role can open Sponsors and Booths',Auth::can($sponsorsRole,'sponsors'));
+    foreach (['dashboard','registrations','edit','payments','workshops','checkin','export','certificates','photos','content','communications','owner'] as $area) $check("sponsors role cannot use $area",!Auth::can($sponsorsRole,$area));
+    $check('sponsors role starts on the Sponsors page',Page::home($sponsorsRole)==='sponsors.php');
+    $check('sponsors role needs the phone code',Auth::needsTwoFactor($sponsorsRole));
+    $check('sponsors role can save bookings',!Auth::viewOnly($sponsorsRole) && Auth::viewerMayPost($sponsorsRole,'/admin/sponsors.php'));
+    $check('sponsors role has a role description',isset(Auth::ROLE_NAMES['sponsors']));
     [$scope,$params]=CommunicationQuery::where(['role'=>'registration'],['status'=>'failed','kind'=>'alert','q'=>"x' OR 1=1 --"]);
     $check('staff never gains alert access through filters',str_contains($scope,"e.kind <> 'alert'") && !str_contains($scope,"x' OR"));
     $check('filter values are passed as parameters',in_array('failed',$params,true) && in_array('alert',$params,true));

@@ -86,6 +86,7 @@ $roleGuide = [
     'content' => ['content', 'Content', 'Website wording, photos and content.'],
     'checkin' => ['checkin', 'Check-in', 'Find tickets, scan QR codes and welcome guests.'],
     'viewer' => ['view', 'Viewer', 'Sees every event page (people, payments, sponsors, check-in) but cannot change anything.'],
+    'sponsors' => ['sponsors', 'Sponsors', 'Books sponsor places on the map and exhibition booths, and follows up those bookings. Nothing else.'],
 ];
 Page::top('Users', 'users', '<a class="btn" href="#add-person">' . Page::navIcon('users') . '<span>Add a person</span></a>');
 ?>

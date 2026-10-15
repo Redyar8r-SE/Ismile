@@ -25,8 +25,8 @@ if (($argv[1] ?? '') === '--render') {
     if (!$owner) throw new RuntimeException('An enabled Owner account is required.');
     // A process-local rendering context, without signing in or updating an account.
     $owner['totp_enabled'] = 1;
-    // --render page query viewer: the same page as a look-only Viewer would see it.
-    if (($argv[4] ?? '') === 'viewer') $owner['role'] = 'viewer';
+    // --render page query role: the same page as a Viewer or Sponsors account would see it.
+    if (in_array($argv[4] ?? '', ['viewer', 'sponsors'], true)) $owner['role'] = $argv[4];
     (new ReflectionProperty(Auth::class, 'user'))->setValue(null, $owner);
     $file = App::siteFile('admin/' . $page . '.php');
     if (!is_file($file)) $file = dirname(__DIR__, 2) . '/admin/' . $page . '.php';
@@ -124,6 +124,14 @@ foreach (['index','registrations','lists','payments','psoola-orders','workshops'
 }
 foreach (['users','settings','backups','content'] as $page) {
     $check('Viewer cannot open ' . $page, str_contains($render($page, '', 'viewer'), '<h2>Not allowed</h2>'));
+}
+// Sponsors: books sponsor map places and booths, and opens nothing else.
+foreach (['sponsors','booths'] as $page) {
+    $html = $render($page, '', 'sponsors');
+    $check('Sponsors account can book on ' . $page, !str_contains($html, '<h2>Not allowed</h2>') && !str_contains($html, 'class="admin-shell view-only"') && str_contains($html, 'new=1'));
+}
+foreach (['index','registrations','payments','checkin','users','content'] as $page) {
+    $check('Sponsors account cannot open ' . $page, str_contains($render($page, '', 'sponsors'), '<h2>Not allowed</h2>'));
 }
 $check('PDF report generator works', str_starts_with(PdfReport::bundle(['Deployment check'=>[['Status'],['Verified']]]), '%PDF-'));
 echo "Deployment verification complete: $passed read-only checks passed. No guests admitted or certificate emails sent.\n";

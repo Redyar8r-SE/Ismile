@@ -185,7 +185,7 @@ $e = [Page::class, 'e'];
 $money = static fn ($amount): string => $amount === null || $amount === '' ? '–' : Page::money((int) $amount);
 $inputTime = static fn (?string $at): string => $at ? date('Y-m-d\TH:i', (int) strtotime($at)) : '';
 $now = App::now();
-$staff = Db::all("SELECT id, name FROM admin_users WHERE disabled_at IS NULL AND role IN ('owner','registration','finance') ORDER BY name");
+$staff = Db::all("SELECT id, name FROM admin_users WHERE disabled_at IS NULL AND role IN ('owner','registration','finance','sponsors') ORDER BY name");
 
 // =========================== one request ===========================
 if ($id > 0 && ($request = Sponsors::find($id))) {
@@ -456,7 +456,7 @@ Page::top($kind==='booth'?'Booths':'Sponsors', $kind==='booth'?'booths':'sponsor
   <a class="btn small <?= $filter === '' && !$dueOnly ? '' : 'ghost' ?>" href="<?= $pageFile ?>">All</a>
   <?php foreach (Sponsors::STATUSES as $status): ?><a class="btn small <?= $filter === $status ? '' : 'ghost' ?>" href="<?= $pageFile ?>?status=<?= $status ?>"><?= $e(str_replace('_', ' ', ucfirst($status))) ?></a><?php endforeach; ?>
 </div>
-<section class="card partner-directory" data-live-region="booking-directory"><div class="panel-top"><?= Page::panelHeading($kind==='booth' ? 'Booth enquiries':'Sponsor enquiries','Your contacts, agreed amounts and upcoming calls, in one place.','sponsors') ?><div class="panel-actions"><a class="btn ghost" href="export.php?what=list&amp;list=<?= $kind === 'booth' ? 'exhibition' : 'sponsors' ?>&amp;format=pdf">Download PDF</a><a class="btn green" href="export.php?what=list&amp;list=<?= $kind === 'booth' ? 'exhibition' : 'sponsors' ?>">Export to Excel</a></div></div><div class="table-wrap"><table>
+<section class="card partner-directory" data-live-region="booking-directory"><div class="panel-top"><?= Page::panelHeading($kind==='booth' ? 'Booth enquiries':'Sponsor enquiries','Your contacts, agreed amounts and upcoming calls, in one place.','sponsors') ?><?php if (Auth::can($user, 'export')): ?><div class="panel-actions"><a class="btn ghost" href="export.php?what=list&amp;list=<?= $kind === 'booth' ? 'exhibition' : 'sponsors' ?>&amp;format=pdf">Download PDF</a><a class="btn green" href="export.php?what=list&amp;list=<?= $kind === 'booth' ? 'exhibition' : 'sponsors' ?>">Export to Excel</a></div><?php endif; ?></div><div class="table-wrap"><table>
   <tr><th>Company</th><th><?= $kind === 'booth' ? 'Booth' : 'Package' ?></th><th>Status</th><th>Agreed / paid</th><th>Next call</th><th>Handled by</th><th>Received</th><th>Actions</th></tr>
   <?php foreach ($rows as $row): $due = $row['next_call_at'] && $row['next_call_at'] <= $now && !in_array($row['status'], ['confirmed', 'declined','cancelled'], true); ?>
   <tr><td><a href="<?= $pageFile ?>?id=<?= (int) $row['id'] ?>"><b><?= $e($row['company']) ?></b></a><br><small><?= $e($row['contact_name']) ?> · <span dir="ltr"><?= $e($row['phone']) ?></span></small></td>
