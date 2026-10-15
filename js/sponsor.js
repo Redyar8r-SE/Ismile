@@ -1,13 +1,13 @@
-import { showLoadError } from "./components/load-error.js?v=131";
+import { showLoadError } from "./components/load-error.js?v=132";
 // Entry point for sponsor.html: the sponsorship and booth request form.
 // The same header, footer and languages as the main page, and nothing else.
-import { loadJSON } from "./utils/load-json.js?v=131";
-import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from "./i18n.js?v=131";
-import { initNav } from "./components/nav.js?v=131";
-import { initTheme } from "./components/theme.js?v=131";
-import { initFooter } from "./sections/footer.js?v=131";
-import { initSponsorForm } from "./sections/sponsor-form.js?v=131";
-import { initBoothMap } from "./sections/booth-map.js?v=131";
+import { loadJSON } from "./utils/load-json.js?v=132";
+import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from "./i18n.js?v=132";
+import { initNav } from "./components/nav.js?v=132";
+import { initTheme } from "./components/theme.js?v=132";
+import { initFooter } from "./sections/footer.js?v=132";
+import { initSponsorForm } from "./sections/sponsor-form.js?v=132";
+import { initBoothMap } from "./sections/booth-map.js?v=132";
 
 async function start() {
   initNav();
