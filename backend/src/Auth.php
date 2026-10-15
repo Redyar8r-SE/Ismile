@@ -24,7 +24,7 @@ final class Auth
         'content'      => 'Content (site text only)',
         'checkin'      => 'Check-in (arrivals, attendance, guest list and totals)',
         'viewer'       => 'Viewer (sees every event page, changes nothing)',
-        'sponsors'     => 'Sponsors (sponsor and booth bookings and map places only)',
+        'sponsors'     => 'Viewer + Sponsors (sees every event page; books sponsor map places and booths)',
     ];
     // Registration takes cash and makes real PSOOLA tickets, so it needs the phone code too.
     // The Viewer sees people's details and the money, so it does as well.
@@ -32,6 +32,8 @@ final class Auth
     public const NEEDS_TWO_FACTOR = ['owner', 'finance', 'registration', 'viewer', 'sponsors'];
     // What a Viewer may still send: signing out and setting up their own phone code.
     private const VIEWER_MAY_POST = ['login.php', 'logout.php', 'two-factor.php'];
+    // Viewer + Sponsors may also save on these pages: sponsor bookings, map places and booths.
+    private const SPONSORS_MAY_POST = ['sponsors.php', 'booths.php'];
 
     private const IDLE_SECONDS = 1800;
     private const MAX_SECONDS = 43200;
@@ -181,35 +183,37 @@ final class Auth
         if ($user['role'] === 'owner') {
             return true;
         }
-        // The Viewer opens every event page but never 'edit' or 'content' (the
-        // website editor). Whatever it sends is refused by viewerMayPost().
+        // The Viewer (and Viewer + Sponsors) opens every event page but never 'edit'
+        // or 'content' (the website editor). What it sends is refused by viewerMayPost().
         $allowed = [
-            'dashboard'     => ['registration', 'finance', 'viewer'],
-            'registrations' => ['registration', 'finance', 'viewer'],
+            'dashboard'     => ['registration', 'finance', 'viewer', 'sponsors'],
+            'registrations' => ['registration', 'finance', 'viewer', 'sponsors'],
             'edit'          => ['registration'],
-            'payments'      => ['finance', 'viewer'],
-            'workshops'     => ['viewer'],               // the Owner books workshops
+            'payments'      => ['finance', 'viewer', 'sponsors'],
+            'workshops'     => ['viewer', 'sponsors'],   // the Owner books workshops
             'sponsors'      => ['finance', 'viewer', 'sponsors'],
-            'checkin'       => ['checkin', 'viewer'],
-            'export'        => ['registration', 'finance', 'viewer'],
-            'certificates'  => ['finance', 'viewer'],
-            'photos'        => ['registration', 'viewer'],
+            'checkin'       => ['checkin', 'viewer', 'sponsors'],
+            'export'        => ['registration', 'finance', 'viewer', 'sponsors'],
+            'certificates'  => ['finance', 'viewer', 'sponsors'],
+            'photos'        => ['registration', 'viewer', 'sponsors'],
             'content'       => ['content'],
-            'communications' => ['finance', 'viewer'],
+            'communications' => ['finance', 'viewer', 'sponsors'],
         ];
         return in_array($user['role'], $allowed[$area] ?? [], true);
     }
 
-    /** True for a look-only account. */
+    /** True for a look-only account (Viewer + Sponsors still saves on the sponsor pages). */
     public static function viewOnly(array $user): bool
     {
-        return $user['role'] === 'viewer';
+        return in_array($user['role'], ['viewer', 'sponsors'], true);
     }
 
     /** False when a Viewer sends something that would change data on this page. */
     public static function viewerMayPost(array $user, string $script): bool
     {
-        return !self::viewOnly($user) || in_array(basename($script), self::VIEWER_MAY_POST, true);
+        $page = basename($script);
+        return !self::viewOnly($user) || in_array($page, self::VIEWER_MAY_POST, true)
+            || ($user['role'] === 'sponsors' && in_array($page, self::SPONSORS_MAY_POST, true));
     }
 
     public static function csrf(): string

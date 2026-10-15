@@ -183,7 +183,6 @@ final class Page
     {
         return match ($user['role']) {
             'checkin' => 'checkin.php',
-            'sponsors' => 'sponsors.php',
             'content' => self::contentUrl(),
             default   => 'index.php',
         };

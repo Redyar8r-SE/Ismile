@@ -36,7 +36,7 @@ try {
     $check('content staff land on their Database overview',Page::home(['role'=>'content'])==='content.php');
     App::boot($config);
     foreach (Auth::ROLES as $role) {
-        $check("communication access for $role",Auth::can(['role'=>$role],'communications')===in_array($role,['owner','finance','viewer'],true));
+        $check("communication access for $role",Auth::can(['role'=>$role],'communications')===in_array($role,['owner','finance','viewer','sponsors'],true));
     }
     $viewer=['role'=>'viewer','id'=>1];
     foreach (['dashboard','registrations','payments','workshops','sponsors','checkin','export','certificates','photos','communications'] as $area) {
@@ -53,11 +53,13 @@ try {
     foreach (['owner','registration','finance','content','checkin'] as $role) $check("$role keeps sending changes",Auth::viewerMayPost(['role'=>$role],'/admin/registration.php'));
     $check('viewer has a role description',isset(Auth::ROLE_NAMES['viewer']));
     $sponsorsRole=['role'=>'sponsors','id'=>1];
-    $check('sponsors role can open Sponsors and Booths',Auth::can($sponsorsRole,'sponsors'));
-    foreach (['dashboard','registrations','edit','payments','workshops','checkin','export','certificates','photos','content','communications','owner'] as $area) $check("sponsors role cannot use $area",!Auth::can($sponsorsRole,$area));
-    $check('sponsors role starts on the Sponsors page',Page::home($sponsorsRole)==='sponsors.php');
-    $check('sponsors role needs the phone code',Auth::needsTwoFactor($sponsorsRole));
-    $check('sponsors role can save bookings',!Auth::viewOnly($sponsorsRole) && Auth::viewerMayPost($sponsorsRole,'/admin/sponsors.php'));
+    foreach (['dashboard','registrations','payments','workshops','sponsors','checkin','export','certificates','photos','communications'] as $area) $check("viewer + sponsors can open $area",Auth::can($sponsorsRole,$area));
+    foreach (['edit','content','owner'] as $area) $check("viewer + sponsors cannot use $area",!Auth::can($sponsorsRole,$area));
+    $check('viewer + sponsors starts on the dashboard',Page::home($sponsorsRole)==='index.php');
+    $check('viewer + sponsors needs the phone code',Auth::needsTwoFactor($sponsorsRole));
+    foreach (['/admin/sponsors.php','/admin/booths.php','/admin/logout.php','/admin/two-factor.php'] as $script) $check("viewer + sponsors may save on $script",Auth::viewerMayPost($sponsorsRole,$script));
+    foreach (['/admin/registration.php','/admin/checkin.php','/admin/payments.php','/admin/workshops.php','/admin/users.php','/admin/settings.php'] as $script) $check("viewer + sponsors cannot send changes to $script",!Auth::viewerMayPost($sponsorsRole,$script));
+    $check('plain viewer still cannot book sponsors',!Auth::viewerMayPost($viewer,'/admin/sponsors.php') && !Auth::viewerMayPost($viewer,'/admin/booths.php'));
     $check('sponsors role has a role description',isset(Auth::ROLE_NAMES['sponsors']));
     [$scope,$params]=CommunicationQuery::where(['role'=>'registration'],['status'=>'failed','kind'=>'alert','q'=>"x' OR 1=1 --"]);
     $check('staff never gains alert access through filters',str_contains($scope,"e.kind <> 'alert'") && !str_contains($scope,"x' OR"));

@@ -125,13 +125,17 @@ foreach (['index','registrations','lists','payments','psoola-orders','workshops'
 foreach (['users','settings','backups','content'] as $page) {
     $check('Viewer cannot open ' . $page, str_contains($render($page, '', 'viewer'), '<h2>Not allowed</h2>'));
 }
-// Sponsors: books sponsor map places and booths, and opens nothing else.
+// Viewer + Sponsors: sees every event page like a Viewer, and books on Sponsors and Booths.
 foreach (['sponsors','booths'] as $page) {
     $html = $render($page, '', 'sponsors');
-    $check('Sponsors account can book on ' . $page, !str_contains($html, '<h2>Not allowed</h2>') && !str_contains($html, 'class="admin-shell view-only"') && str_contains($html, 'new=1'));
+    $check('Viewer + Sponsors can book on ' . $page, !str_contains($html, '<h2>Not allowed</h2>') && !str_contains($html, 'class="admin-shell view-only"') && str_contains($html, 'new=1'));
 }
-foreach (['index','registrations','payments','checkin','users','content'] as $page) {
-    $check('Sponsors account cannot open ' . $page, str_contains($render($page, '', 'sponsors'), '<h2>Not allowed</h2>'));
+foreach (['index','registrations','lists','payments','psoola-orders','workshops','checkin','certificates','communications'] as $page) {
+    $html = $render($page, '', 'sponsors');
+    $check('Viewer + Sponsors sees ' . $page . ' in view-only mode', str_contains($html, 'class="admin-shell view-only"') && !str_contains($html, '<h2>Not allowed</h2>'));
+}
+foreach (['users','settings','backups','content'] as $page) {
+    $check('Viewer + Sponsors cannot open ' . $page, str_contains($render($page, '', 'sponsors'), '<h2>Not allowed</h2>'));
 }
 $check('PDF report generator works', str_starts_with(PdfReport::bundle(['Deployment check'=>[['Status'],['Verified']]]), '%PDF-'));
 echo "Deployment verification complete: $passed read-only checks passed. No guests admitted or certificate emails sent.\n";
