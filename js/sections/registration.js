@@ -8,14 +8,18 @@
 // server (GitHub Pages) or registration is closed, the form is not shown at
 // all, so nobody can believe they registered when nothing was saved.
 // Nothing about the visitor is kept in the browser.
-import { t, getLang, onLangChange } from "../i18n.js?v=132";
-import { formatPrice } from "../utils/money.js?v=132";
-import { initRegistrationExperience } from "./registration-experience.js?v=132";
+import { t, getLang, onLangChange } from "../i18n.js?v=133";
+import { formatPrice } from "../utils/money.js?v=133";
+import { initRegistrationExperience } from "./registration-experience.js?v=133";
 
 const TOTAL_STEPS = 3;
 
 // Which step each field the server may complain about sits on.
 const FIELD_STEP = { terms: 3 };
+// ismile.krd refuses requests over about 1 MB, the form's other fields included.
+const PHOTO_SEND_LIMIT = 950 * 1024;
+const PHOTO_TOO_BIG = { ok: false, error: "err_student_id_big", field: "p_student_id" };
+const SEND_TIMEOUT_MS = 90 * 1000;   // weak phone signal: give up with a clear message, not a spinner forever
 
 // Earlier versions kept the visitor's name, email and phone in the browser.
 // Nothing uses them any more, so they are removed from any device that has them.
@@ -531,6 +535,7 @@ export function initRegistration({ tickets = {} } = {}) {
       const photo = $("p_student_id").files?.[0];
       if (photo) {
         const small = await shrinkPhoto(photo);
+        if (small.size > PHOTO_SEND_LIMIT) return null;   // ismile.krd would refuse it: say so instead of sending
         data.append("student_id", small, small === photo ? photo.name : "student-id.jpg");
       }
     }
@@ -566,33 +571,85 @@ export function initRegistration({ tickets = {} } = {}) {
   // is sent as it is.
   async function shrinkPhoto(file) {
     const LIMIT = 850 * 1024;
-    if (!/^image\/(jpeg|png|webp)$/i.test(file.type) || typeof createImageBitmap !== "function") return file;
+    if (!/^image\/(jpeg|png|webp)$/i.test(file.type)) return file;
     if (file.size <= LIMIT && file.type === "image/jpeg") return file;
+    let picture = null;
     try {
-      const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+      picture = await openPhoto(file);
       let best = null;
-      for (const [side, quality] of [[2000, 0.85], [2000, 0.72], [1600, 0.72], [1280, 0.7]]) {
-        const scale = Math.min(1, side / Math.max(bitmap.width, bitmap.height));
+      for (const [side, quality] of [[2000, 0.85], [2000, 0.72], [1600, 0.72], [1280, 0.7], [1024, 0.65]]) {
+        const scale = Math.min(1, side / Math.max(picture.width, picture.height));
         const canvas = document.createElement("canvas");
-        canvas.width = Math.max(1, Math.round(bitmap.width * scale));
-        canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+        canvas.width = Math.max(1, Math.round(picture.width * scale));
+        canvas.height = Math.max(1, Math.round(picture.height * scale));
         const context = canvas.getContext("2d");
         context.fillStyle = "#fff";
         context.fillRect(0, 0, canvas.width, canvas.height);
-        context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+        context.drawImage(picture.source, 0, 0, canvas.width, canvas.height);
         best = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
         if (best && best.size <= LIMIT) break;
       }
-      bitmap.close?.();
       return best && best.size < file.size ? best : file;
     } catch {
       return file;
+    } finally {
+      picture?.close();
     }
+  }
+
+  // Some phones (older iPhones) refuse createImageBitmap or its "turn upright"
+  // option. The photo is then opened as a plain picture instead, which those
+  // browsers already show upright.
+  async function openPhoto(file) {
+    if (typeof createImageBitmap === "function") {
+      try {
+        const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+        return { source: bitmap, width: bitmap.width, height: bitmap.height, close: () => bitmap.close?.() };
+      } catch { /* try the plain picture below */ }
+    }
+    const url = URL.createObjectURL(file);
+    const image = new Image();
+    image.src = url;
+    try {
+      await image.decode();
+    } catch (error) {
+      URL.revokeObjectURL(url);
+      throw error;
+    }
+    return { source: image, width: image.naturalWidth, height: image.naturalHeight, close: () => URL.revokeObjectURL(url) };
   }
 
   window.addEventListener("pageshow", (event) => {
     if (event.persisted && sending && lastStatusUrl) window.location.replace(lastStatusUrl);
   });
+
+  // Sends the form and, when it fails before our server could answer, names
+  // the reason the visitor can act on instead of a general "something went wrong".
+  async function sendForm(body) {
+    if (navigator.onLine === false) return { ok: false, error: "err_offline" };
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), SEND_TIMEOUT_MS);
+    let response;
+    try {
+      response = await fetch("api/register.php", { method: "POST", body, headers: { Accept: "application/json" }, signal: controller.signal });
+    } catch {
+      return { ok: false, error: controller.signal.aborted ? "err_slow" : "err_offline" };
+    } finally {
+      clearTimeout(timer);
+    }
+    // 413 comes from the ismile.krd host itself (about 1 MB per request), not from our server.
+    if (response.status === 413) return body.has("student_id") ? PHOTO_TOO_BIG : { ok: false, error: "err_server" };
+    let result;
+    try {
+      result = await response.json();
+    } catch {
+      // Not our server's answer: the host or the server is down or restarting.
+      return { ok: false, error: response.status >= 500 ? "err_unavailable" : "err_server" };
+    }
+    // Our server refuses forms sent from another address, e.g. an old http:// or www. page.
+    if (response.status === 403 && result.error === "err_server") return { ok: false, error: "err_reload" };
+    return result;
+  }
 
   async function submitRegistration() {
     if (sending) return;
@@ -600,8 +657,8 @@ export function initRegistration({ tickets = {} } = {}) {
     $("termsError").hidden = true;
     let result = null;
     try {
-      const response = await fetch("api/register.php", { method: "POST", body: await formData(), headers: { Accept: "application/json" } });
-      result = await response.json();
+      const body = await formData();
+      result = body ? await sendForm(body) : PHOTO_TOO_BIG;
     } catch {
       result = { ok: false, error: "err_server" };
     }
