@@ -213,6 +213,7 @@ final class Checkouts
             throw new UserError(match ($error->key) {
                 'err_student_id_size' => 'The student ID photo is too big (8 MB at most). Send a smaller photo.',
                 'err_student_id_type' => 'The student ID photo must be a JPG, PNG or WebP picture.',
+                'err_student_id_failed' => 'The student ID photo could not be read. Try a different photo or a screenshot of the ID.',
                 default => "Attach the student's ID photo (they can send it to you on WhatsApp).",
             });
         }

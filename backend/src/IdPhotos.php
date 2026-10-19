@@ -27,14 +27,38 @@ final class IdPhotos
         if (in_array($upload['error'], [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE], true)) {
             throw new UserError('err_student_id_size');
         }
+        // A photo was chosen but did not arrive whole (e.g. the connection dropped):
+        // tell the visitor it is the photo, not "choose a photo".
         if ($upload['error'] !== UPLOAD_ERR_OK || !is_uploaded_file((string) $upload['tmp_name'])) {
-            throw new UserError('err_student_id');
+            throw new UserError('err_student_id_failed');
         }
         $path = (string) $upload['tmp_name'];
         if (filesize($path) > self::MAX_BYTES) {
             throw new UserError('err_student_id_size');
         }
 
+        try {
+            $photo = self::redraw($path);
+        } catch (UserError $error) {
+            throw $error;
+        } catch (\Throwable $error) {
+            // Anything else that goes wrong with the picture itself is still about the
+            // photo, so the visitor is asked for another one instead of "something went wrong".
+            App::log('error', 'ID photo could not be read', ['error' => $error->getMessage(), 'at' => $error->getFile() . ':' . $error->getLine()]);
+            throw new UserError('err_student_id_failed');
+        }
+        return Db::insert('student_id_photos', $photo + [
+            'mime'          => 'image/jpeg',
+            'sha256'        => hash('sha256', $photo['image']),
+            'original_name' => mb_substr(basename((string) ($upload['name'] ?? '')), 0, 190) ?: null,
+            'uploaded_at'   => App::now(),
+            'uploaded_ip'   => App::clientIp(),
+        ]);
+    }
+
+    /** Checks the picture and draws it again as a fresh JPEG of at most 2000 px. */
+    private static function redraw(string $path): array
+    {
         $type = (new \finfo(FILEINFO_MIME_TYPE))->file($path);
         $size = @getimagesize($path);
         if (!in_array($type, self::TYPES, true) || $size === false || !in_array($size['mime'], self::TYPES, true)) {
@@ -74,17 +98,7 @@ final class IdPhotos
         if (!$written || $jpeg === '') {
             throw new \RuntimeException('The ID photo could not be saved.');
         }
-        return Db::insert('student_id_photos', [
-            'image'         => $jpeg,
-            'mime'          => 'image/jpeg',
-            'width'         => $finalWidth,
-            'height'        => $finalHeight,
-            'bytes'         => strlen($jpeg),
-            'sha256'        => hash('sha256', $jpeg),
-            'original_name' => mb_substr(basename((string) ($upload['name'] ?? '')), 0, 190) ?: null,
-            'uploaded_at'   => App::now(),
-            'uploaded_ip'   => App::clientIp(),
-        ]);
+        return ['image' => $jpeg, 'width' => $finalWidth, 'height' => $finalHeight, 'bytes' => strlen($jpeg)];
     }
 
     /** One photo with its image, or null. */

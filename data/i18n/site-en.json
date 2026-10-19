@@ -42,6 +42,7 @@
   "err_student_id_type": "Use a JPG, PNG or WebP image.",
   "err_student_id_size": "The student ID photo must be 8 MB or smaller.",
   "err_student_id_big": "Your student ID photo is too large to send. Please take a screenshot of your student ID and choose the screenshot instead.",
+  "err_student_id_failed": "Your student ID photo could not be received. Please try again, or choose a different photo or a screenshot of your student ID.",
   "err_terms": "Please confirm this to complete your registration.",
   "success_title": "You're registered!",
   "tk_soon": "Price soon",

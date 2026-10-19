@@ -8,9 +8,9 @@
 // server (GitHub Pages) or registration is closed, the form is not shown at
 // all, so nobody can believe they registered when nothing was saved.
 // Nothing about the visitor is kept in the browser.
-import { t, getLang, onLangChange } from "../i18n.js?v=133";
-import { formatPrice } from "../utils/money.js?v=133";
-import { initRegistrationExperience } from "./registration-experience.js?v=133";
+import { t, getLang, onLangChange } from "../i18n.js?v=134";
+import { formatPrice } from "../utils/money.js?v=134";
+import { initRegistrationExperience } from "./registration-experience.js?v=134";
 
 const TOTAL_STEPS = 3;
 
@@ -19,6 +19,7 @@ const FIELD_STEP = { terms: 3 };
 // ismile.krd refuses requests over about 1 MB, the form's other fields included.
 const PHOTO_SEND_LIMIT = 950 * 1024;
 const PHOTO_TOO_BIG = { ok: false, error: "err_student_id_big", field: "p_student_id" };
+const PHOTO_FAILED = { ok: false, error: "err_student_id_failed", field: "p_student_id" };
 const SEND_TIMEOUT_MS = 90 * 1000;   // weak phone signal: give up with a clear message, not a spinner forever
 
 // Earlier versions kept the visitor's name, email and phone in the browser.
@@ -643,7 +644,9 @@ export function initRegistration({ tickets = {} } = {}) {
     try {
       result = await response.json();
     } catch {
-      // Not our server's answer: the host or the server is down or restarting.
+      // Not our server's answer. A plain 500 while a photo was sent means the
+      // server broke while reading the photo; otherwise it is down or restarting.
+      if (response.status === 500 && body.has("student_id")) return PHOTO_FAILED;
       return { ok: false, error: response.status >= 500 ? "err_unavailable" : "err_server" };
     }
     // Our server refuses forms sent from another address, e.g. an old http:// or www. page.

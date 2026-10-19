@@ -420,6 +420,7 @@ const PARTS = [
       ["err_email", "Error: email"], ["err_phone", "Error: phone"], ["err_student_id", "Error: missing student ID"],
       ["err_student_id_type", "Error: student ID file type"], ["err_student_id_size", "Error: student ID file size"],
       ["err_student_id_big", "Error: student ID photo too large to send"],
+      ["err_student_id_failed", "Error: student ID photo could not be received"],
       ["err_terms", "Error: agreement"],
       ["err_offline", "Error: could not send (internet)"], ["err_slow", "Error: connection too slow"],
       ["err_unavailable", "Error: registration server not answering"], ["err_reload", "Error: old page, reload"],
