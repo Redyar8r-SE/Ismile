@@ -338,7 +338,25 @@ CREATE TABLE IF NOT EXISTS workshops (
   speaker_en   VARCHAR(160)       NULL,
   speaker_ar   VARCHAR(160)       NULL,
   speaker_ku   VARCHAR(160)       NULL,
-  price        INT UNSIGNED       NOT NULL DEFAULT 0,         -- IQD per seat; 0 = price not set yet
+  -- the details page (empty = not shown)
+  credentials_en VARCHAR(200)     NULL,                       -- the trainer's degrees, e.g. "BDS, MSc"
+  credentials_ar VARCHAR(200)     NULL,
+  credentials_ku VARCHAR(200)     NULL,
+  format_en    VARCHAR(120)       NULL,                       -- e.g. "Hands-on Clinical Workshop"
+  format_ar    VARCHAR(120)       NULL,
+  format_ku    VARCHAR(120)       NULL,
+  duration_en  VARCHAR(60)        NULL,                       -- e.g. "3 Hours"
+  duration_ar  VARCHAR(60)        NULL,
+  duration_ku  VARCHAR(60)        NULL,
+  level_en     VARCHAR(120)       NULL,                       -- e.g. "Intermediate to Advanced"
+  level_ar     VARCHAR(120)       NULL,
+  level_ku     VARCHAR(120)       NULL,
+  overview_en  TEXT               NULL,
+  overview_ar  TEXT               NULL,
+  overview_ku  TEXT               NULL,
+  photo        VARCHAR(200)       NULL,                       -- the trainer's photo, a path on the website (assets/…)
+  price        INT UNSIGNED       NOT NULL DEFAULT 0,         -- per seat, in `currency`; 0 = price not set yet
+  currency     CHAR(3)            NOT NULL DEFAULT 'IQD',     -- IQD or USD (the price and every booking's amount)
   total_seats  SMALLINT UNSIGNED  NOT NULL,                   -- the limit
   status       ENUM('active','hidden') NOT NULL DEFAULT 'active',   -- hidden = not on the website, no new bookings
   sort_order   SMALLINT UNSIGNED  NOT NULL DEFAULT 0,
@@ -347,6 +365,7 @@ CREATE TABLE IF NOT EXISTS workshops (
   PRIMARY KEY (id),
   KEY k_workshop_status (status, sort_order),
   CONSTRAINT ck_workshop_seats CHECK (total_seats BETWEEN 1 AND 2000),
+  CONSTRAINT ck_workshop_currency CHECK (currency IN ('IQD','USD')),
   CONSTRAINT ck_workshop_id CHECK (id REGEXP '^[a-z0-9-]{2,40}$')
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Workshops (managed in the admin)';
@@ -682,17 +701,18 @@ FROM registrations r WHERE r.ticket_type = 'student' AND r.status IN ('paid','co
 CREATE OR REPLACE SQL SECURITY DEFINER VIEW `05_workshops` AS
 SELECT
   COALESCE(w.title_en, CONCAT(w.id, ' (title not announced)'))  AS `Workshop`,
-  w.price                                                       AS `Price (IQD)`,
+  w.price                                                       AS `Price`,
+  w.currency                                                    AS `Currency`,
   w.total_seats                                                 AS `Seats`,
   COUNT(wb.id)                                                  AS `Booked`,
   w.total_seats - COUNT(wb.id)                                  AS `Seats left`,
   COALESCE(SUM(wb.payment_status = 'paid'), 0)                  AS `Paid`,
   COALESCE(SUM(wb.payment_status = 'unpaid'), 0)                AS `Not paid yet`,
-  COALESCE(SUM(wb.amount_paid), 0)                              AS `Money received (IQD)`,
+  COALESCE(SUM(wb.amount_paid), 0)                              AS `Money received`,
   IF(w.status = 'active', 'Shown', 'Hidden')                    AS `On the website`
 FROM workshops w
 LEFT JOIN workshop_bookings wb ON wb.workshop_id = w.id AND wb.removed_at IS NULL
-GROUP BY w.id, w.title_en, w.price, w.total_seats, w.status, w.sort_order
+GROUP BY w.id, w.title_en, w.price, w.currency, w.total_seats, w.status, w.sort_order
 ORDER BY w.sort_order;
 
 -- Who booked which workshop.
@@ -702,7 +722,8 @@ SELECT
   CONCAT_WS(' ', r.first_name, r.father_name, r.grandfather_name)    AS `Full name`,
   r.phone                                                            AS `Phone`,
   CASE wb.payment_status WHEN 'paid' THEN 'Paid' WHEN 'complimentary' THEN 'Free' ELSE 'Not paid' END AS `Paid?`,
-  wb.amount_paid                                                     AS `Amount paid (IQD)`,
+  wb.amount_paid                                                     AS `Amount paid`,
+  w.currency                                                         AS `Currency`,
   wb.paid_how                                                        AS `Paid how`,
   wb.created_at                                                      AS `Booked on`,
   r.ref                                                              AS `Reference`

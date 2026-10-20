@@ -5,7 +5,14 @@ import { describe, expect, it } from "vitest";
 const registryURL = new URL("../js/admin/fields.js", import.meta.url);
 const { groupsForText } = await import(registryURL.href);
 
-const pages = ["index.html", "workshops.html", "register.html", "sponsor.html", "payment.html"];
+const pages = [
+  "index.html",
+  "workshops.html",
+  "workshop.html",
+  "register.html",
+  "sponsor.html",
+  "payment.html",
+];
 /** @param {string} name */
 const read = (name) => readFileSync(new URL(`../${name}`, import.meta.url), "utf8");
 /** @type {Record<string, Record<string, string>>} */
@@ -55,7 +62,14 @@ describe("public translations and complete content editing", () => {
   });
 
   it("uses the same editable language files on every page", () => {
-    for (const entry of ["main", "workshops-page", "register", "sponsor", "payment"]) {
+    for (const entry of [
+      "main",
+      "workshops-page",
+      "workshop-page",
+      "register",
+      "sponsor",
+      "payment",
+    ]) {
       const source = read(`js/${entry}.js`);
       for (const code of ["en", "ar", "ku"]) {
         expect(source).toContain(`data/i18n/site-${code}.json`);

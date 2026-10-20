@@ -204,13 +204,14 @@ final class Office
         $typedPrice = trim((string) ($in['price'] ?? ''));
         $typedPrice = preg_replace('/\D/', '', $typedPrice) ?? '';
         $price = $isOwner && $typedPrice !== '' ? (int) $typedPrice : (int) ($workshop['price'] ?? 0);
+        $currency = (string) ($workshop['currency'] ?? 'IQD');
         if ($price > 10_000_000) {
-            throw new UserError('That price (' . number_format($price) . ' IQD) looks wrong. Check the number.');
+            throw new UserError('That price (' . Workshops::money($price, $currency) . ') looks wrong. Check the number.');
         }
         if ($price <= 0 && !$isOwner) {
             throw new UserError('This workshop has no price yet. The Owner sets it on the Workshops page first.');
         }
-        $payment = self::workshopPayment($in, $price, $user);
+        $payment = self::workshopPayment($in, $price, $user, $currency);
         $override = ($in['override'] ?? '') === '1' && $isOwner;
         // The workshop row is locked while the seat is taken, so two people
         // booking the last seat at the same moment cannot both get it.
@@ -240,9 +241,9 @@ final class Office
         SiteData::syncWorkshopSeats();
         Audit::log((int) $user['id'], 'workshop.add', 'registration', (int) $registration['id'], ['workshop' => $workshop['id'], 'booking' => $id, 'payment' => $payment, 'over_capacity' => $full]);
         $paidNote = match ($payment['payment_status']) {
-            'paid' => ' Paid: ' . number_format($price) . ' IQD.',
+            'paid' => ' Paid: ' . Workshops::money($price, $currency) . '.',
             'complimentary' => ' Free (complimentary).',
-            default => ' Not paid yet: ' . number_format($price) . ' IQD to collect.',
+            default => ' Not paid yet: ' . Workshops::money($price, $currency) . ' to collect.',
         };
         return Registrations::fullName($registration) . ' is booked on ' . SiteData::workshopName($workshop) . '.' . $paidNote;
     }
@@ -267,7 +268,7 @@ final class Office
                 Db::update('workshop_bookings', ['removed_at' => App::now(), 'removed_by' => $user['id'], 'updated_at' => App::now()], 'id = ?', [$bookingId]);
                 return [$booking, null];
             }
-            $payment = self::workshopPayment($in + ['payment_status' => $booking['payment_status']], (int) $booking['price_agreed'], $user);
+            $payment = self::workshopPayment($in + ['payment_status' => $booking['payment_status']], (int) $booking['price_agreed'], $user, Workshops::currencyOf($booking['workshop_id']));
             if ($wasPaid && $payment['payment_status'] !== 'paid' && !$isOwner) {
                 throw new UserError('This workshop is already paid. Workshop money is not refunded; only the Owner can correct a mistake.');
             }
@@ -288,7 +289,7 @@ final class Office
         }
         Audit::log((int) $user['id'], 'workshop.payment', 'registration', (int) $booking['registration_id'], ['booking' => $bookingId, 'from' => $booking['payment_status']] + $payment);
         return match ($payment['payment_status']) {
-            'paid' => 'Workshop marked PAID: ' . number_format((int) $booking['price_agreed']) . ' IQD received.',
+            'paid' => 'Workshop marked PAID: ' . Workshops::money((int) $booking['price_agreed'], Workshops::currencyOf($booking['workshop_id'])) . ' received.',
             'complimentary' => 'Workshop marked free (complimentary).',
             default => 'Workshop marked NOT paid.',
         };
@@ -299,7 +300,7 @@ final class Office
      * exact amount received (the agreed price) and how it was paid; anything
      * else is refused, so every workshop is paid correctly or not at all.
      */
-    private static function workshopPayment(array $in, int $price, array $user): array
+    private static function workshopPayment(array $in, int $price, array $user, string $currency = 'IQD'): array
     {
         $status = Validate::oneOf($in['payment_status'] ?? null, ['unpaid', 'paid', 'complimentary'], 'unpaid');
         if ($status === 'complimentary' && $user['role'] !== 'owner') {
@@ -313,10 +314,10 @@ final class Office
         }
         $typed = preg_replace('/\D/', '', (string) ($in['amount_paid'] ?? '')) ?? '';
         if ($typed === '') {
-            throw new UserError('Type the amount received (' . number_format($price) . ' IQD).');
+            throw new UserError('Type the amount received (' . Workshops::money($price, $currency) . ').');
         }
         if ((int) $typed !== $price) {
-            throw new UserError('The amount received (' . number_format((int) $typed) . ' IQD) is not the workshop price (' . number_format($price) . ' IQD). It must be paid in full and exactly.');
+            throw new UserError('The amount received (' . Workshops::money((int) $typed, $currency) . ') is not the workshop price (' . Workshops::money($price, $currency) . '). It must be paid in full and exactly.');
         }
         $how = (string) Validate::oneOf($in['paid_how'] ?? null, ['cash', 'transfer', 'psoola'], '');
         if ($how === '') {

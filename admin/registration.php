@@ -372,15 +372,15 @@ if ($inCheckin) echo CheckinWorkspace::navigation('guests', $user, $workspaceDay
 
 <?php if (Auth::can($user, 'workshops')): ?>
 <div class="card">
-  <h2>Workshops (booked by phone)</h2>
+  <h2>Workshops</h2>
   <div class="table-wrap"><table>
     <tr><th>Workshop</th><th>Price</th><th>Paid?</th><th>Booked by</th><th class="table-action-heading">Actions</th></tr>
     <?php foreach ($bookings as $booking): $workshop = SiteData::workshop($booking['workshop_id']); ?>
     <tr>
       <td><?= $e($workshop ? SiteData::workshopName($workshop) : $booking['workshop_id']) ?><?= $booking['over_capacity'] ? ' ' . Page::pill('waiting_list') . '<small> over capacity</small>' : '' ?></td>
-      <td><?= Page::money((int) $booking['price_agreed'], $prices['currency']) ?></td>
+      <td><?= $e(\Ismile\Workshops::money((int) $booking['price_agreed'], $workshop['currency'] ?? 'IQD')) ?></td>
       <td><?= Page::paidBadge($booking['payment_status']) ?><?= $booking['payment_status'] === 'paid' ? '<br><small class="muted">' . $e((string) $booking['paid_how']) . ', ' . Page::when($booking['paid_at']) . '</small>' : '' ?></td>
-      <td><?= $e($booking['booked_by_name'] ?? '') ?> <?= Page::when($booking['created_at']) ?></td>
+      <td><?= $e($booking['booked_by_name'] ?? ($booking['booked_by'] === null ? 'Website (online)' : '')) ?> <?= Page::when($booking['created_at']) ?></td>
       <td class="table-action-cell">
         <?= Page::workshopPaymentForm($booking, $user, 'registration.php?id=' . $id) ?>
       </td>

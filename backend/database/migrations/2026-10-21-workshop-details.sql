@@ -1,0 +1,21 @@
+-- Workshop details page: the trainer's photo and degrees, format, duration,
+-- level and overview (in three languages), and the price's currency (IQD or USD).
+ALTER TABLE workshops
+  ADD COLUMN credentials_en VARCHAR(200) NULL AFTER speaker_ku,
+  ADD COLUMN credentials_ar VARCHAR(200) NULL AFTER credentials_en,
+  ADD COLUMN credentials_ku VARCHAR(200) NULL AFTER credentials_ar,
+  ADD COLUMN format_en VARCHAR(120) NULL AFTER credentials_ku,
+  ADD COLUMN format_ar VARCHAR(120) NULL AFTER format_en,
+  ADD COLUMN format_ku VARCHAR(120) NULL AFTER format_ar,
+  ADD COLUMN duration_en VARCHAR(60) NULL AFTER format_ku,
+  ADD COLUMN duration_ar VARCHAR(60) NULL AFTER duration_en,
+  ADD COLUMN duration_ku VARCHAR(60) NULL AFTER duration_ar,
+  ADD COLUMN level_en VARCHAR(120) NULL AFTER duration_ku,
+  ADD COLUMN level_ar VARCHAR(120) NULL AFTER level_en,
+  ADD COLUMN level_ku VARCHAR(120) NULL AFTER level_ar,
+  ADD COLUMN overview_en TEXT NULL AFTER level_ku,
+  ADD COLUMN overview_ar TEXT NULL AFTER overview_en,
+  ADD COLUMN overview_ku TEXT NULL AFTER overview_ar,
+  ADD COLUMN photo VARCHAR(200) NULL AFTER overview_ku,
+  ADD COLUMN currency CHAR(3) NOT NULL DEFAULT 'IQD' AFTER price,
+  ADD CONSTRAINT ck_workshop_currency CHECK (currency IN ('IQD','USD'));

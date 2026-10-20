@@ -55,7 +55,7 @@ elif [ ! -d "$BACKEND/vendor" ]; then
 fi
 
 # ---- Website code (pages, design, scripts, API, admin) ----
-for item in index.html register.html workshops.html sponsor.html admin.html payment.html favicon.ico .htaccess css js api admin server; do
+for item in index.html register.html workshops.html workshop.html sponsor.html admin.html payment.html favicon.ico .htaccess css js api admin server; do
   [ -e "$REPO/$item" ] && cp -R "$REPO/$item" "$SITE/"
 done
 # Pictures and video, but not assets/uploads (the admin's own uploads live there on the server).

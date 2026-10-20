@@ -378,6 +378,13 @@ SQL
   echo "Going live: test people, forms, payments, tickets, check-ins and their bookings deleted (sponsors, booths, workshops, accounts kept)."
 fi
 PHP=php ISMILE_SITE="$SITE" ISMILE_BACKEND_DIR="$BACKEND" bash "$REPO/backend/tools/deploy.sh" test
+# ONCE (the Owner's wish, 21 Oct 2026, for the company's video): the 4 "Coming
+# soon" workshops are deleted and two example workshops with trainer photos
+# are added. Afterwards the Owner manages them on the Workshops page.
+if [ ! -f "$BASE/.video-workshops-1" ]; then
+  php "$BACKEND/tools/video-workshops.php"
+  touch "$BASE/.video-workshops-1"
+fi
 # Accounts that still have the old made-up password (printed in public logs) get the new one.
 if [ -n "$OLD_OWNER_PASS" ]; then
   ISMILE_OLD="$OLD_OWNER_PASS" ISMILE_NEW="$OWNER_PASS" php -r '
@@ -452,7 +459,8 @@ fi
 
 # The web server writes the workshop/sponsor cards and the private storage.
 mkdir -p "$BACKEND/storage"
-chown -R www-data:www-data "$SITE/data" "$BACKEND/storage"
+mkdir -p "$SITE/assets/uploads/workshops"
+chown -R www-data:www-data "$SITE/data" "$BACKEND/storage" "$SITE/assets/uploads"
 chmod 750 "$BACKEND/storage"
 # Copy the website's prices, switch and email texts now (then every minute by cron).
 runuser -u www-data -- php "$BACKEND/cron/run.php" minute >/dev/null 2>&1 || true

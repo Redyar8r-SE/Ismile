@@ -41,7 +41,7 @@ final class Lists
     {
         return match ($list) {
             'attendance' => ['ticket_no' => 'Ticket', 'day1' => 'Day 1 arrival', 'day2' => 'Day 2 arrival', 'certificate_no' => 'Certificate', 'ambassador_code' => 'Ambassador', 'ref' => 'Reference'],
-            'workshops'        => ['phone' => 'Phone', 'workshop_paid' => 'Workshop paid?', 'amount_paid' => 'Amount (IQD)', 'ref' => 'Reference'],
+            'workshops'        => ['phone' => 'Phone', 'workshop_paid' => 'Workshop paid?', 'amount_paid' => 'Amount paid', 'ref' => 'Reference'],
             'sponsors'         => ['package' => 'Package', 'contact_name' => 'Contact', 'phone' => 'Phone', 'sponsor_status' => 'Status', 'amount_agreed' => 'Agreed (IQD)', 'amount_paid' => 'Paid (IQD)', 'next_call_at' => 'Next call', 'cancelled_at' => 'Cancelled on', 'cancellation_reason' => 'Cancellation reason', 'ref' => 'Reference'],
             'exhibition'       => ['package' => 'Booth type', 'contact_name' => 'Contact', 'phone' => 'Phone', 'sponsor_status' => 'Status', 'amount_agreed' => 'Agreed (IQD)', 'amount_paid' => 'Paid (IQD)', 'next_call_at' => 'Next call', 'cancelled_at' => 'Cancelled on', 'cancellation_reason' => 'Cancellation reason', 'ref' => 'Reference'],
             'students', 'studentids' => ['phone' => 'Phone', 'university' => 'University', 'study_stage' => 'Stage', 'ambassador_code' => 'Ambassador', 'id_photo' => 'ID photo', 'ticket_no' => 'Ticket no.', 'ref' => 'Reference'],

@@ -14,6 +14,7 @@ use Ismile\Registrations;
 use Ismile\Security;
 use Ismile\SiteData;
 use Ismile\UserError;
+use Ismile\Workshops;
 
 final class Page
 {
@@ -405,19 +406,19 @@ final class Page
             $left = (int) ($workshop['totalSeats'] ?? 0) - Office::bookedCount($workshop['id']);
             $price = (int) ($workshop['price'] ?? 0);
             $options .= '<option value="' . self::e($workshop['id']) . '" data-price="' . $price . '">' . self::e(SiteData::workshopName($workshop))
-                . ' — ' . ($price > 0 ? number_format($price) . ' IQD' : 'no price yet') . ' — ' . max(0, $left) . ' seats left</option>';
+                . ' — ' . ($price > 0 ? Workshops::money($price, $workshop['currency'] ?? 'IQD') : 'no price yet') . ' — ' . max(0, $left) . ' seats left</option>';
         }
         return '<form method="post" class="book-form"' . ($action !== '' ? ' action="' . self::e($action) . '"' : '') . '>'
             . self::csrfField()
             . '<input type="hidden" name="do" value="workshop_add"><input type="hidden" name="rid" value="' . (int) $registration['id'] . '">'
             . '<label>Workshop<select name="workshop" required data-price-source><option value="">Choose…</option>' . $options . '</select></label>'
-            . ($isOwner ? '<label>Price (IQD, Owner may change)<input name="price" type="number" min="0" step="500" placeholder="workshop price" data-price-target></label>' : '')
+            . ($isOwner ? '<label>Price (Owner may change; in the workshop currency)<input name="price" type="number" min="0" step="1" placeholder="workshop price" data-price-target></label>' : '')
             . '<fieldset class="pay-choice"><legend>Paid?</legend>'
             . '<label><input type="radio" name="payment_status" value="unpaid" checked> ✗ Not paid yet</label>'
             . '<label><input type="radio" name="payment_status" value="paid"> ✓ Paid now</label>'
             . ($isOwner ? '<label><input type="radio" name="payment_status" value="complimentary"> ★ Free (Owner)</label>' : '')
             . '</fieldset>'
-            . '<div class="paid-fields"><label>Amount received (IQD)<input name="amount_paid" inputmode="numeric" placeholder="exactly the price"></label>'
+            . '<div class="paid-fields"><label>Amount received (exactly the price)<input name="amount_paid" inputmode="numeric" placeholder="exactly the price"></label>'
             . '<label>How<select name="paid_how"><option value="">choose…</option><option value="cash">cash</option><option value="transfer">transfer</option><option value="psoola">Psoola</option></select></label></div>'
             . ($isOwner ? '<label class="inline"><input type="checkbox" name="override" value="1"> over capacity</label>' : '')
             . '<div class="form-actions"><button class="btn green">Book the workshop</button></div></form>';
@@ -432,18 +433,19 @@ final class Page
             . '<input type="hidden" name="do" value="workshop_change"><input type="hidden" name="booking" value="' . (int) $booking['id'] . '"><input type="hidden" name="rid" value="' . (int) $booking['registration_id'] . '">';
         $html = '<div class="row-actions booking-actions">';
         $workshop = SiteData::workshop((string) $booking['workshop_id']);
+        $currency = (string) ($workshop['currency'] ?? 'IQD');
         $facts = [['calendar', $workshop ? SiteData::workshopName($workshop) : (string) $booking['workshop_id']]];
         if (!empty($booking['first_name'])) {
             array_unshift($facts, ['user', Registrations::fullName($booking)]);
         }
         if ($booking['payment_status'] !== 'paid') {
             $html .= $open . '<input type="hidden" name="payment_status" value="paid">'
-                . '<input name="amount_paid" aria-label="Workshop amount received" inputmode="numeric" size="9" placeholder="' . number_format((int) $booking['price_agreed']) . '" required>'
+                . '<input name="amount_paid" aria-label="Workshop amount received" inputmode="numeric" size="9" placeholder="' . self::e(Workshops::money((int) $booking['price_agreed'], $currency)) . '" required>'
                 . '<select name="paid_how" aria-label="Workshop payment method" required><option value="">how?</option><option value="cash">cash</option><option value="transfer">transfer</option><option value="psoola">Psoola</option></select>'
                 . '<div class="form-actions compact"><button class="btn small green">' . self::navIcon('check') . '<span>Mark paid</span></button></div></form>';
         }
         if ($paid && $isOwner) {
-            $html .= '<div class="row-secondary-actions">' . $open . '<input type="hidden" name="payment_status" value="unpaid"><button class="btn small ghost"' . self::confirm('gold', 'undo', 'Undo this workshop payment?', 'Only for a mistake: the booking goes back to not paid.', [...$facts, ['cash', self::money((int) $booking['amount_paid']) . ($booking['paid_how'] ? ' · ' . $booking['paid_how'] : '')]], ['note' => 'Workshop money is not refunded.', 'yes' => 'Yes, undo payment', 'no' => 'No, keep it paid']) . '>Undo (mistake)</button></form></div>';
+            $html .= '<div class="row-secondary-actions">' . $open . '<input type="hidden" name="payment_status" value="unpaid"><button class="btn small ghost"' . self::confirm('gold', 'undo', 'Undo this workshop payment?', 'Only for a mistake: the booking goes back to not paid.', [...$facts, ['cash', Workshops::money((int) $booking['amount_paid'], $currency) . ($booking['paid_how'] ? ' · ' . $booking['paid_how'] : '')]], ['note' => 'Workshop money is not refunded.', 'yes' => 'Yes, undo payment', 'no' => 'No, keep it paid']) . '>Undo (mistake)</button></form></div>';
         }
         if (!$paid || $isOwner) {
             $html .= '<div class="row-danger-actions">' . $open . '<input type="hidden" name="remove" value="1"><button class="btn small red"' . self::confirm('gold', 'user-x', 'Remove this workshop booking?', 'The seat becomes free on the website.', [...$facts, ...($paid ? [['ban', 'The money is NOT refunded']] : [])], ['yes' => 'Yes, remove', 'no' => 'No, keep the booking']) . '>Remove</button></form></div>';

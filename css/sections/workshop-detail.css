@@ -1,0 +1,83 @@
+/* ==========================================================
+   One workshop's details page (workshop.html?id=…)
+   ========================================================== */
+.wd-page{padding-block:28px 72px}
+.wd-root{margin-top:26px}
+.wd{display:grid;grid-template-columns:minmax(0,520px) minmax(0,1fr);gap:56px;align-items:start}
+
+/* The trainer's photo */
+.wd-photo{position:relative;margin:0;aspect-ratio:13/14;border-radius:28px;overflow:hidden;border:1px solid var(--line);background:var(--surface-2);color:var(--teal)}
+.wd-photo img{display:block;width:100%;height:100%;object-fit:cover;object-position:68% 25%}
+.wd-photo::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 58%,rgba(11,31,39,.88));pointer-events:none}
+.wd-photo.no-photo{display:grid;place-items:center;background:radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--teal) 14%,var(--surface-2)),var(--surface-2))}
+.wd-photo.no-photo>svg{width:34%;opacity:.4}
+.wd-photo.no-photo::after{display:none}
+.wd-photo figcaption{position:absolute;z-index:1;inset-inline:28px;bottom:26px;color:#fff;font-size:22px;line-height:1.25}
+.wd-photo.no-photo figcaption{color:var(--text)}
+
+/* Title, trainer, facts, overview */
+.wd-info{display:flex;flex-direction:column;gap:22px;min-width:0}
+.wd-badge{align-self:flex-start;display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:99px;background:color-mix(in srgb,var(--teal) 14%,transparent);border:1px solid color-mix(in srgb,var(--teal) 40%,transparent);color:var(--teal-ink);font-size:13px;font-weight:700}
+.wd-badge::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--teal)}
+.wd-info h1{margin:0;font-size:clamp(28px,3.4vw,40px);line-height:1.12;font-weight:800;letter-spacing:-.01em}
+.wd-trainer{display:flex;flex-direction:column;gap:3px}
+.wd-trainer b{font-size:17px}
+.wd-trainer span{color:var(--muted);font-size:14px}
+.wd-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:0}
+.wd-fact{display:flex;flex-direction:column;gap:8px;padding:16px;border-radius:16px;background:var(--surface);border:1px solid var(--line)}
+.wd-fact dt{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:11.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase}
+html[dir="rtl"] .wd-fact dt{letter-spacing:0}
+.wd-fact dt svg{flex:none;width:16px;height:16px;color:var(--teal)}
+.wd-fact dd{margin:0;font-size:15px;font-weight:700;line-height:1.3}
+.wd-overview h2{margin:0 0 10px;font-size:18px;font-weight:800}
+.wd-overview p{margin:0 0 10px;color:var(--muted);font-size:16px;line-height:1.6}
+.wd-overview p:last-child{margin-bottom:0}
+
+/* Seats, price and "Register for workshop" */
+.wd-book{display:flex;flex-direction:column;gap:14px;padding:20px;border-radius:20px;background:var(--surface);border:1.5px solid var(--teal)}
+.wd-book-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;font-size:14px;font-weight:600}
+.wd-state{display:inline-flex;align-items:center;gap:7px;color:var(--ok);font-weight:700}
+.wd-state::before{content:"";width:9px;height:9px;border-radius:50%;background:currentColor}
+.wd-book.is-full .wd-state{color:var(--danger)}
+.wd-left{color:var(--muted)}
+.wd-bar{height:7px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+.wd-bar i{display:block;height:100%;border-radius:inherit;background:var(--teal)}
+.wd-price{display:flex;flex-direction:column;gap:2px}
+.wd-price b{font-size:24px;font-weight:800;color:var(--teal-ink)}
+.wd-price small{color:var(--muted);font-size:12.5px}
+.wd-form{display:flex;gap:12px;align-items:stretch}
+.wd-trap{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);opacity:0;pointer-events:none}
+.wd-email{flex:1;min-width:0;display:flex;align-items:center;gap:10px;min-height:52px;padding-inline:18px;border-radius:99px;background:var(--bg);border:1.5px solid var(--line);transition:border-color .15s}
+.wd-email:focus-within{border-color:var(--teal)}
+.wd-email.has-error{border-color:var(--danger)}
+.wd-email svg{flex:none;width:18px;height:18px;color:var(--muted)}
+.wd-email input{flex:1;min-width:0;border:0;background:transparent;color:var(--text);font:inherit;font-size:15px;outline:none}
+.wd-email input::placeholder{color:var(--muted);opacity:1}
+html[dir="rtl"] .wd-email input::placeholder{text-align:right}
+.wd-submit{min-height:52px;padding-inline:24px;font-weight:700;white-space:nowrap;background:linear-gradient(135deg,var(--teal),#0E7F7B);box-shadow:0 10px 22px -10px rgba(22,166,161,.9)}
+.wd-submit svg{width:18px;height:18px}
+html[dir="rtl"] .wd-submit svg{transform:scaleX(-1)}
+.wd-help{margin:0;color:var(--muted);font-size:13px}
+.wd-error,.wd-done{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:14px}
+.wd-error svg,.wd-done svg{flex:none;width:22px;height:22px;margin-top:1px}
+.wd-error p,.wd-done p{margin:0}
+.wd-error{background:color-mix(in srgb,#E5484D 16%,transparent);border:1.5px solid color-mix(in srgb,#E5484D 60%,transparent);color:var(--text)}
+.wd-error svg{color:#E5484D}
+.wd-error .btn{margin-top:10px}
+.wd-done{background:color-mix(in srgb,var(--teal) 14%,transparent);border:1px solid color-mix(in srgb,var(--teal) 50%,transparent)}
+.wd-done svg{color:var(--teal-ink)}
+.wd-done b{display:block;margin-bottom:3px;font-size:16px}
+.wd-done p{color:var(--muted);font-size:14px}
+.wd-missing{padding:40px 0;color:var(--muted);font-size:17px}
+
+@media (max-width:960px){
+  .wd{grid-template-columns:1fr;gap:32px}
+  .wd-photo{max-width:520px;aspect-ratio:4/3}
+}
+@media (max-width:560px){
+  .wd-page{padding-block:18px 56px}
+  .wd-facts{grid-template-columns:1fr}
+  .wd-form{flex-direction:column}
+  .wd-submit{width:100%}
+  .wd-photo figcaption{inset-inline:20px;bottom:18px;font-size:19px}
+}

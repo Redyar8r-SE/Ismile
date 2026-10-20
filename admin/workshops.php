@@ -39,9 +39,9 @@ Page::action(static function () use ($user): string {
     // ---- the workshops themselves (Owner) ----
     $id = (string) ($_POST['ws'] ?? '');
     return match ($do) {
-        'ws_create' => 'Workshop added: ' . SiteData::workshopName(Workshops::find(Workshops::create($_POST, $user))) . '. It is on the website now.',
+        'ws_create' => 'Workshop added: ' . SiteData::workshopName(Workshops::find(Workshops::create($_POST, $user, $_FILES['photo'] ?? null))) . '. It is on the website now.',
         'ws_update' => (static function () use ($id, $user): string {
-            Workshops::update($id, $_POST, $user);
+            Workshops::update($id, $_POST, $user, $_FILES['photo'] ?? null);
             return 'Workshop saved. The website shows the change.';
         })(),
         'ws_seats'  => 'Seats now: ' . Workshops::changeSeats($id, (int) ($_POST['delta'] ?? 0), $user) . '.',
@@ -101,11 +101,11 @@ $e = [Page::class, 'e'];
     <div class="workshop-card-top"><span class="workshop-card-icon"><?= Page::navIcon('workshops') ?></span><span class="pill <?= $left>0 ? 'green':'red' ?>"><?= $left>0 ? $left.' seats left':'Full' ?></span></div>
     <span class="workshop-number">WORKSHOP <?= str_pad((string)($i+1),2,'0',STR_PAD_LEFT) ?></span>
     <h2><?= $e(SiteData::workshopName($workshop)) ?></h2><p class="workshop-speaker"><?= $speaker!=='' ? $e($speaker) : 'Trainer to be announced' ?></p>
-    <div class="workshop-price"><strong><?= (int)($workshop['price'] ?? 0)>0 ? Page::money((int)$workshop['price']) : 'Price to be set' ?></strong><span>per seat</span></div>
+    <div class="workshop-price"><strong><?= (int)($workshop['price'] ?? 0)>0 ? $e(Workshops::money((int)$workshop['price'], $workshop['currency'])) : 'Price to be set' ?></strong><span>per seat</span></div>
     <div class="capacity-label"><span>Seat availability</span><b><?= (int)$counts['booked'] ?> / <?= $total ?> booked</b></div>
     <progress value="<?= min((int)$counts['booked'],max(1,$total)) ?>" max="<?= max(1,$total) ?>" aria-label="<?= $e(SiteData::workshopName($workshop).' booked seats') ?>"></progress>
     <div class="workshop-payment"><span><i class="dot teal"></i><?= (int)$counts['paid'] ?> paid<?= (int)$counts['free'] ? ' · '.(int)$counts['free'].' free':'' ?></span><span><?= (int)$counts['unpaid'] ?> unpaid</span></div>
-    <div class="workshop-collected"><span>Collected</span><b><?= Page::money((int)$counts['money']) ?></b></div>
+    <div class="workshop-collected"><span>Collected</span><b><?= $e(Workshops::money((int)$counts['money'], $workshop['currency'])) ?></b></div>
     <div class="workshop-card-actions"><a class="btn ghost" href="export.php?what=workshop&amp;id=<?= rawurlencode($workshop['id']) ?>&amp;format=pdf">PDF sign-in sheet</a><a class="btn" href="workshops.php?id=<?= rawurlencode($workshop['id']) ?>#people">View people</a><a class="btn ghost" href="export.php?what=workshop&amp;id=<?= rawurlencode($workshop['id']) ?>" aria-label="<?= $e('Export sign-in sheet for '.SiteData::workshopName($workshop)) ?>"><?= Page::navIcon('download') ?> Sign-in sheet</a></div>
   </article>
 <?php endforeach; ?>
@@ -149,8 +149,20 @@ $e = [Page::class, 'e'];
         }
         return $html . '</select>';
     };
-    $fieldsFor = static function (?array $w) use ($e, $iconSelect): string {
+    $currencyOptions = static function (string $current): string {
+        $html = '';
+        foreach (['IQD' => 'IQD (dinar)', 'USD' => 'USD (dollar, $)'] as $code => $label) {
+            $html .= '<option value="' . $code . '"' . ($code === $current ? ' selected' : '') . '>' . $label . '</option>';
+        }
+        return $html;
+    };
+    $siteUrl = static fn (string $path): string => rtrim((string) \Ismile\App::config('site_url'), '/') . '/' . ltrim($path, '/');
+    $fieldsFor = static function (?array $w) use ($e, $iconSelect, $currencyOptions, $siteUrl): string {
         $v = static fn (string $field, string $lang) => $e((string) ($w[$field][$lang] ?? ''));
+        $row3 = static fn (string $field, string $label, string $example) => '<div class="row3">'
+            . '<label>' . $e($label) . ' (English)<input name="' . $field . '_en" placeholder="' . $e($example) . '" value="' . $v($field, 'en') . '"></label>'
+            . '<label>' . $e($label) . ' (Arabic)<input name="' . $field . '_ar" dir="rtl" value="' . $v($field, 'ar') . '"></label>'
+            . '<label>' . $e($label) . ' (Kurdish)<input name="' . $field . '_ku" dir="rtl" value="' . $v($field, 'ku') . '"></label></div>';
         return '<div class="row3">'
             . '<label>Name (English)<input name="title_en" value="' . $v('title', 'en') . '"></label>'
             . '<label>Name (Arabic)<input name="title_ar" dir="rtl" value="' . $v('title', 'ar') . '"></label>'
@@ -164,18 +176,33 @@ $e = [Page::class, 'e'];
             . '<label>Company (Arabic)<input name="company_ar" dir="rtl" value="' . $v('company', 'ar') . '"></label>'
             . '<label>Company (Kurdish)<input name="company_ku" dir="rtl" value="' . $v('company', 'ku') . '"></label></div>'
             . '<div class="row3">'
-            . '<label>Price per seat (IQD; 0 = not set yet)<input name="price" inputmode="numeric" value="' . (int) ($w['price'] ?? 0) . '"></label>'
-            . '<label>Seats (the limit)<input type="number" min="1" max="2000" name="total_seats" value="' . (int) ($w['totalSeats'] ?? 20) . '" required></label>'
-            . '<label>Picture on the website' . $iconSelect((string) ($w['icon'] ?? 'tools')) . '</label></div>';
+            . '<label>Price per seat (0 = not set yet)<input name="price" inputmode="numeric" value="' . (int) ($w['price'] ?? 0) . '"></label>'
+            . '<label>Currency<select name="currency">' . $currencyOptions((string) ($w['currency'] ?? 'IQD')) . '</select></label>'
+            . '<label>Seats (the limit)<input type="number" min="1" max="2000" name="total_seats" value="' . (int) ($w['totalSeats'] ?? 20) . '" required></label></div>'
+            . '<h3 class="form-subhead">Trainer photo</h3>'
+            . '<div class="workshop-photo-field">'
+            . ($w !== null && !empty($w['photo']) ? '<img class="workshop-photo-preview" src="' . $e($siteUrl($w['photo'])) . '" alt="Current photo of the trainer" width="120" height="120">' : '')
+            . '<label>Photo of the trainer (JPEG, PNG or WebP, up to 5 MB)<input type="file" name="photo" accept="image/jpeg,image/png,image/webp"></label>'
+            . ($w !== null && !empty($w['photo']) ? '<label class="inline"><input type="checkbox" name="remove_photo" value="1"> Remove the photo</label>' : '')
+            . '<label>Picture when there is no photo' . $iconSelect((string) ($w['icon'] ?? 'tools')) . '</label></div>'
+            . '<h3 class="form-subhead">Details page</h3>'
+            . $row3('credentials', "Trainer's degrees", 'e.g. BDS, MSc, PhD in Restorative Dentistry')
+            . $row3('format', 'Format', 'e.g. Hands-on Clinical Workshop')
+            . $row3('duration', 'Duration', 'e.g. 3 Hours')
+            . $row3('level', 'Level', 'e.g. Intermediate to Advanced')
+            . '<div class="row3">'
+            . '<label>Overview (English)<textarea name="overview_en" rows="4">' . $v('overview', 'en') . '</textarea></label>'
+            . '<label>Overview (Arabic)<textarea name="overview_ar" rows="4" dir="rtl">' . $v('overview', 'ar') . '</textarea></label>'
+            . '<label>Overview (Kurdish)<textarea name="overview_ku" rows="4" dir="rtl">' . $v('overview', 'ku') . '</textarea></label></div>';
     }; ?>
 <div class="card" id="manage">
   <?= Page::panelHeading('Workshop settings', 'Names, prices, visibility and seat limits. Owner access.', 'settings') ?>
-  <p class="muted">Add a new workshop, change its name, price or seats, or hide it. The website's workshop cards change at once. The seats are the limit: nobody can be booked past it, and the seats can never be fewer than the people already booked.</p>
+  <p class="muted">Add a new workshop, change its name, details, photo, price or seats, or hide it. The website's workshop cards and details pages change at once. The seats are the limit: nobody can be booked past it, and the seats can never be fewer than the people already booked.</p>
   <div class="table-wrap"><table>
     <tr><th>Workshop</th><th>On the website</th><th>Seats (limit)</th><th>Booked</th><th class="table-action-heading">Actions</th></tr>
     <?php foreach ($all as $w): ?>
     <tr>
-      <td><b><?= $e(SiteData::workshopName($w)) ?></b><br><small class="muted"><?= $e($w['id']) ?> · <?= $w['price'] > 0 ? Page::money($w['price']) : 'price not set' ?></small></td>
+      <td><b><?= $e(SiteData::workshopName($w)) ?></b><br><small class="muted"><?= $e($w['id']) ?> · <?= $w['price'] > 0 ? $e(Workshops::money($w['price'], $w['currency'])) : 'price not set' ?></small></td>
       <td><?= $w['status'] === 'active' ? '<span class="pill green">Shown</span>' : '<span class="pill grey">Hidden</span>' ?></td>
       <td>
         <div class="seat-buttons">
@@ -187,7 +214,7 @@ $e = [Page::class, 'e'];
       <td><b><?= (int) $w['booked'] ?></b> <small class="muted">· <?= (int) $w['seatsLeft'] ?> left</small></td>
       <td class="table-action-cell"><div class="row-actions">
         <details class="edit"><summary class="btn small ghost">Edit</summary>
-          <form method="post" class="stack"><?= Page::csrfField() ?><input type="hidden" name="do" value="ws_update"><input type="hidden" name="ws" value="<?= $e($w['id']) ?>">
+          <form method="post" class="stack" enctype="multipart/form-data"><?= Page::csrfField() ?><input type="hidden" name="do" value="ws_update"><input type="hidden" name="ws" value="<?= $e($w['id']) ?>">
             <?= $fieldsFor($w) ?><div class="form-actions"><button class="btn">Save workshop</button></div></form>
         </details>
         <form method="post" class="inline-form"><?= Page::csrfField() ?><input type="hidden" name="ws" value="<?= $e($w['id']) ?>">
@@ -203,7 +230,7 @@ $e = [Page::class, 'e'];
   </table></div>
   <details class="add-new" <?= $all ? '' : 'open' ?>>
     <summary class="btn green">+ Add a new workshop</summary>
-    <form method="post" class="stack"><?= Page::csrfField() ?><input type="hidden" name="do" value="ws_create">
+    <form method="post" class="stack" enctype="multipart/form-data"><?= Page::csrfField() ?><input type="hidden" name="do" value="ws_create">
       <?= $fieldsFor(null) ?>
       <p class="muted small">Leave the names empty only if the title is not announced yet: the website then shows "Coming soon".</p>
       <div class="form-actions"><button class="btn green">Add the workshop</button></div>
@@ -227,7 +254,7 @@ $e = [Page::class, 'e'];
       <td><?= Page::paidBadge($person['payment_status']) ?><?= $person['payment_status'] === 'paid' ? '<br><small class="muted">' . $e((string) $person['paid_how']) . ', ' . Page::when($person['paid_at']) . '</small>' : '' ?></td>
       <td dir="ltr"><?= $e($person['phone']) ?></td>
       <td><?= Page::paidBadge($person['reg_status']) ?></td>
-      <td><?= Page::money((int) $person['price_agreed']) ?></td>
+      <td><?= $e(Workshops::money((int) $person['price_agreed'], $workshop['currency'])) ?></td>
       <td class="table-action-cell"><?= Page::workshopPaymentForm($person, $user, $back . '#people') ?></td>
     </tr>
     <?php endforeach; ?>
