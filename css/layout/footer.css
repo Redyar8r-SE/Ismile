@@ -32,8 +32,6 @@ footer .legal{margin:0;font-size:13px}
   .footbar{justify-content:center;text-align:center}
 }
 
-.admin-link{margin-inline-start:14px;color:#7FD6D2;font-size:13px}
-
 @media (max-width:860px){
   footer .cols{grid-template-columns:1fr}
 }
