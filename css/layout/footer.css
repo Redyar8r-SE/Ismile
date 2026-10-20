@@ -22,16 +22,12 @@ html[dir="rtl"] footer .ltr{text-align:right}
   font-weight:600;
 }
 #footContact a:hover,#footContact a:focus-visible{color:#fff;text-decoration-color:currentColor}
-/* The bottom bar: copyright on one side, who built it on the other. They sit
-   on one line on a laptop and stack, centred, on a phone. */
+/* The bottom bar: the copyright, centred on a phone. */
 .footbar{
   display:flex;align-items:center;justify-content:space-between;gap:14px 20px;flex-wrap:wrap;
   border-top:1px solid rgba(255,255,255,.12);margin-top:40px;padding-top:20px;
 }
 footer .legal{margin:0;font-size:13px}
-footer .credit{margin:0;font-size:13px;text-align:center}
-footer .credit b{color:#fff;font-weight:700}
-footer .credit small{display:block;margin-top:3px;font-size:12px;opacity:.75}
 @media (max-width:640px){
   .footbar{justify-content:center;text-align:center}
 }

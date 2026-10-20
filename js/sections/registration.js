@@ -8,9 +8,9 @@
 // server (GitHub Pages) or registration is closed, the form is not shown at
 // all, so nobody can believe they registered when nothing was saved.
 // Nothing about the visitor is kept in the browser.
-import { t, getLang, onLangChange } from "../i18n.js?v=134";
-import { formatPrice } from "../utils/money.js?v=134";
-import { initRegistrationExperience } from "./registration-experience.js?v=134";
+import { t, getLang, onLangChange } from "../i18n.js?v=135";
+import { formatPrice } from "../utils/money.js?v=135";
+import { initRegistrationExperience } from "./registration-experience.js?v=135";
 
 const TOTAL_STEPS = 3;
 
@@ -346,9 +346,8 @@ export function initRegistration({ tickets = {} } = {}) {
   function syncSpecialty() {
     const tier = checkedValue("ticket");
     const previous = specialty.value;
-    const options = specialtyOptions.filter((option) => tier === "student"
-      ? option.value === "student"
-      : tier === "professional" ? option.value !== "student" : true);
+    // "Dental student" belongs to the Student ticket only, not Dentist or VIP.
+    const options = specialtyOptions.filter((option) => (tier === "student") === (option.value === "student"));
     options.forEach((option) => { option.textContent = t(option.dataset.i18n); });
     specialty.replaceChildren(...options);
     specialty.value = tier === "student" ? "student" : options.some((option) => option.value === previous) ? previous : "";

@@ -1,8 +1,8 @@
 // Sponsor tiers: the sponsors already signed, then the open places left,
 // from data/sponsors.json.
-import { ICONS } from "../config/icons.js?v=134";
-import { initials } from "../utils/initials.js?v=134";
-import { t, tr, onLangChange } from "../i18n.js?v=134";
+import { ICONS } from "../config/icons.js?v=135";
+import { initials } from "../utils/initials.js?v=135";
+import { t, tr, onLangChange } from "../i18n.js?v=135";
 
 export function initSponsors({ tiers, sponsors = [] }) {
   const container = document.getElementById("sponsorTiers");
