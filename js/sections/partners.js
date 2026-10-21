@@ -1,8 +1,8 @@
 // Trusted partners grouped by tier, from data/partners.json.
-import { ICONS } from "../config/icons.js?v=138";
-import { initials } from "../utils/initials.js?v=138";
-import { t, tr, onLangChange } from "../i18n.js?v=138";
-import { tCount } from "../utils/count.js?v=138";
+import { ICONS } from "../config/icons.js?v=139";
+import { initials } from "../utils/initials.js?v=139";
+import { t, tr, onLangChange } from "../i18n.js?v=139";
+import { tCount } from "../utils/count.js?v=139";
 
 export function initPartners({ tiers, partners }) {
   const container = document.getElementById("ptiers");
