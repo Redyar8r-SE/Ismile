@@ -379,5 +379,6 @@
   "wdi_how_title": "How to register for this workshop",
   "wdi_left": "{n} left",
   "wdi_seats": "of {total} seats",
-  "wdi_email_ph": "Your email"
+  "wdi_email_ph": "Your email",
+  "wsb_online": "Register online"
 }

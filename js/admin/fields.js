@@ -300,6 +300,7 @@ const PARTS = [
       ["wdi_how_title", "iSmile workshop page: “How to register” title"],
       ["wdi_left", "iSmile workshop page: seats left (keep {n})"], ["wdi_seats", "iSmile workshop page: under the seats (keep {total})"],
       ["wdi_email_ph", "iSmile workshop page: email box placeholder"],
+      ["wsb_online", "Workshop cards: “Register online” button (iSmile workshops)"],
     ]),
   },
   {
