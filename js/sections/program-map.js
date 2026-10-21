@@ -1,9 +1,9 @@
 // The Program / Map switch in the homepage Program section. The map is the
 // exhibition floor plan as a plain picture: every booth the same colour (the
 // tiers are not shown to visitors), no availability and nothing to book.
-import { t, onLangChange } from "../i18n.js?v=136";
-import { buildBooths } from "../config/booth-layout.js?v=136";
-import { floorPlanSVG } from "./floor-plan.js?v=136";
+import { t, onLangChange } from "../i18n.js?v=137";
+import { buildBooths } from "../config/booth-layout.js?v=137";
+import { floorPlanSVG } from "./floor-plan.js?v=137";
 
 export function initProgramMap({ rows }) {
   const plan = document.getElementById("progMapPlan");

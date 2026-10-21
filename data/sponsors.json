@@ -96,6 +96,41 @@
       "logo": "assets/sponsors/j-dental-care-o10.webp",
       "bg": "#18363F",
       "tile": true
+    },
+    {
+      "name": "Mandali Company",
+      "tier": "gold",
+      "logo": "assets/sponsors/mandali-gold.webp",
+      "bg": "#18363F",
+      "tile": true
+    },
+    {
+      "name": "La Colina",
+      "tier": "gold",
+      "logo": "assets/sponsors/la-colina-gold.webp",
+      "bg": "#18363F",
+      "tile": true
+    },
+    {
+      "name": "Lacalut",
+      "tier": "silver",
+      "logo": "assets/sponsors/lacalut-silver.webp",
+      "bg": "#18363F",
+      "tile": true
+    },
+    {
+      "name": "Gengigel",
+      "tier": "bronze",
+      "logo": "assets/sponsors/gengigel-bronze.webp",
+      "bg": "#18363F",
+      "tile": true
+    },
+    {
+      "name": "ESB Group",
+      "tier": "bronze",
+      "logo": "assets/sponsors/esb-group-bronze.webp",
+      "bg": "#18363F",
+      "tile": true
     }
   ],
   "enquiry": {
