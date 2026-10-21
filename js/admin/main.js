@@ -1,10 +1,10 @@
 // iSmile admin: edit every text, list and photo on the site, and save to GitHub.
-import { GROUPS as BASE_GROUPS, groupsForText, PAGE_TITLES, LANGS, DATA_FILES } from "./fields.js?v=137";
-import * as store from "./store.js?v=137";
-import { upload, imageFromClipboard } from "./images.js?v=137";
-import { buildList, buildProgram, buildTypes, buildSingle } from "./lists.js?v=137";
-import { TEXT_ATTRIBUTES } from "../i18n.js?v=137";
-import { loadAccounts, makeAccount, check, forget, fileText, ACCOUNTS_FILE } from "./accounts.js?v=137";
+import { GROUPS as BASE_GROUPS, groupsForText, PAGE_TITLES, LANGS, DATA_FILES } from "./fields.js?v=138";
+import * as store from "./store.js?v=138";
+import { upload, imageFromClipboard } from "./images.js?v=138";
+import { buildList, buildProgram, buildTypes, buildSingle } from "./lists.js?v=138";
+import { TEXT_ATTRIBUTES } from "../i18n.js?v=138";
+import { loadAccounts, makeAccount, check, forget, fileText, ACCOUNTS_FILE } from "./accounts.js?v=138";
 
 // Tells the small script in admin.html that the admin code did load, so it
 // does not offer to reload the page.
@@ -185,7 +185,7 @@ function buildSpeakers(section) {
   add.className = "btn btn-outline add-row";
   add.textContent = "+ Add a speaker";
   add.addEventListener("click", () => {
-    state.data.speakers.push({ name: { en: "", ar: "", ku: "" }, role: { en: "", ar: "", ku: "" }, photo: null });
+    state.data.speakers.push({ name: { en: "", ar: "", ku: "" }, role: { en: "", ar: "", ku: "" }, topic: null, photo: null });
     render();
     markDirty();
     const last = list.querySelector(".srow:last-child .lbody input");
@@ -272,7 +272,7 @@ function buildSpeakers(section) {
 
       const fields = document.createElement("div");
       fields.className = "lbody";
-      [["name", "Name"], ["role", "Specialty, country"]].forEach(([key, label]) => {
+      [["name", "Name"], ["role", "Specialty, country"], ["topic", "Talk topic"]].forEach(([key, label]) => {
         const block = document.createElement("div");
         block.className = "field";
         block.innerHTML = `<p class="flabel">${label}</p>`;

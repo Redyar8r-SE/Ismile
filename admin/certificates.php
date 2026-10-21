@@ -46,7 +46,7 @@ $detailContext = $inCheckin ? '&workspace=checkin' . (isset($_GET['day']) && in_
     <span class="certificate-brand">iSmile <b>2026</b></span><small>DENTAL SUMMIT · SULAIMANI</small>
     <h2>Certificate of<br>Participation</h2><p>This certificate is proudly presented to</p>
     <strong class="certificate-name">Guest’s full name</strong>
-    <p>In recognition of participation in iSmile 2026<br>Grand Millennium Sulaimani · 20–21 November 2026</p>
+    <p>In recognition of participation in iSmile 2026<br>Grand Millennium Sulaimani · 19–20 November 2026</p>
     <b>iSmile Organizing Committee</b><small>Certificate number · Verified attendance</small>
   </section>
   <section class="card"><?= Page::panelHeading('Attendance earns the certificate', 'Every confirmed arrival creates the guest’s named certificate.', 'checkin') ?>

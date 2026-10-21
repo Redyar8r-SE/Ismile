@@ -84,7 +84,7 @@ final class EmailTemplates
         if ($registration['ticket_type'] === 'student' && $registration['university']) {
             $mine[] = [$w['row_university'], $registration['university']];
         }
-        // Lunch with the real day and date: "Day 1 · 20 November", both, or none.
+        // Lunch with the real day and date: "Day 1 · 19 November", both, or none.
         $event = self::eventInfo();
         $lunchDays = [];
         foreach ([1, 2] as $n) {

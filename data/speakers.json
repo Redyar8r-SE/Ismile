@@ -1,30 +1,106 @@
 [
   {
-    "name": null,
-    "role": null,
-    "photo": null
-  },
-  {
-    "name": null,
-    "role": null,
-    "photo": null
-  },
-  {
-    "name": null,
-    "role": null,
-    "photo": null
+    "name": {
+      "en": "Dr. Athel Adnan Al-Kinani",
+      "ar": "Dr. Athel Adnan Al-Kinani",
+      "ku": "Dr. Athel Adnan Al-Kinani"
+    },
+    "role": {
+      "en": "MSc, Oral and Maxillofacial Surgery",
+      "ar": "MSc, Oral and Maxillofacial Surgery",
+      "ku": "MSc, Oral and Maxillofacial Surgery"
+    },
+    "topic": {
+      "en": "The Atrophic Posterior Mandible: From Bone Augmentation to Nerve Lateralization",
+      "ar": "The Atrophic Posterior Mandible: From Bone Augmentation to Nerve Lateralization",
+      "ku": "The Atrophic Posterior Mandible: From Bone Augmentation to Nerve Lateralization"
+    },
+    "photo": "assets/speakers/athel.webp"
   },
   {
     "name": {
-      "en": "",
-      "ar": "",
-      "ku": ""
+      "en": "Dr. Twana Othman Hussein",
+      "ar": "Dr. Twana Othman Hussein",
+      "ku": "Dr. Twana Othman Hussein"
     },
     "role": {
-      "en": "",
-      "ar": "",
-      "ku": ""
+      "en": "PhD, Pediatric Dentistry Specialist",
+      "ar": "PhD, Pediatric Dentistry Specialist",
+      "ku": "PhD, Pediatric Dentistry Specialist"
     },
-    "photo": null
+    "topic": {
+      "en": "Behind the Mask: The Real Magic of Laughing Gas (N₂O)",
+      "ar": "Behind the Mask: The Real Magic of Laughing Gas (N₂O)",
+      "ku": "Behind the Mask: The Real Magic of Laughing Gas (N₂O)"
+    },
+    "photo": "assets/speakers/twana.webp"
+  },
+  {
+    "name": {
+      "en": "Dr. Mohammed Ahmed Haji",
+      "ar": "Dr. Mohammed Ahmed Haji",
+      "ku": "Dr. Mohammed Ahmed Haji"
+    },
+    "role": {
+      "en": "BDS, MSc in Conservative Dentistry",
+      "ar": "BDS, MSc in Conservative Dentistry",
+      "ku": "BDS, MSc in Conservative Dentistry"
+    },
+    "topic": {
+      "en": "Beyond the Limits: Direct Veneers in Challenging Cases",
+      "ar": "Beyond the Limits: Direct Veneers in Challenging Cases",
+      "ku": "Beyond the Limits: Direct Veneers in Challenging Cases"
+    },
+    "photo": "assets/speakers/mohammed-haji.webp"
+  },
+  {
+    "name": {
+      "en": "Dr. Ziad Abusidu",
+      "ar": "Dr. Ziad Abusidu",
+      "ku": "Dr. Ziad Abusidu"
+    },
+    "role": {
+      "en": "BDS, MFD-RCSI, MSc, Jordanian Board · Fixed and Removable Prosthodontics",
+      "ar": "BDS, MFD-RCSI, MSc, Jordanian Board · Fixed and Removable Prosthodontics",
+      "ku": "BDS, MFD-RCSI, MSc, Jordanian Board · Fixed and Removable Prosthodontics"
+    },
+    "topic": {
+      "en": "Partial Coverage Restorations for Endodontically Treated Teeth: An Evidence-Based Paradigm Shift",
+      "ar": "Partial Coverage Restorations for Endodontically Treated Teeth: An Evidence-Based Paradigm Shift",
+      "ku": "Partial Coverage Restorations for Endodontically Treated Teeth: An Evidence-Based Paradigm Shift"
+    },
+    "photo": "assets/speakers/ziad-abusidu.webp"
+  },
+  {
+    "name": {
+      "en": "Dr. Muhamed Hamawandy",
+      "ar": "Dr. Muhamed Hamawandy",
+      "ku": "Dr. Muhamed Hamawandy"
+    },
+    "role": null,
+    "topic": {
+      "en": "Maxilla For All by JD Implant",
+      "ar": "Maxilla For All by JD Implant",
+      "ku": "Maxilla For All by JD Implant"
+    },
+    "photo": "assets/speakers/muhamed-hamawandy.webp"
+  },
+  {
+    "name": {
+      "en": "Dr. Dastan Tahir Abdulla",
+      "ar": "Dr. Dastan Tahir Abdulla",
+      "ku": "Dr. Dastan Tahir Abdulla"
+    },
+    "role": {
+      "en": "Oral and Maxillofacial Surgeon",
+      "ar": "Oral and Maxillofacial Surgeon",
+      "ku": "Oral and Maxillofacial Surgeon"
+    },
+    "topic": {
+      "en": "Contemporary Strategies in Orthognathic Surgery Planning",
+      "ar": "Contemporary Strategies in Orthognathic Surgery Planning",
+      "ku": "Contemporary Strategies in Orthognathic Surgery Planning"
+    },
+    "photo": "assets/speakers/dastan.webp"
   }
 ]

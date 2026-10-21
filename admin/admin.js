@@ -680,7 +680,7 @@ document.addEventListener("DOMContentLoaded", () => {
       event.preventDefault();
       if (!form.reportValidity()) return;
       const vipDay = ticket.value === "vip" ? Number(value("vip_lunch_day") || 0) : 0;
-      const days = { 1: "Day 1 · Friday 20 Nov", 2: "Day 2 · Saturday 21 Nov" };
+      const days = { 1: "Day 1 · Thursday 19 Nov", 2: "Day 2 · Friday 20 Nov" };
       const lunch = [1, 2].filter((day) => form.querySelector(`[name="lunch_day${day}"]`).checked)
         .map((day) => days[day] + (day === vipDay ? " (with VIP)" : ""));
       field("name").textContent = [value("first_name"), value("father_name"), value("grandfather_name")].filter(Boolean).join(" ");

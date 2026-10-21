@@ -288,7 +288,7 @@ const PARTS = [
     hint: "The heading and the placeholder text for speakers you have not announced yet.",
     fields: many([
       ["sp_title", "Section title"], ["sp_sub", "Section text"],
-      ["sp_name", "Placeholder name"], ["sp_role", "Placeholder specialty"], ["sp_soon", "Badge on empty photos"],
+      ["sp_name", "Placeholder name"], ["sp_role", "Placeholder specialty"], ["sp_soon", "Badge on empty photos"], ["sp_topic", "Label above a talk topic"],
     ]),
   },
   {

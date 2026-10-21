@@ -133,9 +133,9 @@ if (isset($_GET['new'])) {
       </fieldset>
       <fieldset class="form-section">
         <legend>3. Lunch <span class="legend-note">· optional, per day</span></legend>
-        <label id="caller-vip-lunch"<?= !$vip ? ' hidden' : '' ?>>VIP included lunch<select name="vip_lunch_day"<?= !$vip ? ' disabled' : '' ?>><option value="1"<?= $selected('vip_lunch_day','1','1') ?>>Day 1 · 20 November</option><option value="2"<?= $selected('vip_lunch_day','2','1') ?>>Day 2 · 21 November</option></select><small>VIP is $100 with one lunch included. The other day is $40. Call the guest to arrange home badge delivery.</small></label>
+        <label id="caller-vip-lunch"<?= !$vip ? ' hidden' : '' ?>>VIP included lunch<select name="vip_lunch_day"<?= !$vip ? ' disabled' : '' ?>><option value="1"<?= $selected('vip_lunch_day','1','1') ?>>Day 1 · 19 November</option><option value="2"<?= $selected('vip_lunch_day','2','1') ?>>Day 2 · 20 November</option></select><small>VIP is $100 with one lunch included. The other day is $40. Call the guest to arrange home badge delivery.</small></label>
         <div class="lunch-cards">
-          <?php foreach ([1 => 'Friday 20 Nov', 2 => 'Saturday 21 Nov'] as $day => $date): ?>
+          <?php foreach ([1 => 'Thursday 19 Nov', 2 => 'Friday 20 Nov'] as $day => $date): ?>
           <label class="lunch-card"><input type="checkbox" name="lunch_day<?= $day ?>" value="1"<?= ($_POST['lunch_day' . $day] ?? '') === '1' ? ' checked' : '' ?>>
             <span class="lunch-card-text"><b>Lunch day <?= $day ?></b><small><?= $e($date) ?></small></span>
             <span class="lunch-card-price"><b data-lunch-price="<?= $day ?>"><?= $e($shown['lunch' . $day]) ?></b><small data-lunch-sub="<?= $day ?>"><?= $e($lunchUsd($day)) ?></small></span>
