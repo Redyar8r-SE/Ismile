@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 // The browser's registry is outside the server TypeScript project.
 const registryURL = new URL("../js/admin/fields.js", import.meta.url);
@@ -31,6 +31,66 @@ for (const page of pages) {
 }
 
 describe("public translations and complete content editing", () => {
+  it.each(["ar", "ku"])("translates every speaker profile into %s", (code) => {
+    const speakers = JSON.parse(read("data/speakers.json"));
+    for (const speaker of speakers) {
+      for (const field of ["name", "role", "topic"]) {
+        expect(speaker[field][code], `${speaker.name.en}: ${field}`).toMatch(/[\u0600-\u06ff]/);
+        expect(speaker[field][code]).not.toBe(speaker[field].en);
+      }
+    }
+  });
+
+  it.each(["ar", "ku"])("keeps nested public content translated in %s", (code) => {
+    const files = [
+      "footer",
+      "gallery",
+      "journey",
+      "program",
+      "summit-partners",
+      "sponsors",
+      "partners",
+      "projects",
+      "workshops",
+    ];
+    /** @param {unknown} value @param {string} location */
+    function check(value, location) {
+      if (!value || typeof value !== "object") return;
+      const entry = /** @type {Record<string, unknown>} */ (value);
+      if (typeof entry.en === "string" && entry.en.trim()) {
+        expect(entry[code], `${location}.${code}`).toBeTypeOf("string");
+        expect(String(entry[code]).trim(), `${location}.${code}`).not.toBe("");
+        // Acronyms and proper names may remain Latin; descriptive text must not.
+        if (/[a-z]{4}/i.test(entry.en) && !/\.(?:name|company)$/.test(location)) {
+          expect(entry[code], `${location}.${code}`).toMatch(/[\u0600-\u06ff]/);
+        }
+        return;
+      }
+      for (const [key, nested] of Object.entries(entry)) check(nested, `${location}.${key}`);
+    }
+    for (const file of files) check(JSON.parse(read(`data/${file}.json`)), file);
+  });
+
+  it.each(["ar", "ku"])("does not copy English prose into the %s dictionary", (code) => {
+    const unchanged = new Set([
+      "org_italk",
+      "medx_title",
+      "pay_visa_t",
+      "pay_mastercard_t",
+      "pay_fib_t",
+      "pay_fastpay_t",
+      "spf_ph_website",
+      "xp_vip",
+      "ph_email",
+    ]);
+    for (const [key, value] of Object.entries(dictionaries[code])) {
+      if (/[a-z]/i.test(value) && !unchanged.has(key)) {
+        expect(value, `${code}: ${key}`).toMatch(/[\u0600-\u06ff]/);
+      }
+      expect(value, `${code}: ${key}`).not.toMatch(/\uFFFD|[\u202a-\u202e]|\?{2,}/);
+    }
+  });
+
   it.each(["ar", "ku"])("has a %s translation for every public text key", (code) => {
     for (const key of keys) {
       expect(dictionaries[code][key], `${code}: ${key}`).toBeTypeOf("string");
@@ -79,4 +139,23 @@ describe("public translations and complete content editing", () => {
     expect(read("js/admin/main.js")).toMatch(/data\/i18n\/site-\$\{lang\}\.json/);
     expect(read("js/admin/main.js")).toContain('"payment.html"');
   });
+});
+
+describe("preferred website language", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it.each(["ckb", "ckb-IQ", "ku", "ku-IQ", "ar-IQ", "en-US"])(
+    "recognizes %s browsers",
+    async (locale) => {
+      const i18nURL = new URL("../js/i18n.js", import.meta.url);
+      const { addLanguage, preferredLang } = await import(i18nURL.href);
+      addLanguage("ar", dictionaries.ar);
+      addLanguage("ku", dictionaries.ku);
+      vi.stubGlobal("navigator", { language: locale });
+      vi.stubGlobal("localStorage", { getItem: () => null });
+      expect(preferredLang()).toBe(
+        locale.startsWith("ar") ? "ar" : locale.startsWith("en") ? "en" : "ku",
+      );
+    },
+  );
 });

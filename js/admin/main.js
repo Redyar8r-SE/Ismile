@@ -1,10 +1,10 @@
 // iSmile admin: edit every text, list and photo on the site, and save to GitHub.
-import { GROUPS as BASE_GROUPS, groupsForText, PAGE_TITLES, LANGS, DATA_FILES } from "./fields.js?v=146";
-import * as store from "./store.js?v=146";
-import { upload, imageFromClipboard } from "./images.js?v=146";
-import { buildList, buildProgram, buildTypes, buildSingle } from "./lists.js?v=146";
-import { TEXT_ATTRIBUTES } from "../i18n.js?v=146";
-import { loadAccounts, makeAccount, check, forget, fileText, ACCOUNTS_FILE } from "./accounts.js?v=146";
+import { GROUPS as BASE_GROUPS, groupsForText, PAGE_TITLES, LANGS, DATA_FILES } from "./fields.js?v=147";
+import * as store from "./store.js?v=147";
+import { upload, imageFromClipboard } from "./images.js?v=147";
+import { buildList, buildProgram, buildTypes, buildSingle } from "./lists.js?v=147";
+import { TEXT_ATTRIBUTES } from "../i18n.js?v=147";
+import { loadAccounts, makeAccount, check, forget, fileText, ACCOUNTS_FILE } from "./accounts.js?v=147";
 
 // Tells the small script in admin.html that the admin code did load, so it
 // does not offer to reload the page.
