@@ -77,7 +77,11 @@
       "ar": "Dr. Muhamed Hamawandy",
       "ku": "Dr. Muhamed Hamawandy"
     },
-    "role": null,
+    "role": {
+      "en": "BDS, MSc in Conservative Dentistry",
+      "ar": "BDS, MSc in Conservative Dentistry",
+      "ku": "BDS, MSc in Conservative Dentistry"
+    },
     "topic": {
       "en": "Maxilla For All by JD Implant",
       "ar": "Maxilla For All by JD Implant",
