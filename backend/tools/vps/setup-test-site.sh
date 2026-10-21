@@ -386,6 +386,23 @@ if [ ! -f "$BASE/.video-workshops-2" ]; then
   php "$BACKEND/tools/video-workshops.php"
   touch "$BASE/.video-workshops-1" "$BASE/.video-workshops-2"
 fi
+# ONCE (the Owner's wish, 22 Oct 2026): the summit moved to 19–20 November and
+# six speakers were announced. Updates never overwrite data/ on this server, so
+# these files are copied from the project one time. The old copies are kept in
+# $BASE/data-before-2026-10-22 (outside the website).
+if [ ! -f "$BASE/.content-sync-2026-10-22" ]; then
+  KEEP="$BASE/data-before-2026-10-22"
+  mkdir -p "$KEEP/i18n"
+  for f in speakers.json journey.json \
+           i18n/en.json i18n/ar.json i18n/ku.json \
+           i18n/site-en.json i18n/site-ar.json i18n/site-ku.json \
+           i18n/registration-en.json i18n/registration-ar.json i18n/registration-ku.json; do
+    [ -f "$SITE/data/$f" ] && cp -p "$SITE/data/$f" "$KEEP/$f"
+    cp "$REPO/data/$f" "$SITE/data/$f"
+  done
+  touch "$BASE/.content-sync-2026-10-22"
+  echo "Speakers, dates (19–20 November) and translations copied from the project; old copies in $KEEP."
+fi
 # Accounts that still have the old made-up password (printed in public logs) get the new one.
 if [ -n "$OLD_OWNER_PASS" ]; then
   ISMILE_OLD="$OLD_OWNER_PASS" ISMILE_NEW="$OWNER_PASS" php -r '
