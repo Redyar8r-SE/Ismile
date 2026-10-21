@@ -1,6 +1,6 @@
 // Workshops: the cards on workshops.html (#wsGrid), from data/workshops.json.
 // An announced workshop shows the trainer's photo, who organizes it
-// ("Organized by iSmile" or "Organized by <company>"), its title, trainer,
+// ("Organized by iSmile" or "Organized by company"), its title, trainer,
 // duration and level, and opens its details page (workshop.html?id=…).
 // iSmile's workshops are booked there with the summit email; a company's
 // workshops by calling the company's phone.
@@ -44,10 +44,9 @@ export const detailsHref = (w) => `workshop.html?id=${encodeURIComponent(w.id)}`
 /** A company runs this workshop: people call the company to register. */
 export const byCompany = (w) => w?.organizer === "company";
 
-/** "Organized by iSmile" or "Organized by <company name>". */
+/** The tag on the card and details page: "Organized by iSmile" or "Organized by company". */
 export function organizerText(w) {
-  const company = byCompany(w) ? pick(w.company) : "";
-  return company ? t("ws_org_by").replace("{name}", company) : t("ws_org");
+  return t(byCompany(w) ? "wsp4_co_tag" : "ws_org");
 }
 
 export function initWorkshops(workshops) {

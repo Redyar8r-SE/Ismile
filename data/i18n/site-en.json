@@ -349,7 +349,6 @@
   "wd_err_busy": "Too many tries. Please wait a few minutes and try again.",
   "wd_register_summit": "Register for the summit",
   "wd_not_found": "Workshop not found.",
-  "ws_org_by": "Organized by {name}",
   "wd_seats_total": "{total} seats",
   "wd_call_title": "Register by phone",
   "wd_call_text": "This workshop is organized by {name}. Call them to book your seat and arrange payment.",
