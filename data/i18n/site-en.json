@@ -358,18 +358,18 @@
   "wd_err_by_phone": "This workshop is booked by phone. Call the number shown on this page.",
   "wsp3_lead": "Every workshop shows who organizes it. That tells you how to book your seat.",
   "wsp3_ism_title": "Register online with your summit email",
-  "wsp3_ism_s1": "Register for iSmile 2026",
-  "wsp3_ism_s1_d": "Workshops are for summit attendees.",
   "wsp3_open": "Open the workshop",
   "wsp3_ism_s2_d": "See the trainer, the details and the price.",
   "wsp3_ism_s3": "Type your summit email",
-  "wsp3_ism_s3_d": "Your seat is reserved at once. Our office contacts you about payment.",
-  "wsp3_co_tag": "Organized by a company",
   "wsp3_co_title": "Register by phone with the company",
   "wsp3_co_s1_d": "The company’s name and phone number are on the workshop page.",
   "wsp3_co_s2": "Call the company",
   "wsp3_co_s2_d": "Tap the number to call. The company books your seat.",
   "wsp3_co_s3": "The company confirms",
   "wsp3_co_s3_d": "They confirm your seat and arrange payment with you.",
-  "wsp3_co_btn": "See the workshops"
+  "wsp4_first_title": "First, get your iSmile 2026 ticket",
+  "wsp4_first_text": "Workshops are only for summit attendees. Without a summit ticket you cannot book a workshop.",
+  "wsp4_co_tag": "Organized by company",
+  "wsp4_ism_s3": "Your seat is reserved",
+  "wsp4_ism_s3_d": "Our office contacts you about payment."
 }

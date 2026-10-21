@@ -29,7 +29,7 @@
 <!-- The header, back button, intro and animated logo are the registration page's. -->
 <link rel="stylesheet" href="css/sections/hero.css?v=136">
 <link rel="stylesheet" href="css/sections/register-page.css?v=136">
-<link rel="stylesheet" href="css/sections/workshops-page.css?v=138">
+<link rel="stylesheet" href="css/sections/workshops-page.css?v=139">
 
 <script type="module" src="js/workshops-page.js?v=138"></script>
 </head>
@@ -127,6 +127,16 @@
     <h2 data-i18n="wsp_how_title">How booking works</h2>
     <p class="wsp-how-lead" data-i18n="wsp3_lead">Every workshop shows who organizes it. That tells you how to book your seat.</p>
 
+    <!-- The one button: every workshop needs a summit ticket first. -->
+    <div class="wsp-first">
+      <span class="wsp-first-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7.5A1.5 1.5 0 015.5 6h13A1.5 1.5 0 0120 7.5V10a2 2 0 000 4v2.5a1.5 1.5 0 01-1.5 1.5h-13A1.5 1.5 0 014 16.5V14a2 2 0 000-4z"/><path d="M14.5 6v12" stroke-dasharray="1.6 2.2"/><path d="M7.5 10.5h4M7.5 13.5h3"/></svg></span>
+      <div class="wsp-first-text">
+        <h3 data-i18n="wsp4_first_title">First, get your iSmile 2026 ticket</h3>
+        <p data-i18n="wsp4_first_text">Workshops are only for summit attendees. Without a summit ticket you cannot book a workshop.</p>
+      </div>
+      <a class="btn btn-primary" href="register.html" data-i18n="wsp_reg_btn">Register for the summit</a>
+    </div>
+
     <div class="wsp-ways">
       <article class="wsp-way is-ismile">
         <div class="wsp-way-head">
@@ -137,18 +147,17 @@
           </div>
         </div>
         <ol class="wsp-way-steps">
-          <li><b data-i18n="wsp3_ism_s1">Register for iSmile 2026</b><span data-i18n="wsp3_ism_s1_d">Workshops are for summit attendees.</span></li>
           <li><b data-i18n="wsp3_open">Open the workshop</b><span data-i18n="wsp3_ism_s2_d">See the trainer, the details and the price.</span></li>
-          <li><b data-i18n="wsp3_ism_s3">Type your summit email</b><span data-i18n="wsp3_ism_s3_d">Your seat is reserved at once. Our office contacts you about payment.</span></li>
+          <li><b data-i18n="wsp3_ism_s3">Type your summit email</b><span data-i18n="wd_help">Use the same email you registered for iSmile 2026 with.</span></li>
+          <li><b data-i18n="wsp4_ism_s3">Your seat is reserved</b><span data-i18n="wsp4_ism_s3_d">Our office contacts you about payment.</span></li>
         </ol>
-        <a class="btn btn-primary wsp-way-btn" href="register.html" data-i18n="wsp_reg_btn">Register for the summit</a>
       </article>
 
       <article class="wsp-way is-company">
         <div class="wsp-way-head">
           <span class="wsp-way-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.6 3.5h2.6l1.5 4-2 1.3a11 11 0 005.5 5.5l1.3-2 4 1.5v2.6a2 2 0 01-2.2 2A16.5 16.5 0 014.6 5.7a2 2 0 012-2.2z"/></svg></span>
           <div>
-            <span class="wsp-way-tag" data-i18n="wsp3_co_tag">Organized by a company</span>
+            <span class="wsp-way-tag" data-i18n="wsp4_co_tag">Organized by company</span>
             <h3 data-i18n="wsp3_co_title">Register by phone with the company</h3>
           </div>
         </div>
@@ -157,7 +166,6 @@
           <li><b data-i18n="wsp3_co_s2">Call the company</b><span data-i18n="wsp3_co_s2_d">Tap the number to call. The company books your seat.</span></li>
           <li><b data-i18n="wsp3_co_s3">The company confirms</b><span data-i18n="wsp3_co_s3_d">They confirm your seat and arrange payment with you.</span></li>
         </ol>
-        <a class="btn wsp-way-btn" href="#wsList" data-i18n="wsp3_co_btn">See the workshops</a>
       </article>
     </div>
 
