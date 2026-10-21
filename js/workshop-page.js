@@ -12,7 +12,7 @@ import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang, t, onLan
 import { initNav } from "./components/nav.js?v=136";
 import { initTheme } from "./components/theme.js?v=136";
 import { initFooter } from "./sections/footer.js?v=136";
-import { pick, esc, workshopPrice, photoSrc, byCompany, organizerText, WORKSHOP_ICON } from "./sections/workshops.js?v=142";
+import { pick, esc, workshopPrice, photoSrc, byCompany, organizerText, WORKSHOP_ICON } from "./sections/workshops.js?v=143";
 import { phoneHref, PHONE_ICON } from "./utils/phone.js?v=136";
 
 const ICONS = {

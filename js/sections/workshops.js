@@ -2,7 +2,8 @@
 // An announced workshop shows the trainer's photo with who organizes it
 // ("Organized by iSmile" or "Organized by company"), its title, trainer,
 // duration and level, the seats, and a short button on the right: "Register
-// online" (iSmile) or "Call to register" (company). No price on the cards.
+// online" (iSmile) or "Call to register" (company); both open the details
+// page. No price on the cards.
 // The whole card opens its details page (workshop.html?id=…).
 // iSmile's workshops are booked there with the summit email; a company's
 // workshops by calling the company's phone.
@@ -10,7 +11,7 @@
 // never pretend text.
 import { t, tr, onLangChange } from "../i18n.js?v=136";
 import { formatPrice } from "../utils/money.js?v=136";
-import { phoneHref, PHONE_ICON } from "../utils/phone.js?v=136";
+import { PHONE_ICON } from "../utils/phone.js?v=136";
 
 // A tooth and a dental mirror: hands-on dental training.
 export const WORKSHOP_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3.5c-2.8 0-4.6 1.5-4.6 4.2 0 1.8.6 3.1.9 5.1.3 2.8.5 6.7 1.8 6.7 1.1 0 1-3.6 1.9-3.6s.8 3.6 1.9 3.6c1.3 0 1.5-3.9 1.8-6.7.3-2 .9-3.3.9-5.1 0-2.7-1.8-4.2-4.6-4.2z"/><circle cx="17.6" cy="5.4" r="2.6"/><path d="M17.9 8l.5 3"/><path d="M18.4 11l1.4 9.2"/></svg>';
@@ -91,10 +92,10 @@ export function initWorkshops(workshops) {
       : company
         ? [t("wd_seats_total").replace("{total}", total), t("wdc_limited")]
         : [t("wdi_left").replace("{n}", left), t("wdi_seats").replace("{total}", total)];
-    // The button: a company's workshop calls the company; iSmile's opens the page with the email form.
-    const tel = company ? phoneHref(w.companyPhone) : "";
+    // The button opens the details page: there iSmile's workshop has the email
+    // form and a company's workshop has the call button with the phone number.
     const cta = company
-      ? `<a class="wsb-cta" href="${esc(tel || detailsHref(w))}">${PHONE_ICON}<span>${esc(t("wd_call_btn"))}</span>${RIGHT}</a>`
+      ? `<a class="wsb-cta" href="${detailsHref(w)}">${PHONE_ICON}<span>${esc(t("wd_call_btn"))}</span>${RIGHT}</a>`
       : `<a class="wsb-cta" href="${detailsHref(w)}">${MAIL}<span>${esc(t("wsb_online"))}</span>${RIGHT}</a>`;
     return `
       <article class="ws ws-card${company ? " is-company" : ""}${left === 0 ? " full" : ""}">
