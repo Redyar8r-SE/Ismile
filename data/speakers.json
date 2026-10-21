@@ -2,108 +2,108 @@
   {
     "name": {
       "en": "Dr. Athel Adnan Al-Kinani",
-      "ar": "Dr. Athel Adnan Al-Kinani",
-      "ku": "Dr. Athel Adnan Al-Kinani"
+      "ar": "د. أثيل عدنان الكناني",
+      "ku": "د. ئەثیل عەدنان ئەلکینانی"
     },
     "role": {
       "en": "MSc, Oral and Maxillofacial Surgery",
-      "ar": "MSc, Oral and Maxillofacial Surgery",
-      "ku": "MSc, Oral and Maxillofacial Surgery"
+      "ar": "ماجستير في جراحة الفم والوجه والفكين",
+      "ku": "ماستەر لە نەشتەرگەریی دەم و ڕوو و شەویلاک"
     },
     "topic": {
       "en": "The Atrophic Posterior Mandible: From Bone Augmentation to Nerve Lateralization",
-      "ar": "The Atrophic Posterior Mandible: From Bone Augmentation to Nerve Lateralization",
-      "ku": "The Atrophic Posterior Mandible: From Bone Augmentation to Nerve Lateralization"
+      "ar": "ضمور الجزء الخلفي من الفك السفلي: من زيادة حجم العظم إلى الإزاحة الجانبية للعصب",
+      "ku": "پووکانەوەی بەشی دواوەی شەویلاکی خوارەوە: لە زیادکردنی قەبارەی ئێسکەوە تا گواستنەوەی دەمار بۆ لاوە"
     },
     "photo": "assets/speakers/athel.webp"
   },
   {
     "name": {
       "en": "Dr. Twana Othman Hussein",
-      "ar": "Dr. Twana Othman Hussein",
-      "ku": "Dr. Twana Othman Hussein"
+      "ar": "د. توانا عثمان حسين",
+      "ku": "د. توانا عوسمان حسێن"
     },
     "role": {
       "en": "PhD, Pediatric Dentistry Specialist",
-      "ar": "PhD, Pediatric Dentistry Specialist",
-      "ku": "PhD, Pediatric Dentistry Specialist"
+      "ar": "دكتوراه، أخصائي طب أسنان الأطفال",
+      "ku": "دکتۆرا، پسپۆڕی پزیشکیی ددانی منداڵان"
     },
     "topic": {
       "en": "Behind the Mask: The Real Magic of Laughing Gas (N₂O)",
-      "ar": "Behind the Mask: The Real Magic of Laughing Gas (N₂O)",
-      "ku": "Behind the Mask: The Real Magic of Laughing Gas (N₂O)"
+      "ar": "خلف القناع: السحر الحقيقي لغاز الضحك (أكسيد النيتروز N₂O)",
+      "ku": "لە پشت ماسکەوە: جادووی ڕاستەقینەی گازی پێکەنین (ئۆکسیدی نایترۆس N₂O)"
     },
     "photo": "assets/speakers/twana.webp"
   },
   {
     "name": {
       "en": "Dr. Mohammed Ahmed Haji",
-      "ar": "Dr. Mohammed Ahmed Haji",
-      "ku": "Dr. Mohammed Ahmed Haji"
+      "ar": "د. محمد أحمد حاجي",
+      "ku": "د. محەممەد ئەحمەد حاجی"
     },
     "role": {
       "en": "BDS, MSc in Conservative Dentistry",
-      "ar": "BDS, MSc in Conservative Dentistry",
-      "ku": "BDS, MSc in Conservative Dentistry"
+      "ar": "بكالوريوس طب وجراحة الأسنان، ماجستير في طب الأسنان التحفظي",
+      "ku": "بەکالۆریۆس لە پزیشکی و نەشتەرگەریی ددان، ماستەر لە چارەسەری پارێزگارانەی ددان"
     },
     "topic": {
       "en": "Beyond the Limits: Direct Veneers in Challenging Cases",
-      "ar": "Beyond the Limits: Direct Veneers in Challenging Cases",
-      "ku": "Beyond the Limits: Direct Veneers in Challenging Cases"
+      "ar": "تجاوز الحدود: القشور السنية المباشرة في الحالات الصعبة",
+      "ku": "تێپەڕین لە سنوورەکان: ڤینیری ڕاستەوخۆی ددان لە کەیسە دژوارەکاندا"
     },
     "photo": "assets/speakers/mohammed-haji.webp"
   },
   {
     "name": {
       "en": "Dr. Ziad Abusidu",
-      "ar": "Dr. Ziad Abusidu",
-      "ku": "Dr. Ziad Abusidu"
+      "ar": "د. زياد أبو سيدو",
+      "ku": "د. زیاد ئەبو سیدۆ"
     },
     "role": {
       "en": "BDS, MFD-RCSI, MSc, Jordanian Board · Fixed and Removable Prosthodontics",
-      "ar": "BDS, MFD-RCSI, MSc, Jordanian Board · Fixed and Removable Prosthodontics",
-      "ku": "BDS, MFD-RCSI, MSc, Jordanian Board · Fixed and Removable Prosthodontics"
+      "ar": "بكالوريوس طب وجراحة الأسنان، عضوية كلية طب الأسنان بالكلية الملكية للجراحين في أيرلندا (MFD-RCSI)، ماجستير، البورد الأردني · التعويضات السنية الثابتة والمتحركة",
+      "ku": "بەکالۆریۆس لە پزیشکی و نەشتەرگەریی ددان، ئەندامێتیی کۆلێژی پزیشکیی ددان لە کۆلێژی شاهانەی نەشتەرگەران لە ئیرلەندا (MFD-RCSI)، ماستەر، بۆردی ئوردنی · جێگرەوە جێگیر و جووڵاوەکانی ددان"
     },
     "topic": {
       "en": "Partial Coverage Restorations for Endodontically Treated Teeth: An Evidence-Based Paradigm Shift",
-      "ar": "Partial Coverage Restorations for Endodontically Treated Teeth: An Evidence-Based Paradigm Shift",
-      "ku": "Partial Coverage Restorations for Endodontically Treated Teeth: An Evidence-Based Paradigm Shift"
+      "ar": "ترميمات التغطية الجزئية للأسنان المعالَجة جذرياً: تحوّل في النهج يستند إلى الأدلة العلمية",
+      "ku": "نۆژەنکردنەوەی ددانە چارەسەرکراوەکانی کەناڵی ڕەگ بە داپۆشینی بەشەکی: گۆڕانێکی بنەڕەتی لە ڕێبازدا بە پشتبەستن بە بەڵگەی زانستی"
     },
     "photo": "assets/speakers/ziad-abusidu.webp"
   },
   {
     "name": {
       "en": "Dr. Muhamed Hamawandy",
-      "ar": "Dr. Muhamed Hamawandy",
-      "ku": "Dr. Muhamed Hamawandy"
+      "ar": "د. محمد هماوندي",
+      "ku": "د. محەممەد هەمەوەندی"
     },
     "role": {
       "en": "BDS, MSc in Conservative Dentistry",
-      "ar": "BDS, MSc in Conservative Dentistry",
-      "ku": "BDS, MSc in Conservative Dentistry"
+      "ar": "بكالوريوس طب وجراحة الأسنان، ماجستير في طب الأسنان التحفظي",
+      "ku": "بەکالۆریۆس لە پزیشکی و نەشتەرگەریی ددان، ماستەر لە چارەسەری پارێزگارانەی ددان"
     },
     "topic": {
       "en": "Maxilla For All by JD Implant",
-      "ar": "Maxilla For All by JD Implant",
-      "ku": "Maxilla For All by JD Implant"
+      "ar": "الفك العلوي للجميع، من JD Implant",
+      "ku": "شەویلاکی سەرەوە بۆ هەمووان، لەلایەن JD Implant"
     },
     "photo": "assets/speakers/muhamed-hamawandy.webp"
   },
   {
     "name": {
       "en": "Dr. Dastan Tahir Abdulla",
-      "ar": "Dr. Dastan Tahir Abdulla",
-      "ku": "Dr. Dastan Tahir Abdulla"
+      "ar": "د. داستان طاهر عبد الله",
+      "ku": "د. داستان تاهیر عەبدوڵڵا"
     },
     "role": {
       "en": "Oral and Maxillofacial Surgeon",
-      "ar": "Oral and Maxillofacial Surgeon",
-      "ku": "Oral and Maxillofacial Surgeon"
+      "ar": "جرّاح الفم والوجه والفكين",
+      "ku": "نەشتەرگەری دەم و ڕوو و شەویلاک"
     },
     "topic": {
       "en": "Contemporary Strategies in Orthognathic Surgery Planning",
-      "ar": "Contemporary Strategies in Orthognathic Surgery Planning",
-      "ku": "Contemporary Strategies in Orthognathic Surgery Planning"
+      "ar": "الاستراتيجيات الحديثة في التخطيط لجراحة تقويم الفكين",
+      "ku": "ستراتیژییە نوێکان لە پلاندانان بۆ نەشتەرگەریی ڕاستکردنەوەی شەویلاکەکان"
     },
     "photo": "assets/speakers/dastan.webp"
   }

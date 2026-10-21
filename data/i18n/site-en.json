@@ -300,7 +300,7 @@
   "a_venue_map": "Map showing Grand Millennium Sulaimani",
   "pm_qr_alt": "QR code of your ticket",
   "logo_alt": "{name} logo",
-  "load_error": "Could not load the site data. Open the site through a local server (see README.md).",
+  "load_error": "Could not load the website. Please refresh the page, or contact ismile@italk.krd for help.",
   "reg_load_error": "Registration could not load. Please refresh the page, or contact ismile@italk.krd for help.",
   "bm_no_script": "Enable JavaScript to view the numbered map and live booth availability.",
   "spf_trap": "Leave this box empty",
@@ -322,5 +322,8 @@
   "pm_exit": "Exit",
   "pm_aisle": "Main aisle",
   "pm_note": "A guide to the hall. Booth availability and booking are on the sponsor page.",
-  "pm_book": "Book a booth"
+  "pm_book": "Book a booth",
+  "pm_payment_kicker": "Your registration",
+  "bm_unit_m": "m",
+  "bm_width_short": "W"
 }

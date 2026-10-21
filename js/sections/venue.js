@@ -1,6 +1,6 @@
 // Venue: "Copy address" and "Get directions" (uses the visitor's location when allowed).
-import { t } from "../i18n.js?v=139";
-import { mapTarget } from "../utils/maps.js?v=139";
+import { t } from "../i18n.js?v=147";
+import { mapTarget } from "../utils/maps.js?v=147";
 
 // Where the map points. Set in the admin (data/map.json): a place name, or
 // exact coordinates when the name is not precise enough.
@@ -24,7 +24,7 @@ function showMap(map) {
 
   if (frame) {
     frame.src = `https://www.google.com/maps?q=${query}&z=${zoom}&output=embed`;
-    frame.title = map.place || destination;
+    frame.title = t("a_venue_map");
   }
   if (directions) directions.href = `https://www.google.com/maps/dir/?api=1&destination=${query}`;
   if (openMaps) openMaps.href = `https://www.google.com/maps/search/?api=1&query=${query}`;

@@ -1,7 +1,7 @@
 // Summit partners (official, scientific, accreditation), from data/summit-partners.json.
 // The section stays hidden while the list is empty.
-import { t, tr, onLangChange } from "../i18n.js?v=139";
-import { ICONS } from "../config/icons.js?v=139";
+import { t, tr, onLangChange } from "../i18n.js?v=147";
+import { ICONS } from "../config/icons.js?v=147";
 
 // Each kind has its own colour stripe and icon; anything else is a plain partner.
 const KINDS = {
@@ -37,7 +37,7 @@ export function initSummitPartners(data) {
             <div class="spn-text">
               <p class="spn-role">${KINDS[kind]}<span>${escape(tr(p.role))}</span></p>
               <h3>${escape(name)}</h3>
-              ${note ? `<p class="spn-note" dir="auto">${escape(note)}</p>` : ""}
+              ${note && note !== name ? `<p class="spn-note" dir="auto">${escape(note)}</p>` : ""}
             </div>
           </li>`;
       })

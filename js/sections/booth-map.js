@@ -1,6 +1,6 @@
-import { t, onLangChange } from "../i18n.js?v=139";
-import { buildBooths } from "../config/booth-layout.js?v=139";
-import { floorPlanSVG } from "./floor-plan.js?v=139";
+import { t, onLangChange } from "../i18n.js?v=147";
+import { buildBooths } from "../config/booth-layout.js?v=147";
+import { floorPlanSVG } from "./floor-plan.js?v=147";
 
 export function initBoothMap({ rows: BOOTH_ROWS, colors: TIER_COLORS }) {
   const BOOTHS = buildBooths(BOOTH_ROWS);
@@ -29,8 +29,9 @@ export function initBoothMap({ rows: BOOTH_ROWS, colors: TIER_COLORS }) {
   let inFlight = false;
   let timer;
   const escape = (value) => String(value).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+  const sizeText = (size) => size.replace(/^W\s+/, `${t("bm_width_short")} `).replace(/\bm\b/g, t("bm_unit_m"));
   const status = (number) => !connected ? t("bm_unknown") : booked.has(number) ? t("bm_booked") : t("bm_available");
-  const label = (booth) => `${t("bm_booth")} ${booth.number} · ${t(`bm_${booth.tier}`)} · ${booth.size} · ${status(booth.number)}`;
+  const label = (booth) => `${t("bm_booth")} ${booth.number} · ${t(`bm_${booth.tier}`)} · ${sizeText(booth.size)} · ${status(booth.number)}`;
 
   function updateDetails() {
     const booth = BOOTHS.find((item) => item.number === selected);
@@ -40,7 +41,7 @@ export function initBoothMap({ rows: BOOTH_ROWS, colors: TIER_COLORS }) {
       return;
     }
     const taken = booked.has(booth.number);
-    detail.innerHTML = `<span class="sr-only">${escape(label(booth))}</span><span class="booth-detail-number${taken ? " is-booked" : ""}" style="--booth-color:${TIER_COLORS[booth.tier]}" aria-hidden="true">${booth.number}</span><div class="booth-detail-copy" aria-hidden="true"><strong>${escape(t("bm_booth"))} ${booth.number} · ${escape(t(`bm_${booth.tier}`))}</strong><small dir="ltr">${escape(booth.size)}</small></div><span class="booth-detail-status${connected ? taken ? " is-booked" : " is-available" : ""}" aria-hidden="true">${escape(status(booth.number))}</span>`;
+    detail.innerHTML = `<span class="sr-only">${escape(label(booth))}</span><span class="booth-detail-number${taken ? " is-booked" : ""}" style="--booth-color:${TIER_COLORS[booth.tier]}" aria-hidden="true">${booth.number}</span><div class="booth-detail-copy" aria-hidden="true"><strong>${escape(t("bm_booth"))} ${booth.number} · ${escape(t(`bm_${booth.tier}`))}</strong><small dir="auto">${escape(sizeText(booth.size))}</small></div><span class="booth-detail-status${connected ? taken ? " is-booked" : " is-available" : ""}" aria-hidden="true">${escape(status(booth.number))}</span>`;
   }
 
   function button(number) {
@@ -58,7 +59,7 @@ export function initBoothMap({ rows: BOOTH_ROWS, colors: TIER_COLORS }) {
       const state = !connected ? `<span class="booth-group-state">${escape(t("bm_unknown_short"))}</span>` : taken ? `<span class="booth-group-state is-booked">${taken} ${escape(t("bm_booked"))}</span>` : "";
       return `<section class="booth-group tier-${tier}" aria-label="${escape(t(`bm_${tier}`))}">
         <div class="booth-group-head"><i aria-hidden="true"></i><strong>${escape(t(`bm_${tier}`))}</strong><small>${count} ${escape(t("bm_booths"))}</small>${state}</div>
-        ${rows.map((row) => `<div class="booth-row"><div class="booth-numbers">${row.numbers.map(button).join("")}</div><span class="booth-size"><span class="sr-only">${escape(t("bm_size"))}: </span><span dir="ltr">${escape(row.size)}</span></span></div>`).join("")}
+        ${rows.map((row) => `<div class="booth-row"><div class="booth-numbers">${row.numbers.map(button).join("")}</div><span class="booth-size"><span class="sr-only">${escape(t("bm_size"))}: </span><span dir="auto">${escape(sizeText(row.size))}</span></span></div>`).join("")}
       </section>`;
     }).join("");
   }

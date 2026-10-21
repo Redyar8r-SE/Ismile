@@ -6,6 +6,7 @@
 
 const dictionaries = { en: {} };
 const listeners = [];
+const boundSwitches = new WeakSet();
 const STORAGE_KEY = "ismile-lang";
 const RTL = ["ar", "ku"];
 let currentLang = "en";
@@ -103,13 +104,16 @@ export function preferredLang() {
   let saved = null;
   try { saved = localStorage.getItem(STORAGE_KEY); } catch { /* private browsing */ }
   if (saved && dictionaries[saved]) return saved;
-  const browser = (navigator.language || "en").slice(0, 2);
+  const locale = (navigator.language || "en").toLowerCase();
+  const browser = /^(?:ckb|ku)(?:-|$)/.test(locale) ? "ku" : locale.split("-")[0];
   return dictionaries[browser] ? browser : "en";
 }
 
 // Header buttons: EN / العربية
 export function initLangSwitch() {
   document.querySelectorAll(".lang button").forEach((button) => {
+    if (boundSwitches.has(button)) return;
+    boundSwitches.add(button);
     button.addEventListener("click", () => setLang(button.dataset.lang));
   });
 }

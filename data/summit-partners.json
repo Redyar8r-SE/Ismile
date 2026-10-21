@@ -4,7 +4,7 @@
       "kind": "official",
       "role": { "en": "Official Partner of the Summit", "ar": "الشريك الرسمي للقمة", "ku": "هاوبەشی فەرمیی لووتکە" },
       "name": { "en": "Kurdistan Dental Association", "ar": "نقابة أطباء الأسنان في كوردستان", "ku": "سەندیکای پزیشکانی ددانی کوردستان" },
-      "note": { "en": "سەندیکای پزیشکانی ددانی کوردستان", "ar": "Kurdistan Dental Association", "ku": "Kurdistan Dental Association" },
+      "note": { "en": "سەندیکای پزیشکانی ددانی کوردستان", "ar": "نقابة أطباء الأسنان في كوردستان", "ku": "سەندیکای پزیشکانی ددانی کوردستان" },
       "logo": "assets/partners/kda-2026.webp",
       "logo2": null
     },
@@ -12,7 +12,7 @@
       "kind": "scientific",
       "role": { "en": "Scientific Partner", "ar": "الشريك العلمي", "ku": "هاوبەشی زانستی" },
       "name": { "en": "University of Sulaimani", "ar": "جامعة السليمانية", "ku": "زانکۆی سلێمانی" },
-      "note": { "en": "زانکۆی سلێمانی", "ar": "University of Sulaimani", "ku": "University of Sulaimani" },
+      "note": { "en": "زانکۆی سلێمانی", "ar": "جامعة السليمانية", "ku": "زانکۆی سلێمانی" },
       "logo": "assets/partners/uos-2026.webp",
       "logo2": null
     },
