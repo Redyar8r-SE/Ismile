@@ -389,18 +389,20 @@ fi
 # ONCE (the Owner's wish, 22 Oct 2026): the summit moved to 19–20 November and
 # six speakers were announced. Updates never overwrite data/ on this server, so
 # these files are copied from the project one time. The old copies are kept in
-# $BASE/data-before-2026-10-22 (outside the website).
-if [ ! -f "$BASE/.content-sync-2026-10-22" ]; then
+# $BASE/data-before-2026-10-22 (outside the website). Run 2 brings Dr. Hamawandy's
+# qualification, added after run 1.
+if [ ! -f "$BASE/.content-sync-2026-10-22-2" ]; then
   KEEP="$BASE/data-before-2026-10-22"
   mkdir -p "$KEEP/i18n"
   for f in speakers.json journey.json \
            i18n/en.json i18n/ar.json i18n/ku.json \
            i18n/site-en.json i18n/site-ar.json i18n/site-ku.json \
            i18n/registration-en.json i18n/registration-ar.json i18n/registration-ku.json; do
-    [ -f "$SITE/data/$f" ] && cp -p "$SITE/data/$f" "$KEEP/$f"
+    # Keep only the very first old copy, if this step ever runs again.
+    [ -f "$SITE/data/$f" ] && [ ! -f "$KEEP/$f" ] && cp -p "$SITE/data/$f" "$KEEP/$f"
     cp "$REPO/data/$f" "$SITE/data/$f"
   done
-  touch "$BASE/.content-sync-2026-10-22"
+  touch "$BASE/.content-sync-2026-10-22" "$BASE/.content-sync-2026-10-22-2"
   echo "Speakers, dates (19–20 November) and translations copied from the project; old copies in $KEEP."
 fi
 # Accounts that still have the old made-up password (printed in public logs) get the new one.
