@@ -1,7 +1,9 @@
 // Workshops: the cards on workshops.html (#wsGrid), from data/workshops.json.
-// An announced workshop shows the trainer's photo, "Organized by iSmile",
-// its title, trainer, duration and level, and opens its details page
-// (workshop.html?id=…) where people register with their summit email.
+// An announced workshop shows the trainer's photo, who organizes it
+// ("Organized by iSmile" or "Organized by <company>"), its title, trainer,
+// duration and level, and opens its details page (workshop.html?id=…).
+// iSmile's workshops are booked there with the summit email; a company's
+// workshops by calling the company's phone.
 // A workshop without a title is not announced yet: shaped placeholders only,
 // never pretend text.
 import { t, tr, onLangChange } from "../i18n.js?v=136";
@@ -39,6 +41,15 @@ export function photoSrc(w) {
 
 export const detailsHref = (w) => `workshop.html?id=${encodeURIComponent(w.id)}`;
 
+/** A company runs this workshop: people call the company to register. */
+export const byCompany = (w) => w?.organizer === "company";
+
+/** "Organized by iSmile" or "Organized by <company name>". */
+export function organizerText(w) {
+  const company = byCompany(w) ? pick(w.company) : "";
+  return company ? t("ws_org_by").replace("{name}", company) : t("ws_org");
+}
+
 export function initWorkshops(workshops) {
   const grid = document.getElementById("wsGrid");
 
@@ -46,8 +57,8 @@ export function initWorkshops(workshops) {
     grid.innerHTML = workshops.map(renderCard).join("");
   }
 
-  function badge() {
-    return `<span class="ws-badge">${esc(t("ws_org"))}</span>`;
+  function badge(w) {
+    return `<span class="ws-badge${byCompany(w) ? " is-company" : ""}" dir="auto">${esc(organizerText(w))}</span>`;
   }
 
   function renderCard(w) {
@@ -55,7 +66,7 @@ export function initWorkshops(workshops) {
     if (!title) {
       return `
       <article class="ws is-soon">
-        <div class="ws-ph">${badge()}${WORKSHOP_ICON}</div>
+        <div class="ws-ph">${badge(w)}${WORKSHOP_ICON}</div>
         <div class="ws-sk">
           <span class="ws-line"><span class="sr-only">${esc(t("w_tba_title"))}</span></span>
           <span class="ws-line ws-short"></span>
@@ -72,7 +83,7 @@ export function initWorkshops(workshops) {
       <article class="ws ws-card${w.seatsLeft === 0 ? " full" : ""}">
         <div class="ws-media${photo ? "" : " no-photo"}">
           ${photo ? `<img src="${esc(photo)}" alt="" loading="lazy" decoding="async">` : WORKSHOP_ICON}
-          ${badge()}
+          ${badge(w)}
           <span class="ws-go" aria-hidden="true">${ARROW}</span>
         </div>
         <div class="ws-body">

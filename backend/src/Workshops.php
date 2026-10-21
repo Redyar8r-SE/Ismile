@@ -13,6 +13,13 @@ final class Workshops
     /** The pictures a workshop card can have (js/config/icons.js WORKSHOP_ICONS). */
     public const ICONS = ['tools', 'tooth', 'implant', 'smile', 'root', 'scan', 'braces', 'drill'];
 
+    /**
+     * Who runs a workshop. 'ismile': people register on the website with the
+     * email they registered for the summit with. 'company': people call the
+     * company's phone number to register (no online registration).
+     */
+    public const ORGANIZERS = ['ismile', 'company'];
+
     /** A workshop is priced in dinars or dollars; its bookings use the same currency. */
     public const CURRENCIES = ['IQD', 'USD'];
 
@@ -84,6 +91,8 @@ final class Workshops
             'id' => $row['id'], 'icon' => $row['icon'], 'title' => $i18n('title'), 'company' => $i18n('company'), 'speaker' => $i18n('speaker'),
             'credentials' => $i18n('credentials'), 'format' => $i18n('format'), 'duration' => $i18n('duration'), 'level' => $i18n('level'),
             'overview' => $i18n('overview'), 'photo' => $row['photo'] !== null && $row['photo'] !== '' ? (string) $row['photo'] : null,
+            'organizer' => (string) ($row['organizer'] ?? 'ismile'),
+            'companyPhone' => ($row['company_phone'] ?? '') !== '' ? (string) $row['company_phone'] : null,
             'price' => (int) $row['price'], 'currency' => (string) ($row['currency'] ?? 'IQD'),
             'totalSeats' => (int) $row['total_seats'], 'seatsLeft' => max(0, (int) $row['total_seats'] - $booked),
             'booked' => $booked, 'status' => $row['status'], 'sortOrder' => (int) $row['sort_order'],
@@ -183,6 +192,10 @@ final class Workshops
         $workshop = self::find($workshopId);
         if ($workshop === null || $workshop['status'] !== 'active' || !self::hasTitle($workshop)) {
             throw new UserError('wd_err_missing', null, 404);
+        }
+        // A company's workshop is booked by calling the company, never here.
+        if ($workshop['organizer'] === 'company') {
+            throw new UserError('wd_err_by_phone', null, 409);
         }
         $registration = Db::one("SELECT * FROM registrations WHERE LOWER(email) = ? AND status IN ('paid','complimentary') ORDER BY id DESC LIMIT 1", [$email]);
         if ($registration === null) {
@@ -342,6 +355,19 @@ final class Workshops
             throw new UserError('Seats must be a number from 1 to 2000.');
         }
         $price = preg_replace('/\D/', '', (string) ($in['price'] ?? '')) ?? '';
+        $organizer = Validate::oneOf($in['organizer'] ?? null, self::ORGANIZERS, 'ismile');
+        $phone = Validate::text($in['company_phone'] ?? '', 40);
+        if ($phone !== '' && (!preg_match('/^\+?[0-9][0-9 ()-]{6,30}$/', $phone) || strlen((string) preg_replace('/\D/', '', $phone)) < 7)) {
+            throw new UserError('The company phone must be a phone number, e.g. +964 750 123 4567.');
+        }
+        if ($organizer === 'company') {
+            if ($text('company_en') === null && $text('company_ar') === null && $text('company_ku') === null) {
+                throw new UserError('Organized by a company: write the company name (at least in one language).');
+            }
+            if ($phone === '') {
+                throw new UserError('Organized by a company: write the company phone number. People call it to register.');
+            }
+        }
         $details = [];
         foreach (['en', 'ar', 'ku'] as $lang) {
             foreach (self::DETAILS as $field => $max) {
@@ -353,6 +379,7 @@ final class Workshops
             'title_en' => $text('title_en'), 'title_ar' => $text('title_ar'), 'title_ku' => $text('title_ku'),
             'company_en' => $text('company_en'), 'company_ar' => $text('company_ar'), 'company_ku' => $text('company_ku'),
             'speaker_en' => $text('speaker_en'), 'speaker_ar' => $text('speaker_ar'), 'speaker_ku' => $text('speaker_ku'),
+            'organizer' => $organizer, 'company_phone' => $phone !== '' ? $phone : null,
             'price' => $price === '' ? 0 : min((int) $price, 100000000),
             'currency' => Validate::oneOf($in['currency'] ?? null, self::CURRENCIES, 'IQD'),
             'total_seats' => $seats,
@@ -381,6 +408,7 @@ final class Workshops
             'id' => $w['id'], 'icon' => $w['icon'], 'title' => $w['title'], 'company' => $w['company'], 'speaker' => $w['speaker'],
             'credentials' => $w['credentials'], 'format' => $w['format'], 'duration' => $w['duration'], 'level' => $w['level'],
             'overview' => $w['overview'], 'photo' => $w['photo'],
+            'organizer' => $w['organizer'], 'companyPhone' => $w['organizer'] === 'company' ? $w['companyPhone'] : null,
             'price' => $w['price'], 'currency' => $w['currency'], 'totalSeats' => $w['totalSeats'], 'seatsLeft' => $w['seatsLeft'],
         ], self::all());
         $json = json_encode($cards, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n";

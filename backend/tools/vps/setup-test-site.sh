@@ -380,10 +380,11 @@ fi
 PHP=php ISMILE_SITE="$SITE" ISMILE_BACKEND_DIR="$BACKEND" bash "$REPO/backend/tools/deploy.sh" test
 # ONCE (the Owner's wish, 21 Oct 2026, for the company's video): the 4 "Coming
 # soon" workshops are deleted and two example workshops with trainer photos
-# are added. Afterwards the Owner manages them on the Workshops page.
-if [ ! -f "$BASE/.video-workshops-1" ]; then
+# are added, one organized by iSmile (register online) and one by a company
+# (register by phone). Afterwards the Owner manages them on the Workshops page.
+if [ ! -f "$BASE/.video-workshops-2" ]; then
   php "$BACKEND/tools/video-workshops.php"
-  touch "$BASE/.video-workshops-1"
+  touch "$BASE/.video-workshops-1" "$BASE/.video-workshops-2"
 fi
 # Accounts that still have the old made-up password (printed in public logs) get the new one.
 if [ -n "$OLD_OWNER_PASS" ]; then

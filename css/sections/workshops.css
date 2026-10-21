@@ -23,6 +23,13 @@
 .ws-badge{position:absolute;z-index:2;inset-block-start:12px;inset-inline-start:12px;display:inline-flex;align-items:center;gap:7px;max-width:calc(100% - 76px);padding:6px 12px;border-radius:99px;border:1px solid var(--line);background:color-mix(in srgb,var(--bg) 85%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:var(--text);font-size:12px;font-weight:700;letter-spacing:.01em;line-height:1.2}
 .ws-badge::before{content:"";flex:none;width:6px;height:6px;border-radius:50%;background:var(--teal)}
 .ws.is-soon .ws-badge{max-width:calc(100% - 24px)}
+/* Organized by a company (people call the company): an amber dot, so it is
+   easy to tell from iSmile's own workshops (teal) */
+:root{--co:#E8961E;--co-ink:#9A5800}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--co-ink:#F6BE5C}}
+:root[data-theme="dark"]{--co-ink:#F6BE5C}
+.ws-badge.is-company{border-color:color-mix(in srgb,var(--co) 55%,transparent)}
+.ws-badge.is-company::before{background:var(--co)}
 .ws-sk{display:grid;gap:12px;padding:20px 18px 22px;border-top:1px solid var(--line)}
 .ws-line{display:block;height:13px;border-radius:99px;background:linear-gradient(90deg,var(--line),color-mix(in srgb,var(--line) 55%,transparent),var(--line));background-size:200% 100%;animation:wsShift 2.6s ease-in-out infinite}
 .ws-line.ws-short{width:62%;height:10px;opacity:.75}

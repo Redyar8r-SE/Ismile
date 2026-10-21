@@ -156,8 +156,15 @@ $e = [Page::class, 'e'];
         }
         return $html;
     };
+    $organizerOptions = static function (string $current): string {
+        $html = '';
+        foreach (['ismile' => 'iSmile (register online with the summit email)', 'company' => 'A company (register by phone call)'] as $code => $label) {
+            $html .= '<option value="' . $code . '"' . ($code === $current ? ' selected' : '') . '>' . $label . '</option>';
+        }
+        return $html;
+    };
     $siteUrl = static fn (string $path): string => rtrim((string) \Ismile\App::config('site_url'), '/') . '/' . ltrim($path, '/');
-    $fieldsFor = static function (?array $w) use ($e, $iconSelect, $currencyOptions, $siteUrl): string {
+    $fieldsFor = static function (?array $w) use ($e, $iconSelect, $currencyOptions, $organizerOptions, $siteUrl): string {
         $v = static fn (string $field, string $lang) => $e((string) ($w[$field][$lang] ?? ''));
         $row3 = static fn (string $field, string $label, string $example) => '<div class="row3">'
             . '<label>' . $e($label) . ' (English)<input name="' . $field . '_en" placeholder="' . $e($example) . '" value="' . $v($field, 'en') . '"></label>'
@@ -171,8 +178,14 @@ $e = [Page::class, 'e'];
             . '<label>Trainer (English, optional)<input name="speaker_en" value="' . $v('speaker', 'en') . '"></label>'
             . '<label>Trainer (Arabic)<input name="speaker_ar" dir="rtl" value="' . $v('speaker', 'ar') . '"></label>'
             . '<label>Trainer (Kurdish)<input name="speaker_ku" dir="rtl" value="' . $v('speaker', 'ku') . '"></label></div>'
+            . '<h3 class="form-subhead">Organized by</h3>'
+            . '<p class="muted small"><b>iSmile</b>: people register on the website with the email they registered for the summit with. <b>A company</b>: the website shows "Organized by" the company name and its phone number, and people call the company to register (no online registration).</p>'
             . '<div class="row3">'
-            . '<label>Company (English, optional)<input name="company_en" value="' . $v('company', 'en') . '"></label>'
+            . '<label>Organized by<select name="organizer">' . $organizerOptions((string) ($w['organizer'] ?? 'ismile')) . '</select></label>'
+            . '<label>Company phone (people call it to register)<input name="company_phone" dir="ltr" inputmode="tel" maxlength="40" placeholder="+964 750 123 4567" value="' . $e((string) ($w['companyPhone'] ?? '')) . '"></label>'
+            . '</div>'
+            . '<div class="row3">'
+            . '<label>Company name (English)<input name="company_en" value="' . $v('company', 'en') . '"></label>'
             . '<label>Company (Arabic)<input name="company_ar" dir="rtl" value="' . $v('company', 'ar') . '"></label>'
             . '<label>Company (Kurdish)<input name="company_ku" dir="rtl" value="' . $v('company', 'ku') . '"></label></div>'
             . '<div class="row3">'
@@ -202,7 +215,7 @@ $e = [Page::class, 'e'];
     <tr><th>Workshop</th><th>On the website</th><th>Seats (limit)</th><th>Booked</th><th class="table-action-heading">Actions</th></tr>
     <?php foreach ($all as $w): ?>
     <tr>
-      <td><b><?= $e(SiteData::workshopName($w)) ?></b><br><small class="muted"><?= $e($w['id']) ?> · <?= $w['price'] > 0 ? $e(Workshops::money($w['price'], $w['currency'])) : 'price not set' ?></small></td>
+      <td><b><?= $e(SiteData::workshopName($w)) ?></b><br><small class="muted"><?= $e($w['id']) ?> · <?= $w['price'] > 0 ? $e(Workshops::money($w['price'], $w['currency'])) : 'price not set' ?></small><br><?= $w['organizer'] === 'company' ? '<span class="pill gold org">By ' . $e((string) (array_values(array_filter((array) $w['company']))[0] ?? 'a company')) . ' · call <span dir="ltr">' . $e((string) $w['companyPhone']) . '</span></span>' : '<span class="pill green org">By iSmile · online</span>' ?></td>
       <td><?= $w['status'] === 'active' ? '<span class="pill green">Shown</span>' : '<span class="pill grey">Hidden</span>' ?></td>
       <td>
         <div class="seat-buttons">

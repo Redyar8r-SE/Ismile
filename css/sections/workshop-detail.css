@@ -19,6 +19,8 @@
 .wd-info{display:flex;flex-direction:column;gap:22px;min-width:0}
 .wd-badge{align-self:flex-start;display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:99px;background:color-mix(in srgb,var(--teal) 14%,transparent);border:1px solid color-mix(in srgb,var(--teal) 40%,transparent);color:var(--teal-ink);font-size:13px;font-weight:700}
 .wd-badge::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--teal)}
+.wd-badge.is-company{background:color-mix(in srgb,var(--co) 16%,transparent);border-color:color-mix(in srgb,var(--co) 50%,transparent);color:var(--co-ink)}
+.wd-badge.is-company::before{background:var(--co)}
 .wd-info h1{margin:0;font-size:clamp(28px,3.4vw,40px);line-height:1.12;font-weight:800;letter-spacing:-.01em}
 .wd-trainer{display:flex;flex-direction:column;gap:3px}
 .wd-trainer b{font-size:17px}
@@ -70,6 +72,17 @@ html[dir="rtl"] .wd-submit svg{transform:scaleX(-1)}
 .wd-done p{color:var(--muted);font-size:14px}
 .wd-missing{padding:40px 0;color:var(--muted);font-size:17px}
 
+/* Organized by a company: "Register by phone" and a big call button */
+.wd-call{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:14px;background:color-mix(in srgb,var(--teal) 10%,transparent);border:1px solid color-mix(in srgb,var(--teal) 35%,transparent)}
+.wd-call-ic{flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--teal),var(--teal-ink))}
+.wd-call-ic svg{width:20px;height:20px}
+.wd-call b{display:block;margin-bottom:3px;font-size:16px}
+.wd-call p{margin:0;color:var(--muted);font-size:14px;line-height:1.5}
+.wd-call-btn{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px 12px;min-height:56px;padding:10px 24px;border-radius:99px;color:#fff;font-weight:700;text-align:center;background:linear-gradient(135deg,var(--teal),#0E7F7B);box-shadow:0 10px 22px -10px rgba(22,166,161,.9)}
+.wd-call-btn:hover{color:#fff;filter:brightness(1.06)}
+.wd-call-btn svg{flex:none;width:20px;height:20px}
+.wd-call-btn b{font-size:18px;letter-spacing:.02em;padding-inline-start:12px;border-inline-start:1px solid rgba(255,255,255,.4);unicode-bidi:isolate}
+
 @media (max-width:960px){
   .wd{grid-template-columns:1fr;gap:32px}
   .wd-photo{max-width:520px;aspect-ratio:4/3}
@@ -79,5 +92,6 @@ html[dir="rtl"] .wd-submit svg{transform:scaleX(-1)}
   .wd-facts{grid-template-columns:1fr}
   .wd-form{flex-direction:column}
   .wd-submit{width:100%}
+  .wd-call-btn b{flex-basis:100%;padding-inline-start:0;border-inline-start:0}
   .wd-photo figcaption{inset-inline:20px;bottom:18px;font-size:19px}
 }

@@ -112,6 +112,8 @@ $check('Psoola orders page renders (live list, or a clear note when unavailable)
 $html = $render('workshops');
 $check('Workshop settings offer the trainer photo, the details page texts and the currency', str_contains($html, 'name="photo"') && str_contains($html, 'name="overview_en"') && str_contains($html, 'name="currency"'));
 $check('Workshop details page and online registration are deployed', is_file(App::siteFile('workshop.html')) && is_file(App::siteFile('api/workshop-register.php')));
+$check('Workshop settings offer "Organized by" iSmile or a company, with the company phone', str_contains($html, 'name="organizer"') && str_contains($html, 'name="company_phone"') && str_contains($html, 'A company (register by phone call)'));
+$check('The workshops page explains both ways to book (online and by phone)', str_contains((string) @file_get_contents(App::siteFile('workshops.html')), 'wsp3_co_title'));
 $html = $render('registration', 'new=1');
 $check('Register (cash) shows packages, lunch cards and the total to collect', str_contains($html, 'Packages &amp; prices') && str_contains($html, 'id="cash-total"') && str_contains($html, 'class="lunch-card"') && str_contains($html, 'Paid by cash'));
 $check('Paid by cash first asks "Did you receive the cash?"', str_contains($html, 'id="cash-confirm"') && str_contains($html, 'Did you receive the cash?') && str_contains($html, 'Yes, sell the ticket'));

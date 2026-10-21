@@ -335,6 +335,10 @@ CREATE TABLE IF NOT EXISTS workshops (
   company_en   VARCHAR(160)       NULL,
   company_ar   VARCHAR(160)       NULL,
   company_ku   VARCHAR(160)       NULL,
+  -- who runs it: 'ismile' = people register on the website with their summit
+  -- email; 'company' = people call company_phone to register
+  organizer    VARCHAR(10)        NOT NULL DEFAULT 'ismile',
+  company_phone VARCHAR(40)       NULL,
   speaker_en   VARCHAR(160)       NULL,
   speaker_ar   VARCHAR(160)       NULL,
   speaker_ku   VARCHAR(160)       NULL,
@@ -366,6 +370,7 @@ CREATE TABLE IF NOT EXISTS workshops (
   KEY k_workshop_status (status, sort_order),
   CONSTRAINT ck_workshop_seats CHECK (total_seats BETWEEN 1 AND 2000),
   CONSTRAINT ck_workshop_currency CHECK (currency IN ('IQD','USD')),
+  CONSTRAINT ck_workshop_organizer CHECK (organizer IN ('ismile','company')),
   CONSTRAINT ck_workshop_id CHECK (id REGEXP '^[a-z0-9-]{2,40}$')
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Workshops (managed in the admin)';

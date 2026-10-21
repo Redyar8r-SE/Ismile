@@ -4,7 +4,7 @@
    The cards and the "book by phone" bar come from workshops.css, and the
    header, back button, intro and animated logo from register-page.css and
    hero.css, so both pages look the same. This file is the phone bar in the
-   intro, the booking steps and the "register first" panel.
+   intro and "How booking works" (the two ways to book, and the day).
    ========================================================== */
 
 /* ---------- Intro ----------
@@ -18,26 +18,44 @@
 /* The grid below has its own heading, so it needs less room above */
 .wsp-list .ws-grid{margin-top:28px}
 
-/* ---------- How booking works ---------- */
-.wsp-steps{list-style:none;margin:18px 0 0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:18px;counter-reset:none}
-.wsp-steps li{position:relative;display:grid;gap:10px;align-content:start;padding:26px 24px;border-radius:var(--r-lg);background:var(--bg);border:1px solid var(--line);box-shadow:0 18px 34px -28px rgba(8,30,38,.7)}
-.wsp-num{position:absolute;top:18px;inset-inline-end:20px;font-size:40px;font-weight:800;line-height:1;color:color-mix(in srgb,var(--teal) 22%,transparent)}
-.wsp-ic{width:52px;height:52px;border-radius:15px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--teal),var(--teal-ink));box-shadow:0 12px 22px -12px rgba(14,127,123,.9)}
-.wsp-ic svg{width:26px;height:26px}
-.wsp-steps h3{font-size:19px;margin-top:4px}
-.wsp-steps p{color:var(--muted);font-size:15px;line-height:1.55}
+/* ---------- How booking works: two ways, side by side ----------
+   iSmile's workshops (teal): online with the summit email.
+   A company's workshops (amber, --co from workshops.css): by phone. */
+.wsp-how-lead{max-width:640px;margin-top:10px;color:var(--muted);font-size:17px;line-height:1.55}
+.wsp-ways{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin-top:28px}
+.wsp-way{--way:var(--teal);--way-ink:var(--teal-ink);position:relative;display:flex;flex-direction:column;gap:22px;padding:26px;border-radius:var(--r-lg);background:var(--bg);border:1.5px solid color-mix(in srgb,var(--way) 55%,transparent);box-shadow:0 22px 40px -30px color-mix(in srgb,var(--way) 80%,#000);overflow:hidden}
+.wsp-way::before{content:"";position:absolute;inset-inline:0;top:0;height:4px;background:linear-gradient(90deg,var(--way),color-mix(in srgb,var(--way) 30%,transparent))}
+.wsp-way.is-company{--way:var(--co);--way-ink:var(--co-ink)}
+.wsp-way-head{display:flex;align-items:flex-start;gap:16px}
+.wsp-way-ic{flex:none;width:54px;height:54px;border-radius:16px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--way),color-mix(in srgb,var(--way) 70%,#000));box-shadow:0 12px 22px -12px var(--way)}
+.wsp-way-ic svg{width:26px;height:26px}
+.wsp-way-tag{display:inline-flex;align-items:center;gap:7px;padding:4px 11px;border-radius:99px;background:color-mix(in srgb,var(--way) 15%,transparent);color:var(--way-ink);font-size:12.5px;font-weight:700}
+.wsp-way-tag::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--way)}
+.wsp-way-head h3{margin-top:8px;font-size:20px;line-height:1.3}
+.wsp-way-steps{list-style:none;margin:0;padding:0;display:grid;gap:0;counter-reset:way}
+.wsp-way-steps li{position:relative;display:grid;gap:3px;padding-inline-start:50px;padding-bottom:18px;counter-increment:way}
+.wsp-way-steps li:last-child{padding-bottom:0}
+.wsp-way-steps li::before{content:counter(way);position:absolute;inset-inline-start:0;top:-2px;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--way) 16%,var(--bg));border:1.5px solid var(--way);color:var(--way-ink);font-size:15px;font-weight:800}
+/* the line joining the numbers */
+.wsp-way-steps li:not(:last-child)::after{content:"";position:absolute;inset-inline-start:16px;top:34px;bottom:0;width:2px;background:color-mix(in srgb,var(--way) 35%,transparent)}
+.wsp-way-steps b{font-size:16px;line-height:1.35}
+.wsp-way-steps span{color:var(--muted);font-size:15px;line-height:1.5}
+.wsp-way-btn{align-self:flex-start;margin-top:auto}
+.wsp-way.is-company .wsp-way-btn{background:transparent;color:var(--way-ink);border:1.5px solid var(--way)}
+.wsp-way.is-company .wsp-way-btn:hover{background:color-mix(in srgb,var(--way) 14%,transparent)}
 
-/* ---------- Register first ---------- */
-.wsp-register{display:flex;align-items:center;gap:18px;margin-top:28px;padding:22px 26px;border-radius:var(--r-lg);background:linear-gradient(120deg,var(--navy-2),var(--navy) 60%,#126C70);color:#fff}
-.wsp-register-ic{flex:none;width:52px;height:52px;border-radius:15px;display:grid;place-items:center;background:rgba(255,255,255,.14);color:#9FE6E1}
-.wsp-register-ic svg{width:26px;height:26px}
-.wsp-register-text{flex:1;min-width:0}
-.wsp-register-text h3{font-size:19px}
-.wsp-register-text p{margin-top:4px;color:#BFDCDE;font-size:15px}
-.wsp-register .btn{flex:none;white-space:nowrap}
+/* ---------- Join on the day ---------- */
+.wsp-day{display:flex;align-items:center;gap:18px;margin-top:20px;padding:20px 24px;border-radius:var(--r-lg);background:linear-gradient(120deg,var(--navy-2),var(--navy) 60%,#126C70);color:#fff}
+.wsp-ic{flex:none;width:52px;height:52px;border-radius:15px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--teal),var(--teal-ink));box-shadow:0 12px 22px -12px rgba(14,127,123,.9)}
+.wsp-ic svg{width:26px;height:26px}
+.wsp-day h3{font-size:19px}
+.wsp-day p{margin-top:4px;color:#BFDCDE;font-size:15px;line-height:1.5}
 
 @media (max-width:860px){
-  .wsp-steps{grid-template-columns:1fr}
-  .wsp-register{flex-wrap:wrap}
-  .wsp-register .btn{flex-basis:100%;white-space:normal;text-align:center}
+  .wsp-ways{grid-template-columns:1fr}
+}
+@media (max-width:560px){
+  .wsp-way{padding:22px 18px}
+  .wsp-way-btn{align-self:stretch;text-align:center}
+  .wsp-day{align-items:flex-start;padding:18px}
 }

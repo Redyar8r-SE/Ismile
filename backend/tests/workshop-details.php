@@ -1,7 +1,8 @@
 <?php
 // Workshop details page: trainer photo and details, prices in IQD or USD,
-// online "Register for workshop" with the summit email, and the one-time
-// example workshops for the video.
+// online "Register for workshop" with the summit email, workshops organized
+// by a company (register by phone), and the one-time example workshops for
+// the video.
 // ISMILE_CONFIG=/test/config.php php backend/tests/workshop-details.php
 declare(strict_types=1);
 require __DIR__ . '/../bootstrap.php';
@@ -77,6 +78,22 @@ Workshops::setStatus($id, 'hidden', $owner);
 $check('a hidden workshop takes no online registration', $errorKey(static fn () => Workshops::registerOnline($id, $third['email'])) === 'wd_err_missing');
 Workshops::setStatus($id, 'active', $owner);
 
+// ---- organized by a company: people call the company ----
+$check('a company workshop needs the company name', $errorKey(static fn () => Workshops::create(['title_en' => "Co $tag", 'total_seats' => '5', 'organizer' => 'company', 'company_phone' => '+964 750 123 4567'], $owner)) !== null);
+$check('a company workshop needs the phone', $errorKey(static fn () => Workshops::create(['title_en' => "Co $tag", 'total_seats' => '5', 'organizer' => 'company', 'company_en' => 'Dental Co'], $owner)) !== null);
+$check('a phone that is not a number is refused', $errorKey(static fn () => Workshops::create(['title_en' => "Co $tag", 'total_seats' => '5', 'organizer' => 'company', 'company_en' => 'Dental Co', 'company_phone' => 'call us'], $owner)) !== null);
+$companyId = Workshops::create(['title_en' => "Co $tag", 'total_seats' => '5', 'organizer' => 'company', 'company_en' => 'Dental Co', 'company_phone' => '+964 750 123 4567'], $owner);
+$company = Workshops::find($companyId);
+$check('the organizer and phone are saved', $company['organizer'] === 'company' && $company['companyPhone'] === '+964 750 123 4567' && $company['company']['en'] === 'Dental Co');
+$card = array_values(array_filter($website(), static fn (array $w): bool => $w['id'] === $companyId))[0] ?? null;
+$check('the website card says organized by the company, with its phone', $card !== null && $card['organizer'] === 'company' && $card['companyPhone'] === '+964 750 123 4567');
+$check('a company workshop takes no online registration', $errorKey(static fn () => Workshops::registerOnline($companyId, $person['email'])) === 'wd_err_by_phone' && Workshops::booked($companyId) === 0);
+$check('an unknown organizer becomes iSmile', Workshops::find(Workshops::create(['title_en' => "Ism $tag", 'total_seats' => '5', 'organizer' => 'someone'], $owner))['organizer'] === 'ismile');
+$ismCard = array_values(array_filter($website(), static fn (array $w): bool => $w['id'] === $id))[0];
+$check("an iSmile workshop's card has no company phone", $ismCard['organizer'] === 'ismile' && $ismCard['companyPhone'] === null);
+Workshops::update($companyId, ['title_en' => "Co $tag", 'total_seats' => '5', 'organizer' => 'ismile', 'company_en' => 'Dental Co', 'company_phone' => '+964 750 123 4567'], $owner);
+$check('switched back to iSmile, online registration works again', $errorKey(static fn () => Workshops::registerOnline($companyId, $person['email'])) === null && Workshops::booked($companyId) === 1);
+
 // ---- the office side shows dollars ----
 $check('the currency cannot change while people are booked', $errorKey(static fn () => Workshops::update($id, ['title_en' => "Composite $tag", 'total_seats' => '2', 'currency' => 'IQD', 'price' => '100'], $owner)) !== null);
 $paid = Office::changeWorkshop((int) $booking['id'], $owner, ['payment_status' => 'paid', 'amount_paid' => '100', 'paid_how' => 'cash']);
@@ -105,6 +122,18 @@ $check('the two example workshops are added at $100 with 30 seats and photos', $
     && $soft['totalSeats'] === 30 && $soft['photo'] === 'assets/workshops/sarah-hassan.jpg' && $composite['photo'] === 'assets/workshops/alan-karim.jpg');
 $check('the example photos exist on the website', is_file(dirname(__DIR__, 2) . '/assets/workshops/sarah-hassan.jpg') && is_file(dirname(__DIR__, 2) . '/assets/workshops/alan-karim.jpg'));
 $check('the examples are on the website cards', count(array_filter($website(), static fn (array $w): bool => in_array($w['id'], ['soft-tissue-implants', 'composite-restorations'], true))) === 2);
+$check("Dr. Sarah Hassan's example is organized by iSmile", $soft['organizer'] === 'ismile' && $soft['companyPhone'] === null);
+$check("Dr. Alan Karim's example is organized by a company, with a phone", $composite['organizer'] === 'company' && $composite['company']['en'] === 'Partner Dental Company' && $composite['companyPhone'] === '+964 750 123 4567');
 $check('running the tool again changes nothing', str_contains($run(), 'added none') && (int) Db::value("SELECT COUNT(*) FROM workshops WHERE id IN ('soft-tissue-implants','composite-restorations')") === 2);
+
+// The first version of the tool added the composite workshop as iSmile's:
+// the tool makes it the company's, but never overwrites the Owner's own company.
+Db::run("UPDATE workshops SET organizer = 'ismile', company_en = NULL, company_phone = NULL WHERE id = 'composite-restorations'");
+$out = $run();
+$composite = Workshops::find('composite-restorations');
+$check('an iSmile composite workshop from the first version becomes the company one', str_contains($out, 'now organized by') && $composite['organizer'] === 'company' && $composite['companyPhone'] === '+964 750 123 4567');
+Workshops::update('composite-restorations', ['title_en' => 'Composite', 'total_seats' => '30', 'price' => '100', 'currency' => 'USD', 'organizer' => 'company', 'company_en' => 'Real Co', 'company_phone' => '+964 770 000 1111'], $owner);
+$run();
+$check("the tool never overwrites the Owner's own company", Workshops::find('composite-restorations')['company']['en'] === 'Real Co');
 
 echo "$passed checks passed.\n";
