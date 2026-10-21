@@ -297,6 +297,9 @@ const PARTS = [
       ["wdc_how1", "How to book: step 1 title"], ["wdc_how1_d", "How to book: step 1 text"],
       ["wdc_how2", "How to book: step 2 title"], ["wdc_how2_d", "How to book: step 2 text"],
       ["wdc_how3", "How to book: step 3 title"], ["wdc_how3_d", "How to book: step 3 text"],
+      ["wdi_how_title", "iSmile workshop page: “How to register” title"],
+      ["wdi_left", "iSmile workshop page: seats left (keep {n})"], ["wdi_seats", "iSmile workshop page: under the seats (keep {total})"],
+      ["wdi_email_ph", "iSmile workshop page: email box placeholder"],
     ]),
   },
   {

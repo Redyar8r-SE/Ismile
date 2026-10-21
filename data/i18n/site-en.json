@@ -375,5 +375,9 @@
   "wdc_how2": "Pay the company",
   "wdc_how2_d": "They arrange payment with you.",
   "wdc_how3": "Have your summit ticket",
-  "wdc_how3_d": "Workshops are for iSmile 2026 attendees."
+  "wdc_how3_d": "Workshops are for iSmile 2026 attendees.",
+  "wdi_how_title": "How to register for this workshop",
+  "wdi_left": "{n} left",
+  "wdi_seats": "of {total} seats",
+  "wdi_email_ph": "Your email"
 }

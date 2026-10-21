@@ -82,9 +82,9 @@ html[dir="rtl"] .wd-submit svg{transform:scaleX(-1)}
 html[dir="rtl"] .wdc-hero{--fade:to left}
 .wdc-text{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:center;gap:16px;min-width:0;padding-block:40px;padding-inline:44px 8px}
 .wdc-text h1{margin:0;font-size:clamp(28px,2.8vw,38px);line-height:1.12;font-weight:800;letter-spacing:-.01em}
-.wdc-trainer{display:flex;flex-wrap:wrap;gap:2px 8px;margin:0;color:var(--muted);font-size:15px}
+.wdc-trainer{display:flex;flex-direction:column;gap:2px;margin:0;color:var(--muted);font-size:15px}
 .wdc-trainer span:first-child{color:var(--text);font-weight:700}
-.wdc-trainer i{font-style:normal}
+.wdc-trainer i{display:none}
 
 /* Price | seats, and the call button, in one panel */
 .wdc-panel{display:flex;flex-direction:column;gap:14px;margin-top:6px;padding:16px;border-radius:22px;background:var(--bg);border:1px solid var(--line)}
@@ -125,6 +125,27 @@ html[dir="rtl"] .wdc-hero{--fade:to left}
 .wdc-how b{font-size:15px}
 .wdc-how p{margin:2px 0 0;color:var(--muted);font-size:13.5px;line-height:1.45}
 
+/* Organized by iSmile: seats left with a bar, and the summit email and
+   "Register for workshop" together in one pill */
+.wdc-stat-grow{flex:1;min-width:0}
+.wdc-bar{display:block;height:6px;margin-top:7px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+.wdc-bar i{display:block;height:100%;border-radius:inherit;background:var(--teal)}
+.wdc-form{display:flex;align-items:center;gap:10px;padding:6px;padding-inline-start:18px;border-radius:99px;background:var(--surface);border:1.5px solid var(--teal);transition:box-shadow .15s,border-color .15s}
+.wdc-form:focus-within{box-shadow:0 0 0 4px color-mix(in srgb,var(--teal) 22%,transparent)}
+.wdc-form.has-error{border-color:#E5484D}
+.wdc-email{flex:1;min-width:0;display:flex;align-items:center;gap:10px}
+.wdc-email svg{flex:none;width:18px;height:18px;color:var(--muted)}
+.wdc-email input{flex:1;min-width:0;min-height:40px;border:0;background:transparent;color:var(--text);font:inherit;font-size:15px;outline:none}
+.wdc-email input::placeholder{color:var(--muted);opacity:1}
+html[dir="rtl"] .wdc-email input::placeholder{text-align:right}
+.wdc-submit{flex:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 20px;border:0;border-radius:99px;color:#fff;font:inherit;font-size:15px;font-weight:800;white-space:nowrap;cursor:pointer;background:linear-gradient(135deg,var(--teal),#0E7F7B);box-shadow:0 8px 18px -10px rgba(22,166,161,.9);transition:filter .15s}
+.wdc-submit:hover{filter:brightness(1.07)}
+.wdc-submit:disabled{opacity:.6;cursor:not-allowed;filter:none}
+.wdc-submit svg{width:18px;height:18px}
+html[dir="rtl"] .wdc-submit svg{transform:scaleX(-1)}
+.wdc-help{margin:0;color:var(--muted);font-size:12.5px}
+.wdc-panel .wd-error .btn{margin-top:10px}
+
 @media (max-width:960px){
   .wdc-hero{grid-template-columns:1fr;min-height:0}
   .wdc-photo{order:-1;min-height:0;aspect-ratio:10/7}
@@ -136,8 +157,6 @@ html[dir="rtl"] .wdc-hero{--fade:to left}
   .wdc{gap:24px}
   .wdc-hero{border-radius:24px}
   .wdc-panel{padding:12px}
-  .wdc-trainer{flex-direction:column}
-  .wdc-trainer i{display:none}
   .wdc-stat{gap:8px;padding-inline:0}
   .wdc-stat+.wdc-stat{padding-inline-start:10px}
   .wdc-stat-ic{width:36px;height:36px;border-radius:11px}
@@ -151,6 +170,12 @@ html[dir="rtl"] .wdc-hero{--fade:to left}
 }
 @media (max-width:560px){
   .wdc-how{padding:20px}
+}
+/* Narrow phones: the email box above a full-width button */
+@media (max-width:480px){
+  .wdc-form{flex-wrap:wrap;gap:8px;padding:8px;border-radius:22px}
+  .wdc-email{flex-basis:100%;padding-inline:10px}
+  .wdc-submit{flex:1 1 100%}
 }
 /* Small phones (and Arabic/Kurdish, whose words are longer, on any phone):
    price and seats one under the other */
