@@ -100,7 +100,7 @@ final class Certificates
             $pdf->SetXY(35, 83);
             $pdf->Cell(227, 9, 'This certificate is proudly presented to', 0, 1, 'C');
             $pdf->SetXY(42, 126);
-            $pdf->MultiCell(213, 7, "In recognition of participation in iSmile 2026\nat Grand Millennium Sulaimani · 20–21 November 2026", 0, 'C');
+            $pdf->MultiCell(213, 7, "In recognition of participation in iSmile 2026\nat Grand Millennium Sulaimani · 19–20 November 2026", 0, 'C');
             $pdf->SetDrawColor(186, 148, 78);
             $pdf->Line(89, 121, 208, 121);
             $pdf->SetXY(35, 158);

@@ -201,7 +201,7 @@ admission and retain its time and staff member. Certificates are issued by
 both methods.
 
 The live welcome desk selects the day from the server’s Asia/Baghdad date:
-20 November 2026 and 21 November 2026. Admissions outside those dates are
+19 November 2026 and 20 November 2026. Admissions outside those dates are
 rejected. Test mode offers a Day 1 / Day 2 rehearsal switch. The camera uses
 native decoding when available and a local jsQR fallback. HTTPS and camera
 permission are required. A complete QR payload can also be pasted from an

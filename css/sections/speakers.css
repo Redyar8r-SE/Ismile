@@ -1,7 +1,7 @@
 /* ==========================================================
    Speakers grid
    ========================================================== */
-.sp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;margin-top:40px}
+.sp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;margin-top:40px}
 
 .sp{
   position:relative;display:flex;flex-direction:column;
@@ -31,6 +31,19 @@ html[dir="rtl"] .sp::before{transform-origin:right}
 .sp-body h3{font-size:17.5px;font-weight:700;line-height:1.28;letter-spacing:-0.01em}
 .sp-body p{font-size:13.5px;line-height:1.5;color:var(--muted)}
 
+/* Announced speakers: the cut-out photo stands on a soft teal glow and fades
+   into the card; the specialty is teal and the talk topic sits under a gold label. */
+.sp:not(.is-soon) .ph{background:radial-gradient(130% 110% at 50% 42%,color-mix(in srgb,var(--teal) 30%,var(--surface-2)),var(--surface-2))}
+.sp:not(.is-soon) .ph img{object-position:50% 0}
+.sp:not(.is-soon) .ph::before{content:"";position:absolute;inset-inline:0;bottom:0;height:24%;background:linear-gradient(180deg,transparent,var(--bg));z-index:1;pointer-events:none}
+.sp:not(.is-soon) .sp-body{border-top:0;padding-top:4px;gap:8px}
+.sp-body .sp-role{color:var(--teal);font-weight:600}
+.sp-topic{display:grid;gap:6px;margin-top:6px;padding-top:12px;border-top:1px solid var(--line)}
+.sp-topic-label{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#B8862A}
+:root[data-theme="dark"] .sp-topic-label{color:#F2C14E}
+.sp-topic-label svg{width:14px;height:14px}
+.sp-body .sp-topic p{font-size:14.5px;line-height:1.5;color:var(--text)}
+
 /* Not announced yet: shaped placeholders, never pretend text */
 .sp.is-soon{background:var(--surface);border-style:dashed}
 .sp.is-soon .ph{background:radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--teal) 10%,var(--surface-2)),var(--surface-2))}
@@ -50,6 +63,8 @@ html[dir="rtl"] .sp::before{transform-origin:right}
   .sp-body{padding:13px 14px 15px;gap:6px}
   .sp-body h3{font-size:15.5px}
   .sp-body p{font-size:12.5px}
+  .sp-body .sp-topic p{font-size:12.5px}
+  .sp-topic-label{font-size:10.5px;letter-spacing:.1em}
   .sp .ph em{font-size:10.5px;padding:4px 9px;inset-block-start:9px;inset-inline-start:9px}
 }
 @media (prefers-reduced-motion: reduce){

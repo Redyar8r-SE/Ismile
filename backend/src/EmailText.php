@@ -9,7 +9,7 @@ namespace Ismile;
 final class EmailText
 {
     private const WORDS = [
-        'dates_venue'       => '20–21 November 2026 · Grand Millennium Sulaimani',
+        'dates_venue'       => '19–20 November 2026 · Grand Millennium Sulaimani',
         'hello'             => 'Dear {name},',
         'reference'         => 'Your reference',
         'questions'         => 'Questions? Write to ismile@italk.krd{phone} and mention your reference.',

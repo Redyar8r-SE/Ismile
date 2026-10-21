@@ -1,4 +1,4 @@
-import { showLoadError } from "./components/load-error.js?v=144";
+import { showLoadError } from "./components/load-error.js?v=145";
 // Entry point for workshop.html?id=…: one workshop's details page (trainer
 // photo, title, degrees, format, duration, level, overview, seats and
 // price) and how to book a seat:
@@ -7,13 +7,13 @@ import { showLoadError } from "./components/load-error.js?v=144";
 //  - organized by iSmile: the summit email and "Register for workshop" in one
 //    pill (api/workshop-register.php), and the seats left with a bar;
 //  - organized by a company: one "Call to register" button with its phone.
-import { loadJSON } from "./utils/load-json.js?v=144";
-import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang, t, onLangChange } from "./i18n.js?v=144";
-import { initNav } from "./components/nav.js?v=144";
-import { initTheme } from "./components/theme.js?v=144";
-import { initFooter } from "./sections/footer.js?v=144";
-import { pick, esc, workshopPrice, photoSrc, byCompany, organizerText, WORKSHOP_ICON } from "./sections/workshops.js?v=144";
-import { phoneHref, PHONE_ICON } from "./utils/phone.js?v=144";
+import { loadJSON } from "./utils/load-json.js?v=145";
+import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang, t, onLangChange } from "./i18n.js?v=145";
+import { initNav } from "./components/nav.js?v=145";
+import { initTheme } from "./components/theme.js?v=145";
+import { initFooter } from "./sections/footer.js?v=145";
+import { pick, esc, workshopPrice, photoSrc, byCompany, organizerText, WORKSHOP_ICON } from "./sections/workshops.js?v=145";
+import { phoneHref, PHONE_ICON } from "./utils/phone.js?v=145";
 
 const ICONS = {
   format: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V5.5a1.5 1.5 0 013 0V12"/><path d="M11 11.5V4a1.5 1.5 0 013 0v7.5"/><path d="M14 11.5V6a1.5 1.5 0 013 0v7"/><path d="M17 12.5a1.5 1.5 0 013 0V15a7 7 0 01-7 7h-1.2a6 6 0 01-4.6-2.2L4.5 16a1.6 1.6 0 012.3-2.2L8 15"/></svg>',

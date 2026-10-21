@@ -1,7 +1,7 @@
 // Speakers grid, from data/speakers.json.
 // Empty fields (null) show "Coming soon" placeholders.
-import { t, tr, onLangChange } from "../i18n.js?v=144";
-import { ICONS } from "../config/icons.js?v=144";
+import { t, tr, onLangChange } from "../i18n.js?v=145";
+import { ICONS } from "../config/icons.js?v=145";
 
 export function initSpeakers(speakers) {
   const grid = document.getElementById("spGrid");
@@ -11,13 +11,18 @@ export function initSpeakers(speakers) {
       .map((s) => {
         const name = tr(s.name);
         const role = tr(s.role);
+        const topic = tr(s.topic);
         const photo = s.photo
           ? `<img src="${s.photo}" alt="${name || ""}" loading="lazy">`
           : `<em>${t("sp_soon")}</em>${ICONS.person}`;
         // A speaker who is not announced yet shows shaped placeholders instead
         // of pretend text, with the wording kept for screen readers.
         const body = name
-          ? `<h3>${name}</h3><p>${role || t("sp_role")}</p>`
+          ? `<h3>${name}</h3>${role ? `<p class="sp-role">${role}</p>` : ""}${
+              topic
+                ? `<div class="sp-topic"><span class="sp-topic-label">${ICONS.mic}${t("sp_topic")}</span><p>${topic}</p></div>`
+                : ""
+            }`
           : `<h3 class="sk-line"><span class="sr-only">${t("sp_name")}</span></h3>
              <p class="sk-line sk-short"><span class="sr-only">${t("sp_role")}</span></p>`;
         return `

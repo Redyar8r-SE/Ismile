@@ -151,7 +151,7 @@ try {
 } finally { App::db()->exec('DROP TRIGGER attendance_certificate_failure'); }
 
 $legacy1=$make('Linda'); $legacy2=$make('Ranya'); $unknown=$make('Hala');
-foreach ([[$legacy1,'2026-11-20 09:00:00'],[$legacy2,'2026-11-21 10:00:00'],[$unknown,'2026-11-19 08:00:00']] as [$person,$time]) {
+foreach ([[$legacy1,'2026-11-19 09:00:00'],[$legacy2,'2026-11-20 10:00:00'],[$unknown,'2026-11-18 08:00:00']] as [$person,$time]) {
     Db::run('UPDATE tickets SET checked_in_at=?, checked_in_by=? WHERE registration_id=?', [$time,$id,$person['id']]);
 }
 $sql=preg_replace('/^\s*--.*$/m','',(string)file_get_contents(__DIR__ . '/../database/migrations/2026-10-06-two-day-attendance.sql'));
@@ -171,8 +171,8 @@ $check('ticket email includes QR even with obsolete off setting', str_contains($
 $check('email explains one admission on each day', str_contains($email['text'], 'once on Day 1 and once on Day 2'));
 $check('attached ticket is an actual PDF', str_starts_with($email['attachments'][0]['content'], '%PDF-'));
 (new ReflectionProperty(Settings::class, 'cache'))->setValue(null, $saved);
-$check('Day 1 calendar mapping', Attendance::currentDay('2026-11-20')===1);
-$check('Day 2 calendar mapping', Attendance::currentDay('2026-11-21')===2);
+$check('Day 1 calendar mapping', Attendance::currentDay('2026-11-19')===1);
+$check('Day 2 calendar mapping', Attendance::currentDay('2026-11-20')===2);
 $check('outside event has no admission day', Attendance::currentDay('2026-11-22')===null);
 $config = ['site_url'=>'http://127.0.0.1','site_root'=>App::config('site_root'),'storage'=>App::config('storage'), 'db'=>App::config('db'), 'secret'=>App::config('secret')];
 $overnight=$make('Shilan');
@@ -180,9 +180,9 @@ $overnightTicket=Tickets::forRegistration((int)$overnight['id']);
 $overnightQr=Tickets::qrPayload($overnightTicket);
 Attendance::checkIn($overnightQr, 1, $staff);
 App::boot(['env'=>'live']+$config);
-$check('Day 1 ignores a requested Day 2 admission', Attendance::admissionDay(2, '2026-11-20')===1);
-$check('midnight switches an old Day 1 form to Day 2', Attendance::admissionDay(1, '2026-11-21')===2);
-$check('a missing form day still uses the current live day', Attendance::admissionDay(0, '2026-11-21')===2);
+$check('Day 1 ignores a requested Day 2 admission', Attendance::admissionDay(2, '2026-11-19')===1);
+$check('midnight switches an old Day 1 form to Day 2', Attendance::admissionDay(1, '2026-11-20')===2);
+$check('a missing form day still uses the current live day', Attendance::admissionDay(0, '2026-11-20')===2);
 $check('there is no third-day reset', $rejects(static fn()=>Attendance::admissionDay(1, '2026-11-22')));
 $check('live admission cannot be performed outside its real date', $rejects(static fn() => Attendance::checkIn(Tickets::qrPayload($fresh), Attendance::currentDay()===1 ? 2 : 1, $staff)));
 (new ReflectionProperty(Settings::class, 'cache'))->setValue(null, ['event_day1'=>date('Y-m-d',strtotime('yesterday')),'event_day2'=>date('Y-m-d')]+$saved);
@@ -192,7 +192,7 @@ $check('repeat scan after the midnight rollover is blocked for Day 2', Attendanc
 $check('midnight rollover preserves both attendance records', (int)Db::value('SELECT COUNT(*) FROM ticket_attendance WHERE ticket_id=?',[$overnightTicket['id']])===2);
 (new ReflectionProperty(Settings::class, 'cache'))->setValue(null,$saved);
 App::boot(['env'=>'test']+$config);
-$check('test rehearsals retain the selected day', Attendance::admissionDay(1, '2026-11-21')===1);
+$check('test rehearsals retain the selected day', Attendance::admissionDay(1, '2026-11-20')===1);
 $check('check-in staff cannot download personal certificates', !Auth::can($staff,'certificates'));
 $check('finance can download certificates but cannot view student IDs', Auth::can(['role'=>'finance'],'certificates') && !Auth::can(['role'=>'finance'],'photos'));
 $preview = Certificates::rows((int)$r['id'])[0];
@@ -224,16 +224,16 @@ Db::run("UPDATE registrations SET lunch_day1=1,lunch_day2=0,city='Filter Test Ci
 $studentTicket=Tickets::forRegistration((int)$student['id']);
 Attendance::checkIn(Tickets::qrPayload($studentTicket),1,$staff);
 Attendance::checkIn(Tickets::qrPayload($studentTicket),2,$staff);
-Db::run("UPDATE ticket_attendance SET checked_in_at=CASE event_day WHEN 1 THEN '2026-11-20 09:30:42' ELSE '2026-11-21 14:15:09' END WHERE ticket_id=?",[$studentTicket['id']]);
+Db::run("UPDATE ticket_attendance SET checked_in_at=CASE event_day WHEN 1 THEN '2026-11-19 09:30:42' ELSE '2026-11-20 14:15:09' END WHERE ticket_id=?",[$studentTicket['id']]);
 $studentFilters=['q'=>$student['ref'],'type'=>'student','id'=>'present','lunch'=>'day1','city'=>'Filter Test City','university'=>'Sample University','lang'=>'ku','ambassador'=>'FILTER-TEST'];
 $check('guest filters combine student ID, lunch, city, university, language and ambassador',count(CheckinWorkspace::rows($studentFilters))===1);
 $check('lunch filters distinguish a one-day booking from both days',CheckinWorkspace::rows(['lunch'=>'both']+['q'=>$student['ref']])===[] && CheckinWorkspace::rows(['lunch'=>'day2','q'=>$student['ref']])===[]);
 $check('professional filter excludes a student',CheckinWorkspace::rows(['q'=>$student['ref'],'type'=>'professional'])===[]);
 $check('student ID missing and removed are distinct from retained images',CheckinWorkspace::rows(['q'=>$student['ref'],'id'=>'missing'])===[] && CheckinWorkspace::idStatus(Registrations::find((int)$student['id']))==='ID on file');
 $check('Day 1 time filter cannot match the guest\'s Day 2 arrival',CheckinWorkspace::rows(['q'=>$student['ref'],'attendance'=>'day1','from_time'=>'14:00','to_time'=>'15:00'])===[]);
-$check('arrival date and time must match the same admission',CheckinWorkspace::rows(['q'=>$student['ref'],'arrival_date'=>'2026-11-20','from_time'=>'14:00','to_time'=>'15:00'])===[]);
-$filtered=CheckinWorkspace::rows(['q'=>$student['ref'],'attendance'=>'day1','arrival_date'=>'2026-11-20','from_time'=>'09:30','to_time'=>'09:30','staff'=>(string)$id]);
-$check('arrival filter includes seconds throughout the chosen minute',count($filtered)===1 && $filtered[0]['day1']==='2026-11-20 09:30:42' && $filtered[0]['staff1']==='Attendance test');
+$check('arrival date and time must match the same admission',CheckinWorkspace::rows(['q'=>$student['ref'],'arrival_date'=>'2026-11-19','from_time'=>'14:00','to_time'=>'15:00'])===[]);
+$filtered=CheckinWorkspace::rows(['q'=>$student['ref'],'attendance'=>'day1','arrival_date'=>'2026-11-19','from_time'=>'09:30','to_time'=>'09:30','staff'=>(string)$id]);
+$check('arrival filter includes seconds throughout the chosen minute',count($filtered)===1 && $filtered[0]['day1']==='2026-11-19 09:30:42' && $filtered[0]['staff1']==='Attendance test');
 $exports=CheckinWorkspace::exportRows($studentFilters);
 $check('filtered export preserves guest selection and arrival staff details',count($exports)===2 && $exports[1][0]===$student['ref'] && $exports[1][12]==='Attendance test' && $exports[1][5]==='ID on file');
 $check('attendee view cannot be switched to non-attendees by a filter',CheckinWorkspace::filters(['attendance'=>'none'],true)['attendance']==='attended');
