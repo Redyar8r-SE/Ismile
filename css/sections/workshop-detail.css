@@ -78,9 +78,9 @@ html[dir="rtl"] .wd-submit svg{transform:scaleX(-1)}
    overview and "How to book this workshop".
    ========================================================== */
 .wdc{display:flex;flex-direction:column;gap:32px}
-.wdc-hero{--fade:to right;position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);min-height:500px;border-radius:28px;overflow:hidden;background:var(--surface);border:1px solid var(--line)}
+.wdc-hero{--fade:to right;position:relative;display:flex;align-items:center;aspect-ratio:var(--ar,1.4);min-height:500px;border-radius:28px;overflow:hidden;background:var(--surface);border:1px solid var(--line)}
 html[dir="rtl"] .wdc-hero{--fade:to left}
-.wdc-text{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:center;gap:16px;min-width:0;padding-block:40px;padding-inline:44px 8px}
+.wdc-text{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:center;gap:16px;width:min(540px,46%);min-width:0;padding-block:40px;padding-inline:48px 0}
 .wdc-text h1{margin:0;font-size:clamp(28px,2.8vw,38px);line-height:1.12;font-weight:800;letter-spacing:-.01em}
 .wdc-trainer{display:flex;flex-direction:column;gap:2px;margin:0;color:var(--muted);font-size:15px}
 .wdc-trainer span:first-child{color:var(--text);font-weight:700}
@@ -107,9 +107,11 @@ html[dir="rtl"] .wdc-hero{--fade:to left}
 .wdc-call-text b{font-size:19px;font-weight:800;letter-spacing:.01em;unicode-bidi:isolate}
 
 /* The whole photo, fading into the banner on the text side */
-.wdc-photo{position:relative;margin:0;min-height:100%;background:var(--surface-2);color:var(--teal)}
-.wdc-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 20%}
-.wdc-photo::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(var(--fade),var(--surface) 0%,color-mix(in srgb,var(--surface) 80%,transparent) 12%,color-mix(in srgb,var(--surface) 40%,transparent) 26%,transparent 42%)}
+.wdc-photo{position:absolute;inset:0;margin:0;background:var(--surface-2);color:var(--teal)}
+.wdc-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 30%}
+/* Arabic and Kurdish: the text is on the right, so the photo is mirrored and the trainer stands on the left */
+html[dir="rtl"] .wdc-photo img{transform:scaleX(-1)}
+.wdc-photo::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(var(--fade),color-mix(in srgb,var(--surface) 97%,transparent) 0%,color-mix(in srgb,var(--surface) 88%,transparent) 38%,color-mix(in srgb,var(--surface) 40%,transparent) 52%,transparent 66%)}
 .wdc-photo.no-photo{display:grid;place-items:center}
 .wdc-photo.no-photo>svg{width:30%;opacity:.4}
 
@@ -147,10 +149,11 @@ html[dir="rtl"] .wdc-submit svg{transform:scaleX(-1)}
 .wdc-panel .wd-error .btn{margin-top:10px}
 
 @media (max-width:960px){
-  .wdc-hero{grid-template-columns:1fr;min-height:0}
-  .wdc-photo{order:-1;min-height:0;aspect-ratio:10/7}
+  .wdc-hero{flex-direction:column;align-items:stretch;aspect-ratio:auto;min-height:0}
+  .wdc-photo{position:relative;inset:auto;order:-1;aspect-ratio:var(--ar,1.4)}
+  html[dir="rtl"] .wdc-photo img{transform:none}
   .wdc-photo::after{background:linear-gradient(to bottom,transparent 62%,var(--surface))}
-  .wdc-text{padding:6px 20px 22px}
+  .wdc-text{width:auto;padding:6px 20px 22px}
   .wdc-below{grid-template-columns:1fr;gap:28px}
 }
 @media (max-width:560px){

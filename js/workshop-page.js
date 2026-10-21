@@ -102,6 +102,19 @@ function initDetails(workshop) {
         </div>
       </article>`;
     if (!company) bindForm();
+    fitPhoto();
+  }
+
+  // The banner takes the trainer photo's own shape, so the whole photo shows.
+  function fitPhoto() {
+    const img = root.querySelector(".wdc-photo img");
+    const hero = root.querySelector(".wdc-hero");
+    if (!img || !hero) return;
+    const apply = () => {
+      if (img.naturalWidth && img.naturalHeight) hero.style.setProperty("--ar", String(img.naturalWidth / img.naturalHeight));
+    };
+    if (img.complete) apply();
+    else img.addEventListener("load", apply, { once: true });
   }
 
   // Organized by a company: one button that calls the company. Nothing is sent from here.
