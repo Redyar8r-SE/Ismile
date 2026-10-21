@@ -4,7 +4,8 @@ import { showLoadError } from "./components/load-error.js?v=136";
 // price) and how to book a seat:
 //  - organized by iSmile: "Register for workshop" with the email the person
 //    registered for the summit with (api/workshop-register.php);
-//  - organized by a company: the company's phone and "Call to register".
+//  - organized by a company: a banner with the whole trainer photo, the price
+//    and seats, and one "Call to register" button with the company's phone.
 import { loadJSON } from "./utils/load-json.js?v=136";
 import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang, t, onLangChange } from "./i18n.js?v=136";
 import { initNav } from "./components/nav.js?v=136";
@@ -20,6 +21,9 @@ const ICONS = {
   mail: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M4 7.5l8 5.5 8-5.5"/></svg>',
   arrow: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
   check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  wallet: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 7V4a1 1 0 00-1-1H5a2 2 0 000 4h15a1 1 0 011 1v4h-3a2 2 0 000 4h3a1 1 0 001-1v-2a1 1 0 00-1-1"/><path d="M3 5v14a2 2 0 002 2h15a1 1 0 001-1v-4"/></svg>',
+  users: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>',
+  ticket: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9a3 3 0 010 6v2a2 2 0 002 2h16a2 2 0 002-2v-2a3 3 0 010-6V7a2 2 0 00-2-2H4a2 2 0 00-2 2z"/><path d="M13 5v2M13 11v2M13 17v2"/></svg>',
   warn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5h.01"/></svg>',
 };
 
@@ -60,6 +64,15 @@ function initDetails(workshop) {
     const facts = [["format", "wd_format"], ["duration", "wd_duration"], ["level", "wd_level"]]
       .map(([field, label]) => [field, label, pick(w[field])])
       .filter(([, , value]) => value);
+    const factsHtml = `${facts.length ? `<dl class="wd-facts">${facts.map(([field, label, value]) => `
+            <div class="wd-fact"><dt>${ICONS[field]}<span>${esc(t(label))}</span></dt><dd dir="auto">${esc(value)}</dd></div>`).join("")}
+          </dl>` : ""}`;
+    const overviewHtml = `${overview ? `<section class="wd-overview"><h2>${esc(t("wd_overview"))}</h2>${overview.split(/\n{2,}/).map((part) => `<p dir="auto">${esc(part)}</p>`).join("")}</section>` : ""}`;
+
+    if (company) {
+      root.innerHTML = companyPage(w, { title, speaker, credentials, photo, total, full, factsHtml, overviewHtml });
+      return;
+    }
 
     root.innerHTML = `
       <article class="wd">
@@ -71,39 +84,57 @@ function initDetails(workshop) {
           <span class="wd-badge${company ? " is-company" : ""}" dir="auto">${esc(organizerText(w))}</span>
           <h1 dir="auto">${esc(title)}</h1>
           ${speaker ? `<div class="wd-trainer"><b dir="auto">${esc(speaker)}</b>${credentials ? `<span dir="auto">${esc(credentials)}</span>` : ""}</div>` : ""}
-          ${facts.length ? `<dl class="wd-facts">${facts.map(([field, label, value]) => `
-            <div class="wd-fact"><dt>${ICONS[field]}<span>${esc(t(label))}</span></dt><dd dir="auto">${esc(value)}</dd></div>`).join("")}
-          </dl>` : ""}
-          ${overview ? `<section class="wd-overview"><h2>${esc(t("wd_overview"))}</h2>${overview.split(/\n{2,}/).map((part) => `<p dir="auto">${esc(part)}</p>`).join("")}</section>` : ""}
-          <section class="wd-book${full ? " is-full" : ""}${company ? " is-call" : ""}" aria-label="${esc(t(company ? "wd_call_title" : "wd_register"))}">
+          ${factsHtml}
+          ${overviewHtml}
+          <section class="wd-book${full ? " is-full" : ""}" aria-label="${esc(t("wd_register"))}">
             <div class="wd-book-top">
               <span class="wd-state">${esc(t(full ? "wd_full" : "wd_open"))}</span>
-              <span class="wd-left">${esc(company ? t("wd_seats_total").replace("{total}", total) : t("wd_seats").replace("{n}", left).replace("{total}", total))}</span>
+              <span class="wd-left">${esc(t("wd_seats").replace("{n}", left).replace("{total}", total))}</span>
             </div>
-            ${company ? "" : `<div class="wd-bar" aria-hidden="true"><i style="width:${takenPercent}%"></i></div>`}
+            <div class="wd-bar" aria-hidden="true"><i style="width:${takenPercent}%"></i></div>
             <div class="wd-price"><b dir="ltr">${esc(workshopPrice(w))}</b><small>${esc(t("w_price_seat"))}</small></div>
-            ${company ? callBox(w) : state.done ? doneBox() : formBox(full)}
+            ${state.done ? doneBox() : formBox(full)}
           </section>
         </div>
       </article>`;
     bindForm();
   }
 
-  // A company's workshop: people call the company; nothing is sent from here.
-  function callBox(w) {
-    const name = pick(w.company);
+  // A company's workshop: a banner (title, trainer, price and seats, one call
+  // button) beside the whole trainer photo; then the facts and overview, and
+  // how booking works. People call the company; nothing is sent from here.
+  function companyPage(w, { title, speaker, credentials, photo, total, full, factsHtml, overviewHtml }) {
     const number = String(w.companyPhone || "").trim();
     const href = phoneHref(number);
-    const button = href
-      ? `<a class="btn wd-call-btn" href="${esc(href)}">${PHONE_ICON}<span>${esc(t("wd_call_btn"))}</span><b dir="ltr">${esc(number)}</b></a>`
+    const trainer = [speaker, credentials].filter(Boolean).map((part) => `<span dir="auto">${esc(part)}</span>`).join('<i aria-hidden="true">·</i>');
+    const call = href
+      ? `<a class="wdc-call" href="${esc(href)}"><span class="wdc-call-ic">${PHONE_ICON}</span><span class="wdc-call-text"><span>${esc(t("wd_call_btn"))}</span><b dir="ltr">${esc(number)}</b></span></a>`
       : "";
+    const steps = [["phone", "wdc_how1", "wdc_how1_d"], ["wallet", "wdc_how2", "wdc_how2_d"], ["ticket", "wdc_how3", "wdc_how3_d"]]
+      .map(([icon, head, text]) => `<li><span class="wdc-how-ic">${icon === "phone" ? PHONE_ICON : ICONS[icon]}</span><div><b>${esc(t(head))}</b><p>${esc(t(text))}</p></div></li>`)
+      .join("");
     return `
-      <div class="wd-call">
-        <span class="wd-call-ic">${PHONE_ICON}</span>
-        <div><b>${esc(t("wd_call_title"))}</b><p dir="auto">${esc(t("wd_call_text").replace("{name}", name))}</p></div>
-      </div>
-      ${button}
-      <p class="wd-help">${esc(t("wd_call_help"))}</p>`;
+      <article class="wdc">
+        <section class="wdc-hero">
+          <div class="wdc-text">
+            <span class="wd-badge is-company" dir="auto">${esc(organizerText(w))}</span>
+            <h1 dir="auto">${esc(title)}</h1>
+            ${trainer ? `<p class="wdc-trainer">${trainer}</p>` : ""}
+            <div class="wdc-panel">
+              <div class="wdc-stats">
+                <div class="wdc-stat is-price"><span class="wdc-stat-ic">${ICONS.wallet}</span><div><b dir="ltr">${esc(workshopPrice(w))}</b><small>${esc(t("w_price_seat"))}</small></div></div>
+                <div class="wdc-stat is-seats"><span class="wdc-stat-ic">${ICONS.users}</span><div><b>${esc(full ? t("wd_full") : t("wd_seats_total").replace("{total}", total))}</b><small>${esc(t("wdc_limited"))}</small></div></div>
+              </div>
+              ${call}
+            </div>
+          </div>
+          <figure class="wdc-photo${photo ? "" : " no-photo"}">${photo ? `<img src="${esc(photo)}" alt="${esc(speaker)}" decoding="async">` : WORKSHOP_ICON}</figure>
+        </section>
+        <div class="wdc-below">
+          <div class="wdc-main">${factsHtml}${overviewHtml}</div>
+          <aside class="wdc-how"><h2>${esc(t("wdc_how_title"))}</h2><ol>${steps}</ol></aside>
+        </div>
+      </article>`;
   }
 
   function doneBox() {

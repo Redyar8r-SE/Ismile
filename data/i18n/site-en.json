@@ -350,10 +350,7 @@
   "wd_register_summit": "Register for the summit",
   "wd_not_found": "Workshop not found.",
   "wd_seats_total": "{total} seats",
-  "wd_call_title": "Register by phone",
-  "wd_call_text": "This workshop is organized by {name}. Call them to book your seat and arrange payment.",
   "wd_call_btn": "Call to register",
-  "wd_call_help": "Registration for this workshop is by phone only.",
   "wd_err_by_phone": "This workshop is booked by phone. Call the number shown on this page.",
   "wsp3_lead": "Every workshop shows who organizes it. That tells you how to book your seat.",
   "wsp3_ism_title": "Register online with your summit email",
@@ -370,5 +367,13 @@
   "wsp4_first_text": "Workshops are only for summit attendees. Without a summit ticket you cannot book a workshop.",
   "wsp4_co_tag": "Organized by company",
   "wsp4_ism_s3": "Your seat is reserved",
-  "wsp4_ism_s3_d": "Our office contacts you about payment."
+  "wsp4_ism_s3_d": "Our office contacts you about payment.",
+  "wdc_limited": "limited places",
+  "wdc_how_title": "How to book this workshop",
+  "wdc_how1": "Call the company",
+  "wdc_how1_d": "Use the number above. They book your seat.",
+  "wdc_how2": "Pay the company",
+  "wdc_how2_d": "They arrange payment with you.",
+  "wdc_how3": "Have your summit ticket",
+  "wdc_how3_d": "Workshops are for iSmile 2026 attendees."
 }
