@@ -240,7 +240,7 @@ export async function handler(event) {
     if (path.includes("..") || path.startsWith("/"))
       return json(400, { error: "Bad file name." }, origin);
     // The admin may only touch content, never the code that runs the site.
-    const allowed = /^(data\/|assets\/uploads\/)/.test(path);
+    const allowed = /^(data\/|assets\/uploads\/)/.test(path) && path !== "data/admin-accounts.json";
     if (!allowed)
       return json(403, { error: "That file cannot be changed from the admin." }, origin);
 

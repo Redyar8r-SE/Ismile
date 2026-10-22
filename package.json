@@ -9,7 +9,8 @@
     "check-types": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check-errors": "npm run lint && npm run check-types && npm test",
+    "check-security": "node tools/check-repository-security.mjs",
+    "check-errors": "npm run check-security && npm run lint && npm run check-types && npm test",
     "deploy:sync-env": "bash scripts/sync-deploy-env-secret.sh"
   },
   "engines": {
@@ -19,6 +20,6 @@
     "@biomejs/biome": "^2.5.14",
     "@types/node": "^22.18.1",
     "typescript": "^5.9.2",
-    "vitest": "^3.2.4"
+    "vitest": "^4.1.12"
   }
 }

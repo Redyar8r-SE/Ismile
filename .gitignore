@@ -22,3 +22,11 @@ deploy.env
 node_modules/
 coverage/
 .DS_Store
+
+# Local assistant settings and private key material.
+.claude/
+.ssh/
+*.pem
+*.p12
+*.pfx
+*.key

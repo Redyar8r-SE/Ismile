@@ -144,6 +144,32 @@ describe("admin API handler", () => {
     expect(res.statusCode).toBe(403);
   });
 
+  it("refuses public account credentials even for a signed-in editor", async () => {
+    const login = await handler(
+      event({
+        path: "/api/login",
+        httpMethod: "POST",
+        body: JSON.stringify({ email: "admin@ismile.krd", password: PASSWORD }),
+      }),
+    );
+    const { token } = JSON.parse(login.body);
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const response = await handler(
+      event({
+        path: "/api/save",
+        httpMethod: "POST",
+        headers: { origin: "https://ismile.krd", authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          path: "data/admin-accounts.json",
+          contentBase64: Buffer.from('{"accounts":[]}').toString("base64"),
+        }),
+      }),
+    );
+    expect(response.statusCode).toBe(403);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("saves allowed content paths via GitHub Contents API", async () => {
     const login = await handler(
       event({

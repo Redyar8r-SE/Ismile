@@ -1,10 +1,10 @@
 // iSmile admin: edit every text, list and photo on the site, and save to GitHub.
-import { GROUPS as BASE_GROUPS, groupsForText, PAGE_TITLES, LANGS, DATA_FILES } from "./fields.js?v=147";
-import * as store from "./store.js?v=147";
-import { upload, imageFromClipboard } from "./images.js?v=147";
-import { buildList, buildProgram, buildTypes, buildSingle } from "./lists.js?v=147";
-import { TEXT_ATTRIBUTES } from "../i18n.js?v=147";
-import { loadAccounts, makeAccount, check, forget, fileText, ACCOUNTS_FILE } from "./accounts.js?v=147";
+import { GROUPS as BASE_GROUPS, groupsForText, PAGE_TITLES, LANGS, DATA_FILES } from "./fields.js?v=148";
+import * as store from "./store.js?v=148";
+import { upload, imageFromClipboard } from "./images.js?v=148";
+import { buildList, buildProgram, buildTypes, buildSingle } from "./lists.js?v=148";
+import { TEXT_ATTRIBUTES } from "../i18n.js?v=148";
+import { forget } from "./accounts.js?v=148";
 
 // Tells the small script in admin.html that the admin code did load, so it
 // does not offer to reload the page.
@@ -22,7 +22,6 @@ const state = {
   dirty: false,
   pasteTarget: null, // { apply(path) } waiting for a pasted picture
   renderers: {},     // group id -> redraw function
-  accounts: [],      // who may open the admin page
 };
 
 // ---------- loading ----------
@@ -371,140 +370,19 @@ async function uploadImage(file, apply, redraw) {
   }
 }
 
-// Who may open the admin page. The list is saved in data/admin-accounts.json.
+// Credentials belong to the server or the database admin, never public JSON.
 function buildAccounts(body) {
-  const head = document.createElement("h3");
-  head.className = "flabel";
-  head.textContent = "People who can open the admin";
-
-  const list = document.createElement("div");
-
-  const form = document.createElement("div");
-  form.className = "pw-grid";
-  form.style.marginTop = "16px";
-  form.innerHTML = `
-    <label>Email<input type="email" id="acEmail" autocomplete="username"></label>
-    <label>Password (at least 8 characters)<input type="password" id="acOne" autocomplete="new-password"></label>
-    <label>Repeat the password<input type="password" id="acTwo" autocomplete="new-password"></label>`;
-
-  const actions = document.createElement("div");
-  actions.className = "pw-actions";
-  const add = document.createElement("button");
-  add.type = "button";
-  add.className = "btn btn-primary btn-sm";
-  add.textContent = "Add this person";
-  const save = document.createElement("button");
-  save.type = "button";
-  save.className = "btn btn-primary btn-sm";
-  save.textContent = "Save to the website";
-  save.hidden = true;
-  const copy = document.createElement("button");
-  copy.type = "button";
-  copy.className = "btn btn-outline btn-sm";
-  copy.textContent = "Copy the file";
-  copy.hidden = true;
-  const out = document.createElement("button");
-  out.type = "button";
-  out.className = "btn btn-outline btn-sm";
-  out.textContent = "Lock the admin now";
-  actions.append(add, save, copy, out);
-
-  const text = document.createElement("pre");
-  text.className = "pw-out";
-  text.hidden = true;
-
-  const hint = document.createElement("p");
-  hint.className = "ghint";
-  hint.style.marginTop = "12px";
-
-  const warn = document.createElement("p");
-  warn.className = "ghint";
-  warn.textContent = "This asks for a password before the admin opens. It keeps ordinary visitors out — it is not a safe for secrets, because the check happens in the browser.";
-
-  // Nothing is written until you save or paste the file, so show what changed.
-  let pending = false;
-
-  function refresh() {
-    list.replaceChildren();
-    if (!state.accounts.length) {
-      const none = document.createElement("p");
-      none.className = "ghint";
-      none.textContent = "Nobody is set yet, so the admin opens without asking. Add yourself below.";
-      list.append(none);
-    }
-    state.accounts.forEach((account, index) => {
-      const row = document.createElement("div");
-      row.className = "acct";
-      const who = document.createElement("span");
-      who.innerHTML = `<b></b>`;
-      who.querySelector("b").textContent = account.email;
-      const drop = document.createElement("button");
-      drop.type = "button";
-      drop.className = "btn btn-outline btn-sm";
-      drop.textContent = "Remove";
-      drop.addEventListener("click", () => {
-        if (!confirm(`Remove ${account.email}?`)) return;
-        state.accounts.splice(index, 1);
-        mark();
-      });
-      row.append(who, drop);
-      list.append(row);
-    });
-    save.hidden = !(pending && store.ready());
-    copy.hidden = !pending;
-    text.hidden = !pending;
-    text.textContent = pending ? fileText(state.accounts) : "";
-    hint.hidden = !pending;
-    hint.textContent = store.ready()
-      ? "Press “Save to the website” to keep this list."
-      : `Not saved yet. Press “Copy the file”, then open ${ACCOUNTS_FILE} on github.com, press the pencil, replace everything with what you copied and commit.`;
-  }
-
-  function mark() {
-    pending = true;
-    refresh();
-  }
-
-  add.addEventListener("click", async () => {
-    const email = form.querySelector("#acEmail").value.trim();
-    const one = form.querySelector("#acOne").value;
-    const two = form.querySelector("#acTwo").value;
-    if (!email.includes("@")) return say("Write a real email address.", "bad");
-    if (one.length < 8) return say("Use a password of at least 8 characters.", "bad");
-    if (one !== two) return say("The two passwords are not the same.", "bad");
-    const account = await makeAccount(email, one);
-    const at = state.accounts.findIndex((existing) => existing.email === account.email);
-    if (at >= 0) state.accounts[at] = account;      // same email: change the password
-    else state.accounts.push(account);
-    form.querySelector("#acOne").value = "";
-    form.querySelector("#acTwo").value = "";
-    form.querySelector("#acEmail").value = "";
-    mark();
-    say(at >= 0 ? `Password changed for ${account.email}.` : `${account.email} added.`, "ok");
-  });
-
-  save.addEventListener("click", async () => {
-    say("Saving the list…");
-    try {
-      await store.writeText(ACCOUNTS_FILE, fileText(state.accounts), "Admin: update who can open the admin");
-      pending = false;
-      refresh();
-      say("Saved. The admin will ask for one of these passwords from now on.", "ok");
-    } catch (error) {
-      say(`Not saved: ${error.message}`, "bad");
-    }
-  });
-
-  copy.addEventListener("click", async () => {
-    try { await navigator.clipboard.writeText(text.textContent); say(`Copied. Paste it into ${ACCOUNTS_FILE} on github.com.`, "ok"); }
-    catch { say("Select the text below and copy it.", "info"); }
-  });
-
-  out.addEventListener("click", () => location.reload());
-
-  body.append(head, warn, list, form, actions, text, hint);
-  refresh();
-  state.renderers.security = refresh;
+  const heading = document.createElement("h3");
+  heading.className = "flabel";
+  heading.textContent = "Admin sign-in";
+  const note = document.createElement("p");
+  note.className = "ghint";
+  note.textContent = "Sign in through the server to save website changes. Manage database users in the database admin. Passwords and password hashes must never be saved in public website files.";
+  const link = document.createElement("a");
+  link.className = "btn btn-outline btn-sm";
+  link.href = "/admin/users.php";
+  link.textContent = "Manage database users";
+  body.append(heading, note, link);
 }
 
 // ---------- building the page ----------
@@ -947,36 +825,6 @@ function downloadFiles() {
 }
 
 // ---------- start ----------
-// Asks for a password before the admin appears. Only shown when someone is
-// listed in data/admin-accounts.json, so an empty list can never lock you out.
-async function askForPassword() {
-  const lockBox = $("lock");
-  const form = $("lockForm");
-  const message = $("lockMsg");
-  lockBox.hidden = false;
-  document.body.classList.add("lock-on");
-  $("lockEmail").focus();
-
-  await new Promise((resolve) => {
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      const button = $("lockBtn");
-      button.disabled = true;
-      const ok = await check(state.accounts, $("lockEmail").value, $("lockPass").value);
-      button.disabled = false;
-      if (!ok) {
-        message.hidden = false;
-        message.textContent = "Wrong email or password.";
-        $("lockPass").select();
-        return;
-      }
-      lockBox.hidden = true;
-      document.body.classList.remove("lock-on");
-      resolve();
-    });
-  });
-}
-
 async function start() {
   forget();                                   // clear the old "remembered" mark
   const cover = (text) => {
@@ -989,25 +837,13 @@ async function start() {
   // person in, so neither password screen is needed. The pass leaves the
   // address at once (it must not stay in the history).
   const pass = new URLSearchParams(location.search).get("handoff");
-  let handedOver = false;
   if (pass) {
     history.replaceState(null, "", location.pathname + location.hash);
     cover("Signing you in from the database…");
     await store.init();
-    handedOver = await store.handOff(pass).then(() => true, (error) => {
+    await store.handOff(pass).catch((error) => {
       say(error.message, "bad");
-      return false;
     });
-  }
-
-  state.accounts = await loadAccounts();
-  // Decide first, reveal second: the admin must never flash up before the
-  // login screen covers it.
-  if (state.accounts.length && !handedOver) {
-    document.body.classList.add("lock-on");
-    uncover();                                // let the login screen through
-    await askForPassword();
-    cover("Opening the admin…");          // and cover it again while it is built
   }
 
   // Says what is wrong when the server is not reachable or not set up yet.

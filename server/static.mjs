@@ -86,6 +86,7 @@ export function isPublicPath(pathname) {
     return false;
   }
   const segments = decoded.split(/[/\\]+/).filter(Boolean);
+  if (segments.join("/").toLowerCase() === "data/admin-accounts.json") return false;
   if (segments.length === 0) return true;
   // No hidden files or folders anywhere (.env, .git, .github, ...).
   if (segments.some((segment) => segment.startsWith("."))) return false;

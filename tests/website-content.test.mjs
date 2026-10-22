@@ -1,5 +1,5 @@
 import { createHmac } from "node:crypto";
-import { mkdtempSync, readFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { Readable } from "node:stream";
@@ -14,6 +14,13 @@ afterEach(() => {
 });
 
 describe("website content and database controls", () => {
+  it("keeps public legacy account content free of password verifiers", () => {
+    const data = JSON.parse(
+      readFileSync(new URL("../data/admin-accounts.json", import.meta.url), "utf8"),
+    );
+    expect(data).toEqual({ accounts: [] });
+  });
+
   it("forwards the form unchanged and returns the database's closed response", async () => {
     vi.stubEnv("WEBSITE_API_URL", "https://backend.example/api/");
     vi.stubEnv("BOOTH_API_USERNAME", "server-only");
@@ -74,6 +81,12 @@ describe("website content and database controls", () => {
     const address = server.address();
     if (!address || typeof address === "string") throw new Error("No test address");
     const base = `http://127.0.0.1:${address.port}`;
+    mkdirSync(path.join(root, "data"), { recursive: true });
+    writeFileSync(
+      path.join(root, "data/admin-accounts.json"),
+      '{"accounts":[{"hash":"test-only"}]}',
+    );
+    expect((await fetch(`${base}/data/admin-accounts.json`)).status).toBe(404);
     const savedText = { hero_title: "Changed live", arabic: "نص جديد" };
     try {
       const body = JSON.stringify({
@@ -111,6 +124,7 @@ describe("website content and database controls", () => {
     "data/../config.json",
     "assets/uploads/script.php",
     "data/code.js",
+    "data/admin-accounts.json",
     "data/i18n/../../secret.json",
   ])("rejects executable files and traversal: %s", (name) => {
     expect(editableContent(name)).toBe(false);

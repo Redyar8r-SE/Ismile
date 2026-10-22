@@ -405,6 +405,10 @@ if [ ! -f "$BASE/.content-sync-2026-10-22-2" ]; then
   touch "$BASE/.content-sync-2026-10-22" "$BASE/.content-sync-2026-10-22-2"
   echo "Speakers, dates (19–20 November) and translations copied from the project; old copies in $KEEP."
 fi
+# The retired browser password verifier must not survive in public content.
+# Actual sign-in credentials live in the server environment and database.
+printf '{"accounts":[]}\n' > "$SITE/data/admin-accounts.json"
+
 # Accounts that still have the old made-up password (printed in public logs) get the new one.
 if [ -n "$OLD_OWNER_PASS" ]; then
   ISMILE_OLD="$OLD_OWNER_PASS" ISMILE_NEW="$OWNER_PASS" php -r '
