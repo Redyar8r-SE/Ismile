@@ -107,6 +107,9 @@ function readTicket(string $ticket, string $secret): ?array {
 // Only content, never the code that runs the site.
 function siteFile(string $root, string $path): ?string {
     $path = ltrim(str_replace('\\', '/', $path), '/');
+    if ($path === 'data/admin-accounts.json') {
+        return null;
+    }
     if ($path === '' || strpos($path, '..') !== false || strpos($path, "\0") !== false) {
         return null;
     }

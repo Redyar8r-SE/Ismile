@@ -24,7 +24,10 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  security:
+    uses: ./.github/workflows/security.yml
   deploy:
+    needs: security
     name: Update api.ismile.krd
     runs-on: ubuntu-latest
     timeout-minutes: 25

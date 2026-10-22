@@ -1,7 +1,7 @@
 // The list editors: workshops, sponsor tiers, partners, and the program.
 // main.js passes a small context so this file does not import it back.
-import { LANGS } from "./fields.js?v=147";
-import { WORKSHOP_ICONS } from "../config/icons.js?v=147";
+import { LANGS } from "./fields.js?v=148";
+import { WORKSHOP_ICONS } from "../config/icons.js?v=148";
 
 const el = (tag, className, text) => {
   const node = document.createElement(tag);

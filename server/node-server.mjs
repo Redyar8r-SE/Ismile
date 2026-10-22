@@ -9,7 +9,7 @@ import { editorHandoff } from "./editor-handoff.mjs";
 import { registrationRequest } from "./registration.mjs";
 import { sponsorRequest } from "./sponsor.mjs";
 import { sponsorsFile } from "./sponsor-tiers.mjs";
-import { loadEnvFile, resolveStaticFile, sendFile } from "./static.mjs";
+import { isPublicPath, loadEnvFile, resolveStaticFile, sendFile } from "./static.mjs";
 import { websiteState } from "./website-state.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -139,6 +139,10 @@ export function createAppServer() {
         return;
       }
 
+      if (!isPublicPath(url.pathname)) {
+        res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" }).end("Not found");
+        return;
+      }
       const override = contentFile(CONTENT_ROOT, url.pathname.slice(1));
       if (url.pathname === "/data/sponsors.json" && req.method === "GET") {
         const local =

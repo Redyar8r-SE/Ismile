@@ -1,5 +1,5 @@
 // Localize the existing error notice even when a page's content fails to load.
-import { addLanguage, initI18n, initLangSwitch, onLangChange, preferredLang, setLang, t } from "../i18n.js?v=147";
+import { addLanguage, initI18n, initLangSwitch, onLangChange, preferredLang, setLang, t } from "../i18n.js?v=148";
 
 const fallback = {
   en: {

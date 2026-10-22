@@ -12,6 +12,7 @@ import path from "node:path";
 /** Only content and images may be saved; executable uploads are forbidden.
  * @param {string} name */
 export function editableContent(name) {
+  if (name === "data/admin-accounts.json") return false;
   return /^(data\/(?:i18n\/)?[a-z0-9-]+\.json|assets\/uploads\/[a-zA-Z0-9._-]+\.(?:png|jpe?g|webp|gif))$/.test(
     name,
   );

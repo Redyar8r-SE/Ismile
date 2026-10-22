@@ -79,6 +79,8 @@ describe("static helpers", () => {
       "/server/node-server.mjs",
       "/netlify/functions/api.mjs",
       "/css/.env",
+      "/data/admin-accounts.json",
+      "/data/admin%2daccounts.json",
       "/%2e%2e/%2e%2e/etc/passwd",
     ]) {
       expect(resolveStaticFile(root, bad).status, bad).toBe(404);
