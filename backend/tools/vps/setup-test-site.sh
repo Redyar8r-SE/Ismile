@@ -405,6 +405,13 @@ if [ ! -f "$BASE/.content-sync-2026-10-22-2" ]; then
   touch "$BASE/.content-sync-2026-10-22" "$BASE/.content-sync-2026-10-22-2"
   echo "Speakers, dates (19–20 November) and translations copied from the project; old copies in $KEEP."
 fi
+# ONCE (22 Oct 2026): Dr. Hamawandy's qualification is "BDS, MSc in Oral Surgery"
+# (from his speaker poster), so only speakers.json is copied again.
+if [ ! -f "$BASE/.speakers-sync-2026-10-22-3" ]; then
+  cp "$REPO/data/speakers.json" "$SITE/data/speakers.json"
+  touch "$BASE/.speakers-sync-2026-10-22-3"
+  echo "Speakers copied from the project (Dr. Hamawandy's qualification)."
+fi
 # The retired browser password verifier must not survive in public content.
 # Actual sign-in credentials live in the server environment and database.
 printf '{"accounts":[]}\n' > "$SITE/data/admin-accounts.json"
