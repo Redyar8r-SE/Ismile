@@ -23,8 +23,9 @@ Api::run(static function (): void {
     Api::sameOrigin();
     Api::limit('register', 60, 600);   // generous: a whole class may register from one campus network
 
-    // A field people never see: bots fill it in, people leave it empty.
-    if (trim((string) ($_POST['website'] ?? '')) !== '') {
+    // The neutral, readonly field avoids browser/password-manager autofill.
+    // Keep accepting the original trap name from cached registration scripts.
+    if (trim((string) ($_POST['website'] ?? '')) !== '' || trim((string) ($_POST['registration_check'] ?? '')) !== '') {
         throw new UserError('err_server', null, 400);
     }
 
