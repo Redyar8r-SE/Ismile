@@ -38,6 +38,14 @@ jobs:
             node <<'ISMILE_DIAGNOSTIC_NODE'
             const fs=require('node:fs'), crypto=require('node:crypto'), cp=require('node:child_process');
             const report={time:new Date().toISOString(),logs:[],versions:{}};
+            if(fs.existsSync('/var/log/nginx'))for(const name of fs.readdirSync('/var/log/nginx').filter(name=>/^(access|error)\.log/.test(name))) {
+             const file='/var/log/nginx/'+name;
+             if(fs.statSync(file).size>40000000)continue;
+             let buffer=fs.readFileSync(file);
+             if(name.endsWith('.gz'))buffer=require('node:zlib').gunzipSync(buffer,{maxOutputLength:80000000});
+             const lines=buffer.toString('utf8').split('\n').filter(line=>/register\.php/.test(line)&&(/22\/Oct\/2026:1[567]:/.test(line)||/2026\/10\/22 1[567]:/.test(line)));
+             if(lines.length)report.logs.push({file,lines:lines.slice(-100)});
+            }
             for(const file of ['/var/log/nginx/access.log','/var/log/nginx/error.log','/var/log/php8.3-fpm.log','/root/.pm2/logs/ismile-error.log']) {
              if(!fs.existsSync(file))continue;
              const fd=fs.openSync(file,'r'),size=fs.fstatSync(fd).size,buffer=Buffer.alloc(Math.min(size,2000000));
