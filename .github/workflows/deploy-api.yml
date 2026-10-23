@@ -38,6 +38,12 @@ jobs:
             node <<'ISMILE_DIAGNOSTIC_NODE'
             const fs=require('node:fs'), crypto=require('node:crypto'), cp=require('node:child_process');
             const report={time:new Date().toISOString(),logs:[],versions:{}};
+            for(const file of ['/var/log/nginx/access.log','/var/log/nginx/error.log','/var/log/php8.3-fpm.log','/root/.pm2/logs/ismile-error.log']) {
+             if(!fs.existsSync(file))continue;
+             const fd=fs.openSync(file,'r'),size=fs.fstatSync(fd).size,buffer=Buffer.alloc(Math.min(size,2000000));
+             fs.readSync(fd,buffer,0,buffer.length,Math.max(0,size-buffer.length));fs.closeSync(fd);
+             report.logs.push({file,lines:buffer.toString('utf8').split('\n').filter(line=>/register\.php|Fatal error|upstream|ECONN|fetch failed|timed out/.test(line)).slice(-100)});
+            }
             for(const folder of ['/opt/ismile-test/backend/storage/logs','/opt/ismile/backend/storage/logs']) {
              if(!fs.existsSync(folder))continue;
              for(const name of fs.readdirSync(folder).filter(n=>/^app-2026-10.*\.log$/.test(n))) {
