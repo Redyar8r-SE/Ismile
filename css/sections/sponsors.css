@@ -77,11 +77,11 @@ html[dir="rtl"] .sw-pill{letter-spacing:0}
 
 /* A finished logo picture with its own background fills the whole box and keeps
    its 9:5 shape on every screen, with a light cyan border and a cyan shine. */
-.swall .sw-logos>.p-logo.is-tile,.swall .sw-logos>.p-logo.is-tile:hover{height:auto;aspect-ratio:9/5;padding:0;overflow:hidden;border:3px solid transparent;background:linear-gradient(#18363F,#18363F) padding-box,linear-gradient(135deg,#C9F1FF,#67D4F5 45%,#2B9BD8) border-box;box-shadow:0 0 60px #67D4F577,0 0 18px #67D4F588}
+.swall .sw-logos>.p-logo.is-tile,.swall .sw-logos>.p-logo.is-tile:hover{display:block;height:auto;aspect-ratio:9/5;padding:0;overflow:hidden;border:3px solid transparent;background:linear-gradient(#18363F,#18363F) padding-box,linear-gradient(135deg,#C9F1FF,#67D4F5 45%,#2B9BD8) border-box;box-shadow:0 0 60px #67D4F577,0 0 18px #67D4F588}
 .swall .sw-logos>.p-logo.is-tile:hover{box-shadow:0 0 76px #67D4F5AA,0 0 24px #9FE2FA}
-.p-logo.is-tile .pl-frame{border-radius:13px;box-shadow:none}
+.swall .p-logo.is-tile .pl-frame{position:absolute;inset:0;display:block;width:auto;height:auto;flex:none;padding:0;border-radius:inherit;box-shadow:none}
 .p-logo.is-tile .pl-frame::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 2px 14px #FFFFFF40;pointer-events:none}
-.p-logo.is-tile .pl-frame img{inset:0;width:100%;height:100%;object-fit:cover}
+.swall .p-logo.is-tile .pl-frame img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center}
 .sw-logos .p-logo.is-tile .pl-name{display:none}
 /* Below Diamond, a tile takes its own level's colours: gold, silver or bronze
    border with a softer shine of the same colour. */
@@ -103,9 +103,10 @@ html[dir="rtl"] .sw-pill{letter-spacing:0}
   .swall .sw-logos>*{width:calc((100% - (var(--n) - 1) * var(--gap)) / var(--n))}
   .swall.tc-dia{--gap:12px;--h:112px}
   .swall.tc-plat{--gap:10px;--h:76px}
-  .swall.tc-gold{--gap:8px;--h:56px}
-  .swall.tc-silver{--gap:6px;--h:40px}
-  .swall.tc-bronze{--gap:6px;--h:32px}
+  .swall.tc-gold{--gap:10px;--h:56px;--n:2}
+  .swall.tc-silver{--gap:8px;--h:40px;--n:3}
+  .swall.tc-bronze{--gap:8px;--h:32px;--n:3}
+  .swall.tc-gold .sw-logos>*,.swall.tc-silver .sw-logos>*,.swall.tc-bronze .sw-logos>*{height:auto;aspect-ratio:9/5}
   .tc-dia .logo-slot{font-size:12.5px}
   .tc-plat .logo-slot{font-size:11px;gap:5px}
   .tc-gold .slot-text{display:none}
