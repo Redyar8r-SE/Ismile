@@ -207,10 +207,6 @@ if ($id > 0 && ($request = Sponsors::find($id))) {
     ?>
     <div class="toolbar"><span><code class="big"><?= $e($request['ref']) ?></code> <?= Page::pill($request['status']) ?></span><a class="btn" href="#bookingDetails">Edit details</a></div>
     <?php
-    // ---- the progress bar: where this company is ----
-    $stepOf = ['new' => 1, 'contacted' => 2, 'waiting_list' => 2, 'agreed' => 3, 'paid' => 4, 'confirmed' => 5, 'declined' => 0, 'cancelled'=>0];
-    $current = $stepOf[$request['status']] ?? 1;
-    $stepNames = [1 => 'New request', 2 => 'Called', 3 => 'Price agreed', 4 => 'Paid', 5 => 'Confirmed'];
     $agreed = $request['amount_agreed'] !== null ? Page::money((int) $request['amount_agreed']) : '';
     $callForm = static function (bool $first) use ($e, $package): string {
         $choices = $first
@@ -231,24 +227,9 @@ if ($id > 0 && ($request = Sponsors::find($id))) {
             . '<div class="form-actions"><button class="btn green big-btn">Save call</button></div></form>';
     };
     ?>
-    <?php if ($current > 0): ?>
-    <ol class="tracker">
-      <?php foreach ($stepNames as $n => $name): ?>
-        <li class="<?= $n < $current || $current === 5 ? 'done' : ($n === $current ? 'now' : '') ?>"><b><?= $n < $current || $current === 5 ? Page::navIcon('check') : $n ?></b><span><?= $e($name) ?></span></li>
-      <?php endforeach; ?>
-    </ol>
-    <?php endif; ?>
-
+    <?php if (!in_array($request['status'], ['new', 'contacted', 'waiting_list'], true)): ?>
     <div class="card next-step">
-      <?php if ($request['status'] === 'new' || $request['status'] === 'contacted' || $request['status'] === 'waiting_list'): ?>
-        <h2 class="icon-label"><?= Page::navIcon('phone') ?><span>What to do now: call them and agree on a price</span></h2>
-        <p class="lead-line">Call <b><?= $e($request['contact_name']) ?></b> from <b><?= $e($request['company']) ?></b>
-          <a class="btn green" href="tel:<?= $e($request['phone']) ?>" dir="ltr"><?= Page::navIcon('phone') ?><span><?= $e($request['phone']) ?></span></a></p>
-        <p>They want: <b><?= $package ? $e(SponsorPackages::name($package)) : 'not sure yet' ?></b><?= $package && $package['price'] > 0 ? ', list price <b>' . Page::money((int) $package['price']) . '</b>' : '' ?>.
-          <?= $request['status'] === 'waiting_list' ? '<span class="pill violet">on the waiting list</span>' : '' ?></p>
-        <h3>After the call, what happened?</h3>
-        <?= $callForm(true) ?>
-      <?php elseif ($request['status'] === 'agreed'): ?>
+      <?php if ($request['status'] === 'agreed'): ?>
         <h2 class="icon-label"><?= Page::navIcon('payments') ?><span><?= $request['amount_paid'] !== null ? 'Upgrade balance: collect the remaining payment' : 'What to do now: wait for the money, then record it' ?></span></h2>
         <p class="lead-line">Agreed total: <b><?= $agreed ?></b>.<?= $request['amount_paid'] !== null ? ' Already received: <b>' . $money($request['amount_paid']) . '</b>.' : '' ?> Remaining balance: <b class="big-money"><?= Page::money($balance) ?></b>. Record it when received:</p>
         <form method="post" class="stack"><?= Page::csrfField() ?><input type="hidden" name="do" value="pay">
@@ -287,6 +268,7 @@ if ($id > 0 && ($request = Sponsors::find($id))) {
         <form method="post" class="form-actions"><?= Page::csrfField() ?><input type="hidden" name="do" value="status"><input type="hidden" name="status" value="new"><button class="btn">They came back: start again</button></form>
       <?php endif; ?>
     </div>
+    <?php endif; ?>
 
     <?php if(!in_array($request['status'],['declined','cancelled'],true) && ($request['amount_paid']===null || $isOwner)): ?>
     <section class="card booking-cancel-card" id="cancelBooking"><div><?= Page::panelHeading('Cancel booking','If the company changes its mind, cancel the booking and keep its history.','close') ?></div><form method="post" class="booking-cancel-form"><?= Page::csrfField() ?><input type="hidden" name="do" value="cancel"><label>Cancellation reason<textarea name="reason" required maxlength="500" rows="2" placeholder="For example: company withdrew after agreeing the amount"></textarea></label><button class="btn red"<?= Page::confirm('gold', 'circle-x', 'Cancel this booking?', $isBooth ? 'The booth booking is cancelled.' : 'The booking is cancelled and its sponsor map place is released.', [['building', $request['company'] . ' · ' . $request['ref']], ...($package ? [['tag', $package['name_en']]] : [])], ['note' => 'The record and payment history are kept.', 'yes' => 'Yes, cancel booking', 'no' => 'No, keep the booking']) ?>>Cancel booking</button></form></section>

@@ -109,6 +109,12 @@ jobs:
             curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' \
               http://127.0.0.1:8081/admin/vendor/jsQR.js | cmp - /opt/ismile-test/site/admin/vendor/jsQR.js
             echo "qr_decoder_http=200 (matches deployed file)"
+            for asset in map.js map.css; do
+              curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' \
+                "http://127.0.0.1:8081/admin/${asset}" | cmp - "/opt/ismile-test/site/admin/${asset}"
+            done
+            runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/map-access.php
+            echo "map_assets_http=200; all role permissions verified"
             curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' -H 'X-Forwarded-Proto: https' \
               http://127.0.0.1:8081/api/config.php | grep -q '"ok":true'
             echo "api.ismile.krd update OK"

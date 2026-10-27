@@ -192,6 +192,7 @@ final class Auth
             'payments'      => ['finance', 'viewer', 'sponsors'],
             'workshops'     => ['viewer', 'sponsors'],   // the Owner books workshops
             'sponsors'      => ['finance', 'viewer', 'sponsors'],
+            'map'           => self::ROLES,
             'checkin'       => ['checkin', 'viewer', 'sponsors'],
             'export'        => ['registration', 'finance', 'viewer', 'sponsors'],
             'certificates'  => ['finance', 'viewer', 'sponsors'],
@@ -212,6 +213,8 @@ final class Auth
     public static function viewerMayPost(array $user, string $script): bool
     {
         $page = basename($script);
+        // The map is a read-only surface for every role, including Owner.
+        if ($page === 'map.php') return false;
         return !self::viewOnly($user) || in_array($page, self::VIEWER_MAY_POST, true)
             || ($user['role'] === 'sponsors' && in_array($page, self::SPONSORS_MAY_POST, true));
     }

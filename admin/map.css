@@ -1,0 +1,25 @@
+.admin-map { --text:#132c38; --muted:#536c78; --font:inherit; color:var(--text); }
+:root .exhibition.admin-map { --ex-bg:#f1f7f8; --ex-card:#fff; --ex-chip:#fff; --ex-line:#d6e6e8; --ex-track:#dcebed; --plan-bg:#f4f9fa; --plan-floor:#fff; --plan-room:#e3eef0; --plan-wall:#8aa7b0; --plan-wall-strong:#4d7280; --plan-ink:#0b1f27; --plan-accent:#0e7f7b; --booked-red:#f43f5e; --booked-ink:#e11d48; --live-green:#059669; --selected-ring:#0b1f27; }
+.operations-map-layout { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(300px,1fr); gap:20px; align-items:start; }
+.operations-map-main { min-width:0; }
+.map-toolbar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+.map-toolbar h3 { margin:0; }
+.operations-map-scroll { overflow:auto; margin-top:16px; border-radius:12px; background:var(--plan-bg); }
+#mapDrawing { min-width:560px; }
+#mapDrawing svg { display:block; width:100%; height:auto; }
+.map-directory { display:grid; gap:8px; max-height:480px; overflow:auto; margin-top:16px; padding:4px; }
+.map-directory-item { display:flex; align-items:center; gap:12px; width:100%; text-align:start; background:#fff; border:1px solid #d6e6e8; border-radius:10px; padding:12px; color:#132c38; cursor:pointer; }
+.map-directory-item>b { display:grid; place-items:center; flex:none; width:36px; height:36px; border-radius:9px; background:#e0f3ee; }
+.map-directory-item.is-booked>b { background:#f43f5e; color:white; }
+.map-directory-item>span { flex:1; min-width:0; }
+.map-directory-item strong,.map-directory-item small { display:block; overflow-wrap:anywhere; }
+.map-directory-item small { margin-top:4px; }
+.map-directory-item:is(.is-selected,:focus-visible) { outline:2px solid #087f7b; outline-offset:1px; }
+.map-details { position:sticky; top:20px; max-height:calc(100vh - 40px); overflow:auto; overflow-wrap:anywhere; }
+.map-details dl>div { display:grid; grid-template-columns:minmax(100px, .8fr) minmax(0,1fr); gap:12px; padding:9px 0; border-bottom:1px solid #e4edef; }
+.map-details dt { color:#536c78; }.map-details dd { margin:0; white-space:pre-wrap; }
+.map-note { white-space:pre-wrap; }.map-call { border-top:1px solid #d6e6e8; padding:12px 0; }
+.admin-map.map-stale .map-booth polygon { fill:#b5c2c6; }
+.admin-map .legend-booked { background:#f43f5e; }
+@media(max-width:1100px) { .operations-map-layout { grid-template-columns:minmax(0,1fr); }.map-details { position:static; max-height:none; } }
+@media(max-width:620px) { .admin-map .card { padding:14px; }.map-details dl>div { grid-template-columns:1fr; gap:4px; } }

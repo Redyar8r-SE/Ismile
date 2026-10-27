@@ -294,6 +294,21 @@ map. Assignment reserves immediately, before payment. Declined, waiting-list
 and cancelled requests release the position. The database unique key refuses
 simultaneous reservations of one sponsor position.
 
+**Event operations > Map** (`admin/map.php`) shows all 44 numbered sponsor
+positions using the same floor-plan geometry and generated `reserved_booth`
+database column as public availability. Select a map number or directory entry
+to see its company, contact, package, assigned staff, agreed/received/outstanding
+amounts, payment details, notes and call history. Search by number, company,
+contact or phone; filter availability and zoom up to 200%. Read-only data
+refreshes every five seconds while the tab is visible. Failed requests show
+unknown availability. The private JSON route requires an authenticated Map
+permission on every request; public availability still exposes numbers only.
+Every signed-in role can open Map and inspect details. Map has no add, edit,
+delete or booking-management links and rejects changes for every role,
+including Owner. Other pages keep their existing role permissions.
+Standard exhibition booths do not reserve numbered positions. No schema
+migration is needed for this section.
+
 Sponsorship tiers are Platinum, Gold, Silver and Bronze. Package `booth_tier`
 controls the sponsor selector. Platinum: 37?42; Gold: 1, 6, 24, 30, 36, 43, 44;
 Silver: 2?5, 7?14, 25?28, 31?35; Bronze: 15?23, 29.

@@ -10,7 +10,7 @@ use Ismile\Auth;
 use Ismile\Db;
 use Ismile\Admin\PdfReport;
 
-$pages = ['index','checkin','registrations','certificates','sponsors','booths','lists','communications','payments','psoola-orders','registration','workshops','settings','users','backups','content'];
+$pages = ['index','checkin','registrations','certificates','sponsors','booths','map','lists','communications','payments','psoola-orders','registration','workshops','settings','users','backups','content'];
 if (($argv[1] ?? '') === '--render') {
     $page = $argv[2] ?? '';
     if (!in_array($page, $pages, true)) throw new RuntimeException('Unknown verification page.');
@@ -26,7 +26,7 @@ if (($argv[1] ?? '') === '--render') {
     // A process-local rendering context, without signing in or updating an account.
     $owner['totp_enabled'] = 1;
     // --render page query role: the same page as a Viewer or Sponsors account would see it.
-    if (in_array($argv[4] ?? '', ['viewer', 'sponsors'], true)) $owner['role'] = $argv[4];
+    if (in_array($argv[4] ?? '', Auth::ROLES, true)) $owner['role'] = $argv[4];
     (new ReflectionProperty(Auth::class, 'user'))->setValue(null, $owner);
     $file = App::siteFile('admin/' . $page . '.php');
     if (!is_file($file)) $file = dirname(__DIR__, 2) . '/admin/' . $page . '.php';
@@ -93,6 +93,15 @@ foreach ($pages as $page) {
     $html = $render($page);
     $check('deployed page renders: ' . $page, strlen($html) > 1000);
 }
+foreach (Auth::ROLES as $role) {
+    $html = $render('map', '', $role);
+    $check($role . ' sees Map in view-only mode', str_contains($html, 'id="operationsMap"')
+        && str_contains($html, 'class="admin-shell view-only"') && str_contains($html, 'href="map.php"')
+        && !Auth::viewerMayPost(['role' => $role], '/admin/map.php'));
+}
+// Read the real reservation data without logging in or changing any records.
+$mapRows = Db::all("SELECT reserved_booth FROM sponsor_requests WHERE kind='sponsor' AND reserved_booth IS NOT NULL");
+$check('map reservation query succeeds', is_array($mapRows));
 // PSOOLA scans the tickets at the door: no iSmile scanner tab, the workspace opens on Attended.
 $html = $render('checkin', 'day=1');
 $check('Registration navigation has Attended, Guest list and Report, and no scanner tab', !str_contains($html, '>Check-in</span>') && !str_contains($html, 'id="scanCamera"')
