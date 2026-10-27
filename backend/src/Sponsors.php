@@ -117,6 +117,7 @@ final class Sponsors
         if ($kind === null) {
             throw new UserError('Choose sponsorship or an exhibition booth.');
         }
+        self::requireMapAccess(['kind' => $kind], $user);
         $company = Validate::text($in['company'] ?? '', 160);
         $contact = Validate::text($in['contact'] ?? '', 120);
         if (mb_strlen($company) < 2) {
@@ -254,6 +255,7 @@ final class Sponsors
                 throw new UserError('Request not found.');
             }
             if ($request['status']==='cancelled') throw new UserError('This booking is cancelled. Reopen it before recording another call.');
+            self::requireMapAccess($request, $user);
             $done = $request['amount_paid'] !== null;
             if ($done && in_array($outcome, ['agreed', 'declined'], true)) {
                 throw new UserError('A payment is already recorded. Use Edit details to change the agreed total; save this call as "Talked to them" with a note.');
@@ -311,6 +313,7 @@ final class Sponsors
             if ($request['status'] !== 'agreed' || $request['amount_agreed'] === null) {
                 throw new UserError('First save the call where they agreed on the amount (status Agreed). Then record the payment.');
             }
+            self::requireMapAccess($request, $user);
             $previousPaid = (int) ($request['amount_paid'] ?? 0);
             $balance = (int) $request['amount_agreed'] - $previousPaid;
             if ($amount === null || $amount !== $balance || $balance < 0) {
@@ -404,6 +407,7 @@ final class Sponsors
         }
         Db::transaction(static function () use ($requestId, $in, $user): void {
             $request = Db::one('SELECT * FROM sponsor_requests WHERE id = ? FOR UPDATE', [$requestId]) ?? throw new UserError('Request not found.');
+            self::requireMapAccess($request, $user);
             // The form remembers when the booking was opened. If someone saved a
             // call, a payment or other details since, saving this older form
             // would quietly undo their change: refuse, and show the new values.
@@ -512,6 +516,7 @@ final class Sponsors
         if ($reason==='') throw new UserError('Enter the reason for cancelling this booking.');
         return Db::transaction(static function() use($id,$reason,$user): string {
             $request=Db::one('SELECT * FROM sponsor_requests WHERE id=? FOR UPDATE',[$id])??throw new UserError('Booking not found.');
+            self::requireMapAccess($request, $user);
             if ($request['status']==='cancelled') return 'This booking is already cancelled.';
             if ($request['amount_paid']!==null && $user['role']!=='owner') throw new UserError('A payment is recorded. Only the Owner can cancel this booking.');
             $now=App::now();
@@ -527,6 +532,7 @@ final class Sponsors
     {
         Db::transaction(static function () use ($request, $status, $user, $override): void {
             $request = Db::one('SELECT * FROM sponsor_requests WHERE id = ? FOR UPDATE', [$request['id']]) ?? throw new UserError('Request not found.');
+            self::requireMapAccess($request, $user);
             if (!in_array($status, self::STATUSES, true)) {
                 throw new UserError('Unknown status.');
             }
@@ -580,6 +586,13 @@ final class Sponsors
     {
         return (int) Db::value("SELECT COUNT(*) FROM sponsor_requests WHERE next_call_at IS NOT NULL AND next_call_at <= ? AND status NOT IN ('confirmed','declined','cancelled')"
             . ($kind !== null ? ' AND kind = ?' : ''), $kind !== null ? [App::now(), $kind] : [App::now()]);
+    }
+
+    private static function requireMapAccess(array $request, array $user): void
+    {
+        if ($request['kind'] === 'sponsor' && !Auth::canManageMap($user)) {
+            throw new UserError('Only authorised map managers can change sponsor bookings.');
+        }
     }
 
     private static function amount(mixed $value): ?int

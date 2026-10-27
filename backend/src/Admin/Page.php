@@ -187,6 +187,7 @@ final class Page
         return match ($user['role']) {
             'checkin' => 'checkin.php',
             'content' => self::contentUrl(),
+            'map_viewer' => 'map.php',
             default   => 'index.php',
         };
     }

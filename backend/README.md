@@ -303,11 +303,18 @@ contact or phone; filter availability and zoom up to 200%. Read-only data
 refreshes every five seconds while the tab is visible. Failed requests show
 unknown availability. The private JSON route requires an authenticated Map
 permission on every request; public availability still exposes numbers only.
-Every signed-in role can open Map and inspect details. Map has no add, edit,
-delete or booking-management links and rejects changes for every role,
-including Owner. Other pages keep their existing role permissions.
-Standard exhibition booths do not reserve numbered positions. No schema
-migration is needed for this section.
+Every signed-in role can open Map and inspect details. The **Map viewer** role
+sees only Map, starts there after login, and cannot add or change anything.
+Owner and the single designated account with `map_booking_access=1` can book
+an available number directly from Map or open an existing sponsor booking to
+manage it. Other accounts cannot change sponsor bookings through either Map,
+Sponsors or a sponsor ID posted through Booths. The dedicated Map viewer role
+stays read-only even if a grant was left on the account.
+Migration `2026-10-27-map-viewer-role.sql` adds the role and account grant.
+The optional `map_editor_email` deployment input grants access to one existing
+enabled staff account and revokes previous non-owner grants. It does not
+create accounts or print the email. Standard exhibition booths do not reserve
+numbered positions.
 
 Sponsorship tiers are Platinum, Gold, Silver and Bronze. Package `booth_tier`
 controls the sponsor selector. Platinum: 37?42; Gold: 1, 6, 24, 30, 36, 43, 44;

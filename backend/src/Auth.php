@@ -16,7 +16,7 @@ namespace Ismile;
 
 final class Auth
 {
-    public const ROLES = ['owner', 'registration', 'finance', 'content', 'checkin', 'viewer', 'sponsors'];
+    public const ROLES = ['owner', 'registration', 'finance', 'content', 'checkin', 'viewer', 'sponsors', 'map_viewer'];
     public const ROLE_NAMES = [
         'owner'        => 'Owner (everything)',
         'registration' => 'Registration (register people paid by cash; changes only the people they added)',
@@ -24,12 +24,13 @@ final class Auth
         'content'      => 'Content (site text only)',
         'checkin'      => 'Check-in (arrivals, attendance, guest list and totals)',
         'viewer'       => 'Viewer (sees every event page, changes nothing)',
-        'sponsors'     => 'Viewer + Sponsors (sees every event page; books sponsor map places and booths)',
+        'sponsors'     => 'Viewer + Booths (sees event pages; sponsor map booking needs individual access)',
+        'map_viewer'   => 'Map viewer (sees only Map; cannot book or change anything)',
     ];
     // Registration takes cash and makes real PSOOLA tickets, so it needs the phone code too.
     // The Viewer sees people's details and the money, so it does as well.
     // Sponsors sees company contacts and records sponsor payments, like Finance.
-    public const NEEDS_TWO_FACTOR = ['owner', 'finance', 'registration', 'viewer', 'sponsors'];
+    public const NEEDS_TWO_FACTOR = ['owner', 'finance', 'registration', 'viewer', 'sponsors', 'map_viewer'];
     // What a Viewer may still send: signing out and setting up their own phone code.
     private const VIEWER_MAY_POST = ['login.php', 'logout.php', 'two-factor.php'];
     // Viewer + Sponsors may also save on these pages: sponsor bookings, map places and booths.
@@ -183,6 +184,7 @@ final class Auth
         if ($user['role'] === 'owner') {
             return true;
         }
+        if ($area === 'sponsors' && self::canManageMap($user)) return true;
         // The Viewer (and Viewer + Sponsors) opens every event page but never 'edit'
         // or 'content' (the website editor). What it sends is refused by viewerMayPost().
         $allowed = [
@@ -206,15 +208,21 @@ final class Auth
     /** True for a look-only account (Viewer + Sponsors still saves on the sponsor pages). */
     public static function viewOnly(array $user): bool
     {
-        return in_array($user['role'], ['viewer', 'sponsors'], true);
+        return in_array($user['role'], ['viewer', 'sponsors', 'map_viewer'], true);
+    }
+
+    /** Account-specific booking access; the Map viewer role always stays read-only. */
+    public static function canManageMap(array $user): bool
+    {
+        return $user['role'] === 'owner'
+            || ($user['role'] !== 'map_viewer' && (int) ($user['map_booking_access'] ?? 0) === 1);
     }
 
     /** False when a Viewer sends something that would change data on this page. */
     public static function viewerMayPost(array $user, string $script): bool
     {
         $page = basename($script);
-        // The map is a read-only surface for every role, including Owner.
-        if ($page === 'map.php') return false;
+        if (in_array($page, ['map.php', 'sponsors.php'], true)) return self::canManageMap($user);
         return !self::viewOnly($user) || in_array($page, self::VIEWER_MAY_POST, true)
             || ($user['role'] === 'sponsors' && in_array($page, self::SPONSORS_MAY_POST, true));
     }

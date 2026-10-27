@@ -18,6 +18,11 @@ on:
   push:
     branches: ["backend"]
   workflow_dispatch:
+    inputs:
+      map_editor_email:
+        description: Existing account to grant exclusive non-owner map booking access
+        required: false
+        type: string
 
 concurrency:
   group: ismile-api-deploy
@@ -78,8 +83,9 @@ jobs:
           MAIL_FROM: ${{ secrets.API_MAIL_FROM }}
           PSOOLA_CONFIG: ${{ secrets.API_PSOOLA_CONFIG }}
           QUIET_SECRETS: "1"
+          MAP_EDITOR_EMAIL: ${{ inputs.map_editor_email || '' }}
         with:
-          envs: OWNER_EMAIL,OWNER_PASSWORD,SITE_PASSWORD,RESEND_KEY,BREVO_KEY,MAIL_FROM,PSOOLA_CONFIG,QUIET_SECRETS
+          envs: OWNER_EMAIL,OWNER_PASSWORD,SITE_PASSWORD,RESEND_KEY,BREVO_KEY,MAIL_FROM,PSOOLA_CONFIG,QUIET_SECRETS,MAP_EDITOR_EMAIL
           host: ${{ env.DEPLOY_HOST }}
           username: ${{ env.DEPLOY_USER }}
           password: ${{ env.DEPLOY_PASSWORD }}
@@ -99,6 +105,9 @@ jobs:
               -o /root/ismile-test-setup.sh
             chmod +x /root/ismile-test-setup.sh
             DOMAIN=api.ismile.krd BRANCH=backend bash /root/ismile-test-setup.sh
+            if [ -n "${MAP_EDITOR_EMAIL:-}" ]; then
+              php /opt/ismile-test/backend/tools/configure-map-manager.php
+            fi
             runuser -u www-data -- php /opt/ismile-test/backend/tools/verify-deployment.php --source /opt/ismile-test/repo
             # Smoke: PHP admin + config API (basic auth from secrets.env)
             SP="$(grep '^SITE_PASS=' /opt/ismile-test/secrets.env | cut -d= -f2-)"

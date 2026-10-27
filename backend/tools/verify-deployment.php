@@ -25,8 +25,13 @@ if (($argv[1] ?? '') === '--render') {
     if (!$owner) throw new RuntimeException('An enabled Owner account is required.');
     // A process-local rendering context, without signing in or updating an account.
     $owner['totp_enabled'] = 1;
+    $owner['map_booking_access'] = 0;
     // --render page query role: the same page as a Viewer or Sponsors account would see it.
     if (in_array($argv[4] ?? '', Auth::ROLES, true)) $owner['role'] = $argv[4];
+    if (($argv[4] ?? '') === 'map_manager') {
+        $owner['role'] = 'sponsors';
+        $owner['map_booking_access'] = 1;
+    }
     (new ReflectionProperty(Auth::class, 'user'))->setValue(null, $owner);
     $file = App::siteFile('admin/' . $page . '.php');
     if (!is_file($file)) $file = dirname(__DIR__, 2) . '/admin/' . $page . '.php';
@@ -95,10 +100,17 @@ foreach ($pages as $page) {
 }
 foreach (Auth::ROLES as $role) {
     $html = $render('map', '', $role);
-    $check($role . ' sees Map in view-only mode', str_contains($html, 'id="operationsMap"')
-        && str_contains($html, 'class="admin-shell view-only"') && str_contains($html, 'href="map.php"')
-        && !Auth::viewerMayPost(['role' => $role], '/admin/map.php'));
+    $manage = $role === 'owner';
+    $check($role . ' has correct Map access', str_contains($html, 'id="operationsMap"')
+        && str_contains($html, 'href="map.php"')
+        && str_contains($html, 'data-can-manage="' . ($manage ? '1' : '0') . '"')
+        && (str_contains($html, 'class="admin-shell view-only"') !== $manage));
 }
+$html = $render('map', '', 'map_manager');
+$check('designated map manager can book without a view-only banner', str_contains($html, 'id="mapBookingForm"') && !str_contains($html, 'class="admin-shell view-only"'));
+$html = $render('map', '', 'map_viewer');
+$check('Map viewer has only Map navigation and no booking form', !str_contains($html, 'id="mapBookingForm"') && !str_contains($html, 'href="sponsors.php"') && !str_contains($html, 'href="index.php"') && !str_contains($html, 'href="users.php"'));
+$check('at most one non-owner account has map booking access', (int) Db::value("SELECT COUNT(*) FROM admin_users WHERE map_booking_access=1 AND role<>'owner' AND disabled_at IS NULL") <= 1);
 // Read the real reservation data without logging in or changing any records.
 $mapRows = Db::all("SELECT reserved_booth FROM sponsor_requests WHERE kind='sponsor' AND reserved_booth IS NOT NULL");
 $check('map reservation query succeeds', is_array($mapRows));
@@ -140,11 +152,11 @@ foreach (['users','settings','backups','content'] as $page) {
     $check('Viewer cannot open ' . $page, str_contains($render($page, '', 'viewer'), '<h2>Not allowed</h2>'));
 }
 // Viewer + Sponsors: sees every event page like a Viewer, and books on Sponsors and Booths.
-foreach (['sponsors','booths'] as $page) {
+foreach (['booths'] as $page) {
     $html = $render($page, '', 'sponsors');
     $check('Viewer + Sponsors can book on ' . $page, !str_contains($html, '<h2>Not allowed</h2>') && !str_contains($html, 'class="admin-shell view-only"') && str_contains($html, 'new=1'));
 }
-foreach (['index','registrations','lists','payments','psoola-orders','workshops','checkin','certificates','communications'] as $page) {
+foreach (['index','registrations','lists','payments','psoola-orders','workshops','sponsors','checkin','certificates','communications'] as $page) {
     $html = $render($page, '', 'sponsors');
     $check('Viewer + Sponsors sees ' . $page . ' in view-only mode', str_contains($html, 'class="admin-shell view-only"') && !str_contains($html, '<h2>Not allowed</h2>'));
 }

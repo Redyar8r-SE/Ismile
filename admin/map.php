@@ -7,8 +7,27 @@ use Ismile\Admin\Page;
 use Ismile\App;
 use Ismile\Db;
 use Ismile\Sponsors;
+use Ismile\Auth;
+use Ismile\BoothPlan;
+use Ismile\SponsorPackages;
+use Ismile\UserError;
 
-Page::guard('map');
+$user = Page::guard('map');
+if (!in_array($_SERVER['REQUEST_METHOD'] ?? 'GET', ['GET', 'HEAD', 'POST'], true)) {
+    header('Allow: GET, HEAD, POST');
+    http_response_code(405);
+    exit;
+}
+$canManage = Auth::canManageMap($user);
+Page::action(static function () use ($user): string {
+    if (!Auth::canManageMap($user)) throw new UserError('Only authorised map managers can book sponsor positions.');
+    if (($_POST['do'] ?? '') !== 'book') throw new UserError('Unknown map action.');
+    $number = Sponsors::boothNumber($_POST['booth_number'] ?? '');
+    if ($number === null) throw new UserError('Select a numbered map position.');
+    Page::useOnce();
+    $booking = Sponsors::createByStaff(array_replace($_POST, ['kind' => 'sponsor', 'booth_number' => $number]), $user);
+    return 'Position ' . $number . ' booked for ' . $booking['company'] . '.';
+}, 'map.php?number=' . max(1, min(44, (int) ($_POST['booth_number'] ?? 1))));
 
 // Private, authenticated map data. The public availability API stays anonymous
 // and contains numbers only. Use the same generated reservation as booking.
@@ -47,7 +66,7 @@ $version = (int) filemtime(__DIR__ . '/map.js');
 <link rel="stylesheet" href="../css/sections/booth-map.css?v=<?= (int) filemtime(__DIR__ . '/../css/sections/booth-map.css') ?>">
 <link rel="stylesheet" href="map.css?v=<?= (int) filemtime(__DIR__ . '/map.css') ?>">
 <script type="module" src="map.js?v=<?= $version ?>"></script>
-<section class="exhibition admin-map" id="operationsMap" aria-label="Exhibition floor plan">
+<section class="exhibition admin-map" id="operationsMap" data-can-manage="<?= $canManage ? '1' : '0' ?>" aria-label="Exhibition floor plan">
   <div class="exhibition-head"><div><h2>Your exhibition floor plan</h2><p>Select a position on the map or in the directory to see its booking. Red means reserved, including bookings awaiting payment.</p></div><span id="mapLive" class="exhibition-live" role="status">Connecting to database...</span></div>
   <div class="exhibition-overview">
     <div class="exhibition-stat"><span>Numbered positions</span><strong>44</strong></div>
@@ -62,6 +81,30 @@ $version = (int) filemtime(__DIR__ . '/map.js');
     </div>
     <aside class="card map-details" id="mapDetails" aria-label="Selected position details" aria-live="polite"><h3>Select a number</h3><p>Company, contact, agreed amount, payments, notes and call history will appear here.</p></aside>
   </div>
-  <p class="muted small">View only. Numbered positions are sponsor reservations. Standard exhibition booths are managed separately in Booths.</p>
+  <?php if ($canManage): ?>
+  <section class="card" id="mapBookingPanel" hidden aria-labelledby="mapBookingTitle">
+    <h2 id="mapBookingTitle">Book sponsor position <span id="mapBookingNumber"></span></h2>
+    <form method="post" class="stack" id="mapBookingForm">
+      <?= Page::csrfField() ?><?= Page::onceField() ?><input type="hidden" name="do" value="book"><input type="hidden" name="booth_number" id="mapBookingBooth">
+      <div class="row3">
+        <label>Company<input name="company" required minlength="2" maxlength="160" autocomplete="organization"></label>
+        <label>Contact person<input name="contact" required minlength="2" maxlength="120" autocomplete="name"></label>
+        <label>Phone<input name="phone" type="tel" required maxlength="30" autocomplete="tel"></label>
+      </div>
+      <div class="row3">
+        <label>Sponsorship package<select name="package_id" id="mapBookingPackage" required><option value="">Choose a package</option>
+        <?php foreach (SponsorPackages::all('sponsor', false) as $package): ?>
+          <option value="<?= Page::e($package['id']) ?>" data-booths="<?= Page::e(json_encode(BoothPlan::numbers($package['booth_tier']))) ?>"><?= Page::e($package['name_en']) ?></option>
+        <?php endforeach; ?></select></label>
+        <label>Agreed price in IQD (optional)<input name="amount_agreed" type="number" min="0" max="1000000000" step="1"></label>
+        <label>Email (optional)<input name="email" type="email" maxlength="190" autocomplete="email"></label>
+      </div>
+      <label>Notes (optional)<textarea name="notes" maxlength="5000" rows="3"></textarea></label>
+      <p class="muted small">Saving reserves this number immediately. Payments and booking changes are managed from the full booking details.</p>
+      <div class="form-actions"><button class="btn green" type="submit">Book sponsor position</button><button class="btn ghost" type="button" id="mapBookingCancel">Close</button></div>
+    </form>
+  </section>
+  <?php endif; ?>
+  <p class="muted small"><?= $canManage ? 'You can book sponsor positions and manage existing reservations.' : 'View only. You can inspect positions and booking details.' ?> Standard exhibition booths are managed separately in Booths.</p>
 </section>
 <?php Page::bottom(); ?>

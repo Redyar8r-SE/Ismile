@@ -86,7 +86,8 @@ $roleGuide = [
     'content' => ['content', 'Content', 'Website wording, photos and content.'],
     'checkin' => ['checkin', 'Check-in', 'Find tickets, scan QR codes and welcome guests.'],
     'viewer' => ['view', 'Viewer', 'Sees every event page (people, payments, sponsors, check-in) but cannot change anything.'],
-    'sponsors' => ['sponsors', 'Viewer + Sponsors', 'Sees every event page like a Viewer, and can also book sponsor places on the map and exhibition booths.'],
+    'sponsors' => ['sponsors', 'Viewer + Booths', 'Sees event pages and can book exhibition booths. Sponsor map bookings require individual access from the Owner.'],
+    'map_viewer' => ['map', 'Map viewer', 'Sees only Map and booking details. Cannot add, edit, cancel or delete bookings.'],
 ];
 Page::top('Users', 'users', '<a class="btn" href="#add-person">' . Page::navIcon('users') . '<span>Add a person</span></a>');
 ?>

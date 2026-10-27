@@ -2,6 +2,7 @@ import { buildBooths } from '../js/config/booth-layout.js?v=148';
 import { floorPlanSVG } from '../js/sections/floor-plan.js?v=148';
 
 const el = (id) => document.getElementById(id);
+const canManage = el('operationsMap').dataset.canManage === '1';
 const escape = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money = (value) => value == null ? 'Not agreed' : `${Number(value).toLocaleString('en')} IQD`;
 const title = (value) => String(value ?? '').replaceAll('_', ' ').replace(/^./, (c) => c.toUpperCase());
@@ -50,7 +51,7 @@ function renderDetails() {
     return;
   }
   if (!detail) {
-    el('mapDetails').innerHTML = html + '<h3>Available</h3><p>No active sponsor reservation holds this position.</p>';
+    el('mapDetails').innerHTML = html + '<h3>Available</h3><p>No active sponsor reservation holds this position.</p>' + (canManage ? '<button type="button" class="btn green" data-book-position>Book this position</button>' : '');
     return;
   }
   const r = detail;
@@ -64,7 +65,7 @@ function renderDetails() {
     ['Payment method', title(r.paid_how)], ['Payment date', r.paid_at],
     ['Last call', r.last_call_at], ['Next follow-up', r.next_call_at], ['Created', r.created_at], ['Updated', r.updated_at],
   ];
-  html += `<h3>${escape(r.company)}</h3><dl>${fields.map(([k,v]) => `<div><dt>${escape(k)}</dt><dd>${escape(v || '—')}</dd></div>`).join('')}</dl>`;
+  html += `<h3>${escape(r.company)}</h3>${canManage ? `<a class="btn" href="sponsors.php?id=${Number(r.id)}">Manage sponsor booking</a>` : ''}<dl>${fields.map(([k,v]) => `<div><dt>${escape(k)}</dt><dd>${escape(v || '—')}</dd></div>`).join('')}</dl>`;
   html += `<h3>Notes</h3><p class="map-note">${escape(r.notes || 'No internal notes.')}</p><h3>Original message</h3><p class="map-note">${escape(r.message || 'No message.')}</p><h3>Call history</h3>`;
   html += r.calls.length ? r.calls.map((c) => `<article class="map-call"><strong>${escape(title(c.outcome))}</strong><p>${escape(c.called_at)} · ${escape(c.caller || 'Staff')}</p><p class="map-note">${escape(c.note || 'No note.')}</p>${c.amount_quoted != null ? `<p>Quoted: ${money(c.amount_quoted)}</p>` : ''}${c.next_call_at ? `<p>Follow-up: ${escape(c.next_call_at)}</p>` : ''}</article>`).join('') : '<p>No calls recorded.</p>';
   el('mapDetails').innerHTML = html;
@@ -122,6 +123,26 @@ try {
   if (!response.ok) throw new Error('Floor plan unavailable');
   const plan = await response.json();
   booths = buildBooths(plan.rows); colors = plan.colors;
+  if (canManage) {
+    el('mapDetails').addEventListener('click', (event) => {
+      if (!event.target.closest('[data-book-position]') || !connected || bookings.has(selected)) return;
+      el('mapBookingNumber').textContent = selected;
+      el('mapBookingBooth').value = selected;
+      const select = el('mapBookingPackage');
+      select.value = '';
+      const matching = [...select.options].filter((option) => {
+        if (!option.value) return false;
+        const valid = JSON.parse(option.dataset.booths).includes(selected);
+        option.disabled = !valid; option.hidden = !valid;
+        return valid;
+      });
+      if (matching.length === 1) select.value = matching[0].value;
+      el('mapBookingPanel').hidden = false;
+      el('mapBookingPanel').scrollIntoView({behavior: 'smooth', block: 'start'});
+      el('mapBookingForm').elements.company.focus({preventScroll:true});
+    });
+    el('mapBookingCancel').addEventListener('click', () => {el('mapBookingPanel').hidden = true;});
+  }
   for (const id of ['mapDrawing', 'mapDirectory']) {
     el(id).addEventListener('click', (event) => {
       const target = event.target.closest('[data-booth]');

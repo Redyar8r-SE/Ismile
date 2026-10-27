@@ -27,6 +27,13 @@ $id = (int) ($_GET['id'] ?? 0);
 $kind = $bookingKind ?? (Page::query('kind')==='booth'?'booth':'sponsor');
 if ($id>0 && ($existing= Sponsors::find($id))) $kind=$existing['kind'];
 $pageFile=$kind==='booth'?'booths.php':'sponsors.php';
+// Check the booking kind too: posting a sponsor ID through booths.php must
+// never bypass account-specific map booking permissions.
+if (!in_array($_SERVER['REQUEST_METHOD'] ?? 'GET', ['GET', 'HEAD'], true)
+    && $kind === 'sponsor' && !Auth::canManageMap($user)) {
+    http_response_code(403);
+    exit('Only authorised map managers can change sponsor bookings.');
+}
 if (($_SERVER['REQUEST_METHOD']??'GET')==='GET' && basename($_SERVER['SCRIPT_NAME']??$pageFile)!==$pageFile) {
     $query=$_GET; unset($query['kind']);
     Page::redirect($pageFile.($query?'?'.http_build_query($query):''));
