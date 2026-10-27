@@ -106,5 +106,59 @@
       "ku": "ستراتیژییە نوێکان لە پلاندانان بۆ نەشتەرگەریی ڕاستکردنەوەی شەویلاکەکان"
     },
     "photo": "assets/speakers/dastan.webp"
+  },
+  {
+    "name": {
+      "en": "Dr. Shkar Hoshear",
+      "ar": "د. شكار هوشيار",
+      "ku": "د. شکار هۆشیار"
+    },
+    "role": {
+      "en": "Consultant pediatric dentist · DDS, MSc · EAPD Specialized pediatric dentist",
+      "ar": "استشاري طب أسنان الأطفال · DDS، ماجستير · طبيب أسنان أطفال متخصص (EAPD)",
+      "ku": "ڕاوێژکاری پزیشکیی ددانی منداڵان · DDS، ماستەر · پزیشکی پسپۆڕی ددانی منداڵان (EAPD)"
+    },
+    "topic": {
+      "en": "From Limited Cooperation to Comprehensive Care. The Role of General Anesthesia in Pediatric Dentistry.",
+      "ar": "من التعاون المحدود إلى الرعاية الشاملة. دور التخدير العام في طب أسنان الأطفال.",
+      "ku": "لە هاوکاریی سنووردارەوە بۆ چاودێریی گشتگیر. ڕۆڵی بێهۆشکردنی گشتی لە پزیشکیی ددانی منداڵاندا."
+    },
+    "photo": "assets/speakers/shkar-hoshear.webp"
+  },
+  {
+    "name": {
+      "en": "Dr. Mahmood Fawzi Chawshli",
+      "ar": "د. محمود فوزي چاوشلي",
+      "ku": "د. مەحمود فەوزی چاوشلی"
+    },
+    "role": {
+      "en": "Ph.D. in Conservative Dentistry",
+      "ar": "دكتوراه في طب الأسنان التحفظي",
+      "ku": "دکتۆرا لە چارەسەری پارێزگارانەی ددان"
+    },
+    "topic": {
+      "en": "Beyond the Scan: Digital Dentistry in Advanced Prosthodontic Rehabilitation",
+      "ar": "ما وراء المسح: طب الأسنان الرقمي في إعادة التأهيل المتقدم بالتعويضات السنية",
+      "ku": "لە دەرەوەی سکان: پزیشکیی ددانی دیجیتاڵ لە دووبارە توانابەخشینەوەی پێشکەوتوو بە جێگرەوەکانی ددان"
+    },
+    "photo": "assets/speakers/mahmood-fawzi-chawshli.webp"
+  },
+  {
+    "name": {
+      "en": "Dr. Zardasht Bradosty",
+      "ar": "د. زردشت برادوستي",
+      "ku": "د. زەردەشت برادۆستی"
+    },
+    "role": {
+      "en": "Specialist in Esthetic & Restorative Dentistry · B.D.S – PG Dip – M.Sc – PhD",
+      "ar": "أخصائي طب الأسنان التجميلي والترميمي · B.D.S – PG Dip – M.Sc – PhD",
+      "ku": "پسپۆڕی پزیشکیی ددانی جوانکاری و نۆژەنکردنەوە · B.D.S – PG Dip – M.Sc – PhD"
+    },
+    "topic": {
+      "en": "Navigating Biocompatibility in Resin Composites: Uncovering Chemical Risks and Clinical Realities",
+      "ar": "استكشاف التوافق الحيوي في المركبات الراتنجية: كشف المخاطر الكيميائية والواقع السريري",
+      "ku": "لێکۆڵینەوە لە گونجاوی زیندەیی لە کۆمپۆزیتە ڕەزینییەکاندا: ئاشکراکردنی مەترسییە کیمیاییەکان و ڕاستییە کلینیکییەکان"
+    },
+    "photo": "assets/speakers/zardasht-bradosty.webp"
   }
 ]
