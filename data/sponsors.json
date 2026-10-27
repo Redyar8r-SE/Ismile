@@ -112,9 +112,37 @@
       "tile": true
     },
     {
+      "name": "Dental Blueprint",
+      "tier": "gold",
+      "logo": "assets/sponsors/dental-blueprint-gold.webp",
+      "bg": "#18363F",
+      "tile": true
+    },
+    {
       "name": "Lacalut",
       "tier": "silver",
       "logo": "assets/sponsors/lacalut-silver.webp",
+      "bg": "#18363F",
+      "tile": true
+    },
+    {
+      "name": "DentStar Company",
+      "tier": "silver",
+      "logo": "assets/sponsors/dentstar-silver-white.webp",
+      "bg": "#18363F",
+      "tile": true
+    },
+    {
+      "name": "Venus Dental Lab",
+      "tier": "silver",
+      "logo": "assets/sponsors/venus-dental-lab-silver.webp",
+      "bg": "#18363F",
+      "tile": true
+    },
+    {
+      "name": "Elite Dental",
+      "tier": "silver",
+      "logo": "assets/sponsors/elite-dental-silver.webp",
       "bg": "#18363F",
       "tile": true
     },
@@ -129,6 +157,13 @@
       "name": "ESB Group",
       "tier": "bronze",
       "logo": "assets/sponsors/esb-group-bronze.webp",
+      "bg": "#18363F",
+      "tile": true
+    },
+    {
+      "name": "Dentick Company",
+      "tier": "bronze",
+      "logo": "assets/sponsors/dentick-bronze-hq.webp",
       "bg": "#18363F",
       "tile": true
     }
