@@ -80,7 +80,8 @@ export function initBoothMap({ rows: BOOTH_ROWS, colors: TIER_COLORS }) {
     renderTable();
     if (focus) table.querySelector(`[data-booth="${focus}"]`)?.focus({ preventScroll: true });
     live.removeAttribute("data-i18n");
-    live.textContent = connected ? t("bm_live") : attempted ? t("bm_unavailable") : t("bm_connecting");
+    live.hidden = connected;
+    live.textContent = connected ? "" : attempted ? t("bm_unavailable") : t("bm_connecting");
     live.classList.toggle("is-live", connected);
     live.classList.toggle("is-unavailable", attempted && !connected);
     availableCount.textContent = connected ? String(BOOTHS.length - booked.size) : "—";
