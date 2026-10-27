@@ -1,114 +1,49 @@
-# Deploy PHP backend to api.ismile.krd (ismile LXC).
-# Re-runs the idempotent VPS setup script: pulls this branch, updates files/DB,
-# leaves the live Node site on ismile.krd alone.
-# Secrets: same GitHub DEPLOY_ENV as the Node deploy (SSH into LXC :2260), plus
-#   API_OWNER_EMAIL     the Owner's admin sign-in on api.ismile.krd (made if missing)
-#   API_OWNER_PASSWORD  its password, 12+ characters (change the secret = new password)
-#   API_SITE_PASSWORD   the browser password in front of the site (user "ismile")
-#   API_RESEND_KEY      optional: send the emails for real through Resend
-#   API_BREVO_KEY       optional: send through Brevo instead (wins over Resend)
-#   API_MAIL_FROM       optional: the sender (default onboarding@resend.dev)
-#   API_PSOOLA_CONFIG   optional: PSOOLA's settings as one JSON object (keys,
-#                       event/show/ticket/add-on ids, "active": true to take
-#                       real payments). Written into config.php, never printed.
-# The log is public (public repository): passwords are never printed.
-name: Deploy API (api.ismile.krd)
-
+name: Publish approved sponsor content
 on:
-  push:
-    branches: ["backend"]
   workflow_dispatch:
-
-concurrency:
-  group: ismile-api-deploy
-  cancel-in-progress: false
-
+permissions:
+  contents: read
 jobs:
-  security:
-    uses: ./.github/workflows/security.yml
-  deploy:
-    needs: security
-    name: Update api.ismile.krd
+  publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Load DEPLOY_ENV (SSH only)
+      - name: Load saved server connection
+        shell: bash
         env:
           DEPLOY_ENV: ${{ secrets.DEPLOY_ENV }}
         run: |
           set -euo pipefail
-          : "${DEPLOY_ENV:?DEPLOY_ENV secret is required}"
-          printf '%s\n' "$DEPLOY_ENV" >.deploy.env
+          umask 077
+          printf '%s\n' "$DEPLOY_ENV" > "$RUNNER_TEMP/connection.env"
           set -a
-          # shellcheck disable=SC1091
-          source .deploy.env
+          source "$RUNNER_TEMP/connection.env"
           set +a
+          echo "::add-mask::$DEPLOY_PASSWORD"
           for key in DEPLOY_HOST DEPLOY_USER DEPLOY_PASSWORD DEPLOY_SSH_PORT; do
-            if [ -z "${!key:-}" ]; then
-              echo "error: ${key} missing from DEPLOY_ENV" >&2
-              exit 1
-            fi
+            test -n "${!key}"
+            printf '%s=%s\n' "$key" "${!key}" >> "$GITHUB_ENV"
           done
-          echo "::add-mask::${DEPLOY_PASSWORD}"
-          {
-            echo "DEPLOY_HOST<<EOF_DEPLOY_HOST"
-            printf '%s\n' "$DEPLOY_HOST"
-            echo "EOF_DEPLOY_HOST"
-            echo "DEPLOY_USER<<EOF_DEPLOY_USER"
-            printf '%s\n' "$DEPLOY_USER"
-            echo "EOF_DEPLOY_USER"
-            echo "DEPLOY_PASSWORD<<EOF_DEPLOY_PASSWORD"
-            printf '%s\n' "$DEPLOY_PASSWORD"
-            echo "EOF_DEPLOY_PASSWORD"
-            echo "DEPLOY_SSH_PORT<<EOF_DEPLOY_SSH_PORT"
-            printf '%s\n' "$DEPLOY_SSH_PORT"
-            echo "EOF_DEPLOY_SSH_PORT"
-          } >>"$GITHUB_ENV"
-
-      - name: Run setup-test-site.sh on the LXC
+      - name: Merge approved sponsors into persistent content with backups
         uses: appleboy/ssh-action@v1.2.0
-        env:
-          OWNER_EMAIL: ${{ secrets.API_OWNER_EMAIL }}
-          OWNER_PASSWORD: ${{ secrets.API_OWNER_PASSWORD }}
-          SITE_PASSWORD: ${{ secrets.API_SITE_PASSWORD }}
-          RESEND_KEY: ${{ secrets.API_RESEND_KEY }}
-          BREVO_KEY: ${{ secrets.API_BREVO_KEY }}
-          MAIL_FROM: ${{ secrets.API_MAIL_FROM }}
-          PSOOLA_CONFIG: ${{ secrets.API_PSOOLA_CONFIG }}
-          QUIET_SECRETS: "1"
         with:
-          envs: OWNER_EMAIL,OWNER_PASSWORD,SITE_PASSWORD,RESEND_KEY,BREVO_KEY,MAIL_FROM,PSOOLA_CONFIG,QUIET_SECRETS
           host: ${{ env.DEPLOY_HOST }}
           username: ${{ env.DEPLOY_USER }}
           password: ${{ env.DEPLOY_PASSWORD }}
           port: ${{ env.DEPLOY_SSH_PORT }}
           timeout: 60s
-          command_timeout: 20m
+          command_timeout: 2m
           script: |
-            set -euo pipefail
-            cd /root
-            # Save the existing database before applying schema migrations.
-            if [ -f /opt/ismile-test/backend/bootstrap.php ] && [ -f /opt/ismile-test/backend/config.php ]; then
-              runuser -u www-data -- php -r 'require $argv[1]; \Ismile\Backup::run(); echo "Pre-deployment database backup saved.\n";' /opt/ismile-test/backend/bootstrap.php
-            fi
-            # Idle unattended-upgrade-shutdown holds dpkg locks forever; stop it.
-            systemctl stop unattended-upgrades 2>/dev/null || true
-            curl -fsSL "https://raw.githubusercontent.com/Redyar8r-SE/Ismile/backend/backend/tools/vps/setup-test-site.sh" \
-              -o /root/ismile-test-setup.sh
-            chmod +x /root/ismile-test-setup.sh
-            DOMAIN=api.ismile.krd BRANCH=backend bash /root/ismile-test-setup.sh
-            runuser -u www-data -- php /opt/ismile-test/backend/tools/verify-deployment.php --source /opt/ismile-test/repo
-            # Smoke: PHP admin + config API (basic auth from secrets.env)
-            SP="$(grep '^SITE_PASS=' /opt/ismile-test/secrets.env | cut -d= -f2-)"
-            code="$(curl -s -o /dev/null -w '%{http_code}' -u "ismile:${SP}" -H 'Host: api.ismile.krd' http://127.0.0.1:8081/admin/login.php)"
-            echo "admin_login_http=${code}"
-            test "$code" = "200"
-            # The QR fallback must be accessible through nginx's allow-list.
-            curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' \
-              http://127.0.0.1:8081/admin/vendor/jsQR.js | cmp - /opt/ismile-test/site/admin/vendor/jsQR.js
-            echo "qr_decoder_http=200 (matches deployed file)"
-            curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' -H 'X-Forwarded-Proto: https' \
-              http://127.0.0.1:8081/api/config.php | grep -q '"ok":true'
-            echo "api.ismile.krd update OK"
+            set -eu
+            node <<'SPONSORS_CONTENT_NODE'
+            const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto'),cp=require('node:child_process');
+            const apps=JSON.parse(cp.execFileSync('pm2',['jlist'],{encoding:'utf8',stdio:['ignore','pipe','pipe']}));
+            const candidates=apps.filter(a=>a.pm2_env?.pm_cwd&&fs.existsSync(path.join(a.pm2_env.pm_cwd,'.env'))&&fs.existsSync(path.join(a.pm2_env.pm_cwd,'assets/sponsors/dentstar-silver-white.webp')));
+            if(candidates.length!==1)throw Error('Expected one deployed website containing approved sponsor artwork');
+            const current=fs.realpathSync(candidates[0].pm2_env.pm_cwd),hashes={"assets/sponsors/dental-blueprint-gold.webp":"660ec6ecf0b1e7fc30c25ba41450dd3ea6ddfd2b900864103d2f63f104e1b1c9","assets/sponsors/dentstar-silver-white.webp":"9eafb3944e60e86487e6cae6d0f13923b66cb2bfa7ee94d93244edb464241bc5","assets/sponsors/venus-dental-lab-silver.webp":"8a52ed5ea8b9d29998bd9146ed3efcc061f3e31aa687e7c4e260b2fee6faaafe","assets/sponsors/elite-dental-silver.webp":"8abcb4253dc2793ebbe79bec3b20e638415098e753ec3e1d025987b5381784a6","assets/sponsors/dentick-bronze-hq.webp":"886b1a35d8045e79c31c9aad4c0d8f255d3d173df9fd533aa7e0851f1aadbfc6"},additions=[{"name":"Dental Blueprint","tier":"gold","logo":"assets/sponsors/dental-blueprint-gold.webp","bg":"#18363F","tile":true},{"name":"DentStar Company","tier":"silver","logo":"assets/sponsors/dentstar-silver-white.webp","bg":"#18363F","tile":true},{"name":"Venus Dental Lab","tier":"silver","logo":"assets/sponsors/venus-dental-lab-silver.webp","bg":"#18363F","tile":true},{"name":"Elite Dental","tier":"silver","logo":"assets/sponsors/elite-dental-silver.webp","bg":"#18363F","tile":true},{"name":"Dentick Company","tier":"bronze","logo":"assets/sponsors/dentick-bronze-hq.webp","bg":"#18363F","tile":true}];
+            for(const [file,hash] of Object.entries(hashes)){if(crypto.createHash('sha256').update(fs.readFileSync(path.join(current,file))).digest('hex')!==hash)throw Error('Deployed image mismatch: '+file);}
+            const environment=fs.readFileSync(path.join(current,'.env'),'utf8'),match=environment.match(/^CONTENT_ROOT=(.*)$/m);const shared=match&&match[1].trim()?match[1].trim():path.resolve(current,'../../shared-content');
+            const targets=[{file:path.join(shared,'data/sponsors.json'),fallback:path.join(current,'data/sponsors.json')},{file:'/opt/ismile-test/site/data/sponsors.json',fallback:'/opt/ismile-test/repo/data/sponsors.json'}];
+            const backup=path.join(path.dirname(shared),'content-backups','sponsors-'+Date.now());fs.mkdirSync(backup,{recursive:true,mode:0o700});
+            for(let i=0;i<targets.length;i++){const {file,fallback}=targets[i];if(!fs.existsSync(file)&&!fs.existsSync(fallback)){console.log('Skipped absent optional site '+i);continue;}const source=fs.existsSync(file)?file:fallback,raw=fs.readFileSync(source,'utf8'),doc=JSON.parse(raw);if(!Array.isArray(doc.sponsors))throw Error('Invalid sponsor content');fs.writeFileSync(path.join(backup,i+'-sponsors.json'),raw,{mode:0o600});for(const item of additions){const at=doc.sponsors.findIndex(s=>s.name===item.name);if(at>=0)doc.sponsors[at]=item;else{const last=doc.sponsors.findLastIndex(s=>s.tier===item.tier);doc.sponsors.splice(last<0?doc.sponsors.length:last+1,0,item);}}fs.mkdirSync(path.dirname(file),{recursive:true});const temp=file+'.sponsors-writing';fs.writeFileSync(temp,JSON.stringify(doc,null,2)+'\n');const stat=fs.statSync(source);fs.chmodSync(temp,stat.mode&0o777);fs.chownSync(temp,stat.uid,stat.gid);fs.renameSync(temp,file);console.log(JSON.stringify({updated:file,count:doc.sponsors.length}));}
+            SPONSORS_CONTENT_NODE
