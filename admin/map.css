@@ -1,4 +1,5 @@
 .admin-map { --text:#132c38; --muted:#536c78; --font:inherit; color:var(--text); }
+.admin-map #mapLive[hidden] { display:none; }
 :root .exhibition.admin-map { --ex-bg:#f1f7f8; --ex-card:#fff; --ex-chip:#fff; --ex-line:#d6e6e8; --ex-track:#dcebed; --plan-bg:#f4f9fa; --plan-floor:#fff; --plan-room:#e3eef0; --plan-wall:#8aa7b0; --plan-wall-strong:#4d7280; --plan-ink:#0b1f27; --plan-accent:#0e7f7b; --booked-red:#f43f5e; --booked-ink:#e11d48; --live-green:#059669; --selected-ring:#0b1f27; }
 .operations-map-layout { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(300px,1fr); gap:20px; align-items:start; }
 .operations-map-main { min-width:0; }

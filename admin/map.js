@@ -89,13 +89,15 @@ async function refresh() {
     bookings = new Map(data.bookings.map((r) => [Number(r.reserved_booth), r]));
     detail = data.detail;
     connected = true;
-    el('mapLive').textContent = `Live · Updated ${new Date().toLocaleTimeString()} · Every 5 seconds`;
+    el('mapLive').textContent = '';
+    el('mapLive').hidden = true;
     el('mapLive').className = 'exhibition-live is-live';
     el('mapAvailable').textContent = 44 - bookings.size;
     el('mapBooked').textContent = bookings.size;
   } catch {
     if (controller !== request) return;
     connected = false;
+    el('mapLive').hidden = false;
     el('mapLive').textContent = 'Connection unavailable · Retrying';
     el('mapLive').className = 'exhibition-live is-unavailable';
     el('mapAvailable').textContent = el('mapBooked').textContent = '—';
