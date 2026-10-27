@@ -10,6 +10,7 @@ use Ismile\Admin\Page;
 use Ismile\Admin\CheckinWorkspace;
 use Ismile\Admin\RegistrationQuery;
 use Ismile\Admin\PdfReport;
+use Ismile\Admin\PaymentBreakdown;
 use Ismile\Audit;
 use Ismile\Auth;
 use Ismile\Db;
@@ -20,6 +21,7 @@ $what = (string) ($_GET['what'] ?? '');
 $user = Page::guard($what === 'workshop' ? 'workshops' : 'export');
 
 $rows = [];
+$financePeople = [];
 $name = 'ismile';
 switch ($what) {
     case 'all':
@@ -29,15 +31,18 @@ switch ($what) {
             $columns = \Ismile\Admin\Lists::columns($key);
             $companyList = isset(\Ismile\Admin\Lists::COMPANY_LISTS[$key]);
             $sheet = [array_merge(['#', $companyList ? 'Company' : 'Name'], $key==='workshops' ? ['Workshop'] : [], array_values($columns))];
-            foreach (\Ismile\Admin\Lists::rows($key) as $i => $row) {
+            $people = \Ismile\Admin\Lists::rows($key);
+            if (!$companyList) $people = PaymentBreakdown::attach($people);
+            foreach ($people as $i => $row) {
                 $cells = [$i+1, $companyList ? $row['company'] : Registrations::fullName($row)];
                 if ($key==='workshops') $cells[]=$row['workshop_name'];
                 foreach (array_keys($columns) as $column) {
-                    $cells[] = $column==='lunch' ? trim(($row['lunch_day1'] ? 'Day 1 ' : '') . ($row['lunch_day2'] ? 'Day 2' : '')) : ($column==='ticket_type' ? Registrations::ticketName($row['ticket_type']) : (string)($row[$column] ?? ''));
+                    $cells[] = \Ismile\Admin\Lists::exportValue($column, $row);
                 }
                 $sheet[]=$cells;
             }
             $sections[$label]=$sheet;
+            if (!$companyList) $sections[$label . ' - ticket and lunch payments'] = PaymentBreakdown::reportRows($people);
         }
         if (Auth::can($user, 'payments')) {
             $sheet=[['Payment','Reference','Method','Expected','Confirmed','Currency','Status','Started']];
@@ -55,11 +60,13 @@ switch ($what) {
         exit;
     case 'attendance':
         $rows = CheckinWorkspace::exportRows(CheckinWorkspace::filters($_GET));
+        $financePeople = PaymentBreakdown::attach(CheckinWorkspace::rows(CheckinWorkspace::filters($_GET)));
         $name = 'ismile-attendance';
         break;
     case 'registrations':
         if (Page::query('workspace')==='checkin') {
             $rows=CheckinWorkspace::exportRows(CheckinWorkspace::filters($_GET));
+            $financePeople = PaymentBreakdown::attach(CheckinWorkspace::rows(CheckinWorkspace::filters($_GET)));
             $name='ismile-registration-guests';
             break;
         }
@@ -70,8 +77,9 @@ switch ($what) {
         [$where, $params] = RegistrationQuery::where($in);
         $from = RegistrationQuery::from();
         $rows[] = ['Reference', 'First name', 'Second name', 'Last name', 'Phone', 'Email', 'City', 'Ticket', 'Specialty', 'University', 'Stage', 'Lunch day 1', 'Lunch day 2', 'Status', 'Ticket no.', 'Day 1 arrival', 'Day 2 arrival', 'Certificate', 'Language', 'Form sent', 'Paid', 'Added by'];
-        foreach (Db::all('SELECT r.*, t.ticket_no, ab.name AS added_by_name, (SELECT a.checked_in_at FROM ticket_attendance a WHERE a.ticket_id=t.id AND a.event_day=1) AS day1, (SELECT a.checked_in_at FROM ticket_attendance a WHERE a.ticket_id=t.id AND a.event_day=2) AS day2, (SELECT c.certificate_no FROM certificates c WHERE c.registration_id=r.id) AS certificate_no FROM ' . $from . " WHERE $where ORDER BY r.first_name, r.father_name", $params) as $row) {
-            $rows[] = [$row['ref'], $row['first_name'], $row['father_name'], $row['grandfather_name'], $row['phone'], $row['email'], $row['city'], \Ismile\Registrations::ticketName($row['ticket_type']), $row['specialty'], $row['university'] ?? '', $row['study_stage'] ? \Ismile\Registrations::stageName((int) $row['study_stage']) : '',
+        $financePeople = PaymentBreakdown::attach(Db::all('SELECT r.*, t.ticket_no, ab.name AS added_by_name, (SELECT a.checked_in_at FROM ticket_attendance a WHERE a.ticket_id=t.id AND a.event_day=1) AS day1, (SELECT a.checked_in_at FROM ticket_attendance a WHERE a.ticket_id=t.id AND a.event_day=2) AS day2, (SELECT c.certificate_no FROM certificates c WHERE c.registration_id=r.id) AS certificate_no FROM ' . $from . " WHERE $where ORDER BY r.first_name, r.father_name", $params));
+        foreach ($financePeople as $row) {
+            $rows[] = [$row['ref'], $row['first_name'], $row['father_name'], $row['grandfather_name'], $row['phone'], $row['email'], $row['city'], \Ismile\Registrations::ticketName($row['ticket_type']), Registrations::SPECIALTY_NAMES[$row['specialty']] ?? $row['specialty'], $row['university'] ?? '', $row['study_stage'] ? \Ismile\Registrations::stageName((int) $row['study_stage']) : '',
                 $row['lunch_day1'] ? 'yes' : '', $row['lunch_day2'] ? 'yes' : '', $row['status'], $row['ticket_no'] ?? '', $row['day1'] ?? '', $row['day2'] ?? '', $row['certificate_no'] ?? '', $row['lang'], $row['created_at'], $row['paid_at'] ?? '', $row['created_by'] === null ? 'Website' : ($row['added_by_name'] ?? 'Removed account')];
         }
         $name = 'ismile-registrations';
@@ -142,10 +150,12 @@ switch ($what) {
         if ($list === 'workshops') {
             $rows[] = array_merge(['Workshop', '#', 'Name'], array_values($columns));
             foreach (\Ismile\Admin\Lists::workshopGroups() as ['workshop' => $workshop, 'people' => $people]) {
-                foreach (array_values($only($people)) as $i => $row) {
+                $people = PaymentBreakdown::attach(array_values($only($people)));
+                array_push($financePeople, ...$people);
+                foreach ($people as $i => $row) {
                     $cells = [SiteData::workshopName($workshop), $i + 1, Registrations::fullName($row)];
                     foreach (array_keys($columns) as $key) {
-                        $cells[] = $key === 'workshop_paid' ? (['paid' => 'PAID', 'complimentary' => 'FREE'][$row['workshop_paid']] ?? 'NOT PAID') : ($key === 'ticket_type' ? Registrations::ticketName($row['ticket_type']) : (string) ($row[$key] ?? ''));
+                        $cells[] = \Ismile\Admin\Lists::exportValue($key, $row);
                     }
                     $rows[] = $cells;
                 }
@@ -154,15 +164,11 @@ switch ($what) {
             break;
         }
         $rows[] = array_merge(['#', 'Name', 'Paid?'], array_values($columns));
-        foreach ($only(\Ismile\Admin\Lists::rows($list)) as $row) {
+        $financePeople = PaymentBreakdown::attach($only(\Ismile\Admin\Lists::rows($list)));
+        foreach ($financePeople as $row) {
             $cells = [++$number, Registrations::fullName($row), in_array($row['status'], ['paid', 'complimentary'], true) ? 'PAID' : 'NOT PAID'];
             foreach (array_keys($columns) as $key) {
-                $cells[] = match ($key) {
-                    'lunch' => trim(($row['lunch_day1'] ? 'Day 1 ' : '') . ($row['lunch_day2'] ? 'Day 2' : '')),
-                    'ambassador_code' => \Ismile\Admin\Lists::ambassadorCode($row),
-                    'ticket_type' => Registrations::ticketName($row['ticket_type']),
-                    default => (string) ($row[$key] ?? ''),
-                };
+                $cells[] = \Ismile\Admin\Lists::exportValue($key, $row);
             }
             $rows[] = $cells;
         }
@@ -177,13 +183,28 @@ Audit::log((int) $user['id'], 'export', null, null, ['what' => $what, 'rows' => 
 
 if (($_GET['format'] ?? '') === 'pdf') {
     $pdf = $what === 'list' && $list === 'studentids'
-        ? PdfReport::studentIds(\Ismile\Admin\Lists::filter($list, \Ismile\Admin\Lists::rows($list), \Ismile\Admin\Lists::filters($_GET)))
-        : PdfReport::make(ucwords(str_replace('-', ' ', $name)), $rows);
+        ? PdfReport::studentIds($financePeople, PaymentBreakdown::reportRows($financePeople))
+        : ($financePeople ? PdfReport::bundle([ucwords(str_replace('-', ' ', $name)) => $rows, 'Ticket and lunch payment breakdown' => PaymentBreakdown::reportRows($financePeople)]) : PdfReport::make(ucwords(str_replace('-', ' ', $name)), $rows));
     header('Content-Type: application/pdf');
     header('Content-Disposition: attachment; filename="' . $name . '-' . date('Y-m-d-Hi') . '.pdf"');
     header('Cache-Control: no-store');
     echo $pdf;
     exit;
+}
+
+// Excel keeps the original list and adds the identical historical receipt columns.
+if ($financePeople) {
+    $header = count($rows[0] ?? []) === 1 ? 1 : 0;
+    $reference = array_search('Reference', $rows[$header] ?? [], true);
+    $byRef = array_column($financePeople, null, 'ref');
+    if ($reference !== false) {
+        foreach ($rows as $i => &$cells) {
+            if ($i < $header) continue;
+            $extra = $i === $header ? array_values(PaymentBreakdown::COLUMNS) : array_map(static fn ($key) => $byRef[$cells[$reference] ?? ''][$key] ?? 'Not recorded', array_keys(PaymentBreakdown::COLUMNS));
+            $cells = array_merge($cells, $extra);
+        }
+        unset($cells);
+    }
 }
 
 header('Content-Type: text/csv; charset=utf-8');

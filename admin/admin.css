@@ -1111,6 +1111,18 @@ body[data-page=backups] .page-symbol{background:#e9f4ee;color:#418165;border-col
 .list-results table.name-list td code,.list-results .amb-code{white-space:nowrap}
 .list-results table.name-list td:nth-child(2){min-width:190px}
 .table-wrap td code{white-space:nowrap}
+.payment-breakdown{margin-top:28px}
+.payment-breakdown .name-list td{white-space:normal;overflow-wrap:anywhere}
+@media print{
+  @page payment-breakdown{size:A4 landscape;margin:12mm}
+  .admin-shell{background:#fff!important}
+  .payment-breakdown{page:payment-breakdown;break-before:page;margin-top:0}
+  .payment-breakdown .table-wrap{overflow:visible;max-width:none}
+  .payment-breakdown table.name-list{table-layout:fixed;width:100%;font-size:10px}
+  .payment-breakdown table.name-list th,.payment-breakdown table.name-list td{min-width:0!important;padding:4px;font-size:10px;white-space:normal;overflow-wrap:anywhere}
+  .payment-breakdown thead{display:table-header-group}
+  .payment-breakdown tr{break-inside:avoid}
+}
 
 /* Registration workspace: PSOOLA scans the tickets at the door */
 .psoola-gate{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px;border-left:5px solid var(--teal);background:linear-gradient(90deg,var(--teal-l),transparent 70%)}

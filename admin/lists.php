@@ -17,6 +17,7 @@ require __DIR__ . '/_boot.php';
 
 use Ismile\Admin\Lists;
 use Ismile\Admin\Page;
+use Ismile\Admin\PaymentBreakdown;
 use Ismile\Auth;
 use Ismile\Registrations;
 
@@ -49,12 +50,14 @@ if ($current === 'workshops') {
 $options = Lists::options($everyone);
 $query = Lists::query($current, $filters);
 $isCompany = isset(Lists::COMPANY_LISTS[$current]);
+$paymentPeople = $isCompany ? [] : PaymentBreakdown::attach($current === 'workshops' ? array_merge([], ...array_column($groups, 'people')) : $rows);
 $noun = $current === 'workshops' ? 'bookings' : ($isCompany ? 'companies' : 'people');
 
 Page::top('Lists', 'lists', Auth::can($user, 'export') ? '<a class="btn green" href="export.php?what=all&amp;format=pdf">Download all event lists (PDF)</a>' : '');
 $e = [Page::class, 'e'];
 $cell = static function (string $key, array $row) use ($e, $canPhotos): string {
     return match ($key) {
+        'specialty' => $e(Registrations::SPECIALTY_NAMES[$row[$key] ?? ''] ?? (string) ($row[$key] ?? '')),
         'ticket_type' => $e(\Ismile\Registrations::ticketName((string) $row['ticket_type'])),
         'ref', 'ticket_no' => $row[$key] ? '<code>' . $e($row[$key]) . '</code>' : '–',
         'paid_at', 'created_at' => Page::when($row[$key]),
@@ -238,6 +241,16 @@ $pickedLabel = !$pickedAmb ? 'All ambassadors' : (count($pickedAmb) > 1 ? count(
     <?php endforeach; ?>
     <?php if (!$rows): ?><tr><td colspan="<?= count($columns) + 2 ?>" class="muted"><?= $active ? 'Nobody matches these filters.' : 'Nobody on this list yet.' ?></td></tr><?php endif; ?>
   </table></div>
+  <?php endif; ?>
+  <?php if ($paymentPeople): $paymentRows = PaymentBreakdown::reportRows($paymentPeople); $paymentHeaders = array_shift($paymentRows); ?>
+  <section class="group payment-breakdown">
+    <div class="group-head"><h3>Ticket and lunch payment breakdown</h3></div>
+    <p class="muted small">Recorded payments and payment-day rates only. “Not recorded” is not zero. Workshop fees, if any, are shown separately above.</p>
+    <div class="table-wrap"><table class="name-list">
+      <thead><tr><?php foreach ($paymentHeaders as $heading): ?><th><?= $e($heading) ?></th><?php endforeach; ?></tr></thead>
+      <tbody><?php foreach ($paymentRows as $paymentCells): ?><tr><?php foreach ($paymentCells as $value): ?><td><?= $e((string) $value) ?></td><?php endforeach; ?></tr><?php endforeach; ?></tbody>
+    </table></div>
+  </section>
   <?php endif; ?>
   </div>
 </div>
