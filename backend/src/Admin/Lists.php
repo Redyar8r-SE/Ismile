@@ -39,7 +39,7 @@ final class Lists
     /** Extra columns after the name: key => heading. */
     public static function columns(string $list): array
     {
-        return match ($list) {
+        $columns = match ($list) {
             'attendance' => ['ticket_no' => 'Ticket', 'day1' => 'Day 1 arrival', 'day2' => 'Day 2 arrival', 'certificate_no' => 'Certificate', 'ambassador_code' => 'Ambassador', 'ref' => 'Reference'],
             'workshops'        => ['phone' => 'Phone', 'workshop_paid' => 'Workshop paid?', 'amount_paid' => 'Amount paid', 'ref' => 'Reference'],
             'sponsors'         => ['package' => 'Package', 'contact_name' => 'Contact', 'phone' => 'Phone', 'sponsor_status' => 'Status', 'amount_agreed' => 'Agreed (IQD)', 'amount_paid' => 'Paid (IQD)', 'next_call_at' => 'Next call', 'cancelled_at' => 'Cancelled on', 'cancellation_reason' => 'Cancellation reason', 'ref' => 'Reference'],
@@ -48,6 +48,21 @@ final class Lists
             'forms'            => ['phone' => 'Phone', 'email' => 'Email', 'ticket_type' => 'Ticket', 'lunch' => 'Lunch', 'university' => 'University', 'ambassador_code' => 'Ambassador', 'form_status' => 'Payment', 'created_at' => 'Sent', 'ref' => 'Reference'],
             'lunch1', 'lunch2' => ['phone' => 'Phone', 'ticket_type' => 'Ticket', 'ticket_no' => 'Ticket no.', 'ambassador_code' => 'Ambassador', 'ref' => 'Reference'],
             default            => ['phone' => 'Phone', 'ticket_type' => 'Ticket', 'lunch' => 'Lunch', 'ticket_no' => 'Ticket no.', 'ambassador_code' => 'Ambassador', 'ref' => 'Reference', 'paid_at' => 'Paid'],
+        };
+        return isset(self::COMPANY_LISTS[$list]) ? $columns : ['specialty' => 'Specialty'] + $columns;
+    }
+
+    /** Consistent human-readable cells for PDF and Excel, never internal specialty codes. */
+    public static function exportValue(string $key, array $row): string
+    {
+        return match ($key) {
+            'specialty' => \Ismile\Registrations::SPECIALTY_NAMES[$row[$key] ?? ''] ?? (string) ($row[$key] ?? ''),
+            'ticket_type' => \Ismile\Registrations::ticketName($row[$key] ?? ''),
+            'study_stage' => !empty($row[$key]) ? \Ismile\Registrations::stageName((int) $row[$key]) : '',
+            'ambassador_code' => self::ambassadorCode($row),
+            'lunch' => trim((!empty($row['lunch_day1']) ? 'Day 1 ' : '') . (!empty($row['lunch_day2']) ? 'Day 2' : '')),
+            'workshop_paid' => ['paid' => 'PAID', 'complimentary' => 'FREE'][$row[$key] ?? ''] ?? 'NOT PAID',
+            default => (string) ($row[$key] ?? ''),
         };
     }
 

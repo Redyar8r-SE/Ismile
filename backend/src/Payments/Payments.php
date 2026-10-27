@@ -152,6 +152,7 @@ final class Payments
         $payment = self::find($paymentId);
         $payment['_return_url'] = Links::statusUrl($checkout) . '&p=' . $paymentId;
 
+        $sourcePrices = SiteData::prices();
         try {
             $created = self::gateway($gatewayName)->createPayment($payment, $checkout);
             if ($priceFromGateway && (!is_int($created['amount'] ?? null) || $created['amount'] <= 0 || !preg_match('/^[A-Z]{3}$/', (string) ($created['currency'] ?? '')))) {
@@ -168,7 +169,7 @@ final class Payments
         Db::update('payments', $fixed + [
             'provider_payment_id' => $created['id'],
             'redirect_url'        => $created['redirect_url'],
-            'raw_create'          => $created['raw'],
+            'raw_create'          => \Ismile\Admin\PaymentBreakdown::archive($created['raw'], $checkout, $sourcePrices, (array) App::config('payments.psoola.add_ons', [])),
             'status'              => 'waiting',
             'updated_at'          => App::now(),
         ], 'id = ?', [$paymentId]);
@@ -229,6 +230,7 @@ final class Payments
 
         // The company is asked outside any lock.
         $payment = self::find($paymentId);
+        $sourcePrices = SiteData::prices();
         try {
             $sale = $gateway->createCashSale($payment, $checkout);
         } catch (PsoolaRefused $refused) {
@@ -255,7 +257,7 @@ final class Payments
         // PSOOLA sets the price: its total is the amount check() must hear back.
         Db::update('payments', ($priceFromGateway ? ['amount_expected' => $sale['amount'], 'currency' => $sale['currency']] : []) + [
             'provider_payment_id' => $sale['id'],
-            'raw_create'          => $sale['raw'],
+            'raw_create'          => \Ismile\Admin\PaymentBreakdown::archive($sale['raw'], $checkout, $sourcePrices, (array) App::config('payments.psoola.add_ons', [])),
             'status'              => 'waiting',
             'updated_at'          => App::now(),
         ], 'id = ?', [$paymentId]);

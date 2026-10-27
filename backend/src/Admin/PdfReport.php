@@ -20,7 +20,7 @@ final class PdfReport
     private const RULE = [201, 211, 216];
     private const TEAL = [34, 188, 205];
 
-    public static function studentIds(array $people): string
+    public static function studentIds(array $people, array $paymentRows = []): string
     {
         $pdf = self::document('Student ID records', 'P');
         foreach ($people as $person) {
@@ -65,6 +65,7 @@ final class PdfReport
             $pdf->AddPage();
             self::titleBlock($pdf, 'Student ID records', 'No student ID records.');
         }
+        if ($paymentRows !== []) self::append($pdf, 'Ticket and lunch payment breakdown', $paymentRows);
         return $pdf->Output('', 'S');
     }
 
