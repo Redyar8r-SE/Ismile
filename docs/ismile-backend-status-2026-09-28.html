@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>iSmile 2026 — The backend: what we have, 28 September 2026</title>
+<style>
+@page { size: A4; margin: 14mm 14mm 15mm; }
+* { box-sizing: border-box; }
+body { margin: 0; color: #12302F; font: 10.2pt/1.5 Arial, Helvetica, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+h1 { font-size: 24pt; margin: 0 0 2mm; line-height: 1.1; }
+h2 { font-size: 15pt; margin: 7mm 0 3mm; display: flex; align-items: center; gap: 3mm; break-after: avoid; }
+h2 .n { width: 8.5mm; height: 8.5mm; border-radius: 50%; background: #12302F; color: #fff; display: inline-grid; place-items: center; font-size: 10.5pt; flex: none; }
+h3 { font-size: 11pt; margin: 3.5mm 0 1.5mm; color: #0C5F5B; break-after: avoid; }
+p { margin: 0 0 2.5mm; }
+ul { margin: 0 0 3mm; padding-left: 5.5mm; }
+li { margin-bottom: 1mm; }
+code { font-family: Consolas, "Courier New", monospace; font-size: 8.8pt; background: #EEF6F6; padding: .2mm 1.3mm; border-radius: 1mm; }
+.eyebrow { display: inline-block; font-size: 8.5pt; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; background: #D5F1EF; color: #0C6F6B; padding: 1mm 3mm; border-radius: 99px; margin-bottom: 3mm; }
+.lede { color: #4A6467; font-size: 11pt; }
+.callout { border-radius: 3mm; padding: 3.5mm 4.5mm; margin: 3mm 0; break-inside: avoid; }
+.c-red { background: #FBE1DC; color: #7E2A1C; border-left: 4px solid #E0604A; }
+.c-teal { background: #E4F6F5; color: #0C5F5B; border-left: 4px solid #16A6A1; }
+.c-gold { background: #FCEFD3; color: #6E480C; border-left: 4px solid #E0A33A; }
+.c-green { background: #DDF3E5; color: #1D5B36; border-left: 4px solid #2E9E5B; }
+table { width: 100%; border-collapse: collapse; font-size: 9.2pt; margin: 1mm 0 3mm; }
+th, td { border: 1px solid #D4E4E4; padding: 1.6mm 2.3mm; vertical-align: top; text-align: left; }
+th { background: #EEF6F6; }
+tr { break-inside: avoid; }
+td.k { font-weight: 700; width: 26%; }
+.pill { display: inline-block; padding: .2mm 2.2mm; border-radius: 99px; font-size: 8pt; font-weight: 700; white-space: nowrap; }
+.ok { background: #DDF3E5; color: #1D6B3C; } .wait { background: #FCEFD3; color: #8A5A0F; } .no { background: #FBE1DC; color: #9A3222; } .me { background: #DDEBFB; color: #1B4F91; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3mm; margin: 4mm 0; }
+.stat { border-radius: 3mm; padding: 3mm 3.5mm; }
+.stat b { display: block; font-size: 19pt; line-height: 1.1; }
+.stat span { font-size: 8.6pt; font-weight: 700; }
+.s1 { background: #DDF3E5; color: #1D6B3C; } .s2 { background: #D5F1EF; color: #0C6F6B; } .s3 { background: #E6E2FB; color: #3F33A0; } .s4 { background: #FCEFD3; color: #8A5A0F; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+figure { margin: 2mm 0 3mm; break-inside: avoid; }
+figure .frame { border: 1px solid #C9DCDC; border-radius: 2.5mm; overflow: hidden; }
+figure img { display: block; width: 100%; }
+figcaption { font-size: 8.4pt; color: #5B7477; margin-top: 1.2mm; }
+svg { display: block; width: 100%; height: auto; }
+svg text { font-family: Arial, Helvetica, sans-serif; }
+footer { margin-top: 5mm; font-size: 8.4pt; color: #5B7477; }
+</style>
+</head>
+<body>
+
+<span class="eyebrow">iSmile 2026 · Backend · status on 28 September 2026</span>
+<h1>The backend: what we have</h1>
+<p class="lede">The registration, payment and ticket system for iSmile 2026, with its staff admin. It is <b>finished and tested</b>, saved on GitHub, and <b>not yet on the server</b>. This document explains what it does, what is in it, how it was tested, where it is, and what is left before it can take real registrations.</p>
+
+<div class="stats">
+  <div class="stat s1"><b>154 / 154</b><span>automatic checks pass</span></div>
+  <div class="stat s2"><b>16</b><span>database tables (+ 9 views)</span></div>
+  <div class="stat s3"><b>13</b><span>admin pages</span></div>
+  <div class="stat s4"><b>not live</b><span>waits for the VPS setup and Psoola</span></div>
+</div>
+
+<div class="callout c-teal"><b>Where it is:</b> GitHub repository <code>Redyar8r-SE/Ismile</code>, branch <b><code>backend</code></b>. The live site (<code>main</code>, deployed to the VPS) does <b>not</b> contain it yet. The decision on 28 September: keep this custom backend for 2026 (not Pretix).</div>
+
+<h2><span class="n">1</span>The main rules it follows</h2>
+<ul>
+  <li><b>Only people who paid are registered.</b> A filled-in form waits in a temporary area while the person pays. It becomes a registration only when the payment company (Psoola) confirms the <b>exact amount</b>. If nobody pays, the form and its photo are deleted automatically.</li>
+  <li><b>Students</b> upload a photo of their student ID with the form and pay straight away. There is no approval step. The photo is <b>stored inside the database</b> and shown in the admin.</li>
+  <li><b>No refunds</b>, for tickets and workshops. A double payment gives one ticket; Finance handles the extra money.</li>
+  <li><b>The event has no seat limit.</b> Lunch (per day) and each workshop have limits.</li>
+  <li><b>Workshops</b> are managed in the admin (add, change seats, hide) and booked by phone by the office.</li>
+</ul>
+
+<h2><span class="n">2</span>How one registration works</h2>
+<svg viewBox="0 0 1000 300" role="img" aria-label="Registration flow">
+  <defs><marker id="k" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#12302F"/></marker></defs>
+  <g font-size="13" text-anchor="middle">
+    <rect x="10" y="20" width="175" height="95" rx="12" fill="#D5F1EF" stroke="#16A6A1" stroke-width="2"/>
+    <text x="97" y="50" font-weight="700" font-size="15" fill="#0C6F6B">1. Form</text>
+    <text x="97" y="72">name, phone, lunch,</text><text x="97" y="90">student ID photo</text>
+    <rect x="215" y="20" width="175" height="95" rx="12" fill="#FCEFD3" stroke="#E0A33A" stroke-width="2"/>
+    <text x="302" y="50" font-weight="700" font-size="15" fill="#8A5A0F">2. Waiting</text>
+    <text x="302" y="72">kept only while paying</text><text x="302" y="90">(not a registration)</text>
+    <rect x="420" y="20" width="175" height="95" rx="12" fill="#E6E2FB" stroke="#6A5BD8" stroke-width="2"/>
+    <text x="507" y="50" font-weight="700" font-size="15" fill="#3F33A0">3. Psoola</text>
+    <text x="507" y="72">Visa · MasterCard</text><text x="507" y="90">FIB · FastPay</text>
+    <rect x="625" y="20" width="175" height="95" rx="12" fill="#12302F"/>
+    <text x="712" y="50" font-weight="700" font-size="15" fill="#fff">4. Confirmed</text>
+    <text x="712" y="72" fill="#CFE9E7">server asks Psoola:</text><text x="712" y="90" fill="#CFE9E7">exact amount paid?</text>
+    <rect x="830" y="20" width="160" height="95" rx="12" fill="#DDF3E5" stroke="#2E9E5B" stroke-width="2"/>
+    <text x="910" y="50" font-weight="700" font-size="15" fill="#1D5B36">5. Registered</text>
+    <text x="910" y="72">ticket + QR code</text><text x="910" y="90">by email</text>
+    <line x1="185" y1="67" x2="212" y2="67" stroke="#12302F" stroke-width="2.2" marker-end="url(#k)"/>
+    <line x1="390" y1="67" x2="417" y2="67" stroke="#12302F" stroke-width="2.2" marker-end="url(#k)"/>
+    <line x1="595" y1="67" x2="622" y2="67" stroke="#12302F" stroke-width="2.2" marker-end="url(#k)"/>
+    <line x1="800" y1="67" x2="827" y2="67" stroke="#12302F" stroke-width="2.2" marker-end="url(#k)"/>
+    <path d="M302 115 V175 H500" fill="none" stroke="#E0604A" stroke-width="2" stroke-dasharray="6 5"/>
+    <rect x="500" y="150" width="300" height="52" rx="10" fill="#FBE1DC" stroke="#E0604A" stroke-width="2"/>
+    <text x="650" y="172" font-weight="700" fill="#9A3222">Not paid in time?</text>
+    <text x="650" y="192" fill="#7E2A1C">form + photo deleted automatically</text>
+    <rect x="10" y="225" width="980" height="60" rx="10" fill="#fff" stroke="#D4E4E4" stroke-width="2"/>
+    <text x="500" y="250" font-weight="700">The staff see everything in the admin at /admin/</text>
+    <text x="500" y="271" fill="#5B7477">registrations · paid / not paid · lunch lists · student ID photos · workshops · sponsors · payments · check-in at the door</text>
+  </g>
+</svg>
+
+<h2 style="break-before:page;margin-top:0"><span class="n">3</span>What is built</h2>
+<table>
+  <tr><th style="width:26%">Part</th><th>What it does</th><th style="width:13%">State</th></tr>
+  <tr><td class="k">Registration</td><td>The website form sends to the server; the server checks everything, sets the price itself, keeps the form while the person pays, and sends them to the payment page. Students upload their ID photo.</td><td><span class="pill ok">done, tested</span></td></tr>
+  <tr><td class="k">Payments</td><td>Every case handled: paid, declined, wrong amount, paid twice, lost or fake payment message, paying later after a decline. A pretend Psoola is used until Psoola's documents arrive.</td><td><span class="pill ok">done</span> <span class="pill wait">Psoola: 3 spots</span></td></tr>
+  <tr><td class="k">Tickets</td><td>PDF ticket with a signed QR code (fakes are refused at the door); a new version after a name change. Their own ticket page.</td><td><span class="pill ok">done, tested</span></td></tr>
+  <tr><td class="k">Emails</td><td>The ticket email, the "pay now" link for people registered by phone, sponsor emails, alerts to the team. English, Arabic, Kurdish. Test mode until launch.</td><td><span class="pill ok">done</span> <span class="pill wait">Brevo account</span></td></tr>
+  <tr><td class="k">Staff admin</td><td>13 pages (section 4). Own account per person, 5 roles, phone code for Owner and Finance, audit log.</td><td><span class="pill ok">done, tested</span></td></tr>
+  <tr><td class="k">Workshops</td><td>In the database: the Owner adds, edits, changes seats (+/−) and hides them; the website's workshop cards update themselves. Booked by phone; paid only with the exact amount.</td><td><span class="pill ok">done, tested</span></td></tr>
+  <tr><td class="k">Sponsors &amp; booths</td><td>Requests from the website form, handled by a person; sponsors and exhibition booths kept apart.</td><td><span class="pill ok">done, tested</span></td></tr>
+  <tr><td class="k">Automatic jobs</td><td>Every minute: send emails. Every 5 minutes: re-check payments with Psoola, delete unpaid forms. Nightly: database backup (photos included), and photos deleted 90 days after the summit.</td><td><span class="pill ok">done, tested</span></td></tr>
+  <tr><td class="k">Security</td><td>Prices set by the server; personal links cannot be guessed; typed text can never run as code; forms from other websites refused; spam limits; database rules that refuse bad data.</td><td><span class="pill ok">done, reviewed 3×</span></td></tr>
+</table>
+
+<h2><span class="n">4</span>The staff admin (<code>/admin/</code>)</h2>
+<table>
+  <tr><td class="k">Dashboard</td><td>Registered, paying right now, money, lunch counts, and a red box for anything needing attention.</td></tr>
+  <tr><td class="k">Registrations</td><td>Search by name, phone, email, reference or ticket; ✓ PAID badges; filters; Excel export.</td></tr>
+  <tr><td class="k">One person</td><td>Every detail, ticket, ID photo, workshops, payment, emails, notes, history; fix name/email/phone; cancel.</td></tr>
+  <tr><td class="k">Lists</td><td>Registered · Lunch day 1 · Lunch day 2 · Students · <b>Student IDs</b> (all photos) · <b>Workshops</b> (who booked each) · Sponsors · Exhibition · Cancelled. Excel and print.</td></tr>
+  <tr><td class="k">Workshops</td><td>Book a caller by name; mark paid; <b>add a workshop, seats +/−, hide</b> (Owner).</td></tr>
+  <tr><td class="k">Payments</td><td>Every payment; red rows for Finance; daily totals to compare with Psoola; Psoola's messages.</td></tr>
+  <tr><td class="k">Check-in</td><td>For the door, on a phone: scan the QR or search a name; "already checked in" warning.</td></tr>
+  <tr><td class="k">Also</td><td>Register a caller by phone (or a free ticket, Owner) · Sponsors &amp; booths · Settings · Users · Sign-in with phone code.</td></tr>
+</table>
+<div class="two">
+  <figure><div class="frame"><img src="guide-img/28-list-studentids.png"></div><figcaption>Lists → Student IDs: every student's photo, from the database.</figcaption></figure>
+  <figure><div class="frame"><img src="guide-img/27-list-workshops.png"></div><figcaption>Lists → Workshops: who booked each workshop, paid or not.</figcaption></figure>
+</div>
+
+<h2><span class="n">5</span>The database (MySQL / MariaDB)</h2>
+<table>
+  <tr><th style="width:26%">Area</th><th>Tables</th></tr>
+  <tr><td class="k">Waiting for payment</td><td><code>checkouts</code> (temporary forms), <code>student_id_photos</code> (the photos themselves)</td></tr>
+  <tr><td class="k">Registered people</td><td><code>registrations</code> (paid only), <code>ambassadors</code></td></tr>
+  <tr><td class="k">Money and tickets</td><td><code>payments</code>, <code>tickets</code></td></tr>
+  <tr><td class="k">Workshops and sponsors</td><td><code>workshops</code>, <code>workshop_bookings</code>, <code>sponsor_requests</code></td></tr>
+  <tr><td class="k">Messages</td><td><code>emails</code>, <code>webhook_log</code> (messages from Psoola)</td></tr>
+  <tr><td class="k">System</td><td><code>admin_users</code>, <code>settings</code>, <code>audit_log</code>, <code>rate_limits</code>, <code>schema_migrations</code></td></tr>
+</table>
+<p>Every link between tables is enforced by the database, and fixed lists (statuses, languages, payment methods) only accept allowed values. 9 read-only "views" give ready lists (registrations, lunch days, students, workshops with their people, sponsors, exhibition, money per day). Nobody needs to open the database itself: the admin shows it all.</p>
+
+<h2><span class="n">6</span>How it was tested</h2>
+<table>
+  <tr><td class="k">154 automatic checks</td><td>Act like a visitor, like Psoola and like an attacker against a test copy, then look in the database. All pass on a <b>fresh copy from GitHub with an empty database</b>, twice in a row.</td></tr>
+  <tr><td class="k">Real browser</td><td>Paying (English), student with ID photo (Arabic), declined card (Kurdish), sponsor form, every admin page, all pages in 3 languages and on a phone: no errors.</td></tr>
+  <tr><td class="k">3 independent reviews</td><td>A separate reviewer read all the code for bugs and security holes; everything found was fixed and given a check. Confirmed: nobody can be registered without a confirmed payment.</td></tr>
+  <tr><td class="k">Practice deploy</td><td>First install and update on a pretend server both work; admin edits are never overwritten.</td></tr>
+  <tr><td class="k">Not tested yet</td><td>Real Psoola, the real server, real email delivery, and many people at once (load test).</td></tr>
+</table>
+
+<h2><span class="n">7</span>What is left before it can go live</h2>
+<h3>A. To run on your VPS (code work; needs details from your friend)</h3>
+<table>
+  <tr><td style="width:5%">1</td><td>The backend and the Node server both use <code>/api/</code>: one must move (e.g. backend to <code>/reg/</code>).</td><td style="width:14%"><span class="pill me">me</span></td></tr>
+  <tr><td>2</td><td><code>/admin/</code> must be sent to PHP (the new security allow-list blocks it).</td><td><span class="pill me">me</span></td></tr>
+  <tr><td>3</td><td>Read each visitor's real address behind Cloudflare, or spam limits would count everyone together.</td><td><span class="pill me">me</span></td></tr>
+  <tr><td>4</td><td>Rewrite the Apache (cPanel) protection rules for nginx on the VPS.</td><td><span class="pill me">me</span></td></tr>
+  <tr><td>5</td><td>Add the backend to the pipeline: install PHP and MariaDB once, create the database, run the installer, the 3 timed jobs.</td><td><span class="pill me">me</span> + friend</td></tr>
+</table>
+<div class="callout c-gold"><b>Server size:</b> the container has 1 CPU and 1 GB of memory. Enough for normal days with limits set (PHP workers, small database memory, swap); <b>2 GB recommended for the opening week</b>, and the disk size must be checked (photos and 30 days of backups: 5–10 GB). A load test will measure it before launch.</div>
+<h3>B. Waiting for others</h3>
+<table>
+  <tr><td style="width:5%">6</td><td><b>Psoola:</b> API documents and test keys (3 marked spots in the code), the webhook address registered, their fee, live keys.</td><td style="width:14%"><span class="pill no">critical</span></td></tr>
+  <tr><td>7</td><td><b>Emails:</b> a Brevo account, and its records on the domain so tickets don't go to spam.</td><td><span class="pill wait">you</span></td></tr>
+  <tr><td>8</td><td><b>Your numbers and decisions:</b> prices, lunch limits, workshops, team accounts and roles, phone numbers, whether age/gender are needed, keep or remove the 1-hour lunch hold, a native check of the Kurdish and Arabic texts.</td><td><span class="pill wait">you</span></td></tr>
+</table>
+<h3>C. I can do any time</h3>
+<table>
+  <tr><td style="width:5%">9</td><td>Move the browser tests into the repository (today only on the laptop).</td><td style="width:14%"><span class="pill me">me</span></td></tr>
+  <tr><td>10</td><td>Load test: many people registering and paying at once, on the real server.</td><td><span class="pill me">me</span></td></tr>
+  <tr><td>11</td><td>The privacy notice in 3 languages, for your approval.</td><td><span class="pill me">me</span></td></tr>
+</table>
+<div class="callout c-red"><b>On the live site today (not the backend):</b> the registration form on ismile.krd shows "success" but <b>saves nothing</b>. Until the backend is live it should say "Registration opens soon". And after the 27 September incident, the GitHub token, admin password and session secret must be changed.</div>
+
+<footer>iSmile 2026 · Backend status · 28 September 2026 · Code: branch <code>backend</code> of <code>Redyar8r-SE/Ismile</code> · Staff guide: "Admin guide for staff" PDF · Summit 20–21 November 2026, registration target ~25 October.</footer>
+</body>
+</html>

@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="en" dir="ltr" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <base href="../">
+  <title>iSmile · Original layout · VIP color animation</title>
+  <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=Noto+Kufi+Arabic:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/base/tokens.css?v=93">
+  <link rel="stylesheet" href="css/base/base.css?v=93">
+  <link rel="stylesheet" href="css/components/buttons.css?v=93">
+  <link rel="stylesheet" href="css/sections/register.css?v=93">
+  <link rel="stylesheet" href="css/sections/register-page.css?v=93">
+  <style>
+    .preview-toolbar{height:56px;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 24px;background:#0B1F27;border-bottom:1px solid #23505D;color:#E6F2F2;font-size:12px}
+    .preview-toolbar p{font-size:12px;color:#9DB8BE}
+    .preview-controls{display:flex;align-items:center;gap:8px;flex:none}
+    .preview-controls button{font:inherit;font-size:12px;font-weight:600;min-height:34px;padding:0 14px;border:1px solid #365B65;border-radius:8px;background:#10303B;color:#E6F2F2;cursor:pointer}
+    .preview-controls button[aria-pressed="true"]{background:#19424B;border-color:#3CC4BF}
+    .preview-controls button[data-ticket="vip"]{border-color:#A68B50;color:#F3D98B}
+    .preview-controls button[data-ticket="vip"][aria-pressed="true"]{background:#352046;border-color:#D7B768}
+    .preview-viewport{height:calc(100vh - 56px);overflow:auto;position:relative;scrollbar-width:none;background:#0B1F27}
+    .preview-viewport::-webkit-scrollbar{display:none}
+    .preview-page{position:relative;isolation:isolate}
+    .preview-layer{background:linear-gradient(180deg,var(--surface),var(--bg) 460px)}
+    .preview-layer .reg-page-section{padding-top:24px!important}
+    .preview-layer .reg-aside{top:24px}
+    .preview-layer .reg-step{animation:none}
+    .preview-layer *{transition:none!important}
+    #vip-regForm{padding:28px 32px 30px}
+    .preview-layer.is-vip{position:absolute;inset:0;pointer-events:none;clip-path:inset(0 0 100% 0);--bg:#1F152B;--surface:#30213F;--surface-2:#3D2A4C;--text:#F5EFF8;--muted:#BAAEC6;--line:#59456E;--navy:#453059;--navy-2:#30203F;--teal:#D7B768;--teal-ink:#F3D98B;--mint:#402D4D;--enamel:#30213F}
+    .preview-layer.is-vip .st-bar i{background:linear-gradient(90deg,#D7B768,#F3D98B)}
+    .preview-layer.is-vip .cert-note-ic{color:#2B1838;background:linear-gradient(135deg,#F3D98B,#D7B768)}
+    .preview-layer.is-vip .reg-help{background:linear-gradient(135deg,#352046,#523574)}
+    .preview-layer.is-vip .reg-help svg{color:#F3D98B}
+    .preview-layer.is-vip .reg-help a{color:#E6DAF1}
+    @media(max-width:620px){.preview-toolbar{padding:0 12px}.preview-toolbar p{font-size:10px}.preview-controls{gap:5px}.preview-controls button{padding:0 9px;font-size:11px}}
+    @media(max-width:560px){#vip-regForm{padding:22px 20px 24px}}
+    @media(prefers-reduced-motion:reduce){.preview-layer.is-vip{will-change:auto}}
+  </style>
+</head>
+<body data-preview-mode="original">
+  <div class="preview-toolbar">
+    <p>Original layout · VIP color preview</p>
+    <div class="preview-controls" role="group" aria-label="Preview ticket color">
+      <button type="button" data-ticket="original" aria-pressed="true">Original</button>
+      <button type="button" data-ticket="vip" aria-pressed="false">Choose VIP</button>
+      <button type="button" id="replayVip">Replay</button>
+    </div>
+  </div>
+  <div class="preview-viewport" id="previewViewport">
+    <div class="preview-page" id="previewPage">
+      <div class="preview-layer" id="baseLayer" inert><section class="block reg-page-section" id="register">
+  <div class="wrap">
+    <div class="reg">
+      <!-- Side column: tickets, how it works, help -->
+      <aside class="reg-aside">
+        <div class="reg-panel">
+          <h3 data-i18n="reg_tickets">Ticket options</h3>
+          <ul class="ticket-list">
+            <li>
+              <span class="tk-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c.8-4 3.8-6 7.5-6s6.7 2 7.5 6"/></svg></span>
+              <div><b data-i18n="tk_prof">Professional</b><small data-i18n="tk_prof_d">Dentists, specialists, technicians and researchers</small></div>
+              <span class="tk-price" id="tkPriceProf">40,000 IQD</span>
+            </li>
+            <li>
+              <span class="tk-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"/></svg></span>
+              <div><b data-i18n="tk_student">Student</b><small data-i18n="tk_student_d">For currently enrolled dental students</small></div>
+              <span class="tk-price" id="tkPriceStudent">30,000 IQD</span>
+            </li>
+            <li>
+              <span class="tk-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="6"/><circle cx="12" cy="13" r="3"/><path d="M3 4v5a1.5 1.5 0 003 0V4M4.5 9v11M21 4c-1.7 0-2.5 2-2.5 5s.8 3 2.5 3v8"/></svg></span>
+              <div><b data-i18n="tk_lunch">Lunch</b><small data-i18n="tk_lunch_d">Stay for lunch with colleagues. Choose one day or both as you register.</small></div>
+              <span class="tk-price" id="tkPriceLunch">Price soon</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="reg-panel">
+          <h3 data-i18n="how_title">How it works</h3>
+          <ol class="how-steps">
+            <li><span>1</span><div><b data-i18n="how1">Fill in your details</b><small data-i18n="how1_d">It takes about two minutes.</small></div></li>
+            <li><span>2</span><div><b data-i18n="how_lunch">Add lunch if you like</b><small data-i18n="how_lunch_d">Optional. Day 1, Day 2 or both.</small></div></li>
+            <li><span>3</span><div><b data-i18n="how2">Pay with Visa, MasterCard, FIB or FastPay</b><small data-i18n="how2_d">We send your payment link by email.</small></div></li>
+            <li><span>4</span><div><b data-i18n="how3">Receive your ticket</b><small data-i18n="how3_d">Your ticket is sent to your email and kept in your account with your certificate.</small></div></li>
+          </ol>
+        </div>
+
+
+        <div class="reg-help">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 11-4.2-7.6L21 3l-1.2 4.1A9 9 0 0121 12z"/><path d="M9.5 9.5a2.5 2.5 0 114 2c-.9.6-1.5 1.1-1.5 2M12 17h.01"/></svg>
+          <div><b data-i18n="help_title">Need help registering?</b><a href="mailto:ismile@italk.krd" dir="ltr">ismile@italk.krd</a></div>
+        </div>
+        <p class="reg-policy">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
+          <span data-i18n="reg_b4">Tickets are non-refundable.</span>
+        </p>
+      </aside>
+
+      <!-- Form card -->
+      <div class="reg-card" id="regCard">
+
+        <!-- Shown instead of the form while registration is closed, full, or
+             there is no server behind the site. -->
+        <div class="reg-closed" id="regClosed" hidden>
+          <div class="reg-closed-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4M12 13.5v2.5l1.5 1"/></svg></div>
+          <h3 id="regClosedTitle">Registration opens soon</h3>
+          <p id="regClosedText"></p>
+          <a class="btn btn-outline" href="mailto:ismile@italk.krd" dir="ltr">ismile@italk.krd</a>
+        </div>
+
+        <!-- Shown instead of the form while registration is closed
+             (admin: Site content › Registration › Open or closed). -->
+        <div class="reg-closed" id="regClosed" hidden>
+          <div class="reg-closed-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4M12 13.5v2.5l1.5 1"/></svg></div>
+          <h3 data-i18n="reg_closed_title">Registration opens soon</h3>
+          <p data-i18n="reg_closed_text">Online registration is not open yet. Follow iSmile for the opening date, or write to us.</p>
+          <a class="btn btn-outline" href="mailto:ismile@italk.krd" dir="ltr">ismile@italk.krd</a>
+        </div>
+
+
+        <div class="reg-progress" id="regProgress">
+          <ol class="stepper" id="regStepper">
+            <li class="is-active"><span class="st-dot">1</span><span class="st-label" data-i18n="st2">Your details</span></li>
+            <li><span class="st-dot">2</span><span class="st-label" data-i18n="st_lunch">Lunch</span></li>
+            <li><span class="st-dot">3</span><span class="st-label" data-i18n="st3">Payment &amp; review</span></li>
+          </ol>
+          <div class="st-bar" aria-hidden="true"><i id="regBar"></i></div>
+        </div>
+
+        <form id="regForm" novalidate>
+          <!-- Left empty by people, filled in by bots: the server refuses it. -->
+          <div class="reg-trap" aria-hidden="true"><label>Leave this box empty <input id="regTrap" type="text" tabindex="-1" autocomplete="nope" data-lpignore="true" data-1p-ignore></label></div>
+          <!-- Step 1: individual details -->
+          <div class="reg-step" data-step="1">
+            <div class="reg-person-intro">
+              <span class="tc-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c.8-4 3.8-6 7.5-6s6.7 2 7.5 6"/></svg></span>
+              <span class="tc-text"><b data-i18n="mode_person">Dental professional</b><small data-i18n="mode_person_d">Register yourself as a dentist, specialist, technician, researcher or student.</small></span>
+            </div>
+            <div class="step-head">
+              <h3 tabindex="-1" data-i18n="s2_title_p">Your details</h3>
+              <p data-i18n="s2_sub">We use these details to send your payment link and ticket.</p>
+            </div>
+
+            <!-- The names typed below are printed on the attendance certificate. -->
+            <div class="cert-note">
+              <span class="cert-note-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9.5" r="5.5"/><path d="m9 14.5-1 6.5 4-2.2 4 2.2-1-6.5"/><path d="m10 9.5 1.5 1.5L14.5 8"/></svg></span>
+              <span class="cert-note-text">
+                <b data-i18n="cert_note_title">Your name goes on your certificate</b>
+                <small data-i18n="cert_note_text">Write your names exactly as you want them printed. Your attendance certificate is issued with the details you enter here.</small>
+              </span>
+            </div>
+
+            <div class="fields">
+              <div class="f">
+                <label for="p_first" data-i18n="f_first">First name</label>
+                <input id="p_first" autocomplete="given-name" data-rule="name-part" placeholder="First name" data-i18n-ph="ph_first">
+              </div>
+              <div class="f">
+                <label for="p_second" data-i18n="f_second">Father's name</label>
+                <input id="p_second" data-rule="name-part" placeholder="Father's name" data-i18n-ph="ph_second">
+              </div>
+              <div class="f full">
+                <label for="p_third" data-i18n="f_third">Grandfather's name</label>
+                <input id="p_third" autocomplete="family-name" data-rule="name-part" placeholder="Grandfather's name" data-i18n-ph="ph_third">
+              </div>
+              <div class="f">
+                <label for="p_phone" data-i18n="f_phone_number">Phone number</label>
+                <input id="p_phone" type="tel" inputmode="tel" dir="ltr" autocomplete="tel" placeholder="0750 123 4567" data-rule="phone">
+              </div>
+              <div class="f">
+                <label for="p_email" data-i18n="f_email">Email</label>
+                <input id="p_email" type="email" inputmode="email" dir="ltr" autocomplete="email" placeholder="name@example.com" data-rule="email">
+              </div>
+              <div class="f">
+                <label for="p_city" data-i18n="f_city">City</label>
+                <input id="p_city" autocomplete="address-level2" data-rule="required" placeholder="e.g. Sulaimani" data-i18n-ph="ph_city">
+              </div>
+              <div class="f">
+                <label for="p_gender" data-i18n="f_gender">Gender</label>
+                <select id="p_gender" data-rule="required">
+                  <option value="" data-i18n="o_gender">Choose your gender</option>
+                  <option value="female" data-i18n="o_female">Female</option>
+                  <option value="male" data-i18n="o_male">Male</option>
+                  <option value="other" data-i18n="o_other">Other</option>
+                  <option value="prefer-not" data-i18n="o_prefer_not">Prefer not to say</option>
+                </select>
+              </div>
+              <div class="f">
+                <label for="p_age" data-i18n="f_age">Age</label>
+                <div class="age-control">
+                  <button type="button" class="age-step" data-age-step="-1" aria-label="Decrease age" data-i18n-label="age_decrease"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10h10"/></svg></button>
+                  <input id="p_age" type="number" min="16" max="120" inputmode="numeric" data-rule="age" placeholder="28" data-i18n-ph="ph_age">
+                  <button type="button" class="age-step" data-age-step="1" aria-label="Increase age" data-i18n-label="age_increase"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 5v10M5 10h10"/></svg></button>
+                </div>
+              </div>
+              <div class="f">
+                <label for="p_spec" data-i18n="f_spec">Specialty</label>
+                <select id="p_spec" data-rule="required">
+                  <option value="" data-i18n="o_choose">Choose your specialty</option>
+                  <option value="gp" data-i18n="o_gp">General dentist</option>
+                  <option value="spec" data-i18n="o_spec">Specialist</option>
+                  <option value="omfs" data-i18n="o_omfs">Oral and maxillofacial surgeon</option>
+                  <option value="lab" data-i18n="o_lab">Dental technician</option>
+                  <option value="acad" data-i18n="o_acad">Academic or researcher</option>
+                  <option value="student" data-i18n="o_student">Dental student</option>
+                </select>
+              </div>
+              <div class="f full">
+                <span class="f-label" id="ticketLabel" data-i18n="f_ticket">Ticket type</span>
+                <div class="ticket-toggle" role="radiogroup" aria-labelledby="ticketLabel">
+                  <label class="is-checked"><input type="radio" name="ticket" value="professional" checked><span data-i18n="ticket_prof">Professional</span></label>
+                  <label><input type="radio" name="ticket" value="student"><span data-i18n="ticket_student">Student</span></label>
+                </div>
+              </div>
+              <div class="f full" id="uniWrap" hidden>
+                <label for="p_uni" data-i18n="f_uni">University and department</label>
+                <input id="p_uni" autocomplete="organization" data-rule="required" placeholder="e.g. College of Dentistry, University of Sulaimani" data-i18n-ph="ph_uni">
+              </div>
+              <div class="f full" id="ambassadorWrap" hidden>
+                <label for="p_ambassador"><span data-i18n="f_ambassador">Ambassador code</span></label>
+                <input id="p_ambassador" autocomplete="off" data-rule="code" data-optional placeholder="Enter a code if you have one" data-i18n-ph="ph_ambassador" disabled>
+              </div>
+              <div class="f full" id="studentIdWrap" hidden>
+                <label for="p_student_id"><span data-i18n="f_student_id">Student ID photo</span></label>
+                <div class="student-id-upload" id="studentIdDropzone">
+                  <div class="student-id-prompt">
+                    <span class="student-id-upload-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="8.5" cy="11" r="2"/><path d="M5.5 16c.8-1.7 2-2.5 3.6-2.5s2.8.8 3.6 2.5M15 10h3M15 14h3"/></svg></span>
+                    <div class="student-id-upload-copy"><strong data-i18n="student_id_upload_title">Upload your student ID</strong><span data-i18n="student_id_upload_copy">Use a clear photo so we can verify your student registration.</span></div>
+                    <label class="student-id-browse" for="p_student_id"><span data-i18n="student_id_upload_action">Choose a photo</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></label>
+                  </div>
+                  <input id="p_student_id" class="student-id-file" type="file" accept="image/jpeg,image/png,image/webp" data-rule="student-id" disabled>
+                  <p class="student-id-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l7 3v5.1c0 4.2-2.8 7.7-7 8.9-4.2-1.2-7-4.7-7-8.9V6.5l7-3z"/><path d="m9 12 2 2 4-4"/></svg><span data-i18n="student_id_hint">JPG, PNG or WebP, up to 8 MB.</span></p>
+                  <div class="student-id-preview" id="studentIdPreview" hidden>
+                    <img id="studentIdImage" alt="">
+                    <div class="student-id-preview-meta"><strong data-i18n="student_id_selected">Photo selected</strong><span id="studentIdFileName"></span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Step 2: lunch (optional, per day) -->
+          <div class="reg-step" data-step="2" hidden>
+            <div class="step-head step-head-lunch">
+              <div>
+                <h3 tabindex="-1" data-i18n="s_lunch_title">Add lunch</h3>
+                <p data-i18n="lunch_hint">Lunch is served during the lunch break. Choose one day or both.</p>
+              </div>
+              <span class="lunch-optional" data-i18n="lunch_optional">Optional</span>
+            </div>
+
+            <fieldset class="lunch-options">
+              <legend class="sr-only" data-i18n="lunch_legend">Add lunch (optional)</legend>
+              <div class="lunch-grid">
+                <label class="pay-card lunch-card">
+                  <input type="checkbox" name="lunch" value="day1">
+                  <span class="lunch-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="6"/><circle cx="12" cy="13" r="3"/><path d="M3 4v5a1.5 1.5 0 003 0V4M4.5 9v11M21 4c-1.7 0-2.5 2-2.5 5s.8 3 2.5 3v8"/></svg></span>
+                  <span class="tc-text"><b data-i18n="lunch_d1">Day 1 lunch</b><small data-i18n="lunch_d1_d">Friday 20 November, 1:00 to 2:00 PM</small><em class="lunch-price" id="lunchPrice1"></em></span>
+                  <span class="tc-check" aria-hidden="true"></span>
+                </label>
+                <label class="pay-card lunch-card">
+                  <input type="checkbox" name="lunch" value="day2">
+                  <span class="lunch-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="6"/><circle cx="12" cy="13" r="3"/><path d="M3 4v5a1.5 1.5 0 003 0V4M4.5 9v11M21 4c-1.7 0-2.5 2-2.5 5s.8 3 2.5 3v8"/></svg></span>
+                  <span class="tc-text"><b data-i18n="lunch_d2">Day 2 lunch</b><small data-i18n="lunch_d2_d">Saturday 21 November, 1:00 to 2:00 PM</small><em class="lunch-price" id="lunchPrice2"></em></span>
+                  <span class="tc-check" aria-hidden="true"></span>
+                </label>
+              </div>
+            </fieldset>
+          </div>
+
+          <!-- Step 3: payment and review -->
+          <div class="reg-step" data-step="3" hidden>
+            <div class="step-head">
+              <h3 tabindex="-1" data-i18n="s3_title">Payment &amp; review</h3>
+              <p data-i18n="s3_sub">Choose how you'll pay, then check your details.</p>
+            </div>
+
+            <fieldset class="pay-options">
+              <legend data-i18n="pay_legend">Payment method</legend>
+              <label class="pay-card is-checked">
+                <input type="radio" name="pay" value="visa" checked>
+                <span class="pay-logo" aria-hidden="true"><svg viewBox="0 0 48 16" aria-hidden="true" direction="ltr"><text x="24" y="14" text-anchor="middle" direction="ltr" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-style="italic" font-size="17" fill="#1A1F71" letter-spacing="-0.5">VISA</text></svg></span>
+                <span class="tc-text"><b data-i18n="pay_visa_t">Visa</b><small data-i18n="pay_visa_d">Enter your card details on the secure payment page</small></span>
+                <span class="tc-check" aria-hidden="true"></span>
+              </label>
+              <label class="pay-card">
+                <input type="radio" name="pay" value="mastercard">
+                <span class="pay-logo" aria-hidden="true"><svg viewBox="0 0 40 24" aria-hidden="true"><circle cx="14" cy="12" r="11" fill="#EB001B"/><circle cx="26" cy="12" r="11" fill="#F79E1B"/><path d="M20 3.2a11 11 0 0 1 0 17.6 11 11 0 0 1 0-17.6z" fill="#FF5F00"/></svg></span>
+                <span class="tc-text"><b data-i18n="pay_mastercard_t">MasterCard</b><small data-i18n="pay_mastercard_d">Enter your card details on the secure payment page</small></span>
+                <span class="tc-check" aria-hidden="true"></span>
+              </label>
+              <label class="pay-card">
+                <input type="radio" name="pay" value="fib">
+                <span class="pay-logo" aria-hidden="true"><img src="assets/pay/fib.png" alt="FIB" width="56" height="48"></span>
+                <span class="tc-text"><b data-i18n="pay_fib_t">FIB</b><small data-i18n="pay_fib_d">Opens in your FIB app — approve the payment there</small></span>
+                <span class="tc-check" aria-hidden="true"></span>
+              </label>
+              <label class="pay-card">
+                <input type="radio" name="pay" value="fastpay">
+                <span class="pay-logo" aria-hidden="true"><img src="assets/pay/fastpay.png" alt="FastPay" width="56" height="48"></span>
+                <span class="tc-text"><b data-i18n="pay_fastpay_t">FastPay</b><small data-i18n="pay_fastpay_d">Opens in your FastPay app — approve the payment there</small></span>
+                <span class="tc-check" aria-hidden="true"></span>
+              </label>
+              <p class="pay-note" data-i18n="pay_note">All payments are processed securely by Psoola. Your card or bank details are never entered on this website.</p>
+            </fieldset>
+
+            <div class="review">
+              <div class="review-head">
+                <h4 data-i18n="review_title">Review your registration</h4>
+                <button type="button" class="link-btn" id="editDetails" data-i18n="edit">Edit</button>
+              </div>
+              <dl id="reviewList"></dl>
+            </div>
+
+            <div class="order">
+              <div class="review-head">
+                <h4 data-i18n="order_title">Order summary</h4>
+                <button type="button" class="link-btn" id="editLunch" data-i18n="edit">Edit</button>
+              </div>
+              <dl id="orderList"></dl>
+              <div class="order-total"><span data-i18n="order_total">Total</span><b id="orderTotal"></b></div>
+            </div>
+
+            <label class="terms">
+              <input type="checkbox" id="terms">
+              <span data-i18n="terms">I understand that tickets are non-refundable, and I agree to receive my payment link and ticket by email.</span>
+            </label>
+            <p class="f-error terms-error" id="termsError" hidden></p>
+          </div>
+
+          <div class="reg-nav">
+            <button type="button" class="btn btn-outline reg-back is-hidden" id="regBack">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+              <span data-i18n="back">Back</span>
+            </button>
+            <span class="reg-count" id="regCount"></span>
+            <button type="button" class="btn btn-primary reg-next" id="regNext">
+              <span data-i18n="continue">Continue</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </button>
+            <button type="submit" class="btn btn-primary reg-next" id="regSubmit" hidden>
+              <span data-i18n="submit">Complete registration</span>
+            </button>
+          </div>
+        </form>
+
+        <!-- Success -->
+        <div class="reg-success" id="regSuccess" tabindex="-1" hidden>
+          <div class="success-ic" aria-hidden="true"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+          <h3 id="successTitle">You're registered!</h3>
+          <p id="successText"></p>
+          <div class="success-ref"><small data-i18n="success_ref">Your reference number</small><b id="successRef" dir="ltr"></b></div>
+          <!-- After registering: a suggestion to look at the workshops (no phone number here) -->
+          <div class="success-ws">
+            <span class="success-ws-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3.5c-2.8 0-4.6 1.5-4.6 4.2 0 1.8.6 3.1.9 5.1.3 2.8.5 6.7 1.8 6.7 1.1 0 1-3.6 1.9-3.6s.8 3.6 1.9 3.6c1.3 0 1.5-3.9 1.8-6.7.3-2 .9-3.3.9-5.1 0-2.7-1.8-4.2-4.6-4.2z"/><circle cx="17.6" cy="5.4" r="2.6"/><path d="M17.9 8l.5 3"/><path d="M18.4 11l1.4 9.2"/></svg></span>
+            <div class="success-ws-text">
+              <b data-i18n="success_ws_title">Take your learning further</b>
+              <small data-i18n="success_ws_text">Hands-on workshops with leading experts run alongside the summit. See what is on offer and choose the ones that interest you.</small>
+            </div>
+            <a class="btn btn-primary success-ws-btn" href="workshops.html"><span data-i18n="success_ws_btn">See the workshops</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          </div>
+          <div class="success-actions">
+            <button type="button" class="btn btn-outline" id="regAgain" data-i18n="register_again">Register someone else</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Last check before leaving the details step. Outside #regForm: a form
+       cannot be nested inside another one. -->
+  <dialog class="confirm" id="regConfirm">
+    <form method="dialog" class="confirm-card">
+      <button class="confirm-close" value="edit" aria-label="Close" data-i18n-label="confirm_edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <span class="confirm-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8.2v4.6M12 16h.01"/></svg></span>
+      <h3 data-i18n="confirm_title">Is everything correct?</h3>
+      <p data-i18n="confirm_text">Your ticket and certificate are issued with these details. Please check them before you continue.</p>
+      <dl class="confirm-list" id="regConfirmList"></dl>
+      <div class="confirm-actions">
+        <button class="btn btn-outline" value="edit" data-i18n="confirm_edit">No, let me check</button>
+        <button class="btn btn-primary" value="ok" data-i18n="confirm_ok">Yes, continue</button>
+      </div>
+    </form>
+  </dialog>
+</section></div>
+    </div>
+  </div>
+  <script src="docs/vip-color-animation.js"></script>
+</body>
+</html>

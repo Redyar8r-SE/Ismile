@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>iSmile 2026 — Security incident report, 27 September 2026</title>
+<style>
+@page { size: A4; margin: 16mm 16mm 16mm; }
+* { box-sizing: border-box; }
+body { margin: 0; color: #12302F; font: 10.5pt/1.55 Arial, Helvetica, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+h1 { font-size: 22pt; margin: 0 0 2mm; line-height: 1.15; }
+h2 { font-size: 13.5pt; margin: 6mm 0 2.5mm; color: #0C5F5B; break-after: avoid; }
+p { margin: 0 0 2.5mm; }
+ul, ol { margin: 0 0 3mm; padding-left: 6mm; }
+li { margin-bottom: 1mm; }
+code { font-family: Consolas, "Courier New", monospace; font-size: 9.2pt; background: #EEF6F6; padding: .2mm 1.3mm; border-radius: 1mm; }
+.eyebrow { display: inline-block; font-size: 8.5pt; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; background: #FBE1DC; color: #9A3222; padding: 1mm 3mm; border-radius: 99px; margin-bottom: 3mm; }
+.box { border-radius: 3mm; padding: 3.5mm 4.5mm; margin: 3mm 0; break-inside: avoid; }
+.red { background: #FBE1DC; color: #7E2A1C; border-left: 4px solid #E0604A; }
+.green { background: #DDF3E5; color: #1D5B36; border-left: 4px solid #2E9E5B; }
+.gold { background: #FCEFD3; color: #6E480C; border-left: 4px solid #E0A33A; }
+table { width: 100%; border-collapse: collapse; font-size: 9.6pt; margin: 1mm 0 3mm; }
+th, td { border: 1px solid #D4E4E4; padding: 1.8mm 2.5mm; vertical-align: top; text-align: left; }
+th { background: #EEF6F6; }
+tr { break-inside: avoid; }
+.ok { color: #1D6B3C; font-weight: 700; } .bad { color: #9A3222; font-weight: 700; }
+footer { margin-top: 6mm; font-size: 8.5pt; color: #5B7477; }
+</style>
+</head>
+<body>
+
+<span class="eyebrow">Security incident · fixed · 27 September 2026</span>
+<h1>Private files were downloadable from ismile.krd</h1>
+<p>For about 1 hour 20 minutes on 27 September 2026, anyone who knew the address could download private files from the live website, including the file that holds the website's secret keys. The hole is closed. The keys still need to be changed.</p>
+
+<div class="box red"><b>In one line:</b> the new website server gave out every file in its folder, and the secret keys were stored in that same folder.</div>
+
+<h2>1. What was exposed</h2>
+<table>
+  <tr><th style="width:38%">File or folder</th><th>What it contains</th><th style="width:16%">Risk</th></tr>
+  <tr><td><code>/.env</code></td><td>The website's secrets: a <b>GitHub access token</b> (can change the repository, and so the live website), the admin email and password hash, the session secret.</td><td class="bad">High</td></tr>
+  <tr><td><code>/docs/…</code></td><td>Internal documents: the backend plan, the questions for Psoola, the requirements (<code>.md</code>).</td><td class="bad">Medium</td></tr>
+  <tr><td><code>/server/…</code>, <code>/netlify/…</code></td><td>The server's program code.</td><td>Low</td></tr>
+  <tr><td><code>/package.json</code>, <code>/ecosystem.config.cjs</code></td><td>Settings files, no secrets.</td><td>Low</td></tr>
+</table>
+<p>No registrations, payments or personal data of attendees were exposed: the registration database is not on the server yet.</p>
+
+<h2>2. How it happened</h2>
+<p>On 27 September a new setup was added to host the website on a VPS (commit <code>97c301b</code>, "Add VPS deploy for ismile.krd"). Two parts of it were fine on their own, but not together:</p>
+<ol>
+  <li><b>The secrets were placed inside the website folder.</b> The deploy writes the <code>.env</code> file into the same folder as <code>index.html</code>.</li>
+  <li><b>The website server gave out any file in that folder.</b> The small Node.js server (<code>server/static.mjs</code>) only blocked addresses that tried to climb out of the folder (<code>../</code>). It had no rule against hidden files like <code>.env</code>, or against private folders like <code>docs/</code>.</li>
+</ol>
+<p>So <code>https://ismile.krd/.env</code> pointed at a real file, and the server sent it. This is a common mistake with a hand-written server: ready-made servers such as nginx block hidden files by default, a home-made one only blocks what it is told to.</p>
+
+<h2>3. Timeline (27 September 2026)</h2>
+<table>
+  <tr><th style="width:16%">Time</th><th>What happened</th></tr>
+  <tr><td>22:24</td><td>VPS setup added to <code>main</code> and deployed automatically. The files became downloadable.</td></tr>
+  <tr><td>22:33–22:35</td><td>Two more changes to the setup (tests, a start-up fix). Still exposed.</td></tr>
+  <tr><td>~22:45</td><td>While bringing these changes onto the laptop, the problem was noticed in the code, then confirmed on the live site by checking only the response code and file type (the secrets file itself was not opened).</td></tr>
+  <tr><td>22:48</td><td>Fix written and tested on the laptop (commit <code>713c314</code>).</td></tr>
+  <tr><td>~23:43</td><td>Fix pushed to <code>main</code>; the automatic deploy started.</td></tr>
+  <tr><td><b>23:46</b></td><td><b>Fix live.</b> All private files answer "not found".</td></tr>
+</table>
+
+<h2>4. What we did to fix it</h2>
+<p><b>The change:</b> the server now uses an <b>allow-list</b>. It serves only the website itself, and answers "not found" to everything else:</p>
+<ul>
+  <li>Allowed: the pages (<code>index.html</code>, <code>register.html</code>, <code>workshops.html</code>, <code>sponsor.html</code>, <code>admin.html</code>, <code>payment.html</code>), <code>favicon.ico</code>, <code>robots.txt</code>, and the folders <code>assets/</code>, <code>css/</code>, <code>js/</code>, <code>data/</code>.</li>
+  <li>Never allowed: anything starting with a dot (<code>.env</code>, <code>.git</code>, …), and every other file or folder (<code>docs/</code>, <code>server/</code>, <code>netlify/</code>, <code>package.json</code>, …).</li>
+  <li>A new automatic test tries to download <code>.env</code>, the documents, the code and tricky encoded addresses, and checks that every one is refused.</li>
+</ul>
+<p><b>How it reached the live site:</b> the fix was pushed to the <code>main</code> branch on GitHub; the existing pipeline (<code>.github/workflows/deploy.yml</code>) deployed it to the VPS automatically. Nothing else changed on the website.</p>
+<p><b>Checked afterwards, on the live site:</b></p>
+<table>
+  <tr><th style="width:52%">Address</th><th>Before</th><th>After</th></tr>
+  <tr><td><code>/.env</code></td><td class="bad">downloadable</td><td class="ok">not found</td></tr>
+  <tr><td><code>/docs/…</code> (plans, Psoola questions, <code>.md</code>)</td><td class="bad">downloadable</td><td class="ok">not found</td></tr>
+  <tr><td><code>/server/…</code>, <code>/netlify/…</code>, <code>/package.json</code>, <code>/.git/config</code></td><td class="bad">downloadable</td><td class="ok">not found</td></tr>
+  <tr><td>Website pages, and every image, stylesheet and script they use</td><td class="ok">working</td><td class="ok">working</td></tr>
+</table>
+
+<h2>5. What still has to be done</h2>
+<div class="box gold">
+<b>The hole is closed, but the old secrets must be treated as known</b>, because they were public for over an hour.
+</div>
+<ol>
+  <li><b>Revoke the GitHub token</b> and create a new one (GitHub → Settings → Developer settings → Personal access tokens). Then check the repository's recent activity for anything unexpected.</li>
+  <li><b>Change the admin password and the session secret</b> in the deploy settings (<code>DEPLOY_ENV</code>), and redeploy.</li>
+  <li><b>Delete any downloaded copy</b> of the <code>.env</code> file (for example in a Downloads folder).</li>
+  <li><b>Pull before working on <code>main</code></b>, so the fix is not overwritten by an older copy.</li>
+  <li><b>Lasting protection (recommended):</b> keep <code>.env</code> outside the public folder, or put nginx in front of the Node server, so a single mistake in the code can never expose secrets again.</li>
+</ol>
+
+<div class="box green"><b>Lesson:</b> secrets must never live in a folder that the website serves, and a web server should only give out an explicit list of public files.</div>
+
+<footer>iSmile 2026 · Incident report · 27 September 2026 · Fix: commit <code>713c314</code> on <code>main</code>, file <code>server/static.mjs</code>.</footer>
+</body>
+</html>

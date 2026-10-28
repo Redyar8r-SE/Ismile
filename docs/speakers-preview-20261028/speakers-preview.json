@@ -1,0 +1,24 @@
+[
+  {
+    "name": "Dr. Shkar Hoshear",
+    "role": "Consultant pediatric dentist\nDDS, MSc\nEAPD Specialized pediatric dentist",
+    "topic": "From Limited Cooperation to Comprehensive Care. The Role of General Anesthesia in Pediatric Dentistry.",
+    "sourcePhoto": "shkar-source.jpeg",
+    "cutoutPhoto": "shkar-cutout.webp"
+  },
+  {
+    "name": "Dr. Mahmood Fawzi Chawshli",
+    "role": "Ph.D. in Conservative Dentistry",
+    "topic": "Beyond the Scan: Digital Dentistry in Advanced Prosthodontic Rehabilitation",
+    "sourcePhoto": "mahmood-source.jpeg",
+    "cutoutPhoto": "mahmood-cutout.webp",
+    "detailsSource": "User-provided Instagram screenshot: WhatsApp Image 2026-10-23 at 17.00.45.jpeg"
+  },
+  {
+    "name": "Dr. Zardasht Bradosty",
+    "role": "Specialist in Esthetic & Restorative Dentistry\nB.D.S – PG Dip – M.Sc – PhD",
+    "topic": "Navigating Biocompatibility in Resin Composites: Uncovering Chemical Risks and Clinical Realities",
+    "sourcePhoto": "zardasht-source.png",
+    "cutoutPhoto": "zardasht-cutout.webp"
+  }
+]
