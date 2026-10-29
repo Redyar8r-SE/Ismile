@@ -187,6 +187,7 @@ $pickedLabel = !$pickedAmb ? 'All ambassadors' : (count($pickedAmb) > 1 ? count(
   </div>
 
   <div class="list-results" data-live-region="list-results">
+  <div<?= !$isCompany && $current !== 'studentids' ? ' class="no-print"' : '' ?>>
   <?php if ($current === 'studentids'): ?>
     <div class="id-grid">
     <?php foreach ($rows as $row): ?>
@@ -242,13 +243,15 @@ $pickedLabel = !$pickedAmb ? 'All ambassadors' : (count($pickedAmb) > 1 ? count(
     <?php if (!$rows): ?><tr><td colspan="<?= count($columns) + 2 ?>" class="muted"><?= $active ? 'Nobody matches these filters.' : 'Nobody on this list yet.' ?></td></tr><?php endif; ?>
   </table></div>
   <?php endif; ?>
-  <?php if ($paymentPeople): $paymentRows = PaymentBreakdown::reportRows($paymentPeople); $paymentHeaders = array_shift($paymentRows); ?>
+  </div>
+  <?php if (!$isCompany): $paymentRows = Lists::reportRows($current, $paymentPeople); $paymentHeaders = array_shift($paymentRows); ?>
   <section class="group payment-breakdown">
-    <div class="group-head"><h3>Ticket and lunch payment breakdown</h3></div>
-    <p class="muted small">Recorded payments and payment-day rates only. “Not recorded” is not zero. Workshop fees, if any, are shown separately above.</p>
+    <div class="group-head"><h3>Attendee and payment details</h3></div>
+    <p class="muted small">Amounts show the recorded currency (IQD = Iraqi dinars). “Not recorded” is not zero. Lunch quantity includes any lunch included with a VIP ticket.</p>
     <div class="table-wrap"><table class="name-list">
       <thead><tr><?php foreach ($paymentHeaders as $heading): ?><th><?= $e($heading) ?></th><?php endforeach; ?></tr></thead>
-      <tbody><?php foreach ($paymentRows as $paymentCells): ?><tr><?php foreach ($paymentCells as $value): ?><td><?= $e((string) $value) ?></td><?php endforeach; ?></tr><?php endforeach; ?></tbody>
+      <tbody><?php foreach ($paymentRows as $paymentCells): ?><tr><?php foreach ($paymentCells as $value): ?><td><?= $e((string) $value) ?></td><?php endforeach; ?></tr><?php endforeach; ?>
+      <?php if (!$paymentRows): ?><tr><td colspan="<?= count($paymentHeaders) ?>" class="muted">Nobody matches this list.</td></tr><?php endif; ?></tbody>
     </table></div>
   </section>
   <?php endif; ?>

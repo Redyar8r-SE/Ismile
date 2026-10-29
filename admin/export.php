@@ -28,21 +28,22 @@ switch ($what) {
         $sections = [];
         foreach (\Ismile\Admin\Lists::ALL as $key => [$label]) {
             if ($key === 'studentids') continue; // ID photos have a separate protected PDF.
-            $columns = \Ismile\Admin\Lists::columns($key);
             $companyList = isset(\Ismile\Admin\Lists::COMPANY_LISTS[$key]);
-            $sheet = [array_merge(['#', $companyList ? 'Company' : 'Name'], $key==='workshops' ? ['Workshop'] : [], array_values($columns))];
             $people = \Ismile\Admin\Lists::rows($key);
-            if (!$companyList) $people = PaymentBreakdown::attach($people);
+            if (!$companyList) {
+                $sections[$label] = \Ismile\Admin\Lists::reportRows($key, PaymentBreakdown::attach($people));
+                continue;
+            }
+            $columns = \Ismile\Admin\Lists::columns($key);
+            $sheet = [array_merge(['#', 'Company'], array_values($columns))];
             foreach ($people as $i => $row) {
-                $cells = [$i+1, $companyList ? $row['company'] : Registrations::fullName($row)];
-                if ($key==='workshops') $cells[]=$row['workshop_name'];
+                $cells = [$i+1, $row['company']];
                 foreach (array_keys($columns) as $column) {
                     $cells[] = \Ismile\Admin\Lists::exportValue($column, $row);
                 }
                 $sheet[]=$cells;
             }
             $sections[$label]=$sheet;
-            if (!$companyList) $sections[$label . ' - ticket and lunch payments'] = PaymentBreakdown::reportRows($people);
         }
         if (Auth::can($user, 'payments')) {
             $sheet=[['Payment','Reference','Method','Expected','Confirmed','Currency','Status','Started']];
@@ -134,41 +135,18 @@ switch ($what) {
         $applied = array_column(\Ismile\Admin\Lists::describe($list, $filters), 'label');
         $only = static fn (array $people): array => \Ismile\Admin\Lists::filter($list, $people, $filters);
         $rows[] = [\Ismile\Admin\Lists::ALL[$list][0] . ($applied ? ' · Filtered: ' . implode(' · ', $applied) : '')];
-        $number = 0;
-        if (isset(\Ismile\Admin\Lists::COMPANY_LISTS[$list])) {
-            $rows[] = array_merge(['#', 'Company'], array_values($columns));
-            foreach ($only(\Ismile\Admin\Lists::rows($list)) as $row) {
-                $cells = [++$number, $row['company']];
-                foreach (array_keys($columns) as $key) {
-                    $cells[] = (string) ($row[$key] ?? '');
-                }
-                $rows[] = $cells;
-            }
+        if (!isset(\Ismile\Admin\Lists::COMPANY_LISTS[$list])) {
+            $financePeople = PaymentBreakdown::attach($only(\Ismile\Admin\Lists::rows($list)));
+            $rows = array_merge($rows, \Ismile\Admin\Lists::reportRows($list, $financePeople));
             $name = 'ismile-' . $list;
             break;
         }
-        if ($list === 'workshops') {
-            $rows[] = array_merge(['Workshop', '#', 'Name'], array_values($columns));
-            foreach (\Ismile\Admin\Lists::workshopGroups() as ['workshop' => $workshop, 'people' => $people]) {
-                $people = PaymentBreakdown::attach(array_values($only($people)));
-                array_push($financePeople, ...$people);
-                foreach ($people as $i => $row) {
-                    $cells = [SiteData::workshopName($workshop), $i + 1, Registrations::fullName($row)];
-                    foreach (array_keys($columns) as $key) {
-                        $cells[] = \Ismile\Admin\Lists::exportValue($key, $row);
-                    }
-                    $rows[] = $cells;
-                }
-            }
-            $name = 'ismile-workshops';
-            break;
-        }
-        $rows[] = array_merge(['#', 'Name', 'Paid?'], array_values($columns));
-        $financePeople = PaymentBreakdown::attach($only(\Ismile\Admin\Lists::rows($list)));
-        foreach ($financePeople as $row) {
-            $cells = [++$number, Registrations::fullName($row), in_array($row['status'], ['paid', 'complimentary'], true) ? 'PAID' : 'NOT PAID'];
+        $number = 0;
+        $rows[] = array_merge(['#', 'Company'], array_values($columns));
+        foreach ($only(\Ismile\Admin\Lists::rows($list)) as $row) {
+            $cells = [++$number, $row['company']];
             foreach (array_keys($columns) as $key) {
-                $cells[] = \Ismile\Admin\Lists::exportValue($key, $row);
+                $cells[] = (string) ($row[$key] ?? '');
             }
             $rows[] = $cells;
         }
@@ -183,8 +161,8 @@ Audit::log((int) $user['id'], 'export', null, null, ['what' => $what, 'rows' => 
 
 if (($_GET['format'] ?? '') === 'pdf') {
     $pdf = $what === 'list' && $list === 'studentids'
-        ? PdfReport::studentIds($financePeople, PaymentBreakdown::reportRows($financePeople))
-        : ($financePeople ? PdfReport::bundle([ucwords(str_replace('-', ' ', $name)) => $rows, 'Ticket and lunch payment breakdown' => PaymentBreakdown::reportRows($financePeople)]) : PdfReport::make(ucwords(str_replace('-', ' ', $name)), $rows));
+        ? PdfReport::studentIds($financePeople, \Ismile\Admin\Lists::reportRows($list, $financePeople))
+        : ($financePeople && $what !== 'list' ? PdfReport::bundle([ucwords(str_replace('-', ' ', $name)) => $rows, 'Ticket and lunch payment breakdown' => PaymentBreakdown::reportRows($financePeople)]) : PdfReport::make(ucwords(str_replace('-', ' ', $name)), $rows));
     header('Content-Type: application/pdf');
     header('Content-Disposition: attachment; filename="' . $name . '-' . date('Y-m-d-Hi') . '.pdf"');
     header('Cache-Control: no-store');
@@ -193,7 +171,7 @@ if (($_GET['format'] ?? '') === 'pdf') {
 }
 
 // Excel keeps the original list and adds the identical historical receipt columns.
-if ($financePeople) {
+if ($financePeople && $what !== 'list') {
     $header = count($rows[0] ?? []) === 1 ? 1 : 0;
     $reference = array_search('Reference', $rows[$header] ?? [], true);
     $byRef = array_column($financePeople, null, 'ref');
