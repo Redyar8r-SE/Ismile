@@ -31,7 +31,7 @@ switch ($what) {
             $companyList = isset(\Ismile\Admin\Lists::COMPANY_LISTS[$key]);
             $people = \Ismile\Admin\Lists::rows($key);
             if (!$companyList) {
-                $sections[$label] = \Ismile\Admin\Lists::reportRows($key, PaymentBreakdown::attach($people));
+                $sections[$label] = \Ismile\Admin\Lists::reportRows($key, PaymentBreakdown::attach($people), false);
                 continue;
             }
             $columns = \Ismile\Admin\Lists::columns($key);
@@ -137,7 +137,7 @@ switch ($what) {
         $rows[] = [\Ismile\Admin\Lists::ALL[$list][0] . ($applied ? ' · Filtered: ' . implode(' · ', $applied) : '')];
         if (!isset(\Ismile\Admin\Lists::COMPANY_LISTS[$list])) {
             $financePeople = PaymentBreakdown::attach($only(\Ismile\Admin\Lists::rows($list)));
-            $rows = array_merge($rows, \Ismile\Admin\Lists::reportRows($list, $financePeople));
+            $rows = array_merge($rows, \Ismile\Admin\Lists::reportRows($list, $financePeople, ($_GET['format'] ?? '') !== 'pdf'));
             $name = 'ismile-' . $list;
             break;
         }
@@ -161,7 +161,7 @@ Audit::log((int) $user['id'], 'export', null, null, ['what' => $what, 'rows' => 
 
 if (($_GET['format'] ?? '') === 'pdf') {
     $pdf = $what === 'list' && $list === 'studentids'
-        ? PdfReport::studentIds($financePeople, \Ismile\Admin\Lists::reportRows($list, $financePeople))
+        ? PdfReport::studentIds($financePeople, \Ismile\Admin\Lists::reportRows($list, $financePeople, false))
         : ($financePeople && $what !== 'list' ? PdfReport::bundle([ucwords(str_replace('-', ' ', $name)) => $rows, 'Ticket and lunch payment breakdown' => PaymentBreakdown::reportRows($financePeople)]) : PdfReport::make(ucwords(str_replace('-', ' ', $name)), $rows));
     header('Content-Type: application/pdf');
     header('Content-Disposition: attachment; filename="' . $name . '-' . date('Y-m-d-Hi') . '.pdf"');
