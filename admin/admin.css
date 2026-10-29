@@ -1115,11 +1115,12 @@ body[data-page=backups] .page-symbol{background:#e9f4ee;color:#418165;border-col
 .payment-breakdown{margin-top:28px}
 .payment-breakdown .name-list td{white-space:normal;overflow-wrap:anywhere}
 @media print{
-  @page payment-breakdown{size:A4 landscape;margin:12mm}
+  @page payment-breakdown{size:A3 landscape;margin:12mm}
+  body:has(.payment-breakdown){page:payment-breakdown}
   .admin-shell{background:#fff!important}
-  .payment-breakdown{page:payment-breakdown;break-before:page;margin-top:0}
+  .payment-breakdown{page:payment-breakdown;break-inside:auto;margin-top:0}
   .payment-breakdown .table-wrap{overflow:visible;max-width:none}
-  .payment-breakdown table.name-list{table-layout:fixed;width:100%;font-size:10px}
+  .payment-breakdown table.name-list{table-layout:auto;width:100%;font-size:10px}
   .payment-breakdown table.name-list th,.payment-breakdown table.name-list td{min-width:0!important;padding:4px;font-size:10px;white-space:normal;overflow-wrap:anywhere}
   .payment-breakdown thead{display:table-header-group}
   .payment-breakdown tr{break-inside:avoid}

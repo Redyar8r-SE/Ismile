@@ -56,14 +56,41 @@ final class Lists
     public static function exportValue(string $key, array $row): string
     {
         return match ($key) {
+            'full_name' => \Ismile\Registrations::fullName($row),
+            'lunch_count' => (string) ((int) !empty($row['lunch_day1']) + (int) !empty($row['lunch_day2'])),
             'specialty' => \Ismile\Registrations::SPECIALTY_NAMES[$row[$key] ?? ''] ?? (string) ($row[$key] ?? ''),
             'ticket_type' => \Ismile\Registrations::ticketName($row[$key] ?? ''),
             'study_stage' => !empty($row[$key]) ? \Ismile\Registrations::stageName((int) $row[$key]) : '',
             'ambassador_code' => self::ambassadorCode($row),
-            'lunch' => trim((!empty($row['lunch_day1']) ? 'Day 1 ' : '') . (!empty($row['lunch_day2']) ? 'Day 2' : '')),
+            'lunch' => implode(', ', array_keys(array_filter(['Day 1' => !empty($row['lunch_day1']), 'Day 2' => !empty($row['lunch_day2'])]))) ?: 'None',
             'workshop_paid' => ['paid' => 'PAID', 'complimentary' => 'FREE'][$row[$key] ?? ''] ?? 'NOT PAID',
             default => (string) ($row[$key] ?? ''),
         };
+    }
+
+    /** One attendee row shared by PDF, Excel and print, including the saved receipt. */
+    public static function reportRows(string $list, array $people): array
+    {
+        $columns = [
+            'full_name' => 'Full name', 'finance_total' => 'Total paid',
+            'phone' => 'Phone', 'ticket_type' => 'Ticket type',
+            'lunch' => 'Lunch days', 'lunch_count' => 'Lunch quantity',
+            'finance_ticket' => 'Ticket paid', 'finance_lunch1' => 'Lunch day 1 paid', 'finance_lunch2' => 'Lunch day 2 paid',
+            'ticket_no' => 'Ticket no.', 'ambassador_code' => 'Ambassador', 'ref' => 'Reference',
+            'finance_date' => 'Payment date (Iraq)', 'finance_channel' => 'Cash / website',
+        ];
+        if ($list === 'workshops') $columns['workshop_name'] = 'Workshop';
+        // Retain each list's own facts (attendance, university, workshop fees, etc.).
+        $extras = self::columns($list);
+        unset($extras['paid_at']); // The receipt's payment timestamp is shown above.
+        $columns += $extras + ['status' => 'Status'] + PaymentBreakdown::COLUMNS;
+        $rows = [array_merge(['#'], array_values($columns))];
+        foreach ($people as $i => $person) {
+            $cells = [$i + 1];
+            foreach (array_keys($columns) as $key) $cells[] = self::exportValue($key, $person);
+            $rows[] = $cells;
+        }
+        return $rows;
     }
 
     public static function rows(string $list): array
@@ -74,9 +101,11 @@ final class Lists
         }
         if ($list === 'forms') {
             // The forms (checkouts), not the registrations: "id" is the registration, if paid.
-            return Db::all("SELECT c.*, c.registration_id AS id,
+            return Db::all("SELECT c.*, c.registration_id AS id, t.ticket_no, r.paid_at,
                                    CASE WHEN c.status = 'paid' THEN 'paid' WHEN c.status = 'open' AND c.expires_at > ? THEN 'waiting' ELSE 'expired' END AS form_status
-                            FROM checkouts c ORDER BY c.created_at DESC, c.id DESC", [\Ismile\App::now()]);
+                            FROM checkouts c LEFT JOIN registrations r ON r.id = c.registration_id
+                            LEFT JOIN tickets t ON t.registration_id = r.id AND t.cancelled_at IS NULL
+                            ORDER BY c.created_at DESC, c.id DESC", [\Ismile\App::now()]);
         }
         if ($list === 'workshops') {
             return array_merge(...array_column(self::workshopGroups(), 'people') ?: [[]]);
@@ -107,8 +136,9 @@ final class Lists
         $groups = [];
         foreach (\Ismile\Workshops::all(true) as $workshop) {
             $people = Db::all(
-                "SELECT r.*, wb.payment_status AS workshop_paid, wb.amount_paid, ? AS workshop_name
+                "SELECT r.*, t.ticket_no, wb.payment_status AS workshop_paid, wb.amount_paid, ? AS workshop_name
                  FROM workshop_bookings wb JOIN registrations r ON r.id = wb.registration_id
+                 LEFT JOIN tickets t ON t.registration_id = r.id AND t.cancelled_at IS NULL
                  WHERE wb.workshop_id = ? AND wb.removed_at IS NULL ORDER BY r.first_name, r.father_name",
                 [\Ismile\Workshops::name($workshop), $workshop['id']]
             );

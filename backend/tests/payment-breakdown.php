@@ -55,4 +55,24 @@ $check('unexplained provider fees are not silently counted as ticket money',$fee
 $usdPayment=$payment;$usdPayment['currency']='USD';$usdPayment['amount_confirmed']=40;$usdPayment['raw_create']=$usdPayment['raw_status']=json_encode(['order'=>['currency'=>'USD','totalAmount'=>40,'items'=>[['quantity'=>1,'unitPrice'=>40,'addOns'=>[]]]]]);
 $check('non-IQD receipts are never converted using a guessed market rate',PaymentBreakdown::describe($ticketOnly,$usdPayment,$map)['finance_total']==='40 USD'&&PaymentBreakdown::describe($ticketOnly,$usdPayment,$map)['finance_usd100']==='Not recorded');
 $check('invalid optional metadata cannot break the payment flow',PaymentBreakdown::archive($raw,$guest,['vip'=>NAN],$map)===$raw);
+$person = array_merge($guest, $r, ['phone'=>'+9647501234567', 'ticket_no'=>'T26-01234', 'ambassador_code'=>' sara26 ']);
+foreach (['registered','attendance','forms','lunch1','lunch2','students','studentids','workshops','cancelled'] as $list) {
+    $report = Lists::reportRows($list, [$person]);
+    $record = array_combine($report[0], $report[1]);
+    $check($list . ' keeps attendee identity and payment details together',
+        $record['Full name']==='Example Student Guest' && $record['Phone']==='+9647501234567'
+        && $record['Ticket type']==='Student' && $record['Ticket no.']==='T26-01234'
+        && $record['Ambassador']==='SARA26' && $record['Reference']==='EXAMPLE-001'
+        && $record['Lunch days']==='Day 1' && $record['Lunch quantity']==='1'
+        && $record['Total paid']==='97,200 IQD' && $record['Lunch day 1 paid']==='67,200 IQD (USD 40)'
+        && $record['Cash / website']==='Cash' && $record['Payment date (Iraq)']==='2026-10-28 08:59:30'
+        && count($report[0])===count(array_unique($report[0])));
+}
+$report = Lists::reportRows('registered', [array_merge($vip, $v), array_merge($two, PaymentBreakdown::describe($two,$web,$map))]);
+$vipRecord = array_combine($report[0], $report[1]);
+$webRecord = array_combine($report[0], $report[2]);
+$check('VIP lunch entitlement and lunch quantity survive the combined report', $vipRecord['Ticket type']==='VIP' && $vipRecord['Lunch quantity']==='2' && $vipRecord['Lunch day 1 paid']==='Included in VIP ticket');
+$check('website payment method survives the combined report', $webRecord['Cash / website']==='Website (Psoola)' && $webRecord['Lunch days']==='Day 1, Day 2');
+$check('unbooked lunch is explicit and the empty report retains its headers', Lists::exportValue('lunch',[])==='None' && Lists::exportValue('lunch_count',[])==='0' && count(Lists::reportRows('registered',[]))===1);
+
 echo $passed." checks passed.\n";
