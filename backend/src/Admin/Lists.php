@@ -69,7 +69,7 @@ final class Lists
     }
 
     /** One attendee row shared by PDF, Excel and print, including the saved receipt. */
-    public static function reportRows(string $list, array $people): array
+    public static function reportRows(string $list, array $people, bool $includeRates = true): array
     {
         $columns = [
             'full_name' => 'Full name', 'finance_total' => 'Total paid',
@@ -84,6 +84,7 @@ final class Lists
         $extras = self::columns($list);
         unset($extras['paid_at']); // The receipt's payment timestamp is shown above.
         $columns += $extras + ['status' => 'Status'] + PaymentBreakdown::COLUMNS;
+        if (!$includeRates) unset($columns['finance_usd100'], $columns['finance_rate_source']);
         $rows = [array_merge(['#'], array_values($columns))];
         foreach ($people as $i => $person) {
             $cells = [$i + 1];
