@@ -103,6 +103,16 @@ final class PdfReport
     {
         if (count($rows[0] ?? []) === 1) $subtitle = (string) array_shift($rows)[0];
         $headers = array_shift($rows) ?? [];
+        // Apply these display choices to every PDF, including bundled reports.
+        $headers = array_diff($headers, ['Specialty', 'Payment notes']);
+        $ticketPaid = array_search('Ticket paid', $headers, true);
+        $channel = array_search('Cash / website', $headers, true);
+        if ($ticketPaid !== false && $channel !== false) {
+            foreach ($rows as &$row) {
+                if (($row[$channel] ?? '') === 'Cash') $row[$ticketPaid] = '--';
+            }
+            unset($row);
+        }
         // One table with every column: more than 13 columns use an A3 page.
         $keys = array_keys($headers);
         $columns = count($keys);
