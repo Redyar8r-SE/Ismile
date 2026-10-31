@@ -120,18 +120,18 @@ if ($database) {
         $check($role . ' cannot create staff bookings', $rejects(static fn () => Sponsors::createByStaff($staffInput, ['id' => $ownerId, 'role' => $role])));
     }
     $sponsorInput = array_replace($staffInput, ['kind' => 'sponsor', 'package_id' => 'gold', 'company' => 'Office sponsor', 'booth_number' => '43', 'paid_how' => 'cash']);
-    $manualSponsor = Sponsors::createByStaff($sponsorInput, ['id' => $ownerId, 'role' => 'finance']);
-    $check('Registration can add a sponsorship with a booth', $manualSponsor['kind'] === 'sponsor' && $manualSponsor['package_id'] === 'gold' && Sponsors::bookedBooths() === [43, 44]);
+    $manualSponsor = Sponsors::createByStaff($sponsorInput, ['id' => $ownerId, 'role' => 'finance', 'map_booking_access' => 1]);
+    $check('designated map manager can add a sponsorship with a booth', $manualSponsor['kind'] === 'sponsor' && $manualSponsor['package_id'] === 'gold' && Sponsors::bookedBooths() === [43, 44]);
     $check('full received payment starts at Paid with exact amount and method', $manualSponsor['status'] === 'paid' && (int) $manualSponsor['amount_paid'] === 6000000 && $manualSponsor['paid_how'] === 'cash' && $manualSponsor['paid_at'] !== null);
-    $noStand = Sponsors::createByStaff(array_replace($sponsorInput, ['company' => 'Office sponsor without a stand', 'booth_number' => '', 'paid_how' => '', 'amount_agreed' => '']), ['id' => $ownerId, 'role' => 'finance']);
+    $noStand = Sponsors::createByStaff(array_replace($sponsorInput, ['company' => 'Office sponsor without a stand', 'booth_number' => '', 'paid_how' => '', 'amount_agreed' => '']), ['id' => $ownerId, 'role' => 'finance', 'map_booking_access' => 1]);
     $check('Finance can add a sponsor without a booth or agreed amount', $noStand['status'] === 'new' && $noStand['booth_number'] === null && $noStand['amount_agreed'] === null);
     $expected = [
         'platinum' => [37,38,39,40,41,42], 'gold' => [1,6,24,30,36,43,44],
-        'silver' => [2,3,4,5,7,8,9,10,11,12,13,14,25,26,27,28,31,32,33,34,35],
-        'bronze' => [15,16,17,18,19,20,21,22,23,29],
+        'silver' => [2,3,5,7,8,9,10,11,12,25,26,27,28,32,33,34,35],
+        'bronze' => [15,16,17,18,19,20,21,22,23],
     ];
     foreach ($expected as $tier => $numbers) {
-        $check($tier . ' matches the screenshot numbers', Ismile\BoothPlan::numbers($tier) === $numbers);
+        $check($tier . ' matches the revised map position IDs', Ismile\BoothPlan::numbers($tier) === $numbers);
         foreach ([$tier] as $packageId) {
             $check($packageId . ' has the same tier and number count', Ismile\SponsorPackages::find($packageId)['booth_tier'] === $tier && (int) Ismile\SponsorPackages::find($packageId)['places'] === count($numbers));
         }
@@ -139,8 +139,8 @@ if ($database) {
     $check('existing booking cannot move to a wrong-tier booth', $rejects(static fn () => Sponsors::saveDetails((int) $manualSponsor['id'], ['package_id' => 'platinum', 'booth_number' => '8'], $owner)));
     $check('failed tier change preserves the original booking', Sponsors::find((int) $manualSponsor['id'])['package_id'] === 'gold' && Sponsors::find((int) $manualSponsor['id'])['booth_number'] === '43');
     $upgradeId = (int) $manualSponsor['id'];
-    $registration = ['id' => $ownerId, 'role' => 'finance'];
-    $finance = ['id' => $ownerId, 'role' => 'finance'];
+    $registration = ['id' => $ownerId, 'role' => 'finance', 'map_booking_access' => 1];
+    $finance = ['id' => $ownerId, 'role' => 'finance', 'map_booking_access' => 1];
     $upgrade = [
         'package_id' => 'platinum', 'booth_number' => '37', 'amount_agreed' => '9000000',
         'company' => 'Updated company', 'contact' => 'Updated contact', 'phone' => '0770 111 2233',

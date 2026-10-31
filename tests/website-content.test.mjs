@@ -14,6 +14,21 @@ afterEach(() => {
 });
 
 describe("website content and database controls", () => {
+  it("keeps the map directory with the deployed geometry and reservation rules", () => {
+    expect(editableContent("data/booth-tiers.json")).toBe(false);
+    const result = contentRequest(
+      "unused",
+      "unused",
+      "save",
+      "POST",
+      {},
+      JSON.stringify({
+        path: "data/booth-tiers.json",
+        contentBase64: Buffer.from('{"rows":[]}').toString("base64"),
+      }),
+    );
+    expect(result.statusCode).toBe(403);
+  });
   it("keeps public legacy account content free of password verifiers", () => {
     const data = JSON.parse(
       readFileSync(new URL("../data/admin-accounts.json", import.meta.url), "utf8"),

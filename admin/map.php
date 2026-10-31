@@ -26,7 +26,7 @@ Page::action(static function () use ($user): string {
     if ($number === null) throw new UserError('Select a numbered map position.');
     Page::useOnce();
     $booking = Sponsors::createByStaff(array_replace($_POST, ['kind' => 'sponsor', 'booth_number' => $number]), $user);
-    return 'Position ' . $number . ' booked for ' . $booking['company'] . '.';
+    return 'Position ' . BoothPlan::label($number) . ' booked for ' . $booking['company'] . '.';
 }, 'map.php?number=' . max(1, min(44, (int) ($_POST['booth_number'] ?? 1))));
 
 // Private, authenticated map data. The public availability API stays anonymous
@@ -34,6 +34,7 @@ Page::action(static function () use ($user): string {
 if (Page::query('format') === 'json') {
     header('Content-Type: application/json; charset=utf-8');
     try {
+        BoothPlan::assertDatabaseMatches();
         $bookings = Db::all("SELECT s.id, s.ref, s.company, s.contact_name, s.phone,
             s.reserved_booth, s.status, p.name_en AS package_name
             FROM sponsor_requests s LEFT JOIN sponsor_packages p ON p.id=s.package_id
@@ -69,7 +70,7 @@ $version = (int) filemtime(__DIR__ . '/map.js');
 <section class="exhibition admin-map" id="operationsMap" data-can-manage="<?= $canManage ? '1' : '0' ?>" aria-label="Exhibition floor plan">
   <div class="exhibition-head"><div><h2>Your exhibition floor plan</h2><p>Select a position on the map or in the directory to see its booking. Red means reserved, including bookings awaiting payment.</p></div><span id="mapLive" class="exhibition-live" role="status">Connecting to database...</span></div>
   <div class="exhibition-overview">
-    <div class="exhibition-stat"><span>Numbered positions</span><strong>44</strong></div>
+    <div class="exhibition-stat"><span>Numbered positions</span><strong><?= BoothPlan::count() ?></strong></div>
     <div class="exhibition-stat stat-available"><span>Available</span><strong id="mapAvailable">—</strong></div>
     <div class="exhibition-stat stat-booked"><span>Reserved</span><strong id="mapBooked">—</strong></div>
   </div>

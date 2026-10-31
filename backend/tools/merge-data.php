@@ -24,6 +24,7 @@ if (!is_dir($from)) {
 
 $copied = 0;
 $keys = 0;
+$mapTexts = 0;
 $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($from, FilesystemIterator::SKIP_DOTS));
 foreach ($files as $file) {
     $relative = ltrim(str_replace('\\', '/', substr($file->getPathname(), strlen($from))), '/');
@@ -42,10 +43,29 @@ foreach ($files as $file) {
             continue;
         }
         $missing = array_diff_key($project, $server);
-        if ($missing) {
+        // Only the map's booth count changed; preserve all other edited text.
+        $changed = false;
+        foreach (['bm_intro', 'pg_map_text', 'pm_text'] as $key) {
+            if (!is_string($server[$key] ?? null)) continue;
+            $updated = str_replace(['44', '٤٤'], ['39', '٣٩'], $server[$key]);
+            if ($updated !== $server[$key]) {
+                $server[$key] = $updated;
+                $changed = true;
+                $mapTexts++;
+            }
+        }
+        if (is_string($server['bm_size_note'] ?? null)) {
+            $updated = preg_replace(['/(?<![0-9٠-٩])24(?![0-9٠-٩])/u', '/(?<![0-9٠-٩])6(?![0-9٠-٩])/u', '/٢٤/u', '/٦/u'], ['21', '5', '٢١', '٥'], $server['bm_size_note']);
+            if ($updated !== $server['bm_size_note']) {
+                $server['bm_size_note'] = $updated;
+                $changed = true;
+                $mapTexts++;
+            }
+        }
+        if ($missing || $changed) {
             file_put_contents($target, json_encode($server + $missing, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n", LOCK_EX);
             $keys += count($missing);
         }
     }
 }
-echo "data: $copied new file(s), $keys new translation key(s); nothing overwritten.\n";
+echo "data: $copied new file(s), $keys new translation key(s), $mapTexts map count(s) updated; other edited content preserved.\n";

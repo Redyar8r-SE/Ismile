@@ -2,14 +2,14 @@
 // exhibition floor plan as a plain picture: every booth the same colour (the
 // tiers are not shown to visitors), no availability and nothing to book.
 import { t, onLangChange } from "../i18n.js?v=148";
-import { buildBooths } from "../config/booth-layout.js?v=148";
-import { floorPlanSVG } from "./floor-plan.js?v=148";
+import { buildBooths } from "../config/booth-layout.js?v=150";
+import { floorPlanSVG } from "./floor-plan.js?v=150";
 
 export function initProgramMap({ rows }) {
   const plan = document.getElementById("progMapPlan");
   if (!plan) return;
   const booths = buildBooths(rows);
-  const label = (booth) => `${t("bm_booth")} ${booth.number}`;
+  const label = (booth) => `${t("bm_booth")} ${booth.displayNumber}`;
   const colors = { platinum: "var(--pm-booth)", gold: "var(--pm-booth)", silver: "var(--pm-booth)", bronze: "var(--pm-booth)" };
   const render = () => {
     plan.innerHTML = floorPlanSVG({ booths, colors, label, interactive: false });

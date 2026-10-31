@@ -5,7 +5,7 @@ import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from ".
 import { initNav } from "./components/nav.js?v=148";
 import { initTheme } from "./components/theme.js?v=148";
 import { initProgram } from "./sections/program.js?v=148";
-import { initProgramMap } from "./sections/program-map.js?v=148";
+import { initProgramMap } from "./sections/program-map.js?v=150";
 import { initSpeakers } from "./sections/speakers.js?v=148";
 import { initSponsors } from "./sections/sponsors.js?v=148";
 import { initPartners } from "./sections/partners.js?v=148";

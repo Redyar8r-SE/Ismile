@@ -362,9 +362,8 @@ final class Sponsors
         $numbers = [];
         foreach (Db::all("SELECT reserved_booth FROM sponsor_requests WHERE kind='sponsor' AND reserved_booth IS NOT NULL") as $row) {
             $number = (string) $row['reserved_booth'];
-            if (ctype_digit($number) && (int) $number >= 1 && (int) $number <= 44) {
-                $numbers[] = (int) $number;
-            }
+            if (!BoothPlan::active($number)) throw new \RuntimeException('An active reservation is missing from the current floor plan.');
+            $numbers[] = (int) $number;
         }
         sort($numbers, SORT_NUMERIC);
         return $numbers;
@@ -383,12 +382,20 @@ final class Sponsors
         if ($previous !== null && $number === $previous) {
             return $previous;
         }
-        throw new UserError('Choose a booth number from 1 to 44, or leave it empty to release the booth.');
+        throw new UserError('Choose a booth from the current map, or leave it empty to release the booth.');
     }
 
     /** The database unique key also protects simultaneous staff reservations. */
     private static function updateWithBoothCheck(int $id, array $change): void
     {
+        $request = Db::one('SELECT kind, status, booth_number FROM sponsor_requests WHERE id=? FOR UPDATE', [$id]);
+        if ($request !== null) {
+            $next = array_replace($request, $change);
+            if ($next['kind'] === 'sponsor' && $next['booth_number'] !== null
+                && !in_array($next['status'], ['declined', 'waiting_list', 'cancelled'], true)) {
+                BoothPlan::assertPositionMatches((string) $next['booth_number']);
+            }
+        }
         try {
             Db::update('sponsor_requests', $change, 'id = ?', [$id]);
         } catch (\PDOException $error) {
@@ -432,7 +439,9 @@ final class Sponsors
                 $booth=$request['booth_number']; // Historical labels stay in the record; they do not reserve the map.
             } else {
                 $booth = self::boothNumber($in['booth_number'] ?? '', $request['booth_number']);
-                BoothPlan::check($package, $booth);
+                $unchangedHistory = $booth === $request['booth_number'] && !BoothPlan::active($booth)
+                    && in_array($request['status'], ['declined', 'waiting_list', 'cancelled'], true);
+                if (!$unchangedHistory) BoothPlan::check($package, $booth);
             }
             $change = [
                 'package_id'   => $package ? $package['id'] : null,

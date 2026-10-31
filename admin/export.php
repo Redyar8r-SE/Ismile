@@ -14,6 +14,7 @@ use Ismile\Admin\PaymentBreakdown;
 use Ismile\Audit;
 use Ismile\Auth;
 use Ismile\Db;
+use Ismile\BoothPlan;
 use Ismile\Registrations;
 use Ismile\SiteData;
 
@@ -105,7 +106,7 @@ switch ($what) {
         }
         $rows[] = ['Reference', 'Kind', 'Package', 'Sponsor map position', 'Company', 'Contact', 'Role', 'Phone', 'Email', 'Website', 'City', 'Status', 'Price told', 'Amount agreed', 'Amount paid', 'Paid how', 'Paid on', 'Last call', 'Next call', 'Received', 'Message', 'Notes', 'Cancelled on', 'Cancelled by (staff ID)', 'Cancellation reason'];
         foreach (Db::all('SELECT s.*, p.name_en AS package FROM sponsor_requests s LEFT JOIN sponsor_packages p ON p.id = s.package_id ORDER BY s.id') as $row) {
-            $rows[] = [$row['ref'], $row['kind'], $row['package'] ?? '', $row['kind']==='sponsor' ? ($row['booth_number'] ?? '') : '', $row['company'], $row['contact_name'], $row['contact_role'] ?? '', $row['phone'], $row['email'], $row['website'] ?? '', $row['city'] ?? '', $row['status'],
+            $rows[] = [$row['ref'], $row['kind'], $row['package'] ?? '', $row['kind']==='sponsor' ? BoothPlan::label($row['booth_number']) : '', $row['company'], $row['contact_name'], $row['contact_role'] ?? '', $row['phone'], $row['email'], $row['website'] ?? '', $row['city'] ?? '', $row['status'],
                 $row['price_quoted'] ?? '', $row['amount_agreed'] ?? '', $row['amount_paid'] ?? '', $row['paid_how'] ?? '', $row['paid_at'] ?? '', $row['last_call_at'] ?? '', $row['next_call_at'] ?? '', $row['created_at'], $row['message'] ?? '', $row['notes'] ?? '', $row['cancelled_at'] ?? '', $row['cancelled_by'] ?? '', $row['cancellation_reason'] ?? ''];
         }
         $name = 'ismile-sponsors';

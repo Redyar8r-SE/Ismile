@@ -1,6 +1,6 @@
 import { t, onLangChange } from "../i18n.js?v=148";
-import { buildBooths } from "../config/booth-layout.js?v=148";
-import { floorPlanSVG } from "./floor-plan.js?v=148";
+import { buildBooths } from "../config/booth-layout.js?v=150";
+import { floorPlanSVG } from "./floor-plan.js?v=150";
 
 export function initBoothMap({ rows: BOOTH_ROWS, colors: TIER_COLORS }) {
   const BOOTHS = buildBooths(BOOTH_ROWS);
@@ -31,7 +31,7 @@ export function initBoothMap({ rows: BOOTH_ROWS, colors: TIER_COLORS }) {
   const escape = (value) => String(value).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   const sizeText = (size) => size.replace(/^W\s+/, `${t("bm_width_short")} `).replace(/\bm\b/g, t("bm_unit_m"));
   const status = (number) => !connected ? t("bm_unknown") : booked.has(number) ? t("bm_booked") : t("bm_available");
-  const label = (booth) => `${t("bm_booth")} ${booth.number} · ${t(`bm_${booth.tier}`)} · ${sizeText(booth.size)} · ${status(booth.number)}`;
+  const label = (booth) => `${t("bm_booth")} ${booth.displayNumber} · ${t(`bm_${booth.tier}`)} · ${sizeText(booth.size)} · ${status(booth.number)}`;
 
   function updateDetails() {
     const booth = BOOTHS.find((item) => item.number === selected);
@@ -41,12 +41,12 @@ export function initBoothMap({ rows: BOOTH_ROWS, colors: TIER_COLORS }) {
       return;
     }
     const taken = booked.has(booth.number);
-    detail.innerHTML = `<span class="sr-only">${escape(label(booth))}</span><span class="booth-detail-number${taken ? " is-booked" : ""}" style="--booth-color:${TIER_COLORS[booth.tier]}" aria-hidden="true">${booth.number}</span><div class="booth-detail-copy" aria-hidden="true"><strong>${escape(t("bm_booth"))} ${booth.number} · ${escape(t(`bm_${booth.tier}`))}</strong><small dir="auto">${escape(sizeText(booth.size))}</small></div><span class="booth-detail-status${connected ? taken ? " is-booked" : " is-available" : ""}" aria-hidden="true">${escape(status(booth.number))}</span>`;
+    detail.innerHTML = `<span class="sr-only">${escape(label(booth))}</span><span class="booth-detail-number${taken ? " is-booked" : ""}" style="--booth-color:${TIER_COLORS[booth.tier]}" aria-hidden="true">${booth.displayNumber}</span><div class="booth-detail-copy" aria-hidden="true"><strong>${escape(t("bm_booth"))} ${booth.displayNumber} · ${escape(t(`bm_${booth.tier}`))}</strong><small dir="auto">${escape(sizeText(booth.size))}</small></div><span class="booth-detail-status${connected ? taken ? " is-booked" : " is-available" : ""}" aria-hidden="true">${escape(status(booth.number))}</span>`;
   }
 
   function button(number) {
     const booth = BOOTHS.find((item) => item.number === number);
-    return `<button type="button" class="booth-number${booked.has(number) ? " is-booked" : ""}${selected === number ? " is-selected" : ""}" data-booth="${number}" aria-label="${escape(label(booth))}" aria-pressed="${selected === number}">${number}</button>`;
+    return `<button type="button" class="booth-number${booked.has(number) ? " is-booked" : ""}${selected === number ? " is-selected" : ""}" data-booth="${number}" aria-label="${escape(label(booth))}" aria-pressed="${selected === number}">${booth.displayNumber}</button>`;
   }
 
   // One tinted group per tier: its numbers row by row, each with its size.
@@ -142,7 +142,7 @@ export function initBoothMap({ rows: BOOTH_ROWS, colors: TIER_COLORS }) {
       const response = await fetch("api/booths.php", { cache: "no-store", headers: { Accept: "application/json" }, signal: AbortSignal.timeout(7000) });
       if (!response.ok) throw new Error("availability unavailable");
       const state = await response.json();
-      if (state.ok !== true || !Array.isArray(state.booked) || !state.booked.every((number) => Number.isInteger(number) && number >= 1 && number <= 44)) throw new Error("invalid availability");
+      if (state.ok !== true || !Array.isArray(state.booked) || !state.booked.every((number) => Number.isInteger(number) && BOOTHS.some((booth) => booth.number === number))) throw new Error("invalid availability");
       const next = new Set(state.booked);
       const changed = !connected || next.size !== booked.size || [...next].some((number) => !booked.has(number));
       booked = next;

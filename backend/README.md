@@ -275,13 +275,13 @@ the event’s phones before opening the doors.
 
 ### Live exhibition map
 
-`sponsor.html#exhibition` shows the supplied 44-booth floor plan and its tier,
+`sponsor.html#exhibition` shows the revised 39-booth floor plan and its tier,
 number and size table. `GET /api/booths.php` returns only booked numbers; no
 company, request ID, contact, payment or staff information is public. Visible
 pages refresh every three seconds and immediately when returning to the tab.
 Unavailable data is labelled unknown and retried; it is never shown as available.
 The source floor plan is traced as theme-aware SVG vectors, keeping the same
-booth positions and numbers. The map supports 100–200% zoom and exploration
+row locations, with stable reservation IDs separate from display numbers. The map supports 100–200% zoom and exploration
 on phones. Above 900px the map sits on the left with the compact table on the
 right. Phones and portrait tablets switch between Map and Table views; the
 directory is scrollable inside its panel. Selecting a number returns to the
@@ -294,7 +294,7 @@ map. Assignment reserves immediately, before payment. Declined, waiting-list
 and cancelled requests release the position. The database unique key refuses
 simultaneous reservations of one sponsor position.
 
-**Event operations > Map** (`admin/map.php`) shows all 44 numbered sponsor
+**Event operations > Map** (`admin/map.php`) shows all 39 numbered sponsor
 positions using the same floor-plan geometry and generated `reserved_booth`
 database column as public availability. Select a map number or directory entry
 to see its company, contact, package, assigned staff, agreed/received/outstanding
@@ -317,9 +317,19 @@ create accounts or print the email. Standard exhibition booths do not reserve
 numbered positions.
 
 Sponsorship tiers are Platinum, Gold, Silver and Bronze. Package `booth_tier`
-controls the sponsor selector. Platinum: 37?42; Gold: 1, 6, 24, 30, 36, 43, 44;
-Silver: 2?5, 7?14, 25?28, 31?35; Bronze: 15?23, 29.
-`data/booth-tiers.json` supplies the public map and backend validation.
+controls the sponsor selector. Visible numbers: Platinum 32–37; Gold 1, 5, 21, 26, 31, 38, 39;
+Silver 2–4, 6–11, 22–25, 27–30; Bronze 12–20.
+`data/booth-tiers.json` supplies both clients and backend validation. `numbers`
+are immutable database position IDs; `labels` are the visible 1–39 numbers.
+`booth_number` and `reserved_booth` keep their original IDs, so no company,
+payment or call record is rewritten. Form values, API availability and DOM
+`data-booth` attributes also use stable IDs. User-facing text and CSV exports
+use labels. `sponsor_map_positions` records the mapping, tier and size; the
+`15_sponsor_map` database view shows current numbers alongside reservations.
+Installation checks for reservations on removed IDs before synchronizing the
+directory. Booking writes refuse a database/website mapping mismatch.
+The floor-plan JSON is deployed with the geometry and cannot be changed by
+the general website editor. Canonical tier capacities are 6, 7, 17 and 9.
 The public floor plan is hidden when the request is for an exhibition booth.
 
 Booths has one **Standard booth** type, with its own price and capacity.

@@ -35,6 +35,9 @@ if [ -z "${PHP:-}" ] || ! "$PHP" -r 'exit(PHP_VERSION_ID >= 80100 ? 0 : 1);'; th
   exit 1
 fi
 echo "Deploying $TARGET with $("$PHP" -r 'echo PHP_VERSION;'): website -> $SITE, backend -> $BACKEND"
+if [ -f "$BACKEND/config.php" ]; then
+  "$PHP" "$REPO/backend/tools/check-map-upgrade.php" "$BACKEND/config.php" "$REPO/data/booth-tiers.json"
+fi
 mkdir -p "$SITE" "$BACKEND"
 
 # ---- Backend first (outside the web folder), so the new pages never run
@@ -68,6 +71,13 @@ done
 mkdir -p "$SITE/data"
 "$PHP" "$REPO/backend/tools/merge-data.php" "$REPO/data" "$SITE/data"
 
+# Geometry and reservation IDs are code-owned. Keep a copy of the old plan,
+# then deploy the exact directory used by both the website and database.
+if [ -f "$SITE/data/booth-tiers.json" ] && [ ! -f "$BACKEND/storage/booth-plan-before-39.json" ]; then
+  cp -p "$SITE/data/booth-tiers.json" "$BACKEND/storage/booth-plan-before-39.json"
+fi
+cp "$REPO/data/booth-tiers.json" "$SITE/data/booth-tiers.json"
+
 # The API finds its backend through this one-line file (not in Git).
 if [ ! -f "$SITE/api/_backend.php" ]; then
   printf "<?php return '%s';\n" "$BACKEND" > "$SITE/api/_backend.php"
@@ -82,5 +92,6 @@ else
     echo "DATABASE UPDATE FAILED: the files were updated but the database was not. Fix this before using the site." >&2
     exit 1
   fi
+  "$PHP" "$BACKEND/tools/verify-map-bookings.php"
 fi
 echo "Done: $TARGET"

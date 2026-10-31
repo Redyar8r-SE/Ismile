@@ -249,6 +249,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const boothSelect = form.querySelector('[name="booth_number"]');
     if (!packageSelect || !boothSelect) return;
     const emptyLabel = boothSelect.options[0].textContent;
+    const labels = JSON.parse(form.dataset.boothLabels || "{}");
+    const historical = [...boothSelect.options].find((option) => option.value === boothSelect.dataset.current);
     const booked = new Set(JSON.parse(boothSelect.dataset.booked || "[]"));
     const render = () => {
       const previous = boothSelect.value;
@@ -257,11 +259,14 @@ document.addEventListener("DOMContentLoaded", () => {
       numbers.forEach((number) => {
         const own = String(number) === boothSelect.dataset.current && boothSelect.dataset.currentActive === "1";
         const taken = booked.has(number) && !own;
-        const option = new Option(`Booth ${number}${taken ? " — Booked" : ""}`, String(number));
+        const option = new Option(`Booth ${labels[number] ?? number}${taken ? " — Booked" : ""}`, String(number));
         option.disabled = taken;
         boothSelect.add(option);
       });
-      boothSelect.value = numbers.some((number) => String(number) === previous) ? previous : "";
+      const preserveHistory = historical?.value && boothSelect.dataset.currentActive === "0" &&
+        !numbers.some((number) => String(number) === historical.value) && previous === historical.value;
+      if (preserveHistory) boothSelect.add(new Option(historical.textContent, historical.value));
+      boothSelect.value = preserveHistory || numbers.some((number) => String(number) === previous) ? previous : "";
     };
     packageSelect.addEventListener("change", render);
     render();

@@ -37,7 +37,7 @@ export function floorPlanSVG({ booths, colors, label, booked = new Set(), select
         const x = booth.points.reduce((sum, point) => sum + point[0], 0) / booth.points.length;
         const y = booth.points.reduce((sum, point) => sum + point[1], 0) / booth.points.length;
         const points = booth.points.map((point) => point.join(",")).join(" ");
-        return `<g class="map-booth${booked.has(booth.number) ? " is-booked" : ""}${selected === booth.number ? " is-selected" : ""}" data-booth="${booth.number}"${interactive ? ` tabindex="0" role="button" aria-pressed="${selected === booth.number}" aria-label="${escape(label(booth))}"` : ""} style="--booth-color:${colors[booth.tier]}"><title>${escape(label(booth))}</title><polygon points="${points}"/><polyline class="booth-outline" points="${points} ${booth.points[0].join(",")}"/><text x="${x}" y="${y}" aria-hidden="true">${booth.number}</text></g>`;
+        return `<g class="map-booth${booked.has(booth.number) ? " is-booked" : ""}${selected === booth.number ? " is-selected" : ""}" data-booth="${booth.number}"${interactive ? ` tabindex="0" role="button" aria-pressed="${selected === booth.number}" aria-label="${escape(label(booth))}"` : ""} style="--booth-color:${colors[booth.tier]}"><title>${escape(label(booth))}</title><polygon points="${points}"/><polyline class="booth-outline" points="${points} ${booth.points[0].join(",")}"/><text x="${x}" y="${y}" aria-hidden="true">${booth.displayNumber ?? booth.number}</text></g>`;
       }).join("")}
     </svg>`;
 }

@@ -536,7 +536,7 @@ try {
     check('a second ticket for the same person', $refuses(fn () => Db::insert('tickets', ['registration_id' => $sample['id'], 'ticket_no' => 'X-' . bin2hex(random_bytes(3)), 'source' => 'complimentary', 'created_at' => $now])));
     check('an action by an admin who does not exist', $refuses(fn () => Audit::log(999999999, 'test')));
     $simpleLists = array_column(Db::all('SELECT table_name AS name FROM information_schema.views WHERE table_schema = DATABASE() ORDER BY table_name'), 'name');
-    check('all 14 numbered database lists exist, including attendance and certificates', $simpleLists === ['01_registered_people', '02_lunch_day_1', '03_lunch_day_2', '04_students', '05_workshops', '06_workshop_people', '07_sponsors', '08_exhibition', '09_sponsor_calls', '10_sponsor_packages', '11_payments', '12_money_per_day', '13_forms_sent', '14_attendance_and_certificates'], implode(',', $simpleLists));
+    check('all 15 numbered database lists exist, including attendance and the sponsor map', $simpleLists === ['01_registered_people', '02_lunch_day_1', '03_lunch_day_2', '04_students', '05_workshops', '06_workshop_people', '07_sponsors', '08_exhibition', '09_sponsor_calls', '10_sponsor_packages', '11_payments', '12_money_per_day', '13_forms_sent', '14_attendance_and_certificates', '15_sponsor_map'], implode(',', $simpleLists));
     $listsWork = true;
     foreach ($simpleLists as $list) {
         try {

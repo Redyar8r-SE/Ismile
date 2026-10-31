@@ -77,6 +77,10 @@ foreach ($migrations as $file) {
     Db::run('INSERT INTO schema_migrations (name, applied_at) VALUES (?, ?)', [$name, App::now()]);
 }
 
+// Match the database directory to the website before rebuilding views.
+// This refuses to remove a reserved position and never rewrites bookings.
+\Ismile\BoothPlan::syncDatabase();
+
 // 3. The simple lists (views), always rebuilt from the current design. Lists
 //    from an older design that are no longer in it are removed.
 $run(array_filter($design, $isView));
@@ -97,6 +101,7 @@ if ($imported > 0) {
 // 5. Sponsor tiers from the website plus one Standard exhibition booth type.
 //    Their prices are set on the separate Sponsors and Booths admin pages.
 $imported = \Ismile\SponsorPackages::importFromWebsite();
+\Ismile\BoothPlan::syncPackageCounts();
 \Ismile\SponsorPackages::syncWebsite();
 if ($imported > 0) {
     echo "Sponsor packages copied from the website: $imported (set their prices in the admin: Sponsors)\n";

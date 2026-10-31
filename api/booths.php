@@ -9,5 +9,6 @@ use Ismile\Sponsors;
 
 Api::run(static function (): void {
     Api::requireMethod('GET');
+    \Ismile\BoothPlan::assertDatabaseMatches();
     Api::json(200, ['ok' => true, 'booked' => Sponsors::bookedBooths()]);
 });

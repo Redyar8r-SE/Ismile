@@ -446,6 +446,19 @@ CREATE TABLE IF NOT EXISTS sponsor_packages (
   COMMENT='Sponsor packages and booth types, with prices';
 
 -- Sponsorship and booth requests: handled by a person, never sold like tickets.
+-- Stable reservation IDs are separate from the visible booth numbers.
+CREATE TABLE IF NOT EXISTS sponsor_map_positions (
+  position_id SMALLINT UNSIGNED NOT NULL,
+  display_number SMALLINT UNSIGNED NOT NULL,
+  tier ENUM('platinum','gold','silver','bronze') NOT NULL,
+  size VARCHAR(30) NOT NULL,
+  PRIMARY KEY (position_id),
+  UNIQUE KEY uq_map_display_number (display_number),
+  CONSTRAINT ck_map_display_number CHECK (display_number BETWEEN 1 AND 39)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='Stable booking position IDs and their visible 1-39 map numbers';
+
+-- Sponsorship and booth requests: handled by a person, never sold like tickets.
 -- The steps: New → Contacted (called) → Agreed (amount agreed) → Paid → Confirmed,
 -- or Declined / Waiting list.
 CREATE TABLE IF NOT EXISTS sponsor_requests (
@@ -471,7 +484,7 @@ CREATE TABLE IF NOT EXISTS sponsor_requests (
   amount_paid    INT UNSIGNED  NULL,                           -- IQD, received
   paid_how       ENUM('cash','transfer','psoola','other') NULL,
   paid_at        DATETIME      NULL,
-  booth_number   VARCHAR(20)   NULL,                           -- sponsor map position; legacy exhibitor labels retained
+  booth_number   VARCHAR(20)   NULL,                           -- stable position ID; join sponsor_map_positions for the visible number
   -- Only sponsors reserve. Declined / waiting-list / cancelled release it.
   reserved_booth  VARCHAR(20) AS (IF(kind='sponsor' AND status NOT IN ('declined','waiting_list','cancelled') AND booth_number IS NOT NULL,
     TRIM(LEADING '0' FROM TRIM(booth_number)), NULL)) STORED,
@@ -745,6 +758,7 @@ SELECT
   s.ref                                                  AS `Reference`,
   s.company                                              AS `Company`,
   COALESCE(p.name_en, 'Not sure yet')                    AS `Package`,
+  m.display_number                                      AS `Map position`,
   s.contact_name                                         AS `Contact person`,
   s.phone                                                AS `Phone`,
   s.email                                                AS `Email`,
@@ -759,8 +773,18 @@ SELECT
   s.created_at                                           AS `Received on`
 FROM sponsor_requests s
 LEFT JOIN sponsor_packages p ON p.id = s.package_id
+LEFT JOIN sponsor_map_positions m ON CAST(m.position_id AS CHAR) COLLATE utf8mb4_unicode_ci = s.booth_number
 LEFT JOIN admin_users u      ON u.id = s.assigned_to
 WHERE s.kind = 'sponsor';
+
+-- One row per current map position, including available spaces.
+CREATE OR REPLACE SQL SECURITY DEFINER VIEW `15_sponsor_map` AS
+SELECT m.display_number AS `Map position`, m.position_id AS `Internal position ID`,
+  m.tier AS `Tier`, m.size AS `Size`, s.ref AS `Booking reference`,
+  s.company AS `Company`, s.status AS `Status`
+FROM sponsor_map_positions m
+LEFT JOIN sponsor_requests s ON s.reserved_booth = CAST(m.position_id AS CHAR) COLLATE utf8mb4_unicode_ci
+ORDER BY m.display_number;
 
 -- Exhibition booth requests (separate from the sponsors).
 CREATE OR REPLACE SQL SECURITY DEFINER VIEW `08_exhibition` AS

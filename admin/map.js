@@ -1,5 +1,5 @@
-import { buildBooths } from '../js/config/booth-layout.js?v=148';
-import { floorPlanSVG } from '../js/sections/floor-plan.js?v=148';
+import { buildBooths } from '../js/config/booth-layout.js?v=150';
+import { floorPlanSVG } from '../js/sections/floor-plan.js?v=150';
 
 const el = (id) => document.getElementById(id);
 const canManage = el('operationsMap').dataset.canManage === '1';
@@ -12,7 +12,7 @@ const initial = Number(new URL(location.href).searchParams.get('number'));
 if (Number.isInteger(initial) && initial >= 1 && initial <= 44) selected = initial;
 
 function label(booth) {
-  return `Position ${booth.number}, ${title(booth.tier)}, ${booth.size}, ${!connected ? 'availability unknown' : bookings.has(booth.number) ? `reserved by ${bookings.get(booth.number).company}` : 'available'}`;
+  return `Position ${booth.displayNumber}, ${title(booth.tier)}, ${booth.size}, ${!connected ? 'availability unknown' : bookings.has(booth.number) ? `reserved by ${bookings.get(booth.number).company}` : 'available'}`;
 }
 
 function renderMap() {
@@ -31,13 +31,13 @@ function renderDirectory() {
   const q = el('mapSearch').value.trim().toLowerCase(), filter = el('mapFilter').value;
   const visible = booths.filter((b) => {
     const r = bookings.get(b.number);
-    const matches = /^\d{1,2}$/.test(q) ? b.number === Number(q) : [b.number, b.tier, r?.company, r?.contact_name, r?.phone, r?.ref].some((v) => String(v ?? '').toLowerCase().includes(q));
+    const matches = /^\d{1,2}$/.test(q) ? b.displayNumber === Number(q) : [b.displayNumber, b.tier, r?.company, r?.contact_name, r?.phone, r?.ref].some((v) => String(v ?? '').toLowerCase().includes(q));
     return (!q || matches) &&
       (filter === 'all' || (connected && (filter === 'reserved' ? !!r : !r)));
   });
   el('mapDirectory').innerHTML = visible.map((b) => {
     const r = bookings.get(b.number);
-    return `<button type="button" class="map-directory-item${r ? ' is-booked' : ''}${selected === b.number ? ' is-selected' : ''}" data-booth="${b.number}" aria-pressed="${selected === b.number}"><b>${b.number}</b><span><strong>${escape(title(b.tier))} · ${escape(b.size)}</strong><small>${escape(!connected ? 'Availability unknown' : r ? r.company : 'Available')}</small></span><small>${escape(r ? title(r.status) : '')}</small></button>`;
+    return `<button type="button" class="map-directory-item${r ? ' is-booked' : ''}${selected === b.number ? ' is-selected' : ''}" data-booth="${b.number}" aria-pressed="${selected === b.number}"><b>${b.displayNumber}</b><span><strong>${escape(title(b.tier))} · ${escape(b.size)}</strong><small>${escape(!connected ? 'Availability unknown' : r ? r.company : 'Available')}</small></span><small>${escape(r ? title(r.status) : '')}</small></button>`;
   }).join('') || '<p>No matching positions.</p>';
   if (focused) el('mapDirectory').querySelector(`[data-booth="${Number(focused)}"]`)?.focus({preventScroll: true});
 }
@@ -45,7 +45,7 @@ function renderDirectory() {
 function renderDetails() {
   if (!selected) return;
   const b = booths.find((b) => b.number === selected);
-  let html = `<h2>Position ${selected}</h2><p>${escape(title(b.tier))} · ${escape(b.size)}</p>`;
+  let html = `<h2>Position ${b.displayNumber}</h2><p>${escape(title(b.tier))} · ${escape(b.size)}</p>`;
   if (!connected) {
     el('mapDetails').innerHTML = html + '<p role="status">Booking details are unavailable. Reconnecting to the database...</p>';
     return;
@@ -92,7 +92,7 @@ async function refresh() {
     el('mapLive').textContent = '';
     el('mapLive').hidden = true;
     el('mapLive').className = 'exhibition-live is-live';
-    el('mapAvailable').textContent = 44 - bookings.size;
+    el('mapAvailable').textContent = booths.length - bookings.size;
     el('mapBooked').textContent = bookings.size;
   } catch {
     if (controller !== request) return;
@@ -125,10 +125,11 @@ try {
   if (!response.ok) throw new Error('Floor plan unavailable');
   const plan = await response.json();
   booths = buildBooths(plan.rows); colors = plan.colors;
+  if (selected && !booths.some((booth) => booth.number === selected)) selected = null;
   if (canManage) {
     el('mapDetails').addEventListener('click', (event) => {
       if (!event.target.closest('[data-book-position]') || !connected || bookings.has(selected)) return;
-      el('mapBookingNumber').textContent = selected;
+      el('mapBookingNumber').textContent = booths.find((b) => b.number === selected).displayNumber;
       el('mapBookingBooth').value = selected;
       const select = el('mapBookingPackage');
       select.value = '';

@@ -41,7 +41,7 @@ foreach ($views as $view) {
     if (!preg_match('/^[a-z0-9_]+$/', $name)) throw new RuntimeException('Unexpected view name.');
     App::db()->query("SELECT * FROM `$name` LIMIT 0");
 }
-$check('all 14 views readable', count($views) === 14);
+$check('all 15 views readable', count($views) === 15);
 $check('one Standard booth available', (int) Db::value("SELECT COUNT(*) FROM sponsor_packages WHERE kind='booth' AND status='active'") === 1 && (bool) Db::value("SELECT id FROM sponsor_packages WHERE id='booth-standard' AND status='active'"));
 // Resume a deployment interrupted after the table was created, before this
 // migration was recorded. The existing column must not be added again.

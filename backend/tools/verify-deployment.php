@@ -70,7 +70,10 @@ foreach ($views as $view) {
     if (!preg_match('/^[a-z0-9_]+$/', $view['name'])) throw new RuntimeException('Unexpected database view name.');
     App::db()->query('SELECT * FROM `' . $view['name'] . '` LIMIT 0');
 }
-$check('all 14 database views are readable', count($views) === 14);
+$check('all 15 database views are readable', count($views) === 15);
+\Ismile\BoothPlan::assertDatabaseMatches();
+$check('all 39 map numbers, types and sizes match the website', \Ismile\BoothPlan::count() === 39);
+$check('every active sponsor reservation has a position in the new map', (int) Db::value("SELECT COUNT(*) FROM sponsor_requests s LEFT JOIN sponsor_map_positions m ON CAST(m.position_id AS CHAR) COLLATE utf8mb4_unicode_ci=s.reserved_booth WHERE s.reserved_booth IS NOT NULL AND m.position_id IS NULL") === 0);
 $check('no certificate without attendance', (int) Db::value('SELECT COUNT(*) FROM certificates c WHERE NOT EXISTS (SELECT 1 FROM tickets t JOIN ticket_attendance a ON a.ticket_id=t.id WHERE t.registration_id=c.registration_id)') === 0);
 $check('one admission per ticket per day', (int) Db::value('SELECT COUNT(*) FROM (SELECT ticket_id,event_day FROM ticket_attendance GROUP BY ticket_id,event_day HAVING COUNT(*)>1) duplicates') === 0);
 $check('only one active Standard booth type', (int) Db::value("SELECT COUNT(*) FROM sponsor_packages WHERE kind='booth' AND status='active'") <= 1 && (int) Db::value("SELECT COUNT(*) FROM sponsor_packages WHERE kind='booth' AND status='active' AND (id<>'booth-standard' OR booth_tier IS NOT NULL)") === 0);
