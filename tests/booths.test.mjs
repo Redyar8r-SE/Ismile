@@ -1,5 +1,26 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { boothAvailability } from "../server/booths.mjs";
+import { boothAvailability, normalizeMapText } from "../server/booths.mjs";
+
+describe("map references in existing persistent translations", () => {
+  it("updates the count and width-only booth references without replacing edited text", () => {
+    const result = normalizeMapText({
+      bm_intro: "My 44 numbered booths",
+      bm_size_note: "الأجنحة 1 و6 و24",
+      legal: "Keep this edited text",
+    });
+    expect(result).toEqual({
+      bm_intro: "My 39 numbered booths",
+      bm_size_note: "الأجنحة 1 و5 و21",
+      legal: "Keep this edited text",
+    });
+    expect(normalizeMapText(result)).toEqual(result);
+  });
+  it("preserves Arabic digits when updating Kurdish map references", () => {
+    const result = normalizeMapText({ bm_intro: "٤٤ بووث", bm_size_note: "١، ٦ و ٢٤" });
+    expect(result).toEqual({ bm_intro: "٣٩ بووث", bm_size_note: "١، ٥ و ٢١" });
+    expect(normalizeMapText(result)).toEqual(result);
+  });
+});
 
 describe("live booth availability on the Node website", () => {
   beforeEach(() => {
@@ -36,6 +57,16 @@ describe("live booth availability on the Node website", () => {
     expect(fetchMock.mock.calls[0][1].redirect).toBe("error");
     expect(response.body).not.toContain("staff-server");
     expect(response.body).not.toContain("password");
+  });
+  it("preserves stable ID 44 for the reservation displayed as booth 39", async () => {
+    upstream({ ok: true, booked: [1, 5, 7, 15, 16, 17, 18, 19, 20, 23, 43, 44] });
+    const response = await boothAvailability();
+    expect(response.statusCode).toBe(200);
+    expect(JSON.parse(response.body).booked).toEqual([1, 5, 7, 15, 16, 17, 18, 19, 20, 23, 43, 44]);
+  });
+  it.each([4, 13, 14, 29, 31])("refuses removed position ID %i", async (number) => {
+    upstream({ ok: true, booked: [number] });
+    expect((await boothAvailability()).statusCode).toBe(503);
   });
   it("never lets visitors write reservations through the Node route", async () => {
     const fetchMock = upstream({ ok: true, booked: [] });

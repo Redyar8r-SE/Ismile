@@ -1,9 +1,9 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { createServer } from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { handler } from "../netlify/functions/api.mjs";
-import { boothAvailability } from "./booths.mjs";
+import { boothAvailability, normalizeMapText } from "./booths.mjs";
 import { contentFile, contentRequest } from "./content-store.mjs";
 import { editorHandoff } from "./editor-handoff.mjs";
 import { registrationRequest } from "./registration.mjs";
@@ -144,6 +144,17 @@ export function createAppServer() {
         return;
       }
       const override = contentFile(CONTENT_ROOT, url.pathname.slice(1));
+      if (/^\/data\/i18n\/(?:site-)?(?:en|ar|ku)\.json$/.test(url.pathname)) {
+        const source =
+          override && existsSync(override) ? override : path.join(ROOT, url.pathname.slice(1));
+        const dictionary = normalizeMapText(JSON.parse(readFileSync(source, "utf8")));
+        res.writeHead(200, {
+          "Content-Type": "application/json; charset=utf-8",
+          "Cache-Control": "no-store",
+        });
+        res.end(req.method === "HEAD" ? undefined : JSON.stringify(dictionary));
+        return;
+      }
       if (url.pathname === "/data/sponsors.json" && req.method === "GET") {
         const local =
           override && existsSync(override) ? override : path.join(ROOT, "data/sponsors.json");
