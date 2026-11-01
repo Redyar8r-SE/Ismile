@@ -26,11 +26,16 @@ if (($argv[1] ?? '') === '--render') {
     // A process-local rendering context, without signing in or updating an account.
     $owner['totp_enabled'] = 1;
     $owner['map_booking_access'] = 0;
+    $owner['association_manage_access'] = 0;
     // --render page query role: the same page as a Viewer or Sponsors account would see it.
     if (in_array($argv[4] ?? '', Auth::ROLES, true)) $owner['role'] = $argv[4];
     if (($argv[4] ?? '') === 'map_manager') {
         $owner['role'] = 'sponsors';
         $owner['map_booking_access'] = 1;
+    }
+    if (($argv[4] ?? '') === 'association_manager') {
+        $owner['role'] = 'viewer';
+        $owner['association_manage_access'] = 1;
     }
     (new ReflectionProperty(Auth::class, 'user'))->setValue(null, $owner);
     $file = App::siteFile('admin/' . $page . '.php');
@@ -108,6 +113,8 @@ foreach (['finance','viewer','sponsors'] as $role) {
     $check($role . ' has correct Association controls', str_contains($html, 'Batch history') && (str_contains($html, 'data-association-review') === ($role === 'finance')));
 }
 $associationTotals = \Ismile\Association::totals();
+$html = $render('association', '', 'association_manager');
+$check('designated Association manager can select and confirm without a view-only banner', str_contains($html, 'data-association-review') && str_contains($html, 'data-association-choice') && !str_contains($html, 'class="admin-shell view-only"'));
 $check('Association sent totals match the active guest ledger', (int)$associationTotals['amount'] === (int)Db::value('SELECT COALESCE(SUM(ticket_amount),0) FROM association_batch_items WHERE active=1') && (int)$associationTotals['guests'] === (int)Db::value('SELECT COUNT(*) FROM association_batch_items WHERE active=1'));
 foreach (Auth::ROLES as $role) {
     $html = $render('map', '', $role);

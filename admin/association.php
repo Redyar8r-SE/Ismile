@@ -20,7 +20,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     $back = 'association.php';
     try {
         Auth::checkCsrf();
-        if (!$manage) throw new UserError('Only Owner and Finance can save Association handovers.');
+        if (!$manage) throw new UserError('Your account cannot save Association handovers.');
         $action = Page::post('do');
         if ($action === 'review') {
             $json = Page::post('selection_json', 24001);
@@ -45,9 +45,22 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             Page::flash('ok', Association::label($id) . ' saved as sent to Association.');
         } elseif ($action === 'reverse') {
             $id = (int)Page::post('batch_id');
-            Association::reverse($user, $id, Page::post('reason', 1001));
             $back .= '?batch=' . $id;
-            Page::flash('ok', 'Batch reversed. The amount is restored and its guests can be selected again.');
+            $scope = Page::post('reverse_scope');
+            $ids = null;
+            if ($scope === 'selected') {
+                $json = Page::post('reverse_selection_json', 24001);
+                if ($json !== '') $ids = Association::ids($json);
+                else {
+                    $ids = [];
+                    foreach ($_POST as $key=>$value) if (preg_match('/^reverse_guest_(\d+)$/D', $key, $match) && $value === '1') $ids[] = (int)$match[1];
+                }
+            } elseif ($scope !== 'all') throw new UserError('Choose selected guests or the whole batch.');
+            Association::reverse($user, $id, Page::post('reason', 1001), $ids);
+            if (Association::batch($id)['status'] === 'reversed') {
+                $back = 'association.php';
+                Page::flash('ok', 'Batch reversed and removed from batch history. Its amount is restored and its guests can be selected again.');
+            } else Page::flash('ok', 'Selected guests reversed. Their amount is restored and they can be selected again.');
         } else throw new UserError('Unknown Association action.');
     } catch (UserError $error) {
         Page::flash('error', $error->key);
@@ -83,25 +96,28 @@ echo '<div data-live-region="association-totals">' . Page::stats([
 <div data-association-workspace data-user-id="<?= (int)$user['id'] ?>">
 <?php if ($review || $batch):
     $items = $batch ? Association::items($batchId) : $review['items'];
-    $amount = $batch ? (int)$batch['total_amount'] : $review['total'];
+    $amount = $batch ? (int)$batch['active_amount'] : $review['total'];
+    $reversible = $batch && $manage && $batch['status']==='sent';
 ?>
 <section class="card directory-panel">
   <div class="toolbar list-head"><div><h2><?= $batch ? $e(Association::label($batchId)) : 'Review your handover' ?></h2>
-  <p class="muted"><?= count($items) ?> guests &middot; <b><?= $e(Page::money($amount,'IQD')) ?></b> &middot; Ticket amounts only; lunch excluded.</p></div>
+  <p class="muted"><?= $batch ? (int)$batch['active_guests'] : count($items) ?> guests<?= $batch?' currently sent':'' ?> &middot; <b><?= $e(Page::money($amount,'IQD')) ?></b> &middot; Ticket amounts only; lunch excluded.</p></div>
   <div class="panel-actions"><a class="btn ghost" href="association.php">Back to guests</a>
-  <?php if ($batch && Auth::can($user,'export')): ?><a class="btn green" href="export.php?what=association&amp;id=<?= $batchId ?>&amp;format=pdf">Download batch PDF</a><?php endif; ?></div></div>
+  <?php if ($batch && (Auth::can($user,'export') || $manage)): ?><a class="btn green" href="export.php?what=association&amp;id=<?= $batchId ?>&amp;format=pdf">Download batch PDF</a><?php endif; ?></div></div>
   <?php if ($batch): ?><p><b><?= $e(strtoupper($batch['status'])) ?></b> &middot; <?= $e($batch['sent_at']) ?> (Iraq) &middot; Recorded by <?= $e($batch['created_by_name']) ?></p><?php endif; ?>
+  <?php if ($batch && (int)$batch['active_guests'] !== (int)$batch['guest_count']): ?><p class="muted small">Original batch: <?= (int)$batch['guest_count'] ?> guests &middot; <?= $e(Page::money((int)$batch['total_amount'],'IQD')) ?>. Reversed guests are marked below.</p><?php endif; ?>
   <?php $note = $batch ? $batch['note'] : $review['note']; if ($note !== ''): ?><p><b>Note:</b> <?= $e($note) ?></p><?php endif; ?>
   <?php if ($batch && $batch['status']==='reversed'): ?><p class="muted"><b>Reversed <?= $e($batch['reversed_at']) ?>:</b> <?= $e($batch['reversal_reason']) ?></p><?php endif; ?>
-  <div class="table-wrap"><table><thead><tr><th>#</th><th>Full name</th><th>Phone</th><th>Ticket</th><th>Lunch</th><th>Total paid</th><th>Association amount</th><th>Reference</th></tr></thead><tbody>
-  <?php foreach ($items as $i=>$r): ?><tr><td><?= $i+1 ?></td><td><b><?= $e($r['full_name']) ?></b></td><td dir="ltr"><?= $e($r['phone']) ?></td><td><?= $e($r['ticket_type']) ?></td><td><?= $e($r['lunch']) ?></td><td><?= $e(Page::money((int)$r['total_paid'],'IQD')) ?></td><td><b><?= $e(Page::money((int)$r['ticket_amount'],'IQD')) ?></b></td><td><code><?= $e($r['ref']) ?></code></td></tr><?php endforeach; ?>
+  <?php if ($reversible): ?><form method="post" data-association-reversal-form><?= Page::csrfField() ?><input type="hidden" name="do" value="reverse"><input type="hidden" name="batch_id" value="<?= $batchId ?>"><input type="hidden" name="reverse_selection_json" value=""><?php endif; ?>
+  <div class="table-wrap"><table><thead><tr><?php if ($reversible): ?><th><input type="checkbox" data-association-reverse-all aria-label="Select all active guests to reverse"></th><?php endif; ?><th>#</th><th>Full name</th><th>Phone</th><th>Ticket</th><th>Lunch</th><th>Total paid</th><th>Association amount</th><th>Reference</th><?php if($batch): ?><th>Association status</th><?php endif; ?></tr></thead><tbody>
+  <?php foreach ($items as $i=>$r): ?><tr><?php if ($reversible): ?><td><?php if(!empty($r['active'])): ?><input type="checkbox" name="reverse_guest_<?= (int)$r['registration_id'] ?>" value="1" data-association-reverse-guest aria-label="<?= $e('Reverse '.$r['full_name']) ?>"><?php endif; ?></td><?php endif; ?><td><?= $i+1 ?></td><td><b><?= $e($r['full_name']) ?></b></td><td dir="ltr"><?= $e($r['phone']) ?></td><td><?= $e($r['ticket_type']) ?></td><td><?= $e($r['lunch']) ?></td><td><?= $e(Page::money((int)$r['total_paid'],'IQD')) ?></td><td><b><?= $e(Page::money($batch && empty($r['active'])?0:(int)$r['ticket_amount'],'IQD')) ?></b></td><td><code><?= $e($r['ref']) ?></code></td><?php if($batch): ?><td><?= !empty($r['active'])?'Sent':'Reversed' ?><?php if(empty($r['active'])): ?><br><small class="muted"><?= $e($r['reversed_at']) ?><?= !empty($r['reversal_reason'])?'<br>'.$e($r['reversal_reason']):'' ?></small><?php endif; ?></td><?php endif; ?></tr><?php endforeach; ?>
   </tbody></table></div>
   <?php if ($review): ?>
   <p>Confirm after handing over the money. This records the handover and deducts <?= $e(Page::money($amount,'IQD')) ?> from the remaining revenue.</p>
   <form method="post" class="form-actions"><?= Page::csrfField() ?><input type="hidden" name="do" value="confirm"><input type="hidden" name="review_token" value="<?= $e($reviewToken) ?>"><button class="btn green">Confirm sent to Association</button><a class="btn ghost" href="association.php">Back to selection</a></form>
-  <?php elseif ($manage && $batch['status']==='sent'): ?>
-  <span data-association-consumed="<?= $e(json_encode(array_map('intval',array_column($items,'registration_id')))) ?>" hidden></span>
-  <details class="association-reversal"><summary>Correct this handover</summary><p>Reverse the whole batch to restore its amount and select the correct guests again. The original batch stays in history.</p><form method="post"><?= Page::csrfField() ?><input type="hidden" name="do" value="reverse"><input type="hidden" name="batch_id" value="<?= $batchId ?>"><label>Reason for reversal<textarea name="reason" maxlength="1000" required></textarea></label><button class="btn ghost">Reverse batch and restore amount</button></form></details>
+  <?php elseif ($reversible): ?>
+  <span data-association-consumed="<?= $e(json_encode(array_map('intval',array_column(array_filter($items,static fn($r)=>!empty($r['active'])),'registration_id')))) ?>" hidden></span>
+  <details class="association-reversal"><summary>Reverse guests or the whole batch</summary><p>Select one or several guests above to reverse their amounts, or reverse the whole batch. Fully reversed batches are removed from batch history.</p><label>Reason for reversal<textarea name="reason" maxlength="1000" required></textarea></label><div class="form-actions"><button class="btn ghost" name="reverse_scope" value="selected">Reverse selected guests</button><button class="btn ghost" name="reverse_scope" value="all">Reverse whole batch</button></div></details></form>
   <?php endif; ?>
 </section>
 <?php else:
@@ -146,9 +162,9 @@ echo '<div data-live-region="association-totals">' . Page::stats([
 </div></form>
 <?php endif; ?>
 </div>
-<section class="card directory-panel" id="batch-history" data-live-region="association-history"><div class="toolbar list-head"><div><h2>Batch history</h2><p class="muted small">Saved handovers and reversals. Download the same names and amounts whenever you need them.</p></div></div>
+<section class="card directory-panel" id="batch-history" data-live-region="association-history"><div class="toolbar list-head"><div><h2>Batch history</h2><p class="muted small">Active handovers. Fully reversed batches are removed from this list.</p></div></div>
 <div class="table-wrap"><table><thead><tr><th>Batch</th><th>Sent (Iraq)</th><th>Guests</th><th>Amount sent</th><th>Recorded by</th><th>Status</th><th>Note</th><th>PDF</th></tr></thead><tbody>
-<?php $history=Db::all('SELECT * FROM association_batches ORDER BY id DESC'); foreach($history as $h): ?><tr><td><a href="association.php?batch=<?= (int)$h['id'] ?>"><b><?= $e(Association::label((int)$h['id'])) ?></b></a></td><td><?= $e($h['sent_at']) ?></td><td><?= (int)$h['guest_count'] ?></td><td><?= $e(Page::money((int)$h['total_amount'],'IQD')) ?></td><td><?= $e($h['created_by_name']) ?></td><td><?= $e(ucfirst($h['status'])) ?></td><td><?= $e($h['note']) ?></td><td><?php if(Auth::can($user,'export')): ?><a class="btn small ghost" href="export.php?what=association&amp;id=<?= (int)$h['id'] ?>&amp;format=pdf">PDF</a><?php endif; ?></td></tr><?php endforeach; ?>
+<?php $history=Association::history(); foreach($history as $h): ?><tr><td><a href="association.php?batch=<?= (int)$h['id'] ?>"><b><?= $e(Association::label((int)$h['id'])) ?></b></a></td><td><?= $e($h['sent_at']) ?></td><td><?= (int)$h['active_guests'] ?></td><td><?= $e(Page::money((int)$h['active_amount'],'IQD')) ?></td><td><?= $e($h['created_by_name']) ?></td><td><?= (int)$h['active_guests'] < (int)$h['guest_count']?'Partially reversed':'Sent' ?></td><td><?= $e($h['note']) ?></td><td><?php if(Auth::can($user,'export') || $manage): ?><a class="btn small ghost" href="export.php?what=association&amp;id=<?= (int)$h['id'] ?>&amp;format=pdf">PDF</a><?php endif; ?></td></tr><?php endforeach; ?>
 <?php if(!$history): ?><tr><td colspan="8"><?= Page::emptyState('No handovers recorded yet','Select guests and confirm your first batch after handing over the money.','association') ?></td></tr><?php endif; ?>
 </tbody></table></div></section>
 <?php Page::bottom();

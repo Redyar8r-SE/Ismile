@@ -1306,6 +1306,6 @@ body[data-page=backups] .page-symbol{background:#e9f4ee;color:#418165;border-col
 .association-reversal{margin-top:24px;border-top:1px solid #dbe6ec;padding-top:18px}
 .association-reversal summary{cursor:pointer;font-weight:600}
 .association-reversal form{max-width:680px}
-[data-association-choice],[data-association-all]{width:18px;height:18px;accent-color:#008b86;cursor:pointer}
+[data-association-choice],[data-association-all],[data-association-reverse-all],[data-association-reverse-guest]{width:18px;height:18px;accent-color:#008b86;cursor:pointer}
 [data-association-choice]:disabled{cursor:default}
 @media(max-width:640px){.association-selection-bar .panel-actions{width:100%;flex-wrap:wrap}.association-selection-bar .panel-actions .btn{flex:1}}

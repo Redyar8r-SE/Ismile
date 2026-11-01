@@ -13,6 +13,9 @@ if($active!==(int)$totals['amount'])throw new RuntimeException('Association item
 if((int)Db::value('SELECT COUNT(*) FROM association_batch_items WHERE active=1')!==(int)$totals['guests'])throw new RuntimeException('Association guest counts do not match batch totals.');
 if((int)Db::value("SELECT COUNT(*) FROM association_batch_items i JOIN association_batches b ON b.id=i.batch_id WHERE (i.active=1 AND b.status<>'sent') OR (i.active IS NULL AND b.status<>'reversed')")!==0)throw new RuntimeException('Association active flags disagree with batch statuses.');
 foreach(Auth::ROLES as $role)if(Association::canManage(['role'=>$role])!==in_array($role,['owner','finance'],true))throw new RuntimeException('Association permissions failed.');
+$history=Association::history();
+foreach($history as $batch)if($batch['status']!=='sent'||(int)$batch['active_guests']<1)throw new RuntimeException('Reversed batch remains in visible history.');
+echo 'Association visible batches: '.count($history).'; fully reversed batches excluded: '.(int)Db::value("SELECT COUNT(*) FROM association_batches WHERE status='reversed'")."\n";
 $people=Association::attach(Db::all(Association::selectSql()." WHERE r.status IN ('paid','complimentary') ORDER BY r.id"));
 $eligible=0;$missing=0;$other=0;$eligibleAmount=0;
 foreach($people as $r) {

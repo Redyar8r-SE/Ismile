@@ -52,6 +52,7 @@ CREATE TABLE IF NOT EXISTS admin_users (
   name             VARCHAR(120)      NOT NULL,
   role             ENUM('owner','registration','finance','content','checkin','viewer','sponsors','map_viewer') NOT NULL,
   map_booking_access TINYINT(1) NOT NULL DEFAULT 0,
+  association_manage_access TINYINT(1) NOT NULL DEFAULT 0,
   password_hash    VARCHAR(255)      NOT NULL,                 -- bcrypt/argon, never the password
   totp_secret      VARCHAR(64)       NULL,                     -- the phone-code key
   totp_enabled     TINYINT(1)        NOT NULL DEFAULT 0,
@@ -680,6 +681,8 @@ CREATE TABLE IF NOT EXISTS association_batch_items (
   payment_id INT UNSIGNED NULL,
   active TINYINT UNSIGNED NULL DEFAULT 1,
   reversed_at DATETIME NULL,
+  reversed_by INT UNSIGNED NULL,
+  reversal_reason VARCHAR(1000) NULL,
   ref VARCHAR(32) NOT NULL,
   full_name VARCHAR(600) NOT NULL,
   phone VARCHAR(64) NOT NULL,
@@ -696,6 +699,7 @@ CREATE TABLE IF NOT EXISTS association_batch_items (
   CONSTRAINT fk_association_item_batch FOREIGN KEY (batch_id) REFERENCES association_batches(id),
   CONSTRAINT fk_association_item_guest FOREIGN KEY (registration_id) REFERENCES registrations(id),
   CONSTRAINT fk_association_item_payment FOREIGN KEY (payment_id) REFERENCES payments(id),
+  CONSTRAINT fk_association_item_reverser FOREIGN KEY (reversed_by) REFERENCES admin_users(id),
   CONSTRAINT ck_association_active CHECK ((active = 1 AND reversed_at IS NULL) OR (active IS NULL AND reversed_at IS NOT NULL))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

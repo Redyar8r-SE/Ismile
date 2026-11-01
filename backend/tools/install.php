@@ -60,6 +60,12 @@ foreach ($migrations as $file) {
         // database without attendance therefore already gets this column.
         $methodAlreadyPresent = $name === '2026-10-07-manual-checkin.sql'
             && Db::value("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'ticket_attendance' AND column_name = 'checkin_method'");
+        if ($name === '2026-11-02-association-access.sql') {
+            $methodAlreadyPresent = (bool) Db::value("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'admin_users' AND column_name = 'association_manage_access'");
+        }
+        if ($name === '2026-11-02-association-guest-reversal.sql') {
+            $methodAlreadyPresent = (bool) Db::value("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'association_batch_items' AND column_name = 'reversed_by'");
+        }
         if ($name === '2026-10-09-vip-registration.sql') {
             $maria = stripos((string) Db::value('SELECT VERSION()'), 'MariaDB') !== false;
             foreach ($statements($file) as $statement) {

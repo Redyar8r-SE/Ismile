@@ -185,6 +185,7 @@ final class Auth
             return true;
         }
         if ($area === 'sponsors' && self::canManageMap($user)) return true;
+        if ($area === 'association' && self::canManageAssociation($user)) return true;
         // The Viewer (and Viewer + Sponsors) opens every event page but never 'edit'
         // or 'content' (the website editor). What it sends is refused by viewerMayPost().
         $allowed = [
@@ -219,10 +220,18 @@ final class Auth
             || ($user['role'] !== 'map_viewer' && (int) ($user['map_booking_access'] ?? 0) === 1);
     }
 
+    /** Account-specific Association access leaves every other role permission intact. */
+    public static function canManageAssociation(array $user): bool
+    {
+        return in_array($user['role'] ?? '', ['owner', 'finance'], true)
+            || (int) ($user['association_manage_access'] ?? 0) === 1;
+    }
+
     /** False when a Viewer sends something that would change data on this page. */
     public static function viewerMayPost(array $user, string $script): bool
     {
         $page = basename($script);
+        if ($page === 'association.php') return self::canManageAssociation($user);
         if (in_array($page, ['map.php', 'sponsors.php'], true)) return self::canManageMap($user);
         return !self::viewOnly($user) || in_array($page, self::VIEWER_MAY_POST, true)
             || ($user['role'] === 'sponsors' && in_array($page, self::SPONSORS_MAY_POST, true));

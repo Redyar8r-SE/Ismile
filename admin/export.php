@@ -19,7 +19,7 @@ use Ismile\Registrations;
 use Ismile\SiteData;
 
 $what = (string) ($_GET['what'] ?? '');
-$user = Page::guard($what === 'workshop' ? 'workshops' : 'export');
+$user = Page::guard(match ($what) { 'workshop'=>'workshops', 'association'=>'association', default=>'export' });
 
 $rows = [];
 $financePeople = [];

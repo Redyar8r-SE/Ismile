@@ -23,6 +23,10 @@ on:
         description: Existing account to grant exclusive non-owner map booking access
         required: false
         type: string
+      association_editor_email:
+        description: Existing account to grant full Association access
+        required: false
+        type: string
 
 concurrency:
   group: ismile-api-deploy
@@ -84,8 +88,9 @@ jobs:
           PSOOLA_CONFIG: ${{ secrets.API_PSOOLA_CONFIG }}
           QUIET_SECRETS: "1"
           MAP_EDITOR_EMAIL: ${{ inputs.map_editor_email || '' }}
+          ASSOCIATION_EDITOR_EMAIL: ${{ inputs.association_editor_email || '' }}
         with:
-          envs: OWNER_EMAIL,OWNER_PASSWORD,SITE_PASSWORD,RESEND_KEY,BREVO_KEY,MAIL_FROM,PSOOLA_CONFIG,QUIET_SECRETS,MAP_EDITOR_EMAIL
+          envs: OWNER_EMAIL,OWNER_PASSWORD,SITE_PASSWORD,RESEND_KEY,BREVO_KEY,MAIL_FROM,PSOOLA_CONFIG,QUIET_SECRETS,MAP_EDITOR_EMAIL,ASSOCIATION_EDITOR_EMAIL
           host: ${{ env.DEPLOY_HOST }}
           username: ${{ env.DEPLOY_USER }}
           password: ${{ env.DEPLOY_PASSWORD }}
@@ -107,6 +112,9 @@ jobs:
             DOMAIN=api.ismile.krd BRANCH=backend bash /root/ismile-test-setup.sh
             if [ -n "${MAP_EDITOR_EMAIL:-}" ]; then
               php /opt/ismile-test/backend/tools/configure-map-manager.php
+            fi
+            if [ -n "${ASSOCIATION_EDITOR_EMAIL:-}" ]; then
+              php /opt/ismile-test/backend/tools/configure-association-manager.php
             fi
             runuser -u www-data -- php /opt/ismile-test/backend/tools/verify-deployment.php --source /opt/ismile-test/repo
             runuser -u www-data -- php /opt/ismile-test/backend/tools/verify-association.php

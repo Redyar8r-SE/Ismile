@@ -2,6 +2,20 @@
 document.addEventListener("DOMContentLoaded", () => {
   const workspace = document.querySelector("[data-association-workspace]");
   if (!workspace) return;
+  const reversal = workspace.querySelector("[data-association-reversal-form]");
+  if (reversal) {
+    const all = reversal.querySelector("[data-association-reverse-all]");
+    const guests = [...reversal.querySelectorAll("[data-association-reverse-guest]")];
+    reversal.addEventListener("change", event => {
+      if (event.target === all) guests.forEach(input => { input.checked = all.checked; });
+      all.checked = !!guests.length && guests.every(input => input.checked);
+      all.indeterminate = !all.checked && guests.some(input => input.checked);
+    });
+    reversal.addEventListener("submit", () => {
+      reversal.querySelector('[name="reverse_selection_json"]').value = JSON.stringify(guests.filter(input => input.checked).map(input => Number(input.name.replace("reverse_guest_", ""))));
+      guests.forEach(input => input.removeAttribute("name"));
+    });
+  }
   const key = "ismile-association-selection-" + workspace.dataset.userId;
   let selected = {};
   try {
