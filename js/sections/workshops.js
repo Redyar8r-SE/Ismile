@@ -1,6 +1,5 @@
 // Workshops: the cards on workshops.html (#wsGrid), from data/workshops.json.
-// An announced workshop shows the trainer's photo with who organizes it
-// ("Organized by iSmile" or "Organized by company"), its title, trainer,
+// An announced workshop shows the trainer's photo, its title, trainer,
 // duration and level, the seats, and a short button on the right: "Register
 // online" (iSmile) or "Call to register" (company); both open the details
 // page. No price on the cards.
@@ -49,11 +48,6 @@ export const detailsHref = (w) => `workshop.html?id=${encodeURIComponent(w.id)}`
 /** A company runs this workshop: people call the company to register. */
 export const byCompany = (w) => w?.organizer === "company";
 
-/** The tag on the card and details page: "Organized by iSmile" or "Organized by company". */
-export function organizerText(w) {
-  return t(byCompany(w) ? "wsp4_co_tag" : "ws_org");
-}
-
 export function initWorkshops(workshops) {
   const grid = document.getElementById("wsGrid");
 
@@ -61,16 +55,12 @@ export function initWorkshops(workshops) {
     grid.innerHTML = workshops.map(renderCard).join("");
   }
 
-  function badge(w) {
-    return `<span class="ws-badge${byCompany(w) ? " is-company" : ""}" dir="auto">${esc(organizerText(w))}</span>`;
-  }
-
   function renderCard(w) {
     const title = pick(w.title);
     if (!title) {
       return `
       <article class="ws is-soon">
-        <div class="ws-ph">${badge(w)}${WORKSHOP_ICON}</div>
+        <div class="ws-ph">${WORKSHOP_ICON}</div>
         <div class="ws-sk">
           <span class="ws-line"><span class="sr-only">${esc(t("w_tba_title"))}</span></span>
           <span class="ws-line ws-short"></span>
@@ -101,7 +91,6 @@ export function initWorkshops(workshops) {
       <article class="ws ws-card${company ? " is-company" : ""}${left === 0 ? " full" : ""}">
         <div class="ws-media${photo ? "" : " no-photo"}">
           ${photo ? `<img src="${esc(photo)}" alt="" loading="lazy" decoding="async">` : WORKSHOP_ICON}
-          ${badge(w)}
         </div>
         <div class="ws-body">
           <h3><a class="ws-link" href="${detailsHref(w)}" aria-label="${esc(`${t("ws_details")}: ${title}`)}" dir="auto">${esc(title)}</a></h3>

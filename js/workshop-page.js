@@ -12,7 +12,7 @@ import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang, t, onLan
 import { initNav } from "./components/nav.js?v=148";
 import { initTheme } from "./components/theme.js?v=148";
 import { initFooter } from "./sections/footer.js?v=148";
-import { pick, esc, workshopPrice, photoSrc, byCompany, organizerText, WORKSHOP_ICON } from "./sections/workshops.js?v=148";
+import { pick, esc, workshopPrice, photoSrc, byCompany, WORKSHOP_ICON } from "./sections/workshops.js?v=149";
 import { phoneHref, PHONE_ICON } from "./utils/phone.js?v=148";
 
 const ICONS = {
@@ -86,7 +86,6 @@ function initDetails(workshop) {
       <article class="wdc">
         <section class="wdc-hero">
           <div class="wdc-text">
-            <span class="wd-badge${company ? " is-company" : ""}" dir="auto">${esc(organizerText(w))}</span>
             <h1 dir="auto">${esc(title)}</h1>
             ${trainer ? `<p class="wdc-trainer">${trainer}</p>` : ""}
             <div class="wdc-panel" aria-label="${esc(t(company ? "wd_call_btn" : "wd_register"))}">
