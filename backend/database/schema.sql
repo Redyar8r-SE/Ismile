@@ -656,6 +656,7 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 -- Saved Association handovers. Receipts and registrations remain unchanged.
 CREATE TABLE IF NOT EXISTS association_batches (
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  batch_number INT UNSIGNED NULL,
   request_token CHAR(64) NOT NULL,
   status ENUM('sent','reversed') NOT NULL DEFAULT 'sent',
   currency CHAR(3) NOT NULL DEFAULT 'IQD',
@@ -670,6 +671,7 @@ CREATE TABLE IF NOT EXISTS association_batches (
   reversal_reason VARCHAR(1000) NULL,
   PRIMARY KEY (id),
   UNIQUE KEY uq_association_request (request_token),
+  UNIQUE KEY uq_association_batch_number (batch_number),
   CONSTRAINT fk_association_creator FOREIGN KEY (created_by) REFERENCES admin_users(id),
   CONSTRAINT fk_association_reverser FOREIGN KEY (reversed_by) REFERENCES admin_users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

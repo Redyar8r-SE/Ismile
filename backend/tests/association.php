@@ -40,6 +40,15 @@ $seed=static function(int $ticket=30000,int $lunch=0,string $status='paid',strin
     return $id;
 };
 $remaining=static function():int {foreach(Association::revenue() as $r)if($r['currency']==='IQD')return (int)$r['total'];return 0;};
+// Reproduce the old three reversed records that consumed internal IDs 001-003.
+for($legacy=0;$legacy<3;$legacy++) {
+    $legacyGuest=$seed();
+    $legacyId=Association::confirm($owner,Association::preview([$legacyGuest]),bin2hex(random_bytes(32)));
+    Association::reverse($owner,$legacyId,'Legacy reversed test batch');
+    Db::update('association_batches',['batch_number'=>null],'id=?',[$legacyId]);
+}
+Db::update('settings',['v'=>'1'],"k='association_next_batch_number'");
+Association::initializeBatchNumbers();
 $a=$seed(30000);$b=$seed(40000,67200);$c=$seed(25000);$free=$seed(0,0,'complimentary');
 Db::update('registrations',['ambassador_code'=>'assoc26'],'id=?',[$b]);
 $gross=$remaining();$draft=Association::preview([$a,$b]);
@@ -47,8 +56,14 @@ $check('selection and review do not deduct money',$draft['total']===70000 && $re
 $check('lunch is retained in the receipt but excluded from the handover',$draft['items'][1]['total_paid']===107200 && $draft['items'][1]['ticket_amount']===40000);
 $check('viewer cannot confirm a handover',$reject(fn()=>Association::confirm($viewer,$draft,bin2hex(random_bytes(32)))));
 $token=bin2hex(random_bytes(32));$id=Association::confirm($finance,$draft+['note'=>'Receipt EXAMPLE-001'],$token);
+$check('first real batch displays 001 after three archived reversals',$id>3 && Association::label($id)==='Batch 001' && (int)Association::batch($id)['batch_number']===1);
 $check('confirmed batch deducts the exact ticket amounts once',$remaining()===$gross-70000 && (int)Association::totals()['guests']===2 && count(Association::items($id))===2);
 $check('repeated submission returns the existing batch',Association::confirm($finance,$draft,$token)===$id && $remaining()===$gross-70000);
+$check('repeat submissions do not consume batch numbers',(int)Db::value("SELECT v FROM settings WHERE k='association_next_batch_number'")===2);
+$beforeNumbering=$remaining();
+Db::update('association_batches',['batch_number'=>null],'id=?',[$id]);
+Db::update('settings',['v'=>'1'],"k='association_next_batch_number'");
+$check('existing active batches are numbered from 001 without changing money',Association::initializeBatchNumbers()===1 && Association::label($id)==='Batch 001' && $remaining()===$beforeNumbering && Association::initializeBatchNumbers()===0);
 $beforeBackfill=Association::items($id);$beforePayments=Db::all('SELECT * FROM payments ORDER BY id');
 Db::update('association_batch_items',['report_snapshot'=>null],'batch_id=? AND registration_id=?',[$id,$b]);
 $check('existing batch report details are backfilled once without changing payments or balances',Association::backfillReportSnapshots()===1 && Association::backfillReportSnapshots()===0 && $beforePayments===Db::all('SELECT * FROM payments ORDER BY id') && $remaining()===$gross-70000);
@@ -129,17 +144,17 @@ foreach(Auth::ROLES as $role) {
 }
 // Two independent database connections submit the same selection at the same time.
 $race=$seed();$raceDraft=Association::preview([$race]);
-$runRace=static function(array $tokens)use($owner,$raceDraft):array {
+$runRace=static function(array $tokens,?array $drafts=null)use($owner,$raceDraft):array {
     $children=[];
-    foreach($tokens as $token) {
+    foreach($tokens as $index=>$token) {
         $payload=App::storage('tmp/association-race-'.$token.'.json');
-        file_put_contents($payload,json_encode(['user'=>$owner,'draft'=>$raceDraft,'token'=>$token],JSON_THROW_ON_ERROR));
+        file_put_contents($payload,json_encode(['user'=>$owner,'draft'=>$drafts[$index]??$raceDraft,'token'=>$token],JSON_THROW_ON_ERROR));
         $cmd=[PHP_BINARY];if($ini=php_ini_loaded_file())array_push($cmd,'-c',$ini);array_push($cmd,__FILE__,'--worker',$payload);
         $process=proc_open($cmd,[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes);
         if(!is_resource($process))throw new RuntimeException('Could not start race worker');fclose($pipes[0]);$children[]=[$process,$pipes];
     }
     $results=[];
-    foreach($children as [$process,$pipes]) {$out=stream_get_contents($pipes[1]);$err=stream_get_contents($pipes[2]);fclose($pipes[1]);fclose($pipes[2]);if(proc_close($process)!==0)throw new RuntimeException('Race failed: '.$err);$results[]=json_decode($out,true,512,JSON_THROW_ON_ERROR);}
+    foreach($children as [$process,$pipes]) {$out=stream_get_contents($pipes[1]);$err=stream_get_contents($pipes[2]);fclose($pipes[1]);fclose($pipes[2]);if(proc_close($process)!==0)throw new RuntimeException('Race failed: '.$err.$out);$results[]=json_decode($out,true,512,JSON_THROW_ON_ERROR);}
     return $results;
 };
 $raceToken=bin2hex(random_bytes(32));$results=$runRace([$raceToken,$raceToken]);
@@ -147,6 +162,10 @@ $check('concurrent repeat submissions create one batch',isset($results[0]['id'],
 Association::reverse($owner,$results[0]['id'],'Race reset');
 $results=$runRace([bin2hex(random_bytes(32)),bin2hex(random_bytes(32))]);
 $check('concurrent different batches cannot send the same guest twice',count(array_filter($results,static fn($r)=>isset($r['id'])))===1 && count(array_filter($results,static fn($r)=>isset($r['rejected'])))===1);
+$newGuestA=$seed();$newGuestB=$seed();
+$separate=$runRace([bin2hex(random_bytes(32)),bin2hex(random_bytes(32))],[Association::preview([$newGuestA]),Association::preview([$newGuestB])]);
+$numbers=array_map(static fn($r)=>(int)Association::batch($r['id'])['batch_number'],$separate);sort($numbers);
+$check('simultaneous handovers receive distinct consecutive visible batch numbers',$numbers[1]===$numbers[0]+1);
 $check('database ledger totals agree with active batch headers',(int)Db::value('SELECT COALESCE(SUM(ticket_amount),0) FROM association_batch_items WHERE active=1')===(int)Association::totals()['amount']);
 $check('confirmation and reversal have audit entries',(int)Db::value("SELECT COUNT(*) FROM audit_log WHERE action IN ('association.sent','association.reversed')")>=6);
 echo "$passed Association checks passed.\n";

@@ -69,6 +69,9 @@ foreach ($migrations as $file) {
         if ($name === '2026-11-02-association-report-snapshot.sql') {
             $methodAlreadyPresent = (bool) Db::value("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'association_batch_items' AND column_name = 'report_snapshot'");
         }
+        if ($name === '2026-11-02-association-batch-numbers.sql') {
+            $methodAlreadyPresent = (bool) Db::value("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'association_batches' AND column_name = 'batch_number'");
+        }
         if ($name === '2026-10-09-vip-registration.sql') {
             $maria = stripos((string) Db::value('SELECT VERSION()'), 'MariaDB') !== false;
             foreach ($statements($file) as $statement) {
@@ -85,6 +88,10 @@ foreach ($migrations as $file) {
     }
     Db::run('INSERT INTO schema_migrations (name, applied_at) VALUES (?, ?)', [$name, App::now()]);
 }
+
+// Visible batch numbers are independent of reversed or abandoned record IDs.
+$associationNumbers = \Ismile\Association::initializeBatchNumbers();
+if ($associationNumbers) echo "Association batch numbers assigned: $associationNumbers\n";
 
 // Preserve report details for handovers saved before the expanded PDF columns.
 $associationReports = \Ismile\Association::backfillReportSnapshots();

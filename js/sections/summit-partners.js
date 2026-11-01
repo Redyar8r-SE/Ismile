@@ -17,7 +17,9 @@ const escape = (value) =>
 export function initSummitPartners(data) {
   const section = document.getElementById("partners");
   const list = document.getElementById("spnList");
-  const partners = (data?.partners || []).filter((p) => tr(p.name) || p.logo);
+  const partners = (data?.partners || [])
+    .filter((p) => tr(p.name) || p.logo)
+    .sort((a, b) => Number(b.kind === "accreditation") - Number(a.kind === "accreditation"));
   if (!partners.length) return;
   section.hidden = false;
 

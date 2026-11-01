@@ -14,7 +14,29 @@ final class Association
         return Auth::canManageAssociation($user);
     }
 
-    public static function label(int $id): string { return 'Batch ' . str_pad((string) $id, 3, '0', STR_PAD_LEFT); }
+    public static function label(int $id, ?int $number = null): string
+    {
+        $number ??= (int)(Db::value('SELECT batch_number FROM association_batches WHERE id=?',[$id]) ?? $id);
+        return 'Batch ' . str_pad((string)$number,3,'0',STR_PAD_LEFT);
+    }
+
+    /** Existing active handovers start at 001; archived reversals keep their internal IDs. */
+    public static function initializeBatchNumbers(): int
+    {
+        return Db::transaction(static function():int {
+            Db::run("INSERT IGNORE INTO settings (k,v,updated_at) VALUES ('association_next_batch_number','1',?)",[App::now()]);
+            $sequence = Db::one("SELECT v FROM settings WHERE k='association_next_batch_number' FOR UPDATE");
+            $next = max(1,(int)$sequence['v'],1+(int)Db::value('SELECT COALESCE(MAX(batch_number),0) FROM association_batches'));
+            $count = 0;
+            foreach(Db::all("SELECT id FROM association_batches WHERE status='sent' AND batch_number IS NULL ORDER BY id FOR UPDATE") as $batch) {
+                Db::update('association_batches',['batch_number'=>$next],'id=?',[$batch['id']]);
+                Audit::log(null,'association.number_assigned','association_batch',(int)$batch['id'],['batch_number'=>$next]);
+                $next++;$count++;
+            }
+            Db::update('settings',['v'=>(string)$next,'updated_at'=>App::now()],"k='association_next_batch_number'");
+            return $count;
+        });
+    }
 
     public static function ids(string $json): array
     {
@@ -89,6 +111,9 @@ final class Association
             // Serialize repeat submissions using the same guest locks.
             $marks = implode(',', array_fill(0, count($ids), '?'));
             Db::all("SELECT id FROM registrations WHERE id IN ($marks) ORDER BY id FOR UPDATE", $ids);
+            // Take the sequence lock before looking up a new request token, so
+            // concurrent inserts cannot deadlock while holding token gap locks.
+            $sequence = Db::one("SELECT v FROM settings WHERE k='association_next_batch_number' FOR UPDATE");
             $existing = Db::one('SELECT id,created_by FROM association_batches WHERE request_token=? FOR UPDATE', [$token]);
             if ($existing) {
                 if ((int) $existing['created_by'] !== (int) $user['id']) throw new UserError('This batch belongs to another staff member.');
@@ -96,7 +121,11 @@ final class Association
             }
             $current = self::preview($ids, true);
             if (!hash_equals((string) ($draft['fingerprint'] ?? ''), $current['fingerprint'])) throw new UserError('Guest or payment details changed. Review a new selection before confirming.');
+            $number = (int)($sequence['v'] ?? 0);
+            if ($number < 1) throw new UserError('Batch numbering is not ready. Reload the page and try again.');
+            Db::update('settings',['v'=>(string)($number+1),'updated_at'=>App::now()],"k='association_next_batch_number'");
             $id = Db::insert('association_batches', [
+                'batch_number'=>$number,
                 'request_token'=>$token, 'guest_count'=>count($current['items']), 'total_amount'=>$current['total'],
                 'currency'=>'IQD', 'note'=>$note, 'created_by'=>(int) $user['id'],
                 'created_by_name'=>$user['name'], 'sent_at'=>App::now(),
@@ -193,7 +222,7 @@ final class Association
 
     public static function report(array $batch, array $items): array
     {
-        $meta = self::label((int) $batch['id']) . ' | ' . strtoupper($batch['status']) . ' | ' . $batch['sent_at'] . ' (Iraq) | ' . $batch['created_by_name']
+        $meta = self::label((int) $batch['id'],isset($batch['batch_number'])?(int)$batch['batch_number']:null) . ' | ' . strtoupper($batch['status']) . ' | ' . $batch['sent_at'] . ' (Iraq) | ' . $batch['created_by_name']
             . ' | ' . $batch['guest_count'] . ' guests | Sent: ' . number_format((int) $batch['total_amount']) . ' IQD | Ticket amounts only; lunch excluded.';
         if ($batch['note'] !== '') $meta .= ' | Note: ' . $batch['note'];
         $active = array_filter($items, static fn($r)=>!empty($r['active']));
