@@ -192,6 +192,7 @@ final class Auth
             'registrations' => ['registration', 'finance', 'viewer', 'sponsors'],
             'edit'          => ['registration'],
             'payments'      => ['finance', 'viewer', 'sponsors'],
+            'association'   => ['finance', 'viewer', 'sponsors'],
             'workshops'     => ['viewer', 'sponsors'],   // the Owner books workshops
             'sponsors'      => ['finance', 'viewer', 'sponsors'],
             'map'           => self::ROLES,

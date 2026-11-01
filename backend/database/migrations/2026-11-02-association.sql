@@ -1,0 +1,46 @@
+-- Saved Association handovers. Receipts and registrations remain unchanged.
+CREATE TABLE IF NOT EXISTS association_batches (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  request_token CHAR(64) NOT NULL,
+  status ENUM('sent','reversed') NOT NULL DEFAULT 'sent',
+  currency CHAR(3) NOT NULL DEFAULT 'IQD',
+  guest_count INT UNSIGNED NOT NULL,
+  total_amount BIGINT UNSIGNED NOT NULL,
+  note VARCHAR(1000) NOT NULL DEFAULT '',
+  created_by INT UNSIGNED NOT NULL,
+  created_by_name VARCHAR(120) NOT NULL,
+  sent_at DATETIME NOT NULL,
+  reversed_at DATETIME NULL,
+  reversed_by INT UNSIGNED NULL,
+  reversal_reason VARCHAR(1000) NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_association_request (request_token),
+  CONSTRAINT fk_association_creator FOREIGN KEY (created_by) REFERENCES admin_users(id),
+  CONSTRAINT fk_association_reverser FOREIGN KEY (reversed_by) REFERENCES admin_users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS association_batch_items (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  batch_id INT UNSIGNED NOT NULL,
+  registration_id INT UNSIGNED NOT NULL,
+  payment_id INT UNSIGNED NULL,
+  active TINYINT UNSIGNED NULL DEFAULT 1,
+  reversed_at DATETIME NULL,
+  ref VARCHAR(32) NOT NULL,
+  full_name VARCHAR(600) NOT NULL,
+  phone VARCHAR(64) NOT NULL,
+  ticket_type VARCHAR(32) NOT NULL,
+  ticket_no VARCHAR(64) NOT NULL,
+  lunch VARCHAR(120) NOT NULL,
+  total_paid BIGINT UNSIGNED NOT NULL,
+  ticket_amount BIGINT UNSIGNED NOT NULL,
+  payment_channel VARCHAR(64) NOT NULL,
+  payment_date VARCHAR(64) NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_association_active_guest (registration_id, active),
+  UNIQUE KEY uq_association_batch_guest (batch_id, registration_id),
+  CONSTRAINT fk_association_item_batch FOREIGN KEY (batch_id) REFERENCES association_batches(id),
+  CONSTRAINT fk_association_item_guest FOREIGN KEY (registration_id) REFERENCES registrations(id),
+  CONSTRAINT fk_association_item_payment FOREIGN KEY (payment_id) REFERENCES payments(id),
+  CONSTRAINT ck_association_active CHECK ((active = 1 AND reversed_at IS NULL) OR (active IS NULL AND reversed_at IS NOT NULL))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

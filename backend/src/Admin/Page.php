@@ -22,6 +22,7 @@ final class Page
         'index'         => ['Dashboard', 'dashboard'],
         'registrations' => ['Registrations', 'registrations'],
         'lists'         => ['Lists', 'registrations'],
+        'association'   => ['Association', 'association'],
         'payments'      => ['Payments', 'payments'],
         'psoola-orders' => ['Psoola orders', 'payments'],
         'workshops'     => ['Workshops', 'workshops'],
@@ -45,6 +46,7 @@ final class Page
             'index' => '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
             'registrations' => '<rect x="4" y="3" width="16" height="18" rx="2"/><circle cx="12" cy="9" r="2"/><path d="M8 16c0-3 8-3 8 0M9 3v-1m6 1v-1"/>',
             'lists' => '<path d="M9 5h12M9 12h12M9 19h12M3 5h1M3 12h1M3 19h1"/>',
+            'association' => '<path d="m3 8 9-5 9 5H3Zm2 3v7m7-7v7m7-7v7M3 21h18"/>',
             'payments' => '<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18M7 15h4"/>',
             'workshops' => '<path d="M12 5v16M3 4c4-1 7 0 9 2 2-2 5-3 9-2v15c-4-1-7 0-9 2-2-2-5-3-9-2Z"/>',
             'sponsors' => '<path d="M4 21V8l8-5 8 5v13M2 21h20M9 21v-5h6v5M8 9h1m6 0h1m-8 4h1m6 0h1"/>',
@@ -240,7 +242,7 @@ final class Page
             echo '<nav class="sidebar-nav" aria-label="Database pages">';
             $groups = [
                 'Workspace' => ['index'],
-                'Event operations' => ['registrations', 'lists', 'payments', 'psoola-orders', 'workshops', 'sponsors', 'booths', 'map', 'checkin', 'certificates'],
+                'Event operations' => ['registrations', 'lists', 'association', 'payments', 'psoola-orders', 'workshops', 'sponsors', 'booths', 'map', 'checkin', 'certificates'],
                 'Database' => ['communications', 'settings', 'users', 'backups'],
             ];
             foreach ($groups as $group => $files) {
@@ -273,6 +275,7 @@ final class Page
             'index' => 'Your event at a glance. People, payments and the next task, all in one place.',
             'registrations' => 'Look after every guest, from their first call to their event ticket.',
             'lists' => 'Find the right people and prepare clear lists for your team.',
+            'association' => 'Prepare guest handovers, record money sent and download each saved batch.',
             'payments' => 'Review payments, follow up on issues and keep every amount accounted for.',
             'psoola-orders' => 'Every sale Psoola recorded for iSmile, card and cash, read live from Psoola and matched to your registrations.',
             'workshops' => 'Organise workshops, manage bookings and keep track of available seats.',
@@ -287,7 +290,7 @@ final class Page
             'backups' => 'Keep a copy of your event records. Check your latest successful backup and download it securely.',
             default => $user ? '' : 'Welcome to your iSmile workspace. Sign in to continue.',
         };
-        $section = $current === 'index' ? 'Overview' : (in_array($current, ['registrations', 'lists', 'payments', 'psoola-orders', 'workshops', 'sponsors', 'booths', 'map', 'checkin'], true) ? 'Event operations' : 'Database');
+        $section = $current === 'index' ? 'Overview' : (in_array($current, ['registrations', 'lists', 'association', 'payments', 'psoola-orders', 'workshops', 'sponsors', 'booths', 'map', 'checkin'], true) ? 'Event operations' : 'Database');
         echo '<main class="page" id="main-content" tabindex="-1"><div class="page-heading"><div class="page-heading-copy">' . ($user ? '<div class="page-title-row"><span class="page-symbol">' . self::navIcon($current !== '' ? $current : 'security') . '</span><div><span class="page-kicker">' . $section . '</span><h1>' . self::e($title) . '</h1></div></div>' : '<h1>' . self::e($title) . '</h1>') . ($description !== '' ? '<p>' . self::e($description) . '</p>' : '') . '</div>' . ($actions !== '' ? '<div class="page-actions no-print">' . $actions . '</div>' : '') . '</div>';
         Auth::startSession();
         foreach ($_SESSION['flash'] ?? [] as [$kind, $message]) {

@@ -58,9 +58,14 @@ final class PaymentBreakdown
     {
         $unknown = 'Not recorded';
         $out = array_fill_keys(array_keys(self::COLUMNS), $unknown);
+        // Numeric receipt facts for handovers; display strings are never parsed as money.
+        $out += ['receipt_ticket_amount' => null, 'receipt_total_amount' => null,
+            'receipt_currency' => null, 'receipt_payment_id' => null];
         $out['finance_date'] = (string) ($payment['confirmed_at'] ?? $registration['paid_at'] ?? $unknown);
         $out['finance_note'] = '';
         if (($registration['status'] ?? '') === 'complimentary' && $payment === null) {
+            $out['receipt_ticket_amount'] = $out['receipt_total_amount'] = 0;
+            $out['receipt_currency'] = 'IQD';
             foreach (['finance_ticket','finance_lunch1','finance_lunch2','finance_total'] as $key) $out[$key] = '0 IQD (complimentary)';
             $out['finance_channel'] = 'Complimentary';
             $out['finance_usd100'] = $out['finance_rate_source'] = 'Not applicable';
@@ -75,6 +80,9 @@ final class PaymentBreakdown
         $total = self::integer($payment['amount_confirmed']);
         if ($total === null) return $out;
         $out['finance_total'] = self::money($total, $currency);
+        $out['receipt_total_amount'] = $total;
+        $out['receipt_currency'] = $currency;
+        $out['receipt_payment_id'] = (int) ($payment['id'] ?? 0);
         $out['finance_channel'] = ($payment['method'] ?? '') === 'cash' ? 'Cash' : (($payment['gateway'] ?? '') === 'psoola' ? 'Website (Psoola)' : 'Test payment');
         $create = self::json($payment['raw_create'] ?? null);
         $status = self::json($payment['raw_status'] ?? null);
@@ -117,6 +125,7 @@ final class PaymentBreakdown
         }
         if ($receipt !== null) {
             [$ticket, $lunches] = $receipt;
+            $out['receipt_ticket_amount'] = $ticket;
             $out['finance_ticket'] = self::money($ticket, $currency);
             if (($sale['ticket_type'] ?? '') === 'vip' && ($prices['vipCurrency'] ?? '') === 'USD' && (float) ($prices['vip'] ?? 0) > 0) $usd[] = [$ticket, (float) $prices['vip']];
             foreach ($lunches as $day => $price) {

@@ -1299,3 +1299,13 @@ body[data-page=backups] .page-symbol{background:#e9f4ee;color:#418165;border-col
 .workshop-photo-field>label{flex:1 1 220px}
 .workshop-photo-field>label.inline{flex:0 0 auto}
 .workshop-photo-preview{width:120px;height:120px;object-fit:cover;border-radius:14px;border:1px solid var(--line,#d3e6e6)}
+/* Association handovers use the existing metric cards and directory table. */
+.association-selection-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.association-selection-bar p{margin:6px 0 0}
+.association-note{flex-basis:100%;margin:0}
+.association-reversal{margin-top:24px;border-top:1px solid #dbe6ec;padding-top:18px}
+.association-reversal summary{cursor:pointer;font-weight:600}
+.association-reversal form{max-width:680px}
+[data-association-choice],[data-association-all]{width:18px;height:18px;accent-color:#008b86;cursor:pointer}
+[data-association-choice]:disabled{cursor:default}
+@media(max-width:640px){.association-selection-bar .panel-actions{width:100%;flex-wrap:wrap}.association-selection-bar .panel-actions .btn{flex:1}}

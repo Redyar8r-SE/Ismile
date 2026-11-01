@@ -109,6 +109,7 @@ jobs:
               php /opt/ismile-test/backend/tools/configure-map-manager.php
             fi
             runuser -u www-data -- php /opt/ismile-test/backend/tools/verify-deployment.php --source /opt/ismile-test/repo
+            runuser -u www-data -- php /opt/ismile-test/backend/tools/verify-association.php
             # Smoke: PHP admin + config API (basic auth from secrets.env)
             SP="$(grep '^SITE_PASS=' /opt/ismile-test/secrets.env | cut -d= -f2-)"
             code="$(curl -s -o /dev/null -w '%{http_code}' -u "ismile:${SP}" -H 'Host: api.ismile.krd' http://127.0.0.1:8081/admin/login.php)"

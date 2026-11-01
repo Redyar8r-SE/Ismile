@@ -1,3 +1,72 @@
+// Association selections span searches and pages; only the server confirms amounts.
+document.addEventListener("DOMContentLoaded", () => {
+  const workspace = document.querySelector("[data-association-workspace]");
+  if (!workspace) return;
+  const key = "ismile-association-selection-" + workspace.dataset.userId;
+  let selected = {};
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(key) || "{}");
+    if (saved && typeof saved === "object" && !Array.isArray(saved)) selected = saved;
+  } catch { /* Selection can still work if browser storage is unavailable. */ }
+  const save = () => { try { sessionStorage.setItem(key, JSON.stringify(selected)); } catch {} };
+  const consumed = workspace.querySelector("[data-association-consumed]");
+  if (consumed) {
+    try { JSON.parse(consumed.dataset.associationConsumed).forEach(id => delete selected[id]); } catch {}
+    save();
+  }
+  const form = workspace.querySelector("[data-association-selection]");
+  if (!form) return;
+  const choices = () => [...form.querySelectorAll("[data-association-choice]")];
+  const summary = form.querySelector("[data-association-summary]");
+  const hidden = form.querySelector('[name="selection_json"]');
+  const sync = () => {
+    choices().forEach(input => {
+      const id = input.dataset.id;
+      if (input.disabled) delete selected[id];
+      input.checked = !input.disabled && Object.hasOwn(selected, id);
+      if (input.checked) selected[id] = Number(input.dataset.amount);
+    });
+    const ids = Object.keys(selected).filter(id => /^\d+$/.test(id) && Number.isSafeInteger(Number(id)));
+    const total = ids.reduce((sum, id) => sum + Number(selected[id] || 0), 0);
+    if (summary) summary.textContent = ids.length ? `${ids.length.toLocaleString()} guests selected · ${total.toLocaleString("en-US")} IQD` : "No guests selected";
+    hidden.value = JSON.stringify(ids.map(Number));
+    const review = form.querySelector("[data-association-review]");
+    if (review) review.disabled = !ids.length;
+    const all = form.querySelector("[data-association-all]");
+    const eligible = choices().filter(input => !input.disabled);
+    if (all) {
+      all.disabled = !eligible.length;
+      all.checked = !!eligible.length && eligible.every(input => input.checked);
+      all.indeterminate = !all.checked && eligible.some(input => input.checked);
+    }
+    save();
+  };
+  form.addEventListener("change", event => {
+    const input = event.target;
+    if (input.matches("[data-association-choice]")) {
+      if (input.checked) selected[input.dataset.id] = Number(input.dataset.amount);
+      else delete selected[input.dataset.id];
+      sync();
+    } else if (input.matches("[data-association-all]")) {
+      choices().filter(choice => !choice.disabled).forEach(choice => {
+        if (input.checked) selected[choice.dataset.id] = Number(choice.dataset.amount);
+        else delete selected[choice.dataset.id];
+      });
+      sync();
+    }
+  });
+  form.querySelector("[data-association-clear]")?.addEventListener("click", () => { selected = {}; sync(); });
+  document.addEventListener("admin:search-complete", sync);
+  const directory = form.querySelector('[data-live-region="association-directory"]');
+  if (directory) new MutationObserver(sync).observe(directory, { childList: true, subtree: true });
+  form.addEventListener("submit", () => {
+    sync();
+    // A single JSON field also supports large selections within PHP's input limit.
+    choices().forEach(input => input.removeAttribute("name"));
+  });
+  sync();
+});
+
 // Search without navigation, including single letters and pasted scanner text.
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll("form[data-instant-search], form[data-guest-suggestions]").forEach(form => {

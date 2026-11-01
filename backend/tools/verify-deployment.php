@@ -10,7 +10,7 @@ use Ismile\Auth;
 use Ismile\Db;
 use Ismile\Admin\PdfReport;
 
-$pages = ['index','checkin','registrations','certificates','sponsors','booths','map','lists','communications','payments','psoola-orders','registration','workshops','settings','users','backups','content'];
+$pages = ['index','checkin','registrations','association','certificates','sponsors','booths','map','lists','communications','payments','psoola-orders','registration','workshops','settings','users','backups','content'];
 if (($argv[1] ?? '') === '--render') {
     $page = $argv[2] ?? '';
     if (!in_array($page, $pages, true)) throw new RuntimeException('Unknown verification page.');
@@ -101,6 +101,14 @@ foreach ($pages as $page) {
     $html = $render($page);
     $check('deployed page renders: ' . $page, strlen($html) > 1000);
 }
+$html = $render('association');
+$check('Association guest selection, batch history and navigation render', str_contains($html, 'data-association-selection') && str_contains($html, 'Batch history') && str_contains($html, 'href="association.php"'));
+foreach (['finance','viewer','sponsors'] as $role) {
+    $html = $render('association', '', $role);
+    $check($role . ' has correct Association controls', str_contains($html, 'Batch history') && (str_contains($html, 'data-association-review') === ($role === 'finance')));
+}
+$associationTotals = \Ismile\Association::totals();
+$check('Association sent totals match the active guest ledger', (int)$associationTotals['amount'] === (int)Db::value('SELECT COALESCE(SUM(ticket_amount),0) FROM association_batch_items WHERE active=1') && (int)$associationTotals['guests'] === (int)Db::value('SELECT COUNT(*) FROM association_batch_items WHERE active=1'));
 foreach (Auth::ROLES as $role) {
     $html = $render('map', '', $role);
     $manage = $role === 'owner';

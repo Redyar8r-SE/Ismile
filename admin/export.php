@@ -25,6 +25,13 @@ $rows = [];
 $financePeople = [];
 $name = 'ismile';
 switch ($what) {
+    case 'association':
+        if (!Auth::can($user, 'association')) { http_response_code(403); exit('Not allowed.'); }
+        $batch = \Ismile\Association::batch((int)($_GET['id'] ?? 0));
+        if (!$batch) { http_response_code(404); exit('Batch not found.'); }
+        $rows = \Ismile\Association::report($batch, \Ismile\Association::items((int)$batch['id']));
+        $name = 'ismile-association-batch-' . str_pad((string)$batch['id'],3,'0',STR_PAD_LEFT);
+        break;
     case 'all':
         $sections = [];
         foreach (\Ismile\Admin\Lists::ALL as $key => [$label]) {
