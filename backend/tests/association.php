@@ -41,6 +41,7 @@ $seed=static function(int $ticket=30000,int $lunch=0,string $status='paid',strin
 };
 $remaining=static function():int {foreach(Association::revenue() as $r)if($r['currency']==='IQD')return (int)$r['total'];return 0;};
 $a=$seed(30000);$b=$seed(40000,67200);$c=$seed(25000);$free=$seed(0,0,'complimentary');
+Db::update('registrations',['ambassador_code'=>'assoc26'],'id=?',[$b]);
 $gross=$remaining();$draft=Association::preview([$a,$b]);
 $check('selection and review do not deduct money',$draft['total']===70000 && $remaining()===$gross && (int)Association::totals()['guests']===0);
 $check('lunch is retained in the receipt but excluded from the handover',$draft['items'][1]['total_paid']===107200 && $draft['items'][1]['ticket_amount']===40000);
@@ -48,6 +49,10 @@ $check('viewer cannot confirm a handover',$reject(fn()=>Association::confirm($vi
 $token=bin2hex(random_bytes(32));$id=Association::confirm($finance,$draft+['note'=>'Receipt EXAMPLE-001'],$token);
 $check('confirmed batch deducts the exact ticket amounts once',$remaining()===$gross-70000 && (int)Association::totals()['guests']===2 && count(Association::items($id))===2);
 $check('repeated submission returns the existing batch',Association::confirm($finance,$draft,$token)===$id && $remaining()===$gross-70000);
+$beforeBackfill=Association::items($id);$beforePayments=Db::all('SELECT * FROM payments ORDER BY id');
+Db::update('association_batch_items',['report_snapshot'=>null],'batch_id=? AND registration_id=?',[$id,$b]);
+$check('existing batch report details are backfilled once without changing payments or balances',Association::backfillReportSnapshots()===1 && Association::backfillReportSnapshots()===0 && $beforePayments===Db::all('SELECT * FROM payments ORDER BY id') && $remaining()===$gross-70000);
+Db::update('registrations',['ambassador_code'=>'changed-code','lunch_day1'=>0],'id=?',[$b]);
 $check('already sent names cannot enter another batch',$reject(fn()=>Association::preview([$a])));
 $count=(int)Db::value('SELECT COUNT(*) FROM association_batches');
 $check('mixed eligible and already sent selection is rejected entirely',$reject(fn()=>Association::preview([$b,$c])) && (int)Db::value('SELECT COUNT(*) FROM association_batches')===$count);
@@ -60,7 +65,11 @@ Db::update('payments',['raw_status'=>$payment['raw_status'],'raw_create'=>$payme
 Db::update('registrations',['first_name'=>'Edited after handover'],'id=?',[$a]);
 $snapshot=Association::items($id);
 $check('saved batch keeps the original name and money',$snapshot[0]['full_name']==='Example Association Guest' && (int)$snapshot[0]['ticket_amount']===30000);
-$sheet=Association::report(Association::batch($id),$snapshot);$pdf=PdfReport::make('Association '.Association::label($id),$sheet);
+$sheet=Association::report(Association::batch($id),$snapshot);$pdf=PdfReport::make('Association '.Association::label($id),$sheet,true);
+$expectedColumns=['#','Full name','Total paid','Phone','Ticket type','Lunch days','Lunch quantity','Ticket paid','Lunch day 1 paid','Lunch day 2 paid','Ticket no.','Ambassador','Reference','Payment date (Iraq)','Cash / website','Status'];
+$check('Association PDF uses exactly the requested columns in the requested order',$sheet[1]===$expectedColumns && count($sheet[2])===16 && count($sheet[3])===16);
+$detail=array_combine($sheet[1],$sheet[3]);
+$check('Association PDF keeps saved lunch amounts, quantity and ambassador after edits',$detail['Total paid']==='107,200 IQD' && $detail['Ticket paid']==='40,000 IQD' && $detail['Lunch days']==='Day 1' && $detail['Lunch quantity']==='1' && $detail['Lunch day 1 paid']==='67,200 IQD' && $detail['Lunch day 2 paid']==='Not booked' && $detail['Ambassador']==='ASSOC26' && $detail['Status']==='Paid');
 $check('batch PDF uses saved items and includes guest count and total',str_starts_with($pdf,'%PDF-') && strlen($pdf)>5000 && str_contains($sheet[0][0],'70,000 IQD') && str_contains($sheet[0][0],'2 guests') && count($sheet)===4);
 file_put_contents(App::storage('tmp/association-example.pdf'),$pdf);
 $check('viewer cannot reverse a handover',$reject(fn()=>Association::reverse($viewer,$id,'Example correction')));
@@ -107,7 +116,7 @@ $check('single guest is released while the other guests remain sent',Association
 $check('partially reversed batch remains in history with the active amounts',in_array($partialId,array_map('intval',array_column(Association::history(),'id')),true));
 $check('already reversed or unrelated guests cannot be reversed again',$reject(fn()=>Association::reverse($manager,$partialId,'Duplicate',[$partialA])) && $reject(fn()=>Association::reverse($manager,$partialId,'Wrong batch',[$c])));
 $partialReport=Association::report($partialBatch,Association::items($partialId));
-$check('PDF data identifies partial reversals and the remaining handover amount',str_contains($partialReport[0][0],'Currently sent: 2 guests, 65,000 IQD') && in_array('Reversed',$partialReport[2],true));
+$check('PDF data identifies partial reversals and the remaining handover amount',str_contains($partialReport[0][0],'Currently sent: 2 guests, 65,000 IQD') && str_contains($partialReport[2][15],'Reversed'));
 Association::reverse($manager,$partialId,'Reverse remaining batch');
 $check('whole batch reversal after a partial reversal restores only the remaining amount',$remaining()===$beforePartial+95000 && Association::batch($partialId)['status']==='reversed');
 $check('fully reversed batches disappear from history without removing their saved items',!in_array($partialId,array_map('intval',array_column(Association::history(),'id')),true) && count(Association::items($partialId))===3);

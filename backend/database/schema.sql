@@ -693,6 +693,7 @@ CREATE TABLE IF NOT EXISTS association_batch_items (
   ticket_amount BIGINT UNSIGNED NOT NULL,
   payment_channel VARCHAR(64) NOT NULL,
   payment_date VARCHAR(64) NOT NULL,
+  report_snapshot MEDIUMTEXT NULL,
   PRIMARY KEY (id),
   UNIQUE KEY uq_association_active_guest (registration_id, active),
   UNIQUE KEY uq_association_batch_guest (batch_id, registration_id),

@@ -6,13 +6,14 @@ document.addEventListener("DOMContentLoaded", () => {
   if (reversal) {
     const all = reversal.querySelector("[data-association-reverse-all]");
     const guests = [...reversal.querySelectorAll("[data-association-reverse-guest]")];
+    guests.forEach(input => { input.dataset.registrationId = input.name.replace("reverse_guest_", ""); });
     reversal.addEventListener("change", event => {
       if (event.target === all) guests.forEach(input => { input.checked = all.checked; });
       all.checked = !!guests.length && guests.every(input => input.checked);
       all.indeterminate = !all.checked && guests.some(input => input.checked);
     });
     reversal.addEventListener("submit", () => {
-      reversal.querySelector('[name="reverse_selection_json"]').value = JSON.stringify(guests.filter(input => input.checked).map(input => Number(input.name.replace("reverse_guest_", ""))));
+      reversal.querySelector('[name="reverse_selection_json"]').value = JSON.stringify(guests.filter(input => input.checked).map(input => Number(input.dataset.registrationId)));
       guests.forEach(input => input.removeAttribute("name"));
     });
   }
@@ -29,6 +30,32 @@ document.addEventListener("DOMContentLoaded", () => {
     save();
   }
   const form = workspace.querySelector("[data-association-selection]");
+  const selectionIds = () => Object.keys(selected).filter(id => /^\d+$/.test(id) && Number.isSafeInteger(Number(id)) && Number.isSafeInteger(selected[id]) && selected[id] >= 0);
+  const updateBalance = () => {
+    const balance = document.querySelector("[data-association-balance]");
+    if (!balance) return;
+    const ids = selectionIds();
+    const total = form ? ids.reduce((sum, id) => sum + selected[id], 0) : Number(workspace.dataset.reviewTotal || 0);
+    const count = form ? ids.length : Number(workspace.dataset.reviewGuests || 0);
+    let values;
+    try { values = JSON.parse(balance.dataset.revenueValues); } catch { return; }
+    let hasIqd = false;
+    const projected = values.map(value => {
+      let amount = Number(value.total);
+      if (value.currency === "IQD") { amount -= total; hasIqd = true; }
+      return `${amount.toLocaleString("en-US")} ${value.currency}`;
+    });
+    if (!hasIqd && total) projected.push(`${(-total).toLocaleString("en-US")} IQD`);
+    const value = balance.querySelector(".metric-card strong");
+    const note = balance.querySelector(".metric-card small");
+    const text = projected.join(" + ") || "0 IQD";
+    const message = count ? `Preview after sending ${count.toLocaleString()} selected guests (${total.toLocaleString("en-US")} IQD). Confirm to save.` : "Confirmed payments less Association handovers; cancelled excluded";
+    if (value && value.textContent !== text) value.textContent = text;
+    if (note && note.textContent !== message) note.textContent = message;
+  };
+  const totalsRegion = document.querySelector('[data-live-region="association-totals"]');
+  if (totalsRegion) new MutationObserver(updateBalance).observe(totalsRegion, { childList: true, subtree: true });
+  updateBalance();
   if (!form) return;
   const choices = () => [...form.querySelectorAll("[data-association-choice]")];
   const summary = form.querySelector("[data-association-summary]");
@@ -40,7 +67,7 @@ document.addEventListener("DOMContentLoaded", () => {
       input.checked = !input.disabled && Object.hasOwn(selected, id);
       if (input.checked) selected[id] = Number(input.dataset.amount);
     });
-    const ids = Object.keys(selected).filter(id => /^\d+$/.test(id) && Number.isSafeInteger(Number(id)));
+    const ids = selectionIds();
     const total = ids.reduce((sum, id) => sum + Number(selected[id] || 0), 0);
     if (summary) summary.textContent = ids.length ? `${ids.length.toLocaleString()} guests selected · ${total.toLocaleString("en-US")} IQD` : "No guests selected";
     hidden.value = JSON.stringify(ids.map(Number));
@@ -54,6 +81,7 @@ document.addEventListener("DOMContentLoaded", () => {
       all.indeterminate = !all.checked && eligible.some(input => input.checked);
     }
     save();
+    updateBalance();
   };
   form.addEventListener("change", event => {
     const input = event.target;

@@ -70,11 +70,11 @@ final class PdfReport
     }
 
     /** One report: every column in one table, on A4 or (for many columns) A3 landscape. */
-    public static function make(string $title, array $rows): string
+    public static function make(string $title, array $rows, bool $showCashTicketAmounts = false): string
     {
         $title = self::cleanTitle($title);
         $pdf = self::document($title);
-        self::append($pdf, $title, $rows);
+        self::append($pdf, $title, $rows, $showCashTicketAmounts);
         return $pdf->Output('', 'S');
     }
 
@@ -99,7 +99,7 @@ final class PdfReport
         return $pdf->Output('', 'S');
     }
 
-    private static function append(\TCPDF $pdf, string $title, array $rows): void
+    private static function append(\TCPDF $pdf, string $title, array $rows, bool $showCashTicketAmounts = false): void
     {
         if (count($rows[0] ?? []) === 1) $subtitle = (string) array_shift($rows)[0];
         $headers = array_shift($rows) ?? [];
@@ -107,7 +107,7 @@ final class PdfReport
         $headers = array_diff($headers, ['Specialty', 'Payment notes']);
         $ticketPaid = array_search('Ticket paid', $headers, true);
         $channel = array_search('Cash / website', $headers, true);
-        if ($ticketPaid !== false && $channel !== false) {
+        if (!$showCashTicketAmounts && $ticketPaid !== false && $channel !== false) {
             foreach ($rows as &$row) {
                 if (($row[$channel] ?? '') === 'Cash') $row[$ticketPaid] = '--';
             }

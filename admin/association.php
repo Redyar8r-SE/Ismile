@@ -85,15 +85,21 @@ if (($batchId && !$batch) || ($reviewToken !== '' && !$review)) {
 Page::top('Association', 'association', '<a class="btn ghost" href="association.php#batch-history">Batch history</a>');
 $totals = Association::totals();
 $revenue = Association::revenue();
-$remaining = $revenue ? implode(' + ', array_map(static fn($r)=>Page::money((int)$r['total'],$r['currency']), $revenue)) : '0 IQD';
-echo '<div data-live-region="association-totals">' . Page::stats([
-    ['Ticket revenue remaining', $remaining, 'Confirmed payments less Association handovers; cancelled excluded', 'payments','blue'],
+$previewAmount = (int)($review['total'] ?? 0);
+$previewRevenue = $revenue;
+$hasIqd = false;
+foreach ($previewRevenue as &$value) if ($value['currency']==='IQD') { $value['total']=(int)$value['total']-$previewAmount; $hasIqd=true; }
+unset($value);
+if (!$hasIqd && $previewAmount) $previewRevenue[]=['currency'=>'IQD','total'=>-$previewAmount];
+$remaining = $previewRevenue ? implode(' + ', array_map(static fn($r)=>Page::money((int)$r['total'],$r['currency']), $previewRevenue)) : '0 IQD';
+echo '<div data-live-region="association-totals"><div data-association-balance data-revenue-values="'.$e(json_encode($revenue)).'">' . Page::stats([
+    ['Ticket revenue remaining', $remaining, $previewAmount ? 'Preview after confirming this batch. Confirm to save.' : 'Confirmed payments less Association handovers; cancelled excluded', 'payments','blue'],
     ['Sent to Association', Page::money((int)$totals['amount'],'IQD'), 'Confirmed handovers; lunch excluded', 'association','teal'],
     ['Guests sent', number_format((int)$totals['guests']), number_format((int)$totals['batches']).' confirmed batches', 'users','violet'],
     ['Not sent yet', number_format((int)$totals['waiting']), 'Registered guests without an active handover', 'registrations','gold'],
-]) . '</div>';
+]) . '</div></div>';
 ?>
-<div data-association-workspace data-user-id="<?= (int)$user['id'] ?>">
+<div data-association-workspace data-user-id="<?= (int)$user['id'] ?>" data-review-total="<?= $previewAmount ?>" data-review-guests="<?= count($review['items'] ?? []) ?>">
 <?php if ($review || $batch):
     $items = $batch ? Association::items($batchId) : $review['items'];
     $amount = $batch ? (int)$batch['active_amount'] : $review['total'];

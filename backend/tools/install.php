@@ -66,6 +66,9 @@ foreach ($migrations as $file) {
         if ($name === '2026-11-02-association-guest-reversal.sql') {
             $methodAlreadyPresent = (bool) Db::value("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'association_batch_items' AND column_name = 'reversed_by'");
         }
+        if ($name === '2026-11-02-association-report-snapshot.sql') {
+            $methodAlreadyPresent = (bool) Db::value("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'association_batch_items' AND column_name = 'report_snapshot'");
+        }
         if ($name === '2026-10-09-vip-registration.sql') {
             $maria = stripos((string) Db::value('SELECT VERSION()'), 'MariaDB') !== false;
             foreach ($statements($file) as $statement) {
@@ -82,6 +85,10 @@ foreach ($migrations as $file) {
     }
     Db::run('INSERT INTO schema_migrations (name, applied_at) VALUES (?, ?)', [$name, App::now()]);
 }
+
+// Preserve report details for handovers saved before the expanded PDF columns.
+$associationReports = \Ismile\Association::backfillReportSnapshots();
+if ($associationReports) echo "Association report snapshots added: $associationReports\n";
 
 // Match the database directory to the website before rebuilding views.
 // This refuses to remove a reserved position and never rewrites bookings.

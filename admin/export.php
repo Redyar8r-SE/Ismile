@@ -170,7 +170,7 @@ Audit::log((int) $user['id'], 'export', null, null, ['what' => $what, 'rows' => 
 if (($_GET['format'] ?? '') === 'pdf') {
     $pdf = $what === 'list' && $list === 'studentids'
         ? PdfReport::studentIds($financePeople, \Ismile\Admin\Lists::reportRows($list, $financePeople, false))
-        : ($financePeople && $what !== 'list' ? PdfReport::bundle([ucwords(str_replace('-', ' ', $name)) => $rows, 'Ticket and lunch payment breakdown' => PaymentBreakdown::reportRows($financePeople)]) : PdfReport::make(ucwords(str_replace('-', ' ', $name)), $rows));
+        : ($financePeople && $what !== 'list' ? PdfReport::bundle([ucwords(str_replace('-', ' ', $name)) => $rows, 'Ticket and lunch payment breakdown' => PaymentBreakdown::reportRows($financePeople)]) : PdfReport::make(ucwords(str_replace('-', ' ', $name)), $rows, $what === 'association'));
     header('Content-Type: application/pdf');
     header('Content-Disposition: attachment; filename="' . $name . '-' . date('Y-m-d-Hi') . '.pdf"');
     header('Cache-Control: no-store');

@@ -107,7 +107,7 @@ foreach ($pages as $page) {
     $check('deployed page renders: ' . $page, strlen($html) > 1000);
 }
 $html = $render('association');
-$check('Association guest selection, batch history and navigation render', str_contains($html, 'data-association-selection') && str_contains($html, 'Batch history') && str_contains($html, 'href="association.php"'));
+$check('Association guest selection, revenue preview, batch history and navigation render', str_contains($html, 'data-association-selection') && str_contains($html,'data-association-balance') && str_contains($html,'data-revenue-values') && str_contains($html, 'Batch history') && str_contains($html, 'href="association.php"'));
 foreach (['finance','viewer','sponsors'] as $role) {
     $html = $render('association', '', $role);
     $check($role . ' has correct Association controls', str_contains($html, 'Batch history') && (str_contains($html, 'data-association-review') === ($role === 'finance')));

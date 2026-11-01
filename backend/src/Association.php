@@ -8,6 +8,7 @@ use Ismile\Admin\PaymentBreakdown;
 /** Immutable handover snapshots, with one active handover per registration. */
 final class Association
 {
+    public const REPORT_COLUMNS = ['#','Full name','Total paid','Phone','Ticket type','Lunch days','Lunch quantity','Ticket paid','Lunch day 1 paid','Lunch day 2 paid','Ticket no.','Ambassador','Reference','Payment date (Iraq)','Cash / website','Status'];
     public static function canManage(array $user): bool
     {
         return Auth::canManageAssociation($user);
@@ -69,6 +70,7 @@ final class Association
                 'lunch' => Lists::exportValue('lunch', $r), 'total_paid' => $r['receipt_total_amount'],
                 'ticket_amount' => $r['receipt_ticket_amount'], 'payment_channel' => $r['finance_channel'],
                 'payment_date' => $r['finance_date'],
+                'report_snapshot' => self::reportSnapshot($r, $r),
             ];
             $items[] = $item; $total += $item['ticket_amount'];
         }
@@ -154,6 +156,41 @@ final class Association
     public static function history(): array { return Db::all("SELECT b.*, (SELECT COUNT(*) FROM association_batch_items i WHERE i.batch_id=b.id AND i.active=1) AS active_guests, (SELECT COALESCE(SUM(ticket_amount),0) FROM association_batch_items i WHERE i.batch_id=b.id AND i.active=1) AS active_amount FROM association_batches b WHERE b.status='sent' ORDER BY b.id DESC"); }
     public static function items(int $id): array { return Db::all('SELECT * FROM association_batch_items WHERE batch_id=? ORDER BY id', [$id]); }
 
+    private static function reportSnapshot(array $registration, array $receipt): string
+    {
+        return json_encode([
+            'lunch_quantity'=>(int)!empty($registration['lunch_day1'])+(int)!empty($registration['lunch_day2']),
+            'lunch_day1_paid'=>$receipt['finance_lunch1'] ?? 'Not recorded',
+            'lunch_day2_paid'=>$receipt['finance_lunch2'] ?? 'Not recorded',
+            'ambassador'=>Lists::exportValue('ambassador_code',$registration),
+            'status'=>$registration['status'] ?? 'paid',
+        ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
+    }
+
+    /** One-time enrichment of old rows; original names, money and handover state stay intact. */
+    public static function backfillReportSnapshots(): int
+    {
+        $count = 0;
+        foreach (Db::all('SELECT * FROM association_batch_items WHERE report_snapshot IS NULL ORDER BY id') as $item) {
+            $registration = Db::one('SELECT * FROM registrations WHERE id=?', [$item['registration_id']]) ?? [];
+            $type = array_search($item['ticket_type'], Registrations::TICKET_NAMES, true);
+            $registration = [
+                'ticket_type'=>$type !== false ? $type : ($registration['ticket_type'] ?? 'professional'),
+                'lunch_day1'=>str_contains($item['lunch'],'Day 1') ? 1 : 0,
+                'lunch_day2'=>str_contains($item['lunch'],'Day 2') ? 1 : 0,
+                'status'=>$item['payment_id'] ? 'paid' : 'complimentary',
+            ] + $registration;
+            $payment = $item['payment_id'] ? Db::one('SELECT * FROM payments WHERE id=?',[$item['payment_id']]) : null;
+            $receipt = PaymentBreakdown::describe($registration,$payment,(array)App::config('payments.psoola.add_ons',[]));
+            if ($receipt['receipt_currency']!=='IQD' || $receipt['receipt_total_amount']!==(int)$item['total_paid'] || $receipt['receipt_ticket_amount']!==(int)$item['ticket_amount']) {
+                $receipt['finance_lunch1']=$registration['lunch_day1']?'Not recorded':'Not booked';
+                $receipt['finance_lunch2']=$registration['lunch_day2']?'Not recorded':'Not booked';
+            }
+            $count += Db::update('association_batch_items',['report_snapshot'=>self::reportSnapshot($registration,$receipt)],'id=? AND report_snapshot IS NULL',[$item['id']]);
+        }
+        return $count;
+    }
+
     public static function report(array $batch, array $items): array
     {
         $meta = self::label((int) $batch['id']) . ' | ' . strtoupper($batch['status']) . ' | ' . $batch['sent_at'] . ' (Iraq) | ' . $batch['created_by_name']
@@ -162,8 +199,13 @@ final class Association
         $active = array_filter($items, static fn($r)=>!empty($r['active']));
         $meta .= ' | Currently sent: ' . count($active) . ' guests, ' . number_format(array_sum(array_column($active,'ticket_amount'))) . ' IQD';
         if ($batch['status'] === 'reversed') $meta .= ' | Reversed: ' . $batch['reversed_at'] . ' | Reason: ' . $batch['reversal_reason'];
-        $rows = [[$meta], ['#','Full name','Phone','Ticket type','Lunch days','Total paid','Original handover','Ticket no.','Reference','Cash / website','Payment date (Iraq)','Association status','Reversed (Iraq)']];
-        foreach ($items as $i => $r) $rows[] = [$i+1,$r['full_name'],$r['phone'],$r['ticket_type'],$r['lunch'],number_format((int) $r['total_paid']).' IQD',number_format((int) $r['ticket_amount']).' IQD',$r['ticket_no'],$r['ref'],$r['payment_channel'],$r['payment_date'],empty($r['active'])?'Reversed':'Sent',$r['reversed_at'] ?? ''];
+        $rows = [[$meta], self::REPORT_COLUMNS];
+        foreach ($items as $i => $r) {
+            $detail = json_decode($r['report_snapshot'] ?? '{}',true) ?: [];
+            $status = ucfirst((string)($detail['status'] ?? 'paid'));
+            if (empty($r['active'])) $status = 'Reversed / '.$status;
+            $rows[] = [$i+1,$r['full_name'],number_format((int)$r['total_paid']).' IQD',$r['phone'],$r['ticket_type'],$r['lunch'],(string)($detail['lunch_quantity'] ?? 'Not recorded'),number_format((int)$r['ticket_amount']).' IQD',$detail['lunch_day1_paid'] ?? 'Not recorded',$detail['lunch_day2_paid'] ?? 'Not recorded',$r['ticket_no'],$detail['ambassador'] ?? '',$r['ref'],$r['payment_date'],$r['payment_channel'],$status];
+        }
         return $rows;
     }
 }

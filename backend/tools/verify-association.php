@@ -11,7 +11,11 @@ $active=(int)Db::value('SELECT COALESCE(SUM(ticket_amount),0) FROM association_b
 $totals=Association::totals();
 if($active!==(int)$totals['amount'])throw new RuntimeException('Association item amounts do not match batch totals.');
 if((int)Db::value('SELECT COUNT(*) FROM association_batch_items WHERE active=1')!==(int)$totals['guests'])throw new RuntimeException('Association guest counts do not match batch totals.');
-if((int)Db::value("SELECT COUNT(*) FROM association_batch_items i JOIN association_batches b ON b.id=i.batch_id WHERE (i.active=1 AND b.status<>'sent') OR (i.active IS NULL AND b.status<>'reversed')")!==0)throw new RuntimeException('Association active flags disagree with batch statuses.');
+if((int)Db::value("SELECT COUNT(*) FROM association_batch_items i JOIN association_batches b ON b.id=i.batch_id WHERE i.active=1 AND b.status<>'sent'")!==0)throw new RuntimeException('Association active flags disagree with batch statuses.');
+if((int)Db::value('SELECT COUNT(*) FROM association_batch_items WHERE report_snapshot IS NULL')!==0)throw new RuntimeException('Association report snapshots are missing.');
+$sample=Db::one('SELECT id FROM association_batches ORDER BY id DESC LIMIT 1');
+if($sample){$report=Association::report(Association::batch((int)$sample['id']),Association::items((int)$sample['id']));if(($report[1]??[])!==Association::REPORT_COLUMNS||count($report[1])!==16)throw new RuntimeException('Association PDF columns do not match.');}
+echo "Association PDF columns verified: 16.\n";
 foreach(Auth::ROLES as $role)if(Association::canManage(['role'=>$role])!==in_array($role,['owner','finance'],true))throw new RuntimeException('Association permissions failed.');
 $history=Association::history();
 foreach($history as $batch)if($batch['status']!=='sent'||(int)$batch['active_guests']<1)throw new RuntimeException('Reversed batch remains in visible history.');
