@@ -431,5 +431,6 @@
   "wd_pending_places": "Awaiting payment: {n}",
   "wd_hold_note": "Pending PSOOLA payments temporarily hold seats. Unpaid holds are released when checkout expires.",
   "wd_seats_in_checkout": "Seats in checkout",
-  "wd_available_now": "Available now"
+  "wd_available_now": "Available now",
+  "cta_see_workshops": "See workshops"
 }
