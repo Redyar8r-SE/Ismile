@@ -119,7 +119,7 @@ export function initWorkshops(workshops) {
     // The button opens the details page: there iSmile's workshop has the email
     // form and a company's workshop has the call button with the phone number.
     const cta = company
-      ? `<a class="wsb-cta" href="${detailsHref(w)}">${PHONE_ICON}<span>${esc(t("wd_call_btn"))}</span>${RIGHT}</a>`
+      ? `<a class="wsb-cta" href="${detailsHref(w)}">${PHONE_ICON}<span>${esc(t("wsb_company_call"))}</span>${RIGHT}</a>`
       : `<a class="wsb-cta" href="${detailsHref(w)}">${MAIL}<span>${esc(t("wsb_online"))}</span>${RIGHT}</a>`;
     return `
       <article data-workshop-id="${esc(w.id)}" class="ws ws-card${w.photoStyle === "cutout" ? " is-cutout" : ""}${company ? " is-company" : ""}${left === 0 && w.availabilityVerified !== false ? " full" : ""}">
