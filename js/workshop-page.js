@@ -12,7 +12,7 @@ import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang, t, onLan
 import { initNav } from "./components/nav.js?v=148";
 import { initTheme } from "./components/theme.js?v=148";
 import { initFooter } from "./sections/footer.js?v=148";
-import { pick, esc, workshopPrice, photoSrc, byCompany, workshopSchedule, watchWorkshopAvailability, WORKSHOP_ICON } from "./sections/workshops.js?v=151";
+import { pick, esc, workshopPrice, photoSrc, byCompany, workshopSchedule, watchWorkshopAvailability, WORKSHOP_ICON } from "./sections/workshops.js?v=152";
 import { phoneHref, PHONE_ICON } from "./utils/phone.js?v=148";
 
 const ICONS = {
@@ -83,7 +83,7 @@ function initDetails(workshop) {
     // Company: total seats (the company takes the bookings). iSmile: seats left and a bar.
     const seats = unavailable ? `<div class="wdc-stat is-seats"><span class="wdc-stat-ic">${ICONS.users}</span><div><b>${esc(t("wd_availability_unavailable"))}</b></div></div>` : company
       ? `<div class="wdc-stat is-seats"><span class="wdc-stat-ic">${ICONS.users}</span><div><b>${esc(full ? t("wd_full") : t("wd_seats_total").replace("{total}", total))}</b><small>${esc(t("wdc_limited"))}</small></div></div>`
-      : `<div class="wdc-stat is-seats"><span class="wdc-stat-ic">${ICONS.users}</span><div class="wdc-stat-grow"><b>${esc(full ? t(pending ? "wd_seats_in_checkout" : "wd_full") : left)}</b>${!full ? `<small>${esc(t("wd_available_now"))}</small>` : ""}<small>${esc(t("wdi_seats").replace("{total}", total))}</small><small>${esc(t("wd_paid_places").replace("{n}", paid))}</small>${pending ? `<small>${esc(t("wd_pending_places").replace("{n}", pending))}</small>` : ""}<span class="wdc-bar" aria-hidden="true"><i style="width:${takenPercent}%"></i></span></div></div>`;
+      : `<div class="wdc-stat is-seats"><span class="wdc-stat-ic">${ICONS.users}</span><div class="wdc-stat-grow"><b>${esc(full ? t(pending ? "wd_seats_in_checkout" : "wd_full") : t("wdi_left").replace("{n}", left))}</b><small>${esc(t("wdi_seats").replace("{total}", total))}</small>${pending ? `<small>${esc(t("wd_pending_places").replace("{n}", pending))}</small>` : ""}<span class="wdc-bar" aria-hidden="true"><i style="width:${takenPercent}%"></i></span></div></div>`;
     const steps = (company
       ? [["phone", "wdc_how1", "wdc_how1_d"], ["wallet", "wdc_how2", "wdc_how2_d"], ["ticket", "wdc_how3", "wdc_how3_d"]]
       : [["ticket", "wdc_how3", "wd_paid_ticket_help"], ["wallet", "wd_online_step", "wd_online_step_text"], ["check", "wd_online_registered", "wd_online_registered_text"]])
