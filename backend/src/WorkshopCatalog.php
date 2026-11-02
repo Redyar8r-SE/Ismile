@@ -16,7 +16,7 @@ final class WorkshopCatalog
         $w=Workshops::find($id);
         if(!$w || $w['status']!=='active')return null;
         $w['paidRegistrations']=(int)Db::value("SELECT COUNT(*) FROM workshop_bookings WHERE workshop_id=? AND removed_at IS NULL AND payment_status='paid'",[$id]);
-        $w['pendingPayments']=(int)Db::value("SELECT COUNT(*) FROM workshop_checkouts WHERE workshop_id=? AND provider_status='awaiting_payment' AND provider_session_id IS NOT NULL AND (expires_at IS NULL OR expires_at>?)",[$id,App::now()]);
+        $w['pendingPayments']=(int)Db::value("SELECT COUNT(*) FROM workshop_checkouts WHERE workshop_id=? AND provider_status='awaiting_payment' AND provider_session_id IS NOT NULL",[$id]);
         $w['availabilityVerified']=!$w['providerEventId'];
         if($w['providerEventId']){
             $file=App::storage('tmp/workshop-catalog-'.$id.'.json');
@@ -33,6 +33,9 @@ final class WorkshopCatalog
             if(is_array($cache['data']??null))$w=array_replace($w,$cache['data'],['availabilityVerified'=>true]);
             else {$w['availabilityVerified']=false;$w['seatsLeft']=0;}
         }
+        // Expiration and inventory release can differ by a provider processing
+        // interval. Keep a hold visible while PSOOLA still withholds that seat.
+        if($w['availabilityVerified'])$w['pendingPayments']=min($w['pendingPayments'],max(0,$w['totalSeats']-$w['paidRegistrations']-$w['seatsLeft']));
         unset($w['providerEventId'],$w['providerShowId'],$w['providerTicketTypeId']);
         return $w;
     }

@@ -11,6 +11,7 @@ $person=Db::insert('registrations',['ref'=>'ST'.strtoupper(bin2hex(random_bytes(
 $w=WorkshopCatalog::one($id,true);$check('no checkout means 25 available and zero registered',$w['seatsLeft']===25&&$w['paidRegistrations']===0&&$w['pendingPayments']===0);
 WorkshopCheckout::start($id,'seat-fixture@example.invalid');$attempt=Db::one('SELECT * FROM workshop_checkouts WHERE registration_id=? ORDER BY id DESC LIMIT 1',[$person]);$w=WorkshopCatalog::one($id,true);
 $check('unpaid checkout is clearly separated from paid registrations',$w['seatsLeft']===24&&$w['paidRegistrations']===0&&$w['pendingPayments']===1&&(int)Db::value('SELECT COUNT(*) FROM workshop_bookings')===0);
+Db::update('workshop_checkouts',['expires_at'=>'2020-01-01 00:00:00'],'id=?',[$attempt['id']]);$w=WorkshopCatalog::one($id,true);$check('hold stays visible until the provider actually releases inventory',$w['seatsLeft']===24&&$w['pendingPayments']===1&&$w['paidRegistrations']===0);
 $fixture('expire?id='.$attempt['provider_session_id']);WorkshopCheckout::reconcile($attempt['provider_session_id']);$w=WorkshopCatalog::one($id,true);
 $check('expired unpaid hold returns to 25 without registering a person',$w['seatsLeft']===25&&$w['paidRegistrations']===0&&$w['pendingPayments']===0);
 WorkshopCheckout::start($id,'seat-fixture@example.invalid');$next=Db::one('SELECT * FROM workshop_checkouts WHERE registration_id=? ORDER BY id DESC LIMIT 1',[$person]);$fixture('pay?id='.$next['provider_session_id']);WorkshopCheckout::reconcile($next['provider_session_id']);$w=WorkshopCatalog::one($id,true);
