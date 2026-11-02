@@ -190,7 +190,6 @@ function initDetails(workshop) {
         const result = await response.json().catch(() => ({}));
         if (response.ok && result.ok) {
           state.done = true;
-          workshop.seatsLeft = Math.max(0, (Number(workshop.seatsLeft) || 0) - 1);
         } else {
           state.error = ERRORS[result.error] || "wd_err_server";
           if (result.error === "wd_err_full") workshop.seatsLeft = 0;
