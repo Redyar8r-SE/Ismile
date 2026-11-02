@@ -115,7 +115,7 @@ export function initWorkshops(workshops) {
       ? [t(Number(w.pendingPayments) > 0 ? "wd_seats_in_checkout" : "wd_full"), ""]
       : company
         ? [t("wd_seats_total").replace("{total}", total), t("wdc_limited")]
-        : [t("wd_seats_available").replace("{n}", left), t("wd_paid_places").replace("{n}", Number(w.paidRegistrations) || 0)];
+        : [t("wdi_left").replace("{n}", left), t("wdi_seats").replace("{total}", total)];
     // The button opens the details page: there iSmile's workshop has the email
     // form and a company's workshop has the call button with the phone number.
     const cta = company
