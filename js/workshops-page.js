@@ -6,7 +6,7 @@ import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from ".
 import { initNav } from "./components/nav.js?v=148";
 import { initTheme } from "./components/theme.js?v=148";
 import { initFooter } from "./sections/footer.js?v=148";
-import { initWorkshops } from "./sections/workshops.js?v=148";
+import { initWorkshops } from "./sections/workshops.js?v=150";
 
 async function start() {
   initNav();
@@ -15,7 +15,7 @@ async function start() {
   try {
     const [strings, workshops, footer] = await Promise.all([
       loadJSON("data/i18n/site-en.json"),
-      loadJSON("data/workshops.json"),
+      loadJSON("api/workshops.php"),
       loadJSON("data/footer.json"),
     ]);
 

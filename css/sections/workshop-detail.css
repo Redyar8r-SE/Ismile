@@ -1,0 +1,236 @@
+/* ==========================================================
+   One workshop's details page (workshop.html?id=…)
+   ========================================================== */
+.wd-page{padding-block:28px 72px}
+.wdc-organizer{margin:0;color:var(--teal-ink);font-size:12px;font-weight:700;letter-spacing:.08em}
+.wdc-schedule{display:flex;flex-wrap:wrap;gap:12px 24px;color:var(--teal-ink);font-size:14px;font-weight:600}
+.wdc-schedule span{display:inline-flex;align-items:center;gap:8px}
+.wdc-schedule svg{width:18px;height:18px;flex:none}
+.wdc-phone-options{display:grid;gap:10px}
+.wdc .wd-facts{grid-template-columns:repeat(4,minmax(0,1fr))}
+.wdc.is-cutout .wdc-hero{aspect-ratio:auto;min-height:740px;background-image:var(--workshop-studio);background-size:cover;background-position:center;isolation:isolate}
+.wdc.is-cutout .wdc-photo{background:transparent}
+.wdc.is-cutout .wdc-photo img{inset:auto;inset-inline-end:0;bottom:0;width:56%;height:94%;object-fit:contain;object-position:center bottom}
+.wdc.is-cutout .wdc-text{width:min(540px,48%);gap:18px;padding-block:44px}
+.wdc.is-cutout[data-workshop-id="crown-vs-veneer"] .wdc-photo img{height:113%;width:63%;bottom:-10%}
+html[dir="rtl"] .wdc.is-cutout .wdc-photo img{transform:none}
+.wdc .wdc-stat b{font-size:clamp(18px,1.7vw,24px);overflow-wrap:anywhere}
+.wdc .wdc-trainer{overflow-wrap:anywhere}
+@media(max-width:960px){
+  .wdc.is-cutout .wdc-hero{min-height:0;aspect-ratio:auto}
+  .wdc.is-cutout .wdc-photo{height:420px;aspect-ratio:auto}
+  .wdc.is-cutout .wdc-photo img{height:100%;width:100%;inset-inline:0;bottom:0;object-position:center bottom}
+  .wdc.is-cutout[data-workshop-id="crown-vs-veneer"] .wdc-photo img{height:116%;width:100%;bottom:-12%}
+  .wdc.is-cutout .wdc-text{width:auto;padding:16px 24px 28px}
+  .wdc .wd-facts{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:560px){
+  .wdc.is-cutout .wdc-photo{height:320px}
+  .wdc.is-cutout .wdc-text{padding:12px 18px 22px}
+  .wdc .wdc-stat{flex-direction:column;align-items:flex-start}
+  .wdc .wdc-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .wdc .wdc-stat+.wdc-stat{padding-inline-start:12px;border-top:0;padding-top:0;border-inline-start:1px solid var(--line)}
+  .wdc .wdc-stat b{font-size:20px}
+  .wdc .wd-fact{padding:14px}
+  .wdc .wd-fact dd{font-size:14px}
+}
+.wd-root{margin-top:26px}
+.wd{display:grid;grid-template-columns:minmax(0,520px) minmax(0,1fr);gap:56px;align-items:start}
+
+/* The trainer's photo */
+.wd-photo{position:relative;margin:0;aspect-ratio:13/14;border-radius:28px;overflow:hidden;border:1px solid var(--line);background:var(--surface-2);color:var(--teal)}
+.wd-photo img{display:block;width:100%;height:100%;object-fit:cover;object-position:68% 25%}
+.wd-photo::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 58%,rgba(11,31,39,.88));pointer-events:none}
+.wd-photo.no-photo{display:grid;place-items:center;background:radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--teal) 14%,var(--surface-2)),var(--surface-2))}
+.wd-photo.no-photo>svg{width:34%;opacity:.4}
+.wd-photo.no-photo::after{display:none}
+.wd-photo figcaption{position:absolute;z-index:1;inset-inline:28px;bottom:26px;color:#fff;font-size:22px;line-height:1.25}
+.wd-photo.no-photo figcaption{color:var(--text)}
+
+/* Title, trainer, facts, overview */
+.wd-info{display:flex;flex-direction:column;gap:22px;min-width:0}
+.wd-badge{align-self:flex-start;display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:99px;background:color-mix(in srgb,var(--teal) 14%,transparent);border:1px solid color-mix(in srgb,var(--teal) 40%,transparent);color:var(--teal-ink);font-size:13px;font-weight:700}
+.wd-badge::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--teal)}
+.wd-badge.is-company{background:color-mix(in srgb,var(--co) 16%,transparent);border-color:color-mix(in srgb,var(--co) 50%,transparent);color:var(--co-ink)}
+.wd-badge.is-company::before{background:var(--co)}
+.wd-info h1{margin:0;font-size:clamp(28px,3.4vw,40px);line-height:1.12;font-weight:800;letter-spacing:-.01em}
+.wd-trainer{display:flex;flex-direction:column;gap:3px}
+.wd-trainer b{font-size:17px}
+.wd-trainer span{color:var(--muted);font-size:14px}
+.wd-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:0}
+.wd-fact{display:flex;flex-direction:column;gap:8px;padding:16px;border-radius:16px;background:var(--surface);border:1px solid var(--line)}
+.wd-fact dt{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:11.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase}
+html[dir="rtl"] .wd-fact dt{letter-spacing:0}
+.wd-fact dt svg{flex:none;width:16px;height:16px;color:var(--teal)}
+.wd-fact dd{margin:0;font-size:15px;font-weight:700;line-height:1.3}
+.wd-overview h2{margin:0 0 10px;font-size:18px;font-weight:800}
+.wd-overview p{margin:0 0 10px;color:var(--muted);font-size:16px;line-height:1.6}
+.wd-overview p:last-child{margin-bottom:0}
+
+/* Seats, price and "Register for workshop" */
+.wd-book{display:flex;flex-direction:column;gap:14px;padding:20px;border-radius:20px;background:var(--surface);border:1.5px solid var(--teal)}
+.wd-book-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;font-size:14px;font-weight:600}
+.wd-state{display:inline-flex;align-items:center;gap:7px;color:var(--ok);font-weight:700}
+.wd-state::before{content:"";width:9px;height:9px;border-radius:50%;background:currentColor}
+.wd-book.is-full .wd-state{color:var(--danger)}
+.wd-left{color:var(--muted)}
+.wd-bar{height:7px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+.wd-bar i{display:block;height:100%;border-radius:inherit;background:var(--teal)}
+.wd-price{display:flex;flex-direction:column;gap:2px}
+.wd-price b{font-size:24px;font-weight:800;color:var(--teal-ink)}
+.wd-price small{color:var(--muted);font-size:12.5px}
+.wd-form{display:flex;gap:12px;align-items:stretch}
+.wd-trap{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);opacity:0;pointer-events:none}
+.wd-email{flex:1;min-width:0;display:flex;align-items:center;gap:10px;min-height:52px;padding-inline:18px;border-radius:99px;background:var(--bg);border:1.5px solid var(--line);transition:border-color .15s}
+.wd-email:focus-within{border-color:var(--teal)}
+.wd-email.has-error{border-color:var(--danger)}
+.wd-email svg{flex:none;width:18px;height:18px;color:var(--muted)}
+.wd-email input{flex:1;min-width:0;border:0;background:transparent;color:var(--text);font:inherit;font-size:15px;outline:none}
+.wd-email input::placeholder{color:var(--muted);opacity:1}
+html[dir="rtl"] .wd-email input::placeholder{text-align:right}
+.wd-submit{min-height:52px;padding-inline:24px;font-weight:700;white-space:nowrap;background:linear-gradient(135deg,var(--teal),#0E7F7B);box-shadow:0 10px 22px -10px rgba(22,166,161,.9)}
+.wd-submit svg{width:18px;height:18px}
+html[dir="rtl"] .wd-submit svg{transform:scaleX(-1)}
+.wd-help{margin:0;color:var(--muted);font-size:13px}
+.wd-error,.wd-done{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:14px}
+.wd-error svg,.wd-done svg{flex:none;width:22px;height:22px;margin-top:1px}
+.wd-error p,.wd-done p{margin:0}
+.wd-error{background:color-mix(in srgb,#E5484D 16%,transparent);border:1.5px solid color-mix(in srgb,#E5484D 60%,transparent);color:var(--text)}
+.wd-error svg{color:#E5484D}
+.wd-error .btn{margin-top:10px}
+.wd-done{background:color-mix(in srgb,var(--teal) 14%,transparent);border:1px solid color-mix(in srgb,var(--teal) 50%,transparent)}
+.wd-done svg{color:var(--teal-ink)}
+.wd-done b{display:block;margin-bottom:3px;font-size:16px}
+.wd-done p{color:var(--muted);font-size:14px}
+.wd-missing{padding:40px 0;color:var(--muted);font-size:17px}
+
+/* ==========================================================
+   Organized by a company (.wdc): a banner with the title, trainer, price,
+   seats and one call button beside the whole trainer photo; then the facts,
+   overview and "How to book this workshop".
+   ========================================================== */
+.wdc{display:flex;flex-direction:column;gap:32px}
+.wdc-hero{--fade:to right;position:relative;display:flex;align-items:center;aspect-ratio:var(--ar,1.4);min-height:500px;border-radius:28px;overflow:hidden;background:var(--surface);border:1px solid var(--line)}
+html[dir="rtl"] .wdc-hero{--fade:to left}
+.wdc-text{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:center;gap:16px;width:min(540px,46%);min-width:0;padding-block:40px;padding-inline:48px 0}
+.wdc-text h1{margin:0;font-size:clamp(28px,2.8vw,38px);line-height:1.12;font-weight:800;letter-spacing:-.01em}
+.wdc-trainer{display:flex;flex-direction:column;gap:2px;margin:0;color:var(--muted);font-size:15px}
+.wdc-trainer span:first-child{color:var(--text);font-weight:700}
+.wdc-trainer i{display:none}
+
+/* Price | seats, and the call button, in one panel */
+.wdc-panel{display:flex;flex-direction:column;gap:14px;margin-top:6px;padding:16px;border-radius:22px;background:var(--bg);border:1px solid var(--line)}
+.wdc-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+.wdc-stat{display:flex;align-items:center;gap:12px;min-width:0;padding-inline:4px}
+.wdc-stat+.wdc-stat{padding-inline-start:16px;border-inline-start:1px solid var(--line)}
+.wdc-stat-ic{flex:none;width:46px;height:46px;border-radius:14px;display:grid;place-items:center}
+.wdc-stat-ic svg{width:22px;height:22px}
+.wdc-stat.is-price .wdc-stat-ic{background:color-mix(in srgb,var(--co) 16%,transparent);color:var(--co)}
+.wdc-stat.is-seats .wdc-stat-ic{background:color-mix(in srgb,var(--teal) 16%,transparent);color:var(--teal)}
+.wdc-stat b{display:block;font-size:24px;font-weight:800;line-height:1.1}
+.wdc-stat small{display:block;margin-top:2px;color:var(--muted);font-size:12.5px}
+.wdc-call{display:flex;align-items:center;gap:12px;padding-block:10px;padding-inline:10px 22px;border-radius:99px;color:#fff;text-decoration:none;background:linear-gradient(135deg,var(--teal),#0E7F7B);box-shadow:0 12px 26px -12px rgba(22,166,161,.9);transition:filter .15s}
+.wdc-call:hover{color:#fff;filter:brightness(1.07)}
+.wdc-call:focus-visible{outline:3px solid var(--teal);outline-offset:3px}
+.wdc-call-ic{flex:none;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:#fff;color:#0E7F7B}
+.wdc-call-ic svg{width:20px;height:20px}
+.wdc-call-text{flex:1;min-width:0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:2px 12px}
+.wdc-call-text span{font-size:16px;font-weight:700;opacity:.92}
+.wdc-call-text b{font-size:19px;font-weight:800;letter-spacing:.01em;unicode-bidi:isolate}
+
+/* The whole photo, fading into the banner on the text side */
+.wdc-photo{position:absolute;inset:0;margin:0;background:var(--surface-2);color:var(--teal)}
+.wdc-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 30%}
+/* Arabic and Kurdish: the text is on the right, so the photo is mirrored and the trainer stands on the left */
+html[dir="rtl"] .wdc-photo img{transform:scaleX(-1)}
+.wdc-photo::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(var(--fade),color-mix(in srgb,var(--surface) 97%,transparent) 0%,color-mix(in srgb,var(--surface) 88%,transparent) 38%,color-mix(in srgb,var(--surface) 40%,transparent) 52%,transparent 66%)}
+.wdc-photo.no-photo{display:grid;place-items:center}
+.wdc-photo.no-photo>svg{width:30%;opacity:.4}
+
+/* Below the banner */
+.wdc-below{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:40px;align-items:start}
+.wdc-main{display:flex;flex-direction:column;gap:26px;min-width:0}
+.wdc-how{padding:24px;border-radius:22px;background:var(--surface);border:1px solid var(--line)}
+.wdc-how h2{margin:0 0 16px;font-size:17px;font-weight:800}
+.wdc-how ol{list-style:none;margin:0;padding:0;display:grid;gap:14px}
+.wdc-how li{display:flex;gap:12px}
+.wdc-how-ic{flex:none;width:36px;height:36px;border-radius:11px;display:grid;place-items:center;background:color-mix(in srgb,var(--teal) 15%,transparent);color:var(--teal-ink)}
+.wdc-how-ic svg{width:18px;height:18px}
+.wdc-how b{font-size:15px}
+.wdc-how p{margin:2px 0 0;color:var(--muted);font-size:13.5px;line-height:1.45}
+
+/* Organized by iSmile: seats left with a bar, and the summit email and
+   "Register for workshop" together in one pill */
+.wdc-stat-grow{flex:1;min-width:0}
+.wdc-bar{display:block;height:6px;margin-top:7px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+.wdc-bar i{display:block;height:100%;border-radius:inherit;background:var(--teal)}
+.wdc-form{display:flex;align-items:center;gap:10px;padding:6px;padding-inline-start:18px;border-radius:99px;background:var(--surface);border:1.5px solid var(--teal);transition:box-shadow .15s,border-color .15s}
+.wdc-form:focus-within{box-shadow:0 0 0 4px color-mix(in srgb,var(--teal) 22%,transparent)}
+.wdc-form.has-error{border-color:#E5484D}
+.wdc-email{flex:1;min-width:0;display:flex;align-items:center;gap:10px}
+.wdc-email svg{flex:none;width:18px;height:18px;color:var(--muted)}
+.wdc-email input{flex:1;min-width:0;min-height:40px;border:0;background:transparent;color:var(--text);font:inherit;font-size:15px;outline:none}
+.wdc-email input::placeholder{color:var(--muted);opacity:1}
+html[dir="rtl"] .wdc-email input::placeholder{text-align:right}
+.wdc-submit{flex:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 20px;border:0;border-radius:99px;color:#fff;font:inherit;font-size:15px;font-weight:800;white-space:nowrap;cursor:pointer;background:linear-gradient(135deg,var(--teal),#0E7F7B);box-shadow:0 8px 18px -10px rgba(22,166,161,.9);transition:filter .15s}
+.wdc-submit:hover{filter:brightness(1.07)}
+.wdc-submit:disabled{opacity:.6;cursor:not-allowed;filter:none}
+.wdc-submit svg{width:18px;height:18px}
+html[dir="rtl"] .wdc-submit svg{transform:scaleX(-1)}
+.wdc-help{margin:0;color:var(--muted);font-size:12.5px}
+.wdc-panel .wd-error .btn{margin-top:10px}
+
+@media (max-width:960px){
+  .wdc-hero{flex-direction:column;align-items:stretch;aspect-ratio:auto;min-height:0}
+  .wdc-photo{position:relative;inset:auto;order:-1;aspect-ratio:var(--ar,1.4)}
+  html[dir="rtl"] .wdc-photo img{transform:none}
+  .wdc-photo::after{background:linear-gradient(to bottom,transparent 62%,var(--surface))}
+  .wdc-text{width:auto;padding:6px 20px 22px}
+  .wdc-below{grid-template-columns:1fr;gap:28px}
+}
+@media (max-width:560px){
+  .wdc{gap:24px}
+  .wdc-hero{border-radius:24px}
+  .wdc-panel{padding:12px}
+  .wdc-stat{gap:8px;padding-inline:0}
+  .wdc-stat+.wdc-stat{padding-inline-start:10px}
+  .wdc-stat-ic{width:36px;height:36px;border-radius:11px}
+  .wdc-stat-ic svg{width:19px;height:19px}
+  .wdc-stat b{font-size:19px}
+  .wdc-stat small{line-height:1.3}
+  .wdc-call{padding-inline:8px 16px}
+  .wdc-call-text{flex-direction:column;align-items:flex-start;gap:0}
+  .wdc-call-text span{font-size:13px;line-height:1.3}
+  .wdc-call-text b{font-size:18px;white-space:nowrap}
+}
+@media (max-width:560px){
+  .wdc-how{padding:20px}
+}
+/* Narrow phones: the email box above a full-width button */
+@media (max-width:480px){
+  .wdc-form{flex-wrap:wrap;gap:8px;padding:8px;border-radius:22px}
+  .wdc-email{flex-basis:100%;padding-inline:10px}
+  .wdc-submit{flex:1 1 100%}
+}
+/* Small phones (and Arabic/Kurdish, whose words are longer, on any phone):
+   price and seats one under the other */
+@media (max-width:370px){
+  .wdc-stats{grid-template-columns:1fr;gap:10px}
+  .wdc-stat+.wdc-stat{padding-inline-start:0;padding-top:10px;border-inline-start:0;border-top:1px solid var(--line)}
+}
+@media (max-width:460px){
+  html[dir="rtl"] .wdc-stats{grid-template-columns:1fr;gap:10px}
+  html[dir="rtl"] .wdc-stat+.wdc-stat{padding-inline-start:0;padding-top:10px;border-inline-start:0;border-top:1px solid var(--line)}
+}
+
+@media (max-width:960px){
+  .wd{grid-template-columns:1fr;gap:32px}
+  .wd-photo{max-width:520px;aspect-ratio:4/3}
+}
+@media (max-width:560px){
+  .wd-page{padding-block:18px 56px}
+  .wd-facts{grid-template-columns:1fr}
+  .wd-form{flex-direction:column}
+  .wd-submit{width:100%}
+  .wd-photo figcaption{inset-inline:20px;bottom:18px;font-size:19px}
+}

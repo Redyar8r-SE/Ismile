@@ -19,8 +19,17 @@
 .ws.is-soon{padding:0;gap:0;overflow:hidden;border-radius:var(--r-lg);background:var(--surface);border-style:dashed}
 .ws-ph{position:relative;aspect-ratio:4/3;display:grid;place-items:center;color:var(--teal);background:radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--teal) 10%,var(--surface-2)),var(--surface-2))}
 .ws-ph svg{width:34%;opacity:.3}
-.ws-ph em{position:absolute;inset-block-start:12px;inset-inline-start:12px;display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:99px;border:1px solid var(--line);background:color-mix(in srgb,var(--bg) 85%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:var(--text);font-style:normal;font-size:11.5px;font-weight:700;letter-spacing:.02em}
-.ws-ph em::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--teal)}
+/* "Organized by iSmile": on every card, over the picture */
+.ws-badge{position:absolute;z-index:2;inset-block-start:12px;inset-inline-start:12px;display:inline-flex;align-items:center;gap:7px;max-width:calc(100% - 76px);padding:6px 12px;border-radius:99px;border:1px solid var(--line);background:color-mix(in srgb,var(--bg) 85%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:var(--text);font-size:12px;font-weight:700;letter-spacing:.01em;line-height:1.2}
+.ws-badge::before{content:"";flex:none;width:6px;height:6px;border-radius:50%;background:var(--teal)}
+.ws.is-soon .ws-badge{max-width:calc(100% - 24px)}
+/* Organized by a company (people call the company): an amber dot, so it is
+   easy to tell from iSmile's own workshops (teal) */
+:root{--co:#E8961E;--co-ink:#9A5800}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--co-ink:#F6BE5C}}
+:root[data-theme="dark"]{--co-ink:#F6BE5C}
+.ws-badge.is-company{border-color:color-mix(in srgb,var(--co) 55%,transparent)}
+.ws-badge.is-company::before{background:var(--co)}
 .ws-sk{display:grid;gap:12px;padding:20px 18px 22px;border-top:1px solid var(--line)}
 .ws-line{display:block;height:13px;border-radius:99px;background:linear-gradient(90deg,var(--line),color-mix(in srgb,var(--line) 55%,transparent),var(--line));background-size:200% 100%;animation:wsShift 2.6s ease-in-out infinite}
 .ws-line.ws-short{width:62%;height:10px;opacity:.75}
@@ -62,4 +71,73 @@
   .ws-actions{flex-wrap:wrap}
   .ws-actions .ws-call{flex:1 1 100%}
   .ws-callbar{display:flex;border-radius:18px}
+}
+
+/* ---------- An announced workshop (workshops page) ----------
+   Big photo with who organizes it; title, trainer, chips; at the bottom the
+   seats on one side and a short "Register online" / "Call to register"
+   button on the other. No price. The whole card opens the details page. */
+.ws.ws-card{position:relative;padding:0;gap:0;overflow:hidden;border-radius:24px;background:var(--surface);border:1.5px solid color-mix(in srgb,var(--teal) 45%,transparent);box-shadow:0 18px 40px -24px rgba(22,166,161,.55);transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
+.ws.ws-card.is-company{border-color:color-mix(in srgb,var(--co) 45%,transparent);box-shadow:0 18px 40px -24px rgba(232,150,30,.45)}
+.ws.ws-card:hover,.ws.ws-card:focus-within{transform:translateY(-4px);border-color:var(--teal);box-shadow:0 24px 46px -20px rgba(22,166,161,.7)}
+.ws.ws-card.is-company:hover,.ws.ws-card.is-company:focus-within{border-color:var(--co);box-shadow:0 24px 46px -20px rgba(232,150,30,.55)}
+.ws-media{position:relative;aspect-ratio:16/10;overflow:hidden;background:var(--surface-2);color:var(--teal)}
+.ws-media img{display:block;width:100%;height:100%;object-fit:cover;object-position:60% 22%;transition:transform .35s ease}
+.ws.ws-card:hover .ws-media img{transform:scale(1.04)}
+.ws-media::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 62%,color-mix(in srgb,var(--surface) 85%,transparent) 100%);pointer-events:none}
+.ws-media.no-photo{display:grid;place-items:center;background:radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--teal) 14%,var(--surface-2)),var(--surface-2))}
+.ws-media.no-photo>svg{width:30%;opacity:.4}
+.ws-card .ws-badge{max-width:calc(100% - 24px)}
+.ws-body{flex:1;display:flex;flex-direction:column;gap:10px;padding:20px}
+.ws-body h3{margin:0;font-size:19px;line-height:1.28;min-height:0}
+.ws-link{color:var(--text);text-decoration:none}
+/* The whole card opens the details page (the button sits above it) */
+.ws-link::after{content:"";position:absolute;inset:0;z-index:3;border-radius:inherit}
+.ws-link:focus-visible{outline:none}
+.ws.ws-card:has(.ws-link:focus-visible){outline:3px solid var(--teal);outline-offset:3px}
+.ws-trainer{margin:0;color:var(--muted);font-size:14px;font-weight:600}
+.ws-chips{display:flex;flex-wrap:wrap;gap:8px}
+.ws-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:99px;background:var(--surface-2);color:var(--text);font-size:12.5px;font-weight:600;line-height:1.25}
+.ws-chip svg{flex:none;width:14px;height:14px;color:var(--teal)}
+.wsb-foot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-top:auto;padding-top:14px;border-top:1px solid var(--line)}
+.wsb-seats{display:flex;align-items:center;gap:10px;min-width:0}
+.wsb-seats-ic{flex:none;width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:color-mix(in srgb,var(--teal) 16%,transparent);color:var(--teal)}
+.wsb-seats-ic svg{width:19px;height:19px}
+.wsb-seats b{display:block;font-size:16px;font-weight:800;line-height:1.15;white-space:nowrap}
+.wsb-seats small{display:block;color:var(--muted);font-size:12px;white-space:nowrap}
+.ws.full .wsb-seats b{color:var(--danger)}
+.wsb-cta{position:relative;z-index:4;flex:none;display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:99px;color:#fff;font-size:14.5px;font-weight:800;text-decoration:none;white-space:nowrap;background:linear-gradient(135deg,var(--teal),#0E7F7B);box-shadow:0 10px 20px -12px rgba(22,166,161,.95);transition:filter .15s}
+.wsb-cta:hover{color:#fff;filter:brightness(1.08)}
+.wsb-cta:focus-visible{outline:3px solid var(--teal);outline-offset:3px}
+.wsb-cta svg{flex:none;width:16px;height:16px}
+html[dir="rtl"] .wsb-cta svg:last-child{transform:scaleX(-1)}
+@media (prefers-reduced-motion: reduce){.ws.ws-card,.ws-media img{transition:none}.ws.ws-card:hover{transform:none}.ws.ws-card:hover .ws-media img{transform:none}}
+
+/* Three real workshops, with the approved portrait treatment in both themes. */
+:root{--workshop-studio:url('../../assets/workshops/studio-light.webp')}
+:root[data-theme="dark"]{--workshop-studio:url('../../assets/workshops/studio-dark.webp')}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--workshop-studio:url('../../assets/workshops/studio-dark.webp')}}
+.ws-card.is-cutout .ws-media{background-image:var(--workshop-studio);background-size:cover;background-position:center;aspect-ratio:4/3}
+.ws-card.is-cutout .ws-media img{object-fit:contain;object-position:center bottom}
+.ws-card[data-workshop-id="crown-vs-veneer"] .ws-media img{transform:translateY(9%) scale(1.12)}
+.ws-schedule{margin:0;color:var(--teal-ink);font-size:13px;font-weight:600;line-height:1.7}
+.wsb-seats b,.wsb-seats small{white-space:normal}
+/* Workshop directory layout. */
+.wsp-list .ws-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:22px}
+@media(max-width:1100px){.wsp-list .ws-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:760px){
+  .wsp-list .ws-grid{grid-template-columns:1fr;gap:16px}
+}
+/* Phones: a smaller button, still on the right of the seats. When a language
+   needs more room it moves under the seats and stays on the right side. */
+.wsb-cta{margin-inline-start:auto}
+@media (max-width:480px){
+  .wsb-foot{gap:10px}
+  .wsb-seats{gap:8px}
+  .wsb-seats-ic{width:34px;height:34px;border-radius:11px}
+  .wsb-seats-ic svg{width:17px;height:17px}
+  .wsb-seats b{font-size:15px}
+  .wsb-seats small{font-size:11.5px}
+  .wsb-cta{gap:6px;padding:9px 13px;font-size:13.5px}
+  .wsb-cta svg{width:15px;height:15px}
 }

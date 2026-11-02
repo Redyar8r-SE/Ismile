@@ -8,7 +8,7 @@
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=1">
 <script>try{if(localStorage.getItem("ismile-theme")==="light")document.documentElement.dataset.theme="light"}catch(e){}</script>
 <title>Workshops · iSmile 2026</title>
-<meta name="description" content="Hands-on dental workshops with leading experts at iSmile 2026, Iraq's largest international dental summit. Seats are booked by phone.">
+<meta name="description" content="Hands-on dental workshops with leading experts at iSmile 2026, Iraq's largest international dental summit. Register online with your summit email, or by phone with the company that runs the workshop.">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,13 +25,13 @@
 <link rel="stylesheet" href="css/layout/header.css?v=148">
 <link rel="stylesheet" href="css/layout/footer.css?v=148">
 <!-- The cards and the phone bar are the same as on the home page. -->
-<link rel="stylesheet" href="css/sections/workshops.css?v=148">
+<link rel="stylesheet" href="css/sections/workshops.css?v=150">
 <!-- The header, back button, intro and animated logo are the registration page's. -->
 <link rel="stylesheet" href="css/sections/hero.css?v=148">
 <link rel="stylesheet" href="css/sections/register-page.css?v=148">
-<link rel="stylesheet" href="css/sections/workshops-page.css?v=148">
+<link rel="stylesheet" href="css/sections/workshops-page.css?v=150">
 
-<script type="module" src="js/workshops-page.js?v=148"></script>
+<script type="module" src="js/workshops-page.js?v=150"></script>
 </head>
 <body>
 
@@ -94,8 +94,7 @@
       <div class="reg-page-hero-copy">
         <p class="section-kicker" data-i18n="wsp_kicker">Hands-on training</p>
         <h1 data-i18n="wsp_title">Advanced Workshops at iSmile 2026</h1>
-        <p data-i18n="wsp_sub">Take your clinical skills to the next level through exclusive, high-level hands-on workshops led by distinguished experts and experienced practitioners. Workshop topics, expert trainers, and pricing will be announced soon. Seats are limited. Registration will be handled directly through our office.</p>
-        <div class="ws-callbar" id="wsCallbar"></div>
+        <p data-i18n="ws_catalog_sub">Explore the iSmile 2026 workshops, meet your trainers and choose your next clinical skill. A paid summit ticket is required. Register with your summit email for iSmile workshops, or call the company for its workshop.</p>
       </div>
       <div class="reg-animated-brand" aria-hidden="true">
         <div class="hero-brand">
@@ -113,46 +112,68 @@
 </section>
 
 <!-- ============ THE WORKSHOPS (rendered from data/workshops.json) ============ -->
-<section class="block wsp-list">
+<section class="block wsp-list" id="wsList">
   <div class="wrap">
     <h2 data-i18n="wsp_list_title">The workshops</h2>
     <div class="ws-grid" id="wsGrid"></div>
   </div>
 </section>
 
-<!-- ============ HOW BOOKING WORKS ============ -->
+<!-- ============ HOW BOOKING WORKS ============
+     Two ways, as the badge on each workshop says: iSmile's own workshops are
+     booked online with the summit email; a company's workshops by phone. -->
 <section class="block alt wsp-how">
   <div class="wrap">
     <h2 data-i18n="wsp_how_title">How booking works</h2>
-    <div class="wsp-register">
-      <span class="wsp-register-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M6.5 15c.5-2 1.3-3 2.5-3s2 1 2.5 3M14 8h3M14 11h3"/></svg></span>
-      <div class="wsp-register-text">
-        <h3 data-i18n="wsp_reg_title">Workshops are for summit attendees</h3>
-        <p data-i18n="wsp_reg_text">Register for iSmile 2026 first, then call us to add a workshop.</p>
+    <p class="wsp-how-lead" data-i18n="wsp3_lead">Every workshop shows who organizes it. That tells you how to book your seat.</p>
+
+    <!-- The one button: every workshop needs a summit ticket first. -->
+    <div class="wsp-first">
+      <span class="wsp-first-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7.5A1.5 1.5 0 015.5 6h13A1.5 1.5 0 0120 7.5V10a2 2 0 000 4v2.5a1.5 1.5 0 01-1.5 1.5h-13A1.5 1.5 0 014 16.5V14a2 2 0 000-4z"/><path d="M14.5 6v12" stroke-dasharray="1.6 2.2"/><path d="M7.5 10.5h4M7.5 13.5h3"/></svg></span>
+      <div class="wsp-first-text">
+        <h3 data-i18n="wsp4_first_title">First, get your iSmile 2026 ticket</h3>
+        <p data-i18n="wsp4_first_text">Workshops are only for summit attendees. Without a summit ticket you cannot book a workshop.</p>
       </div>
       <a class="btn btn-primary" href="register.html" data-i18n="wsp_reg_btn">Register for the summit</a>
     </div>
 
-    <ol class="wsp-steps">
-      <li>
-        <span class="wsp-num">1</span>
-        <span class="wsp-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.6 3.5h2.6l1.5 4-2 1.3a11 11 0 005.5 5.5l1.3-2 4 1.5v2.6a2 2 0 01-2.2 2A16.5 16.5 0 014.6 5.7a2 2 0 012-2.2z"/></svg></span>
-        <h3 data-i18n="wsp_s1">Call our office</h3>
-        <p data-i18n="wsp_s1_d">Tell us which workshop you would like to join.</p>
-      </li>
-      <li>
-        <span class="wsp-num">2</span>
-        <span class="wsp-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg></span>
-        <h3 data-i18n="wsp_s2">We reserve your seat</h3>
-        <p data-i18n="wsp_s2_d">The office confirms your place and tells you how to pay.</p>
-      </li>
-      <li>
-        <span class="wsp-num">3</span>
-        <span class="wsp-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3.5c-2.8 0-4.6 1.5-4.6 4.2 0 1.8.6 3.1.9 5.1.3 2.8.5 6.7 1.8 6.7 1.1 0 1-3.6 1.9-3.6s.8 3.6 1.9 3.6c1.3 0 1.5-3.9 1.8-6.7.3-2 .9-3.3.9-5.1 0-2.7-1.8-4.2-4.6-4.2z"/><circle cx="17.6" cy="5.4" r="2.6"/><path d="M17.9 8l.5 3"/><path d="M18.4 11l1.4 9.2"/></svg></span>
+    <div class="wsp-ways">
+      <article class="wsp-way is-ismile">
+        <div class="wsp-way-head">
+          <span class="wsp-way-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M4 7.5l8 5.5 8-5.5"/></svg></span>
+          <div>
+            <h3 data-i18n="wsp3_ism_title">Register online with your summit email</h3>
+          </div>
+        </div>
+        <ol class="wsp-way-steps">
+          <li><b data-i18n="wsp3_open">Open the workshop</b><span data-i18n="wsp3_ism_s2_d">See the trainer, the details and the price.</span></li>
+          <li><b data-i18n="wsp3_ism_s3">Type your summit email</b><span data-i18n="wd_help">Use the same email you registered for iSmile 2026 with.</span></li>
+          <li><b data-i18n="wd_request_title">Registration request received</b><span data-i18n="wd_request_text">The office contacts you about payment. Your workshop ticket is confirmed after payment and ticket issuance.</span></li>
+        </ol>
+      </article>
+
+      <article class="wsp-way is-company">
+        <div class="wsp-way-head">
+          <span class="wsp-way-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.6 3.5h2.6l1.5 4-2 1.3a11 11 0 005.5 5.5l1.3-2 4 1.5v2.6a2 2 0 01-2.2 2A16.5 16.5 0 014.6 5.7a2 2 0 012-2.2z"/></svg></span>
+          <div>
+            <h3 data-i18n="wsp3_co_title">Register by phone with the company</h3>
+          </div>
+        </div>
+        <ol class="wsp-way-steps">
+          <li><b data-i18n="wsp3_open">Open the workshop</b><span data-i18n="wsp3_co_s1_d">The company’s name and phone number are on the workshop page.</span></li>
+          <li><b data-i18n="wsp3_co_s2">Call the company</b><span data-i18n="wsp3_co_s2_d">Tap the number to call. The company books your seat.</span></li>
+          <li><b data-i18n="wsp3_co_s3">The company confirms</b><span data-i18n="wsp3_co_s3_d">They confirm your seat and arrange payment with you.</span></li>
+        </ol>
+      </article>
+    </div>
+
+    <div class="wsp-day">
+      <span class="wsp-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3.5c-2.8 0-4.6 1.5-4.6 4.2 0 1.8.6 3.1.9 5.1.3 2.8.5 6.7 1.8 6.7 1.1 0 1-3.6 1.9-3.6s.8 3.6 1.9 3.6c1.3 0 1.5-3.9 1.8-6.7.3-2 .9-3.3.9-5.1 0-2.7-1.8-4.2-4.6-4.2z"/><circle cx="17.6" cy="5.4" r="2.6"/><path d="M17.9 8l.5 3"/><path d="M18.4 11l1.4 9.2"/></svg></span>
+      <div>
         <h3 data-i18n="wsp_s3">Join on the day</h3>
         <p data-i18n="wsp_s3_d">Workshops run during the summit, 19 &amp; 20 November 2026, at Grand Millennium Sulaimani.</p>
-      </li>
-    </ol>
+      </div>
+    </div>
   </div>
 </section>
 </main>
