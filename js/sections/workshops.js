@@ -60,6 +60,26 @@ export function workshopSchedule(w) {
 /** A company runs this workshop: people call the company to register. */
 export const byCompany = (w) => w?.organizer === "company";
 
+// Payment holds expire independently of this page. Refresh visible pages so a
+// released seat is shown without requiring visitors to reload manually.
+export function watchWorkshopAvailability(update) {
+  let busy = false;
+  async function refresh() {
+    if (document.hidden || busy) return;
+    busy = true;
+    try {
+      const response = await fetch("api/workshops.php", { cache: "no-store" });
+      const rows = await response.json();
+      if (response.ok && Array.isArray(rows) && rows.every((w) => typeof w.id === "string" && Number.isInteger(w.seatsLeft))) update(rows);
+    } catch {
+      // Keep the last verified display; purchases still check current stock.
+    } finally { busy = false; }
+  }
+  setInterval(refresh, 30000);
+  document.addEventListener("visibilitychange", refresh);
+  window.addEventListener("pageshow", (event) => { if (event.persisted) refresh(); });
+}
+
 export function initWorkshops(workshops) {
   const grid = document.getElementById("wsGrid");
 
@@ -92,10 +112,10 @@ export function initWorkshops(workshops) {
     const [seats, seatsSub] = w.availabilityVerified === false
       ? [t("wd_availability_unavailable"), ""]
       : left === 0
-      ? [t("wd_full"), ""]
+      ? [t(Number(w.pendingPayments) > 0 ? "wd_seats_in_checkout" : "wd_full"), ""]
       : company
         ? [t("wd_seats_total").replace("{total}", total), t("wdc_limited")]
-        : [t("wdi_left").replace("{n}", left), t("wdi_seats").replace("{total}", total)];
+        : [t("wd_seats_available").replace("{n}", left), t("wd_paid_places").replace("{n}", Number(w.paidRegistrations) || 0)];
     // The button opens the details page: there iSmile's workshop has the email
     // form and a company's workshop has the call button with the phone number.
     const cta = company
@@ -121,4 +141,9 @@ export function initWorkshops(workshops) {
 
   render();
   onLangChange(render);
+  watchWorkshopAvailability((rows) => {
+    if (JSON.stringify(rows) === JSON.stringify(workshops)) return;
+    workshops = rows;
+    render();
+  });
 }
