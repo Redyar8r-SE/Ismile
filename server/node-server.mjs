@@ -11,6 +11,7 @@ import { sponsorRequest } from "./sponsor.mjs";
 import { sponsorsFile } from "./sponsor-tiers.mjs";
 import { isPublicPath, loadEnvFile, resolveStaticFile, sendFile } from "./static.mjs";
 import { websiteState } from "./website-state.mjs";
+import { workshopRegistration, workshopsFile } from "./workshops.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -88,6 +89,24 @@ export function createAppServer() {
   return createServer(async (req, res) => {
     try {
       const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
+      if (url.pathname === "/api/workshops.php") {
+        if (!["GET", "HEAD"].includes(req.method || "")) {
+          res
+            .writeHead(405, { "Content-Type": "application/json" })
+            .end('{"ok":false,"error":"method"}');
+          return;
+        }
+        const result = await workshopsFile(path.join(ROOT, "data/workshops.json"));
+        res
+          .writeHead(result.statusCode, result.headers)
+          .end(req.method === "HEAD" ? undefined : result.body);
+        return;
+      }
+      if (url.pathname === "/api/workshop-register.php") {
+        const result = await workshopRegistration(req);
+        res.writeHead(result.statusCode, result.headers).end(result.body);
+        return;
+      }
       if (url.pathname === "/api/register.php") {
         const result = await registrationRequest(req);
         res.writeHead(result.statusCode, result.headers);
@@ -144,10 +163,25 @@ export function createAppServer() {
         return;
       }
       const override = contentFile(CONTENT_ROOT, url.pathname.slice(1));
+      if (url.pathname === "/data/workshops.json" && ["GET", "HEAD"].includes(req.method || "")) {
+        const local =
+          override && existsSync(override) ? override : path.join(ROOT, "data/workshops.json");
+        const result = await workshopsFile(local);
+        res
+          .writeHead(result.statusCode, result.headers)
+          .end(req.method === "HEAD" ? undefined : result.body);
+        return;
+      }
       if (/^\/data\/i18n\/(?:site-)?(?:en|ar|ku)\.json$/.test(url.pathname)) {
         const source =
           override && existsSync(override) ? override : path.join(ROOT, url.pathname.slice(1));
-        const dictionary = normalizeMapText(JSON.parse(readFileSync(source, "utf8")));
+        const defaults = /\/site-(?:en|ar|ku)\.json$/.test(url.pathname)
+          ? JSON.parse(readFileSync(path.join(ROOT, url.pathname.slice(1)), "utf8"))
+          : {};
+        const dictionary = normalizeMapText({
+          ...defaults,
+          ...JSON.parse(readFileSync(source, "utf8")),
+        });
         res.writeHead(200, {
           "Content-Type": "application/json; charset=utf-8",
           "Cache-Control": "no-store",

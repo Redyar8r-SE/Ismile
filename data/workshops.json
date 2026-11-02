@@ -1,42 +1,160 @@
 [
   {
-    "id": "implant",
-    "icon": "implant",
-    "title": null,
+    "id": "simplified-direct-veneers",
+    "icon": "tooth",
+    "title": {
+      "en": "Simplified Direct Veneers: The Dual Matrix Approach",
+      "ar": "القشور المباشرة المبسطة: تقنية القالب المزدوج",
+      "ku": "ڤینێری ڕاستەوخۆی سادەکراو: ڕێبازی دوو ماتریکس"
+    },
+    "speaker": {
+      "en": "Dr Muhammad Haji",
+      "ar": "د. محمد حاجي",
+      "ku": "د. محەمەد حاجی"
+    },
+    "credentials": {
+      "en": "M.Sc. in Conservative Dentistry",
+      "ar": "ماجستير في طب الأسنان التحفظي",
+      "ku": "ماستەر لە پزیشکی ددانی پارێزگاری"
+    },
+    "format": null,
+    "overview": {
+      "en": "Selecting composite veneer cases and exploring simple, effective techniques for beautiful aesthetic results.",
+      "ar": "اختيار حالات القشور المركبة واستكشاف تقنيات بسيطة وفعالة لتحقيق نتائج جمالية مميزة.",
+      "ku": "هەڵبژاردنی حاڵەتەکانی ڤینێری کۆمپۆزیت و ناسینی تەکنیکی سادە و کاریگەر بۆ ئەنجامی جوانکاریی باش."
+    },
+    "duration": {
+      "en": "4 hours",
+      "ar": "4 ساعات",
+      "ku": "4 کاتژمێر"
+    },
+    "level": {
+      "en": "Suitable for all experience levels",
+      "ar": "مناسب لجميع مستويات الخبرة",
+      "ku": "گونجاوە بۆ هەموو ئاستەکانی ئەزموون"
+    },
+    "organizer": "ismile",
     "company": null,
-    "speaker": null,
-    "price": 0,
-    "totalSeats": 30,
-    "seatsLeft": 30
+    "companyPhone": null,
+    "companyPhones": [],
+    "scheduledDate": "2026-11-20",
+    "startTime": "13:00",
+    "endTime": "17:00",
+    "photo": "assets/workshops/muhammad-haji.webp",
+    "photoStyle": "cutout",
+    "price": 100000,
+    "currency": "IQD",
+    "totalSeats": 25,
+    "seatsLeft": 25,
+    "availabilityVerified": false
   },
   {
-    "id": "dsd",
-    "icon": "smile",
-    "title": null,
-    "company": null,
-    "speaker": null,
-    "price": 0,
-    "totalSeats": 24,
-    "seatsLeft": 24
+    "id": "mastering-zirconia-veneers",
+    "icon": "tooth",
+    "title": {
+      "en": "Mastering Zirconia Veneers: Digital Smile Design, Preparation, and the Complete Bonding Protocol",
+      "ar": "إتقان قشور الزركونيا: تصميم الابتسامة الرقمي، والتحضير، وبروتوكول الإلصاق الكامل",
+      "ku": "شارەزایی لە ڤینێری زیرکۆنیا: دیزاینی دیجیتاڵی پێکەنین، ئامادەکردن و پرۆتۆکۆلی تەواوی لەقاندن"
+    },
+    "speaker": {
+      "en": "Dr. Mohammad Qadoumi",
+      "ar": "د. محمد القدومي",
+      "ku": "د. محەمەد قەدومی"
+    },
+    "credentials": {
+      "en": "BDS MSc Prosthodontics",
+      "ar": "بكالوريوس طب وجراحة الأسنان، ماجستير في التعويضات السنية",
+      "ku": "بەکالۆریۆس لە پزیشکی و نەشتەرگەری ددان، ماستەر لە پڕۆستۆدۆنتیکس"
+    },
+    "format": null,
+    "overview": {
+      "en": "Digital smile design, zirconia veneer preparation, and the complete bonding protocol.",
+      "ar": "تصميم الابتسامة الرقمي، وتحضير قشور الزركونيا، وبروتوكول الإلصاق الكامل.",
+      "ku": "دیزاینی دیجیتاڵی پێکەنین، ئامادەکردنی ڤینێری زیرکۆنیا و پرۆتۆکۆلی تەواوی لەقاندن."
+    },
+    "duration": {
+      "en": "2 hours",
+      "ar": "ساعتان",
+      "ku": "2 کاتژمێر"
+    },
+    "level": {
+      "en": "Suitable for all experience levels",
+      "ar": "مناسب لجميع مستويات الخبرة",
+      "ku": "گونجاوە بۆ هەموو ئاستەکانی ئەزموون"
+    },
+    "organizer": "company",
+    "company": {
+      "en": "Vanest",
+      "ar": "ڤانيست",
+      "ku": "ڤانێست"
+    },
+    "companyPhone": "0771 366 6464",
+    "companyPhones": [
+      "0771 366 6464",
+      "0751 420 3598"
+    ],
+    "scheduledDate": "2026-11-20",
+    "startTime": "11:00",
+    "endTime": "13:00",
+    "photo": "assets/workshops/mohammad-qadoumi.webp",
+    "photoStyle": "cutout",
+    "price": 100000,
+    "currency": "IQD",
+    "totalSeats": 25,
+    "seatsLeft": 25,
+    "availabilityVerified": false
   },
   {
-    "id": "endo",
-    "icon": "root",
-    "title": null,
+    "id": "crown-vs-veneer",
+    "icon": "tooth",
+    "title": {
+      "en": "Crown vs Veneer (Principles of Preparation)",
+      "ar": "التاج مقابل القشرة (مبادئ التحضير)",
+      "ku": "کراون بەرامبەر ڤینێر (بنەماکانی ئامادەکردن)"
+    },
+    "speaker": {
+      "en": "Dr. Qais Aljumaily",
+      "ar": "د. قيس الجميلي",
+      "ku": "د. قەیس جومەیلی"
+    },
+    "credentials": {
+      "en": "B.D.S., H.D.D. (Prosthodontics)",
+      "ar": "B.D.S.، H.D.D. (التعويضات السنية)",
+      "ku": "B.D.S.، H.D.D. (پڕۆستۆدۆنتیکس)"
+    },
+    "format": {
+      "en": "Lecture, demonstration and hands-on practice",
+      "ar": "محاضرة وعرض عملي وتطبيق عملي",
+      "ku": "وانە و پیشاندانی کرداری و ڕاهێنانی کرداری"
+    },
+    "overview": {
+      "en": "Short lecture\nLive demonstration\nHands-on workshop by participants",
+      "ar": "محاضرة قصيرة\nعرض عملي مباشر\nورشة تطبيقية للمشاركين",
+      "ku": "وانەیەکی کورت\nپیشاندانی کرداریی ڕاستەوخۆ\nوۆرکشۆپی کرداری بۆ بەشداربووان"
+    },
+    "duration": {
+      "en": "4 hours",
+      "ar": "4 ساعات",
+      "ku": "4 کاتژمێر"
+    },
+    "level": {
+      "en": "Suitable for all experience levels",
+      "ar": "مناسب لجميع مستويات الخبرة",
+      "ku": "گونجاوە بۆ هەموو ئاستەکانی ئەزموون"
+    },
+    "organizer": "ismile",
     "company": null,
-    "speaker": null,
-    "price": 0,
-    "totalSeats": 20,
-    "seatsLeft": 20
-  },
-  {
-    "id": "scan",
-    "icon": "scan",
-    "title": null,
-    "company": null,
-    "speaker": null,
-    "price": 0,
-    "totalSeats": 24,
-    "seatsLeft": 24
+    "companyPhone": null,
+    "companyPhones": [],
+    "scheduledDate": "2026-11-19",
+    "startTime": "13:00",
+    "endTime": "17:00",
+    "photo": "assets/workshops/qais-aljumaily.webp",
+    "photoStyle": "cutout",
+    "price": 120000,
+    "currency": "IQD",
+    "totalSeats": 25,
+    "seatsLeft": 25,
+    "availabilityVerified": false
   }
 ]

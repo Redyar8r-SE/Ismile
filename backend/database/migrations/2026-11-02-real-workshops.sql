@@ -1,0 +1,36 @@
+ALTER TABLE workshops
+  ADD COLUMN company_phone_secondary VARCHAR(40) NULL AFTER company_phone,
+  ADD COLUMN scheduled_date DATE NULL AFTER photo,
+  ADD COLUMN start_time TIME NULL AFTER scheduled_date,
+  ADD COLUMN end_time TIME NULL AFTER start_time,
+  ADD COLUMN photo_style VARCHAR(12) NOT NULL DEFAULT 'photo' AFTER end_time,
+  ADD COLUMN provider_event_id VARCHAR(64) NULL AFTER photo_style,
+  ADD COLUMN provider_show_id VARCHAR(64) NULL AFTER provider_event_id,
+  ADD COLUMN provider_ticket_type_id VARCHAR(64) NULL AFTER provider_show_id;
+
+CREATE TABLE IF NOT EXISTS workshop_ticket_orders (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  booking_id INT UNSIGNED NOT NULL,
+  registration_id INT UNSIGNED NOT NULL,
+  workshop_id VARCHAR(40) NOT NULL,
+  idempotency_key VARCHAR(64) NOT NULL,
+  partner_reference VARCHAR(100) NOT NULL,
+  request_json MEDIUMTEXT NOT NULL,
+  provider_session_id VARCHAR(100) NULL,
+  provider_status VARCHAR(24) NOT NULL DEFAULT 'created',
+  amount INT UNSIGNED NULL,
+  currency CHAR(3) NULL,
+  raw_response MEDIUMTEXT NULL,
+  last_webhook_id VARCHAR(100) NULL,
+  last_error VARCHAR(500) NULL,
+  created_at DATETIME NOT NULL,
+  updated_at DATETIME NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_wto_booking (booking_id),
+  UNIQUE KEY uq_wto_key (idempotency_key),
+  UNIQUE KEY uq_wto_reference (partner_reference),
+  UNIQUE KEY uq_wto_session (provider_session_id),
+  CONSTRAINT fk_wto_booking FOREIGN KEY (booking_id) REFERENCES workshop_bookings(id),
+  CONSTRAINT fk_wto_registration FOREIGN KEY (registration_id) REFERENCES registrations(id),
+  CONSTRAINT fk_wto_workshop FOREIGN KEY (workshop_id) REFERENCES workshops(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -2,6 +2,38 @@
    One workshop's details page (workshop.html?id=…)
    ========================================================== */
 .wd-page{padding-block:28px 72px}
+.wdc-organizer{margin:0;color:var(--teal-ink);font-size:12px;font-weight:700;letter-spacing:.08em}
+.wdc-schedule{display:flex;flex-wrap:wrap;gap:12px 24px;color:var(--teal-ink);font-size:14px;font-weight:600}
+.wdc-schedule span{display:inline-flex;align-items:center;gap:8px}
+.wdc-schedule svg{width:18px;height:18px;flex:none}
+.wdc-phone-options{display:grid;gap:10px}
+.wdc .wd-facts{grid-template-columns:repeat(4,minmax(0,1fr))}
+.wdc.is-cutout .wdc-hero{aspect-ratio:auto;min-height:740px;background-image:var(--workshop-studio);background-size:cover;background-position:center;isolation:isolate}
+.wdc.is-cutout .wdc-photo{background:transparent}
+.wdc.is-cutout .wdc-photo img{inset:auto;inset-inline-end:0;bottom:0;width:56%;height:94%;object-fit:contain;object-position:center bottom}
+.wdc.is-cutout .wdc-text{width:min(540px,48%);gap:18px;padding-block:44px}
+.wdc.is-cutout[data-workshop-id="crown-vs-veneer"] .wdc-photo img{height:113%;width:63%;bottom:-10%}
+html[dir="rtl"] .wdc.is-cutout .wdc-photo img{transform:none}
+.wdc .wdc-stat b{font-size:clamp(18px,1.7vw,24px);overflow-wrap:anywhere}
+.wdc .wdc-trainer{overflow-wrap:anywhere}
+@media(max-width:960px){
+  .wdc.is-cutout .wdc-hero{min-height:0;aspect-ratio:auto}
+  .wdc.is-cutout .wdc-photo{height:420px;aspect-ratio:auto}
+  .wdc.is-cutout .wdc-photo img{height:100%;width:100%;inset-inline:0;bottom:0;object-position:center bottom}
+  .wdc.is-cutout[data-workshop-id="crown-vs-veneer"] .wdc-photo img{height:116%;width:100%;bottom:-12%}
+  .wdc.is-cutout .wdc-text{width:auto;padding:16px 24px 28px}
+  .wdc .wd-facts{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:560px){
+  .wdc.is-cutout .wdc-photo{height:320px}
+  .wdc.is-cutout .wdc-text{padding:12px 18px 22px}
+  .wdc .wdc-stat{flex-direction:column;align-items:flex-start}
+  .wdc .wdc-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .wdc .wdc-stat+.wdc-stat{padding-inline-start:12px;border-top:0;padding-top:0;border-inline-start:1px solid var(--line)}
+  .wdc .wdc-stat b{font-size:20px}
+  .wdc .wd-fact{padding:14px}
+  .wdc .wd-fact dd{font-size:14px}
+}
 .wd-root{margin-top:26px}
 .wd{display:grid;grid-template-columns:minmax(0,520px) minmax(0,1fr);gap:56px;align-items:start}
 

@@ -200,6 +200,12 @@ final class PsoolaGateway implements Gateway, CashSales
     }
 
     /** The event as PSOOLA's partner API lists it (ticket types, add-ons, IQD prices). */
+    public function workshopRequest(string $method, string $path, ?array $payload = null, array $headers = []): array
+    {
+        $this->ready();
+        return $this->request($method, 'api/partner/v1/' . ltrim($path,'/'), $payload, $headers);
+    }
+
     public function fetchEvent(): array
     {
         $this->ready();

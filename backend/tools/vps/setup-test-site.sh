@@ -386,6 +386,11 @@ if [ ! -f "$BASE/.video-workshops-2" ]; then
   php "$BACKEND/tools/video-workshops.php"
   touch "$BASE/.video-workshops-1" "$BASE/.video-workshops-2"
 fi
+# Publish the three approved workshops once; subsequent deploys preserve owner edits.
+if [ ! -f "$BASE/.real-workshops-2026-11-02" ]; then
+  php "$BACKEND/tools/publish-real-workshops.php" --apply
+  touch "$BASE/.real-workshops-2026-11-02"
+fi
 # ONCE (the Owner's wish, 22 Oct 2026): the summit moved to 19–20 November and
 # six speakers were announced. Updates never overwrite data/ on this server, so
 # these files are copied from the project one time. The old copies are kept in

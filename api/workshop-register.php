@@ -2,8 +2,8 @@
 // POST /api/workshop-register.php  (from workshop.html: workshop + email)
 //
 // "Register for workshop": the visitor types the email they registered for
-// iSmile 2026 with. A registered person gets a seat, booked NOT PAID (the
-// office collects the workshop money); anyone else is told to register for
+// iSmile 2026 with. A paid summit attendee can submit an unpaid request (the
+// office collects the workshop money before issuing a ticket); others must register for
 // the summit first. Errors are website translation keys (wd_err_*).
 
 declare(strict_types=1);

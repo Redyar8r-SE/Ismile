@@ -194,6 +194,13 @@ final class Office
         }
         $isOwner = $user['role'] === 'owner';
         // Only registered people (they paid) take a workshop seat.
+        if (!empty($workshop['providerEventId'])) {
+            if ($registration['status'] !== 'paid') throw new UserError('A paid iSmile summit ticket is required before workshop registration.');
+            $live = WorkshopCatalog::one($workshop['id'],true);
+            if (!$live || !$live['availabilityVerified']) throw new UserError('Current workshop availability could not be verified.');
+            if ($live['seatsLeft'] < 1) throw new UserError('PSOOLA reports that this workshop is sold out.');
+            $workshop['price'] = $live['price'];
+        }
         if (!in_array($registration['status'], ['paid', 'complimentary'], true)) {
             throw new UserError(Registrations::fullName($registration) . ' is not registered (cancelled).');
         }

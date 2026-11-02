@@ -384,5 +384,17 @@
   "wsb_online": "Register online",
   "pm_payment_kicker": "Your registration",
   "bm_unit_m": "m",
-  "bm_width_short": "W"
+  "bm_width_short": "W",
+  "wd_date": "Date",
+  "wd_time": "Time",
+  "wd_hours": "{n} hours",
+  "wd_availability_unavailable": "Availability unavailable",
+  "wd_ismile_workshop": "iSmile workshop",
+  "wd_company_workshop": "{company} Company workshop",
+  "wd_company_ticket_help": "A paid iSmile summit ticket is required to attend. Contact the company directly to register.",
+  "wd_paid_ticket_help": "A paid iSmile summit ticket is required before workshop registration.",
+  "wd_email_help": "Use the same email as your summit ticket.",
+  "wd_request_title": "Registration request received",
+  "wd_request_text": "The office will contact you about payment. Your workshop ticket is confirmed only after payment and ticket issuance.",
+  "ws_catalog_sub": "Explore the iSmile 2026 workshops, meet your trainers and choose your next clinical skill. A paid summit ticket is required. Register with your summit email for iSmile workshops, or call the company for its workshop."
 }

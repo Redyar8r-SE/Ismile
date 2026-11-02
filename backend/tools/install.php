@@ -60,6 +60,9 @@ foreach ($migrations as $file) {
         // database without attendance therefore already gets this column.
         $methodAlreadyPresent = $name === '2026-10-07-manual-checkin.sql'
             && Db::value("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'ticket_attendance' AND column_name = 'checkin_method'");
+        if ($name === '2026-11-02-real-workshops.sql') {
+            $methodAlreadyPresent = (bool) Db::value("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'workshops' AND column_name = 'company_phone_secondary'");
+        }
         if ($name === '2026-11-02-association-access.sql') {
             $methodAlreadyPresent = (bool) Db::value("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'admin_users' AND column_name = 'association_manage_access'");
         }

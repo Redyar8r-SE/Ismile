@@ -55,6 +55,9 @@ $check('only the Owner changes workshops', $errorKey(static fn () => Workshops::
 $form = ['first_name' => 'Sara', 'father_name' => 'Ahmed', 'grandfather_name' => 'Hassan', 'phone' => '0750' . random_int(1000000, 9999999),
     'email' => "Sara-$tag@Example.invalid", 'city' => 'Sulaimani', 'specialty' => 'gp', 'ticket' => 'professional', 'comp_reason' => 'Test'];
 $person = Office::createComplimentary($owner, $form);
+$check('a complimentary summit ticket does not satisfy the paid workshop prerequisite', $errorKey(static fn () => Workshops::registerOnline($id, $person['email'])) === 'wd_err_not_registered');
+Db::update('registrations',['status'=>'paid','comp_reason'=>null],'id=?',[$person['id']]);
+$person = Db::one('SELECT * FROM registrations WHERE id=?',[$person['id']]);
 $check('a wrong email is refused', $errorKey(static fn () => Workshops::registerOnline($id, 'not-an-email')) === 'wd_err_email');
 $check('an email that is not registered for the summit is refused', $errorKey(static fn () => Workshops::registerOnline($id, "nobody-$tag@example.invalid")) === 'wd_err_not_registered');
 $check('an unknown workshop is refused', $errorKey(static fn () => Workshops::registerOnline('no-such-workshop', $person['email'])) === 'wd_err_missing');
@@ -68,8 +71,10 @@ $card = array_values(array_filter($website(), static fn (array $w): bool => $w['
 $check('the website shows one seat fewer at once', $card['seatsLeft'] === 1);
 $check('the same person cannot register twice', $errorKey(static fn () => Workshops::registerOnline($id, $person['email'])) === 'wd_err_already');
 $second = Office::createComplimentary($owner, ['email' => "second-$tag@example.invalid", 'phone' => '0751' . random_int(1000000, 9999999)] + $form);
+Db::update('registrations',['status'=>'paid','comp_reason'=>null],'id=?',[$second['id']]);
 Workshops::registerOnline($id, $second['email']);
 $third = Office::createComplimentary($owner, ['email' => "third-$tag@example.invalid", 'phone' => '0752' . random_int(1000000, 9999999)] + $form);
+Db::update('registrations',['status'=>'paid','comp_reason'=>null],'id=?',[$third['id']]);
 $check('a full workshop takes nobody more', $errorKey(static fn () => Workshops::registerOnline($id, $third['email'])) === 'wd_err_full');
 $check('still exactly 2 people on the 2 seats', Workshops::booked($id) === 2);
 Office::cancel($third, $owner, 'Test');
@@ -110,7 +115,7 @@ foreach (['implant', 'dsd'] as $old) {
 }
 Db::insert('workshop_bookings', ['registration_id' => $person['id'], 'workshop_id' => 'dsd', 'price_agreed' => 0, 'payment_status' => 'unpaid', 'created_at' => $now, 'updated_at' => $now]);
 $run = static function (): string {
-    $command = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(dirname(__DIR__) . '/tools/video-workshops.php');
+    $command = escapeshellarg(PHP_BINARY) . (php_ini_loaded_file() ? ' -c '.escapeshellarg(php_ini_loaded_file()) : '') . ' ' . escapeshellarg(dirname(__DIR__) . '/tools/video-workshops.php');
     return (string) shell_exec($command);
 };
 $out = $run();

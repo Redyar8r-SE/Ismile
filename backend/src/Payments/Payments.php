@@ -438,6 +438,19 @@ final class Payments
             return ['status' => 401, 'outcome' => 'bad signature'];
         }
 
+        if ($gatewayName === 'psoola') {
+            $event = json_decode($body,true);
+            try {
+                if (\Ismile\WorkshopTickets::reconcile($providerId,$event['data']['partnerReference']??null,$event['id']??null)) {
+                    Db::update('webhook_log',['signature_ok'=>1,'provider_payment_id'=>$providerId,'outcome'=>'workshop order verified'],'id=?',[$logId]);
+                    return ['status'=>200,'outcome'=>'workshop order verified'];
+                }
+            } catch (\Throwable $error) {
+                App::log('error','Workshop webhook verification failed',['session'=>$providerId,'error'=>$error->getMessage()]);
+                Db::update('webhook_log',['signature_ok'=>1,'provider_payment_id'=>$providerId,'outcome'=>'workshop verification retry'],'id=?',[$logId]);
+                return ['status'=>503,'outcome'=>'workshop verification retry'];
+            }
+        }
         $payment = Db::one('SELECT * FROM payments WHERE gateway = ? AND provider_payment_id = ?', [$gatewayName, $providerId]);
         if ($payment === null) {
             // Not ours, or already cleaned up. If the company says it was PAID,

@@ -93,6 +93,14 @@ final class Workshops
             'overview' => $i18n('overview'), 'photo' => $row['photo'] !== null && $row['photo'] !== '' ? (string) $row['photo'] : null,
             'organizer' => (string) ($row['organizer'] ?? 'ismile'),
             'companyPhone' => ($row['company_phone'] ?? '') !== '' ? (string) $row['company_phone'] : null,
+            'companyPhones' => array_values(array_filter([$row['company_phone'] ?? null,$row['company_phone_secondary'] ?? null])),
+            'scheduledDate' => $row['scheduled_date'] ?? null,
+            'startTime' => isset($row['start_time']) ? substr($row['start_time'],0,5) : null,
+            'endTime' => isset($row['end_time']) ? substr($row['end_time'],0,5) : null,
+            'photoStyle' => $row['photo_style'] ?? 'photo',
+            'providerEventId' => $row['provider_event_id'] ?? null,
+            'providerShowId' => $row['provider_show_id'] ?? null,
+            'providerTicketTypeId' => $row['provider_ticket_type_id'] ?? null,
             'price' => (int) $row['price'], 'currency' => (string) ($row['currency'] ?? 'IQD'),
             'totalSeats' => (int) $row['total_seats'], 'seatsLeft' => max(0, (int) $row['total_seats'] - $booked),
             'booked' => $booked, 'status' => $row['status'], 'sortOrder' => (int) $row['sort_order'],
@@ -177,8 +185,8 @@ final class Workshops
 
     /**
      * Online "Register for workshop" on the website: the visitor types the
-     * email they registered for the summit with. Only a registered (paid or
-     * free ticket) person gets a seat; it is booked NOT PAID, and the office
+     * email they registered for the summit with. Only a paid summit
+     * registration can submit an unpaid workshop request; the office
      * collects the workshop money as for a phone booking.
      *
      * Errors are website translation keys (wd_err_*).
@@ -197,17 +205,26 @@ final class Workshops
         if ($workshop['organizer'] === 'company') {
             throw new UserError('wd_err_by_phone', null, 409);
         }
-        $registration = Db::one("SELECT * FROM registrations WHERE LOWER(email) = ? AND status IN ('paid','complimentary') ORDER BY id DESC LIMIT 1", [$email]);
+        $registration = Db::one("SELECT * FROM registrations WHERE LOWER(email) = ? AND status='paid' ORDER BY id DESC LIMIT 1", [$email]);
         if ($registration === null) {
             throw new UserError('wd_err_not_registered', 'email', 404);
         }
         // The workshop row is locked while the seat is taken, as for a phone
         // booking, so two people can never take the last seat together.
-        $bookingId = Db::transaction(static function () use ($workshop, $registration): int {
-            $row = Db::one('SELECT total_seats, status, price FROM workshops WHERE id = ? FOR UPDATE', [$workshop['id']]);
+        $current = null;
+        if ($workshop['providerEventId']) {
+            $current = WorkshopCatalog::one($workshop['id']);
+            if (!$current || !$current['availabilityVerified']) throw new UserError('wd_err_server',null,503);
+            if ($current['seatsLeft'] < 1) throw new UserError('wd_err_full',null,409);
+        }
+        $bookingId = Db::transaction(static function () use ($workshop, $registration, $current): int {
+            $row = Db::one('SELECT total_seats, status, price, organizer FROM workshops WHERE id = ? FOR UPDATE', [$workshop['id']]);
             if ($row === null || $row['status'] !== 'active') {
                 throw new UserError('wd_err_missing', null, 404);
             }
+            if ($row['organizer'] === 'company') throw new UserError('wd_err_by_phone',null,409);
+            if (Db::value('SELECT status FROM registrations WHERE id=? LOCK IN SHARE MODE',[$registration['id']]) !== 'paid') throw new UserError('wd_err_not_registered','email',404);
+            if (Db::value("SELECT id FROM workshop_ticket_orders WHERE registration_id=? AND workshop_id=? AND provider_status IN ('created','unknown','awaiting_payment','paid')",[$registration['id'],$workshop['id']])) throw new UserError('wd_err_already','email',409);
             if (Db::value('SELECT id FROM workshop_bookings WHERE registration_id = ? AND workshop_id = ? AND removed_at IS NULL', [$registration['id'], $workshop['id']])) {
                 throw new UserError('wd_err_already', 'email', 409);
             }
@@ -216,7 +233,7 @@ final class Workshops
             }
             $now = App::now();
             return Db::insert('workshop_bookings', [
-                'registration_id' => $registration['id'], 'workshop_id' => $workshop['id'], 'price_agreed' => (int) $row['price'],
+                'registration_id' => $registration['id'], 'workshop_id' => $workshop['id'], 'price_agreed' => (int) ($current['price'] ?? $row['price']),
                 'payment_status' => 'unpaid', 'booked_by' => null, 'over_capacity' => 0,
                 'notes' => 'Registered online on the website',
                 'created_at' => $now, 'updated_at' => $now,
@@ -357,6 +374,15 @@ final class Workshops
         $price = preg_replace('/\D/', '', (string) ($in['price'] ?? '')) ?? '';
         $organizer = Validate::oneOf($in['organizer'] ?? null, self::ORGANIZERS, 'ismile');
         $phone = Validate::text($in['company_phone'] ?? '', 40);
+        $secondary = Validate::text($in['company_phone_secondary'] ?? '',40);
+        if ($secondary !== '' && !preg_match('/^\+?[0-9][0-9 ()-]{6,30}$/',$secondary)) throw new UserError('The second company phone must be a valid phone number.');
+        $date = Validate::text($in['scheduled_date'] ?? '',10);
+        $start = Validate::text($in['start_time'] ?? '',5);
+        $end = Validate::text($in['end_time'] ?? '',5);
+        if ($date !== '' || $start !== '' || $end !== '') {
+            $parsed = \DateTimeImmutable::createFromFormat('!Y-m-d',$date);
+            if (!$parsed || $parsed->format('Y-m-d') !== $date || !preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d$/D',$start) || !preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d$/D',$end) || $end <= $start) throw new UserError('Choose a valid date and a finishing time after the starting time.');
+        }
         if ($phone !== '' && (!preg_match('/^\+?[0-9][0-9 ()-]{6,30}$/', $phone) || strlen((string) preg_replace('/\D/', '', $phone)) < 7)) {
             throw new UserError('The company phone must be a phone number, e.g. +964 750 123 4567.');
         }
@@ -380,6 +406,11 @@ final class Workshops
             'company_en' => $text('company_en'), 'company_ar' => $text('company_ar'), 'company_ku' => $text('company_ku'),
             'speaker_en' => $text('speaker_en'), 'speaker_ar' => $text('speaker_ar'), 'speaker_ku' => $text('speaker_ku'),
             'organizer' => $organizer, 'company_phone' => $phone !== '' ? $phone : null,
+            'company_phone_secondary' => $organizer==='company' && $secondary!=='' ? $secondary : null,
+            'scheduled_date' => $date!==''?$date:null,
+            'start_time' => $start!==''?$start:null,
+            'end_time' => $end!==''?$end:null,
+            'photo_style' => Validate::oneOf($in['photo_style']??null,['photo','cutout'],'photo'),
             'price' => $price === '' ? 0 : min((int) $price, 100000000),
             'currency' => Validate::oneOf($in['currency'] ?? null, self::CURRENCIES, 'IQD'),
             'total_seats' => $seats,
@@ -409,6 +440,8 @@ final class Workshops
             'credentials' => $w['credentials'], 'format' => $w['format'], 'duration' => $w['duration'], 'level' => $w['level'],
             'overview' => $w['overview'], 'photo' => $w['photo'],
             'organizer' => $w['organizer'], 'companyPhone' => $w['organizer'] === 'company' ? $w['companyPhone'] : null,
+            'companyPhones' => $w['organizer']==='company'?$w['companyPhones']:[],
+            'scheduledDate'=>$w['scheduledDate'],'startTime'=>$w['startTime'],'endTime'=>$w['endTime'],'photoStyle'=>$w['photoStyle'],
             'price' => $w['price'], 'currency' => $w['currency'], 'totalSeats' => $w['totalSeats'], 'seatsLeft' => $w['seatsLeft'],
         ], self::all());
         $json = json_encode($cards, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n";

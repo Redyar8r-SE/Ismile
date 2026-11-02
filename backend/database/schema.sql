@@ -341,6 +341,7 @@ CREATE TABLE IF NOT EXISTS workshops (
   -- email; 'company' = people call company_phone to register
   organizer    VARCHAR(10)        NOT NULL DEFAULT 'ismile',
   company_phone VARCHAR(40)       NULL,
+  company_phone_secondary VARCHAR(40) NULL,
   speaker_en   VARCHAR(160)       NULL,
   speaker_ar   VARCHAR(160)       NULL,
   speaker_ku   VARCHAR(160)       NULL,
@@ -361,6 +362,13 @@ CREATE TABLE IF NOT EXISTS workshops (
   overview_ar  TEXT               NULL,
   overview_ku  TEXT               NULL,
   photo        VARCHAR(200)       NULL,                       -- the trainer's photo, a path on the website (assets/…)
+  scheduled_date DATE NULL,
+  start_time TIME NULL,
+  end_time TIME NULL,
+  photo_style VARCHAR(12) NOT NULL DEFAULT 'photo',
+  provider_event_id VARCHAR(64) NULL,
+  provider_show_id VARCHAR(64) NULL,
+  provider_ticket_type_id VARCHAR(64) NULL,
   price        INT UNSIGNED       NOT NULL DEFAULT 0,         -- per seat, in `currency`; 0 = price not set yet
   currency     CHAR(3)            NOT NULL DEFAULT 'IQD',     -- IQD or USD (the price and every booking's amount)
   total_seats  SMALLINT UNSIGNED  NOT NULL,                   -- the limit
@@ -415,6 +423,33 @@ CREATE TABLE IF NOT EXISTS workshop_bookings (
     OR (payment_status = 'complimentary' AND amount_paid IS NULL AND paid_how IS NULL))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Workshop bookings (by phone)';
+
+CREATE TABLE IF NOT EXISTS workshop_ticket_orders (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  booking_id INT UNSIGNED NOT NULL,
+  registration_id INT UNSIGNED NOT NULL,
+  workshop_id VARCHAR(40) NOT NULL,
+  idempotency_key VARCHAR(64) NOT NULL,
+  partner_reference VARCHAR(100) NOT NULL,
+  request_json MEDIUMTEXT NOT NULL,
+  provider_session_id VARCHAR(100) NULL,
+  provider_status VARCHAR(24) NOT NULL DEFAULT 'created',
+  amount INT UNSIGNED NULL,
+  currency CHAR(3) NULL,
+  raw_response MEDIUMTEXT NULL,
+  last_webhook_id VARCHAR(100) NULL,
+  last_error VARCHAR(500) NULL,
+  created_at DATETIME NOT NULL,
+  updated_at DATETIME NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_wto_booking (booking_id),
+  UNIQUE KEY uq_wto_key (idempotency_key),
+  UNIQUE KEY uq_wto_reference (partner_reference),
+  UNIQUE KEY uq_wto_session (provider_session_id),
+  CONSTRAINT fk_wto_booking FOREIGN KEY (booking_id) REFERENCES workshop_bookings(id),
+  CONSTRAINT fk_wto_registration FOREIGN KEY (registration_id) REFERENCES registrations(id),
+  CONSTRAINT fk_wto_workshop FOREIGN KEY (workshop_id) REFERENCES workshops(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- The sponsorship packages (Diamond, Platinum, Gold, Silver…) and the
 -- single Standard exhibition booth, with its price and capacity. Managed

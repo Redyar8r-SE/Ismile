@@ -12,10 +12,12 @@ import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang, t, onLan
 import { initNav } from "./components/nav.js?v=148";
 import { initTheme } from "./components/theme.js?v=148";
 import { initFooter } from "./sections/footer.js?v=148";
-import { pick, esc, workshopPrice, photoSrc, byCompany, WORKSHOP_ICON } from "./sections/workshops.js?v=149";
+import { pick, esc, workshopPrice, photoSrc, byCompany, workshopSchedule, WORKSHOP_ICON } from "./sections/workshops.js?v=150";
 import { phoneHref, PHONE_ICON } from "./utils/phone.js?v=148";
 
 const ICONS = {
+  date: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 2v6M17 2v6M3 11h18"/></svg>',
+  time: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg>',
   format: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V5.5a1.5 1.5 0 013 0V12"/><path d="M11 11.5V4a1.5 1.5 0 013 0v7.5"/><path d="M14 11.5V6a1.5 1.5 0 013 0v7"/><path d="M17 12.5a1.5 1.5 0 013 0V15a7 7 0 01-7 7h-1.2a6 6 0 01-4.6-2.2L4.5 16a1.6 1.6 0 012.3-2.2L8 15"/></svg>',
   duration: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>',
   level: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M5 19v-4M12 19V10M19 19V5"/></svg>',
@@ -60,48 +62,52 @@ function initDetails(workshop) {
     const full = left === 0;
     const company = byCompany(w);
     const takenPercent = total ? Math.round(((total - left) / total) * 100) : 0;
-    document.title = `${title} · iSmile 2026`;
+    document.title = `${title} | iSmile 2026`;
+    const schedule = workshopSchedule(w);
+    const unavailable = w.availabilityVerified === false;
 
-    const facts = [["format", "wd_format"], ["duration", "wd_duration"], ["level", "wd_level"]]
-      .map(([field, label]) => [field, label, pick(w[field])])
+    const facts = (schedule ? [["date", "wd_date", schedule.date], ["time", "wd_time", schedule.time], ["duration", "wd_duration", schedule.duration], ["level", "wd_level", pick(w.level)]] : [["format", "wd_format", pick(w.format)], ["duration", "wd_duration", pick(w.duration)], ["level", "wd_level", pick(w.level)]])
       .filter(([, , value]) => value);
     const factsHtml = `${facts.length ? `<dl class="wd-facts">${facts.map(([field, label, value]) => `
             <div class="wd-fact"><dt>${ICONS[field]}<span>${esc(t(label))}</span></dt><dd dir="auto">${esc(value)}</dd></div>`).join("")}
           </dl>` : ""}`;
-    const overviewHtml = `${overview ? `<section class="wd-overview"><h2>${esc(t("wd_overview"))}</h2>${overview.split(/\n{2,}/).map((part) => `<p dir="auto">${esc(part)}</p>`).join("")}</section>` : ""}`;
+    const overviewHtml = `${overview ? `<section class="wd-overview"><h2>${esc(t("wd_overview"))}</h2>${overview.split(/\n+/).map((part) => `<p dir="auto">${esc(part)}</p>`).join("")}</section>` : ""}`;
 
-    const trainer = [speaker, credentials].filter(Boolean).map((part) => `<span dir="auto">${esc(part)}</span>`).join('<i aria-hidden="true">·</i>');
-    const price = `<div class="wdc-stat is-price"><span class="wdc-stat-ic">${ICONS.wallet}</span><div><b dir="ltr">${esc(workshopPrice(w))}</b><small>${esc(t("w_price_seat"))}</small></div></div>`;
+    const trainer = [speaker, credentials].filter(Boolean).map((part) => `<span dir="auto">${esc(part)}</span>`).join('');
+    const price = `<div class="wdc-stat is-price"><span class="wdc-stat-ic">${ICONS.wallet}</span><div><b dir="auto">${esc(unavailable ? t("wd_availability_unavailable") : workshopPrice(w))}</b><small>${esc(t("w_price_seat"))}</small></div></div>`;
     // Company: total seats (the company takes the bookings). iSmile: seats left and a bar.
-    const seats = company
+    const seats = unavailable ? `<div class="wdc-stat is-seats"><span class="wdc-stat-ic">${ICONS.users}</span><div><b>${esc(t("wd_availability_unavailable"))}</b></div></div>` : company
       ? `<div class="wdc-stat is-seats"><span class="wdc-stat-ic">${ICONS.users}</span><div><b>${esc(full ? t("wd_full") : t("wd_seats_total").replace("{total}", total))}</b><small>${esc(t("wdc_limited"))}</small></div></div>`
       : `<div class="wdc-stat is-seats"><span class="wdc-stat-ic">${ICONS.users}</span><div class="wdc-stat-grow"><b>${esc(full ? t("wd_full") : t("wdi_left").replace("{n}", left).replace("{total}", total))}</b><small>${esc(t("wdi_seats").replace("{total}", total))}</small><span class="wdc-bar" aria-hidden="true"><i style="width:${takenPercent}%"></i></span></div></div>`;
     const steps = (company
       ? [["phone", "wdc_how1", "wdc_how1_d"], ["wallet", "wdc_how2", "wdc_how2_d"], ["ticket", "wdc_how3", "wdc_how3_d"]]
-      : [["ticket", "wdc_how3", "wdc_how3_d"], ["mail", "wsp3_ism_s3", "wd_help"], ["check", "wsp4_ism_s3", "wsp4_ism_s3_d"]])
+      : [["ticket", "wdc_how3", "wd_paid_ticket_help"], ["mail", "wsp3_ism_s3", "wd_email_help"], ["check", "wd_request_title", "wd_request_text"]])
       .map(([icon, head, text]) => `<li><span class="wdc-how-ic">${icon === "phone" ? PHONE_ICON : ICONS[icon]}</span><div><b>${esc(t(head))}</b><p>${esc(t(text))}</p></div></li>`)
       .join("");
 
     root.innerHTML = `
-      <article class="wdc">
+      <article class="wdc${w.photoStyle === "cutout" ? " is-cutout" : ""}" data-workshop-id="${esc(w.id)}">
         <section class="wdc-hero">
           <div class="wdc-text">
+            <p class="wdc-organizer">${esc(company ? t("wd_company_workshop").replace("{company}", pick(w.company)) : t("wd_ismile_workshop"))}</p>
             <h1 dir="auto">${esc(title)}</h1>
             ${trainer ? `<p class="wdc-trainer">${trainer}</p>` : ""}
+            ${schedule ? `<div class="wdc-schedule"><span>${ICONS.date}${esc(schedule.date)}</span><span>${ICONS.time}${esc(schedule.time)}</span></div>` : ""}
             <div class="wdc-panel" aria-label="${esc(t(company ? "wd_call_btn" : "wd_register"))}">
               <div class="wdc-stats">${price}${seats}</div>
-              ${company ? callButton(w) : state.done ? doneBox() : formBox(full)}
+              ${company ? callButton(w) : state.done ? doneBox() : formBox(full || unavailable)}
             </div>
           </div>
           <figure class="wdc-photo${photo ? "" : " no-photo"}">${photo ? `<img src="${esc(photo)}" alt="${esc(speaker)}" decoding="async">` : WORKSHOP_ICON}</figure>
         </section>
+        ${factsHtml}
         <div class="wdc-below">
-          <div class="wdc-main">${factsHtml}${overviewHtml}</div>
+          <div class="wdc-main">${overviewHtml}</div>
           <aside class="wdc-how"><h2>${esc(t(company ? "wdc_how_title" : "wdi_how_title"))}</h2><ol>${steps}</ol></aside>
         </div>
       </article>`;
     if (!company) bindForm();
-    fitPhoto();
+    if (w.photoStyle !== "cutout") fitPhoto();
   }
 
   // The banner takes the trainer photo's own shape, so the whole photo shows.
@@ -118,15 +124,19 @@ function initDetails(workshop) {
 
   // Organized by a company: one button that calls the company. Nothing is sent from here.
   function callButton(w) {
-    const number = String(w.companyPhone || "").trim();
-    const href = phoneHref(number);
+    const numbers = Array.isArray(w.companyPhones) && w.companyPhones.length ? w.companyPhones : [w.companyPhone];
+    return `<div class="wdc-phone-options">${numbers.map((value) => {
+    const number = String(value || "").trim();
+    const normalized = /^07\d{9}$/.test(number.replace(/\s/g, "")) ? "+964" + number.replace(/\s/g, "").slice(1) : number;
+    const href = phoneHref(normalized);
     return href
       ? `<a class="wdc-call" href="${esc(href)}"><span class="wdc-call-ic">${PHONE_ICON}</span><span class="wdc-call-text"><span>${esc(t("wd_call_btn"))}</span><b dir="ltr">${esc(number)}</b></span></a>`
       : "";
+    }).join("")}</div><p class="wdc-help">${esc(t("wd_company_ticket_help"))}</p>`;
   }
 
   function doneBox() {
-    return `<div class="wd-done" role="status">${ICONS.check}<div><b>${esc(t("wd_ok_title"))}</b><p>${esc(t("wd_ok_text"))}</p></div></div>`;
+    return `<div class="wd-done" role="status">${ICONS.check}<div><b>${esc(t("wd_request_title"))}</b><p>${esc(t("wd_request_text"))}</p></div></div>`;
   }
 
   // Organized by iSmile: the summit email and "Register for workshop" in one pill.
@@ -148,7 +158,7 @@ function initDetails(workshop) {
         </button>
       </form>
       ${error}
-      <p class="wdc-help">${esc(t("wd_help"))}</p>`;
+      <p class="wdc-help">${esc(t("wd_paid_ticket_help"))} ${esc(t("wd_email_help"))}</p>`;
   }
 
   function bindForm() {
@@ -204,7 +214,7 @@ async function start() {
   try {
     const [strings, workshops, footer] = await Promise.all([
       loadJSON("data/i18n/site-en.json"),
-      loadJSON("data/workshops.json"),
+      loadJSON("api/workshops.php"),
       loadJSON("data/footer.json"),
     ]);
     initI18n(strings);

@@ -8,7 +8,7 @@
 // workshops by calling the company's phone.
 // A workshop without a title is not announced yet: shaped placeholders only,
 // never pretend text.
-import { t, tr, onLangChange } from "../i18n.js?v=148";
+import { t, tr, onLangChange, getLang } from "../i18n.js?v=148";
 import { formatPrice } from "../utils/money.js?v=148";
 import { PHONE_ICON } from "../utils/phone.js?v=148";
 
@@ -45,6 +45,18 @@ export function photoSrc(w) {
 
 export const detailsHref = (w) => `workshop.html?id=${encodeURIComponent(w.id)}`;
 
+export function workshopSchedule(w) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(w.scheduledDate || "") || !/^\d{2}:\d{2}$/.test(w.startTime || "") || !/^\d{2}:\d{2}$/.test(w.endTime || "")) return null;
+  const start = new Date(`${w.scheduledDate}T${w.startTime}:00+03:00`), end = new Date(`${w.scheduledDate}T${w.endTime}:00+03:00`);
+  if (!Number.isFinite(start.getTime()) || end <= start) return null;
+  const locale = { en: "en-GB", ar: "ar-IQ", ku: "ckb-IQ" }[getLang()] || "en-GB";
+  const options = { timeZone: "Asia/Baghdad" };
+  const date = new Intl.DateTimeFormat(locale, { ...options, day: "numeric", month: "long", year: "numeric" }).format(start);
+  const clock = new Intl.DateTimeFormat(locale, { ...options, hour: "numeric", minute: "2-digit", hour12: true });
+  const hours = (end - start) / 3600000;
+  return { date, time: `${clock.format(start)}–${clock.format(end)}`, duration: t("wd_hours").replace("{n}", new Intl.NumberFormat(locale).format(hours)) };
+}
+
 /** A company runs this workshop: people call the company to register. */
 export const byCompany = (w) => w?.organizer === "company";
 
@@ -77,7 +89,9 @@ export function initWorkshops(workshops) {
       .map(([icon, text]) => `<span class="ws-chip">${icon}<span dir="auto">${esc(text)}</span></span>`)
       .join("");
     // Seats: iSmile counts the seats left; a company takes its own bookings.
-    const [seats, seatsSub] = left === 0
+    const [seats, seatsSub] = w.availabilityVerified === false
+      ? [t("wd_availability_unavailable"), ""]
+      : left === 0
       ? [t("wd_full"), ""]
       : company
         ? [t("wd_seats_total").replace("{total}", total), t("wdc_limited")]
@@ -88,13 +102,14 @@ export function initWorkshops(workshops) {
       ? `<a class="wsb-cta" href="${detailsHref(w)}">${PHONE_ICON}<span>${esc(t("wd_call_btn"))}</span>${RIGHT}</a>`
       : `<a class="wsb-cta" href="${detailsHref(w)}">${MAIL}<span>${esc(t("wsb_online"))}</span>${RIGHT}</a>`;
     return `
-      <article class="ws ws-card${company ? " is-company" : ""}${left === 0 ? " full" : ""}">
+      <article data-workshop-id="${esc(w.id)}" class="ws ws-card${w.photoStyle === "cutout" ? " is-cutout" : ""}${company ? " is-company" : ""}${left === 0 && w.availabilityVerified !== false ? " full" : ""}">
         <div class="ws-media${photo ? "" : " no-photo"}">
           ${photo ? `<img src="${esc(photo)}" alt="" loading="lazy" decoding="async">` : WORKSHOP_ICON}
         </div>
         <div class="ws-body">
           <h3><a class="ws-link" href="${detailsHref(w)}" aria-label="${esc(`${t("ws_details")}: ${title}`)}" dir="auto">${esc(title)}</a></h3>
           ${speaker ? `<p class="ws-trainer" dir="auto">${esc(speaker)}</p>` : ""}
+          ${workshopSchedule(w) ? `<p class="ws-schedule">${esc(workshopSchedule(w).date)}<br>${esc(workshopSchedule(w).time)}</p>` : ""}
           ${chips ? `<div class="ws-chips">${chips}</div>` : ""}
           <div class="wsb-foot">
             <div class="wsb-seats"><span class="wsb-seats-ic">${USERS}</span><div><b>${esc(seats)}</b>${seatsSub ? `<small>${esc(seatsSub)}</small>` : ""}</div></div>

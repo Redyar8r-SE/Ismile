@@ -113,8 +113,18 @@
 html[dir="rtl"] .wsb-cta svg:last-child{transform:scaleX(-1)}
 @media (prefers-reduced-motion: reduce){.ws.ws-card,.ws-media img{transition:none}.ws.ws-card:hover{transform:none}.ws.ws-card:hover .ws-media img{transform:none}}
 
-/* Two big cards per row; one per row on phones */
-.wsp-list .ws-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}
+/* Three real workshops, with the approved portrait treatment in both themes. */
+:root{--workshop-studio:url('../../assets/workshops/studio-light.webp')}
+:root[data-theme="dark"]{--workshop-studio:url('../../assets/workshops/studio-dark.webp')}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--workshop-studio:url('../../assets/workshops/studio-dark.webp')}}
+.ws-card.is-cutout .ws-media{background-image:var(--workshop-studio);background-size:cover;background-position:center;aspect-ratio:4/3}
+.ws-card.is-cutout .ws-media img{object-fit:contain;object-position:center bottom}
+.ws-card[data-workshop-id="crown-vs-veneer"] .ws-media img{transform:translateY(9%) scale(1.12)}
+.ws-schedule{margin:0;color:var(--teal-ink);font-size:13px;font-weight:600;line-height:1.7}
+.wsb-seats b,.wsb-seats small{white-space:normal}
+/* Workshop directory layout. */
+.wsp-list .ws-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:22px}
+@media(max-width:1100px){.wsp-list .ws-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:760px){
   .wsp-list .ws-grid{grid-template-columns:1fr;gap:16px}
 }

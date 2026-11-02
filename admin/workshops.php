@@ -26,6 +26,7 @@ $back = 'workshops.php?' . http_build_query(array_filter(['id' => $open, 'q' => 
 
 Page::action(static function () use ($user): string {
     $do = (string) ($_POST['do'] ?? '');
+    if ($do === 'workshop_issue_ticket') return \Ismile\WorkshopTickets::issue((int)($_POST['booking']??0),$user);
     if ($do === 'workshop_add') {
         $registration = Registrations::find((int) ($_POST['rid'] ?? 0));
         if ($registration === null) {
@@ -183,6 +184,7 @@ $e = [Page::class, 'e'];
             . '<div class="row3">'
             . '<label>Organized by<select name="organizer">' . $organizerOptions((string) ($w['organizer'] ?? 'ismile')) . '</select></label>'
             . '<label>Company phone (people call it to register)<input name="company_phone" dir="ltr" inputmode="tel" maxlength="40" placeholder="+964 750 123 4567" value="' . $e((string) ($w['companyPhone'] ?? '')) . '"></label>'
+            . '<label>Second company phone (optional)<input name="company_phone_secondary" dir="ltr" inputmode="tel" maxlength="40" value="'.$e((string)($w['companyPhones'][1]??'')).'"></label>'
             . '</div>'
             . '<div class="row3">'
             . '<label>Company name (English)<input name="company_en" value="' . $v('company', 'en') . '"></label>'
@@ -192,6 +194,11 @@ $e = [Page::class, 'e'];
             . '<label>Price per seat (0 = not set yet)<input name="price" inputmode="numeric" value="' . (int) ($w['price'] ?? 0) . '"></label>'
             . '<label>Currency<select name="currency">' . $currencyOptions((string) ($w['currency'] ?? 'IQD')) . '</select></label>'
             . '<label>Seats (the limit)<input type="number" min="1" max="2000" name="total_seats" value="' . (int) ($w['totalSeats'] ?? 20) . '" required></label></div>'
+            . '<h3 class="form-subhead">Workshop schedule (Iraq time)</h3><div class="row3">'
+            . '<label>Date<input type="date" name="scheduled_date" value="'.$e((string)($w['scheduledDate']??'')).'"></label>'
+            . '<label>Start time<input type="time" name="start_time" value="'.$e((string)($w['startTime']??'')).'"></label>'
+            . '<label>End time<input type="time" name="end_time" value="'.$e((string)($w['endTime']??'')).'"></label></div>'
+            . '<input type="hidden" name="photo_style" value="'.$e((string)($w['photoStyle']??'photo')).'">'
             . '<h3 class="form-subhead">Trainer photo</h3>'
             . '<div class="workshop-photo-field">'
             . ($w !== null && !empty($w['photo']) ? '<img class="workshop-photo-preview" src="' . $e($siteUrl($w['photo'])) . '" alt="Current photo of the trainer" width="120" height="120">' : '')
@@ -268,7 +275,12 @@ $e = [Page::class, 'e'];
       <td dir="ltr"><?= $e($person['phone']) ?></td>
       <td><?= Page::paidBadge($person['reg_status']) ?></td>
       <td><?= $e(Workshops::money((int) $person['price_agreed'], $workshop['currency'])) ?></td>
-      <td class="table-action-cell"><?= Page::workshopPaymentForm($person, $user, $back . '#people') ?></td>
+      <td class="table-action-cell"><?= Page::workshopPaymentForm($person, $user, $back . '#people') ?>
+      <?php if($user['role']==='owner' && $person['payment_status']==='paid' && !empty($workshop['providerEventId'])): $order=Db::one('SELECT provider_status FROM workshop_ticket_orders WHERE booking_id=?',[$person['id']]); ?>
+        <?php if($order): ?><p class="small">PSOOLA workshop ticket: <b><?= $e($order['provider_status']) ?></b></p><?php endif; ?>
+        <form method="post" class="inline-form"><?= Page::csrfField() ?><input type="hidden" name="do" value="workshop_issue_ticket"><input type="hidden" name="booking" value="<?= (int)$person['id'] ?>"><button class="btn small green"><?= ($order['provider_status']??'')==='paid'?'Verify workshop ticket':'Issue paid workshop ticket' ?></button></form>
+        <p class="muted small">Issue after collecting payment. PSOOLA emails the ticket.</p>
+      <?php endif; ?></td>
     </tr>
     <?php endforeach; ?>
     <?php if (!$people): ?><tr><td colspan="6" class="muted">Nobody booked yet.</td></tr><?php endif; ?>
