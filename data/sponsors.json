@@ -147,6 +147,13 @@
       "tile": true
     },
     {
+      "name": "AL MERQAB Scientific Bureau",
+      "tier": "silver",
+      "logo": "assets/sponsors/merqab-silver-20261103.webp",
+      "bg": "#18363F",
+      "tile": true
+    },
+    {
       "name": "Gengigel",
       "tier": "bronze",
       "logo": "assets/sponsors/gengigel-bronze.webp",
@@ -164,6 +171,13 @@
       "name": "Dentick Company",
       "tier": "bronze",
       "logo": "assets/sponsors/dentick-bronze-hq.webp",
+      "bg": "#18363F",
+      "tile": true
+    },
+    {
+      "name": "VITIS",
+      "tier": "bronze",
+      "logo": "assets/sponsors/vitis-bronze-20261103.webp",
       "bg": "#18363F",
       "tile": true
     }
