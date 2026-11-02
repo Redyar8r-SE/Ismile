@@ -84,6 +84,11 @@ foreach ($workshops as $workshop) {
 }
 Page::top('Workshops', 'workshops', ($user['role']==='owner' ? '<a class="btn ghost" href="#manage">Workshop settings</a>' : '') . '<a class="btn" href="#book">Book a guest ' . Page::navIcon('arrow') . '</a>');
 $e = [Page::class, 'e'];
+$needsReview=Db::all("SELECT c.registration_id,c.workshop_id,c.fulfillment_error,r.first_name,r.father_name,r.grandfather_name FROM workshop_checkouts c JOIN registrations r ON r.id=c.registration_id WHERE c.provider_status='paid' AND c.fulfillment_error IS NOT NULL ORDER BY c.id DESC");
+foreach($needsReview as $review): ?>
+<div class="card"><p><b>PSOOLA workshop payment received: review required.</b> <a href="registration.php?id=<?= (int)$review['registration_id'] ?>"><?= $e(Registrations::fullName($review)) ?></a></p><p><?= $e($review['fulfillment_error']) ?></p></div>
+<?php endforeach;
+$e = [Page::class, 'e'];
 ?>
 <?= Page::stats([
     ['Active workshops', number_format(count($workshops)), 'Workshops available for booking', 'workshops', 'blue'],
@@ -275,8 +280,9 @@ $e = [Page::class, 'e'];
       <td dir="ltr"><?= $e($person['phone']) ?></td>
       <td><?= Page::paidBadge($person['reg_status']) ?></td>
       <td><?= $e(Workshops::money((int) $person['price_agreed'], $workshop['currency'])) ?></td>
-      <td class="table-action-cell"><?= Page::workshopPaymentForm($person, $user, $back . '#people') ?>
-      <?php if($user['role']==='owner' && $person['payment_status']==='paid' && !empty($workshop['providerEventId'])): $order=Db::one('SELECT provider_status FROM workshop_ticket_orders WHERE booking_id=?',[$person['id']]); ?>
+      <?php $online=Db::one('SELECT provider_status FROM workshop_checkouts WHERE booking_id=?',[$person['id']]); ?>
+      <td class="table-action-cell"><?php if($online): ?><p class="small">Paid online through PSOOLA. Ticket issued automatically.</p><?php else: ?><?= Page::workshopPaymentForm($person, $user, $back . '#people') ?><?php endif; ?>
+      <?php if(!$online && $user['role']==='owner' && $person['payment_status']==='paid' && !empty($workshop['providerEventId'])): $order=Db::one('SELECT provider_status FROM workshop_ticket_orders WHERE booking_id=?',[$person['id']]); ?>
         <?php if($order): ?><p class="small">PSOOLA workshop ticket: <b><?= $e($order['provider_status']) ?></b></p><?php endif; ?>
         <form method="post" class="inline-form"><?= Page::csrfField() ?><input type="hidden" name="do" value="workshop_issue_ticket"><input type="hidden" name="booking" value="<?= (int)$person['id'] ?>"><button class="btn small green"><?= ($order['provider_status']??'')==='paid'?'Verify workshop ticket':'Issue paid workshop ticket' ?></button></form>
         <p class="muted small">Issue after collecting payment. PSOOLA emails the ticket.</p>

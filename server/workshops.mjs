@@ -85,11 +85,101 @@ export async function workshopRegistration(req) {
       signal: AbortSignal.timeout(20000),
     });
     const data = await response.json();
-    if (response.ok && data?.ok === true) return reply(200, { ok: true });
+    if (response.ok && data?.ok === true) {
+      const redirect = paymentRedirect(data.redirect);
+      if (!redirect) return reply(503, { ok: false, error: "wd_err_server" });
+      return reply(200, { ok: true, redirect });
+    }
     if (response.status >= 400 && response.status < 500 && typeof data?.error === "string")
       return reply(response.status, { ok: false, error: data.error, field: data.field });
   } catch {
     /* Public response excludes connection details. */
   }
   return reply(503, { ok: false, error: "wd_err_server" });
+}
+
+/** @param {unknown} value */
+function paymentRedirect(value) {
+  if (typeof value !== "string") return null;
+  try {
+    const url = new URL(value);
+    if (
+      url.protocol !== "https:" ||
+      url.username ||
+      url.password ||
+      (url.port && url.port !== "443")
+    )
+      return null;
+    if (/(^|\.)psoola\.com$/i.test(url.hostname)) return url.href;
+    if (
+      ["ismile.krd", "www.ismile.krd"].includes(url.hostname) &&
+      url.pathname === "/workshop.html" &&
+      /^[a-f0-9]{64}$/.test(url.searchParams.get("payment") || "")
+    )
+      return url.href;
+  } catch {
+    /* Invalid provider redirect. */
+  }
+  return null;
+}
+
+/** Public payment status exposes no attendee data or provider credentials.
+ * @param {URLSearchParams} query */
+export async function workshopPayment(query) {
+  const headers = {
+    "Content-Type": "application/json; charset=utf-8",
+    "Cache-Control": "no-store",
+    "Referrer-Policy": "no-referrer",
+  };
+  const token = query.get("token") || "";
+  if (!/^[a-f0-9]{64}$/.test(token))
+    return { statusCode: 404, headers, body: '{"ok":false,"error":"wd_err_missing"}' };
+  try {
+    const { endpoint, upstreamHeaders } = backendConnection(
+      "workshop-payment.php",
+      new URLSearchParams({ token }),
+    );
+    const response = await fetch(endpoint, {
+      headers: upstreamHeaders,
+      redirect: "error",
+      cache: "no-store",
+      signal: AbortSignal.timeout(20000),
+    });
+    const data = await response.json();
+    if (
+      response.ok &&
+      data?.ok === true &&
+      typeof data.workshopId === "string" &&
+      typeof data.confirmed === "boolean" &&
+      [
+        "created",
+        "unknown",
+        "awaiting_payment",
+        "paid",
+        "expired",
+        "cancelled",
+        "refunded",
+        "review",
+      ].includes(data.status) &&
+      (!data.confirmed || data.status === "paid")
+    ) {
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          ok: true,
+          workshopId: data.workshopId,
+          status: data.status,
+          confirmed: data.confirmed,
+          checkoutUrl:
+            data.status === "awaiting_payment" ? paymentRedirect(data.checkoutUrl) : null,
+        }),
+      };
+    }
+    if (response.status === 404)
+      return { statusCode: 404, headers, body: '{"ok":false,"error":"wd_err_missing"}' };
+  } catch {
+    /* Never turn an unverified return URL into a paid registration. */
+  }
+  return { statusCode: 503, headers, body: '{"ok":false,"error":"wd_err_server"}' };
 }

@@ -224,6 +224,7 @@ final class Office
         // booking the last seat at the same moment cannot both get it.
         [$id, $full] = Db::transaction(static function () use ($registration, $workshop, $user, $in, $price, $payment, $override): array {
             $limit = (int) Db::value('SELECT total_seats FROM workshops WHERE id = ? FOR UPDATE', [$workshop['id']]);
+            WorkshopCheckout::assertNoOpenPurchase((int)$registration['id'],$workshop['id']);
             // Still registered now (not cancelled a moment ago by someone else)?
             if (!in_array(Db::value('SELECT status FROM registrations WHERE id = ? LOCK IN SHARE MODE', [$registration['id']]), ['paid', 'complimentary'], true)) {
                 throw new UserError(Registrations::fullName($registration) . ' is not registered (cancelled).');
@@ -265,6 +266,7 @@ final class Office
             if ($booking === null) {
                 throw new UserError('Booking not found.');
             }
+            WorkshopCheckout::assertNoOpenPurchase((int)$booking['registration_id'],$booking['workshop_id']);
             // Money received is never given back. Only the Owner may correct a
             // mistake (a payment recorded on the wrong person or workshop).
             $wasPaid = $booking['payment_status'] === 'paid';

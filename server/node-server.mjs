@@ -11,7 +11,7 @@ import { sponsorRequest } from "./sponsor.mjs";
 import { sponsorsFile } from "./sponsor-tiers.mjs";
 import { isPublicPath, loadEnvFile, resolveStaticFile, sendFile } from "./static.mjs";
 import { websiteState } from "./website-state.mjs";
-import { workshopRegistration, workshopsFile } from "./workshops.mjs";
+import { workshopPayment, workshopRegistration, workshopsFile } from "./workshops.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -104,6 +104,17 @@ export function createAppServer() {
       }
       if (url.pathname === "/api/workshop-register.php") {
         const result = await workshopRegistration(req);
+        res.writeHead(result.statusCode, result.headers).end(result.body);
+        return;
+      }
+      if (url.pathname === "/api/workshop-payment.php") {
+        if (req.method !== "GET") {
+          res
+            .writeHead(405, { "Content-Type": "application/json" })
+            .end('{"ok":false,"error":"method"}');
+          return;
+        }
+        const result = await workshopPayment(url.searchParams);
         res.writeHead(result.statusCode, result.headers).end(result.body);
         return;
       }

@@ -16,6 +16,11 @@ final class WorkshopTickets
         if(!$registration)throw new UserError('A paid summit registration is required before a workshop ticket can be issued.');
         $workshop=Workshops::find($booking['workshop_id']);
         if(!$workshop || !$workshop['providerEventId'])throw new UserError('This workshop is not configured for PSOOLA tickets.');
+        $online=Db::one('SELECT * FROM workshop_checkouts WHERE booking_id=?',[$bookingId]);
+        if($online){
+            self::verifyOnline($online);
+            return 'Workshop ticket already paid online. PSOOLA sends the ticket to the attendee.';
+        }
         $existing=Db::one('SELECT * FROM workshop_ticket_orders WHERE booking_id=?',[$bookingId]);
         if($existing && $existing['provider_session_id']){
             self::reconcile($existing['provider_session_id'],$existing['partner_reference']);
@@ -34,6 +39,7 @@ final class WorkshopTickets
             if(!$locked || $locked['payment_status']!=='paid' || Db::value('SELECT status FROM registrations WHERE id=? LOCK IN SHARE MODE',[$registration['id']])!=='paid')throw new UserError('A paid summit registration and collected workshop payment are required.');
             $saved=Db::one('SELECT * FROM workshop_ticket_orders WHERE booking_id=?',[$bookingId]);
             if($saved)return $saved;
+            WorkshopCheckout::assertNoOpenPurchase((int)$registration['id'],$workshop['id']);
             if(Db::value("SELECT id FROM workshop_ticket_orders WHERE registration_id=? AND workshop_id=? AND provider_status IN ('created','unknown','awaiting_payment','paid')",[$registration['id'],$workshop['id']]))throw new UserError('This attendee already has a workshop ticket or an order awaiting confirmation.');
             $phone=Validate::phone((string)$registration['phone']);
             if(!$phone || !preg_match('/^\+[1-9][0-9]{6,14}$/D',$phone))throw new UserError('A valid international attendee phone number is required.');
@@ -58,6 +64,13 @@ final class WorkshopTickets
             App::log('error','Workshop ticket issue could not be confirmed',['booking'=>$bookingId,'error'=>$error->getMessage()]);
             throw new UserError('The workshop ticket could not be confirmed. Retry this same booking; its saved order key prevents duplicate purchases.');
         }
+    }
+
+    private static function verifyOnline(array $online): void
+    {
+        if(!$online['provider_session_id'])throw new UserError('The online workshop payment must be verified first.');
+        WorkshopCheckout::reconcile($online['provider_session_id'],$online['partner_reference']);
+        if(Db::value('SELECT provider_status FROM workshop_checkouts WHERE id=?',[$online['id']])!=='paid')throw new UserError('The online workshop payment is not paid.');
     }
 
     public static function validate(array $attempt,array $session): void

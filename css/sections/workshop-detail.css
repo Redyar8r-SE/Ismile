@@ -207,6 +207,9 @@ html[dir="rtl"] .wdc-submit svg{transform:scaleX(-1)}
   .wdc-how{padding:20px}
 }
 /* Narrow phones: the email box above a full-width button */
+.wd-payment-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.wd-payment-actions .btn{white-space:normal;text-align:center}
+.wd-payment-status .wd-done{align-items:flex-start}
 @media (max-width:480px){
   .wdc-form{flex-wrap:wrap;gap:8px;padding:8px;border-radius:22px}
   .wdc-email{flex-basis:100%;padding-inline:10px}
