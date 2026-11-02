@@ -33,18 +33,21 @@ const ICONS = {
 // The answers the server can give, as website texts.
 const ERRORS = {
   wd_err_email: "wd_err_email",
-  wd_err_not_registered: "wd_err_not_registered",
+  wd_err_not_registered: "wd_err_paid_summit",
   wd_err_already: "wd_err_already",
   wd_err_full: "wd_err_full",
   wd_err_missing: "wd_err_missing",
   wd_err_by_phone: "wd_err_by_phone",
+  wd_err_phone: "wd_err_phone",
   err_busy: "wd_err_busy",
 };
 
 function initDetails(workshop) {
   const root = document.getElementById("wdRoot");
   // What the visitor did, kept when the language changes.
-  const state = { email: "", sending: false, done: false, error: "" };
+  const paymentToken = new URLSearchParams(location.search).get("payment");
+  const state = { email: "", sending: false, error: "", payment: null, checking: false, paymentError: false };
+  let paymentPolls = 0;
 
   function render() {
     if (!workshop) {
@@ -81,7 +84,7 @@ function initDetails(workshop) {
       : `<div class="wdc-stat is-seats"><span class="wdc-stat-ic">${ICONS.users}</span><div class="wdc-stat-grow"><b>${esc(full ? t("wd_full") : t("wdi_left").replace("{n}", left).replace("{total}", total))}</b><small>${esc(t("wdi_seats").replace("{total}", total))}</small><span class="wdc-bar" aria-hidden="true"><i style="width:${takenPercent}%"></i></span></div></div>`;
     const steps = (company
       ? [["phone", "wdc_how1", "wdc_how1_d"], ["wallet", "wdc_how2", "wdc_how2_d"], ["ticket", "wdc_how3", "wdc_how3_d"]]
-      : [["ticket", "wdc_how3", "wd_paid_ticket_help"], ["mail", "wsp3_ism_s3", "wd_email_help"], ["check", "wd_request_title", "wd_request_text"]])
+      : [["ticket", "wdc_how3", "wd_paid_ticket_help"], ["wallet", "wd_online_step", "wd_online_step_text"], ["check", "wd_online_registered", "wd_online_registered_text"]])
       .map(([icon, head, text]) => `<li><span class="wdc-how-ic">${icon === "phone" ? PHONE_ICON : ICONS[icon]}</span><div><b>${esc(t(head))}</b><p>${esc(t(text))}</p></div></li>`)
       .join("");
 
@@ -95,7 +98,7 @@ function initDetails(workshop) {
             ${schedule ? `<div class="wdc-schedule"><span>${ICONS.date}${esc(schedule.date)}</span><span>${ICONS.time}${esc(schedule.time)}</span></div>` : ""}
             <div class="wdc-panel" aria-label="${esc(t(company ? "wd_call_btn" : "wd_register"))}">
               <div class="wdc-stats">${price}${seats}</div>
-              ${company ? callButton(w) : state.done ? doneBox() : formBox(full || unavailable)}
+              ${paymentToken ? paymentBox() : company ? callButton(w) : formBox(full || unavailable)}
             </div>
           </div>
           <figure class="wdc-photo${photo ? "" : " no-photo"}">${photo ? `<img src="${esc(photo)}" alt="${esc(speaker)}" decoding="async">` : WORKSHOP_ICON}</figure>
@@ -107,6 +110,7 @@ function initDetails(workshop) {
         </div>
       </article>`;
     if (!company) bindForm();
+    root.querySelector("#wdCheckPayment")?.addEventListener("click", checkPayment);
     if (w.photoStyle !== "cutout") fitPhoto();
   }
 
@@ -135,14 +139,47 @@ function initDetails(workshop) {
     }).join("")}</div><p class="wdc-help">${esc(t("wd_company_ticket_help"))}</p>`;
   }
 
-  function doneBox() {
-    return `<div class="wd-done" role="status">${ICONS.check}<div><b>${esc(t("wd_request_title"))}</b><p>${esc(t("wd_request_text"))}</p></div></div>`;
+  function paymentBox() {
+    const payment = state.payment;
+    const confirmed = payment?.confirmed === true && payment.status === "paid";
+    const status = confirmed ? "paid" : payment?.status || "checking";
+    const key = state.paymentError ? "error" : ["paid", "expired", "cancelled", "refunded", "review"].includes(status) ? status : "pending";
+    const copy = status === "checking" && !state.paymentError ? "checking" : key;
+    const href = payment?.checkoutUrl;
+    const safeCheckout = typeof href === "string" && /^https:\/\/([a-z0-9-]+\.)*psoola\.com\//i.test(href);
+    return `<div class="wd-payment-status" data-payment-status="${esc(status)}" role="status">
+      <div class="wd-done">${confirmed ? ICONS.check : ICONS.wallet}<div><b>${esc(t(`wd_pay_${copy}_title`))}</b><p>${esc(t(`wd_pay_${copy}_text`))}</p></div></div>
+      <div class="wd-payment-actions">
+      ${!confirmed && status === "awaiting_payment" && safeCheckout ? `<a class="btn btn-primary" href="${esc(href)}" rel="noreferrer">${esc(t("wd_pay_continue"))}</a>` : ""}
+      ${!confirmed && ["checking", "created", "unknown", "awaiting_payment"].includes(status) ? `<button class="btn btn-ghost" id="wdCheckPayment" type="button"${state.checking ? " disabled" : ""}>${esc(t("wd_pay_check"))}</button>` : ""}
+      ${["expired", "cancelled", "refunded"].includes(status) ? `<a class="btn btn-primary" href="workshop.html?id=${encodeURIComponent(workshop.id)}">${esc(t("wd_pay_retry"))}</a>` : ""}
+      </div></div>`;
+  }
+
+  async function checkPayment() {
+    if (state.checking || !paymentToken || !workshop) return;
+    state.checking = true;
+    state.paymentError = false;
+    render();
+    try {
+      const response = await fetch(`api/workshop-payment.php?token=${encodeURIComponent(paymentToken)}`, { cache: "no-store", headers: { Accept: "application/json" } });
+      const result = await response.json();
+      if (!response.ok || result.ok !== true || result.workshopId !== workshop.id) throw new Error("Payment verification unavailable");
+      state.payment = result;
+    } catch {
+      state.paymentError = true;
+    }
+    state.checking = false;
+    render();
+    if (state.payment && ["created", "unknown", "awaiting_payment"].includes(state.payment.status) && ++paymentPolls < 4) {
+      setTimeout(checkPayment, 20000);
+    }
   }
 
   // Organized by iSmile: the summit email and "Register for workshop" in one pill.
   function formBox(full) {
     const error = state.error
-      ? `<div class="wd-error" role="alert">${ICONS.warn}<div><p>${esc(t(state.error))}</p>${state.error === "wd_err_not_registered" ? `<a class="btn btn-sm btn-primary" href="register.html">${esc(t("wd_register_summit"))}</a>` : ""}</div></div>`
+      ? `<div class="wd-error" role="alert">${ICONS.warn}<div><p>${esc(t(state.error))}</p>${state.error === "wd_err_paid_summit" ? `<a class="btn btn-sm btn-primary" href="register.html">${esc(t("wd_register_summit"))}</a>` : ""}</div></div>`
       : "";
     return `
       <form class="wdc-form${state.error ? " has-error" : ""}" id="wdForm" novalidate>
@@ -154,11 +191,11 @@ function initDetails(workshop) {
             placeholder="${esc(t("wdi_email_ph"))}" value="${esc(state.email)}"${full ? " disabled" : ""}${state.error ? ' aria-invalid="true"' : ""}>
         </label>
         <button class="wdc-submit" type="submit"${full || state.sending ? " disabled" : ""}>
-          <span>${esc(t(state.sending ? "wd_sending" : "wd_register"))}</span>${state.sending ? "" : ICONS.arrow}
+          <span>${esc(t(state.sending ? "wd_pay_opening" : "wd_pay_button"))}</span>${state.sending ? "" : ICONS.arrow}
         </button>
       </form>
       ${error}
-      <p class="wdc-help">${esc(t("wd_paid_ticket_help"))} ${esc(t("wd_email_help"))}</p>`;
+      <p class="wdc-help">${esc(t("wd_paid_ticket_help"))} ${esc(t("wd_online_help"))}</p>`;
   }
 
   function bindForm() {
@@ -188,8 +225,12 @@ function initDetails(workshop) {
       try {
         const response = await fetch("api/workshop-register.php", { method: "POST", body, headers: { Accept: "application/json" } });
         const result = await response.json().catch(() => ({}));
-        if (response.ok && result.ok) {
-          state.done = true;
+        if (response.ok && result.ok && typeof result.redirect === "string") {
+          const target = new URL(result.redirect);
+          const ownResult = ["ismile.krd", "www.ismile.krd"].includes(target.hostname) && target.pathname === "/workshop.html" && /^[a-f0-9]{64}$/.test(target.searchParams.get("payment") || "");
+          if (target.protocol !== "https:" || target.username || target.password || (target.port && target.port !== "443") || (!/(^|\.)psoola\.com$/i.test(target.hostname) && !ownResult)) throw new Error("Invalid checkout address");
+          window.location.assign(target.href);
+          return;
         } else {
           state.error = ERRORS[result.error] || "wd_err_server";
           if (result.error === "wd_err_full") workshop.seatsLeft = 0;
@@ -205,6 +246,7 @@ function initDetails(workshop) {
 
   render();
   onLangChange(render);
+  if (paymentToken) checkPayment();
 }
 
 async function start() {

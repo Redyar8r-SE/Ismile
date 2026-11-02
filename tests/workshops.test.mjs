@@ -1,6 +1,6 @@
 import { Readable } from "node:stream";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { workshopRegistration, workshopsFile } from "../server/workshops.mjs";
+import { workshopPayment, workshopRegistration, workshopsFile } from "../server/workshops.mjs";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -68,6 +68,106 @@ describe("workshop backend integration", () => {
       (await workshopRegistration(request("https://attacker.example", "email=x"))).statusCode,
     ).toBe(403);
     expect(fetcher).not.toHaveBeenCalled();
+  });
+  it("returns the PSOOLA checkout address without marking registration complete", async () => {
+    connection();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            ok: true,
+            redirect: "https://psoola.com/checkout/example",
+            buyer: "private",
+          }),
+        ),
+      ),
+    );
+    const result = await workshopRegistration(
+      request("https://ismile.krd", "email=paid%40example.invalid"),
+    );
+    expect(JSON.parse(result.body)).toEqual({
+      ok: true,
+      redirect: "https://psoola.com/checkout/example",
+    });
+  });
+  it("rejects an unexpected checkout hostname", async () => {
+    connection();
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValue(
+          new Response(
+            JSON.stringify({ ok: true, redirect: "https://psoola.com.attacker.example/pay" }),
+          ),
+        ),
+    );
+    expect(
+      (await workshopRegistration(request("https://ismile.krd", "email=paid%40example.invalid")))
+        .statusCode,
+    ).toBe(503);
+  });
+  it("does not treat a return query parameter as payment confirmation", async () => {
+    const fetcher = vi.fn();
+    vi.stubGlobal("fetch", fetcher);
+    const result = await workshopPayment(
+      new URLSearchParams({ psoolaStatus: "paid", psoolaSession: "forged" }),
+    );
+    expect(result.statusCode).toBe(404);
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+  it("shows pending until the backend confirms payment and strips attendee data", async () => {
+    connection();
+    const fetcher = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ok: true,
+          workshopId: "crown-vs-veneer",
+          status: "awaiting_payment",
+          confirmed: false,
+          checkoutUrl: "https://psoola.com/checkout/example",
+          email: "private@example.invalid",
+        }),
+      ),
+    );
+    vi.stubGlobal("fetch", fetcher);
+    const result = await workshopPayment(
+      new URLSearchParams({ token: "a".repeat(64), psoolaStatus: "paid" }),
+    );
+    expect(JSON.parse(result.body)).toEqual({
+      ok: true,
+      workshopId: "crown-vs-veneer",
+      status: "awaiting_payment",
+      confirmed: false,
+      checkoutUrl: "https://psoola.com/checkout/example",
+    });
+    expect(fetcher.mock.calls[0][0].searchParams.has("psoolaStatus")).toBe(false);
+  });
+  it("exposes the verified paid workshop result", async () => {
+    connection();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            ok: true,
+            workshopId: "crown-vs-veneer",
+            status: "paid",
+            confirmed: true,
+            buyer: "private",
+          }),
+        ),
+      ),
+    );
+    const result = await workshopPayment(new URLSearchParams({ token: "a".repeat(64) }));
+    expect(JSON.parse(result.body)).toEqual({
+      ok: true,
+      workshopId: "crown-vs-veneer",
+      status: "paid",
+      confirmed: true,
+      checkoutUrl: null,
+    });
   });
   it("rejects oversized workshop forms without forwarding them", async () => {
     connection();
