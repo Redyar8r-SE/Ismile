@@ -76,9 +76,12 @@ if ($q !== '') {
 }
 
 $workshopCounts = array_column(Db::all("SELECT workshop_id, COUNT(*) AS booked, COALESCE(SUM(payment_status='paid'),0) AS paid, COALESCE(SUM(payment_status='complimentary'),0) AS free, COALESCE(SUM(payment_status='unpaid'),0) AS unpaid, COALESCE(SUM(amount_paid),0) AS money FROM workshop_bookings WHERE removed_at IS NULL GROUP BY workshop_id"), null, 'workshop_id');
-$availableTotal = $bookingTotal = $unpaidTotal = 0;
+$liveCatalog = array_column(\Ismile\WorkshopCatalog::all(),null,'id');
+$availableTotal = $bookingTotal = $unpaidTotal = $pendingTotal = 0;
 foreach ($workshops as $workshop) {
-    $availableTotal += max(0,(int) ($workshop['totalSeats'] ?? 0) - (int) ($workshopCounts[$workshop['id']]['booked'] ?? 0));
+    $stock=$liveCatalog[$workshop['id']]??null;
+    $availableTotal += $stock && $stock['availabilityVerified'] ? (int)$stock['seatsLeft'] : 0;
+    $pendingTotal += (int)($stock['pendingPayments']??0);
     $bookingTotal += (int) ($workshopCounts[$workshop['id']]['booked'] ?? 0);
     $unpaidTotal += (int) ($workshopCounts[$workshop['id']]['unpaid'] ?? 0);
 }
@@ -92,25 +95,29 @@ $e = [Page::class, 'e'];
 ?>
 <?= Page::stats([
     ['Active workshops', number_format(count($workshops)), 'Workshops available for booking', 'workshops', 'blue'],
-    ['Seats available', number_format($availableTotal), 'Across all active workshops', 'ticket', 'teal'],
+    ['Seats available now', number_format($availableTotal), 'Live availability excludes temporary payment holds', 'ticket', 'teal'],
     ['Workshop bookings', number_format($bookingTotal), 'Seats reserved in active workshops', 'users', 'violet'],
-    ['Payment to collect', number_format($unpaidTotal), 'Unpaid workshop bookings', 'payments', 'gold'],
+    ['Online payments pending', number_format($pendingTotal), 'Not registered until PSOOLA confirms payment', 'payments', 'gold'],
 ]) ?>
 <div class="workshop-grid" id="workshop-grid">
 <?php foreach ($workshops as $i => $workshop):
     $counts = $workshopCounts[$workshop['id']] ?? ['booked'=>0,'paid'=>0,'free'=>0,'unpaid'=>0,'money'=>0];
     $total = (int) ($workshop['totalSeats'] ?? 0);
-    $left = max(0,$total-(int)$counts['booked']);
+    $stock=$liveCatalog[$workshop['id']]??null;
+    $verified=$stock && $stock['availabilityVerified'];
+    $left = $verified ? (int)$stock['seatsLeft'] : 0;
+    $pending=(int)($stock['pendingPayments']??0);
     $speaker = is_array($workshop['speaker'] ?? null) ? ($workshop['speaker']['en'] ?? '') : '';
 ?>
   <article class="card workshop-card<?= $left===0 ? ' is-full' : '' ?>">
-    <div class="workshop-card-top"><span class="workshop-card-icon"><?= Page::navIcon('workshops') ?></span><span class="pill <?= $left>0 ? 'green':'red' ?>"><?= $left>0 ? $left.' seats left':'Full' ?></span></div>
+    <div class="workshop-card-top"><span class="workshop-card-icon"><?= Page::navIcon('workshops') ?></span><span class="pill <?= $left>0 ? 'green':'red' ?>"><?= !$verified ? 'Availability unavailable' : ($left>0 ? $left.' available now' : ($pending ? 'Seats in checkout':'Full')) ?></span></div>
     <span class="workshop-number">WORKSHOP <?= str_pad((string)($i+1),2,'0',STR_PAD_LEFT) ?></span>
     <h2><?= $e(SiteData::workshopName($workshop)) ?></h2><p class="workshop-speaker"><?= $speaker!=='' ? $e($speaker) : 'Trainer to be announced' ?></p>
     <div class="workshop-price"><strong><?= (int)($workshop['price'] ?? 0)>0 ? $e(Workshops::money((int)$workshop['price'], $workshop['currency'])) : 'Price to be set' ?></strong><span>per seat</span></div>
     <div class="capacity-label"><span>Seat availability</span><b><?= (int)$counts['booked'] ?> / <?= $total ?> booked</b></div>
     <progress value="<?= min((int)$counts['booked'],max(1,$total)) ?>" max="<?= max(1,$total) ?>" aria-label="<?= $e(SiteData::workshopName($workshop).' booked seats') ?>"></progress>
     <div class="workshop-payment"><span><i class="dot teal"></i><?= (int)$counts['paid'] ?> paid<?= (int)$counts['free'] ? ' · '.(int)$counts['free'].' free':'' ?></span><span><?= (int)$counts['unpaid'] ?> unpaid</span></div>
+    <?php if($pending): ?><p class="muted small"><?= $pending ?> awaiting PSOOLA payment. These are temporary holds, not registered attendees. Unpaid holds are released when checkout expires.</p><?php endif; ?>
     <div class="workshop-collected"><span>Collected</span><b><?= $e(Workshops::money((int)$counts['money'], $workshop['currency'])) ?></b></div>
     <div class="workshop-card-actions"><a class="btn ghost" href="export.php?what=workshop&amp;id=<?= rawurlencode($workshop['id']) ?>&amp;format=pdf">PDF sign-in sheet</a><a class="btn" href="workshops.php?id=<?= rawurlencode($workshop['id']) ?>#people">View people</a><a class="btn ghost" href="export.php?what=workshop&amp;id=<?= rawurlencode($workshop['id']) ?>" aria-label="<?= $e('Export sign-in sheet for '.SiteData::workshopName($workshop)) ?>"><?= Page::navIcon('download') ?> Sign-in sheet</a></div>
   </article>

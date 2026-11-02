@@ -15,6 +15,8 @@ final class WorkshopCatalog
     {
         $w=Workshops::find($id);
         if(!$w || $w['status']!=='active')return null;
+        $w['paidRegistrations']=(int)Db::value("SELECT COUNT(*) FROM workshop_bookings WHERE workshop_id=? AND removed_at IS NULL AND payment_status='paid'",[$id]);
+        $w['pendingPayments']=(int)Db::value("SELECT COUNT(*) FROM workshop_checkouts WHERE workshop_id=? AND provider_status='awaiting_payment' AND provider_session_id IS NOT NULL AND (expires_at IS NULL OR expires_at>?)",[$id,App::now()]);
         $w['availabilityVerified']=!$w['providerEventId'];
         if($w['providerEventId']){
             $file=App::storage('tmp/workshop-catalog-'.$id.'.json');
