@@ -253,9 +253,10 @@ function initDetails(workshop) {
   if (workshop) watchWorkshopAvailability((rows) => {
     const fresh = rows.find((w) => w.id === workshop.id);
     if (!fresh || JSON.stringify(fresh) === JSON.stringify(workshop)) return;
-    Object.assign(workshop, fresh);
     // Preserve typing and payment submission while inventory refreshes.
-    if (!state.sending && !root.querySelector("#wdForm")?.contains(document.activeElement)) render();
+    if (state.sending || root.querySelector("#wdForm")?.contains(document.activeElement)) return;
+    Object.assign(workshop, fresh);
+    render();
   });
 }
 
