@@ -194,7 +194,7 @@ function initDetails(workshop) {
             placeholder="${esc(t("wdi_email_ph"))}" value="${esc(state.email)}"${full ? " disabled" : ""}${state.error ? ' aria-invalid="true"' : ""}>
         </label>
         <button class="wdc-submit" type="submit"${full || state.sending ? " disabled" : ""}>
-          <span>${esc(t(state.sending ? "wd_pay_opening" : "wd_pay_button"))}</span>${state.sending ? "" : ICONS.arrow}
+          <span>${esc(t(state.sending ? "wd_pay_opening" : "wd_pay_action"))}</span>${state.sending ? "" : ICONS.arrow}
         </button>
       </form>
       ${error}
