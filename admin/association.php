@@ -127,7 +127,8 @@ echo '<div data-live-region="association-totals"><div data-association-balance d
   <?php endif; ?>
 </section>
 <?php else:
-    $filters = ['q'=>Page::query('q'),'type'=>Page::query('type'),'sent'=>Page::query('sent'),'status'=>Page::query('status'),'lunch'=>Page::query('lunch'),'sale'=>Page::query('sale')];
+    $filters = ['q'=>Page::query('q'),'type'=>Page::query('type'),'sent'=>Page::query('sent'),'status'=>Page::query('status'),'lunch'=>Page::query('lunch'),'sale'=>Page::query('sale'),'sort'=>Page::query('sort')];
+    if (!isset(Association::DIRECTORY_SORTS[$filters['sort']])) $filters['sort'] = 'name';
     $where = []; $params = [];
     if ($filters['status']==='cancelled') $where[]="r.status='cancelled'";
     else { $where[]="r.status IN ('paid','complimentary')"; if (in_array($filters['status'],['paid','complimentary'],true)) { $where[]='r.status=?'; $params[]=$filters['status']; } }
@@ -143,13 +144,14 @@ echo '<div data-live-region="association-totals"><div data-association-balance d
     $sql = Association::selectSql().' WHERE '.implode(' AND ',$where);
     $count = (int)Db::value('SELECT COUNT(*) FROM ('.$sql.') matched', $params);
     $pages = max(1,(int)ceil($count/100)); $page = min($pages,max(1,(int)Page::query('page')));
-    $people = Association::attach(Db::all($sql.' ORDER BY r.first_name,r.father_name,r.id LIMIT 100 OFFSET '.(($page-1)*100),$params));
+    $people = Association::attach(Db::all($sql.' ORDER BY '.Association::directoryOrder($filters['sort']).' LIMIT 100 OFFSET '.(($page-1)*100),$params));
     $select = static function(string $key,string $label,array $options) use($filters,$e):void { echo '<label class="filter-field"><span>'.$e($label).'</span><select name="'.$key.'">'; foreach($options as $value=>$text) echo '<option value="'.$e($value).'"'.($filters[$key]===(string)$value?' selected':'').'>'.$e($text).'</option>'; echo '</select></label>'; };
 ?>
 <form class="filters card filter-panel" method="get" data-instant-search data-search-regions="association-directory">
 <?= Page::panelHeading('Choose guests for Association','Find guests, select their names and review the handover total.','search') ?>
 <label class="filter-field filter-search"><span>Name, phone, email or reference</span><input type="search" name="q" value="<?= $e($filters['q']) ?>" placeholder="Search guests"></label>
 <?php $select('type','Ticket type',[''=>'Any ticket']+Registrations::TICKET_NAMES); $select('sale','Payment method',[''=>'All payments','cash'=>'Cash','website'=>'Website']); $select('sent','Association status',[''=>'Everyone','no'=>'Not sent yet','yes'=>'Already sent']); $select('status','Registration status',[''=>'Registered (paid + free)','paid'=>'Paid','complimentary'=>'Free ticket','cancelled'=>'Cancelled']); $select('lunch','Lunch',[''=>'Any lunch','none'=>'No lunch','day1'=>'Lunch day 1','day2'=>'Lunch day 2']); ?>
+<?php $select('sort','Sort by',Association::DIRECTORY_SORTS); ?>
 <div class="form-actions filter-actions"><a class="btn ghost" href="association.php">Clear filters</a><button class="btn">Search</button></div>
 </form>
 <form method="post" data-association-selection>

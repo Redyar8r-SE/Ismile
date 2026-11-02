@@ -22,3 +22,11 @@ foreach (Auth::ROLES as $role) {
 }
 if (Association::canManage(['role'=>'viewer','association_manage_access'=>0]) || Association::canManage(['role'=>'viewer','association_manage_access'=>2])) throw new RuntimeException('Invalid flag grants access.');
 echo "PASS: missing, zero and invalid grants remain read-only\n";
+
+foreach (['', 'unknown', 'r.email DESC', 'name; DROP TABLE registrations'] as $sort) {
+    if (Association::directoryOrder($sort) !== Association::directoryOrder('name')) throw new RuntimeException('Invalid directory sort was not rejected.');
+}
+foreach (Association::DIRECTORY_SORTS as $sort => $label) {
+    if (!str_ends_with(Association::directoryOrder($sort), in_array($sort, ['name_desc','newest'], true) ? 'r.id DESC' : 'r.id')) throw new RuntimeException('Directory sort needs a stable ID tie-breaker.');
+}
+echo "PASS: Association sorting uses fixed expressions with stable pagination\n";

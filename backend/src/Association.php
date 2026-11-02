@@ -8,6 +8,19 @@ use Ismile\Admin\PaymentBreakdown;
 /** Immutable handover snapshots, with one active handover per registration. */
 final class Association
 {
+    public const DIRECTORY_SORTS = ['name'=>'Name A–Z','name_desc'=>'Name Z–A','newest'=>'Newest first','oldest'=>'Oldest first'];
+
+    /** Only fixed SQL expressions may be used for guest directory sorting. */
+    public static function directoryOrder(string $sort): string
+    {
+        return match ($sort) {
+            'name_desc' => 'r.first_name DESC,r.father_name DESC,r.grandfather_name DESC,r.id DESC',
+            'newest' => 'r.created_at DESC,r.id DESC',
+            'oldest' => 'r.created_at,r.id',
+            default => 'r.first_name,r.father_name,r.grandfather_name,r.id',
+        };
+    }
+
     public const REPORT_COLUMNS = ['#','Full name','Total paid','Phone','Ticket type','Lunch days','Lunch quantity','Ticket paid','Lunch day 1 paid','Lunch day 2 paid','Ticket no.','Ambassador','Reference','Payment date (Iraq)','Cash / website','Status'];
     public static function canManage(array $user): bool
     {
