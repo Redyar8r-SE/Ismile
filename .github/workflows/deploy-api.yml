@@ -1,114 +1,81 @@
-# Deploy PHP backend to api.ismile.krd (ismile LXC).
-# Re-runs the idempotent VPS setup script: pulls this branch, updates files/DB,
-# leaves the live Node site on ismile.krd alone.
-# Secrets: same GitHub DEPLOY_ENV as the Node deploy (SSH into LXC :2260), plus
-#   API_OWNER_EMAIL     the Owner's admin sign-in on api.ismile.krd (made if missing)
-#   API_OWNER_PASSWORD  its password, 12+ characters (change the secret = new password)
-#   API_SITE_PASSWORD   the browser password in front of the site (user "ismile")
-#   API_RESEND_KEY      optional: send the emails for real through Resend
-#   API_BREVO_KEY       optional: send through Brevo instead (wins over Resend)
-#   API_MAIL_FROM       optional: the sender (default onboarding@resend.dev)
-#   API_PSOOLA_CONFIG   optional: PSOOLA's settings as one JSON object (keys,
-#                       event/show/ticket/add-on ids, "active": true to take
-#                       real payments). Written into config.php, never printed.
-# The log is public (public repository): passwords are never printed.
-name: Deploy API (api.ismile.krd)
-
+name: Save approved VITIS booth booking
 on:
-  push:
-    branches: ["backend"]
   workflow_dispatch:
-
-concurrency:
-  group: ismile-api-deploy
-  cancel-in-progress: false
-
+permissions:
+  contents: read
 jobs:
-  security:
-    uses: ./.github/workflows/security.yml
-  deploy:
-    needs: security
-    name: Update api.ismile.krd
+  publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Load DEPLOY_ENV (SSH only)
+      - name: Load saved server connection
+        shell: bash
         env:
           DEPLOY_ENV: ${{ secrets.DEPLOY_ENV }}
         run: |
           set -euo pipefail
-          : "${DEPLOY_ENV:?DEPLOY_ENV secret is required}"
-          printf '%s\n' "$DEPLOY_ENV" >.deploy.env
+          umask 077
+          printf '%s\n' "$DEPLOY_ENV" > "$RUNNER_TEMP/connection.env"
           set -a
-          # shellcheck disable=SC1091
-          source .deploy.env
+          source "$RUNNER_TEMP/connection.env"
           set +a
+          echo "::add-mask::$DEPLOY_PASSWORD"
           for key in DEPLOY_HOST DEPLOY_USER DEPLOY_PASSWORD DEPLOY_SSH_PORT; do
-            if [ -z "${!key:-}" ]; then
-              echo "error: ${key} missing from DEPLOY_ENV" >&2
-              exit 1
-            fi
+            test -n "${!key}"
+            printf '%s=%s\n' "$key" "${!key}" >> "$GITHUB_ENV"
           done
-          echo "::add-mask::${DEPLOY_PASSWORD}"
-          {
-            echo "DEPLOY_HOST<<EOF_DEPLOY_HOST"
-            printf '%s\n' "$DEPLOY_HOST"
-            echo "EOF_DEPLOY_HOST"
-            echo "DEPLOY_USER<<EOF_DEPLOY_USER"
-            printf '%s\n' "$DEPLOY_USER"
-            echo "EOF_DEPLOY_USER"
-            echo "DEPLOY_PASSWORD<<EOF_DEPLOY_PASSWORD"
-            printf '%s\n' "$DEPLOY_PASSWORD"
-            echo "EOF_DEPLOY_PASSWORD"
-            echo "DEPLOY_SSH_PORT<<EOF_DEPLOY_SSH_PORT"
-            printf '%s\n' "$DEPLOY_SSH_PORT"
-            echo "EOF_DEPLOY_SSH_PORT"
-          } >>"$GITHUB_ENV"
-
-      - name: Run setup-test-site.sh on the LXC
+      - name: Save the approved sponsor through normal booking validation
         uses: appleboy/ssh-action@v1.2.0
         env:
-          OWNER_EMAIL: ${{ secrets.API_OWNER_EMAIL }}
-          OWNER_PASSWORD: ${{ secrets.API_OWNER_PASSWORD }}
-          SITE_PASSWORD: ${{ secrets.API_SITE_PASSWORD }}
-          RESEND_KEY: ${{ secrets.API_RESEND_KEY }}
-          BREVO_KEY: ${{ secrets.API_BREVO_KEY }}
-          MAIL_FROM: ${{ secrets.API_MAIL_FROM }}
-          PSOOLA_CONFIG: ${{ secrets.API_PSOOLA_CONFIG }}
-          QUIET_SECRETS: "1"
+          SPONSOR_BOOKING_JSON: ${{ secrets.ISMILE_VITIS_BOOKING_20261103 }}
         with:
-          envs: OWNER_EMAIL,OWNER_PASSWORD,SITE_PASSWORD,RESEND_KEY,BREVO_KEY,MAIL_FROM,PSOOLA_CONFIG,QUIET_SECRETS
+          envs: SPONSOR_BOOKING_JSON
           host: ${{ env.DEPLOY_HOST }}
           username: ${{ env.DEPLOY_USER }}
           password: ${{ env.DEPLOY_PASSWORD }}
           port: ${{ env.DEPLOY_SSH_PORT }}
           timeout: 60s
-          command_timeout: 20m
+          command_timeout: 2m
           script: |
-            set -euo pipefail
-            cd /root
-            # Save the existing database before applying schema migrations.
-            if [ -f /opt/ismile-test/backend/bootstrap.php ] && [ -f /opt/ismile-test/backend/config.php ]; then
-              runuser -u www-data -- php -r 'require $argv[1]; \Ismile\Backup::run(); echo "Pre-deployment database backup saved.\n";' /opt/ismile-test/backend/bootstrap.php
-            fi
-            # Idle unattended-upgrade-shutdown holds dpkg locks forever; stop it.
-            systemctl stop unattended-upgrades 2>/dev/null || true
-            curl -fsSL "https://raw.githubusercontent.com/Redyar8r-SE/Ismile/backend/backend/tools/vps/setup-test-site.sh" \
-              -o /root/ismile-test-setup.sh
-            chmod +x /root/ismile-test-setup.sh
-            DOMAIN=api.ismile.krd BRANCH=backend bash /root/ismile-test-setup.sh
-            runuser -u www-data -- php /opt/ismile-test/backend/tools/verify-deployment.php --source /opt/ismile-test/repo
-            # Smoke: PHP admin + config API (basic auth from secrets.env)
-            SP="$(grep '^SITE_PASS=' /opt/ismile-test/secrets.env | cut -d= -f2-)"
-            code="$(curl -s -o /dev/null -w '%{http_code}' -u "ismile:${SP}" -H 'Host: api.ismile.krd' http://127.0.0.1:8081/admin/login.php)"
-            echo "admin_login_http=${code}"
-            test "$code" = "200"
-            # The QR fallback must be accessible through nginx's allow-list.
-            curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' \
-              http://127.0.0.1:8081/admin/vendor/jsQR.js | cmp - /opt/ismile-test/site/admin/vendor/jsQR.js
-            echo "qr_decoder_http=200 (matches deployed file)"
-            curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' -H 'X-Forwarded-Proto: https' \
-              http://127.0.0.1:8081/api/config.php | grep -q '"ok":true'
-            echo "api.ismile.krd update OK"
+            set -eu
+            task_file=$(mktemp)
+            trap 'rm -f "$task_file"' EXIT
+            cat > "$task_file" <<'VITIS_BOOKING_PHP'
+            <?php
+            declare(strict_types=1);
+            require '/opt/ismile-test/backend/bootstrap.php';
+            use Ismile\{App,Audit,Auth,Backup,BoothPlan,Db,Sponsors,Validate};
+            $input=json_decode((string)getenv('SPONSOR_BOOKING_JSON'),true,512,JSON_THROW_ON_ERROR);
+            if(($input['company']??'')!=='Vitis - DentAid'||($input['package_id']??'')!=='bronze'||($input['booth_number']??'')!=='22')throw new RuntimeException('Unexpected booking scope.');
+            $position=BoothPlan::positions()[22]??null;
+            if(!$position||$position['display_number']!==19||$position['tier']!=='bronze')throw new RuntimeException('Booth numbering changed.');
+            BoothPlan::assertDatabaseMatches();
+            $input['phone']=Validate::phone((string)$input['phone'])??throw new RuntimeException('Contact phone is invalid.');
+            $matches=Db::all("SELECT * FROM sponsor_requests WHERE kind='sponsor' AND (LOWER(company) LIKE '%vitis%' OR LOWER(company) LIKE '%dentaid%' OR phone=?)",[$input['phone']]);
+            if(count($matches)>1)throw new RuntimeException('Multiple matching sponsor records; no changes made.');
+            $existing=$matches[0]??null;
+            if($existing&&in_array($existing['status'],['declined','waiting_list','cancelled'],true))throw new RuntimeException('Matching record is inactive; no changes made.');
+            $occupied=Db::one('SELECT id FROM sponsor_requests WHERE reserved_booth=22');
+            if($occupied&&(!$existing||(int)$occupied['id']!==(int)$existing['id']))throw new RuntimeException('Booth 19 is already reserved for another booking; no changes made.');
+            $owner=Db::one("SELECT * FROM admin_users WHERE role='owner' AND disabled_at IS NULL ORDER BY id LIMIT 1")??throw new RuntimeException('Owner account unavailable.');
+            if(!Auth::canManageMap($owner))throw new RuntimeException('Authorised map access required.');
+            Backup::run();
+            echo "Pre-booking database backup saved.\n";
+            if($existing){
+              $save=$input+['loaded_at'=>$existing['updated_at'],'assigned_to'=>$existing['assigned_to'],'notes'=>$existing['notes']??''];
+              Sponsors::saveDetails((int)$existing['id'],$save,$owner);
+              $record=Sponsors::find((int)$existing['id']);
+              if($record['status']!==$existing['status']||$record['amount_paid']!==$existing['amount_paid']||$record['amount_agreed']!==$existing['amount_agreed'])throw new RuntimeException('Existing financial details changed unexpectedly.');
+              $action='updated_existing';
+            }else{
+              $record=Sponsors::createByStaff($input+['kind'=>'sponsor','email'=>'','lang'=>'en','notes'=>'Booth 19 booking authorised by the owner with the supplied company and contact details.'],$owner);
+              $action='created';
+            }
+            if(!$record||$record['company']!==$input['company']||$record['contact_name']!==$input['contact']||$record['phone']!==$input['phone']||$record['package_id']!=='bronze'||(int)$record['reserved_booth']!==22)throw new RuntimeException('Saved booking verification failed.');
+            if(!in_array(22,Sponsors::bookedBooths(),true))throw new RuntimeException('Map reservation verification failed.');
+            echo json_encode(['vitis_booking'=>['action'=>$action,'id'=>(int)$record['id'],'tier'=>'bronze','display_booth'=>19,'reserved_position'=>22,'contact_details_verified'=>true,'status'=>$record['status']]],JSON_THROW_ON_ERROR)."\n";
+            VITIS_BOOKING_PHP
+            php -l "$task_file"
+            chown www-data:www-data "$task_file"
+            chmod 600 "$task_file"
+            runuser -u www-data -- php "$task_file"
