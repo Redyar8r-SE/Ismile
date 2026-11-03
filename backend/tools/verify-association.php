@@ -18,6 +18,12 @@ if($sample){$report=Association::report(Association::batch((int)$sample['id']),A
 echo "Association PDF columns verified: 16.\n";
 foreach(Auth::ROLES as $role)if(Association::canManage(['role'=>$role])!==in_array($role,['owner','finance'],true))throw new RuntimeException('Association permissions failed.');
 $history=Association::history();
+foreach($history as $batch) {
+    $summary=Association::report($batch,Association::items((int)$batch['id']))[0][0];
+    $expected=Db::one("SELECT COALESCE(SUM(total_paid),0) AS total,COALESCE(SUM(CASE WHEN active=1 THEN total_paid ELSE 0 END),0) AS active_total FROM association_batch_items WHERE batch_id=? AND payment_channel<>'Cash'",[$batch['id']]);
+    if(!str_contains($summary,'Total: '.number_format((int)$expected['total']).' IQD') || !str_contains($summary,'Currently sent: '.$batch['active_guests'].' guests, '.number_format((int)$expected['active_total']).' IQD') || !str_contains($summary,'Tickets and lunch included; cash excluded.')) throw new RuntimeException('Association PDF totals must include tickets and lunch and exclude cash.');
+}
+echo "Association PDF totals verified: tickets and lunch included; cash excluded.\n";
 foreach($history as $batch)if($batch['status']!=='sent'||(int)$batch['active_guests']<1)throw new RuntimeException('Reversed batch remains in visible history.');
 foreach($history as $batch)if((int)($batch['batch_number']??0)<1)throw new RuntimeException('Active batch has no display number.');
 $nextNumber=(int)Db::value("SELECT v FROM settings WHERE k='association_next_batch_number'");

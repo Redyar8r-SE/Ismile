@@ -24,18 +24,18 @@ $ownerId=Auth::createUser('association-'.bin2hex(random_bytes(4)).'@example.inva
 Db::update('admin_users',['totp_enabled'=>1],'id=?',[$ownerId]);
 $owner=Db::one('SELECT * FROM admin_users WHERE id=?',[$ownerId]);
 $finance=['role'=>'finance']+$owner;$viewer=['role'=>'viewer']+$owner;
-$seed=static function(int $ticket=30000,int $lunch=0,string $status='paid',string $currency='IQD',bool $receipt=true)use($ownerId):int {
+$seed=static function(int $ticket=30000,int $lunch=0,string $status='paid',string $currency='IQD',bool $receipt=true,bool $cash=true)use($ownerId):int {
     $now=App::now();
     $id=Db::insert('registrations',[
         'ref'=>'AT'.strtoupper(bin2hex(random_bytes(5))), 'first_name'=>'Example', 'father_name'=>'Association', 'grandfather_name'=>'Guest',
         'phone'=>'+9647501234567','email'=>'association@example.invalid','city'=>'Association Test City','gender'=>'female','specialty'=>'gp','ticket_type'=>'professional',
-        'lunch_day1'=>$lunch?1:0,'pay_method'=>$status==='complimentary'?null:'cash','status'=>$status,'comp_reason'=>$status==='complimentary'?'Association test':null,
+        'lunch_day1'=>$lunch?1:0,'pay_method'=>$status==='complimentary'?null:($cash?'cash':'visa'),'status'=>$status,'comp_reason'=>$status==='complimentary'?'Association test':null,
         'view_nonce'=>bin2hex(random_bytes(16)),'created_by'=>$ownerId,'created_at'=>$now,'paid_at'=>$now,'updated_at'=>$now,
     ]);
     if($status!=='complimentary') {
-        $raw=json_encode(['channel'=>'direct','order'=>['currency'=>$currency,'totalAmount'=>$ticket+$lunch,'items'=>[['quantity'=>1,'unitPrice'=>$ticket,'addOns'=>$lunch?[['addOnId'=>'association_lunch1','quantity'=>1,'unitPrice'=>$lunch]]:[]]]]]);
+        $raw=json_encode(['channel'=>$cash?'direct':'checkout','order'=>['currency'=>$currency,'totalAmount'=>$ticket+$lunch,'items'=>[['quantity'=>1,'unitPrice'=>$ticket,'addOns'=>$lunch?[['addOnId'=>'association_lunch1','quantity'=>1,'unitPrice'=>$lunch]]:[]]]]]);
         $raw=PaymentBreakdown::archive($raw,['ticket_type'=>'professional','lunch_day1'=>$lunch?1:0,'lunch_day2'=>0],[],['lunchDay1'=>'association_lunch1']);
-        Db::insert('payments',['registration_id'=>$id,'gateway'=>'fake','method'=>'cash','amount_expected'=>$ticket+$lunch,'currency'=>$currency,'amount_confirmed'=>$ticket+$lunch,'status'=>'paid','raw_create'=>$receipt?$raw:'{}','raw_status'=>$receipt?$raw:'{}','created_at'=>$now,'updated_at'=>$now,'confirmed_at'=>$now]);
+        Db::insert('payments',['registration_id'=>$id,'gateway'=>$cash?'fake':'psoola','method'=>$cash?'cash':'visa','amount_expected'=>$ticket+$lunch,'currency'=>$currency,'amount_confirmed'=>$ticket+$lunch,'status'=>'paid','raw_create'=>$receipt?$raw:'{}','raw_status'=>$receipt?$raw:'{}','created_at'=>$now,'updated_at'=>$now,'confirmed_at'=>$now]);
     }
     return $id;
 };
@@ -49,7 +49,7 @@ for($legacy=0;$legacy<3;$legacy++) {
 }
 Db::update('settings',['v'=>'1'],"k='association_next_batch_number'");
 Association::initializeBatchNumbers();
-$a=$seed(30000);$b=$seed(40000,67200);$c=$seed(25000);$free=$seed(0,0,'complimentary');
+$a=$seed(30000);$b=$seed(40000,67200,cash:false);$c=$seed(25000);$free=$seed(0,0,'complimentary');
 Db::update('registrations',['ambassador_code'=>'assoc26'],'id=?',[$b]);
 $gross=$remaining();$draft=Association::preview([$a,$b]);
 $check('selection and review do not deduct money',$draft['total']===70000 && $remaining()===$gross && (int)Association::totals()['guests']===0);
@@ -85,15 +85,21 @@ $expectedColumns=['#','Full name','Total paid','Phone','Ticket type','Lunch days
 $check('Association PDF uses exactly the requested columns in the requested order',$sheet[1]===$expectedColumns && count($sheet[2])===16 && count($sheet[3])===16);
 $detail=array_combine($sheet[1],$sheet[3]);
 $check('Association PDF keeps saved lunch amounts, quantity and ambassador after edits',$detail['Total paid']==='107,200 IQD' && $detail['Ticket paid']==='40,000 IQD' && $detail['Lunch days']==='Day 1' && $detail['Lunch quantity']==='1' && $detail['Lunch day 1 paid']==='67,200 IQD' && $detail['Lunch day 2 paid']==='Not booked' && $detail['Ambassador']==='ASSOC26' && $detail['Status']==='Paid');
-$check('batch PDF uses saved items and includes guest count and total',str_starts_with($pdf,'%PDF-') && strlen($pdf)>5000 && str_contains($sheet[0][0],'70,000 IQD') && str_contains($sheet[0][0],'2 guests') && count($sheet)===4);
+$check('batch PDF total includes saved website ticket and lunch but excludes cash',str_starts_with($pdf,'%PDF-') && strlen($pdf)>5000 && str_contains($sheet[0][0],'Total: 107,200 IQD') && str_contains($sheet[0][0],'Currently sent: 2 guests, 107,200 IQD') && str_contains($sheet[0][0],'Tickets and lunch included; cash excluded.') && !str_contains($sheet[0][0],'lunch excluded') && count($sheet)===4);
+$cashDetail=array_combine($sheet[1],$sheet[2]);
+$check('cash guest and their saved amounts remain visible in the PDF',$cashDetail['Cash / website']==='Cash' && $cashDetail['Total paid']==='30,000 IQD' && $cashDetail['Ticket paid']==='30,000 IQD' && $detail['Cash / website']==='Website (Psoola)');
 file_put_contents(App::storage('tmp/association-example.pdf'),$pdf);
 $check('viewer cannot reverse a handover',$reject(fn()=>Association::reverse($viewer,$id,'Example correction')));
 $check('reversal requires a reason',$reject(fn()=>Association::reverse($owner,$id,'')));
 Association::reverse($owner,$id,'Example correction');
 $check('reversal restores money and guests without deleting history',$remaining()===$gross && (int)Association::totals()['guests']===0 && Association::batch($id)['status']==='reversed' && count(Association::items($id))===2 && Association::preview([$a])['total']===30000);
+$reversedReport=Association::report(Association::batch($id),Association::items($id));
+$check('reversed PDF keeps the original noncash total and clears the currently sent amount',str_contains($reversedReport[0][0],'Total: 107,200 IQD') && str_contains($reversedReport[0][0],'Currently sent: 0 guests, 0 IQD'));
 $check('batch cannot be reversed twice',$reject(fn()=>Association::reverse($owner,$id,'Again')));
 $next=Association::confirm($owner,Association::preview([$a,$free]),bin2hex(random_bytes(32)));
 $check('reversed guests can be sent again and free tickets contribute zero',(int)Association::batch($next)['guest_count']===2 && (int)Association::batch($next)['total_amount']===30000 && $remaining()===$gross-30000);
+$cashReport=Association::report(Association::batch($next),Association::items($next));
+$check('cash and complimentary only batch has zero PDF total while retaining both guests',str_contains($cashReport[0][0],'Total: 0 IQD') && str_contains($cashReport[0][0],'Currently sent: 2 guests, 0 IQD') && count($cashReport)===4);
 $cancelled=$seed(30000,0,'cancelled');$unknown=$seed(30000,0,'paid','IQD',false);$usd=$seed(30,0,'paid','USD');
 $check('cancelled guests are ineligible',$reject(fn()=>Association::preview([$cancelled])));
 $check('missing receipt amounts are never guessed',$reject(fn()=>Association::preview([$unknown])));
@@ -121,7 +127,7 @@ $managerGuest=$seed();$managerBatch=Association::confirm($manager,Association::p
 $check('designated viewer can confirm a batch without changing role',$manager['role']==='viewer' && (int)Association::batch($managerBatch)['created_by']===$managerId);
 Association::reverse($manager,$managerBatch,'Designated manager correction');
 $check('designated viewer can reverse a batch',Association::batch($managerBatch)['status']==='reversed');
-$partialA=$seed(30000);$partialB=$seed(40000);$partialC=$seed(25000);
+$partialA=$seed(30000,10000,cash:false);$partialB=$seed(40000,20000,cash:false);$partialC=$seed(25000,30000);
 $partialId=Association::confirm($manager,Association::preview([$partialA,$partialB,$partialC]),bin2hex(random_bytes(32)));
 $beforePartial=$remaining();
 Association::reverse($manager,$partialId,'Reverse one guest',[$partialA]);
@@ -131,7 +137,7 @@ $check('single guest is released while the other guests remain sent',Association
 $check('partially reversed batch remains in history with the active amounts',in_array($partialId,array_map('intval',array_column(Association::history(),'id')),true));
 $check('already reversed or unrelated guests cannot be reversed again',$reject(fn()=>Association::reverse($manager,$partialId,'Duplicate',[$partialA])) && $reject(fn()=>Association::reverse($manager,$partialId,'Wrong batch',[$c])));
 $partialReport=Association::report($partialBatch,Association::items($partialId));
-$check('PDF data identifies partial reversals and the remaining handover amount',str_contains($partialReport[0][0],'Currently sent: 2 guests, 65,000 IQD') && str_contains($partialReport[2][15],'Reversed'));
+$check('partially reversed PDF includes lunch and excludes cash from original and active totals',str_contains($partialReport[0][0],'Total: 100,000 IQD') && str_contains($partialReport[0][0],'Currently sent: 2 guests, 60,000 IQD') && str_contains($partialReport[2][15],'Reversed'));
 Association::reverse($manager,$partialId,'Reverse remaining batch');
 $check('whole batch reversal after a partial reversal restores only the remaining amount',$remaining()===$beforePartial+95000 && Association::batch($partialId)['status']==='reversed');
 $check('fully reversed batches disappear from history without removing their saved items',!in_array($partialId,array_map('intval',array_column(Association::history(),'id')),true) && count(Association::items($partialId))===3);

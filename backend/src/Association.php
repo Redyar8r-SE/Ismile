@@ -233,13 +233,21 @@ final class Association
         return $count;
     }
 
+    /** Saved receipt totals include tickets and lunch; cash stays visible only in guest rows. */
+    private static function reportTotal(array $items): int
+    {
+        $total = 0;
+        foreach ($items as $item) if ($item['payment_channel'] !== 'Cash') $total += (int)$item['total_paid'];
+        return $total;
+    }
+
     public static function report(array $batch, array $items): array
     {
         $meta = self::label((int) $batch['id'],isset($batch['batch_number'])?(int)$batch['batch_number']:null) . ' | ' . strtoupper($batch['status']) . ' | ' . $batch['sent_at'] . ' (Iraq) | ' . $batch['created_by_name']
-            . ' | ' . $batch['guest_count'] . ' guests | Sent: ' . number_format((int) $batch['total_amount']) . ' IQD | Ticket amounts only; lunch excluded.';
+            . ' | ' . $batch['guest_count'] . ' guests | Total: ' . number_format(self::reportTotal($items)) . ' IQD | Tickets and lunch included; cash excluded.';
         if ($batch['note'] !== '') $meta .= ' | Note: ' . $batch['note'];
         $active = array_filter($items, static fn($r)=>!empty($r['active']));
-        $meta .= ' | Currently sent: ' . count($active) . ' guests, ' . number_format(array_sum(array_column($active,'ticket_amount'))) . ' IQD';
+        $meta .= ' | Currently sent: ' . count($active) . ' guests, ' . number_format(self::reportTotal($active)) . ' IQD';
         if ($batch['status'] === 'reversed') $meta .= ' | Reversed: ' . $batch['reversed_at'] . ' | Reason: ' . $batch['reversal_reason'];
         $rows = [[$meta], self::REPORT_COLUMNS];
         foreach ($items as $i => $r) {
