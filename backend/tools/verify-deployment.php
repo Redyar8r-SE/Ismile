@@ -117,7 +117,7 @@ foreach (['finance','viewer','sponsors'] as $role) {
 $associationTotals = \Ismile\Association::totals();
 $html = $render('association', '', 'association_manager');
 $check('designated Association manager can select and confirm without a view-only banner', str_contains($html, 'data-association-review') && str_contains($html, 'data-association-choice') && !str_contains($html, 'class="admin-shell view-only"'));
-$check('Association sent totals match the active guest ledger', (int)$associationTotals['amount'] === (int)Db::value('SELECT COALESCE(SUM(ticket_amount),0) FROM association_batch_items WHERE active=1') && (int)$associationTotals['guests'] === (int)Db::value('SELECT COUNT(*) FROM association_batch_items WHERE active=1'));
+$check('Association sent totals match the active guest ledger', (int)$associationTotals['amount'] === (int)Db::value("SELECT COALESCE(SUM(total_paid),0) FROM association_batch_items WHERE active=1 AND payment_channel<>'Cash'") && (int)$associationTotals['guests'] === (int)Db::value('SELECT COUNT(*) FROM association_batch_items WHERE active=1'));
 foreach (Auth::ROLES as $role) {
     $html = $render('map', '', $role);
     $manage = $role === 'owner';

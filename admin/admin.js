@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
       guests.forEach(input => input.removeAttribute("name"));
     });
   }
-  const key = "ismile-association-selection-" + workspace.dataset.userId;
+  const key = "ismile-association-selection-receipts-" + workspace.dataset.userId;
   let selected = {};
   try {
     const saved = JSON.parse(sessionStorage.getItem(key) || "{}");

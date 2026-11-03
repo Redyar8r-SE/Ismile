@@ -8,6 +8,13 @@ use Ismile\Admin\PaymentBreakdown;
 /** Immutable handover snapshots, with one active handover per registration. */
 final class Association
 {
+    private const AMOUNT_SQL = "CASE WHEN i.payment_channel='Cash' THEN 0 ELSE i.total_paid END";
+
+    public static function amount(string $channel, int $total): int
+    {
+        return $channel === 'Cash' ? 0 : $total;
+    }
+
     public const DIRECTORY_SORTS = ['name'=>'Name A–Z','name_desc'=>'Name Z–A','newest'=>'Newest first','oldest'=>'Oldest first'];
 
     /** Only fixed SQL expressions may be used for guest directory sorting. */
@@ -64,6 +71,7 @@ final class Association
     {
         $people = PaymentBreakdown::attach($people);
         foreach ($people as &$r) {
+            $r['association_amount'] = self::amount($r['finance_channel'], (int)$r['receipt_total_amount']);
             $r['association_reason'] = match (true) {
                 !in_array($r['status'], ['paid','complimentary'], true) => 'Cancelled registration',
                 !empty($r['association_batch_id']) => 'Already sent in ' . self::label((int) $r['association_batch_id']),
@@ -95,7 +103,7 @@ final class Association
         }
         $people = self::attach(Db::all(self::selectSql() . " WHERE r.id IN ($marks) ORDER BY r.id", $ids));
         if (count($people) !== count($ids)) throw new UserError('A selected guest no longer exists. Refresh the list.');
-        $items = []; $total = 0;
+        $items = [];
         foreach ($people as $r) {
             if ($r['association_reason'] !== '') throw new UserError($r['ref'] . ': ' . $r['association_reason']);
             $item = [
@@ -107,10 +115,11 @@ final class Association
                 'payment_date' => $r['finance_date'],
                 'report_snapshot' => self::reportSnapshot($r, $r),
             ];
-            $items[] = $item; $total += $item['ticket_amount'];
+            $items[] = $item;
         }
+        $total = self::reportTotal($items);
         return ['ids' => $ids, 'items' => $items, 'total' => $total,
-            'fingerprint' => hash('sha256', json_encode($items, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE))];
+            'fingerprint' => hash('sha256', json_encode(['items'=>$items,'total'=>$total], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE))];
     }
 
     public static function confirm(array $user, array $draft, string $token): int
@@ -172,13 +181,13 @@ final class Association
             $fullyReversed = count($items) === count($active);
             if ($fullyReversed) Db::update('association_batches', ['status'=>'reversed','reversed_at'=>$now,'reversed_by'=>(int) $user['id'],'reversal_reason'=>$reason], 'id=?', [$id]);
             Audit::log((int) $user['id'], $fullyReversed ? 'association.reversed' : 'association.guests_reversed', 'association_batch', $id,
-                ['reason'=>$reason, 'registration_ids'=>$chosen, 'amount'=>array_sum(array_column($items,'ticket_amount')), 'guests'=>count($items)]);
+                ['reason'=>$reason, 'registration_ids'=>$chosen, 'amount'=>self::reportTotal($items), 'guests'=>count($items)]);
         });
     }
 
     public static function totals(): array
     {
-        $sent = Db::one("SELECT COALESCE(SUM(i.ticket_amount),0) AS amount, COUNT(*) AS guests, COUNT(DISTINCT i.batch_id) AS batches FROM association_batch_items i JOIN association_batches b ON b.id=i.batch_id WHERE i.active=1 AND b.status='sent'");
+        $sent = Db::one("SELECT COALESCE(SUM(".self::AMOUNT_SQL."),0) AS amount, COUNT(*) AS guests, COUNT(DISTINCT i.batch_id) AS batches FROM association_batch_items i JOIN association_batches b ON b.id=i.batch_id WHERE i.active=1 AND b.status='sent'");
         $sent['waiting'] = (int) Db::value("SELECT COUNT(*) FROM registrations r WHERE r.status IN ('paid','complimentary') AND NOT EXISTS (SELECT 1 FROM association_batch_items ai WHERE ai.registration_id=r.id AND ai.active=1)");
         return $sent;
     }
@@ -186,7 +195,7 @@ final class Association
     public static function revenue(): array
     {
         $gross = Db::all("SELECT p.currency, SUM(p.amount_confirmed) AS total FROM payments p LEFT JOIN registrations r ON r.id=p.registration_id WHERE p.status='paid' AND (r.id IS NULL OR r.status<>'cancelled') GROUP BY p.currency ORDER BY p.currency");
-        $sent = (int) Db::value("SELECT COALESCE(SUM(i.ticket_amount),0) FROM association_batch_items i JOIN association_batches b ON b.id=i.batch_id WHERE i.active=1 AND b.status='sent'");
+        $sent = (int) Db::value("SELECT COALESCE(SUM(".self::AMOUNT_SQL."),0) FROM association_batch_items i JOIN association_batches b ON b.id=i.batch_id WHERE i.active=1 AND b.status='sent'");
         $hasIqd = false;
         foreach ($gross as &$row) if ($row['currency'] === 'IQD') { $row['total'] = (int) $row['total'] - $sent; $hasIqd = true; }
         unset($row);
@@ -194,8 +203,18 @@ final class Association
         return $gross;
     }
 
-    public static function batch(int $id): ?array { return Db::one('SELECT b.*, (SELECT COUNT(*) FROM association_batch_items i WHERE i.batch_id=b.id AND i.active=1) AS active_guests, (SELECT COALESCE(SUM(ticket_amount),0) FROM association_batch_items i WHERE i.batch_id=b.id AND i.active=1) AS active_amount FROM association_batches b WHERE b.id=?', [$id]); }
-    public static function history(): array { return Db::all("SELECT b.*, (SELECT COUNT(*) FROM association_batch_items i WHERE i.batch_id=b.id AND i.active=1) AS active_guests, (SELECT COALESCE(SUM(ticket_amount),0) FROM association_batch_items i WHERE i.batch_id=b.id AND i.active=1) AS active_amount FROM association_batches b WHERE b.status='sent' ORDER BY b.id DESC"); }
+    /** Recalculate saved batches from receipt snapshots, including batches saved under older rules. */
+    private static function batchSql(): string
+    {
+        return 'SELECT b.*,
+            (SELECT COUNT(*) FROM association_batch_items i WHERE i.batch_id=b.id AND i.active=1) AS active_guests,
+            (SELECT COALESCE(SUM('.self::AMOUNT_SQL.'),0) FROM association_batch_items i WHERE i.batch_id=b.id AND i.active=1) AS active_amount,
+            (SELECT COALESCE(SUM('.self::AMOUNT_SQL.'),0) FROM association_batch_items i WHERE i.batch_id=b.id) AS receipt_amount
+            FROM association_batches b';
+    }
+
+    public static function batch(int $id): ?array { return Db::one(self::batchSql().' WHERE b.id=?', [$id]); }
+    public static function history(): array { return Db::all(self::batchSql()." WHERE b.status='sent' ORDER BY b.id DESC"); }
     public static function items(int $id): array { return Db::all('SELECT * FROM association_batch_items WHERE batch_id=? ORDER BY id', [$id]); }
 
     private static function reportSnapshot(array $registration, array $receipt): string
@@ -237,7 +256,7 @@ final class Association
     private static function reportTotal(array $items): int
     {
         $total = 0;
-        foreach ($items as $item) if ($item['payment_channel'] !== 'Cash') $total += (int)$item['total_paid'];
+        foreach ($items as $item) $total += self::amount($item['payment_channel'], (int)$item['total_paid']);
         return $total;
     }
 
