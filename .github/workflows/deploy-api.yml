@@ -27,6 +27,10 @@ on:
         description: Existing account to grant full Association access
         required: false
         type: string
+      registration_editor_email:
+        description: Existing account to allow paid and complimentary guest registration
+        required: false
+        type: string
 
 concurrency:
   group: ismile-api-deploy
@@ -89,8 +93,9 @@ jobs:
           QUIET_SECRETS: "1"
           MAP_EDITOR_EMAIL: ${{ inputs.map_editor_email || '' }}
           ASSOCIATION_EDITOR_EMAIL: ${{ inputs.association_editor_email || '' }}
+          REGISTRATION_EDITOR_EMAIL: ${{ inputs.registration_editor_email || '' }}
         with:
-          envs: OWNER_EMAIL,OWNER_PASSWORD,SITE_PASSWORD,RESEND_KEY,BREVO_KEY,MAIL_FROM,PSOOLA_CONFIG,QUIET_SECRETS,MAP_EDITOR_EMAIL,ASSOCIATION_EDITOR_EMAIL
+          envs: OWNER_EMAIL,OWNER_PASSWORD,SITE_PASSWORD,RESEND_KEY,BREVO_KEY,MAIL_FROM,PSOOLA_CONFIG,QUIET_SECRETS,MAP_EDITOR_EMAIL,ASSOCIATION_EDITOR_EMAIL,REGISTRATION_EDITOR_EMAIL
           host: ${{ env.DEPLOY_HOST }}
           username: ${{ env.DEPLOY_USER }}
           password: ${{ env.DEPLOY_PASSWORD }}
@@ -116,6 +121,9 @@ jobs:
             if [ -n "${ASSOCIATION_EDITOR_EMAIL:-}" ]; then
               php /opt/ismile-test/backend/tools/configure-association-manager.php
             fi
+            if [ -n "${REGISTRATION_EDITOR_EMAIL:-}" ]; then
+              php /opt/ismile-test/backend/tools/configure-registration-manager.php
+            fi
             runuser -u www-data -- php /opt/ismile-test/backend/tools/verify-deployment.php --source /opt/ismile-test/repo
             runuser -u www-data -- php /opt/ismile-test/backend/tools/verify-association.php
             # Smoke: PHP admin + config API (basic auth from secrets.env)
@@ -132,6 +140,7 @@ jobs:
                 "http://127.0.0.1:8081/admin/${asset}" | cmp - "/opt/ismile-test/site/admin/${asset}"
             done
             runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/map-access.php
+            runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/registration-access.php
             echo "map_assets_http=200; all role permissions verified"
             curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' -H 'X-Forwarded-Proto: https' \
               http://127.0.0.1:8081/api/config.php | grep -q '"ok":true'

@@ -130,14 +130,14 @@ final class Office
     }
 
     /**
-     * Owner only: registers someone directly with a free ticket (a guest, a
+     * Owner or delegated registrar: registers someone with a free ticket (a guest, a
      * speaker's assistant...). The only way into the registrations without a
      * payment; logged with who and why.
      */
     public static function createComplimentary(array $user, array $in, ?array $photo = null): array
     {
-        if ($user['role'] !== 'owner') {
-            throw new UserError('Only the Owner can give a free ticket.');
+        if (!Auth::canIssueComplimentary($user)) {
+            throw new UserError('You do not have permission to give a free ticket.');
         }
         $reason = Validate::text($in['comp_reason'] ?? '', 255);
         if ($reason === '') {

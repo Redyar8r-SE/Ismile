@@ -167,9 +167,9 @@ if (isset($_GET['new'])) {
         <button type="button" class="btn cash-pay" id="cash-confirm-yes" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg>Yes, sell the ticket</button>
       </div>
     </dialog>
-      <?php if ($user['role'] === 'owner'): ?>
+      <?php if (Auth::canIssueComplimentary($user)): ?>
         <details class="card more owner-ticket"<?= ($_POST['do'] ?? '') === 'free' ? ' open' : '' ?>>
-          <summary>Owner: issue a complimentary ticket</summary>
+          <summary>Issue a complimentary ticket</summary>
           <label>Reason (required for a free ticket)<input name="comp_reason" form="caller-form" maxlength="255" value="<?= $value('comp_reason') ?>" placeholder="e.g. Diamond sponsor staff"></label>
           <div class="form-actions">
           <button class="btn violet" form="caller-form" name="do" value="free"<?= Page::confirm('violet', 'gift', 'Give a free ticket?', 'This person is registered with a FREE ticket now, and the ticket is emailed.', [], ['form' => 'caller', 'note' => 'Logged with your name and the reason.', 'yes' => 'Yes, give free ticket', 'no' => 'No, go back']) ?>>Register with a free ticket</button>

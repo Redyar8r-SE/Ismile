@@ -87,6 +87,12 @@ new files and new translation keys), `assets/uploads/`, `config.php` or
 
 ## Psoola
 
+The Owner can delegate paid and complimentary guest registration under **Users →
+Allow paid & free registration**. This preserves the account's existing role and
+other permissions. Delegated staff can edit guests they added; cancelling guests,
+managing accounts and settings remain restricted. Free registrations keep their
+required reason, audit history and automatic ticket email.
+
 `src/Payments/PsoolaGateway.php` has three marked places to fill from
 Psoola's documentation: create a payment, check a payment, verify the
 webhook. Until then the test site uses the pretend gateway

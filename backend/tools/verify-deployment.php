@@ -27,6 +27,7 @@ if (($argv[1] ?? '') === '--render') {
     $owner['totp_enabled'] = 1;
     $owner['map_booking_access'] = 0;
     $owner['association_manage_access'] = 0;
+    $owner['registration_manage_access'] = 0;
     // --render page query role: the same page as a Viewer or Sponsors account would see it.
     if (in_array($argv[4] ?? '', Auth::ROLES, true)) $owner['role'] = $argv[4];
     if (($argv[4] ?? '') === 'map_manager') {
@@ -36,6 +37,16 @@ if (($argv[1] ?? '') === '--render') {
     if (($argv[4] ?? '') === 'association_manager') {
         $owner['role'] = 'viewer';
         $owner['association_manage_access'] = 1;
+    }
+    if (($argv[4] ?? '') === 'registration_manager') {
+        $owner['role'] = 'sponsors';
+        $owner['registration_manage_access'] = 1;
+    }
+    if (($argv[4] ?? '') === 'designated_registrar') {
+        $email = strtolower(trim((string) getenv('REGISTRATION_EDITOR_EMAIL')));
+        $owner = Db::one('SELECT * FROM admin_users WHERE email=? AND disabled_at IS NULL', [$email]);
+        if (!$owner || (int) $owner['registration_manage_access'] !== 1) throw new RuntimeException('The designated registrar is not configured.');
+        $owner['totp_enabled'] = 1; // Process-local page rendering; the real sign-in still requires the phone code.
     }
     (new ReflectionProperty(Auth::class, 'user'))->setValue(null, $owner);
     $file = App::siteFile('admin/' . $page . '.php');
@@ -121,6 +132,18 @@ foreach (['finance','viewer','sponsors'] as $role) {
 $associationTotals = \Ismile\Association::totals();
 $html = $render('association', '', 'association_manager');
 $check('designated Association manager can select and confirm without a view-only banner', str_contains($html, 'data-association-review') && str_contains($html, 'data-association-choice') && !str_contains($html, 'class="admin-shell view-only"'));
+$html = $render('registration', 'new=1', 'registration_manager');
+$check('designated registrar has paid and free registration controls without a view-only banner', str_contains($html, 'id="caller-pay"') && str_contains($html, 'Register with a free ticket') && !str_contains($html, 'class="admin-shell view-only"'));
+$html = $render('registration', 'new=1', 'viewer');
+$check('ordinary viewers cannot issue complimentary tickets', !str_contains($html, 'Register with a free ticket'));
+$html = $render('registration', 'new=1', 'registration');
+$check('ordinary registration staff keep paid-only registration', str_contains($html, 'id="caller-pay"') && !str_contains($html, 'Register with a free ticket'));
+if (getenv('REGISTRATION_EDITOR_EMAIL')) {
+    $html = $render('registration', 'new=1', 'designated_registrar');
+    $check('selected live account can open paid and complimentary registration', str_contains($html, 'id="caller-pay"') && str_contains($html, 'Register with a free ticket') && !str_contains($html, 'class="admin-shell view-only"'));
+    $html = $render('registrations', '', 'designated_registrar');
+    $check('selected live account has the Register action in its guest list', str_contains($html, 'href="registration.php?new=1"') && !str_contains($html, 'class="admin-shell view-only"'));
+}
 $check('Association sent totals match the active guest ledger', (int)$associationTotals['amount'] === (int)Db::value("SELECT COALESCE(SUM(total_paid),0) FROM association_batch_items WHERE active=1 AND payment_channel<>'Cash'") && (int)$associationTotals['guests'] === (int)Db::value('SELECT COUNT(*) FROM association_batch_items WHERE active=1'));
 foreach (Auth::ROLES as $role) {
     $html = $render('map', '', $role);

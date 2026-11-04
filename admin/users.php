@@ -38,6 +38,11 @@ Page::action(static function () use ($user): string {
         throw new UserError('This is the main Owner account. Only the main Owner can change it.');
     }
     switch ($do) {
+        case 'registration_access':
+            $enabled = ($_POST['enabled'] ?? '') === '1' ? 1 : 0;
+            Db::update('admin_users', ['registration_manage_access' => $enabled], 'id=?', [$target['id']]);
+            Audit::log((int) $user['id'], $enabled ? 'user.registration_manage_grant' : 'user.registration_manage_revoke', 'admin_user', (int) $target['id']);
+            return $enabled ? 'Paid and complimentary registration access granted.' : 'Delegated registration access removed.';
         case 'delete':
             return Erase::account((int) $target['id'], (string) ($_POST['confirm_email'] ?? ''), $user);
         case 'disable':
@@ -107,8 +112,12 @@ Page::top('Users', 'users', '<a class="btn" href="#add-person">' . Page::navIcon
     <td><div class="team-member"><span class="team-avatar" aria-hidden="true"><?= $e(mb_strtoupper(mb_substr($row['name'],0,1))) ?></span><div><b><?= $e($row['name']) ?></b><small dir="ltr"><?= $e($row['email']) ?></small><span class="pill <?= $row['disabled_at'] ? 'grey':'green' ?>"><?= $row['disabled_at'] ? 'Disabled' : 'Active' ?></span><?php if ((int)$row['id']===(int)$user['id']): ?><span class="team-you">You</span><?php endif; ?></div></div></td>
     <?php $protected = Erase::isMainOwnerAccount($row) && (int)$row['id']!==(int)$user['id']; ?>
     <td><?php if ((int)$row['id']===(int)$user['id'] || $protected): ?><span class="team-role"><?= Page::navIcon($roleGuide[$row['role']][0]) ?><?= $e($roleGuide[$row['role']][1]) ?></span><small class="field-hint"><?= $protected ? 'Main Owner: protected.' : (Erase::isMainOwner($user) ? 'Main Owner: only you can delete records.' : 'Your own role stays protected.') ?></small><?php else: ?><form method="post" class="inline-form team-role-form"><?= Page::csrfField() ?><input type="hidden" name="do" value="role"><input type="hidden" name="id" value="<?= (int) $row['id'] ?>">
-      <select name="role" aria-label="<?= $e('Role for ' . $row['name']) ?>"><?php foreach (Auth::ROLES as $role): ?><option value="<?= $role ?>"<?= $role === $row['role'] ? ' selected' : '' ?>><?= $e($roleGuide[$role][1]) ?></option><?php endforeach; ?></select><button class="btn small ghost">Set role</button></form><?php endif; ?></td>
-    <td><span class="security-status <?= (int)$row['totp_enabled'] ? 'enabled':'pending' ?>"><?= Page::navIcon('security') ?><span><?= (int)$row['totp_enabled'] ? 'Phone code on' : 'Phone code off' ?></span></span><small class="field-hint"><?= in_array($row['role'], Auth::NEEDS_TWO_FACTOR, true) ? 'Required for this role' : 'Optional for this role' ?></small></td>
+      <select name="role" aria-label="<?= $e('Role for ' . $row['name']) ?>"><?php foreach (Auth::ROLES as $role): ?><option value="<?= $role ?>"<?= $role === $row['role'] ? ' selected' : '' ?>><?= $e($roleGuide[$role][1]) ?></option><?php endforeach; ?></select><button class="btn small ghost">Set role</button></form><?php endif; ?>
+      <?php if ($row['role'] !== 'owner' && !$protected): $registrationAccess = (int) ($row['registration_manage_access'] ?? 0) === 1; ?>
+      <small class="field-hint"><?= $registrationAccess ? 'Can register paid and complimentary guests.' : 'Complimentary registration requires individual access.' ?></small>
+      <form method="post" class="inline-form"><?= Page::csrfField() ?><input type="hidden" name="do" value="registration_access"><input type="hidden" name="id" value="<?= (int) $row['id'] ?>"><input type="hidden" name="enabled" value="<?= $registrationAccess ? '0' : '1' ?>"><button class="btn small ghost"><?= $registrationAccess ? 'Remove paid & free registration access' : 'Allow paid & free registration' ?></button></form>
+      <?php endif; ?></td>
+    <td><span class="security-status <?= (int)$row['totp_enabled'] ? 'enabled':'pending' ?>"><?= Page::navIcon('security') ?><span><?= (int)$row['totp_enabled'] ? 'Phone code on' : 'Phone code off' ?></span></span><small class="field-hint"><?= Auth::needsTwoFactor($row) ? 'Required for this account' : 'Optional for this account' ?></small></td>
     <td><span class="team-last-login"><?= $row['last_login_at'] ? Page::when($row['last_login_at']) : 'Not signed in yet' ?></span></td>
     <td class="table-action-cell"><div class="row-actions">
       <?php if ($protected): ?><span class="muted small">Only the main Owner can change this account.</span><?php else: ?>
