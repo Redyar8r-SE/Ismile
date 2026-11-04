@@ -1,7 +1,7 @@
 <?php
 // Registration delegation checks; optional --database requires an isolated fake-gateway DB.
 declare(strict_types=1);
-require __DIR__ . '/../vendor/autoload.php';
+require __DIR__ . '/../src/Auth.php';
 
 use Ismile\App;
 use Ismile\Auth;
