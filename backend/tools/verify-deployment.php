@@ -134,8 +134,8 @@ $html = $render('association', '', 'association_manager');
 $check('designated Association manager can select and confirm without a view-only banner', str_contains($html, 'data-association-review') && str_contains($html, 'data-association-choice') && !str_contains($html, 'class="admin-shell view-only"'));
 $html = $render('registration', 'new=1', 'registration_manager');
 $check('designated registrar has paid and free registration controls without a view-only banner', str_contains($html, 'id="caller-pay"') && str_contains($html, 'Register with a free ticket') && !str_contains($html, 'class="admin-shell view-only"'));
-$html = $render('registration', 'new=1', 'viewer');
-$check('ordinary viewers cannot issue complimentary tickets', !str_contains($html, 'Register with a free ticket'));
+$html = $render('registrations', '', 'viewer');
+$check('ordinary viewers have no Register action', !str_contains($html, 'href="registration.php?new=1"'));
 $html = $render('registration', 'new=1', 'registration');
 $check('ordinary registration staff keep paid-only registration', str_contains($html, 'id="caller-pay"') && !str_contains($html, 'Register with a free ticket'));
 if (getenv('REGISTRATION_EDITOR_EMAIL')) {
