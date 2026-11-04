@@ -433,6 +433,13 @@ body[data-page=checkin] .page-symbol{background:#e5f5ed;color:var(--green-d);bor
 .metric-card.violet{--metric-bg:#ece7ff;--metric-ink:#6350a5}
 .metric-card.gold{--metric-bg:#fff1d8;--metric-ink:#94660e}
 .metric-card.red{--metric-bg:#ffe9e4;--metric-ink:#a34635}
+.dashboard-summary-heading{margin:0 0 15px;font-size:17px;line-height:1.35;color:#173f5c;font-weight:600}
+.dashboard-income .operation-summary{grid-template-columns:repeat(3,minmax(0,1fr))}
+.dashboard-income .metric-card{min-height:162px;padding:22px;gap:14px}
+.dashboard-income .metric-card:last-child{background:#104e67;border-color:#104e67;color:#fff;--metric-bg:#ffffff16;--metric-ink:#b3eaf5}
+.dashboard-income .metric-card:last-child .metric-top>span{color:#e4f3f9}
+.dashboard-income .metric-card:last-child>small{color:#bbdce9}
+@media(max-width:760px){.dashboard-income .operation-summary{grid-template-columns:1fr}.dashboard-income .metric-card{min-height:146px;padding:20px}}
 .panel-heading{display:flex;align-items:flex-start;gap:12px;margin:0 0 22px;min-width:0}
 .panel-heading>div{min-width:0}
 .panel-heading h2{margin:1px 0 4px;font-size:17px;line-height:1.35;letter-spacing:-.3px}
