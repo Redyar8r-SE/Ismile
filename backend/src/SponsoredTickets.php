@@ -56,7 +56,7 @@ final class SponsoredTickets
                     $now = App::now();
                     $guestKey = hash('sha256', $guest['email'].'|'.$guest['phone']);
                     $id = Db::insert('sponsored_ticket_orders', ['attempt_key'=>$key,'partner_reference'=>$reference,
-                        'created_by'=>(int)$user['id'], 'guest_key'=>$guestKey,'fingerprint'=>$fingerprint,
+                        'created_by'=>(int)$user['id'], 'guest_key'=>$guestKey,'active_guest_key'=>$guestKey,'fingerprint'=>$fingerprint,
                         'guest_json'=>json_encode($guest,JSON_THROW_ON_ERROR),'request_json'=>json_encode($body,JSON_THROW_ON_ERROR),
                         'created_at'=>$now,'updated_at'=>$now]);
                     return Db::one('SELECT * FROM sponsored_ticket_orders WHERE id=?', [$id]);
@@ -78,7 +78,7 @@ final class SponsoredTickets
             if (!in_array($answer['status'],[200,201],true)) {
                 $code = $answer['json']['error']['code'] ?? '';
                 if (in_array($answer['status'],[400,401,403,404,422],true) || ($answer['status'] === 409 && in_array($code,['INSUFFICIENT_INVENTORY','SALES_CLOSED'],true))) {
-                    Db::update('sponsored_ticket_orders',['status'=>'rejected','last_error'=>'PSOOLA HTTP '.$answer['status'],'updated_at'=>App::now()],'id=? AND status<>?',[$attempt['id'],'issued']);
+                    Db::update('sponsored_ticket_orders',['status'=>'rejected','active_guest_key'=>null,'last_error'=>'PSOOLA HTTP '.$answer['status'],'updated_at'=>App::now()],'id=? AND status<>?',[$attempt['id'],'issued']);
                     throw new UserError(match($code) {
                         'INSUFFICIENT_INVENTORY'=>'PSOOLA says this ticket is sold out.',
                         'SALES_CLOSED'=>'PSOOLA says ticket issuance is closed for this event.',
