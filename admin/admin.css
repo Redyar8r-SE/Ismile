@@ -257,6 +257,9 @@ textarea{max-width:100%}
 .form-section legend{font-size:15px;font-weight:700;padding:0 10px;color:var(--teal-d)}
 .caller-form{max-width:960px;gap:20px}
 .caller-form>p{margin:0}
+.free-ticket-consent{display:flex;align-items:flex-start;gap:10px}
+.free-ticket-consent input{flex:none;margin-top:4px}
+.free-ticket-consent small{display:block;font-weight:400;margin-top:5px}
 .form-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px;border-top:1px solid var(--line);padding-top:16px}
 .owner-ticket{padding:14px 16px;background:#f5f3fc;border-radius:10px}
 .owner-ticket[open]>summary{margin-bottom:14px}

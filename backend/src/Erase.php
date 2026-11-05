@@ -105,6 +105,7 @@ final class Erase
             $photoIds = array_values(array_unique(array_filter(array_map('intval', [$registration['id_photo_id'], ...array_column($checkouts, 'id_photo_id')]))));
             $snapshot = [
                 'registrations'     => [$registration],
+                'sponsored_ticket_orders' => Db::all('SELECT * FROM sponsored_ticket_orders WHERE registration_id=? FOR UPDATE',[$id]),
                 'tickets'           => $tickets,
                 'ticket_attendance' => self::rowsIn('ticket_attendance', 'ticket_id', $ticketIds),
                 'certificates'      => Db::all('SELECT * FROM certificates WHERE registration_id = ? FOR UPDATE', [$id]),

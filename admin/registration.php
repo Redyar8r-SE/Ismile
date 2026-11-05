@@ -37,6 +37,43 @@ if (isset($_GET['new'])) {
     if (!$canEdit) {
         Page::redirect('registrations.php');
     }
+    if (Page::query('new') === 'free') {
+        if (!Auth::canIssueComplimentary($user)) Page::redirect('registrations.php');
+        $retrying = false;
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET' && Page::query('retry') !== '') {
+            $saved = Db::one('SELECT * FROM sponsored_ticket_orders WHERE attempt_key=? AND created_by=?',[Page::query('retry'),$user['id']]);
+            if (!$saved) Page::redirect('registration.php?new=free');
+            if ($saved['status'] === 'issued' && $saved['registration_id']) Page::redirect('registration.php?id='.(int)$saved['registration_id']);
+            $_POST = json_decode($saved['guest_json'],true,512,JSON_THROW_ON_ERROR);
+            $request = json_decode($saved['request_json'],true,512,JSON_THROW_ON_ERROR);
+            $_POST['whatsapp_consent'] = isset($request['buyer']['whatsappConsent']) ? '1' : '';
+            if ($saved['status'] !== 'rejected') { $_POST['attempt']=$saved['attempt_key']; $retrying=true; }
+        }
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
+            try {
+                Auth::checkCsrf();
+                $created = \Ismile\SponsoredTickets::issue($user,$_POST);
+                Page::flash('ok', 'Free ticket issued for '.Registrations::fullName($created).'. Sponsoring company: '.$created['sponsoring_company'].'. PSOOLA handles ticket delivery.');
+                Page::redirect('registration.php?id='.(int)$created['id']);
+            } catch (UserError $error) {
+                Page::flash('error',$error->key);
+                $attempt = is_string($_POST['attempt'] ?? null) ? $_POST['attempt'] : '';
+                $saved = Db::one('SELECT * FROM sponsored_ticket_orders WHERE attempt_key=? AND created_by=?',[$attempt,$user['id']]);
+                if ($saved && $saved['status'] === 'rejected') unset($_POST['attempt']);
+                elseif ($saved) {
+                    $_POST = json_decode($saved['guest_json'],true,512,JSON_THROW_ON_ERROR);
+                    $request = json_decode($saved['request_json'],true,512,JSON_THROW_ON_ERROR);
+                    $_POST['whatsapp_consent']=isset($request['buyer']['whatsappConsent'])?'1':'';
+                    $_POST['attempt']=$saved['attempt_key']; $retrying=true;
+                }
+            } catch (\Throwable $error) {
+                \Ismile\App::log('error','Sponsored ticket request failed before completion');
+                Page::flash('error','The ticket could not be confirmed. Retry this same form before starting another request for this guest.');
+            }
+        }
+        require __DIR__ . '/_free_ticket_form.php';
+        exit;
+    }
     if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         try {
             \Ismile\Auth::checkCsrf();
@@ -309,6 +346,12 @@ if ($inCheckin) echo CheckinWorkspace::navigation('guests', $user, $workspaceDay
       <dt>City</dt><dd><?= $e($registration['city']) ?></dd>
       <dt>Gender / age</dt><dd><?= $e($registration['gender']) ?> / <?= $e($registration['age'] ?? '–') ?></dd>
       <dt>Specialty</dt><dd><?= $e(Registrations::SPECIALTY_NAMES[$registration['specialty']] ?? $registration['specialty']) ?></dd>
+      <?php if (!empty($registration['sponsoring_company'])): ?><dt>Sponsoring company</dt><dd><?= $e($registration['sponsoring_company']) ?></dd><?php endif; ?>
+      <?php $sponsoredOrder = Db::one("SELECT provider_order_id,provider_amount,provider_currency,email_status,whatsapp_status FROM sponsored_ticket_orders WHERE registration_id=? AND status='issued'",[$registration['id']]); if ($sponsoredOrder): ?>
+      <dt>PSOOLA order</dt><dd><code><?= $e($sponsoredOrder['provider_order_id']) ?></code></dd>
+      <dt>Provider order amount</dt><dd><?= $e(Page::money((int)$sponsoredOrder['provider_amount'],$sponsoredOrder['provider_currency'])) ?><small class="muted"> &middot; Sponsored ticket; guest pays 0.</small></dd>
+      <dt>Ticket delivery</dt><dd>Email: <?= $e($sponsoredOrder['email_status'] ?: 'Pending update') ?> &middot; WhatsApp: <?= $e($sponsoredOrder['whatsapp_status'] ?: 'Not confirmed') ?></dd>
+      <?php endif; ?>
       <dt>Ticket</dt><dd><?= $e(\Ismile\Registrations::ticketName($registration['ticket_type'])) ?></dd>
       <dt>Lunch</dt><dd><?= $registration['lunch_day1'] ? 'Day 1 ' : '' ?><?= $registration['lunch_day2'] ? 'Day 2' : '' ?><?= !$registration['lunch_day1'] && !$registration['lunch_day2'] ? 'None' : '' ?></dd>
       <dt>Paid</dt><dd><?= Page::paidBadge($registration['status']) ?> <?= $paidAmount !== null ? Page::money($paidAmount, $paidPayment['currency']) : '' ?> <?= $registration['pay_method'] ? $e(strtoupper($registration['pay_method'])) : '' ?> · <?= Page::when($registration['paid_at']) ?></dd>

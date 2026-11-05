@@ -178,7 +178,7 @@ final class PsoolaGateway implements Gateway, CashSales
     }
 
     /** What a checkout session and a cash sale both send: the event, the items and the buyer. */
-    private function orderBody(array $form): array
+    public function orderBody(array $form): array
     {
         $eventId = (string) App::config('payments.psoola.event_id', '');
         $showId = (string) App::config('payments.psoola.show_id', '');
@@ -201,6 +201,12 @@ final class PsoolaGateway implements Gateway, CashSales
 
     /** The event as PSOOLA's partner API lists it (ticket types, add-ons, IQD prices). */
     public function workshopRequest(string $method, string $path, ?array $payload = null, array $headers = []): array
+    {
+        return $this->partnerRequest($method, $path, $payload, $headers);
+    }
+
+    /** Server-side partner API requests, including sponsored direct orders. */
+    public function partnerRequest(string $method, string $path, ?array $payload = null, array $headers = []): array
     {
         $this->ready();
         return $this->request($method, 'api/partner/v1/' . ltrim($path,'/'), $payload, $headers);

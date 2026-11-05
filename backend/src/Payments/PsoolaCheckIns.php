@@ -113,6 +113,7 @@ final class PsoolaCheckIns
         $orderId = $scan['order']['id'] ?? null;
         if ($registration === null && is_string($orderId) && $orderId !== '') {
             $registrationId = Db::value("SELECT registration_id FROM payments WHERE provider_payment_id = ? AND registration_id IS NOT NULL ORDER BY id DESC LIMIT 1", [$orderId]);
+            $registrationId ??= Db::value("SELECT registration_id FROM sponsored_ticket_orders WHERE provider_order_id=? AND status='issued'",[$orderId]);
             $registration = $registrationId ? Registrations::find((int) $registrationId) : null;
         }
         if ($registration === null || !in_array($registration['status'], ['paid', 'complimentary'], true)) {

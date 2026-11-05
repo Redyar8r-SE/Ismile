@@ -74,6 +74,7 @@ final class Lists
         $columns = [
             'full_name' => 'Full name', 'finance_total' => 'Total paid',
             'phone' => 'Phone', 'ticket_type' => 'Ticket type',
+            'sponsoring_company' => 'Sponsoring company',
             'lunch' => 'Lunch days', 'lunch_count' => 'Lunch quantity',
             'finance_ticket' => 'Ticket paid', 'finance_lunch1' => 'Lunch day 1 paid', 'finance_lunch2' => 'Lunch day 2 paid',
             'ticket_no' => 'Ticket no.', 'ambassador_code' => 'Ambassador', 'ref' => 'Reference',

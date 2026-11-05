@@ -186,6 +186,7 @@ CREATE TABLE IF NOT EXISTS registrations (
   status             ENUM('paid','complimentary','cancelled') NOT NULL,
   possible_duplicate TINYINT(1)        NOT NULL DEFAULT 0,     -- same phone or email as another registration
   comp_reason        VARCHAR(255)      NULL,                   -- why the Owner gave a free ticket
+  sponsoring_company VARCHAR(160)      NULL,                   -- company providing a complimentary ticket
   notes              TEXT              NULL,                   -- office notes
   view_nonce         CHAR(32)          NOT NULL,               -- with the secret: their own ticket page link
   -- record keeping
@@ -205,11 +206,44 @@ CREATE TABLE IF NOT EXISTS registrations (
   CONSTRAINT ck_reg_lunch CHECK (lunch_day1 IN (0, 1) AND lunch_day2 IN (0, 1)),
   CONSTRAINT ck_reg_student CHECK (specialty <> 'student' OR ticket_type IN ('student','vip')),
   CONSTRAINT ck_reg_vip_lunch CHECK ((ticket_type <> 'vip' AND vip_lunch_day IS NULL) OR (ticket_type = 'vip' AND vip_lunch_day IS NOT NULL AND ((vip_lunch_day = 1 AND lunch_day1 = 1) OR (vip_lunch_day = 2 AND lunch_day2 = 1)))),
-  CONSTRAINT ck_reg_university CHECK (ticket_type <> 'student' OR university IS NOT NULL),
+  CONSTRAINT ck_reg_university CHECK (ticket_type <> 'student' OR status <> 'paid' OR university IS NOT NULL),
   CONSTRAINT ck_reg_age CHECK (age IS NULL OR age BETWEEN 16 AND 120),
   CONSTRAINT ck_reg_free CHECK (status <> 'complimentary' OR comp_reason IS NOT NULL)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Registered people (paid or free ticket only)';
+
+CREATE TABLE IF NOT EXISTS sponsored_ticket_orders (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  attempt_key CHAR(32) NOT NULL,
+  partner_reference CHAR(12) NOT NULL,
+  registration_id INT UNSIGNED NULL,
+  created_by INT UNSIGNED NOT NULL,
+  guest_key CHAR(64) NOT NULL,
+  fingerprint CHAR(64) NOT NULL,
+  guest_json JSON NOT NULL,
+  request_json JSON NOT NULL,
+  status ENUM('pending','uncertain','rejected','issued') NOT NULL DEFAULT 'pending',
+  active_guest_key CHAR(64) AS (IF(status<>'rejected',guest_key,NULL)) STORED,
+  provider_order_id VARCHAR(190) NULL,
+  provider_amount BIGINT UNSIGNED NULL,
+  provider_currency CHAR(3) NULL,
+  email_status VARCHAR(40) NULL,
+  whatsapp_status VARCHAR(40) NULL,
+  raw_response MEDIUMTEXT NULL,
+  last_error VARCHAR(500) NULL,
+  created_at DATETIME NOT NULL,
+  updated_at DATETIME NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_sponsored_attempt (attempt_key),
+  UNIQUE KEY uq_sponsored_reference (partner_reference),
+  UNIQUE KEY uq_sponsored_guest (active_guest_key),
+  UNIQUE KEY uq_sponsored_provider (provider_order_id),
+  UNIQUE KEY uq_sponsored_registration (registration_id),
+  CONSTRAINT fk_sponsored_registration FOREIGN KEY (registration_id) REFERENCES registrations(id) ON DELETE SET NULL,
+  CONSTRAINT fk_sponsored_staff FOREIGN KEY (created_by) REFERENCES admin_users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='Sponsored guest issuance; provider cash-sale amounts are retained separately from guest income';
+
 
 -- Ambassador codes, so student registrations can be counted per ambassador.
 -- Registrations store the typed code, not a foreign key: removing a code

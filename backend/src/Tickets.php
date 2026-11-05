@@ -50,6 +50,9 @@ final class Tickets
      */
     public static function issuedByPsoola(?array $ticket): bool
     {
+        if ($ticket !== null && $ticket['source'] === 'complimentary') {
+            return (bool)Db::value("SELECT id FROM sponsored_ticket_orders WHERE registration_id=? AND status='issued'",[$ticket['registration_id']]);
+        }
         if ($ticket === null || $ticket['source'] !== 'payment' || $ticket['payment_id'] === null) {
             return false;
         }

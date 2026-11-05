@@ -309,7 +309,7 @@ final class Checkouts
     {
         for ($try = 0; $try < 20; $try++) {
             $ref = Security::reference('ISM26', 6);
-            if (!Db::value('SELECT id FROM registrations WHERE ref = ?', [$ref]) && !Db::value('SELECT id FROM checkouts WHERE ref = ?', [$ref])) {
+            if (!Db::value('SELECT id FROM registrations WHERE ref = ?', [$ref]) && !Db::value('SELECT id FROM checkouts WHERE ref = ?', [$ref]) && !Db::value('SELECT id FROM sponsored_ticket_orders WHERE partner_reference=?',[$ref])) {
                 return $ref;
             }
         }

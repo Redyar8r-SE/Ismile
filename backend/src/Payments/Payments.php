@@ -441,6 +441,16 @@ final class Payments
         if ($gatewayName === 'psoola') {
             $event = json_decode($body,true);
             try {
+                if (\Ismile\SponsoredTickets::reconcile($providerId,$event['data']['partnerReference']??null)) {
+                    Db::update('webhook_log',['signature_ok'=>1,'provider_payment_id'=>$providerId,'outcome'=>'sponsored ticket verified'],'id=?',[$logId]);
+                    return ['status'=>200,'outcome'=>'sponsored ticket verified'];
+                }
+            } catch (\Throwable $error) {
+                App::log('warning','Sponsored ticket webhook needs a retry',['session'=>$providerId]);
+                Db::update('webhook_log',['signature_ok'=>1,'provider_payment_id'=>$providerId,'outcome'=>'sponsored verification retry'],'id=?',[$logId]);
+                return ['status'=>503,'outcome'=>'sponsored verification retry'];
+            }
+            try {
                 if (\Ismile\WorkshopCheckout::reconcile($providerId,$event['data']['partnerReference']??null,$event['id']??null)
                     || \Ismile\WorkshopTickets::reconcile($providerId,$event['data']['partnerReference']??null,$event['id']??null)) {
                     Db::update('webhook_log',['signature_ok'=>1,'provider_payment_id'=>$providerId,'outcome'=>'workshop order verified'],'id=?',[$logId]);

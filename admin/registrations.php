@@ -33,7 +33,9 @@ $cities = array_column(Db::all('SELECT DISTINCT city FROM registrations ORDER BY
 $adders = array_column(Db::all("SELECT id, name FROM admin_users WHERE role IN ('owner','registration') OR id IN (SELECT DISTINCT created_by FROM registrations WHERE created_by IS NOT NULL) ORDER BY name"), 'name', 'id');
 
 $overview = Db::one("SELECT COALESCE(SUM(status IN ('paid','complimentary')),0) AS registered, COALESCE(SUM(status IN ('paid','complimentary') AND ticket_type = 'professional'),0) AS professionals, COALESCE(SUM(status IN ('paid','complimentary') AND ticket_type = 'student'),0) AS students, COALESCE(SUM(status IN ('paid','complimentary') AND ticket_type = 'vip'),0) AS vip, COALESCE(SUM(status = 'cancelled'),0) AS cancelled FROM registrations");
-Page::top('Registrations', 'registrations', Auth::can($user,'edit') ? '<a class="btn" href="registration.php?new=1">+ Register (cash)</a>' : '');
+$registrationActions = Auth::can($user,'edit') ? '<a class="btn" href="registration.php?new=1">+ Register (cash)</a>' : '';
+if (Auth::canIssueComplimentary($user)) $registrationActions .= '<a class="btn violet" href="registration.php?new=free">+ Free ticket</a>';
+Page::top('Registrations', 'registrations', $registrationActions);
 $e = [Page::class, 'e'];
 $select = static function (string $name, array $options, string $current): string {
     $label = ['type'=>'Ticket type', 'status'=>'Registration status', 'lunch'=>'Lunch', 'city'=>'City', 'lang'=>'Language', 'dup'=>'Duplicates', 'email'=>'Email delivery', 'attendance'=>'Attendance', 'by'=>'Added by'][$name] ?? $name;
@@ -86,7 +88,7 @@ $select = static function (string $name, array $options, string $current): strin
   <tr data-registration-result>
     <td><a href="registration.php?id=<?= (int) $row['id'] ?>"><code><?= $e($row['ref']) ?></code></a>
       <?= $row['possible_duplicate'] ? ' <span class="pill violet" title="Same email or phone as another registration">duplicate?</span>' : '' ?></td>
-    <td><div class="guest-cell"><span class="guest-avatar" aria-hidden="true"><?= $e(mb_strtoupper(mb_substr($row['first_name'],0,1))) ?></span><div><a href="registration.php?id=<?= (int) $row['id'] ?>"><b><?= $e(Registrations::fullName($row)) ?></b></a><small><?= Page::paidBadge($row['status']) ?></small></div></div></td>
+    <td><div class="guest-cell"><span class="guest-avatar" aria-hidden="true"><?= $e(mb_strtoupper(mb_substr($row['first_name'],0,1))) ?></span><div><a href="registration.php?id=<?= (int) $row['id'] ?>"><b><?= $e(Registrations::fullName($row)) ?></b></a><small><?= Page::paidBadge($row['status']) ?></small><?php if (!empty($row['sponsoring_company'])): ?><small>Sponsoring company: <?= $e($row['sponsoring_company']) ?></small><?php endif; ?></div></div></td>
     <td dir="ltr"><?= $e($row['phone']) ?></td>
     <td><?= $e(\Ismile\Registrations::ticketName($row['ticket_type'])) ?><br><small class="muted"><?= $e(Registrations::SPECIALTY_NAMES[$row['specialty']] ?? $row['specialty']) ?></small><?= $row['university'] ? '<br><small class="muted">' . $e($row['university']) . '</small>' : '' ?></td>
     <td><?= $row['lunch_day1'] ? 'D1 ' : '' ?><?= $row['lunch_day2'] ? 'D2' : '' ?><?= !$row['lunch_day1'] && !$row['lunch_day2'] ? '–' : '' ?></td>

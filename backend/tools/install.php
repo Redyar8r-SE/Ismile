@@ -87,6 +87,12 @@ foreach ($migrations as $file) {
                 if (Db::value("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name=? AND column_name='vip_lunch_day'", [$table[1]])) continue;
                 $run([$maria ? str_replace('DROP CHECK ', 'DROP CONSTRAINT ', $statement) : $statement]);
             }
+        } elseif ($name === '2026-11-05-sponsored-tickets.sql') {
+            $maria = stripos((string)Db::value('SELECT VERSION()'),'MariaDB') !== false;
+            foreach ($statements($file) as $statement) {
+                if (str_contains($statement,'ADD COLUMN sponsoring_company') && Db::value("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='registrations' AND column_name='sponsoring_company'")) continue;
+                $run([$maria ? str_replace('DROP CHECK ','DROP CONSTRAINT ',$statement) : $statement]);
+            }
         } elseif (!$methodAlreadyPresent) {
             $run($statements($file));
         }

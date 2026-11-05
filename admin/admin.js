@@ -547,6 +547,13 @@ document.addEventListener("DOMContentLoaded", () => {
     if (data.text) head.append(make("p", "confirm-text", data.text));
     const body = make("div", "confirm-body");
     const facts = data.form === "caller" && form ? callerFacts(form) : (data.facts || []);
+    if (data.form === "sponsored" && form) {
+      const value = name => form.elements.namedItem(name)?.value.trim() || "";
+      facts.push(["user", [value("first_name"),value("father_name"),value("grandfather_name")].join(" ")]);
+      facts.push(["info", "Sponsoring company: " + value("sponsoring_company")]);
+      facts.push(["info", "Ticket email: " + value("email")]);
+      facts.push(["ticket", "Guest payment: 0 IQD"]);
+    }
     if (facts.length) {
       const list = make("ul", "confirm-facts");
       facts.forEach(([name, text]) => {
