@@ -9,6 +9,16 @@ use Ismile\Auth;
 
 $active=(int)Db::value("SELECT COALESCE(SUM(total_paid),0) FROM association_batch_items WHERE active=1 AND payment_channel<>'Cash'");
 $totals=Association::totals();
+$balances=Association::revenueBreakdown();
+$amounts=[];
+foreach($balances as $channel=>$rows) $amounts[$channel]=array_column($rows,'total','currency');
+$expected=array_column(Db::all("SELECT p.currency,SUM(p.amount_confirmed) AS total FROM payments p LEFT JOIN registrations r ON r.id=p.registration_id WHERE p.status='paid' AND (r.id IS NULL OR r.status<>'cancelled') GROUP BY p.currency"),'total','currency');
+if((int)$totals['amount']) $expected['IQD']=(int)($expected['IQD']??0)-(int)$totals['amount'];
+$currencies=array_unique(array_merge(array_keys($expected),array_keys($amounts['total']),array_keys($amounts['cash']),array_keys($amounts['website'])));
+foreach($currencies as $currency) {
+    if(($amounts['total'][$currency]??0)!==($amounts['cash'][$currency]??0)+($amounts['website'][$currency]??0) || ($amounts['total'][$currency]??0)!==(int)($expected[$currency]??0)) throw new RuntimeException('Cash and website balances do not reconcile with confirmed receipts and handovers.');
+}
+echo "Association cash and website balances verified against confirmed receipts and handovers.\n";
 if($active!==(int)$totals['amount'])throw new RuntimeException('Association item amounts do not match batch totals.');
 if((int)Db::value('SELECT COUNT(*) FROM association_batch_items WHERE active=1')!==(int)$totals['guests'])throw new RuntimeException('Association guest counts do not match batch totals.');
 if((int)Db::value("SELECT COUNT(*) FROM association_batch_items i JOIN association_batches b ON b.id=i.batch_id WHERE i.active=1 AND b.status<>'sent'")!==0)throw new RuntimeException('Association active flags disagree with batch statuses.');

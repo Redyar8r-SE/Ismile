@@ -420,6 +420,7 @@ body[data-page=payments] .page-symbol{background:#f0edff;color:var(--violet-d);b
 body[data-page=sponsors] .page-symbol{background:#fff3da;color:var(--gold-d);border-color:#f0dfb4}
 body[data-page=checkin] .page-symbol{background:#e5f5ed;color:var(--green-d);border-color:#cbe6d8}
 .operation-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:24px}
+@media(min-width:1101px){[data-association-balance] .operation-summary{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .metric-card{position:relative;min-width:0;display:flex;flex-direction:column;gap:10px;min-height:146px;padding:20px;background:linear-gradient(135deg,#fff,#fbfdff);border:1px solid #dce7ef;border-radius:17px;box-shadow:0 5px 18px -12px #17496d26;overflow:hidden}
 .metric-card::after{content:"";position:absolute;right:-12px;bottom:-24px;width:95px;height:95px;background:var(--metric-bg);border-radius:50%;opacity:.4;pointer-events:none}
 .metric-top{display:flex;justify-content:space-between;align-items:center;gap:10px;position:relative;z-index:1}

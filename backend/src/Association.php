@@ -194,13 +194,31 @@ final class Association
 
     public static function revenue(): array
     {
-        $gross = Db::all("SELECT p.currency, SUM(p.amount_confirmed) AS total FROM payments p LEFT JOIN registrations r ON r.id=p.registration_id WHERE p.status='paid' AND (r.id IS NULL OR r.status<>'cancelled') GROUP BY p.currency ORDER BY p.currency");
+        return self::revenueBreakdown()['total'];
+    }
+
+    /** Remaining balances by receipt channel; handovers only reduce website money. */
+    public static function revenueBreakdown(): array
+    {
+        $balances = ['total'=>[], 'cash'=>[], 'website'=>[]];
+        $payments = Db::all("SELECT p.currency,p.amount_confirmed,p.method,p.gateway,p.raw_create,p.raw_status FROM payments p LEFT JOIN registrations r ON r.id=p.registration_id WHERE p.status='paid' AND (r.id IS NULL OR r.status<>'cancelled')");
+        foreach ($payments as $payment) {
+            $channel = PaymentBreakdown::channel($payment) === 'Cash' ? 'cash' : 'website';
+            $currency = $payment['currency'];
+            $amount = (int)$payment['amount_confirmed'];
+            $balances[$channel][$currency] = ($balances[$channel][$currency] ?? 0) + $amount;
+            $balances['total'][$currency] = ($balances['total'][$currency] ?? 0) + $amount;
+        }
         $sent = (int) Db::value("SELECT COALESCE(SUM(".self::AMOUNT_SQL."),0) FROM association_batch_items i JOIN association_batches b ON b.id=i.batch_id WHERE i.active=1 AND b.status='sent'");
-        $hasIqd = false;
-        foreach ($gross as &$row) if ($row['currency'] === 'IQD') { $row['total'] = (int) $row['total'] - $sent; $hasIqd = true; }
-        unset($row);
-        if (!$hasIqd && $sent) $gross[] = ['currency'=>'IQD','total'=>-$sent];
-        return $gross;
+        if ($sent) foreach (['total','website'] as $channel) $balances[$channel]['IQD'] = ($balances[$channel]['IQD'] ?? 0) - $sent;
+        foreach ($balances as &$currencies) {
+            ksort($currencies);
+            $rows = [];
+            foreach ($currencies as $currency=>$amount) $rows[] = ['currency'=>$currency,'total'=>$amount];
+            $currencies = $rows;
+        }
+        unset($currencies);
+        return $balances;
     }
 
     /** Recalculate saved batches from receipt snapshots, including batches saved under older rules. */

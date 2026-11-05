@@ -53,6 +53,15 @@ final class PaymentBreakdown
         return array_map(static fn ($r) => array_merge($r, self::describe($r, $payments[(int) ($r['id'] ?? 0)] ?? null, $map)), $people);
     }
 
+    /** Use the receipt channel even when the registration was entered by staff. */
+    public static function channel(array $payment): string
+    {
+        $create = self::json($payment['raw_create'] ?? null);
+        $status = self::json($payment['raw_status'] ?? null);
+        if (($payment['method'] ?? '') === 'cash' || ($status['channel'] ?? $create['channel'] ?? '') === 'direct') return 'Cash';
+        return ($payment['gateway'] ?? '') === 'psoola' ? 'Website (Psoola)' : 'Test payment';
+    }
+
     /** Pure formatter: the confirmed receipt total is authoritative. */
     public static function describe(array $registration, ?array $payment, array $addOnIds = []): array
     {
@@ -83,10 +92,9 @@ final class PaymentBreakdown
         $out['receipt_total_amount'] = $total;
         $out['receipt_currency'] = $currency;
         $out['receipt_payment_id'] = (int) ($payment['id'] ?? 0);
-        $out['finance_channel'] = ($payment['method'] ?? '') === 'cash' ? 'Cash' : (($payment['gateway'] ?? '') === 'psoola' ? 'Website (Psoola)' : 'Test payment');
+        $out['finance_channel'] = self::channel($payment);
         $create = self::json($payment['raw_create'] ?? null);
         $status = self::json($payment['raw_status'] ?? null);
-        if (($status['channel'] ?? $create['channel'] ?? '') === 'direct') $out['finance_channel'] = 'Cash';
         $paidAt = $status['paidAt'] ?? $create['paidAt'] ?? null;
         if (is_int($paidAt) && $paidAt > 0) $out['finance_date'] = date('Y-m-d H:i:s', (int) floor($paidAt / 1000));
         $snapshot = is_array($create['_ismile_pricing'] ?? null) ? $create['_ismile_pricing'] : [];

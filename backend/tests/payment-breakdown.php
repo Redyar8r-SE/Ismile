@@ -24,6 +24,11 @@ $check('unchosen lunch is not mistaken for a payment',$r['finance_lunch2']==='No
 $check('original provider JSON fields are preserved',json_decode($archived,true)['order']===json_decode($raw,true)['order']);
 $web=$payment;$web['method']=null;$web['raw_create']=str_replace('direct','checkout',$archived);$web['raw_status']=str_replace('direct','checkout',$raw);
 $check('online sale is labelled Website, not inferred from who added the guest',PaymentBreakdown::describe($guest,$web,$map)['finance_channel']==='Website (Psoola)');
+$direct=$payment;$direct['method']='visa';
+$check('direct provider receipts count as cash even with a card method',PaymentBreakdown::channel($direct)==='Cash' && PaymentBreakdown::describe($guest,$direct,$map)['finance_channel']==='Cash');
+$direct['raw_status']='{}';
+$check('cash channel falls back to the original provider receipt',PaymentBreakdown::channel($direct)==='Cash');
+$check('invalid optional receipt JSON still uses the recorded cash method',PaymentBreakdown::channel(['method'=>'cash','raw_status'=>'invalid','raw_create'=>'invalid'])==='Cash');
 $historic=$payment;$historic['raw_create']=$raw;
 $h=PaymentBreakdown::describe($guest,$historic,$map);
 $check('older receipts show paid IQD item prices without inventing a USD rate',$h['finance_lunch1']==='67,200 IQD'&&$h['finance_usd100']==='Not recorded');

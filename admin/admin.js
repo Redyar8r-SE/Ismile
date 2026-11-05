@@ -37,21 +37,28 @@ document.addEventListener("DOMContentLoaded", () => {
     const ids = selectionIds();
     const total = form ? ids.reduce((sum, id) => sum + selected[id], 0) : Number(workspace.dataset.reviewTotal || 0);
     const count = form ? ids.length : Number(workspace.dataset.reviewGuests || 0);
-    let values;
-    try { values = JSON.parse(balance.dataset.revenueValues); } catch { return; }
-    let hasIqd = false;
-    const projected = values.map(value => {
-      let amount = Number(value.total);
-      if (value.currency === "IQD") { amount -= total; hasIqd = true; }
-      return `${amount.toLocaleString("en-US")} ${value.currency}`;
-    });
-    if (!hasIqd && total) projected.push(`${(-total).toLocaleString("en-US")} IQD`);
-    const value = balance.querySelector(".metric-card strong");
-    const note = balance.querySelector(".metric-card small");
-    const text = projected.join(" + ") || "0 IQD";
-    const message = count ? `Preview after sending ${count.toLocaleString()} selected guests (${total.toLocaleString("en-US")} IQD). Confirm to save.` : "Confirmed payments less Association handovers; cancelled excluded";
-    if (value && value.textContent !== text) value.textContent = text;
-    if (note && note.textContent !== message) note.textContent = message;
+    const cards = balance.querySelectorAll(".metric-card");
+    for (const [card, source, defaultNote] of [
+      [cards[0], balance.dataset.revenueValues, "Confirmed payments less Association handovers; cancelled excluded"],
+      [cards[2], balance.dataset.websiteValues, "Confirmed website payments less Association handovers; tickets and lunch included"],
+    ]) {
+      if (!card) continue;
+      let values;
+      try { values = JSON.parse(source); } catch { continue; }
+      let hasIqd = false;
+      const projected = values.map(value => {
+        let amount = Number(value.total);
+        if (value.currency === "IQD") { amount -= total; hasIqd = true; }
+        return `${amount.toLocaleString("en-US")} ${value.currency}`;
+      });
+      if (!hasIqd && total) projected.push(`${(-total).toLocaleString("en-US")} IQD`);
+      const value = card.querySelector("strong");
+      const note = card.querySelector("small");
+      const text = projected.join(" + ") || "0 IQD";
+      const message = count ? `Preview after sending ${count.toLocaleString()} selected guests (${total.toLocaleString("en-US")} IQD). Confirm to save.` : defaultNote;
+      if (value && value.textContent !== text) value.textContent = text;
+      if (note && note.textContent !== message) note.textContent = message;
+    }
   };
   const totalsRegion = document.querySelector('[data-live-region="association-totals"]');
   if (totalsRegion) new MutationObserver(updateBalance).observe(totalsRegion, { childList: true, subtree: true });

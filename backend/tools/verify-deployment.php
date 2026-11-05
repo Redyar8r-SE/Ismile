@@ -125,6 +125,7 @@ foreach ($income['total'] as $currency => $amount) {
     $check('dashboard combined income reconciles in ' . $currency, $amount === ($income['tickets'][$currency] ?? 0) + ($income['workshops'][$currency] ?? 0));
 }
 $check('Association guest selection, revenue preview, batch history and navigation render', str_contains($html, 'data-association-selection') && str_contains($html,'data-association-balance') && str_contains($html,'data-revenue-values') && str_contains($html, 'Batch history') && str_contains($html, 'href="association.php"'));
+$check('Association shows separate cash and website balances and guest payment methods', str_contains($html,'<span>Cash payments</span>') && str_contains($html,'<span>Website payments remaining</span>') && str_contains($html,'data-website-values') && str_contains($html,'<th>Payment method</th>'));
 foreach (['finance','viewer','sponsors'] as $role) {
     $html = $render('association', '', $role);
     $check($role . ' has correct Association controls', str_contains($html, 'Batch history') && (str_contains($html, 'data-association-review') === ($role === 'finance')));
