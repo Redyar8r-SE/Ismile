@@ -188,6 +188,7 @@ final class Office
 
     public static function addWorkshop(array $registration, array $user, array $in): string
     {
+        if (!Auth::canBookWorkshops($user)) throw new UserError('Your account cannot book workshops.', null, 403);
         $workshop = SiteData::workshop((string) ($in['workshop'] ?? ''));
         if ($workshop === null) {
             throw new UserError('Choose a workshop.');
@@ -259,6 +260,7 @@ final class Office
 
     public static function changeWorkshop(int $bookingId, array $user, array $in): string
     {
+        if (!Auth::canBookWorkshops($user)) throw new UserError('Your account cannot change workshop bookings.', null, 403);
         $isOwner = $user['role'] === 'owner';
         // Decided on the locked booking, so two staff (or a double press) never
         // remove and mark paid at the same time, or record a payment twice.

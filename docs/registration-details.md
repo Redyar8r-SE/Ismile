@@ -21,8 +21,12 @@ Company workshops are excluded. An active paid or complimentary summit
 registration is required. The selected person's name, email, phone and locale
 come from the database. Staff supply a reason and explicitly confirm WhatsApp
 permission in the issuance confirmation. A phone number alone is insufficient.
-Workshop changes retain the existing Owner-only booking permission; delegated
-summit guest-ticket access alone does not grant workshop issuance.
+Workshop booking requires Owner access or the individual workshop-booking grant.
+Delegated summit guest-ticket access alone does not grant workshop issuance.
+Staff with both grants can issue guest workshops for any registered attendee,
+including people added by other staff or the website. They retain their existing
+role and personal-detail editing scope. Owner-only cancellation, deletion and
+workshop configuration are not granted.
 
 The server reuses `GuestOrders`, its API client, credentials, error handling,
 bounded retries and verified webhook handling. It sends quantity one and
@@ -78,5 +82,14 @@ Local verification passed: 29 guest-workshop checks, 86 existing complimentary
 checks, 27 paid workshop checks, 36 cash-sale checks, 33 deletion checks, 20 field
 checks, 33 browser checks, the additive upgrade check and the repository's 87
 JavaScript tests, lint, type and security checks. PHP syntax checks passed.
-The unrelated `admin-operations.php` suite has a pre-existing failure at the
-Viewer + Sponsors save-permission assertion; that test and Auth.php are unchanged.
+The initial profile release recorded a pre-existing `admin-operations.php` failure
+at the Viewer + Sponsors save-permission assertion. Its sponsor/map authorization
+behavior is not changed by the workshop delegation permission.
+
+Individual workshop delegation is stored in `admin_users.workshop_booking_access`.
+The Owner can grant/revoke this separately on Users. The CLI-only
+`configure-workshop-manager.php` uses `WORKSHOP_EDITOR_EMAIL` to grant both guest
+registration and workshop booking to one existing active account, verifies that
+only those two flags changed, and preserves the role and sign-in security.
+The deployment's optional `workshop_editor_email` input invokes this grant and
+checks the designated account's real pages without issuing production tickets.

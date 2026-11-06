@@ -31,7 +31,7 @@ $pending = array_filter($requests, static fn($r) => $r['state'] !== 'issued');
 $history = Db::all('SELECT a.*,u.name FROM audit_log a LEFT JOIN admin_users u ON u.id=a.user_id WHERE a.target_type=? AND a.target_id=? ORDER BY a.id DESC LIMIT 50', ['registration',$id]);
 $twins = Db::all("SELECT id,ref,first_name,father_name,grandfather_name,status FROM registrations WHERE id<>? AND (email=? OR phone=?) AND status<>'cancelled'", [$id,$registration['email'],$registration['phone']]);
 $sponsoredOrder = Db::one("SELECT * FROM sponsored_ticket_orders WHERE registration_id=? AND status='issued'", [$id]);
-$canWorkshop = $canChange && Auth::can($user,'workshops') && $user['role'] === 'owner';
+$canWorkshop = Auth::canBookWorkshops($user);
 $canGuestWorkshop = $canWorkshop && Auth::canIssueComplimentary($user) && GuestOrders::enabled() && in_array($registration['status'], ['paid','complimentary'], true);
 $eligible = [];
 if (Auth::can($user,'workshops')) foreach (Workshops::all() as $workshop) {
@@ -96,7 +96,7 @@ if ($inCheckin) echo \Ismile\Admin\CheckinWorkspace::navigation('guests',$user,$
     <aside class="rd-personal">
       <section class="rd-card"><div class="rd-section-title"><h2>Personal information</h2><?= $icon('registrations') ?></div><dl class="rd-fields">
         <?php $field('Full name',$fullName); $field('Email address',$registration['email'],'mail',true); $field('WhatsApp number',$registration['phone'],'phone',true); $field('Specialty',$specialty,'workshops'); if ($registration['sponsoring_company']) $field('Sponsoring company',$registration['sponsoring_company'],'sponsors'); $field('City',$registration['city'],'map'); if ($registration['gender'] || $registration['age']) $field('Gender / age',implode(' · ',array_filter([$registration['gender'] ?? null,$registration['age'] ?? null])),'user'); ?>
-      </dl><?php if (!$canChange && Auth::can($user,'edit')): ?><p class="rd-hint">Read only: you can change only the people you added yourself.</p><?php endif; ?></section>
+      </dl><?php if (!$canChange && Auth::can($user,'edit')): ?><p class="rd-hint">Personal details: you can edit only the people you added yourself.</p><?php endif; ?></section>
       <?php if ($isComp): ?><section class="rd-card"><h2>Complimentary details</h2><dl class="rd-fields"><?php $field('Reason',$registration['comp_reason'],'ticket'); $field('Issued by',$addedBy ?? 'Event administrator','user'); ?></dl></section><?php endif; ?>
       <details class="rd-card rd-information"><summary><span>Registration information</span><span aria-hidden="true">⌄</span></summary><p class="rd-hint">Ticket type, lunch, language and record details</p><dl class="rd-fields">
         <?php $field('Ticket type',Registrations::ticketName($registration['ticket_type']),'ticket'); $field('Lunch',trim(($registration['lunch_day1'] ? 'Day 1 ' : '').($registration['lunch_day2'] ? 'Day 2' : '')) ?: 'None','lunch');

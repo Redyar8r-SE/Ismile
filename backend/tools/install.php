@@ -69,6 +69,9 @@ foreach ($migrations as $file) {
         if ($name === '2026-11-04-registration-access.sql') {
             $methodAlreadyPresent = (bool) Db::value("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'admin_users' AND column_name = 'registration_manage_access'");
         }
+        if ($name === '2026-11-07-workshop-booking-access.sql') {
+            $methodAlreadyPresent = (bool) Db::value("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'admin_users' AND column_name = 'workshop_booking_access'");
+        }
         if ($name === '2026-11-02-association-guest-reversal.sql') {
             $methodAlreadyPresent = (bool) Db::value("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'association_batch_items' AND column_name = 'reversed_by'");
         }

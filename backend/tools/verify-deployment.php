@@ -48,6 +48,12 @@ if (($argv[1] ?? '') === '--render') {
         if (!$owner || (int) $owner['registration_manage_access'] !== 1) throw new RuntimeException('The designated registrar is not configured.');
         $owner['totp_enabled'] = 1; // Process-local page rendering; the real sign-in still requires the phone code.
     }
+    if (($argv[4] ?? '') === 'designated_workshop_manager') {
+        $email = strtolower(trim((string)getenv('WORKSHOP_EDITOR_EMAIL')));
+        $owner = Db::one('SELECT * FROM admin_users WHERE email=? AND disabled_at IS NULL',[$email]);
+        if (!$owner || !Auth::canBookWorkshops($owner) || !Auth::canIssueComplimentary($owner)) throw new RuntimeException('The designated workshop manager is not configured.');
+        $owner['totp_enabled'] = 1;
+    }
     (new ReflectionProperty(Auth::class, 'user'))->setValue(null, $owner);
     $file = App::siteFile('admin/' . $page . '.php');
     if (!is_file($file)) $file = dirname(__DIR__, 2) . '/admin/' . $page . '.php';
@@ -144,6 +150,17 @@ if ($profileId) {
     $check('Registration details preserve contact history and protected actions', str_contains($profile,'Email address') && str_contains($profile,'rd-history') && str_contains($profile,'Edit details') && str_contains($profile,'rd-menu'));
 }
 $check('Guest workshop request storage is installed', (bool)Db::value("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='guest_workshop_orders'"));
+if ($workshopEmail = strtolower(trim((string)getenv('WORKSHOP_EDITOR_EMAIL')))) {
+    $manager = Db::one('SELECT * FROM admin_users WHERE email=? AND disabled_at IS NULL',[$workshopEmail]);
+    $check('designated account has guest registration and all-attendee workshop booking', $manager && Auth::canBookWorkshops($manager) && Auth::canIssueComplimentary($manager));
+    $check('designated account can open guest ticket issuance', str_contains($render('registration','new=free','designated_workshop_manager'),'data-guest-ticket-form'));
+    $otherPerson = Db::value("SELECT id FROM registrations WHERE status IN ('paid','complimentary') AND (created_by IS NULL OR created_by<>?) ORDER BY id LIMIT 1",[$manager['id']]);
+    if ($otherPerson && \Ismile\GuestOrders::enabled()) {
+        $managerProfile = $render('registration','id='.(int)$otherPerson,'designated_workshop_manager');
+        $check('designated account can book a guest workshop for another staff member or website attendee', str_contains($managerProfile,'data-rd-open="rd-workshop"') && !str_contains($managerProfile,'class="admin-shell view-only"'));
+        if ($manager['role'] !== 'owner') $check('designated account retains owner-only restrictions', !str_contains($managerProfile,'value="erase"') && !str_contains($managerProfile,'id="rd-cancel"'));
+    }
+}
 $check('Ordinary registration staff do not get the free ticket button', !str_contains($render('registrations','','registration'),'href="registration.php?new=free"'));
 foreach (['finance','viewer','sponsors'] as $role) {
     $html = $render('association', '', $role);

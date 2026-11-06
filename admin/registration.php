@@ -248,12 +248,12 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && ($_POST['do'] ?? '') ===
 // ---------- Actions ----------
 Page::action(static function () use ($registration, $user, $canChange): string {
     $do = (string) ($_POST['do'] ?? '');
-    $needsEdit = ['edit', 'notes', 'workshop_add', 'workshop_change', 'guest_workshop', 'guest_workshop_retry', 'resend_ticket', 'resend_email'];
+    $needsEdit = ['edit', 'notes', 'resend_ticket', 'resend_email'];
     if ($do === 'cancel' && $user['role'] !== 'owner') {
         throw new UserError('Only the Owner can cancel a registration.');
     }
-    if (in_array($do, ['workshop_add', 'workshop_change', 'guest_workshop', 'guest_workshop_retry'], true) && !Auth::can($user, 'workshops')) {
-        throw new UserError('Only the Owner books workshops.');
+    if (in_array($do, ['workshop_add', 'workshop_change', 'guest_workshop', 'guest_workshop_retry'], true) && !Auth::canBookWorkshops($user)) {
+        throw new UserError('Your account cannot book workshops.');
     }
     if (in_array($do, $needsEdit, true) && !$canChange) {
         throw new UserError('You can change only the people you added yourself.');

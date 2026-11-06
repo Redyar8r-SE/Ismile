@@ -176,7 +176,7 @@ final class Auth
     public static function needsTwoFactor(array $user): bool
     {
         return in_array($user['role'], self::NEEDS_TWO_FACTOR, true)
-            || (int) ($user['registration_manage_access'] ?? 0) === 1;
+            || (int) ($user['registration_manage_access'] ?? 0) === 1 || self::canBookWorkshops($user);
     }
 
     /** True when this role may use this area. The Owner may use everything. */
@@ -188,6 +188,7 @@ final class Auth
         if (in_array($area, ['registrations', 'edit'], true) && (int) ($user['registration_manage_access'] ?? 0) === 1) return true;
         if ($area === 'sponsors' && self::canManageMap($user)) return true;
         if ($area === 'association' && self::canManageAssociation($user)) return true;
+        if ($area === 'workshops' && self::canBookWorkshops($user)) return true;
         // The Viewer (and Viewer + Sponsors) opens every event page but never 'edit'
         // or 'content' (the website editor). What it sends is refused by viewerMayPost().
         $allowed = [
@@ -235,10 +236,17 @@ final class Auth
         return $user['role'] === 'owner' || (int) ($user['registration_manage_access'] ?? 0) === 1;
     }
 
+    /** Book for any registered attendee without granting workshop configuration or Owner powers. */
+    public static function canBookWorkshops(array $user): bool
+    {
+        return $user['role'] === 'owner' || (int) ($user['workshop_booking_access'] ?? 0) === 1;
+    }
+
     /** False when a Viewer sends something that would change data on this page. */
     public static function viewerMayPost(array $user, string $script): bool
     {
         $page = basename($script);
+        if (in_array($page, ['registration.php','workshops.php'], true) && self::canBookWorkshops($user)) return true;
         if (in_array($page, ['registration.php', 'registrations.php'], true) && (int) ($user['registration_manage_access'] ?? 0) === 1) return true;
         if ($page === 'association.php') return self::canManageAssociation($user);
         if (in_array($page, ['map.php', 'sponsors.php'], true)) return self::canManageMap($user);

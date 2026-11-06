@@ -13,7 +13,7 @@ final class GuestWorkshops
 
     private static function authorize(array $user, array $registration): void
     {
-        if (($user['role'] ?? '') !== 'owner' || !Auth::can($user, 'workshops') || !Auth::canIssueComplimentary($user) || !Office::canChange($user, $registration)) {
+        if (!Auth::canBookWorkshops($user) || !Auth::canIssueComplimentary($user)) {
             throw new UserError('Your account cannot issue a guest workshop for this registration.', null, 403);
         }
     }

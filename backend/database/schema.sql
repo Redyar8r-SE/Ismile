@@ -54,6 +54,7 @@ CREATE TABLE IF NOT EXISTS admin_users (
   map_booking_access TINYINT(1) NOT NULL DEFAULT 0,
   association_manage_access TINYINT(1) NOT NULL DEFAULT 0,
   registration_manage_access TINYINT(1) NOT NULL DEFAULT 0,
+  workshop_booking_access TINYINT(1) NOT NULL DEFAULT 0,
   password_hash    VARCHAR(255)      NOT NULL,                 -- bcrypt/argon, never the password
   totp_secret      VARCHAR(64)       NULL,                     -- the phone-code key
   totp_enabled     TINYINT(1)        NOT NULL DEFAULT 0,

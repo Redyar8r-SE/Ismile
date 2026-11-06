@@ -54,6 +54,12 @@ $check('paid online route refuses existing complimentary order', $reject(fn()=>W
 $check('ordinary viewer cannot book', $reject(fn()=>GuestWorkshops::start($viewer,$person('viewer'),$form()),'cannot issue'));
 $delegated=$viewer;$delegated['registration_manage_access']=1;
 $check('summit guest permission alone does not grant workshop booking', $reject(fn()=>GuestWorkshops::start($delegated,$person('delegated'),$form()),'cannot issue'));
+Db::update('admin_users',['registration_manage_access'=>1,'workshop_booking_access'=>1],'id=?',[$viewer['id']]);
+$manager=Db::one('SELECT * FROM admin_users WHERE id=?',[$viewer['id']]);$otherPerson=$person('workshop-manager');
+$managedOrder=GuestWorkshops::start($manager,$otherPerson,$form());
+$check('granted staff can issue a workshop for another staff member\'s attendee', $managedOrder['status']==='issued' && (int)Db::value('SELECT booked_by FROM workshop_bookings WHERE registration_id=?',[$otherPerson['id']])===(int)$manager['id']);
+$check('workshop grant does not permit editing another person\'s personal details', !\Ismile\Office::canChange($manager,$otherPerson));
+$check('granted staff still cannot cancel registrations or change workshop settings', $reject(fn()=>\Ismile\Office::cancel($otherPerson,$manager,'Not allowed')) && $reject(fn()=>Workshops::changeSeats('simplified-direct-veneers',1,$manager)));
 $check('company workshop is rejected', $reject(fn()=>GuestWorkshops::start($owner,$person('company'),$form('mastering-zirconia-veneers')),'Company workshops'));
 $check('missing reason rejected before local attempt', $reject(fn()=>GuestWorkshops::start($owner,$person('reason'),array_replace($form(),['complimentary_reason'=>'  '])),'reason'));
 $check('missing consent rejected', $reject(fn()=>GuestWorkshops::start($owner,$person('consent'),array_replace($form(),['delivery_confirmation'=>''])),'permission'));

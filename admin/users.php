@@ -38,6 +38,11 @@ Page::action(static function () use ($user): string {
         throw new UserError('This is the main Owner account. Only the main Owner can change it.');
     }
     switch ($do) {
+        case 'workshop_access':
+            $enabled = ($_POST['enabled'] ?? '') === '1' ? 1 : 0;
+            Db::update('admin_users', ['workshop_booking_access'=>$enabled], 'id=?', [$target['id']]);
+            Audit::log((int)$user['id'], $enabled ? 'user.workshop_booking_grant' : 'user.workshop_booking_revoke', 'admin_user', (int)$target['id']);
+            return $enabled ? 'Workshop booking for all registered attendees granted.' : 'Delegated workshop booking removed.';
         case 'registration_access':
             $enabled = ($_POST['enabled'] ?? '') === '1' ? 1 : 0;
             Db::update('admin_users', ['registration_manage_access' => $enabled], 'id=?', [$target['id']]);
@@ -116,6 +121,9 @@ Page::top('Users', 'users', '<a class="btn" href="#add-person">' . Page::navIcon
       <?php if ($row['role'] !== 'owner' && !$protected): $registrationAccess = (int) ($row['registration_manage_access'] ?? 0) === 1; ?>
       <small class="field-hint"><?= $registrationAccess ? 'Can register paid and complimentary guests.' : 'Complimentary registration requires individual access.' ?></small>
       <form method="post" class="inline-form"><?= Page::csrfField() ?><input type="hidden" name="do" value="registration_access"><input type="hidden" name="id" value="<?= (int) $row['id'] ?>"><input type="hidden" name="enabled" value="<?= $registrationAccess ? '0' : '1' ?>"><button class="btn small ghost"><?= $registrationAccess ? 'Remove paid & free registration access' : 'Allow paid & free registration' ?></button></form>
+      <?php $workshopAccess = Auth::canBookWorkshops($row); ?>
+      <small class="field-hint"><?= $workshopAccess ? 'Can book workshops for any registered attendee.' : 'Workshop booking requires individual access.' ?></small>
+      <form method="post" class="inline-form"><?= Page::csrfField() ?><input type="hidden" name="do" value="workshop_access"><input type="hidden" name="id" value="<?= (int)$row['id'] ?>"><input type="hidden" name="enabled" value="<?= $workshopAccess ? '0' : '1' ?>"><button class="btn small ghost"><?= $workshopAccess ? 'Remove workshop booking access' : 'Allow workshop booking for everyone' ?></button></form>
       <?php endif; ?></td>
     <td><span class="security-status <?= (int)$row['totp_enabled'] ? 'enabled':'pending' ?>"><?= Page::navIcon('security') ?><span><?= (int)$row['totp_enabled'] ? 'Phone code on' : 'Phone code off' ?></span></span><small class="field-hint"><?= Auth::needsTwoFactor($row) ? 'Required for this account' : 'Optional for this account' ?></small></td>
     <td><span class="team-last-login"><?= $row['last_login_at'] ? Page::when($row['last_login_at']) : 'Not signed in yet' ?></span></td>
