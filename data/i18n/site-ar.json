@@ -752,7 +752,7 @@
   "wd_pending_places": "بانتظار الدفع: {n}",
   "wd_hold_note": "تحجز جلسات الدفع المعلقة لدى بسوولا المقاعد مؤقتًا. تصبح المقاعد متاحة مجددًا عند انتهاء جلسة الدفع دون سداد.",
   "wd_seats_in_checkout": "المقاعد في مرحلة الدفع",
-  "wd_available_now": "متاح الآن",
+  "wd_available_now": "متاح",
   "cta_see_workshops": "اطّلع على ورش العمل",
   "wsb_company_call": "اتصل للتسجيل",
   "wd_pay_action": "ادفع"
