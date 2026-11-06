@@ -102,20 +102,14 @@ export function initWorkshops(workshops) {
     const photo = photoSrc(w);
     const speaker = pick(w.speaker);
     const company = byCompany(w);
-    const total = Number(w.totalSeats) || 0;
     const left = Math.max(0, Number(w.seatsLeft) || 0);
     const chips = [[CLOCK, pick(w.duration)], [LEVEL, pick(w.level)]]
       .filter(([, text]) => text)
       .map(([icon, text]) => `<span class="ws-chip">${icon}<span dir="auto">${esc(text)}</span></span>`)
       .join("");
-    // Seats: iSmile counts the seats left; a company takes its own bookings.
-    const [seats, seatsSub] = w.availabilityVerified === false
-      ? [t("wd_availability_unavailable"), ""]
-      : left === 0
-      ? [t(Number(w.pendingPayments) > 0 ? "wd_seats_in_checkout" : "wd_full"), ""]
-      : company
-        ? [t("wd_seats_total").replace("{total}", total), t("wdc_limited")]
-        : [t("wdi_left").replace("{n}", left), t("wdi_seats").replace("{total}", total)];
+    const seats = w.availabilityVerified === false
+      ? t("wd_availability_unavailable")
+      : left === 0 ? t("wd_full") : t("wd_available_now");
     // The button opens the details page: there iSmile's workshop has the email
     // form and a company's workshop has the call button with the phone number.
     const cta = company
@@ -132,7 +126,7 @@ export function initWorkshops(workshops) {
           ${workshopSchedule(w) ? `<p class="ws-schedule">${esc(workshopSchedule(w).date)}<br>${esc(workshopSchedule(w).time)}</p>` : ""}
           ${chips ? `<div class="ws-chips">${chips}</div>` : ""}
           <div class="wsb-foot">
-            <div class="wsb-seats"><span class="wsb-seats-ic">${USERS}</span><div><b>${esc(seats)}</b>${seatsSub ? `<small>${esc(seatsSub)}</small>` : ""}</div></div>
+            <div class="wsb-seats"><span class="wsb-seats-ic">${USERS}</span><div><b>${esc(seats)}</b></div></div>
             ${cta}
           </div>
         </div>

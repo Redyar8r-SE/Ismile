@@ -5,14 +5,14 @@ import { showLoadError } from "./components/load-error.js?v=148";
 // Both kinds use the same banner: title, trainer, price and seats beside the
 // trainer's whole photo; below it the facts, overview and how to book.
 //  - organized by iSmile: the summit email and "Register for workshop" in one
-//    pill (api/workshop-register.php), and the seats left with a bar;
+//    pill (api/workshop-register.php), with a count-free availability label;
 //  - organized by a company: one "Call to register" button with its phone.
 import { loadJSON } from "./utils/load-json.js?v=148";
 import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang, t, onLangChange } from "./i18n.js?v=148";
 import { initNav } from "./components/nav.js?v=148";
 import { initTheme } from "./components/theme.js?v=148";
 import { initFooter } from "./sections/footer.js?v=148";
-import { pick, esc, workshopPrice, photoSrc, byCompany, workshopSchedule, watchWorkshopAvailability, WORKSHOP_ICON } from "./sections/workshops.js?v=153";
+import { pick, esc, workshopPrice, photoSrc, byCompany, workshopSchedule, watchWorkshopAvailability, WORKSHOP_ICON } from "./sections/workshops.js?v=157";
 import { phoneHref, PHONE_ICON } from "./utils/phone.js?v=148";
 
 const ICONS = {
@@ -60,13 +60,10 @@ function initDetails(workshop) {
     const credentials = pick(w.credentials);
     const overview = pick(w.overview);
     const photo = photoSrc(w);
-    const total = Number(w.totalSeats) || 0;
     const left = Math.max(0, Number(w.seatsLeft) || 0);
     const full = left === 0;
     const company = byCompany(w);
-    const paid = Math.max(0, Number(w.paidRegistrations) || 0);
     const pending = Math.max(0, Number(w.pendingPayments) || 0);
-    const takenPercent = total ? Math.min(100, Math.round((paid / total) * 100)) : 0;
     document.title = `${title} | iSmile 2026`;
     const schedule = workshopSchedule(w);
     const unavailable = w.availabilityVerified === false;
@@ -80,10 +77,8 @@ function initDetails(workshop) {
 
     const trainer = [speaker, credentials].filter(Boolean).map((part) => `<span dir="auto">${esc(part)}</span>`).join('');
     const price = `<div class="wdc-stat is-price"><span class="wdc-stat-ic">${ICONS.wallet}</span><div><b dir="auto">${esc(unavailable ? t("wd_availability_unavailable") : workshopPrice(w))}</b><small>${esc(t("w_price_seat"))}</small></div></div>`;
-    // Company: total seats (the company takes the bookings). iSmile: seats left and a bar.
-    const seats = unavailable ? `<div class="wdc-stat is-seats"><span class="wdc-stat-ic">${ICONS.users}</span><div><b>${esc(t("wd_availability_unavailable"))}</b></div></div>` : company
-      ? `<div class="wdc-stat is-seats"><span class="wdc-stat-ic">${ICONS.users}</span><div><b>${esc(full ? t("wd_full") : t("wd_seats_total").replace("{total}", total))}</b><small>${esc(t("wdc_limited"))}</small></div></div>`
-      : `<div class="wdc-stat is-seats"><span class="wdc-stat-ic">${ICONS.users}</span><div class="wdc-stat-grow"><b>${esc(full ? t(pending ? "wd_seats_in_checkout" : "wd_full") : t("wdi_left").replace("{n}", left))}</b><small>${esc(t("wdi_seats").replace("{total}", total))}</small>${pending ? `<small>${esc(t("wd_pending_places").replace("{n}", pending))}</small>` : ""}<span class="wdc-bar" aria-hidden="true"><i style="width:${takenPercent}%"></i></span></div></div>`;
+    const availability = unavailable ? t("wd_availability_unavailable") : full ? t("wd_full") : t("wd_available_now");
+    const seats = `<div class="wdc-stat is-seats"><span class="wdc-stat-ic">${ICONS.users}</span><div><b>${esc(availability)}</b></div></div>`;
     const steps = (company
       ? [["phone", "wdc_how1", "wdc_how1_d"], ["wallet", "wdc_how2", "wdc_how2_d"], ["ticket", "wdc_how3", "wdc_how3_d"]]
       : [["ticket", "wdc_how3", "wd_paid_ticket_help"], ["wallet", "wd_online_step", "wd_online_step_text"], ["check", "wd_online_registered", "wd_online_registered_text"]])
@@ -194,7 +189,7 @@ function initDetails(workshop) {
             placeholder="${esc(t("wdi_email_ph"))}" value="${esc(state.email)}"${full ? " disabled" : ""}${state.error ? ' aria-invalid="true"' : ""}>
         </label>
         <button class="wdc-submit" type="submit"${full || state.sending ? " disabled" : ""}>
-          <span>${esc(t(state.sending ? "wd_pay_opening" : "wd_pay_action"))}</span>${state.sending ? "" : ICONS.arrow}
+          <span>${esc(t(full ? (workshop.availabilityVerified === false ? "wd_availability_unavailable" : "wd_full") : state.sending ? "wd_pay_opening" : "wd_pay_action"))}</span>${state.sending ? "" : ICONS.arrow}
         </button>
       </form>
       ${error}
