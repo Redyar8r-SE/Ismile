@@ -18,7 +18,7 @@ header('Content-Type: application/json; charset=utf-8');
 try {
     if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') throw new UserError('POST required.',null,405);
     Auth::checkCsrf();
-    $result = PsoolaTickets::link($user,(int)($_POST['registration_id'] ?? 0));
+    $result = PsoolaTickets::preview($user,(int)($_POST['registration_id'] ?? 0));
     echo json_encode(['ok'=>true]+$result,JSON_THROW_ON_ERROR|JSON_HEX_TAG);
 } catch (UserError $error) {
     http_response_code($error->status);

@@ -1,7 +1,8 @@
 // Local-only PSOOLA complimentary simulator. No external calls or messages.
 import http from 'node:http';
 import fs from 'node:fs';
-const sessions=new Map(),keys=new Map(),bodies=new Map(),calls=new Map(),buyers=new Map();
+const sessions=new Map(),keys=new Map(),bodies=new Map(),calls=new Map(),buyers=new Map(),listOrders=new Map();
+let listPageSize=100;
 const runId=Date.now().toString(36);let posts=0,creations=0,reads=0,catalogueReads=0,unsafePosts=0,checkoutPosts=0,permission=true;
 const events=[{id:'event-test',name:{en:'iSmile Test Event',ar:'?????? ???????',ckb:'????? ???????????'},currency:'IQD',shows:[
  {id:'show-test',name:{en:'General admission',ar:'?????? ?????',ckb:'????????????? ????'},maxPerOrder:100,ticketTypes:[
@@ -19,7 +20,8 @@ http.createServer(async(req,res)=>{
  const reply=(status,body,headers={})=>{res.writeHead(status,{'Content-Type':'application/json',...headers});res.end(JSON.stringify(body));};
  const error=(status,code,headers={})=>reply(status,{error:{code,message:'Fixture '+code},requestId:'support-'+code},headers);
  if(url.pathname==='/fixture')return reply(200,{posts,creations,reads,catalogueReads,unsafePosts,checkoutPosts,sessions:[...sessions.values()]});
- if(url.pathname==='/fixture/seed-order'&&req.method==='POST'){let raw='';for await(const data of req)raw+=data;const {session,lookupId}=JSON.parse(raw);sessions.set(lookupId||session.id,{...session,request:session.request||{partnerReference:session.partnerReference}});return reply(200,{ok:true});}
+ if(url.pathname==='/fixture/seed-order'&&req.method==='POST'){let raw='';for await(const data of req)raw+=data;const {session,lookupId,listOrder}=JSON.parse(raw);sessions.set(lookupId||session.id,{...session,request:session.request||{partnerReference:session.partnerReference}});if(listOrder)listOrders.set(lookupId||session.id,listOrder);else listOrders.delete(lookupId||session.id);return reply(200,{ok:true});}
+ if(url.pathname==='/fixture/list-page-size'){listPageSize=Math.max(1,Math.min(100,Number(url.searchParams.get('size'))||100));return reply(200,{ok:true});}
  if(url.pathname==='/fixture/permission'){permission=url.searchParams.get('enabled')==='1';return reply(200,{ok:true});}
  if(url.pathname==='/fixture/stock'){const type=events.find(e=>e.id===url.searchParams.get('event'))?.shows[0]?.ticketTypes[0];if(type)type.available=Number(url.searchParams.get('available'));return reply(200,{ok:!!type});}
  if(url.pathname==='/fixture/delivery'){const s=sessions.get(url.searchParams.get('id'));if(s){s.emailStatus='delivered';s.whatsappStatus='delivered';}return reply(200,{ok:!!s});}
@@ -76,7 +78,9 @@ http.createServer(async(req,res)=>{
  }
  if(req.method==='GET'&&url.pathname==='/api/partner/v1/orders'){
   reads++;const ref=url.searchParams.get('partnerReference');if(ref){const s=[...sessions.values()].find(s=>s.request.partnerReference===ref);return s?reply(200,s):error(404,'NOT_FOUND');}
-  return reply(200,{orders:[...sessions.values()].filter(s=>!url.searchParams.get('eventId')||s.eventId===url.searchParams.get('eventId')),nextCursor:null});
+  const rows=[...sessions.entries()].map(([id,s])=>listOrders.get(id)||s).filter(s=>!url.searchParams.get('eventId')||(s.event?.id||s.eventId)===url.searchParams.get('eventId'));
+  const start=Number(url.searchParams.get('cursor')||0),size=Math.min(listPageSize,Number(url.searchParams.get('limit')||100));
+  return reply(200,{orders:rows.slice(start,start+size),nextCursor:start+size<rows.length?String(start+size):null});
  }
  const id=url.pathname.match(/^\/api\/partner\/v1\/orders\/([^/]+)$/)?.[1];
  if(req.method==='GET'&&id){reads++;return sessions.has(id)?reply(200,sessions.get(id)):error(404,'NOT_FOUND');}

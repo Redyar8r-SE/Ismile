@@ -101,6 +101,7 @@
 .rd-menu-hint{display:flex;align-items:center;gap:8px;padding:10px;font-size:11px;color:var(--rd-muted);line-height:1.5}
 .rd-dialog{width:min(650px,calc(100vw - 32px));max-height:calc(100dvh - 48px);padding:26px;border:1px solid var(--rd-line);border-radius:14px;color:#15354a;background:#fff;box-shadow:0 20px 80px #102f4326;overflow:auto}
 .rd-dialog::backdrop{background:#102f4366}
+.rd-provider-summary{display:grid;gap:12px;margin-bottom:20px;justify-items:start}.rd-provider-summary p,.rd-provider-delivery{font-size:13px;color:var(--rd-muted);overflow-wrap:anywhere}.rd-provider-ticket{display:grid;justify-items:center;gap:10px;text-align:center;border:1px solid var(--rd-line);border-radius:12px;padding:20px 12px;margin:16px 0;overflow-wrap:anywhere}.rd-provider-ticket img{display:block;width:min(240px,100%);height:auto;aspect-ratio:1;background:#fff}.rd-provider-code{direction:ltr;unicode-bidi:isolate;font-size:17px;letter-spacing:2px;overflow-wrap:anywhere;max-width:100%}.rd-provider-delivery{margin-bottom:16px}.rd-provider-dialog [data-rd-psoola-body]>.btn{margin-top:16px;white-space:normal}
 .rd-dialog-heading{display:flex;align-items:start;justify-content:space-between;gap:18px;margin-bottom:24px}
 .rd-dialog-heading h2{font-size:19px}
 .rd-dialog-heading p{font-size:12px;color:var(--rd-muted);margin-top:8px}

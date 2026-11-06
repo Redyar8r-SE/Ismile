@@ -154,6 +154,7 @@ $psoolaProfileId = Db::value("SELECT r.id FROM registrations r JOIN tickets t ON
 if ($psoolaProfileId) {
     $ticketProfile = $render('registration','id='.(int)$psoolaProfileId);
     $check('PSOOLA ticket-page button is available for a linked issued registration', str_contains($ticketProfile,'data-rd-ticket="psoola"') && str_contains($ticketProfile,'View PSOOLA ticket'));
+    $check('Original PSOOLA QR dialog is present without private ticket data', str_contains($ticketProfile,'data-rd-psoola-dialog') && str_contains($ticketProfile,'data-rd-psoola-body') && !str_contains($ticketProfile,'data:image/svg+xml;base64,'));
 }
 if ($workshopEmail = strtolower(trim((string)getenv('WORKSHOP_EDITOR_EMAIL')))) {
     $manager = Db::one('SELECT * FROM admin_users WHERE email=? AND disabled_at IS NULL',[$workshopEmail]);

@@ -1,6 +1,53 @@
 document.addEventListener("DOMContentLoaded", () => {
   const profile = document.querySelector("[data-registration-details]");
   if (!profile) return;
+  const providerDialog = profile.querySelector("[data-rd-psoola-dialog]");
+  const providerBody = providerDialog?.querySelector("[data-rd-psoola-body]");
+  let providerTrigger;
+  const label = value => typeof value === "string" ? value : value?.en || value?.ckb || value?.ar || "";
+  const clearProvider = () => { providerBody?.replaceChildren(); };
+  providerDialog?.addEventListener("close", () => { clearProvider(); providerTrigger?.focus(); });
+  window.addEventListener("pagehide", () => { providerDialog?.close(); clearProvider(); });
+  const showProvider = (data, trigger) => {
+    if (!providerDialog || !providerBody) throw Error("Reload this page to view the original PSOOLA ticket.");
+    clearProvider(); providerTrigger = trigger;
+    const add = (parent, tag, text, className) => {
+      const element = document.createElement(tag); element.textContent = text;
+      if (className) element.className = className; parent.append(element); return element;
+    };
+    const summary = add(providerBody, "div", "", "rd-provider-summary");
+    add(summary, "span", data.isComplimentary ? "Complimentary" : "Issued", "rd-badge green");
+    add(summary, "h3", label(data.event) || "PSOOLA event");
+    const rawDate = data.showDateTime;
+    const date = rawDate == null ? null : new Date(typeof rawDate === "number" && rawDate < 1e12 ? rawDate * 1000 : rawDate);
+    if (date && !Number.isNaN(date.getTime())) add(summary, "p", date.toLocaleString("en-GB", { timeZone: "Asia/Baghdad", dateStyle: "medium", timeStyle: "short" }) + " · Iraq time");
+    add(summary, "strong", "Total: " + Number(data.totalAmount).toLocaleString("en-GB") + " " + data.currency);
+    for (const item of data.tickets) {
+      const card = add(providerBody, "section", "", "rd-provider-ticket");
+      add(card, "h3", item.holderName || data.buyer?.name || "Ticket holder");
+      add(card, "p", label(item.ticketTypeName), "rd-hint");
+      if (item.qrImage?.startsWith("data:image/svg+xml;base64,")) {
+        const image = document.createElement("img"); image.src = item.qrImage; image.alt = "Original PSOOLA ticket QR code"; image.width = 240; image.height = 240; card.append(image);
+        add(card, "code", item.code, "rd-provider-code");
+      } else add(card, "p", "This ticket is " + item.status + ". Its QR is unavailable.", "rd-hint");
+      add(card, "p", "Status: " + item.status + (item.checkedIn ? " · Checked in" : "") + (item.inside ? " · Inside" : ""));
+      for (const addon of Array.isArray(item.addOns) ? item.addOns : []) {
+        const name = label(typeof addon === "string" ? addon : addon.name || addon.title);
+        if (name) add(card, "p", name, "rd-hint");
+      }
+    }
+    const delivery = add(providerBody, "div", "", "rd-provider-delivery");
+    if (data.buyer?.email) add(delivery, "p", data.buyer.email);
+    if (data.buyer?.phone) add(delivery, "p", data.buyer.phone);
+    if (data.emailStatus) add(delivery, "p", "Email: " + data.emailStatus);
+    if (data.whatsappStatus) add(delivery, "p", "WhatsApp: " + data.whatsappStatus);
+    add(providerBody, "p", "Private ticket access. Share only with the ticket holder.", "rd-hint");
+    if (data.ticketsUrl) {
+      const link = add(providerBody, "a", "Open PSOOLA ticket page", "btn ghost");
+      link.href = data.ticketsUrl; link.referrerPolicy = "no-referrer"; link.rel = "noreferrer";
+    }
+    providerDialog.showModal(); providerDialog.querySelector("[data-rd-close]").focus();
+  };
   profile.addEventListener("click", async event => {
     const opener = event.target.closest("[data-rd-open]");
     if (opener) {
@@ -52,7 +99,10 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         if (!(response.headers.get("content-type") || "").includes("application/json")) throw Error("Reload this page and sign in again to view the PSOOLA ticket.");
         const data = await response.json();
-        if (!response.ok || !data.ticketsUrl) throw Error(data.error === "view_only" ? "Your account does not have permission to view this ticket." : data.error || "PSOOLA could not return the ticket page.");
+        if (!response.ok || !data.ok) throw Error(data.error === "view_only" ? "Your account does not have permission to view this ticket." : data.error || "PSOOLA could not return the ticket page.");
+        if (Array.isArray(data.tickets) && data.tickets.length) {
+          showProvider(data, ticket); showResult("Original PSOOLA ticket loaded.", "success"); return;
+        }
         url = data.ticketsUrl;
       } else if (ticket.dataset.orderId) {
         const response = await fetch("registration.php?new=free", {

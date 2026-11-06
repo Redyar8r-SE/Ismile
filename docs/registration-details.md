@@ -96,26 +96,26 @@ checks the designated account's real pages without issuing production tickets.
 
 ## View PSOOLA ticket
 
-The extra button beside View ticket and Copy ticket link retrieves the existing
-order's `ticketsUrl` through authenticated `POST admin/psoola-ticket.php`. That
-endpoint makes only a PSOOLA `GET /orders/{saved-id}` request. It verifies order
-identity/reference/status and confirmed amount/currency, retaining full zero-total
-complimentary validation for guest orders. Owners, individually authorized
-workshop staff, and staff accessing their own registrations can use it.
+The button beside View ticket and Copy ticket link retrieves original provider
+QR tickets through authenticated POST admin/psoola-ticket.php. Owners,
+individually authorized workshop staff, and staff accessing their own records
+can use it. The endpoint only makes GET requests: it verifies the saved order
+through /orders/{id}, then finds that exact id in the paginated event order list.
+The latter returns tickets[].code even when ticketsUrl is null. Reference,
+status, amount/currency and full complimentary zero-total validation must pass
+again on the list entry. Unrelated orders are never sent to the browser.
 
-The link is returned uncached and is never saved in HTML, logs or browser storage.
-It opens PSOOLA's original ticket page containing the real QR tickets. The API
-guide does not provide a separate QR-code payload, and no replacement QR or PDF
-is generated. Orders for which PSOOLA returns a null/invalid link show an explicit
-retrieval error. Local-only tickets show a disabled provider button.
+The dialog shows the provider holder, event, show, ticket type, add-ons, ticket
+status, actual total, and separate delivery statuses. Each active ticket QR
+encodes the original PSOOLA payload unchanged (qrCode when provided, otherwise
+code), matching PSOOLA's public renderer. Existing TCPDF encodes it with medium
+error correction and a four-module quiet zone. No new admission identity, order,
+PDF, payment, email or scan is created. Inactive tickets show status without QR.
 
-A live read-only check retrieved an existing provider ticket link and received
-HTTP 200 from its official ticket page. Some other issued orders returned
-`ticketsUrl: null`; the button cannot open a provider ticket page for those until
-PSOOLA supplies the link. No real tickets were created or delivery retried.
-
-Ticket-link lookups show progress on the registration page. Once the provider
-returns a verified link, the ticket opens in the same tab. Missing links, network
-failures and timeouts leave the profile open with a visible focused error alert;
-the interface no longer opens and immediately closes a temporary tab. Back resets
-stale loading state. Fifteen browser navigation regression checks cover these cases.
+Ticket codes, images and optional private links are returned uncached and are
+not persisted or logged. The dialog clears them on close or leaving the page;
+the initial HTML contains no private ticket data. All provider text is rendered
+with textContent. A verified private page link remains available where supplied
+and is the fallback if the list omits tickets. No guessed provider URLs are used.
+Missing data and network failures remain visible on the profile without opening
+and closing another tab. No production tickets are issued during verification.

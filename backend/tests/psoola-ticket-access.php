@@ -7,7 +7,7 @@ putenv('PSOOLA_API_BASE_URL=http://127.0.0.1:8862/api/partner/v1');putenv('PSOOL
 $passed=0;$check=static function(string $label,bool $ok)use(&$passed):void{if(!$ok)throw new RuntimeException('FAILED: '.$label);$passed++;echo "PASS: $label\n";};
 $reject=static function(callable $fn,string $contains=''):bool{try{$fn();return false;}catch(UserError $e){return !$contains||str_contains($e->key,$contains);}};
 $fixture=static fn():array=>json_decode(file_get_contents('http://127.0.0.1:8862/fixture'),true,512,JSON_THROW_ON_ERROR);
-$seed=static function(array $session,?string $lookup=null):void{$context=stream_context_create(['http'=>['method'=>'POST','header'=>'Content-Type: application/json','content'=>json_encode(['session'=>$session,'lookupId'=>$lookup])]]);file_get_contents('http://127.0.0.1:8862/fixture/seed-order',false,$context);};
+$seed=static function(array $session,?string $lookup=null,?array $listOrder=null):void{$context=stream_context_create(['http'=>['method'=>'POST','header'=>'Content-Type: application/json','content'=>json_encode(['session'=>$session,'lookupId'=>$lookup,'listOrder'=>$listOrder])]]);file_get_contents('http://127.0.0.1:8862/fixture/seed-order',false,$context);};
 $tag=bin2hex(random_bytes(5));
 $account=static fn(string $role):array=>Db::one('SELECT * FROM admin_users WHERE id=?',[Auth::createUser('ticket-'.$role.'-'.$tag.'@example.invalid','Ticket Access '.ucfirst($role),$role,bin2hex(random_bytes(16)))]);
 $owner=$account('owner');$registrar=$account('registration');$viewer=$account('viewer');$manager=$account('sponsors');
@@ -40,7 +40,31 @@ $seed($webSession);Db::update('registrations',['status'=>'cancelled'],'id=?',[$w
 $gift=GuestOrders::issueSingle($owner,['attempt'=>bin2hex(random_bytes(16)),'first_name'=>'Ticket','father_name'=>'Complimentary','grandfather_name'=>'Guest','specialty'=>'gp','email'=>'ticket-guest-'.$tag.'@example.invalid','phone'=>'+964750'.random_int(1000000,9999999),'complimentary_reason'=>'Invited speaker','delivery_confirmation'=>'email-whatsapp-v1']);
 $check('complimentary admission uses existing verified private PSOOLA page',str_starts_with(PsoolaTickets::link($manager,(int)$gift['registration_id'])['ticketsUrl'],'https://psoola.com/t/private-'));
 $giftBefore=$fixture();PsoolaTickets::link($owner,(int)$gift['registration_id']);$check('opening complimentary ticket never issues another order',$fixture()['posts']===$giftBefore['posts']);
+$giftCompact=array_values(array_filter($giftBefore['sessions'],static fn($s)=>$s['id']===$gift['provider_order_id']))[0];
+$giftRich=$giftCompact+['event'=>['id'=>App::config('payments.psoola.event_id'),'title'=>'Guest event'],'tickets'=>[['code'=>'GUEST-ORIGINAL','status'=>'valid','holderName'=>'Complimentary guest']]];
+$giftCompact['ticketsUrl']=$giftRich['ticketsUrl']=null;$seed($giftCompact,null,$giftRich);
+$giftPreview=PsoolaTickets::preview($manager,(int)$gift['registration_id']);$check('complimentary preview retains zero total and original QR without page URL',$giftPreview['isComplimentary']===true&&$giftPreview['totalAmount']===0&&$giftPreview['tickets'][0]['qrImage']!==null);
+$giftRich['order']['totalAmount']=40000;$seed($giftCompact,null,$giftRich);$check('rich-list complimentary preview enforces zero total',$reject(fn()=>PsoolaTickets::preview($owner,(int)$gift['registration_id']),'verify this complimentary'));
 file_get_contents('http://127.0.0.1:8862/fixture/tamper?id='.rawurlencode($gift['provider_order_id']));$check('complimentary zero-total validation remains enforced',$reject(fn()=>PsoolaTickets::link($owner,(int)$gift['registration_id']),'verify this complimentary'));
 $check('paid ticket lookup does not change local payment records',hash('sha256',json_encode(Db::all('SELECT * FROM payments WHERE registration_id IN (?,?)',[$web['id'],$cash['id']])))===$snapshot);
 $check('paid ticket lookups do not create paid orders',$fixture()['unsafePosts']===$before['unsafePosts']&&$fixture()['checkoutPosts']===$before['checkoutPosts']);
+$previewPerson=$person();$compact=$pay($previewPerson);$compact['ticketsUrl']=null;
+$rich=$compact+['event'=>['id'=>App::config('payments.psoola.event_id'),'title'=>'Original event'],'show'=>['dateTime'=>'2026-11-19T13:00:00+03:00'],
+    'buyer'=>['name'=>'Original holder','email'=>'preview@example.invalid','phone'=>'+9647501234567'],
+    'tickets'=>[['code'=>'ORIG-QR8','holderName'=>'Original holder','ticketTypeName'=>'Dentist','status'=>'valid','checkedIn'=>false,'inside'=>false,'addOns'=>[]]]];
+$rich['order']['ticketCount']=1;
+$seed($compact,null,$rich);$readsBefore=$fixture();
+file_get_contents('http://127.0.0.1:8862/fixture/list-page-size?size=1');
+$preview=PsoolaTickets::preview($manager,(int)$previewPerson['id']);
+$check('null ticket link still shows original provider QR and holder',$preview['ticketsUrl']===null&&$preview['tickets'][0]['code']==='ORIG-QR8'&&str_starts_with($preview['tickets'][0]['qrImage'],'data:image/svg+xml;base64,')&&$preview['buyer']['name']==='Original holder');
+$check('read-only preview supports paginated rich orders',$fixture()['reads']>$readsBefore['reads']+2);
+file_get_contents('http://127.0.0.1:8862/fixture/list-page-size?size=100');
+$check('preview requires staff authorization',$reject(fn()=>PsoolaTickets::preview($viewer,(int)$previewPerson['id']),'cannot view'));
+$bad=$rich;$bad['partnerReference']='another-person';$seed($compact,null,$bad);$check('rich-list identity mismatch is rejected',$reject(fn()=>PsoolaTickets::preview($owner,(int)$previewPerson['id'])));
+$bad=$rich;$bad['order']['totalAmount']=1;$seed($compact,null,$bad);$check('rich-list amount mismatch is rejected',$reject(fn()=>PsoolaTickets::preview($owner,(int)$previewPerson['id'])));
+$bad=$rich;$bad['tickets'][]=$bad['tickets'][0];$seed($compact,null,$bad);$check('incomplete or excess ticket counts are rejected',$reject(fn()=>PsoolaTickets::preview($owner,(int)$previewPerson['id'])));
+$bad=$rich;$bad['tickets'][0]['status']='cancelled';$seed($compact,null,$bad);$check('cancelled provider tickets have no usable QR',PsoolaTickets::preview($owner,(int)$previewPerson['id'])['tickets'][0]['qrImage']===null);
+$seed($compact);$check('missing both codes and link is a retryable lookup error',$reject(fn()=>PsoolaTickets::preview($owner,(int)$previewPerson['id']),'original ticket codes'));
+$withLink=$compact;$withLink['ticketsUrl']='https://psoola.com/t/mock-fallback';$seed($withLink);$check('verified original page remains a fallback without ticket rows',PsoolaTickets::preview($owner,(int)$previewPerson['id'])===['ticketsUrl'=>$withLink['ticketsUrl'],'tickets'=>[]]);
+$check('all preview lookups never submit or create any order',$fixture()['posts']===$readsBefore['posts']&&$fixture()['creations']===$readsBefore['creations']);
 echo "$passed PSOOLA ticket-access checks passed.\n";
