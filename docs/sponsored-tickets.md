@@ -1,5 +1,16 @@
 # Sponsored free tickets
 
+**Issuance is paused.** The supplied PSOOLA `POST /orders` documentation creates
+full-price cash orders, which does not meet the requirement for zero-price
+tickets. `SponsoredTickets::issue()` stops before database writes or provider
+calls, including retries. The form's submit button is disabled. Do not re-enable
+issuance until PSOOLA documents and verifies a true zero-price route or ticket
+type. Existing provider amounts and order history remain unchanged.
+
+Run `php backend/tests/sponsored-issuance-pause.php` to verify the stop without
+any database or provider connection. The integration tests below describe the
+previous implementation and are not evidence of PSOOLA zero-price support.
+
 Authorized staff open **Registrations → Free ticket** and enter the guest's
 first, second and third names, specialty, email, WhatsApp number and sponsoring
 company. Owner accounts and accounts with individual registration access can

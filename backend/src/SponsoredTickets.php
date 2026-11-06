@@ -7,6 +7,12 @@ use Ismile\Payments\PsoolaGateway;
 /** Free to the guest. PSOOLA's direct-order amount remains a separate provider record. */
 final class SponsoredTickets
 {
+    /** Paid direct orders cannot satisfy a zero-price free-ticket request. */
+    public static function issuanceAvailable(): bool
+    {
+        return false;
+    }
+
     public static function guest(array $in): array
     {
         $row = [];
@@ -31,6 +37,7 @@ final class SponsoredTickets
     public static function issue(array $user, array $in): array
     {
         if (!Auth::canIssueComplimentary($user)) throw new UserError('Your account cannot issue free tickets.');
+        if (!self::issuanceAvailable()) throw new UserError('Free ticket issuance is paused until PSOOLA supports a verified zero-price order. No order was submitted.');
         if (App::config('payments.gateway') !== 'psoola') throw new UserError('PSOOLA ticket issuance is not available on this site.');
         $key = $in['attempt'] ?? '';
         if (!is_string($key) || !preg_match('/^[a-f0-9]{32}$/D', $key)) throw new UserError('Reload the free ticket form and try again.');

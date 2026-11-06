@@ -11,7 +11,7 @@ $companies = \Ismile\Db::all("SELECT DISTINCT company FROM sponsor_requests WHER
 ?>
 <form method="post" class="card stack caller-form" id="free-ticket-form">
   <?= \Ismile\Admin\Page::csrfField() ?><input type="hidden" name="attempt" value="<?= $e($attemptKey) ?>">
-  <p class="muted">Register a sponsored guest with a complimentary ticket. Fields marked * are required.</p>
+  <p class="flash warn">Free ticket issuance is paused. PSOOLA must support a verified zero-price order before another free ticket can be issued.</p>
   <?php if ($retrying): ?><p class="flash warn">Retrying your saved ticket request. The original guest details and permission record are preserved to prevent duplicate tickets.</p><?php endif; ?>
   <fieldset class="form-section">
     <legend>Guest details</legend>
@@ -36,8 +36,8 @@ $companies = \Ismile\Db::all("SELECT DISTINCT company FROM sponsor_requests WHER
   </fieldset>
   <?php if ($retrying && ($_POST['whatsapp_consent'] ?? '') === '1'): ?><input type="hidden" name="whatsapp_consent" value="1"><?php endif; ?>
   <label class="free-ticket-consent"><input type="checkbox"<?= $retrying ? ' disabled' : ' name="whatsapp_consent"' ?> value="1"<?= ($_POST['whatsapp_consent'] ?? '') === '1' ? ' checked' : '' ?>><span>The guest agrees to receive this ticket on WhatsApp.<small class="muted">Record the guest's agreement now. Without it, PSOOLA delivers by email only.</small></span></label>
-  <p class="muted small">The guest pays nothing. PSOOLA records the order at its listed ticket price; the provider amount is saved separately from guest payments.</p>
-  <div class="form-actions"><a class="btn ghost" href="registrations.php">Cancel</a><button class="btn violet" type="submit"<?= \Ismile\Admin\Page::confirm('violet','gift',$retrying?'Retry this ticket request?':'Issue this free ticket?','PSOOLA will issue the ticket for this sponsored guest. The guest pays nothing.',[],['form'=>'sponsored','note'=>'PSOOLA records its listed direct-order price. The sponsoring company and provider amount are kept on record.','yes'=>$retrying?'Retry ticket request':'Issue free ticket','no'=>'Go back']) ?>><?= $retrying?'Retry ticket request':'Issue free ticket' ?></button></div>
+  <p class="muted small">No new free-ticket orders can be submitted while issuance is paused.</p>
+  <div class="form-actions"><a class="btn ghost" href="registrations.php">Back to registrations</a><button class="btn violet" type="submit" disabled>Free ticket issuance paused</button></div>
 </form>
 <?php $requests=\Ismile\Db::all('SELECT * FROM sponsored_ticket_orders WHERE created_by=? ORDER BY id DESC LIMIT 10',[$user['id']]); if($requests): ?>
 <section class="card caller-form"><h2>Your recent free ticket requests</h2><div class="table-wrap"><table><thead><tr><th>Guest</th><th>Sponsoring company</th><th>Status</th><th>Action</th></tr></thead><tbody>
