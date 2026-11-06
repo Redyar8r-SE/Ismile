@@ -14,6 +14,7 @@ use Ismile\SiteData;
 use Ismile\Tickets;
 use Ismile\Workshops;
 use Ismile\WorkshopCatalog;
+use Ismile\PsoolaTickets;
 
 if (!isset($registration, $user, $id)) { http_response_code(404); exit; }
 
@@ -62,6 +63,8 @@ $field = static function (string $label, mixed $value, string $glyph = 'user', b
 $providerAccess = $sponsoredOrder && (int)$sponsoredOrder['is_complimentary'] && Auth::canIssueComplimentary($user)
     && ($user['role'] === 'owner' || (int)$sponsoredOrder['created_by'] === (int)$user['id']);
 $ticketUrl = Links::statusUrl($registration);
+$canPsoolaTicket = PsoolaTickets::canView($user,$registration);
+$hasPsoolaTicket = $canPsoolaTicket && PsoolaTickets::available($user,$registration);
 Page::top('Registration details', $inCheckin ? 'checkin' : 'registrations', '', true);
 if ($inCheckin) echo \Ismile\Admin\CheckinWorkspace::navigation('guests',$user,$workspaceDay);
 ?>
@@ -115,7 +118,7 @@ if ($inCheckin) echo \Ismile\Admin\CheckinWorkspace::navigation('guests',$user,$
     <div class="rd-main">
       <section class="rd-card rd-admission"><div class="rd-section-title"><h2><?= $icon('ticket') ?><?= $isComp ? 'Guest ticket' : 'Event ticket' ?></h2><span class="rd-badge <?= $activeTicket ? 'green' : ($ticket ? 'red' : 'gold') ?>"><?= $activeTicket ? 'Issued' : ($ticket ? 'Cancelled' : 'Not issued') ?></span></div>
         <div class="rd-ticket-summary"><div><h3>iSmile International Dental Summit</h3><p>19–20 November 2026 <span>·</span> <?= $e(Registrations::ticketName($registration['ticket_type'])) ?></p></div><div class="rd-total"><span><?= $registration['status'] === 'paid' ? 'PAID TOTAL' : 'TOTAL' ?></span><strong><?= $total !== null ? $e(Page::money($total,$currency)) : 'Not confirmed' ?></strong></div></div>
-        <?php if ($activeTicket): ?><div class="rd-ticket-actions"><a class="btn violet" href="<?= $e($ticketUrl) ?>" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer" data-rd-ticket="view"<?= $providerAccess ? ' data-order-id="'.(int)$sponsoredOrder['id'].'"' : '' ?>><?= $icon('external') ?>View ticket</a><button class="btn ghost" type="button" data-rd-ticket="copy"<?= $providerAccess ? ' data-order-id="'.(int)$sponsoredOrder['id'].'"' : '' ?>><?= $icon('copy') ?>Copy ticket link</button></div><p class="rd-link-result" role="status" data-rd-link-result></p>
+        <?php if ($activeTicket): ?><div class="rd-ticket-actions"><a class="btn violet" href="<?= $e($ticketUrl) ?>" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer" data-rd-ticket="view"<?= $providerAccess ? ' data-order-id="'.(int)$sponsoredOrder['id'].'"' : '' ?>><?= $icon('external') ?>View ticket</a><button class="btn ghost" type="button" data-rd-ticket="copy"<?= $providerAccess ? ' data-order-id="'.(int)$sponsoredOrder['id'].'"' : '' ?>><?= $icon('copy') ?>Copy ticket link</button><?php if ($canPsoolaTicket): ?><button class="btn ghost" type="button" data-rd-ticket="psoola" data-registration-id="<?= $id ?>"<?= !$hasPsoolaTicket ? ' disabled title="No issued PSOOLA order is linked to this registration."' : '' ?>><?= $icon('ticket') ?>View PSOOLA ticket</button><?php endif; ?></div><p class="rd-link-result" role="status" data-rd-link-result></p>
         <?php elseif ($ticket): ?><p class="rd-hint">This ticket has been cancelled.</p><?php else: ?><p class="rd-hint">A ticket appears after payment or complimentary issuance is confirmed.</p><?php endif; ?>
       </section>
       <?php if (Auth::can($user,'workshops')): ?><section class="rd-card rd-workshops"><div class="rd-section-title"><h2><?= $icon('workshops') ?>Workshops</h2><span class="rd-badge neutral">iSmile</span></div>

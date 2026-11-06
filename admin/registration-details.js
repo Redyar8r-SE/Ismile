@@ -15,15 +15,31 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!ticket) return;
     event.preventDefault();
     if (ticket.dataset.pending === "true") return;
-    const view = ticket.dataset.rdTicket === "view";
+    const view = ticket.dataset.rdTicket === "view" || ticket.dataset.rdTicket === "psoola";
     const result = profile.querySelector("[data-rd-link-result]");
     let tab;
-    if (view) { tab = window.open("about:blank", "_blank"); if (tab) tab.opener = null; }
+    if (view) {
+      tab = window.open("about:blank", "_blank");
+      if (tab) {
+        tab.opener = null;
+        const policy = tab.document.createElement("meta"); policy.name = "referrer"; policy.content = "no-referrer"; tab.document.head.append(policy);
+      }
+    }
     ticket.dataset.pending = "true";
     ticket.setAttribute("aria-busy", "true");
     try {
       let url;
-      if (ticket.dataset.orderId) {
+      if (ticket.dataset.rdTicket === "psoola") {
+        const response = await fetch("psoola-ticket.php", {
+          method: "POST", credentials: "same-origin", cache: "no-store",
+          headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
+          body: new URLSearchParams({ registration_id: ticket.dataset.registrationId, csrf: profile.dataset.csrf }),
+        });
+        if (!(response.headers.get("content-type") || "").includes("application/json")) throw Error("Reload this page and sign in again to view the PSOOLA ticket.");
+        const data = await response.json();
+        if (!response.ok || !data.ticketsUrl) throw Error(data.error || "PSOOLA could not return the ticket page.");
+        url = data.ticketsUrl;
+      } else if (ticket.dataset.orderId) {
         const response = await fetch("registration.php?new=free", {
           method: "POST", credentials: "same-origin", cache: "no-store",
           headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },

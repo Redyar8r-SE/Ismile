@@ -19,6 +19,7 @@ http.createServer(async(req,res)=>{
  const reply=(status,body,headers={})=>{res.writeHead(status,{'Content-Type':'application/json',...headers});res.end(JSON.stringify(body));};
  const error=(status,code,headers={})=>reply(status,{error:{code,message:'Fixture '+code},requestId:'support-'+code},headers);
  if(url.pathname==='/fixture')return reply(200,{posts,creations,reads,catalogueReads,unsafePosts,checkoutPosts,sessions:[...sessions.values()]});
+ if(url.pathname==='/fixture/seed-order'&&req.method==='POST'){let raw='';for await(const data of req)raw+=data;const {session,lookupId}=JSON.parse(raw);sessions.set(lookupId||session.id,{...session,request:session.request||{partnerReference:session.partnerReference}});return reply(200,{ok:true});}
  if(url.pathname==='/fixture/permission'){permission=url.searchParams.get('enabled')==='1';return reply(200,{ok:true});}
  if(url.pathname==='/fixture/stock'){const type=events.find(e=>e.id===url.searchParams.get('event'))?.shows[0]?.ticketTypes[0];if(type)type.available=Number(url.searchParams.get('available'));return reply(200,{ok:!!type});}
  if(url.pathname==='/fixture/delivery'){const s=sessions.get(url.searchParams.get('id'));if(s){s.emailStatus='delivered';s.whatsappStatus='delivered';}return reply(200,{ok:!!s});}

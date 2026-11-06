@@ -93,3 +93,23 @@ registration and workshop booking to one existing active account, verifies that
 only those two flags changed, and preserves the role and sign-in security.
 The deployment's optional `workshop_editor_email` input invokes this grant and
 checks the designated account's real pages without issuing production tickets.
+
+## View PSOOLA ticket
+
+The extra button beside View ticket and Copy ticket link retrieves the existing
+order's `ticketsUrl` through authenticated `POST admin/psoola-ticket.php`. That
+endpoint makes only a PSOOLA `GET /orders/{saved-id}` request. It verifies order
+identity/reference/status and confirmed amount/currency, retaining full zero-total
+complimentary validation for guest orders. Owners, individually authorized
+workshop staff, and staff accessing their own registrations can use it.
+
+The link is returned uncached and is never saved in HTML, logs or browser storage.
+It opens PSOOLA's original ticket page containing the real QR tickets. The API
+guide does not provide a separate QR-code payload, and no replacement QR or PDF
+is generated. Orders for which PSOOLA returns a null/invalid link show an explicit
+retrieval error. Local-only tickets show a disabled provider button.
+
+A live read-only check retrieved an existing provider ticket link and received
+HTTP 200 from its official ticket page. Some other issued orders returned
+`ticketsUrl: null`; the button cannot open a provider ticket page for those until
+PSOOLA supplies the link. No real tickets were created or delivery retried.

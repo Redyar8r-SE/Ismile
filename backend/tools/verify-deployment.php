@@ -150,6 +150,11 @@ if ($profileId) {
     $check('Registration details preserve contact history and protected actions', str_contains($profile,'Email address') && str_contains($profile,'rd-history') && str_contains($profile,'Edit details') && str_contains($profile,'rd-menu'));
 }
 $check('Guest workshop request storage is installed', (bool)Db::value("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='guest_workshop_orders'"));
+$psoolaProfileId = Db::value("SELECT r.id FROM registrations r JOIN tickets t ON t.registration_id=r.id AND t.cancelled_at IS NULL WHERE r.status IN ('paid','complimentary') AND (EXISTS(SELECT 1 FROM payments p WHERE p.registration_id=r.id AND p.gateway='psoola' AND p.status='paid' AND p.provider_payment_id IS NOT NULL) OR EXISTS(SELECT 1 FROM sponsored_ticket_orders o WHERE o.registration_id=r.id AND o.status='issued' AND o.provider_order_id IS NOT NULL)) ORDER BY r.id DESC LIMIT 1");
+if ($psoolaProfileId) {
+    $ticketProfile = $render('registration','id='.(int)$psoolaProfileId);
+    $check('PSOOLA ticket-page button is available for a linked issued registration', str_contains($ticketProfile,'data-rd-ticket="psoola"') && str_contains($ticketProfile,'View PSOOLA ticket'));
+}
 if ($workshopEmail = strtolower(trim((string)getenv('WORKSHOP_EDITOR_EMAIL')))) {
     $manager = Db::one('SELECT * FROM admin_users WHERE email=? AND disabled_at IS NULL',[$workshopEmail]);
     $check('designated account has guest registration and all-attendee workshop booking', $manager && Auth::canBookWorkshops($manager) && Auth::canIssueComplimentary($manager));

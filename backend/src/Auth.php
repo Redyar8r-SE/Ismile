@@ -246,6 +246,7 @@ final class Auth
     public static function viewerMayPost(array $user, string $script): bool
     {
         $page = basename($script);
+        if ($page === 'psoola-ticket.php') return Auth::can($user,'edit') || self::canBookWorkshops($user);
         if (in_array($page, ['registration.php','workshops.php'], true) && self::canBookWorkshops($user)) return true;
         if (in_array($page, ['registration.php', 'registrations.php'], true) && (int) ($user['registration_manage_access'] ?? 0) === 1) return true;
         if ($page === 'association.php') return self::canManageAssociation($user);
