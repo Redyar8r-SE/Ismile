@@ -1034,11 +1034,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const guest = ["first_name","father_name","grandfather_name"].map(key=>form.elements[key].value.trim()).filter(Boolean).join(" ");
       const email = form.elements.email.value.trim(), reason = form.elements.complimentary_reason.value.trim();
       const issue = form.querySelector("[data-guest-issue]");
-      form.querySelector("[data-guest-review]").textContent = [guest,email,"1 free ticket",reason].filter(Boolean).join(" / ");
+      form.querySelector("[data-guest-review]").textContent = [guest,email,"1 guest ticket",reason].filter(Boolean).join(" / ");
       issue.disabled = !data.enabled;
       issue.setAttribute("data-confirm",words.confirm);
       issue.dataset.confirmBox = JSON.stringify({tone:"violet",icon:"ticket",title:words.confirm,text:words.total,
-        facts:[["user",guest],["mail",email],["ticket","1 free ticket"],["info",reason]],
+        facts:[["user",guest],["mail",email],["ticket","1 guest ticket"],["info",reason]],
         note:words.confirm_note,yes:words.issue,no:words.cancel,dir:"ltr",lang:"en"});
     };
     form.addEventListener("input",review);

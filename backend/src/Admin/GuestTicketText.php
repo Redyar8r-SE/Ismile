@@ -90,8 +90,8 @@ final class GuestTicketText
             'no_addons'=>'Ji bo vê bilêtê vebijêrkên piştgirîkirî tune ne.',
             'setup_required'=>'Berî çalakkirina derxistina rastîn, divê PSOOLA destûra bilêtên belaş bide û ceribandina destûrdayî serkeftî be.',
         ];
-        if($locale==='en')$en=array_replace($en,['title'=>'Free ticket','intro'=>'Enter the guest details to issue one free ticket for this event.',
-            'name'=>'Guest name','review'=>'Review free ticket','issue'=>'Issue free ticket','issued'=>'Free ticket issued','history'=>'Free ticket history']);
+        if($locale==='en')$en=array_replace($en,['title'=>'Guest ticket','intro'=>'Enter the guest details to issue one complimentary ticket for this event.',
+            'name'=>'Guest name','review'=>'Review guest ticket','issue'=>'Issue guest ticket','issued'=>'Guest ticket issued','history'=>'Guest ticket history']);
         return array_replace($en,match($locale){'ar'=>$ar,'ckb'=>$ckb,'kmr'=>$kmr,default=>[]});
     }
 }
