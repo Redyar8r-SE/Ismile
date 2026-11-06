@@ -13,6 +13,7 @@ final class GuestOrders
     public static function issueSingle(array $user,array $in): array
     {
         self::authorize($user);
+        if(($in['delivery_confirmation']??'')!=='email-whatsapp-v1')throw new UserError('Confirm the guest agreed to WhatsApp ticket messages using the Issue guest ticket action.');
         $parts=[];
         foreach(['first_name','father_name','grandfather_name'] as $key) {
             $part=Validate::text($in[$key]??'',61);
@@ -25,9 +26,9 @@ final class GuestOrders
         $event=App::config('payments.psoola.event_id','');$show=App::config('payments.psoola.show_id','');
         $ticket=App::config('payments.psoola.ticket_types.'.$type,'');
         if(!$event||!$show||!$ticket)throw new UserError('The free ticket for this event needs server configuration. Ask the Owner to check the PSOOLA event and ticket mapping.');
-        $request=array_intersect_key($in,array_flip(['attempt','email','phone','sponsoring_company','complimentary_reason','whatsapp_consent']));
+        $request=array_intersect_key($in,array_flip(['attempt','email','phone','sponsoring_company','complimentary_reason']));
         return self::issue($user,$request+['buyer_name'=>implode(' ',$parts),'specialty'=>$specialty,
-            'event_id'=>$event,'show_id'=>$show,'ticket_type_id'=>$ticket,'quantity'=>1,'locale'=>'en','add_on_ids_json'=>'[]']);
+            'event_id'=>$event,'show_id'=>$show,'ticket_type_id'=>$ticket,'quantity'=>1,'locale'=>'en','add_on_ids_json'=>'[]','whatsapp_consent'=>'1']);
     }
 
     public static function enabled(): bool

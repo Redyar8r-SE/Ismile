@@ -1035,6 +1035,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const email = form.elements.email.value.trim(), reason = form.elements.complimentary_reason.value.trim();
       const issue = form.querySelector("[data-guest-issue]");
       form.querySelector("[data-guest-review]").textContent = [guest,email,"1 guest ticket",reason].filter(Boolean).join(" / ");
+      form.querySelector("[data-guest-preview-name]").textContent = guest || "Your guest";
       issue.disabled = !data.enabled;
       issue.setAttribute("data-confirm",words.confirm);
       issue.dataset.confirmBox = JSON.stringify({tone:"violet",icon:"ticket",title:words.confirm,text:words.total,
@@ -1066,6 +1067,14 @@ document.addEventListener("DOMContentLoaded", () => {
     orderForm.addEventListener("submit", event => {
       if (event.defaultPrevented) return;
       if (orderForm.dataset.guestPending) { event.preventDefault(); return; }
+      if (orderForm.matches('[data-guest-ticket-form]')) {
+        if (!event.submitter?.matches('[data-guest-issue]')) {
+          event.preventDefault();
+          orderForm.querySelector('[data-guest-issue]').click();
+          return;
+        }
+        orderForm.elements.delivery_confirmation.value = 'email-whatsapp-v1';
+      }
       orderForm.dataset.guestPending = "1";
       orderForm.querySelectorAll('button[type="submit"],button:not([type])').forEach(button => {button.disabled=true;button.textContent=words.issuing;});
     });

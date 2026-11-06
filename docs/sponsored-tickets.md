@@ -1,6 +1,6 @@
 # Complimentary guest tickets
 
-Authorized staff open **Registrations > Free ticket** alongside cash sales.
+Authorized staff open **Registrations > Guest ticket** alongside cash sales.
 The form collects first, second and third names, specialty, email, WhatsApp
 number, sponsoring company and a required reason. It has no language controls,
 event/show/type/quantity selectors, add-on section or availability-refresh button.
@@ -9,7 +9,18 @@ add-ons. Student specialty uses the configured student type; all other
 specialties use professional. Posted ticket selections cannot override these
 defaults. Availability and permission are still checked through PSOOLA before
 issuance. Saved historical retries retain their exact original payloads.
-Sponsoring company is optional. WhatsApp consent starts unchecked.
+Sponsoring company is optional. Labels omit asterisks while required validation
+remains enforced. The approved layout pairs guest details with a complimentary
+ticket preview and a live guest-name summary. It has no introductory subtitle,
+setup banner or delivery checkbox. Issuance still obeys its server feature flag.
+
+The staff form requests delivery by **Email + WhatsApp**. Its delivery notice and
+final Issue confirmation explicitly state that issuing confirms the guest's
+WhatsApp permission. The browser records `delivery_confirmation` only when the
+staff member submits the Issue action. The server rejects a missing confirmation
+before calling PSOOLA, then saves the existing consent contract, confirmation time,
+reference and staff identity with the immutable order. Saved retries preserve
+their original delivery choices and consent evidence.
 
 ## Configuration and activation
 
@@ -78,8 +89,9 @@ page HTML, browser storage and analytics.
 PSOOLA handles email delivery. Email and WhatsApp statuses are separate from
 issuance; queued/sent does not mean delivered. An email failure retains the
 issued order and link and never causes reissuance. WhatsApp consent is sent only
-when staff explicitly record the guest's agreement, using the existing consent
-contract; a phone number alone grants no consent.
+when staff explicitly confirm the guest's agreement in the Issue action, using
+the existing consent contract; a phone number alone grants no consent. The
+general integration still omits WhatsApp consent unless explicitly supplied.
 
 The existing HMAC verifier checks the original raw body, timestamp freshness and
 signature in constant time. Guest webhook processing requires an event ID,

@@ -91,7 +91,9 @@ final class GuestTicketText
             'setup_required'=>'Berî çalakkirina derxistina rastîn, divê PSOOLA destûra bilêtên belaş bide û ceribandina destûrdayî serkeftî be.',
         ];
         if($locale==='en')$en=array_replace($en,['title'=>'Guest ticket','intro'=>'Enter the guest details to issue one complimentary ticket for this event.',
-            'name'=>'Guest name','review'=>'Review guest ticket','issue'=>'Issue guest ticket','issued'=>'Guest ticket issued','history'=>'Guest ticket history']);
+            'name'=>'Guest name','review'=>'Review guest ticket','issue'=>'Issue guest ticket','issued'=>'Guest ticket issued','history'=>'Recent guest tickets',
+            'company'=>'Sponsoring company','reason'=>'Reason for complimentary ticket',
+            'confirm_note'=>'By issuing, you confirm the guest agreed to WhatsApp ticket messages. PSOOLA must confirm a complimentary total of 0 IQD. No paid fallback is allowed.']);
         return array_replace($en,match($locale){'ar'=>$ar,'ckb'=>$ckb,'kmr'=>$kmr,default=>[]});
     }
 }
