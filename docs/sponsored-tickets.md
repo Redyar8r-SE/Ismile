@@ -21,6 +21,11 @@ complimentary issuance**; cash-sale permission is insufficient. Obtain an
 authorized staging event and staging key from PSOOLA and verify issuance there
 before enabling production. Never issue production tickets as a deployment test.
 The application does not determine partner permission from cash-sale access.
+For the existing GitHub deployment, put the same configuration in the private
+`API_PSOOLA_CONFIG` secret: `api_base`, `api_key`, the existing event/type/add-on
+mapping and webhook secret, plus `complimentary_enabled: true` only after staging
+verification. Omission keeps issuance disabled. Both host-only and full-prefix
+API bases are supported by that deployment configuration.
 
 Apply database updates with the existing `backend/tools/install.php` procedure.
 The additive `2026-11-06-complimentary-orders.sql` migration preserves legacy

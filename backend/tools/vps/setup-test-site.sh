@@ -292,7 +292,8 @@ if [ -n "${PSOOLA_CONFIG:-}" ]; then
     $text = static fn ($v): bool => is_string($v) && $v !== "";
     $ids = static fn ($v, array $keys): bool => is_array($v) && array_reduce($keys, static fn ($ok, $k) => $ok && is_string($v[$k] ?? null) && $v[$k] !== "", true);
     if (!is_array($in) || !$text($in["api_key"] ?? null) || !$text($in["webhook_secret"] ?? null)
-        || !preg_match("~^https://[a-z0-9.-]+$~", (string) ($in["api_base"] ?? ""))
+        || !preg_match("~^https://[a-z0-9.-]+(?:/api/partner/v1)?/?$~D", (string) ($in["api_base"] ?? ""))
+        || (isset($in["complimentary_enabled"]) && !is_bool($in["complimentary_enabled"]))
         || !$text($in["event_id"] ?? null) || !$text($in["show_id"] ?? null)
         || !$ids($in["ticket_types"] ?? null, ["professional", "student", "vip"])
         || !$ids($in["add_ons"] ?? null, ["lunchDay1", "lunchDay2"])) {
@@ -302,6 +303,8 @@ if [ -n "${PSOOLA_CONFIG:-}" ]; then
     $cfg["payments"]["psoola"] = [
         "api_base" => rtrim($in["api_base"], "/"), "api_key" => $in["api_key"],
         "merchant_id" => (string) ($in["merchant_id"] ?? ""), "webhook_secret" => $in["webhook_secret"],
+        // Separate opt-in after partner permission and authorized staging verification.
+        "complimentary_enabled" => ($in["complimentary_enabled"] ?? false) === true,
         "event_id" => $in["event_id"], "show_id" => $in["show_id"],
         "ticket_types" => array_intersect_key($in["ticket_types"], array_flip(["professional", "student", "vip"])),
         "add_ons" => array_intersect_key($in["add_ons"], array_flip(["lunchDay1", "lunchDay2"])),
