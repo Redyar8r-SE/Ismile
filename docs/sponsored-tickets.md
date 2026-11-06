@@ -1,10 +1,15 @@
 # Complimentary guest tickets
 
-Authorized staff open **Registrations > Guest tickets** alongside cash sales.
-The form selects a PSOOLA event, general-admission show, ticket type, quantity
-and supported complimentary add-ons. It collects guest contact details, a
-required reason and ticket language (`en`, `ar`, `ckb`, `kmr`). Arabic and Sorani
-use RTL. Sponsoring company is optional. WhatsApp consent starts unchecked.
+Authorized staff open **Registrations > Free ticket** alongside cash sales.
+The form collects first, second and third names, specialty, email, WhatsApp
+number, sponsoring company and a required reason. It has no language controls,
+event/show/type/quantity selectors, add-on section or availability-refresh button.
+The server selects the configured event and show, one ticket, English and no
+add-ons. Student specialty uses the configured student type; all other
+specialties use professional. Posted ticket selections cannot override these
+defaults. Availability and permission are still checked through PSOOLA before
+issuance. Saved historical retries retain their exact original payloads.
+Sponsoring company is optional. WhatsApp consent starts unchecked.
 
 ## Configuration and activation
 

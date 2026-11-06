@@ -1029,79 +1029,21 @@ document.addEventListener("DOMContentLoaded", () => {
   let data;
   try { data = JSON.parse(dataNode.textContent); } catch { return; }
   const words = data.words, form = root.querySelector("[data-guest-ticket-form]");
-  const label = names => names?.[data.ui] || (data.ui === "ckb" ? names?.ku : "") || names?.en || Object.values(names || {})[0] || "";
   if (form) {
-    const eventSelect = form.elements.event_id, showSelect = form.elements.show_id, typeSelect = form.elements.ticket_type_id;
-    const quantity = form.elements.quantity, addons = form.querySelector("[data-guest-addons]"), issue = form.querySelector("[data-guest-issue]");
-    const result = form.querySelector("[data-guest-form-error]");
-    let events = data.events || [], values = data.values || {};
-    if (typeof values.add_on_ids_json === "string") {
-      try { const saved = JSON.parse(values.add_on_ids_json); values.add_on_ids = Array.isArray(saved) ? saved : []; } catch { values.add_on_ids = []; }
-    }
-    const options = (select, rows, selected) => {
-      select.replaceChildren(new Option(words.choose, ""));
-      rows.forEach(row => {
-        const option = new Option(label(row.name), row.id);
-        option.disabled = !!row.closed || row.available === 0;
-        select.add(option);
-      });
-      select.value = selected || "";
-    };
-    const currentEvent = () => events.find(event => event.id === eventSelect.value);
-    const currentShow = () => currentEvent()?.shows.find(show => show.id === showSelect.value);
-    const currentType = () => currentShow()?.ticketTypes.find(type => type.id === typeSelect.value);
     const review = () => {
-      const event = currentEvent(), show = currentShow(), type = currentType();
-      const guest = form.elements.buyer_name.value.trim() || form.elements.email.value.trim();
-      const summary = [guest, label(event?.name), label(show?.name), `${label(type?.name)} × ${quantity.value}`, form.elements.complimentary_reason.value.trim()].filter(Boolean);
-      form.querySelector("[data-guest-review]").textContent = summary.join(" · ");
-      form.elements.add_on_ids_json.value = JSON.stringify([...addons.querySelectorAll("input:checked")].map(input=>input.value));
-      issue.disabled = !data.enabled || !event || !show || !type || !!type.closed || !!show.closed || type.available === 0;
-      issue.setAttribute("data-confirm", words.confirm);
+      const guest = ["first_name","father_name","grandfather_name"].map(key=>form.elements[key].value.trim()).filter(Boolean).join(" ");
+      const email = form.elements.email.value.trim(), reason = form.elements.complimentary_reason.value.trim();
+      const issue = form.querySelector("[data-guest-issue]");
+      form.querySelector("[data-guest-review]").textContent = [guest,email,"1 free ticket",reason].filter(Boolean).join(" / ");
+      issue.disabled = !data.enabled;
+      issue.setAttribute("data-confirm",words.confirm);
       issue.dataset.confirmBox = JSON.stringify({tone:"violet",icon:"ticket",title:words.confirm,text:words.total,
-        facts:[["user",guest],["ticket",[label(event?.name),label(show?.name),label(type?.name),quantity.value].join(" · ")],["info",form.elements.complimentary_reason.value.trim()]],
-        note:words.confirm_note,yes:words.issue,no:words.cancel,dir:root.dir,lang:data.ui});
+        facts:[["user",guest],["mail",email],["ticket","1 free ticket"],["info",reason]],
+        note:words.confirm_note,yes:words.issue,no:words.cancel,dir:"ltr",lang:"en"});
     };
-    const renderAddons = () => {
-      const type = currentType();
-      addons.replaceChildren();
-      const max = Math.min(100, type?.maxQuantity ?? 100, type?.available ?? 100);
-      quantity.max = String(max);
-      (type?.addOns || []).forEach(addon => {
-        const row = document.createElement("label"), input = document.createElement("input"), text = document.createElement("span");
-        input.type = "checkbox"; input.dataset.guestAddon = ""; input.value = addon.id;
-        input.disabled = addon.closed || (addon.available !== null && addon.available < Number(quantity.value));
-        input.checked = !input.disabled && (values.add_on_ids || []).includes(addon.id);
-        text.textContent = label(addon.name); row.append(input,text); addons.append(row);
-      });
-      if (!addons.children.length) addons.textContent = words.no_addons;
-      review();
-    };
-    const renderTypes = selected => { options(typeSelect,currentShow()?.ticketTypes || [],selected); renderAddons(); };
-    const renderShows = (showId,typeId) => { options(showSelect,currentEvent()?.shows || [],showId); renderTypes(typeId); };
-    const render = () => { options(eventSelect,events,values.event_id); renderShows(values.show_id,values.ticket_type_id); };
-    eventSelect.addEventListener("change", () => { values.add_on_ids=[]; renderShows(); });
-    showSelect.addEventListener("change", () => { values.add_on_ids=[]; renderTypes(); });
-    typeSelect.addEventListener("change", () => { values.add_on_ids=[]; renderAddons(); });
-    quantity.addEventListener("input", () => { values.add_on_ids=[...addons.querySelectorAll("input:checked")].map(input=>input.value); renderAddons(); });
-    form.addEventListener("input", review);
-    form.addEventListener("change", () => {
-      const checked = [...addons.querySelectorAll("input:checked")];
-      const extra = checked.length > 10;
-      checked.forEach(input => input.setCustomValidity(extra ? "Choose no more than 10 add-ons." : ""));
-      review();
-    });
-    form.querySelector("[data-guest-catalogue-refresh]").addEventListener("click", async event => {
-      const button = event.currentTarget; button.disabled = true;
-      values = {event_id:eventSelect.value,show_id:showSelect.value,ticket_type_id:typeSelect.value,add_on_ids:[...addons.querySelectorAll("input:checked")].map(input=>input.value)};
-      try {
-        const response = await fetch(data.endpoint + "&do=catalogue",{credentials:"same-origin",cache:"no-store"});
-        const body = await response.json(); if (!response.ok || !body.ok) throw Error(body.error || words.catalogue_error);
-        events = body.events; result.textContent = ""; render();
-      } catch (error) { result.textContent = error.message || words.catalogue_error; issue.disabled = true; }
-      finally { button.disabled = false; }
-    });
-    render();
+    form.addEventListener("input",review);
+    form.addEventListener("change",review);
+    review();
   }
   root.querySelectorAll("[data-guest-ticket-link]").forEach(button => button.addEventListener("click",async () => {
     const result = root.querySelector("[data-guest-link-result]");

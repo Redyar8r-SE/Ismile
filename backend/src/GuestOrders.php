@@ -9,6 +9,27 @@ final class GuestOrders
 {
     public const LOCALES=['en','ar','ckb','kmr'];
 
+    /** The staff registration form issues one ticket for this site's configured event. */
+    public static function issueSingle(array $user,array $in): array
+    {
+        self::authorize($user);
+        $parts=[];
+        foreach(['first_name','father_name','grandfather_name'] as $key) {
+            $part=Validate::text($in[$key]??'',61);
+            if(!Validate::namePart($part))throw new UserError('Enter the first, second and third names, each from 2 to 60 characters.');
+            $parts[]=$part;
+        }
+        $specialty=Validate::oneOf($in['specialty']??null,Registrations::SPECIALTIES);
+        if(!$specialty)throw new UserError('Choose a specialty.');
+        $type=$specialty==='student'?'student':'professional';
+        $event=App::config('payments.psoola.event_id','');$show=App::config('payments.psoola.show_id','');
+        $ticket=App::config('payments.psoola.ticket_types.'.$type,'');
+        if(!$event||!$show||!$ticket)throw new UserError('The free ticket for this event needs server configuration. Ask the Owner to check the PSOOLA event and ticket mapping.');
+        $request=array_intersect_key($in,array_flip(['attempt','email','phone','sponsoring_company','complimentary_reason','whatsapp_consent']));
+        return self::issue($user,$request+['buyer_name'=>implode(' ',$parts),'specialty'=>$specialty,
+            'event_id'=>$event,'show_id'=>$show,'ticket_type_id'=>$ticket,'quantity'=>1,'locale'=>'en','add_on_ids_json'=>'[]']);
+    }
+
     public static function enabled(): bool
     {
         $flag=getenv('PSOOLA_COMPLIMENTARY_ENABLED');

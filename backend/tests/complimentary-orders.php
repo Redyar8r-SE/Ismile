@@ -35,6 +35,13 @@ $check('catalogue inventory and add-ons enforced',$reject(fn()=>GuestOrders::iss
 $check('item and add-on count limits enforced',$reject(fn()=>GuestTicketCatalog::selection(['items_json'=>json_encode(array_fill(0,21,['ticketTypeId'=>'professional-test','quantity'=>1]))]+$input))&&$reject(fn()=>GuestTicketCatalog::selection(['add_on_ids'=>array_map(static fn($n)=>'add-'.$n,range(1,11))]+$input)));
 $check('JSON add-on form field survives scalar request parsing',GuestTicketCatalog::selection(['add_on_ids_json'=>'["lunch1-test"]']+$input)['items'][0]['addOnIds']===['lunch1-test']);
 $check('request guard rejects cash and prices',$reject(fn()=>GuestOrders::assertRequest(['issuanceType'=>'cash','complimentaryReason'=>'Guest']))&&$reject(fn()=>GuestOrders::assertRequest(['issuanceType'=>'complimentary','complimentaryReason'=>'Guest','amount'=>0])));
+$simple=['first_name'=>'Simple','father_name'=>'Free','grandfather_name'=>'Guest','specialty'=>'gp']+$form('simple');
+$check('simple form requires three valid names and specialty',$reject(fn()=>GuestOrders::issueSingle($owner,['father_name'=>'']+$simple))&&$reject(fn()=>GuestOrders::issueSingle($owner,['specialty'=>'invalid']+$simple)));
+$simpleOrder=GuestOrders::issueSingle($owner,['event_id'=>'tampered','quantity'=>99,'locale'=>'ar','items_json'=>'[]','add_on_ids_json'=>'["lunch1-test"]']+$simple);
+$simpleBody=json_decode($simpleOrder['request_json'],true);
+$check('simple form fixes configured event, one ticket, English and no add-ons on the server',$simpleBody['eventId']==='event-test'&&$simpleBody['showId']==='show-test'&&$simpleBody['items']==[['ticketTypeId'=>'professional-test','quantity'=>1]]&&$simpleBody['locale']==='en'&&$simpleBody['buyer']['name']==='Simple Free Guest'&&(int)$simpleOrder['provider_amount']===0);
+$studentOrder=GuestOrders::issueSingle($owner,['specialty'=>'student']+['first_name'=>'Student','father_name'=>'Free','grandfather_name'=>'Guest']+$form('simple-student'));
+$check('student specialty uses the configured student ticket',json_decode($studentOrder['request_json'],true)['items'][0]['ticketTypeId']==='student-test');
 $income=\Ismile\Admin\DashboardIncome::totals();$balance=\Ismile\Association::revenueBreakdown();$paymentCount=(int)Db::value('SELECT COUNT(*) FROM payments');$emails=(int)Db::value('SELECT COUNT(*) FROM emails');
 $input['add_on_ids']=['lunch1-test'];$order=GuestOrders::issue($owner,$input);$body=json_decode($order['request_json'],true);
 $check('issuance stores explicit flag, reason and zero total',$order['status']==='issued'&&(int)$order['is_complimentary']===1&&(int)$order['provider_amount']===0&&$body['issuanceType']==='complimentary'&&$body['complimentaryReason']===$input['complimentary_reason']);
