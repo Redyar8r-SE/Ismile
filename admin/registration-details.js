@@ -15,10 +15,21 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!ticket) return;
     event.preventDefault();
     if (ticket.dataset.pending === "true") return;
-    const view = ticket.dataset.rdTicket === "view" || ticket.dataset.rdTicket === "psoola";
-    const result = profile.querySelector("[data-rd-link-result]");
+    const provider = ticket.dataset.rdTicket === "psoola";
+    const view = ticket.dataset.rdTicket === "view" || provider;
+    const lookupView = view && (provider || !!ticket.dataset.orderId);
+    const card = ticket.closest(".rd-admission,.rd-booking");
+    let result = card ? card.querySelector("[data-rd-link-result]") : profile.querySelector("[data-rd-link-result]");
+    if (!result) {
+      result = document.createElement("p"); result.className = "rd-link-result"; result.dataset.rdLinkResult = "";
+      ticket.closest(".rd-ticket-actions")?.after(result);
+    }
+    const showResult = (message, state) => {
+      result.textContent = message; result.dataset.state = state; result.setAttribute("role", state === "error" ? "alert" : "status");
+      if (state === "error") { result.tabIndex = -1; result.focus({ preventScroll: true }); result.scrollIntoView({ block: "nearest" }); }
+    };
     let tab;
-    if (view) {
+    if (view && !lookupView) {
       tab = window.open("about:blank", "_blank");
       if (tab) {
         tab.opener = null;
@@ -27,17 +38,21 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     ticket.dataset.pending = "true";
     ticket.setAttribute("aria-busy", "true");
+    if (lookupView) showResult("Getting the PSOOLA ticket…", "pending");
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
     try {
       let url;
       if (ticket.dataset.rdTicket === "psoola") {
         const response = await fetch("psoola-ticket.php", {
           method: "POST", credentials: "same-origin", cache: "no-store",
+          signal: controller.signal,
           headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
           body: new URLSearchParams({ registration_id: ticket.dataset.registrationId, csrf: profile.dataset.csrf }),
         });
         if (!(response.headers.get("content-type") || "").includes("application/json")) throw Error("Reload this page and sign in again to view the PSOOLA ticket.");
         const data = await response.json();
-        if (!response.ok || !data.ticketsUrl) throw Error(data.error || "PSOOLA could not return the ticket page.");
+        if (!response.ok || !data.ticketsUrl) throw Error(data.error === "view_only" ? "Your account does not have permission to view this ticket." : data.error || "PSOOLA could not return the ticket page.");
         url = data.ticketsUrl;
       } else if (ticket.dataset.orderId) {
         const response = await fetch("registration.php?new=free", {
@@ -51,16 +66,18 @@ document.addEventListener("DOMContentLoaded", () => {
       } else url = profile.querySelector("a[data-rd-ticket=view]")?.href;
       if (!url) throw Error("No ticket link is available yet.");
       if (view) {
-        if (tab) tab.location.replace(url);
+        if (lookupView) { showResult("Opening the PSOOLA ticket…", "pending"); window.location.assign(url); }
+        else if (tab) tab.location.replace(url);
         else throw Error("Allow pop-ups for this site, then use View ticket again.");
       } else {
         await navigator.clipboard.writeText(url);
-        if (result) result.textContent = "Ticket link copied. Keep this private access link confidential.";
+        showResult("Ticket link copied. Keep this private access link confidential.", "success");
       }
     } catch (error) {
       if (tab) tab.close();
-      if (result) { result.textContent = error.message || "The ticket link could not be retrieved."; result.scrollIntoView({ block: "nearest" }); }
+      showResult(error.name === "AbortError" ? "The ticket lookup timed out. Please try again." : error.message || "The ticket link could not be retrieved.", "error");
     } finally {
+      clearTimeout(timeout);
       delete ticket.dataset.pending;
       ticket.removeAttribute("aria-busy");
     }
@@ -85,6 +102,8 @@ document.addEventListener("DOMContentLoaded", () => {
     requestAnimationFrame(() => { form.querySelectorAll('button[type="submit"],button:not([type])').forEach(button => { button.disabled = true; button.setAttribute("aria-busy", "true"); }); });
   }));
   window.addEventListener("pageshow", () => {
+    profile.querySelectorAll("[data-rd-ticket][data-pending]").forEach(button => { delete button.dataset.pending; button.removeAttribute("aria-busy"); });
+    profile.querySelectorAll('[data-rd-link-result][data-state="pending"]').forEach(result => { result.textContent = ""; delete result.dataset.state; });
     profile.querySelectorAll("form[data-pending]").forEach(form => {
       delete form.dataset.pending;
       form.querySelectorAll('button[aria-busy="true"]').forEach(button => { button.disabled = false; button.removeAttribute("aria-busy"); });

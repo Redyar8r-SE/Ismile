@@ -113,3 +113,9 @@ A live read-only check retrieved an existing provider ticket link and received
 HTTP 200 from its official ticket page. Some other issued orders returned
 `ticketsUrl: null`; the button cannot open a provider ticket page for those until
 PSOOLA supplies the link. No real tickets were created or delivery retried.
+
+Ticket-link lookups show progress on the registration page. Once the provider
+returns a verified link, the ticket opens in the same tab. Missing links, network
+failures and timeouts leave the profile open with a visible focused error alert;
+the interface no longer opens and immediately closes a temporary tab. Back resets
+stale loading state. Fifteen browser navigation regression checks cover these cases.

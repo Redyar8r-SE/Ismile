@@ -55,6 +55,10 @@
 .rd-ticket-actions{display:flex;flex-wrap:wrap;gap:10px}
 .rd-link-result{font-size:12px;color:var(--rd-muted);margin-top:10px!important}
 .rd-link-result:empty{display:none}
+.rd-link-result[data-state]{padding:12px 14px;border-radius:8px;font-size:13px;line-height:1.6}
+.rd-link-result[data-state="pending"]{background:#f4f1fc;color:#5145bf}
+.rd-link-result[data-state="success"]{background:#e7f4ee;color:#2d7757}
+.rd-link-result[data-state="error"]{background:#fff0ed;color:#9a3222;border-inline-start:4px solid #c85846;font-weight:500}
 .rd-empty{display:flex;align-items:center;gap:16px;background:#f6f8fa;padding:18px;border-radius:8px;margin-bottom:20px}
 .rd-empty>.nav-icon{box-sizing:content-box;background:#e9eef2;border-radius:12px;color:#6c8290;width:22px;height:22px;padding:12px}
 .rd-empty p{margin-top:6px;font-size:12px;color:var(--rd-muted)}
