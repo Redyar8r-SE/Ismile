@@ -413,7 +413,7 @@ final class Payments
             'gateway'     => $gatewayName,
             'outcome'     => 'received',
             'headers'     => mb_substr(json_encode(self::safeHeaders($headers)), 0, 20000),
-            'body'        => mb_substr($body, 0, 60000),
+            'body'        => mb_substr($gatewayName === 'psoola' ? self::safePsoolaWebhookBody($body) : $body, 0, 60000),
         ]);
 
         try {
@@ -441,7 +441,7 @@ final class Payments
         if ($gatewayName === 'psoola') {
             $event = json_decode($body,true);
             try {
-                if (\Ismile\SponsoredTickets::reconcile($providerId,$event['data']['partnerReference']??null)) {
+                if (\Ismile\SponsoredTickets::reconcile($providerId,$event['data']['partnerReference']??null,$event['id']??'')) {
                     Db::update('webhook_log',['signature_ok'=>1,'provider_payment_id'=>$providerId,'outcome'=>'sponsored ticket verified'],'id=?',[$logId]);
                     return ['status'=>200,'outcome'=>'sponsored ticket verified'];
                 }
@@ -489,8 +489,17 @@ final class Payments
 
     private static function safeHeaders(array $headers): array
     {
-        unset($headers['cookie'], $headers['authorization']);
-        return $headers;
+        return array_filter($headers, static fn($key)=>in_array(strtolower((string)$key),
+            ['content-type','user-agent','x-psoola-signature','x-psoola-request-id','x-request-id'],true), ARRAY_FILTER_USE_KEY);
+    }
+
+    private static function safePsoolaWebhookBody(string $body): string
+    {
+        // Verification below still receives the original raw body. Logs retain only support metadata.
+        $event=json_decode($body,true);$safe=[];
+        foreach(['id','type','requestId'] as $key) if(is_string($event[$key]??null)) $safe[$key]=mb_substr($event[$key],0,190);
+        foreach(['sessionId','partnerReference'] as $key) if(is_string($event['data'][$key]??null)) $safe['data'][$key]=mb_substr($event['data'][$key],0,190);
+        return (string)json_encode($safe,JSON_UNESCAPED_SLASHES);
     }
 
     /** The timed job: asks about every attempt still waiting (catches lost webhooks). */

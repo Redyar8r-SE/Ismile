@@ -10,7 +10,7 @@ final class SponsoredTickets
     /** Paid direct orders cannot satisfy a zero-price free-ticket request. */
     public static function issuanceAvailable(): bool
     {
-        return false;
+        return GuestOrders::enabled();
     }
 
     public static function guest(array $in): array
@@ -36,78 +36,7 @@ final class SponsoredTickets
 
     public static function issue(array $user, array $in): array
     {
-        if (!Auth::canIssueComplimentary($user)) throw new UserError('Your account cannot issue free tickets.');
-        if (!self::issuanceAvailable()) throw new UserError('Free ticket issuance is paused until PSOOLA supports a verified zero-price order. No order was submitted.');
-        if (App::config('payments.gateway') !== 'psoola') throw new UserError('PSOOLA ticket issuance is not available on this site.');
-        $key = $in['attempt'] ?? '';
-        if (!is_string($key) || !preg_match('/^[a-f0-9]{32}$/D', $key)) throw new UserError('Reload the free ticket form and try again.');
-        $guest = self::guest($in);
-        $consent = ($in['whatsapp_consent'] ?? '') === '1';
-        $fingerprint = hash('sha256', json_encode([$guest,$consent], JSON_THROW_ON_ERROR));
-        $attempt = Db::one('SELECT * FROM sponsored_ticket_orders WHERE attempt_key=?', [$key]);
-        if (!$attempt) {
-            if (!Settings::bool('registration_open')) throw new UserError('Registration is closed in Settings.');
-            if (Registrations::isFull(true)) throw new UserError('Registration is full: no places are left.');
-            $reference = Checkouts::newReference();
-            $body = (new PsoolaGateway())->orderBody($guest + ['ref'=>$reference]);
-            if ($consent) $body['buyer']['whatsappConsent'] = ['acknowledged'=>true,
-                'receivedAt'=>(int)floor(microtime(true)*1000), 'source'=>'other',
-                'reference'=>'ismile-sponsored-consent-'.$key, 'categories'=>['utility']];
-            try {
-                $attempt = Db::transaction(static function() use($key,$reference,$guest,$body,$user,$fingerprint): array {
-                    // Serialize submissions by this staff member, then enforce the guest key across staff.
-                    Db::one('SELECT id FROM admin_users WHERE id=? FOR UPDATE', [$user['id']]);
-                    $saved = Db::one('SELECT * FROM sponsored_ticket_orders WHERE attempt_key=?', [$key]);
-                    if ($saved) return $saved;
-                    if (Db::value("SELECT id FROM registrations WHERE email=? AND phone=? AND status<>'cancelled'", [$guest['email'],$guest['phone']])) throw new UserError('A guest with this email address and phone number is already registered. Open their existing registration.');
-                    $now = App::now();
-                    $guestKey = hash('sha256', $guest['email'].'|'.$guest['phone']);
-                    $id = Db::insert('sponsored_ticket_orders', ['attempt_key'=>$key,'partner_reference'=>$reference,
-                        'created_by'=>(int)$user['id'], 'guest_key'=>$guestKey,'active_guest_key'=>$guestKey,'fingerprint'=>$fingerprint,
-                        'guest_json'=>json_encode($guest,JSON_THROW_ON_ERROR),'request_json'=>json_encode($body,JSON_THROW_ON_ERROR),
-                        'created_at'=>$now,'updated_at'=>$now]);
-                    return Db::one('SELECT * FROM sponsored_ticket_orders WHERE id=?', [$id]);
-                });
-            } catch (\PDOException $error) {
-                if (($error->errorInfo[1] ?? 0) !== 1062) throw $error;
-                $attempt = Db::one('SELECT * FROM sponsored_ticket_orders WHERE attempt_key=?', [$key]);
-                if (!$attempt) throw new UserError('This guest already has a ticket request. Finish that request before starting another.');
-            }
-        }
-        if ((int)$attempt['created_by'] !== (int)$user['id'] || !hash_equals($attempt['fingerprint'],$fingerprint)) throw new UserError('The saved ticket request has different details. Retry with its original details.');
-        if ($attempt['status'] === 'issued') return self::registration($attempt);
-        if ($attempt['status'] === 'rejected') throw new UserError('This request was rejected. Check the details and submit a new free ticket form.');
-        if (!Settings::bool('registration_open')) throw new UserError('Registration is closed in Settings. Retry this saved request after registration reopens.');
-        $body = json_decode($attempt['request_json'],true,512,JSON_THROW_ON_ERROR);
-        try {
-            // The same body and key are replayed after timeouts, double clicks and local failures.
-            $answer = (new PsoolaGateway())->partnerRequest('POST','orders',$body,['Idempotency-Key: ismile-free-'.$key]);
-            if (!in_array($answer['status'],[200,201],true)) {
-                $code = $answer['json']['error']['code'] ?? '';
-                if (in_array($answer['status'],[400,401,403,404,422],true) || ($answer['status'] === 409 && in_array($code,['INSUFFICIENT_INVENTORY','SALES_CLOSED'],true))) {
-                    Db::update('sponsored_ticket_orders',['status'=>'rejected','active_guest_key'=>null,'last_error'=>'PSOOLA HTTP '.$answer['status'],'updated_at'=>App::now()],'id=? AND status<>?',[$attempt['id'],'issued']);
-                    throw new UserError(match($code) {
-                        'INSUFFICIENT_INVENTORY'=>'PSOOLA says this ticket is sold out.',
-                        'SALES_CLOSED'=>'PSOOLA says ticket issuance is closed for this event.',
-                        'LIMIT_EXCEEDED'=>'PSOOLA says this phone number has reached its ticket limit.',
-                        'DIRECT_ISSUE_NOT_ENABLED'=>'PSOOLA has not enabled direct ticket issuance for this account.',
-                        'EVENT_NOT_ENABLED','TICKET_TYPE_NOT_AVAILABLE'=>'PSOOLA has not enabled this event or ticket type.',
-                        default=>'PSOOLA did not accept the ticket request. Check the details and try again.',
-                    });
-                }
-                throw new \RuntimeException('PSOOLA order HTTP '.$answer['status']);
-            }
-            $session = $answer['json'] ?? [];
-            self::validate($attempt,$session);
-            return self::complete($attempt,$session);
-        } catch (UserError $error) {
-            throw $error;
-        } catch (\Throwable $error) {
-            Db::run("UPDATE sponsored_ticket_orders SET status=IF(status='issued','issued','uncertain'),last_error=?,updated_at=? WHERE id=?",['The ticket response could not be verified.',App::now(),$attempt['id']]);
-            // Do not log provider payloads, customer details or private ticket URLs.
-            App::log('warning','Sponsored ticket issuance needs a retry',['request'=>(int)$attempt['id']]);
-            throw new UserError('The ticket could not be confirmed yet. Retry this same form with its original details; the saved request prevents duplicate tickets.');
-        }
+        return GuestOrders::issue($user,$in);
     }
 
     public static function validate(array $attempt, array $session): void
@@ -169,9 +98,11 @@ final class SponsoredTickets
     }
 
     /** Verified signed webhooks recover requests whose original response was lost. */
-    public static function reconcile(string $providerId, ?string $reference = null): bool
+    public static function reconcile(string $providerId, ?string $reference = null, ?string $webhookId = null): bool
     {
+        if (GuestOrders::reconcile($providerId,$reference,$webhookId)) return true;
         $attempt = Db::one('SELECT * FROM sponsored_ticket_orders WHERE provider_order_id=? OR partner_reference=?',[$providerId,$reference]);
+        if ($attempt && $attempt['status'] !== 'issued') throw new \RuntimeException('Legacy cash-order requests require manual review; they cannot be issued as complimentary.');
         if (!$attempt) return false;
         $answer = (new PsoolaGateway())->partnerRequest('GET','orders/'.rawurlencode($providerId));
         if ($answer['status'] !== 200 || ($answer['json']['id'] ?? null) !== $providerId) throw new \RuntimeException('Sponsored order verification failed.');

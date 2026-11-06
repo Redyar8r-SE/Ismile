@@ -224,6 +224,19 @@ CREATE TABLE IF NOT EXISTS sponsored_ticket_orders (
   request_json JSON NOT NULL,
   status ENUM('pending','uncertain','rejected','issued') NOT NULL DEFAULT 'pending',
   active_guest_key CHAR(64) NULL,
+  is_complimentary TINYINT(1) NOT NULL DEFAULT 0,
+  complimentary_reason VARCHAR(500) NULL,
+  event_id VARCHAR(190) NULL,
+  show_id VARCHAR(190) NULL,
+  event_name VARCHAR(250) NULL,
+  show_name VARCHAR(250) NULL,
+  ticket_quantity SMALLINT UNSIGNED NOT NULL DEFAULT 1,
+  discount_amount BIGINT UNSIGNED NULL,
+  provider_status VARCHAR(40) NULL,
+  support_request_id VARCHAR(190) NULL,
+  last_webhook_id VARCHAR(190) NULL,
+  retry_after DATETIME NULL,
+  attempts INT UNSIGNED NOT NULL DEFAULT 0,
   provider_order_id VARCHAR(190) NULL,
   provider_amount BIGINT UNSIGNED NULL,
   provider_currency CHAR(3) NULL,
@@ -244,6 +257,15 @@ CREATE TABLE IF NOT EXISTS sponsored_ticket_orders (
   CONSTRAINT fk_sponsored_staff FOREIGN KEY (created_by) REFERENCES admin_users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Sponsored guest issuance; provider cash-sale amounts are retained separately from guest income';
+
+
+CREATE TABLE IF NOT EXISTS sponsored_ticket_events (
+  event_id VARCHAR(190) COLLATE utf8mb4_bin NOT NULL,
+  order_id INT UNSIGNED NOT NULL,
+  received_at DATETIME NOT NULL,
+  PRIMARY KEY (event_id),
+  CONSTRAINT fk_guest_webhook_order FOREIGN KEY (order_id) REFERENCES sponsored_ticket_orders(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 -- Ambassador codes, so student registrations can be counted per ambassador.

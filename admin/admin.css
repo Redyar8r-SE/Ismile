@@ -260,6 +260,15 @@ textarea{max-width:100%}
 .free-ticket-consent{display:flex;align-items:flex-start;gap:10px}
 .free-ticket-consent input{flex:none;margin-top:4px}
 .free-ticket-consent small{display:block;font-weight:400;margin-top:5px}
+[data-guest-tickets]{min-width:0}
+.guest-language-links{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
+.guest-review{padding:18px;border:1px solid #ded8f2;border-radius:14px;background:#f8f6ff;overflow-wrap:anywhere}
+.guest-review h2{font-size:16px;margin-bottom:10px}
+.guest-zero-total{font-size:22px;color:#40328a;font-variant-numeric:tabular-nums}
+.guest-addons{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px}
+.guest-addons label{display:flex;align-items:center;gap:8px}
+.guest-history{margin-top:24px;min-width:0}
+[data-guest-tickets] .facts dd{overflow-wrap:anywhere}
 .form-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px;border-top:1px solid var(--line);padding-top:16px}
 .owner-ticket{padding:14px 16px;background:#f5f3fc;border-radius:10px}
 .owner-ticket[open]>summary{margin-bottom:14px}

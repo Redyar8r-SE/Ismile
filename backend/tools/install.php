@@ -93,6 +93,12 @@ foreach ($migrations as $file) {
                 if (str_contains($statement,'ADD COLUMN sponsoring_company') && Db::value("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='registrations' AND column_name='sponsoring_company'")) continue;
                 $run([$maria ? str_replace('DROP CHECK ','DROP CONSTRAINT ',$statement) : $statement]);
             }
+        } elseif ($name === '2026-11-06-complimentary-orders.sql') {
+            foreach ($statements($file) as $statement) {
+                if (preg_match('/^ALTER TABLE sponsored_ticket_orders ADD COLUMN (\w+)/',$statement,$column)
+                    && Db::value("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='sponsored_ticket_orders' AND column_name=?",[$column[1]])) continue;
+                $run([$statement]);
+            }
         } elseif (!$methodAlreadyPresent) {
             $run($statements($file));
         }

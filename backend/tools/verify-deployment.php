@@ -127,8 +127,11 @@ foreach ($income['total'] as $currency => $amount) {
 $check('Association guest selection, revenue preview, batch history and navigation render', str_contains($html, 'data-association-selection') && str_contains($html,'data-association-balance') && str_contains($html,'data-revenue-values') && str_contains($html, 'Batch history') && str_contains($html, 'href="association.php"'));
 $check('Association shows separate cash and website balances and guest payment methods', str_contains($html,'<span>Cash payments</span>') && str_contains($html,'<span>Website payments remaining</span>') && str_contains($html,'data-website-values') && str_contains($html,'<th>Payment method</th>'));
 $freeForm=$render('registration','new=free');
-$check('Free ticket form collects guest details, specialty, email, WhatsApp and sponsoring company', str_contains($freeForm,'id="free-ticket-form"') && str_contains($freeForm,'name="first_name"') && str_contains($freeForm,'name="father_name"') && str_contains($freeForm,'name="grandfather_name"') && str_contains($freeForm,'name="specialty"') && str_contains($freeForm,'name="email"') && str_contains($freeForm,'name="phone"') && str_contains($freeForm,'name="sponsoring_company"') && str_contains($freeForm,'name="attempt"'));
-$check('Unverified zero-price issuance is paused and the submit button is disabled', !\Ismile\SponsoredTickets::issuanceAvailable() && str_contains($freeForm,'type="submit" disabled') && str_contains($freeForm,'Free ticket issuance is paused'));
+$check('Guest ticket form collects catalogue selections, guest details and a complimentary reason', str_contains($freeForm,'data-guest-ticket-form') && str_contains($freeForm,'name="event_id"') && str_contains($freeForm,'name="show_id"') && str_contains($freeForm,'name="ticket_type_id"') && str_contains($freeForm,'name="quantity"') && str_contains($freeForm,'name="email"') && str_contains($freeForm,'name="phone"') && str_contains($freeForm,'name="complimentary_reason"'));
+$explicitGuard=false;
+try { \Ismile\GuestOrders::assertRequest(['issuanceType'=>'cash','complimentaryReason'=>'Test']); }
+catch(\Ismile\UserError){$explicitGuard=true;}
+$check('Guest issuance requires an explicit complimentary request and shows a zero total', $explicitGuard && str_contains($freeForm,'Total: 0 IQD'));
 $check('Owner sees separate cash and free registration buttons', str_contains($render('registrations'),'href="registration.php?new=free"'));
 $check('Ordinary registration staff do not get the free ticket button', !str_contains($render('registrations','','registration'),'href="registration.php?new=free"'));
 foreach (['finance','viewer','sponsors'] as $role) {

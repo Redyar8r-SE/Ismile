@@ -51,14 +51,17 @@ return [
     'payments' => [
         'gateway' => 'fake',
         'psoola'  => [
-            // PSOOLA's partner API address, without /api/... and without a
-            // slash at the end: https://actions.psoola.com (live),
-            // https://stage-actions.psoola.com (PSOOLA staging),
-            // http://127.0.0.1:3211 (local PSOOLA).
+            // Use the base URL shown in the partner portal, including /api/partner/v1.
+            // PSOOLA_API_BASE_URL and PSOOLA_API_KEY may supply these server-only values.
+            // Older host-only api_base configuration remains supported.
+            // Complimentary issuance separately requires PSOOLA's partner permission.
             'api_base'       => '',
             // The partner API key PSOOLA gives you: psk_<env>_<keyId>_<secret>.
             // Test key on test.ismile.krd, live key on ismile.krd.
             'api_key'        => '',
+            // Enable only after PSOOLA grants complimentary permission and staging is verified.
+            // May also be supplied as PSOOLA_COMPLIMENTARY_ENABLED=1 on the server.
+            'complimentary_enabled' => false,
             'merchant_id'    => '',   // not used by the v1 partner API
             // Signs PSOOLA's webhooks (X-Psoola-Signature). Give PSOOLA the
             // webhook address https://<this site>/api/webhook.php.

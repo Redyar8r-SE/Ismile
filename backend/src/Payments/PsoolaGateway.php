@@ -43,8 +43,10 @@ final class PsoolaGateway implements Gateway, CashSales
 
     public function __construct()
     {
-        $this->base = rtrim((string) App::config('payments.psoola.api_base', ''), '/');
-        $this->key = (string) App::config('payments.psoola.api_key', '');
+        $this->base = rtrim((string) (getenv('PSOOLA_API_BASE_URL') ?: App::config('payments.psoola.api_base', '')), '/');
+        // Older installations store the host; the portal supplies the full partner prefix.
+        $this->base = preg_replace('~/api/partner/v1$~', '', $this->base) ?? $this->base;
+        $this->key = (string) (getenv('PSOOLA_API_KEY') ?: App::config('payments.psoola.api_key', ''));
         $this->webhookSecret = (string) App::config('payments.psoola.webhook_secret', '');
     }
 
@@ -339,6 +341,8 @@ final class PsoolaGateway implements Gateway, CashSales
     {
         return match ($lang) {
             'ar'    => 'ar',
+            'ckb'   => 'ckb',
+            'kmr'   => 'kmr',
             'ku'    => 'ckb',
             default => 'en',
         };
@@ -397,10 +401,17 @@ final class PsoolaGateway implements Gateway, CashSales
     public static function withoutLinks(string $body): string
     {
         $json = json_decode($body, true);
-        if (!is_array($json) || !array_key_exists('ticketsUrl', $json)) {
-            return $body;
-        }
-        unset($json['ticketsUrl']);
+        if (!is_array($json)) return $body;
+        $changed = false;
+        $strip = static function(array $data) use (&$strip, &$changed): array {
+            foreach ($data as $key=>$value) {
+                if (in_array($key,['ticketsUrl','ticketUrl'],true)) { unset($data[$key]); $changed=true; }
+                elseif (is_array($value)) $data[$key]=$strip($value);
+            }
+            return $data;
+        };
+        $json=$strip($json);
+        if (!$changed) return $body;
         return (string) json_encode($json, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 
@@ -465,6 +476,14 @@ final class PsoolaGateway implements Gateway, CashSales
             CURLOPT_SSL_VERIFYPEER => true,
             CURLOPT_SSL_VERIFYHOST => 2,
         ]);
+        $retryAfter = null;
+        curl_setopt($curl, CURLOPT_HEADERFUNCTION, static function($handle,string $line) use (&$retryAfter): int {
+            if (stripos($line,'Retry-After:')===0) {
+                $value=trim(substr($line,12));
+                $retryAfter=ctype_digit($value)?min(86400,(int)$value):max(0,min(86400,(strtotime($value)?:time())-time()));
+            }
+            return strlen($line);
+        });
         $body = curl_exec($curl);
         $status = (int) curl_getinfo($curl, CURLINFO_RESPONSE_CODE);
         $error = curl_error($curl);
@@ -474,6 +493,6 @@ final class PsoolaGateway implements Gateway, CashSales
             throw new GatewayNotReady('Psoola did not answer: ' . $error);
         }
         $json = json_decode((string) $body, true);
-        return ['status' => $status, 'body' => (string) $body, 'json' => is_array($json) ? $json : null];
+        return ['status' => $status, 'body' => (string) $body, 'json' => is_array($json) ? $json : null, 'retry_after'=>$retryAfter];
     }
 }

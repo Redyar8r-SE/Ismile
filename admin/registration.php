@@ -38,40 +38,7 @@ if (isset($_GET['new'])) {
         Page::redirect('registrations.php');
     }
     if (Page::query('new') === 'free') {
-        if (!Auth::canIssueComplimentary($user)) Page::redirect('registrations.php');
-        $retrying = false;
-        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET' && Page::query('retry') !== '') {
-            $saved = Db::one('SELECT * FROM sponsored_ticket_orders WHERE attempt_key=? AND created_by=?',[Page::query('retry'),$user['id']]);
-            if (!$saved) Page::redirect('registration.php?new=free');
-            if ($saved['status'] === 'issued' && $saved['registration_id']) Page::redirect('registration.php?id='.(int)$saved['registration_id']);
-            $_POST = json_decode($saved['guest_json'],true,512,JSON_THROW_ON_ERROR);
-            $request = json_decode($saved['request_json'],true,512,JSON_THROW_ON_ERROR);
-            $_POST['whatsapp_consent'] = isset($request['buyer']['whatsappConsent']) ? '1' : '';
-            if ($saved['status'] !== 'rejected') { $_POST['attempt']=$saved['attempt_key']; $retrying=true; }
-        }
-        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
-            try {
-                Auth::checkCsrf();
-                $created = \Ismile\SponsoredTickets::issue($user,$_POST);
-                Page::flash('ok', 'Free ticket issued for '.Registrations::fullName($created).'. Sponsoring company: '.$created['sponsoring_company'].'. PSOOLA handles ticket delivery.');
-                Page::redirect('registration.php?id='.(int)$created['id']);
-            } catch (UserError $error) {
-                Page::flash('error',$error->key);
-                $attempt = is_string($_POST['attempt'] ?? null) ? $_POST['attempt'] : '';
-                $saved = Db::one('SELECT * FROM sponsored_ticket_orders WHERE attempt_key=? AND created_by=?',[$attempt,$user['id']]);
-                if ($saved && $saved['status'] === 'rejected') unset($_POST['attempt']);
-                elseif ($saved) {
-                    $_POST = json_decode($saved['guest_json'],true,512,JSON_THROW_ON_ERROR);
-                    $request = json_decode($saved['request_json'],true,512,JSON_THROW_ON_ERROR);
-                    $_POST['whatsapp_consent']=isset($request['buyer']['whatsappConsent'])?'1':'';
-                    $_POST['attempt']=$saved['attempt_key']; $retrying=true;
-                }
-            } catch (\Throwable $error) {
-                \Ismile\App::log('error','Sponsored ticket request failed before completion');
-                Page::flash('error','The ticket could not be confirmed. Retry this same form before starting another request for this guest.');
-            }
-        }
-        require __DIR__ . '/_free_ticket_form.php';
+        require __DIR__ . '/_guest_tickets.php';
         exit;
     }
     if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {

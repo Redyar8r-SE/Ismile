@@ -1,67 +1,108 @@
-# Sponsored free tickets
+# Complimentary guest tickets
 
-**Issuance is paused.** The supplied PSOOLA `POST /orders` documentation creates
-full-price cash orders, which does not meet the requirement for zero-price
-tickets. `SponsoredTickets::issue()` stops before database writes or provider
-calls, including retries. The form's submit button is disabled. Do not re-enable
-issuance until PSOOLA documents and verifies a true zero-price route or ticket
-type. Existing provider amounts and order history remain unchanged.
+Authorized staff open **Registrations > Guest tickets** alongside cash sales.
+The form selects a PSOOLA event, general-admission show, ticket type, quantity
+and supported complimentary add-ons. It collects guest contact details, a
+required reason and ticket language (`en`, `ar`, `ckb`, `kmr`). Arabic and Sorani
+use RTL. Sponsoring company is optional. WhatsApp consent starts unchecked.
 
-Run `php backend/tests/sponsored-issuance-pause.php` to verify the stop without
-any database or provider connection. The integration tests below describe the
-previous implementation and are not evidence of PSOOLA zero-price support.
+## Configuration and activation
 
-Authorized staff open **Registrations → Free ticket** and enter the guest's
-first, second and third names, specialty, email, WhatsApp number and sponsoring
-company. Owner accounts and accounts with individual registration access can
-issue tickets. Ordinary cash registrars and viewers cannot.
+Reuse the existing server-side PSOOLA configuration, or set:
 
-The new form uses PSOOLA's `POST /api/partner/v1/orders` endpoint. Tickets are
-free to the guest in iSmile. PSOOLA calculates and records its direct-order
-price; the integration does not send a zero price or claim PSOOLA waived it.
-The actual provider amount, currency, order ID and sponsoring company remain
-in `sponsored_ticket_orders`, separate from guest payment income. Sponsored
-guests contribute zero to Association handovers.
+- `PSOOLA_API_BASE_URL`: the partner portal base including `/api/partner/v1`.
+- `PSOOLA_API_KEY`: the server-only partner key.
+- The existing webhook secret from the portal's webhook contract.
+- `PSOOLA_COMPLIMENTARY_ENABLED=1`, or
+  `payments.psoola.complimentary_enabled = true`, after the checks below.
 
-PSOOLA handles ticket email and, when enabled by PSOOLA and agreed to by the
-guest, WhatsApp delivery. Permission is unchecked initially. When staff record
-the guest's agreement, its timestamp, source, reference and utility category
-are durably saved with the original request. No duplicate iSmile email is sent.
-Private ticket links are removed from stored provider responses.
+Issuance defaults to disabled. PSOOLA must separately enable **Allow
+complimentary issuance**; cash-sale permission is insufficient. Obtain an
+authorized staging event and staging key from PSOOLA and verify issuance there
+before enabling production. Never issue production tickets as a deployment test.
+The application does not determine partner permission from cash-sale access.
 
-Each request has one saved body and idempotency key. Uncertain responses can
-be retried from **Your recent free ticket requests** using the original body,
-including its original consent record. A new request key cannot issue another
-ticket to the same active guest. Only a verified paid response creates the
-complimentary registration. Signed webhooks can recover a lost response;
-provider scans also match the saved order when no partner reference is present.
+Apply database updates with the existing `backend/tools/install.php` procedure.
+The additive `2026-11-06-complimentary-orders.sql` migration preserves legacy
+cash orders and can resume after partially added columns. Keep those historical
+provider amounts unchanged; old cash request bodies cannot be retried here.
 
-The installer applies `2026-11-05-sponsored-tickets.sql` on MySQL or MariaDB
-and can resume after the company column has already been added. Existing
-paid student eligibility checks remain enforced. Complimentary students do
-not need documents proving eligibility for a paid student discount.
+## Request and recovery
 
-## Local verification
+All catalogue, issuance and order lookup requests run on the authenticated
+server using the existing API client. Staff authorization and CSRF protection
+apply to issuance and private ticket links. The server constructs `POST /orders`
+with `issuanceType: complimentary` and `complimentaryReason`. It sends no prices,
+payment details, totals or return URL, and never falls back to a cash order or
+checkout session.
 
-Use an isolated database named `ismile_sponsored_test_*`, test environment and
-log-only mail. Set `payments.gateway` to `psoola` and configure its connection:
+Before POST, the database saves the original payload, staff identity, reason,
+local reference and a distinct `ismile-guest-<local order key>` idempotency key. Retries preserve
+the body and key, including any original consent evidence. Uncertain results
+remain pending reconciliation; order-reference lookup and bounded retries
+recover them. Rate limits respect `Retry-After`. Rejected requests retain their
+error; staff must deliberately start a corrected request rather than edit a
+pending order. Concurrent duplicate submissions share one provider key.
 
-- `api_base`: `http://127.0.0.1:8862`
-- `api_key`: `sponsored-local-test-key` (local fixture only)
-- `event_id` / `show_id`: `event-test` / `show-test`
-- `ticket_types.professional` / `student`: `professional-test` / `student-test`
-- `webhook_secret`: any local test secret
+Only a verified response with `isComplimentary: true`, status `paid`, channel
+`direct`, the matching reference, reason and items, and an IQD total of zero
+marks the order issued. The returned discount is stored as supplied. A positive
+total or mismatched response stays unresolved and adds no revenue. Errors retain
+safe support request IDs without logging guest payloads or credentials.
 
-After running the database installer with that configuration:
+History and PSOOLA reporting show complimentary quantities, reason, staff,
+discount and zero total separately from cash collections and paid tickets.
+One eligible summit ticket may link to an administrative complimentary attendee
+record; group orders remain in order history without invented attendee details.
+The integration uses PSOOLA's real QR tickets and does not generate replacement
+QR codes, ticket PDFs or duplicate ticket emails.
+
+## Ticket access, delivery and webhooks
+
+View/copy fetches `ticketsUrl` through a fresh authenticated `GET /orders/{id}`.
+The server verifies the saved order before returning that private link with
+`Cache-Control: no-store` and a no-referrer policy. Links are stripped recursively
+from stored provider responses and webhook logs and are absent from initial
+page HTML, browser storage and analytics.
+
+PSOOLA handles email delivery. Email and WhatsApp statuses are separate from
+issuance; queued/sent does not mean delivered. An email failure retains the
+issued order and link and never causes reissuance. WhatsApp consent is sent only
+when staff explicitly record the guest's agreement, using the existing consent
+contract; a phone number alone grants no consent.
+
+The existing HMAC verifier checks the original raw body, timestamp freshness and
+signature in constant time. Guest webhook processing requires an event ID,
+deduplicates it and confirms `GET /orders/{data.sessionId}` before updating the
+order. Replayed events cannot create another order or count tickets twice.
+
+## Automated verification
+
+Use isolated local databases and log-only mail. The complimentary suite rejects
+any database outside `ismile_sponsored_test_*` or provider outside the loopback
+fixture at port 8862. Set `ISMILE_CONFIG` to that test configuration, with the
+complimentary feature enabled and a local-only key/secret.
 
 ```sh
 node backend/tests/sponsored-provider.mjs
-# In another terminal, pointing ISMILE_CONFIG at the isolated configuration:
-php backend/tests/sponsored-tickets.php
+# In a separate terminal, using the isolated test configuration:
+php backend/tests/complimentary-orders.php
 ```
 
-The fixture never contacts PSOOLA or sends messages. The checks exercise
-permissions, validation, accounting, consent, response mismatches, lost replies,
-concurrent submissions, webhook recovery, delivery updates, admission and
-archiving. Existing cash-sale, payment-breakdown and registration-access suites
-also cover shared code.
+The fixture sends no real tickets or messages. Coverage includes zero totals,
+realistic waived amounts, add-ons/capacity, authorization, validation, permission
+errors, buyer limits, immutable retries, lost replies, concurrency, malformed
+provider responses, delivery failures, webhook verification/deduplication,
+private-link removal, legacy cash protection and zero revenue. Run the existing
+PSOOLA gateway, cash-sale, registration-access and payment-breakdown regressions
+as well. Browser checks cover staff roles, catalogues, confirmation, private
+links, translations and mobile RTL layout.
+
+## Required live staging checks
+
+Mocks do not establish the actual partner permission or production API behavior.
+With PSOOLA-authorized staging access, verify a real zero-total complimentary
+order, its actual ticket-page/QR access, selected add-on capacity, configured
+limits, delivery statuses and signed webhook receipt. Confirm a replay returns
+the same order and an induced lost response recovers it. Use designated staging
+recipients. Enable production issuance only after these checks pass.

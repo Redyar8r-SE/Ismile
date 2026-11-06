@@ -9,6 +9,7 @@ declare(strict_types=1);
 require __DIR__ . '/_boot.php';
 
 use Ismile\Admin\Page;
+use Ismile\Admin\PsoolaOrderSummary;
 use Ismile\App;
 use Ismile\Db;
 use Ismile\Payments\PsoolaCheckIns;
@@ -17,7 +18,7 @@ use Ismile\Registrations;
 
 $user = Page::guard('payments');
 $e = [Page::class, 'e'];
-$channel = in_array($_GET['channel'] ?? '', ['checkout', 'direct'], true) ? (string) $_GET['channel'] : '';
+$channel = in_array($_GET['channel'] ?? '', ['checkout', 'direct', 'complimentary'], true) ? (string) $_GET['channel'] : '';
 $q = Page::query('q', 120);
 
 $orders = [];
@@ -66,26 +67,15 @@ $itemsText = static function (array $order) use ($ourType): string {
 $millis = static fn ($ms): ?string => is_int($ms) || is_float($ms) ? date('Y-m-d H:i:s', (int) floor($ms / 1000)) : null;
 
 // Totals over every sale (before the filters).
-$sum = ['orders' => 0, 'tickets' => 0, 'card' => 0, 'cash' => 0, 'cash_orders' => 0, 'used' => 0, 'missing' => 0];
-foreach ($orders as $order) {
-    $total = (int) ($order['order']['totalAmount'] ?? 0);
-    $sum['orders']++;
-    $sum['tickets'] += (int) ($order['order']['ticketCount'] ?? 0);
-    if (($order['channel'] ?? '') === 'direct') {
-        $sum['cash'] += $total;
-        $sum['cash_orders']++;
-    } else {
-        $sum['card'] += $total;
-    }
-    foreach ((array) ($order['tickets'] ?? []) as $ticket) {
-        if (is_array($ticket) && !empty($ticket['checkedIn'])) $sum['used']++;
-    }
-    if (!isset($ours[$order['partnerReference'] ?? ''])) $sum['missing']++;
-}
+$guestOrders=[];
+foreach(Db::all('SELECT o.id,o.partner_reference,o.provider_order_id,o.complimentary_reason,o.ticket_quantity,u.name AS staff_name FROM sponsored_ticket_orders o JOIN admin_users u ON u.id=o.created_by WHERE o.is_complimentary=1 AND o.status=\'issued\'') as $guestOrder) $guestOrders[$guestOrder['provider_order_id']]=$guestOrder;
+
+$known=$ours;foreach($guestOrders as $guestOrder)$known[$guestOrder['partner_reference']]=true;
+$sum=PsoolaOrderSummary::totals($orders,$known);
 
 // The filters.
 $shown = array_values(array_filter($orders, static function (array $order) use ($channel, $q): bool {
-    if ($channel !== '' && ($order['channel'] ?? '') !== $channel) return false;
+    if ($channel !== '' && PsoolaOrderSummary::kind($order) !== ['direct'=>'cash','checkout'=>'online','complimentary'=>'complimentary'][$channel]) return false;
     if ($q === '') return true;
     $haystack = mb_strtolower(implode(' ', [
         $order['id'] ?? '', $order['partnerReference'] ?? '',
@@ -101,40 +91,43 @@ if ($problem !== null) {
     exit;
 }
 echo Page::stats([
-    ['Sales', number_format($sum['orders']), number_format($sum['tickets']) . ' tickets · ' . number_format($sum['used']) . ' used at the door', 'psoola-orders', 'blue'],
+    ['Orders', number_format($sum['orders']), number_format($sum['tickets']) . ' tickets · ' . number_format($sum['used']) . ' used at the door', 'psoola-orders', 'blue'],
     ['Paid on Psoola', number_format($sum['card']) . ' IQD', 'Card and wallet payments (FIB, FastPay, NassWallet, Qi)', 'payments', 'teal'],
     ['Cash sales', number_format($sum['cash']) . ' IQD', $sum['cash_orders'] . ($sum['cash_orders'] === 1 ? ' sale' : ' sales') . ' · iSmile owes Psoola this ticket price', 'check', 'green'],
+    ['Guest tickets', number_format($sum['complimentary_tickets']), $sum['complimentary_orders'].' complimentary orders · 0 IQD collected', 'ticket', 'violet'],
     ['Not in our database', number_format($sum['missing']), $sum['missing'] ? 'Sales with no matching registration: check these' : 'Every sale has its registration', 'users', $sum['missing'] ? 'gold' : 'violet'],
 ]);
 ?>
 <form method="get" class="card registration-filter-card">
   <div class="registration-filter-main">
     <label class="filter-field filter-search"><span>Name, email, phone or reference</span><input type="search" name="q" value="<?= $e($q) ?>" placeholder="Find a sale…"></label>
-    <label class="filter-field"><span>Sale type</span><select name="channel"><option value="">Card and cash</option><option value="checkout"<?= $channel === 'checkout' ? ' selected' : '' ?>>Paid on Psoola</option><option value="direct"<?= $channel === 'direct' ? ' selected' : '' ?>>Cash sales</option></select></label>
+    <label class="filter-field"><span>Sale type</span><select name="channel"><option value="">All orders</option><option value="checkout"<?= $channel === 'checkout' ? ' selected' : '' ?>>Paid on Psoola</option><option value="direct"<?= $channel === 'direct' ? ' selected' : '' ?>>Cash sales</option><option value="complimentary"<?= $channel === 'complimentary' ? ' selected' : '' ?>>Complimentary</option></select></label>
   </div>
   <div class="registration-filter-actions"><span></span><div><a class="btn ghost" href="psoola-orders.php">Clear filters</a><button class="btn">Apply filters</button></div></div>
 </form>
 <section class="card registration-directory">
   <div class="panel-top"><?= Page::panelHeading('Sales recorded by Psoola', number_format(count($shown)) . ' matching sales · newest first. Read live from Psoola; refunds are made by Psoola.', 'psoola-orders') ?></div>
-  <div class="table-wrap"><table class="psoola-orders"><thead><tr><th>Paid</th><th>Buyer</th><th>Bought</th><th>Total</th><th>Sale</th><th>Ticket email</th><th>At the door</th><th>Our registration</th></tr></thead><tbody>
+  <div class="table-wrap"><table class="psoola-orders"><thead><tr><th>Paid</th><th>Buyer</th><th>Bought</th><th>Total</th><th>Sale</th><th>Complimentary reason / staff</th><th>Ticket email</th><th>At the door</th><th>Our registration</th></tr></thead><tbody>
   <?php foreach ($shown as $order):
       $paid = $millis($order['paidAt'] ?? null);
       $mail = (string) ($order['emailStatus'] ?? '');
       $tickets = array_filter((array) ($order['tickets'] ?? []), 'is_array');
       $used = count(array_filter($tickets, static fn ($t) => !empty($t['checkedIn'])));
-      $mine = $ours[$order['partnerReference'] ?? ''] ?? null; ?>
+      $mine = $ours[$order['partnerReference'] ?? ''] ?? null;
+      $kind=PsoolaOrderSummary::kind($order);$guestOrder=$guestOrders[$order['id']??'']??null; ?>
     <tr>
       <td data-label="Paid"><?= $paid ? $e(Page::when($paid)) : '—' ?><small><code><?= $e((string) ($order['id'] ?? '')) ?></code></small></td>
       <td data-label="Buyer"><b><?= $e((string) ($order['buyer']['name'] ?? '')) ?></b><small dir="ltr"><?= $e((string) ($order['buyer']['email'] ?? '')) ?></small><small dir="ltr"><?= $e((string) ($order['buyer']['phone'] ?? '')) ?></small></td>
       <td data-label="Bought"><?= $e($itemsText($order)) ?></td>
       <td data-label="Total"><b><?= number_format((int) ($order['order']['totalAmount'] ?? 0)) ?></b> <?= $e((string) ($order['order']['currency'] ?? 'IQD')) ?></td>
-      <td data-label="Sale"><?= ($order['channel'] ?? '') === 'direct' ? '<span class="psoola-channel cash">Cash</span>' : '<span class="psoola-channel">Paid on Psoola</span>' ?></td>
+      <td data-label="Sale"><?= match($kind){'complimentary'=>'<span class="pill violet">Complimentary</span>','review'=>'<span class="pill gold">Needs review</span>','cash'=>'<span class="psoola-channel cash">Cash</span>',default=>'<span class="psoola-channel">Paid on Psoola</span>'} ?></td>
+      <td data-label="Complimentary reason / staff"><?php if(in_array($kind,['complimentary','review'],true)): ?><?= $e((string)($order['complimentaryReason']??$guestOrder['complimentary_reason']??'')) ?><small><?= $e($guestOrder['staff_name']??'PSOOLA') ?></small><?php else: ?>—<?php endif; ?></td>
       <td data-label="Ticket email"><?php if ($mail === ''): ?><span class="muted">—</span><?php else: ?><span class="psoola-mail<?= in_array($mail, ['bounced', 'complained', 'failed', 'delayed'], true) ? ' bad' : '' ?>"><?= $e(ucfirst($mail)) ?></span><?php endif; ?></td>
       <td data-label="At the door"><?= $tickets ? $used . ' of ' . count($tickets) . ' used' : '—' ?></td>
-      <td data-label="Our registration"><?php if ($mine): ?><a href="registration.php?id=<?= (int) $mine['id'] ?>"><?= $e(Registrations::fullName($mine)) ?></a><small><code><?= $e($mine['ref']) ?></code> · <?= Page::pill($mine['status']) ?></small><?php else: ?><span class="psoola-missing">Not in our database</span><small><code><?= $e((string) ($order['partnerReference'] ?? 'no reference')) ?></code></small><?php endif; ?></td>
+      <td data-label="Our registration"><?php if ($mine): ?><a href="registration.php?id=<?= (int) $mine['id'] ?>"><?= $e(Registrations::fullName($mine)) ?></a><small><code><?= $e($mine['ref']) ?></code> · <?= Page::pill($mine['status']) ?></small><?php elseif($guestOrder): ?><?php if(\Ismile\Auth::canIssueComplimentary($user)): ?><a href="registration.php?new=free&amp;order=<?= (int)$guestOrder['id'] ?>">Guest order</a><?php else: ?><span>Complimentary guest order</span><?php endif; ?><?php else: ?><span class="psoola-missing">Not in our database</span><small><code><?= $e((string) ($order['partnerReference'] ?? 'no reference')) ?></code></small><?php endif; ?></td>
     </tr>
   <?php endforeach; ?>
-  <?php if (!$shown): ?><tr class="empty-row"><td colspan="8"><?= Page::emptyState($orders ? 'No sales match these filters' : 'No sales yet', $orders ? 'Clear a filter or search for another buyer.' : 'Sales paid on Psoola and cash sales appear here.', 'psoola-orders') ?></td></tr><?php endif; ?>
+  <?php if (!$shown): ?><tr class="empty-row"><td colspan="9"><?= Page::emptyState($orders ? 'No sales match these filters' : 'No sales yet', $orders ? 'Clear a filter or search for another buyer.' : 'Sales paid on Psoola and cash sales appear here.', 'psoola-orders') ?></td></tr><?php endif; ?>
   </tbody></table></div>
 </section>
 <?php Page::bottom();
