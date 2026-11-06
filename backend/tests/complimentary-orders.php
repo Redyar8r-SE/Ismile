@@ -42,6 +42,10 @@ $simpleOrder=GuestOrders::issueSingle($owner,['event_id'=>'tampered','quantity'=
 $simpleBody=json_decode($simpleOrder['request_json'],true);
 $check('simple form fixes configured event, one ticket, English and no add-ons on the server',$simpleBody['eventId']==='event-test'&&$simpleBody['showId']==='show-test'&&$simpleBody['items']==[['ticketTypeId'=>'professional-test','quantity'=>1]]&&$simpleBody['locale']==='en'&&$simpleBody['buyer']['name']==='Simple Free Guest'&&(int)$simpleOrder['provider_amount']===0);
 $check('confirmed staff action requests both email and WhatsApp delivery',$simpleBody['buyer']['whatsappConsent']['acknowledged']===true&&$simpleBody['buyer']['whatsappConsent']['source']==='other'&&$simpleBody['buyer']['whatsappConsent']['categories']===['utility']);
+$directory=\Ismile\Association::attach(Db::all(\Ismile\Association::selectSql()." WHERE r.id=? AND r.status='complimentary'",[$simpleOrder['registration_id']]));
+$check('issued guest appears once by full name in Association with zero contribution',count($directory)===1&&\Ismile\Registrations::fullName($directory[0])==='Simple Free Guest'&&(int)$directory[0]['association_amount']===0&&(int)$directory[0]['receipt_total_amount']===0&&$directory[0]['association_reason']==='');
+$sameSimple=GuestOrders::issueSingle($owner,$simple);
+$check('replaying a guest ticket does not duplicate the Association guest',$sameSimple['registration_id']===$simpleOrder['registration_id']&&(int)Db::value('SELECT COUNT(*) FROM registrations WHERE ref=?',[$simpleOrder['partner_reference']])===1);
 $studentOrder=GuestOrders::issueSingle($owner,['specialty'=>'student','delivery_confirmation'=>'email-whatsapp-v1']+['first_name'=>'Student','father_name'=>'Free','grandfather_name'=>'Guest']+$form('simple-student'));
 $check('student specialty uses the configured student ticket',json_decode($studentOrder['request_json'],true)['items'][0]['ticketTypeId']==='student-test');
 $income=\Ismile\Admin\DashboardIncome::totals();$balance=\Ismile\Association::revenueBreakdown();$paymentCount=(int)Db::value('SELECT COUNT(*) FROM payments');$emails=(int)Db::value('SELECT COUNT(*) FROM emails');

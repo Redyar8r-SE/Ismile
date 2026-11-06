@@ -62,6 +62,7 @@ $dir=in_array($ui,['ar','ckb'],true)?'rtl':'ltr';
  <dt><?= $e($t('whatsapp_status')) ?></dt><dd data-guest-whatsapp-status><?= $e($deliveryText($order['whatsapp_status'])) ?></dd></dl>
  <?php if($verified): ?><p class="guest-zero-total"><strong><?= $e($t('total')) ?></strong></p><p class="muted small"><?= $e($t('delivery_note')) ?></p>
  <div class="form-actions"><button class="btn violet" type="button" data-guest-ticket-link="view" data-order="<?= (int)$order['id'] ?>"><?= $e($t('view')) ?></button><button class="btn ghost" type="button" data-guest-ticket-link="copy" data-order="<?= (int)$order['id'] ?>"><?= $e($t('copy')) ?></button></div>
+ <?php if($order['registration_id']&&\Ismile\Auth::can($user,'association')): $associationRef=\Ismile\Db::value('SELECT ref FROM registrations WHERE id=?',[$order['registration_id']]); ?><p><a class="btn ghost" data-guest-association href="association.php?<?= $e(http_build_query(['q'=>$associationRef,'sale'=>'guest','status'=>'complimentary'])) ?>">View in Association</a></p><?php endif; ?>
  <p data-guest-link-result role="status" aria-live="polite"></p>
  <?php elseif(!(int)$order['is_complimentary']): ?><p class="flash warn"><?= $e($t('legacy')) ?> · <?= $e(Page::money((int)$order['provider_amount'],$order['provider_currency']??'IQD')) ?></p>
  <?php else: ?><p class="muted"><?= $e($t('saved')) ?></p><?php if($order['last_error']): ?><p class="flash warn"><?= $e($order['last_error']) ?></p><?php endif; ?>

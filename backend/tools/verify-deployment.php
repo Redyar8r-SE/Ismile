@@ -126,6 +126,7 @@ foreach ($income['total'] as $currency => $amount) {
 }
 $check('Association guest selection, revenue preview, batch history and navigation render', str_contains($html, 'data-association-selection') && str_contains($html,'data-association-balance') && str_contains($html,'data-revenue-values') && str_contains($html, 'Batch history') && str_contains($html, 'href="association.php"'));
 $check('Association shows separate cash and website balances and guest payment methods', str_contains($html,'<span>Cash payments</span>') && str_contains($html,'<span>Website payments remaining</span>') && str_contains($html,'data-website-values') && str_contains($html,'<th>Payment method</th>'));
+$check('Association guest directory includes a Guest ticket filter',str_contains($html,'value="guest"')&&str_contains($html,'Guest ticket'));
 $freeForm=$render('registration','new=free');
 $check('Free ticket form collects names, specialty, guest contact details and a reason', str_contains($freeForm,'data-guest-ticket-form') && str_contains($freeForm,'name="first_name"') && str_contains($freeForm,'name="father_name"') && str_contains($freeForm,'name="grandfather_name"') && str_contains($freeForm,'name="specialty"') && str_contains($freeForm,'name="email"') && str_contains($freeForm,'name="phone"') && str_contains($freeForm,'name="complimentary_reason"') && !str_contains($freeForm,'guest-language-links') && !str_contains($freeForm,'name="event_id"') && !str_contains($freeForm,'name="locale"'));
 $explicitGuard=false;

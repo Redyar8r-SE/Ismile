@@ -9,6 +9,12 @@ add-ons. Student specialty uses the configured student type; all other
 specialties use professional. Posted ticket selections cannot override these
 defaults. Availability and permission are still checked through PSOOLA before
 issuance. Saved historical retries retain their exact original payloads.
+After verified issuance, each single summit guest is included in Association's
+Guest directory as a complimentary registration with a zero contribution. The
+issued order links directly to that entry using **View in Association**. The
+directory has a **Guest ticket** label and filter; repeated requests do not
+create another directory entry.
+
 Sponsoring company is optional. Labels omit asterisks while required validation
 remains enforced. The approved layout pairs guest details with a complimentary
 ticket preview and a live guest-name summary. It has no introductory subtitle,
