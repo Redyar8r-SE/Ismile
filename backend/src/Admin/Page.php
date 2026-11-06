@@ -82,6 +82,12 @@ final class Page
             'cash' => '<rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 9h.01M18 15h.01"/>',
             'bank' => '<path d="m3 8 9-5 9 5H3Zm2 3v7m7-7v7m7-7v7M3 21h18"/>',
             'security' => '<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2"/>',
+            'user' => '<circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/>',
+            'copy' => '<rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V3H3v13h5"/>',
+            'plus' => '<path d="M12 4v16M4 12h16"/>',
+            'trash' => '<path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/>',
+            'ticket-x' => '<path d="M3 5h18v5a2 2 0 0 0 0 4v5H3v-5a2 2 0 0 0 0-4Z"/><path d="m9 9 6 6m0-6-6 6"/>',
+            'hash' => '<path d="m10 3-4 18M18 3l-4 18M3 8h18M2 16h18"/>',
             default => '',
         };
         return '<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' . $drawing . '</svg>';
@@ -227,14 +233,16 @@ final class Page
         $_SESSION['flash'][] = [$kind, $message];
     }
 
-    public static function top(string $title, string $current, string $actions = ''): void
+    public static function top(string $title, string $current, string $actions = '', bool $registrationDetails = false): void
     {
         $user = self::$user;
         echo '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">';
         echo '<meta name="robots" content="noindex"><title>' . self::e($title) . ' · iSmile Database</title><link rel="icon" href="../assets/favicon-32.png?v=1" type="image/png" sizes="32x32">';
         // The version follows the files' date, so a change is never hidden by the browser's cache.
         $v = static fn (string $file): int => (int) @filemtime(App::siteFile('admin/' . $file)) ?: 1;
-        echo '<link rel="stylesheet" href="admin.css?v=' . $v('admin.css') . '"><script src="admin.js?v=' . $v('admin.js') . '" defer></script></head><body class="' . ($user ? 'admin-shell' . (self::viewOnlyHere() ? ' view-only' : '') : 'database-auth') . '" data-page="' . self::e($current) . '">';
+        echo '<link rel="stylesheet" href="admin.css?v=' . $v('admin.css') . '"><script src="admin.js?v=' . $v('admin.js') . '" defer></script>';
+        if ($registrationDetails) echo '<link rel="stylesheet" href="registration-details.css?v=' . $v('registration-details.css') . '"><script src="registration-details.js?v=' . $v('registration-details.js') . '" defer></script>';
+        echo '</head><body class="' . ($user ? 'admin-shell' . (self::viewOnlyHere() ? ' view-only' : '') : 'database-auth') . ($registrationDetails ? ' registration-detail-page' : '') . '" data-page="' . self::e($current) . '">';
         if ($user) {
             echo '<a class="skip-link" href="#main-content">Skip to content</a>';
             echo '<aside class="sidebar" id="admin-sidebar" aria-label="Database navigation">';
@@ -405,15 +413,16 @@ final class Page
      * "Book a workshop" for one person: which workshop, the price, and whether
      * the money was received now (exact amount) or is still to collect.
      */
-    public static function workshopAddForm(array $user, array $registration, string $action = ''): string
+    public static function workshopAddForm(array $user, array $registration, string $action = '', bool $profile = false): string
     {
         $isOwner = $user['role'] === 'owner';
         $options = '';
         foreach (SiteData::workshops() as $workshop) {
+            if ($profile && ($workshop['organizer'] ?? 'ismile') !== 'ismile') continue;
             $left = (int) ($workshop['totalSeats'] ?? 0) - Office::bookedCount($workshop['id']);
             $price = (int) ($workshop['price'] ?? 0);
             $options .= '<option value="' . self::e($workshop['id']) . '" data-price="' . $price . '">' . self::e(SiteData::workshopName($workshop))
-                . ' — ' . ($price > 0 ? Workshops::money($price, $workshop['currency'] ?? 'IQD') : 'no price yet') . ' — ' . max(0, $left) . ' seats left</option>';
+                . ' — ' . ($price > 0 ? Workshops::money($price, $workshop['currency'] ?? 'IQD') : 'no price yet') . ($profile ? '' : ' — ' . max(0, $left) . ' seats left') . '</option>';
         }
         return '<form method="post" class="book-form"' . ($action !== '' ? ' action="' . self::e($action) . '"' : '') . '>'
             . self::csrfField()
@@ -423,7 +432,7 @@ final class Page
             . '<fieldset class="pay-choice"><legend>Paid?</legend>'
             . '<label><input type="radio" name="payment_status" value="unpaid" checked> ✗ Not paid yet</label>'
             . '<label><input type="radio" name="payment_status" value="paid"> ✓ Paid now</label>'
-            . ($isOwner ? '<label><input type="radio" name="payment_status" value="complimentary"> ★ Free (Owner)</label>' : '')
+            . ($isOwner && !$profile ? '<label><input type="radio" name="payment_status" value="complimentary"> ★ Free (Owner)</label>' : '')
             . '</fieldset>'
             . '<div class="paid-fields"><label>Amount received (exactly the price)<input name="amount_paid" inputmode="numeric" placeholder="exactly the price"></label>'
             . '<label>How<select name="paid_how"><option value="">choose…</option><option value="cash">cash</option><option value="transfer">transfer</option><option value="psoola">Psoola</option></select></label></div>'

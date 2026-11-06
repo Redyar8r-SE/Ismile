@@ -20,7 +20,7 @@ $input=$form();$before=$fixture();
 putenv('PSOOLA_COMPLIMENTARY_ENABLED=0');
 $check('explicit server pause blocks new issuance before POST',$reject(fn()=>GuestOrders::issue($owner,$input),'disabled')&&$fixture()['posts']===$before['posts']);
 putenv('PSOOLA_COMPLIMENTARY_ENABLED=1');
-$check('full-prefix API base works without doubled prefix',count(GuestTicketCatalog::events())===2);
+$check('full-prefix API base works without doubled prefix',count(array_intersect(['event-test','other-event'],array_column(GuestTicketCatalog::events(),'id')))===2);
 $catalogue=GuestTicketCatalog::events();$check('cinema and reserved shows are excluded',count($catalogue[0]['shows'])===1&&$catalogue[0]['shows'][0]['id']==='show-test');
 $closedCatalogue=GuestTicketCatalog::normalize(['id'=>'closed','salesOpen'=>false,'maxPerOrder'=>3,'shows'=>[['id'=>'show','ticketTypes'=>[['id'=>'ticket']]]]]);
 $check('event sale windows and stricter event limits reach the form',$closedCatalogue['shows'][0]['closed']&&$closedCatalogue['shows'][0]['maxQuantity']===3&&$closedCatalogue['shows'][0]['ticketTypes'][0]['maxQuantity']===3);

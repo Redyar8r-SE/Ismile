@@ -229,7 +229,9 @@ final class GuestOrders
             if ($webhookId) Db::insert('sponsored_ticket_events',['event_id'=>$webhookId,'order_id'=>$locked['id'],'received_at'=>App::now()]);
             if ($first) Audit::log((int)$locked['created_by'],'ticket.complimentary_order','sponsored_ticket_order',(int)$locked['id'],
                 ['order'=>$session['id'],'quantity'=>(int)$locked['ticket_quantity'],'reason'=>$locked['complimentary_reason'],'total'=>0,'currency'=>'IQD']);
-            return Db::one('SELECT * FROM sponsored_ticket_orders WHERE id=?',[$locked['id']]);
+            $issued = Db::one('SELECT * FROM sponsored_ticket_orders WHERE id=?',[$locked['id']]);
+            GuestWorkshops::mirror($issued);
+            return $issued;
         });
     }
 

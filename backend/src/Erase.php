@@ -110,6 +110,7 @@ final class Erase
                 'ticket_attendance' => self::rowsIn('ticket_attendance', 'ticket_id', $ticketIds),
                 'certificates'      => Db::all('SELECT * FROM certificates WHERE registration_id = ? FOR UPDATE', [$id]),
                 'workshop_bookings' => Db::all('SELECT * FROM workshop_bookings WHERE registration_id = ? FOR UPDATE', [$id]),
+                'guest_workshop_orders' => Db::all('SELECT * FROM guest_workshop_orders WHERE registration_id = ? FOR UPDATE', [$id]),
                 'payments'          => Db::all('SELECT * FROM payments WHERE registration_id = ?' . ($checkoutIds ? ' OR checkout_id IN (' . self::marks($checkoutIds) . ')' : '') . ' FOR UPDATE', [$id, ...$checkoutIds]),
                 'checkouts'         => $checkouts,
                 'emails'            => Db::all('SELECT * FROM emails WHERE registration_id = ?' . ($checkoutIds ? ' OR checkout_id IN (' . self::marks($checkoutIds) . ')' : '') . ' FOR UPDATE', [$id, ...$checkoutIds]),

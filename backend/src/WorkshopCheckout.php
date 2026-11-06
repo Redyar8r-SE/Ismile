@@ -29,6 +29,7 @@ final class WorkshopCheckout
             $row = Db::one('SELECT * FROM workshops WHERE id=? FOR UPDATE',[$workshop['id']]);
             if (!$row || $row['status'] !== 'active') throw new UserError('wd_err_missing',null,404);
             if ($row['organizer'] === 'company') throw new UserError('wd_err_by_phone',null,409);
+            GuestWorkshops::assertNoOrder((int)$person['id'], $workshop['id']);
             if (Db::value('SELECT status FROM registrations WHERE id=? LOCK IN SHARE MODE',[$person['id']]) !== 'paid') throw new UserError('wd_err_not_registered','email',404);
             $saved = self::latest((int)$person['id'],$workshop['id']);
             if ($saved && $saved['provider_status'] === 'paid') throw new UserError('wd_err_already','email',409);
@@ -72,6 +73,7 @@ final class WorkshopCheckout
 
     public static function assertNoOpenPurchase(int $personId, string $workshopId): void
     {
+        GuestWorkshops::assertNoOrder($personId, $workshopId);
         if (Db::value("SELECT id FROM workshop_checkouts WHERE registration_id=? AND workshop_id=? AND provider_status IN ('created','unknown','awaiting_payment','paid') LIMIT 1",[$personId,$workshopId])) {
             throw new UserError('This attendee already has an online PSOOLA workshop payment. Verify or finish it before recording another payment.');
         }

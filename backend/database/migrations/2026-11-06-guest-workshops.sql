@@ -1,0 +1,23 @@
+CREATE TABLE IF NOT EXISTS guest_workshop_orders (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  registration_id INT UNSIGNED NOT NULL,
+  workshop_id VARCHAR(40) NOT NULL,
+  created_by INT UNSIGNED NOT NULL,
+  attempt_key CHAR(32) NOT NULL,
+  active_pair CHAR(64) NULL,
+  payload_json JSON NOT NULL,
+  state ENUM('pending','issued','rejected') NOT NULL DEFAULT 'pending',
+  guest_order_id INT UNSIGNED NULL,
+  booking_id INT UNSIGNED NULL,
+  created_at DATETIME NOT NULL,
+  updated_at DATETIME NOT NULL,
+  UNIQUE KEY uq_guest_workshop_attempt (attempt_key),
+  UNIQUE KEY uq_guest_workshop_pair (active_pair),
+  UNIQUE KEY uq_guest_workshop_order (guest_order_id),
+  UNIQUE KEY uq_guest_workshop_booking (booking_id),
+  CONSTRAINT fk_guest_workshop_person FOREIGN KEY (registration_id) REFERENCES registrations(id) ON DELETE CASCADE,
+  CONSTRAINT fk_guest_workshop_definition FOREIGN KEY (workshop_id) REFERENCES workshops(id),
+  CONSTRAINT fk_guest_workshop_staff FOREIGN KEY (created_by) REFERENCES admin_users(id),
+  CONSTRAINT fk_guest_workshop_order FOREIGN KEY (guest_order_id) REFERENCES sponsored_ticket_orders(id),
+  CONSTRAINT fk_guest_workshop_booking FOREIGN KEY (booking_id) REFERENCES workshop_bookings(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

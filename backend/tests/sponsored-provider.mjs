@@ -1,5 +1,6 @@
 // Local-only PSOOLA complimentary simulator. No external calls or messages.
 import http from 'node:http';
+import fs from 'node:fs';
 const sessions=new Map(),keys=new Map(),bodies=new Map(),calls=new Map(),buyers=new Map();
 const runId=Date.now().toString(36);let posts=0,creations=0,reads=0,catalogueReads=0,unsafePosts=0,checkoutPosts=0,permission=true;
 const events=[{id:'event-test',name:{en:'iSmile Test Event',ar:'?????? ???????',ckb:'????? ???????????'},currency:'IQD',shows:[
@@ -10,12 +11,16 @@ const events=[{id:'event-test',name:{en:'iSmile Test Event',ar:'?????? ???????',
   {id:'closed-test',name:{en:'Closed'},price:10000,available:100,salesOpen:false,addOns:[]}]},
  {id:'cinema-test',type:'cinema',name:{en:'Unsupported cinema'},ticketTypes:[{id:'cinema-ticket',price:10000,available:10}]}]},
  {id:'other-event',name:{en:'Other General Admission Event'},currency:'IQD',shows:[{id:'other-show',name:{en:'Other show'},ticketTypes:[{id:'other-ticket',name:{en:'Other ticket'},price:17000,available:500,addOns:[]}]}]}];
+for (const row of JSON.parse(fs.readFileSync(new URL('../assets/real-workshops-2026.json', import.meta.url),'utf8'))) {
+ events.push({id:row.provider_event_id,name:{en:row.title_en},currency:'IQD',shows:[{id:row.provider_show_id,name:{en:row.title_en},dateTime:Date.parse(row.scheduled_date+'T'+row.start_time+':00+03:00'),endTime:Date.parse(row.scheduled_date+'T'+row.end_time+':00+03:00'),ticketTypes:[{id:row.provider_ticket_type_id,name:{en:'Workshop Admission'},price:row.price,available:25,addOns:[]}]}]});
+}
 http.createServer(async(req,res)=>{
  const url=new URL(req.url,'http://127.0.0.1:8862');
  const reply=(status,body,headers={})=>{res.writeHead(status,{'Content-Type':'application/json',...headers});res.end(JSON.stringify(body));};
  const error=(status,code,headers={})=>reply(status,{error:{code,message:'Fixture '+code},requestId:'support-'+code},headers);
  if(url.pathname==='/fixture')return reply(200,{posts,creations,reads,catalogueReads,unsafePosts,checkoutPosts,sessions:[...sessions.values()]});
  if(url.pathname==='/fixture/permission'){permission=url.searchParams.get('enabled')==='1';return reply(200,{ok:true});}
+ if(url.pathname==='/fixture/stock'){const type=events.find(e=>e.id===url.searchParams.get('event'))?.shows[0]?.ticketTypes[0];if(type)type.available=Number(url.searchParams.get('available'));return reply(200,{ok:!!type});}
  if(url.pathname==='/fixture/delivery'){const s=sessions.get(url.searchParams.get('id'));if(s){s.emailStatus='delivered';s.whatsappStatus='delivered';}return reply(200,{ok:!!s});}
  if(url.pathname==='/fixture/tamper'){const s=sessions.get(url.searchParams.get('id'));if(s)s.order.totalAmount=40000;return reply(200,{ok:!!s});}
  if(req.headers.authorization!=='Bearer sponsored-local-test-key')return error(401,'UNAUTHORIZED');

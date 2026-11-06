@@ -136,6 +136,14 @@ $check('Guest issuance requires an explicit complimentary request and shows a ze
 $check('Approved Guest ticket design shows the ticket card and both delivery channels without a consent checkbox',str_contains($freeForm,'guest-issuance-layout')&&str_contains($freeForm,'guest-pass-header')&&str_contains($freeForm,'Delivery: Email + WhatsApp')&&str_contains($freeForm,'name="delivery_confirmation"')&&!str_contains($freeForm,'type="checkbox"')&&!str_contains($freeForm,'First name *')&&!str_contains($freeForm,'class="flash warn">Issuance needs setup:'));
 if(\Ismile\GuestOrders::enabled())$check('Authorized Guest ticket action is enabled in the deployed form',preg_match('/<button\b(?=[^>]*data-guest-issue)(?![^>]*\bdisabled\b)[^>]*>/',$freeForm)===1);
 $check('Owner sees separate cash and free registration buttons', str_contains($render('registrations'),'href="registration.php?new=free"'));
+$profileId = Db::value('SELECT id FROM registrations ORDER BY id LIMIT 1');
+if ($profileId) {
+    $profile = $render('registration', 'id=' . (int)$profileId);
+    $check('Approved registration details render for an existing record', str_contains($profile,'data-registration-details') && str_contains($profile,'registration-details.css') && str_contains($profile,'registration-details.js') && str_contains($profile,'Personal information') && str_contains($profile,'Registration information'));
+    $check('Registration details omit standalone Payments Emails and Notes sections', !str_contains($profile,'<h2>Payments</h2>') && !str_contains($profile,'<h2>Emails</h2>') && !str_contains($profile,'<h2>Notes</h2>'));
+    $check('Registration details preserve contact history and protected actions', str_contains($profile,'Email address') && str_contains($profile,'rd-history') && str_contains($profile,'Edit details') && str_contains($profile,'rd-menu'));
+}
+$check('Guest workshop request storage is installed', (bool)Db::value("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='guest_workshop_orders'"));
 $check('Ordinary registration staff do not get the free ticket button', !str_contains($render('registrations','','registration'),'href="registration.php?new=free"'));
 foreach (['finance','viewer','sponsors'] as $role) {
     $html = $render('association', '', $role);

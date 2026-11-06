@@ -248,11 +248,11 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && ($_POST['do'] ?? '') ===
 // ---------- Actions ----------
 Page::action(static function () use ($registration, $user, $canChange): string {
     $do = (string) ($_POST['do'] ?? '');
-    $needsEdit = ['edit', 'notes', 'workshop_add', 'workshop_change', 'resend_ticket', 'resend_email'];
+    $needsEdit = ['edit', 'notes', 'workshop_add', 'workshop_change', 'guest_workshop', 'guest_workshop_retry', 'resend_ticket', 'resend_email'];
     if ($do === 'cancel' && $user['role'] !== 'owner') {
         throw new UserError('Only the Owner can cancel a registration.');
     }
-    if (in_array($do, ['workshop_add', 'workshop_change'], true) && !Auth::can($user, 'workshops')) {
+    if (in_array($do, ['workshop_add', 'workshop_change', 'guest_workshop', 'guest_workshop_retry'], true) && !Auth::can($user, 'workshops')) {
         throw new UserError('Only the Owner books workshops.');
     }
     if (in_array($do, $needsEdit, true) && !$canChange) {
@@ -266,6 +266,14 @@ Page::action(static function () use ($registration, $user, $canChange): string {
         'notes'           => Office::saveNotes($fresh, $user, Page::post('notes', 3000)),
         'workshop_add'    => Office::addWorkshop($fresh, $user, $_POST),
         'workshop_change' => Office::changeWorkshop((int) ($_POST['booking'] ?? 0), $user, $_POST),
+        'guest_workshop' => (static function () use ($user, $fresh): string {
+            \Ismile\GuestWorkshops::start($user, $fresh, $_POST);
+            return 'Guest workshop booked. Complimentary ticket issued. Total: 0 IQD.';
+        })(),
+        'guest_workshop_retry' => (static function () use ($user, $fresh): string {
+            \Ismile\GuestWorkshops::resume($user, $fresh, (int)($_POST['request_id'] ?? 0));
+            return 'Guest workshop booked. Complimentary ticket issued. Total: 0 IQD.';
+        })(),
         'resend_email'    => (static function () use ($fresh): string {
             $email = Db::one('SELECT * FROM emails WHERE id = ? AND registration_id = ?', [(int) ($_POST['email_id'] ?? 0), $fresh['id']]);
             if ($email === null) {
@@ -278,218 +286,4 @@ Page::action(static function () use ($registration, $user, $canChange): string {
     };
 }, $back);
 
-$ticket = Tickets::forRegistration($id);
-$payments = Db::all('SELECT * FROM payments WHERE registration_id = ? ORDER BY id DESC', [$id]);
-$emails = Db::all('SELECT * FROM emails WHERE registration_id = ? ORDER BY id DESC', [$id]);
-$bookings = Db::all('SELECT wb.*, u.name AS booked_by_name FROM workshop_bookings wb LEFT JOIN admin_users u ON u.id = wb.booked_by WHERE wb.registration_id = ? AND wb.removed_at IS NULL ORDER BY wb.id', [$id]);
-$history = Db::all('SELECT a.*, u.name FROM audit_log a LEFT JOIN admin_users u ON u.id = a.user_id WHERE a.target_type = ? AND a.target_id = ? ORDER BY a.id DESC LIMIT 50', ['registration', $id]);
-$twins = Db::all("SELECT id, ref, first_name, father_name, grandfather_name, status FROM registrations WHERE id <> ? AND (email = ? OR phone = ?) AND status <> 'cancelled'", [$id, $registration['email'], $registration['phone']]);
-$prices = SiteData::prices();
-$paidPayment = Db::one("SELECT amount_confirmed, currency FROM payments WHERE registration_id = ? AND status = 'paid' LIMIT 1", [$id]);
-$paidAmount = $paidPayment !== null ? (int) $paidPayment['amount_confirmed'] : null;
-$e = [Page::class, 'e'];
-
-Page::top(Registrations::fullName($registration), $inCheckin ? 'checkin' : 'registrations', '<a class="btn ghost" href="' . Page::e($listUrl) . '">&larr; ' . ($inCheckin ? 'Guest list' : 'All registrations') . '</a>');
-if ($inCheckin) echo CheckinWorkspace::navigation('guests', $user, $workspaceDay);
-?>
-<div class="toolbar">
-  <span><code class="big"><?= $e($registration['ref']) ?></code> <?= Page::pill($registration['status']) ?>
-  <?= $registration['comp_reason'] ? '<span class="muted">(' . $e($registration['comp_reason']) . ')</span>' : '' ?></span>
-</div>
-
-<?php if ($twins): ?>
-<div class="flash warn">Possible duplicate: same email or phone as
-  <?php foreach ($twins as $twin): ?><a href="registration.php?id=<?= (int) $twin['id'] ?>"><?= $e($twin['ref']) ?></a> (<?= $e(Registrations::fullName($twin)) ?>, <?= $e($twin['status']) ?>) <?php endforeach; ?>.
-  Families may share a phone; check before changing anything.</div>
-<?php endif; ?>
-
-<div class="grid2">
-  <div class="card">
-    <h2>Details</h2>
-    <dl class="facts">
-      <dt>Name</dt><dd><b><?= $e(Registrations::fullName($registration)) ?></b></dd>
-      <dt>Phone</dt><dd dir="ltr"><?= $e($registration['phone']) ?></dd>
-      <dt>Email</dt><dd dir="ltr"><?= $e($registration['email']) ?></dd>
-      <dt>City</dt><dd><?= $e($registration['city']) ?></dd>
-      <dt>Gender / age</dt><dd><?= $e($registration['gender']) ?> / <?= $e($registration['age'] ?? '–') ?></dd>
-      <dt>Specialty</dt><dd><?= $e(Registrations::SPECIALTY_NAMES[$registration['specialty']] ?? $registration['specialty']) ?></dd>
-      <?php if (!empty($registration['sponsoring_company'])): ?><dt>Sponsoring company</dt><dd><?= $e($registration['sponsoring_company']) ?></dd><?php endif; ?>
-      <?php $sponsoredOrder = Db::one("SELECT provider_order_id,provider_amount,provider_currency,email_status,whatsapp_status FROM sponsored_ticket_orders WHERE registration_id=? AND status='issued'",[$registration['id']]); if ($sponsoredOrder): ?>
-      <dt>PSOOLA order</dt><dd><code><?= $e($sponsoredOrder['provider_order_id']) ?></code></dd>
-      <dt>Provider order amount</dt><dd><?= $e(Page::money((int)$sponsoredOrder['provider_amount'],$sponsoredOrder['provider_currency'])) ?><small class="muted"> &middot; Sponsored ticket; guest pays 0.</small></dd>
-      <dt>Ticket delivery</dt><dd>Email: <?= $e($sponsoredOrder['email_status'] ?: 'Pending update') ?> &middot; WhatsApp: <?= $e($sponsoredOrder['whatsapp_status'] ?: 'Not confirmed') ?></dd>
-      <?php endif; ?>
-      <dt>Ticket</dt><dd><?= $e(\Ismile\Registrations::ticketName($registration['ticket_type'])) ?></dd>
-      <dt>Lunch</dt><dd><?= $registration['lunch_day1'] ? 'Day 1 ' : '' ?><?= $registration['lunch_day2'] ? 'Day 2' : '' ?><?= !$registration['lunch_day1'] && !$registration['lunch_day2'] ? 'None' : '' ?></dd>
-      <dt>Paid</dt><dd><?= Page::paidBadge($registration['status']) ?> <?= $paidAmount !== null ? Page::money($paidAmount, $paidPayment['currency']) : '' ?> <?= $registration['pay_method'] ? $e(strtoupper($registration['pay_method'])) : '' ?> · <?= Page::when($registration['paid_at']) ?></dd>
-      <?php if ($registration['ticket_type'] === 'vip'): ?><dt>VIP included lunch</dt><dd>Day <?= (int) $registration['vip_lunch_day'] ?> · Call to arrange home badge delivery.</dd><?php endif; ?>
-      <dt>No-refund terms</dt><dd><?= $registration['terms_accepted_at'] ? 'accepted on the website, ' . Page::when($registration['terms_accepted_at']) : '<span class="muted">registered by the office</span>' ?></dd>
-      <dt>Language</dt><dd><?= $e($registration['lang']) ?></dd>
-      <dt>Form sent</dt><dd><?= Page::when($registration['created_at']) ?></dd>
-      <dt>Added by</dt><dd><?= $registration['created_by'] === null ? '<span class="muted">The website (the person registered online)</span>' : '<b>' . $e($addedBy ?? 'A removed account') . '</b>' . ($registration['pay_method'] === 'cash' ? ' · cash sale' : ($registration['status'] === 'complimentary' ? ' · free ticket' : '')) ?></dd>
-    </dl>
-    <?php if (!$canChange && Auth::can($user, 'edit')): ?><p class="muted small read-only-note">Read only: you can change only the people you added yourself.</p><?php endif; ?>
-    <?php if ($canChange): ?>
-    <details class="edit">
-      <summary class="btn ghost small">Edit name, email or phone</summary>
-      <form method="post" class="stack">
-        <?= Page::csrfField() ?><input type="hidden" name="do" value="edit">
-        <div class="row3"><label>First<input name="first_name" value="<?= $e($registration['first_name']) ?>" required></label><label>Second<input name="father_name" value="<?= $e($registration['father_name']) ?>" required></label><label>Last<input name="grandfather_name" value="<?= $e($registration['grandfather_name']) ?>" required></label></div>
-        <div class="row3"><label>Email<input name="email" dir="ltr" value="<?= $e($registration['email']) ?>" required></label><label>Phone<input name="phone" dir="ltr" value="<?= $e($registration['phone']) ?>" required></label><label>City<input name="city" value="<?= $e($registration['city']) ?>"></label></div>
-        <p class="muted small">Changing the name reissues the ticket and emails it again (the name goes on the certificate). Every change is logged.</p>
-        <div class="form-actions"><button class="btn">Save details</button></div>
-      </form>
-    </details>
-    <?php endif; ?>
-  </div>
-
-  <div class="card">
-    <h2>Ticket</h2>
-    <?php if ($ticket && $ticket['cancelled_at'] === null): ?>
-      <p><code class="big"><?= $e($ticket['ticket_no']) ?></code> version <?= (int) $ticket['version'] ?> · <?= $e($ticket['source']) ?></p>
-      <?php $attendance = Db::all('SELECT event_day, checked_in_at FROM ticket_attendance WHERE ticket_id=? ORDER BY event_day', [$ticket['id']]); ?>
-      <?php foreach ([1,2] as $eventDay): $arrival = array_values(array_filter($attendance, static fn($a) => (int)$a['event_day']===$eventDay))[0] ?? null; ?><p>Day <?= $eventDay ?>: <?= $arrival ? Page::pill('arrived') . ' ' . Page::when($arrival['checked_in_at']) : 'Not checked in' ?></p><?php endforeach; ?>
-      <?php if ($attendance && Auth::can($user, 'certificates')): ?><p><a class="btn green" href="certificate-download.php?id=<?= $id ?>">Download certificate (PDF)</a></p><?php else: ?><p class="muted small">Certificate available after attendance. Payment alone does not qualify.</p><?php endif; ?>
-      <?php if (Tickets::issuedByPsoola($ticket)): ?>
-      <p class="muted small">Psoola issued this ticket and emailed it with the QR<?= $registration['pay_method'] === 'cash' ? ' (cash sale)' : '' ?>. To send it again, use the Psoola partner portal. Psoola scans it at the door.</p>
-      <?php elseif ($canChange): ?>
-      <form method="post" class="form-actions"><?= Page::csrfField() ?><input type="hidden" name="do" value="resend_ticket"><button class="btn">Resend ticket</button></form>
-      <?php endif; ?>
-    <?php elseif ($ticket): ?>
-      <p><?= Page::pill('cancelled') ?> Ticket <?= $e($ticket['ticket_no']) ?> was cancelled.</p>
-    <?php else: ?>
-      <p class="muted">No ticket: a ticket is made only when the payment is confirmed.</p>
-    <?php endif; ?>
-
-    <p class="small"><a href="<?= $e(Links::statusUrl($registration)) ?>" target="_blank" rel="noopener">Their ticket page</a> <span class="muted">(personal link: do not share)</span></p>
-
-    <?php if ($registration['ticket_type'] === 'student'): ?>
-      <h2>Student</h2>
-      <p>University: <b><?= $e($registration['university'] ?? '') ?></b><?= $registration['study_stage'] ? ' · <b>' . $e(\Ismile\Registrations::stageName((int) $registration['study_stage'])) . '</b>' : '' ?><?= $registration['ambassador_code'] ? ' · ambassador code <code>' . $e($registration['ambassador_code']) . '</code>' : '' ?></p>
-      <?php if ($registration['id_photo_id'] && Auth::can($user, 'photos')): $photoInfo = \Ismile\IdPhotos::info((int) $registration['id_photo_id']); ?>
-        <p class="muted small">Student ID photo, stored in the database (sent with the form <?= Page::when($photoInfo['uploaded_at'] ?? null) ?>, <?= $photoInfo ? round($photoInfo['bytes'] / 1024) . ' KB' : '' ?>). Accepted automatically when they paid; click to see it full size:</p>
-        <a href="photo.php?id=<?= $id ?>" target="_blank" rel="noopener"><img class="idphoto" src="photo.php?id=<?= $id ?>" alt="Student ID photo"></a>
-      <?php elseif ($registration['created_by'] === null && !$registration['id_photo_deleted_at'] && $registration['created_ip'] !== 'office'): ?>
-        <p class="flash warn">No ID photo is stored for this student.</p>
-      <?php elseif ($registration['id_photo_deleted_at']): ?>
-        <p class="muted">Photo deleted <?= Page::when($registration['id_photo_deleted_at']) ?> (after the summit, as planned).</p>
-      <?php elseif ($registration['created_ip'] === 'office'): ?>
-        <p class="muted">Registered by the office (ID seen by phone / in person).</p>
-      <?php endif; ?>
-    <?php endif; ?>
-  </div>
-</div>
-
-<?php if (Auth::can($user, 'workshops')): ?>
-<div class="card">
-  <h2>Workshops</h2>
-  <div class="table-wrap"><table>
-    <tr><th>Workshop</th><th>Price</th><th>Paid?</th><th>Booked by</th><th class="table-action-heading">Actions</th></tr>
-    <?php foreach ($bookings as $booking): $workshop = SiteData::workshop($booking['workshop_id']); ?>
-    <tr>
-      <td><?= $e($workshop ? SiteData::workshopName($workshop) : $booking['workshop_id']) ?><?= $booking['over_capacity'] ? ' ' . Page::pill('waiting_list') . '<small> over capacity</small>' : '' ?></td>
-      <td><?= $e(\Ismile\Workshops::money((int) $booking['price_agreed'], $workshop['currency'] ?? 'IQD')) ?></td>
-      <td><?= Page::paidBadge($booking['payment_status']) ?><?= $booking['payment_status'] === 'paid' ? '<br><small class="muted">' . $e((string) $booking['paid_how']) . ', ' . Page::when($booking['paid_at']) . '</small>' : '' ?></td>
-      <td><?= $e($booking['booked_by_name'] ?? ($booking['booked_by'] === null ? 'Website (online)' : '')) ?> <?= Page::when($booking['created_at']) ?></td>
-      <td class="table-action-cell">
-        <?= Page::workshopPaymentForm($booking, $user, 'registration.php?id=' . $id) ?>
-      </td>
-    </tr>
-    <?php endforeach; ?>
-    <?php if (!$bookings): ?><tr><td colspan="5" class="muted">No workshops.</td></tr><?php endif; ?>
-  </table></div>
-  <?php if ($registration['status'] !== 'cancelled'): ?>
-  <?= Page::workshopAddForm($user, $registration) ?>
-  <?php endif; ?>
-</div>
-<?php endif; ?>
-
-<div class="card">
-  <h2>Payments</h2>
-  <div class="table-wrap"><table>
-    <tr><th>#</th><th>Method</th><th>Expected</th><th>Confirmed</th><th>Status</th><th>Company id</th><th>Started</th></tr>
-    <?php foreach ($payments as $payment): ?>
-    <tr><td><?= (int) $payment['id'] ?></td><td><?= $e(strtoupper((string) $payment['method'])) ?></td><td><?= Page::money((int) $payment['amount_expected'], $payment['currency']) ?></td>
-      <td><?= Page::money($payment['amount_confirmed'] === null ? null : (int) $payment['amount_confirmed'], $payment['currency']) ?></td>
-      <td><?= Page::pill($payment['status']) ?><?= $payment['last_error'] ? '<br><small class="muted">' . $e($payment['last_error']) . '</small>' : '' ?></td>
-      <td><code><?= $e($payment['provider_payment_id'] ?? '–') ?></code></td><td><?= Page::when($payment['created_at']) ?></td></tr>
-    <?php endforeach; ?>
-    <?php if (!$payments): ?><tr><td colspan="7" class="muted">No payment attempts.</td></tr><?php endif; ?>
-  </table></div>
-</div>
-
-<div class="card">
-  <h2>Emails</h2>
-  <div class="table-wrap"><table>
-    <tr><th>Email</th><th>To</th><th>Status</th><th>Tries</th><th>Sent</th><th class="table-action-heading">Actions</th></tr>
-    <?php foreach ($emails as $email): ?>
-    <tr><td><?= $e($email['kind']) ?></td><td dir="ltr"><?= $e($email['to_email']) ?></td>
-      <td><?= Page::pill($email['status']) ?><?= $email['last_error'] ? '<br><small class="muted">' . $e($email['last_error']) . '</small>' : '' ?></td>
-      <td><?= (int) $email['attempts'] ?></td><td><?= Page::when($email['sent_at']) ?></td>
-      <td class="table-action-cell"><?php if ($canChange): ?><form method="post"><?= Page::csrfField() ?><input type="hidden" name="do" value="resend_email"><input type="hidden" name="email_id" value="<?= (int) $email['id'] ?>"><button class="btn small ghost">Send again</button></form><?php endif; ?></td></tr>
-    <?php endforeach; ?>
-    <?php if (!$emails): ?><tr><td colspan="6" class="muted">No emails.</td></tr><?php endif; ?>
-  </table></div>
-  <p class="muted small">Emails always go to the current address above. Fix a wrong address with "Edit", then "Send again".</p>
-</div>
-
-<div class="grid2">
-  <div class="card">
-    <h2>Notes</h2>
-    <form method="post" class="stack"><?= Page::csrfField() ?><input type="hidden" name="do" value="notes">
-      <textarea name="notes" rows="4" <?= $canChange ? '' : 'readonly' ?>><?= $e($registration['notes'] ?? '') ?></textarea>
-      <?php if ($canChange): ?><div class="form-actions"><button class="btn">Save notes</button></div><?php endif; ?>
-    </form>
-  </div>
-  <?php if ($user['role'] === 'owner'): ?>
-  <div class="card danger">
-    <h2>Cancel</h2>
-    <p class="muted small">Tickets are non-refundable: cancelling stops the ticket at the door and frees workshop seats; no money is returned.</p>
-    <?php if ($registration['status'] !== 'cancelled'):
-      // The person, for the "Are you sure?" windows below.
-      $who = ['user', Registrations::fullName($registration) . ' · ' . $registration['ref']];
-      $ticketFact = ['ticket', Registrations::ticketName($registration['ticket_type']) . ($ticket ? ' · ' . $ticket['ticket_no'] : '')]; ?>
-    <form method="post" class="stack"><?= Page::csrfField() ?><input type="hidden" name="do" value="cancel">
-      <label>Reason for cancelling<input name="reason" required></label>
-      <div class="form-actions danger-actions"><button class="btn red"<?= Page::confirm('gold', 'ticket-x', 'Cancel this registration?', 'The ticket stops working at the door and workshop seats are freed.', [$who, $ticketFact, ['ban', 'Tickets are non-refundable: no money is returned']], ['note' => 'The record and payment history are kept.', 'yes' => 'Yes, cancel it', 'no' => 'No, keep the ticket']) ?>>Cancel registration</button></div>
-    </form>
-    <?php endif; ?>
-  </div>
-  <?php endif; ?>
-</div>
-
-<?php if (Erase::isMainOwner($user)): ?>
-<section class="card danger" id="deleteRecord">
-  <h2>Delete for good (main Owner)</h2>
-  <p class="muted small">Removes this person, their ticket, check-ins, certificate, workshop seats, payment records, emails and ID photo. Use Cancel above to keep the history instead. A full copy is kept in the database table <code>deleted_records</code>.</p>
-  <?php
-    $paidRow = null;
-    foreach ($payments as $payment) { if ($payment['status'] === 'paid') { $paidRow = $payment; break; } }
-    $paidFact = ['cash', $registration['status'] === 'complimentary' ? 'Free ticket'
-        : ($paidRow ? Page::money((int) ($paidRow['amount_confirmed'] ?? $paidRow['amount_expected']), $paidRow['currency']) . ($paidRow['method'] ? ' · ' . ($paidRow['method'] === 'cash' ? 'Cash' : 'Card (online)') : '') : ucfirst($registration['status']))
-        . ($registration['paid_at'] ? ' · ' . date('j M', strtotime($registration['paid_at'])) : '')];
-    $eraseBox = Page::confirm('red', 'trash', 'Delete this person for good?', 'Everything about this guest is removed from the database. This cannot be undone from the admin.',
-        [['user', Registrations::fullName($registration)], ['hash', $registration['ref']], ['ticket', Registrations::ticketName($registration['ticket_type']) . ($ticket ? ' · ' . $ticket['ticket_no'] : '')], $paidFact],
-        ['deletes' => ['Ticket & QR', 'Check-ins', 'Certificate', 'Workshop seats', 'Payment records', 'Emails', 'Student ID photo'],
-         'tip' => $registration['status'] !== 'cancelled' ? 'Only want to stop the ticket? Use Cancel registration instead. It keeps the history and the money record.' : null,
-         'type' => $registration['ref'], 'field' => 'confirm_ref',
-         'note' => 'Only the main Owner can do this. A full copy is kept in deleted_records.', 'yes' => 'Yes, delete for good', 'no' => 'No, keep this person']);
-  ?>
-  <form method="post" class="stack"><?= Page::csrfField() ?><input type="hidden" name="do" value="erase"><input type="hidden" name="confirm_ref" value="">
-    <div class="form-actions danger-actions"><button class="btn red"<?= $eraseBox ?>>Delete for good</button></div>
-  </form>
-</section>
-<?php elseif ($locked = Erase::lockedReason($user)): ?>
-<section class="card" id="deleteRecord"><h2>Delete for good</h2><p class="muted small"><?= $e($locked) ?></p></section>
-<?php endif; ?>
-
-<div class="card">
-  <h2>History</h2>
-  <ul class="history">
-    <?php foreach ($history as $item): ?>
-      <li><b><?= Page::when($item['created_at']) ?></b> · <?= $e($item['name'] ?? 'system') ?> · <?= $e($item['action']) ?> <span class="muted small"><?= $e(mb_substr((string) $item['details'], 0, 300)) ?></span></li>
-    <?php endforeach; ?>
-    <?php if (!$history): ?><li class="muted">No changes yet.</li><?php endif; ?>
-  </ul>
-</div>
-<?php Page::bottom();
+require __DIR__ . '/_registration_details.php';

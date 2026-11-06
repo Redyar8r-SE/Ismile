@@ -195,6 +195,7 @@ final class Office
         $isOwner = $user['role'] === 'owner';
         // Only registered people (they paid) take a workshop seat.
         if (!empty($workshop['providerEventId'])) {
+            if (($in['payment_status'] ?? '') === 'complimentary') throw new UserError('Use Book guest workshop on the registration details page to issue a verified complimentary PSOOLA ticket.');
             if ($registration['status'] !== 'paid') throw new UserError('A paid iSmile summit ticket is required before workshop registration.');
             $live = WorkshopCatalog::one($workshop['id'],true);
             if (!$live || !$live['availabilityVerified']) throw new UserError('Current workshop availability could not be verified.');
