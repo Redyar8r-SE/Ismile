@@ -18,7 +18,7 @@ $form=static fn(string $prefix='guest'):array=>['attempt'=>bin2hex(random_bytes(
  'event_id'=>'event-test','show_id'=>'show-test','ticket_type_id'=>'professional-test','quantity'=>'2','locale'=>'en'];
 $input=$form();$before=$fixture();
 putenv('PSOOLA_COMPLIMENTARY_ENABLED=0');
-$check('disabled production setup blocks new issuance before POST',$reject(fn()=>GuestOrders::issue($owner,$input),'needs setup')&&$fixture()['posts']===$before['posts']);
+$check('explicit server pause blocks new issuance before POST',$reject(fn()=>GuestOrders::issue($owner,$input),'disabled')&&$fixture()['posts']===$before['posts']);
 putenv('PSOOLA_COMPLIMENTARY_ENABLED=1');
 $check('full-prefix API base works without doubled prefix',count(GuestTicketCatalog::events())===2);
 $catalogue=GuestTicketCatalog::events();$check('cinema and reserved shows are excluded',count($catalogue[0]['shows'])===1&&$catalogue[0]['shows'][0]['id']==='show-test');

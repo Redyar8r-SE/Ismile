@@ -15,8 +15,8 @@ $fixture=['api_base'=>'https://stage-actions.psoola.com','api_key'=>'local-fixtu
 $passed=0;
 try {
     foreach([
-        'host-only base stays compatible'=>[[],true,false],
-        'portal full-prefix base accepted'=>[['api_base'=>'https://stage-actions.psoola.com/api/partner/v1/'],true,false],
+        'configured partner enables staff guest-ticket flow by default'=>[[],true,true],
+        'portal full-prefix base accepted'=>[['api_base'=>'https://stage-actions.psoola.com/api/partner/v1/'],true,true],
         'explicit complimentary opt-in survives deployment'=>[['complimentary_enabled'=>true],true,true],
         'explicit disable survives deployment'=>[['complimentary_enabled'=>false],true,false],
         'string opt-in is rejected'=>[['complimentary_enabled'=>'true'],false,false],

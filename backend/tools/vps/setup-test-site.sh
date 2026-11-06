@@ -303,8 +303,8 @@ if [ -n "${PSOOLA_CONFIG:-}" ]; then
     $cfg["payments"]["psoola"] = [
         "api_base" => rtrim($in["api_base"], "/"), "api_key" => $in["api_key"],
         "merchant_id" => (string) ($in["merchant_id"] ?? ""), "webhook_secret" => $in["webhook_secret"],
-        // Separate opt-in after partner permission and authorized staging verification.
-        "complimentary_enabled" => ($in["complimentary_enabled"] ?? false) === true,
+        // PSOOLA checks complimentary permission on every explicit guest order.
+        "complimentary_enabled" => ($in["complimentary_enabled"] ?? true) === true,
         "event_id" => $in["event_id"], "show_id" => $in["show_id"],
         "ticket_types" => array_intersect_key($in["ticket_types"], array_flip(["professional", "student", "vip"])),
         "add_ons" => array_intersect_key($in["add_ons"], array_flip(["lunchDay1", "lunchDay2"])),

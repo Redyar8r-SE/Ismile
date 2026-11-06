@@ -59,9 +59,9 @@ return [
             // The partner API key PSOOLA gives you: psk_<env>_<keyId>_<secret>.
             // Test key on test.ismile.krd, live key on ismile.krd.
             'api_key'        => '',
-            // Enable only after PSOOLA grants complimentary permission and staging is verified.
-            // May also be supplied as PSOOLA_COMPLIMENTARY_ENABLED=1 on the server.
-            'complimentary_enabled' => false,
+            // Staff guest-ticket flow; PSOOLA separately enforces complimentary permission.
+            // Set false or PSOOLA_COMPLIMENTARY_ENABLED=0 to pause it explicitly.
+            'complimentary_enabled' => true,
             'merchant_id'    => '',   // not used by the v1 partner API
             // Signs PSOOLA's webhooks (X-Psoola-Signature). Give PSOOLA the
             // webhook address https://<this site>/api/webhook.php.

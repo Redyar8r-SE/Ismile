@@ -33,8 +33,11 @@ final class GuestOrders
 
     public static function enabled(): bool
     {
+        if(App::config('payments.gateway')!=='psoola'
+            || !(getenv('PSOOLA_API_BASE_URL')?:App::config('payments.psoola.api_base',''))
+            || !(getenv('PSOOLA_API_KEY')?:App::config('payments.psoola.api_key','')))return false;
         $flag=getenv('PSOOLA_COMPLIMENTARY_ENABLED');
-        return $flag!==false?in_array(strtolower($flag),['1','true'],true):(bool)App::config('payments.psoola.complimentary_enabled',false);
+        return $flag!==false?in_array(strtolower($flag),['1','true'],true):(bool)App::config('payments.psoola.complimentary_enabled',true);
     }
 
     public static function guest(array $in): array
@@ -71,7 +74,7 @@ final class GuestOrders
             if (!hash_equals($saved['fingerprint'],$fingerprint)) throw new UserError('The original guest order has different details. Reconcile or retry its saved request; do not replace its key.');
             return self::send($saved);
         }
-        if (!self::enabled()) throw new UserError('Complimentary issuance needs setup: confirm PSOOLA partner permission and an authorized staging test before enabling it. No order was submitted.');
+        if (!self::enabled()) throw new UserError('Guest ticket issuance is disabled in the server configuration. No order was submitted.');
         if (!Settings::bool('registration_open')) throw new UserError('Registration is closed in Settings.');
         $catalogue=GuestTicketCatalog::verify($selection);
         $reference=Checkouts::newReference();
@@ -129,7 +132,7 @@ final class GuestOrders
         self::assertRequest($request);
         if (!(int)$saved['is_complimentary']) throw new UserError('Legacy cash requests cannot be reissued as guest tickets.');
         if ($saved['status']==='issued') return $saved;
-        if (!self::enabled()) throw new UserError('Complimentary issuance is disabled until its PSOOLA setup and staging verification are complete. No order was submitted.');
+        if (!self::enabled()) throw new UserError('Guest ticket issuance is disabled in the server configuration. No order was submitted.');
         if ($saved['status']==='rejected') throw new UserError('PSOOLA rejected this request. Review the saved error. Corrected details require an explicit new request, not a changed retry.');
         if ($saved['retry_after'] && strtotime($saved['retry_after'])>time()) throw new UserError('PSOOLA asked us to wait. Retry after '.$saved['retry_after'].' (Iraq time).');
         $gateway=new PsoolaGateway();

@@ -133,6 +133,7 @@ try { \Ismile\GuestOrders::assertRequest(['issuanceType'=>'cash','complimentaryR
 catch(\Ismile\UserError){$explicitGuard=true;}
 $check('Guest issuance requires an explicit complimentary request and shows a zero total', $explicitGuard && str_contains($freeForm,'Total: 0 IQD'));
 $check('Approved Guest ticket design shows the ticket card and both delivery channels without a consent checkbox',str_contains($freeForm,'guest-issuance-layout')&&str_contains($freeForm,'guest-pass-header')&&str_contains($freeForm,'Delivery: Email + WhatsApp')&&str_contains($freeForm,'name="delivery_confirmation"')&&!str_contains($freeForm,'type="checkbox"')&&!str_contains($freeForm,'First name *')&&!str_contains($freeForm,'class="flash warn">Issuance needs setup:'));
+if(\Ismile\GuestOrders::enabled())$check('Authorized Guest ticket action is enabled in the deployed form',preg_match('/<button\b(?=[^>]*data-guest-issue)(?![^>]*\bdisabled\b)[^>]*>/',$freeForm)===1);
 $check('Owner sees separate cash and free registration buttons', str_contains($render('registrations'),'href="registration.php?new=free"'));
 $check('Ordinary registration staff do not get the free ticket button', !str_contains($render('registrations','','registration'),'href="registration.php?new=free"'));
 foreach (['finance','viewer','sponsors'] as $role) {

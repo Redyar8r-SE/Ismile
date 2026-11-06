@@ -29,19 +29,24 @@ Reuse the existing server-side PSOOLA configuration, or set:
 - `PSOOLA_API_BASE_URL`: the partner portal base including `/api/partner/v1`.
 - `PSOOLA_API_KEY`: the server-only partner key.
 - The existing webhook secret from the portal's webhook contract.
-- `PSOOLA_COMPLIMENTARY_ENABLED=1`, or
-  `payments.psoola.complimentary_enabled = true`, after the checks below.
+- Staff issuance is available by default with the configured PSOOLA gateway.
+  Set `PSOOLA_COMPLIMENTARY_ENABLED=0` or
+  `payments.psoola.complimentary_enabled = false` to pause it explicitly.
 
-Issuance defaults to disabled. PSOOLA must separately enable **Allow
-complimentary issuance**; cash-sale permission is insufficient. Obtain an
-authorized staging event and staging key from PSOOLA and verify issuance there
-before enabling production. Never issue production tickets as a deployment test.
-The application does not determine partner permission from cash-sale access.
-For the existing GitHub deployment, put the same configuration in the private
-`API_PSOOLA_CONFIG` secret: `api_base`, `api_key`, the existing event/type/add-on
-mapping and webhook secret, plus `complimentary_enabled: true` only after staging
-verification. Omission keeps issuance disabled. Both host-only and full-prefix
-API bases are supported by that deployment configuration.
+PSOOLA separately enforces **Allow complimentary issuance** on every explicit
+complimentary request; cash-sale permission is insufficient. If permission is
+absent, the form shows PSOOLA's permission error without a cash-sale fallback.
+An enabled local button does not establish the partner's actual permission.
+
+The existing GitHub deployment reuses the private `API_PSOOLA_CONFIG` secret:
+`api_base`, `api_key`, event/type/add-on mapping and webhook secret. The optional
+`complimentary_enabled` boolean defaults to true; explicit false pauses issuance.
+Both host-only and full-prefix API bases remain supported.
+
+Use an authorized staging event and staging key for live verification. Never
+issue production tickets as a deployment test. If staging access is unavailable,
+report actual provider issuance, private QR access, delivery and signed webhook
+receipt as unverified; do not claim mocks establish these outcomes.
 
 Apply database updates with the existing `backend/tools/install.php` procedure.
 The additive `2026-11-06-complimentary-orders.sql` migration preserves legacy
@@ -127,4 +132,4 @@ With PSOOLA-authorized staging access, verify a real zero-total complimentary
 order, its actual ticket-page/QR access, selected add-on capacity, configured
 limits, delivery statuses and signed webhook receipt. Confirm a replay returns
 the same order and an induced lost response recovers it. Use designated staging
-recipients. Enable production issuance only after these checks pass.
+recipients. These live checks remain unverified until authorized staging access is available.
