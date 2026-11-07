@@ -36,7 +36,7 @@ try {
  await until(`!!document.querySelector('[name="add_on_ids[]"]')`);
  check('only supported general-admission shows are selectable',await evaluate(`![...document.querySelector('[name=show_id]').options].some(o=>o.value==='cinema-test')`));
  await evaluate(`(()=>{const f=document.querySelector('[data-guest-options]');const values={buyer_name:'Options Browser Guest',email:'options-'+Date.now()+'@example.invalid',phone:'+964750'+Math.floor(1000000+Math.random()*8999999),complimentary_reason:'Invited research team',quantity:'2',locale:'kmr'};for(const [key,value] of Object.entries(values)) f.elements[key].value=value;f.querySelector('[name="add_on_ids[]"][value="lunch1-test"]').checked=true;f.dispatchEvent(new Event('input'));})()`);
- check('review includes guest, event, quantity and zero total',await evaluate(`document.querySelector('[data-guest-review]').textContent.includes('Options Browser Guest')&&document.querySelector('[data-guest-review]').textContent.includes('2 Ã—')&&document.querySelector('.guest-pass').textContent.includes('Total: 0 IQD')&&!document.querySelector('[data-guest-issue]').disabled`));
+ check('review includes guest, event, quantity and zero total',await evaluate(`document.querySelector('[data-guest-review]').textContent.includes('Options Browser Guest')&&document.querySelector('[data-guest-review]').textContent.includes('2 ×')&&document.querySelector('.guest-pass').textContent.includes('Total: 0 IQD')&&!document.querySelector('[data-guest-issue]').disabled`));
  const refreshBefore=await fixture();
  await evaluate(`document.querySelector('[data-guest-refresh]').click()`);await until(`!document.querySelector('[data-guest-issue]').disabled`);
  check('availability refresh preserves selection and creates no order',(await fixture()).posts===refreshBefore.posts&&await evaluate(`document.querySelector('[name=ticket_type_id]').value==='professional-test'&&document.querySelector('[name="add_on_ids[]"][value="lunch1-test"]').checked`));
@@ -49,7 +49,7 @@ try {
  for(const width of [1440,390]){
   await call('Emulation.setDeviceMetricsOverride',{width,height:1150,deviceScaleFactor:1,mobile:width<600},sessionId);
   await navigate('/admin/registration.php?new=free&options=1&ui=ckb');
-  check('Sorani form preserves RTL at '+width,await evaluate(`document.querySelector('[data-guest-tickets]').dir==='rtl'&&document.querySelector('[data-guest-tickets]').textContent.includes('Ù¾Ø³ÙˆÙˆÚµÛ•')&&document.documentElement.scrollWidth<=innerWidth+1`));
+  check('Sorani form preserves RTL at '+width,await evaluate(`document.querySelector('[data-guest-tickets]').dir==='rtl'&&document.querySelector('[data-guest-tickets]').textContent.includes('پسووڵە')&&document.documentElement.scrollWidth<=innerWidth+1`));
  }
  await navigate('/sponsored-test-login?role=registration');
  const denied=await evaluate(`fetch('/admin/registration.php?new=free&options=1&do=catalogue').then(r=>r.status)`);
