@@ -1,0 +1,36 @@
+<?php
+declare(strict_types=1);
+require __DIR__.'/../bootstrap.php';
+use Ismile\App;use Ismile\Auth;use Ismile\Db;use Ismile\Workshops;
+if(App::isLive()||!str_starts_with((string)App::config('db.name'),'ismile_sponsored_test_')||App::config('payments.psoola.api_base')!=='http://127.0.0.1:8862')throw new RuntimeException('Isolated workshop database and mock API required.');
+putenv('PSOOLA_API_BASE_URL=http://127.0.0.1:8862/api/partner/v1');putenv('PSOOLA_API_KEY=sponsored-local-test-key');putenv('PSOOLA_COMPLIMENTARY_ENABLED=1');
+$passed=0;$check=static function(string $name,bool $ok)use(&$passed):void{if(!$ok)throw new RuntimeException('FAILED: '.$name);echo "PASS: $name\n";$passed++;};
+$fixture=static fn():array=>json_decode(file_get_contents('http://127.0.0.1:8862/fixture'),true,512,JSON_THROW_ON_ERROR);
+$before=$fixture();$tables=['workshop_bookings','payments','sponsored_ticket_orders'];$snapshot=[];foreach($tables as $table)$snapshot[$table]=hash('sha256',json_encode(Db::all('SELECT * FROM '.$table.' ORDER BY id')));
+$render=static function(string $query='',string $role='owner'):string{
+    $pipes=[];$cmd=[PHP_BINARY];$ini=php_ini_loaded_file();if($ini){$cmd[]='-c';$cmd[]=$ini;}$cmd=array_merge($cmd,[__DIR__.'/../tools/verify-deployment.php','--render','workshops',$query,$role]);
+    $process=proc_open($cmd,[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes);if(!is_resource($process))throw new RuntimeException('Could not render workshop page.');fclose($pipes[0]);$html=stream_get_contents($pipes[1]);$error=stream_get_contents($pipes[2]);fclose($pipes[1]);fclose($pipes[2]);if(proc_close($process)!==0)throw new RuntimeException('Workshop render failed: '.$error);return $html;
+};
+$html=$render('id=crown-vs-veneer');
+$check('approved page loads its isolated assets and master-detail layout',str_contains($html,'workshops.css')&&str_contains($html,'workshops.js')&&str_contains($html,'ws-columns')&&str_contains($html,'ws-attendees'));
+$check('paid and complimentary summaries remain separate',str_contains($html,'Confirmed bookings')&&str_contains($html,'Guest tickets excluded')&&str_contains($html,'Complimentary · 0 IQD'));
+$check('default interface exposes no numerical seat availability',!str_contains($html,'Seats available now')&&!str_contains($html,'seats left')&&!str_contains($html,'available now')&&!str_contains($html,'<progress'));
+$check('owner keeps workshop creation editing capacity and visibility',str_contains($html,'value="ws_create"')&&str_contains($html,'value="ws_update"')&&str_contains($html,'name="total_seats"')&&str_contains($html,'name="delta"')&&str_contains($html,'value="ws_hide"'));
+$check('owner retains all language photo company and schedule fields',str_contains($html,'name="title_ar"')&&str_contains($html,'name="title_ku"')&&str_contains($html,'name="photo"')&&str_contains($html,'name="company_phone"')&&str_contains($html,'name="scheduled_date"'));
+$check('PDF and CSV sign-in sheets remain available',str_contains($html,'PDF sign-in sheet')&&str_contains($html,'CSV sign-in sheet'));
+$person=Db::one("SELECT * FROM registrations WHERE status IN ('paid','complimentary') AND id NOT IN (SELECT registration_id FROM workshop_bookings WHERE workshop_id='crown-vs-veneer' AND removed_at IS NULL) AND id NOT IN (SELECT registration_id FROM guest_workshop_orders WHERE workshop_id='crown-vs-veneer' AND active_pair IS NOT NULL) ORDER BY id DESC LIMIT 1");
+if(!$person)throw new RuntimeException('An unbooked local fixture attendee is required.');
+$html=$render('id=crown-vs-veneer&booking=1&rid='.$person['id']);
+$check('guest form binds a saved request key attendee and workshop',str_contains($html,'value="guest_workshop"')&&str_contains($html,'name="attempt"')&&str_contains($html,'name="rid" value="'.$person['id'].'"')&&str_contains($html,'name="workshop" value="crown-vs-veneer"'));
+$check('guest flow has reason consent and zero total',str_contains($html,'name="complimentary_reason"')&&str_contains($html,'name="delivery_confirmation"')&&str_contains($html,'No payment is collected')&&str_contains($html,'Issue free tickets'));
+$html=$render('id=crown-vs-veneer&booking=1&mode=paid&rid='.$person['id']);
+$check('paid booking keeps exact receipt fields and avoids complimentary request',str_contains($html,'value="workshop_add"')&&str_contains($html,'name="amount_paid"')&&str_contains($html,'name="paid_how"')&&!str_contains($html,'value="guest_workshop"'));
+$html=$render('id=mastering-zirconia-veneers&booking=1&rid='.$person['id']);
+$check('company workshop directs staff to organizer and never offers free issuance',str_contains($html,'ws-company-contact')&&str_contains($html,'Select an iSmile workshop')&&!str_contains($html,'value="guest_workshop"'));
+$html=$render('id=crown-vs-veneer&view=overview');$check('workshop overview remains accessible',str_contains($html,'class="ws-overview"'));
+$html=$render('id=crown-vs-veneer&view=activity');$check('existing workshop audit remains accessible',str_contains($html,'class="ws-activity"'));
+$html=$render('id=crown-vs-veneer&booking=1&rid='.$person['id'],'viewer');$check('viewer cannot access booking or owner configuration',!str_contains($html,'id="ws-book"')&&!str_contains($html,'id="ws-settings"')&&!str_contains($html,'value="guest_workshop"'));
+$html=$render('search=%3Cscript%3Etest%3C%2Fscript%3E');$check('search output is escaped',!str_contains($html,'<script>test</script>')&&str_contains($html,'&lt;script&gt;test&lt;/script&gt;'));
+foreach($tables as $table)$check('browsing leaves '.$table.' unchanged',$snapshot[$table]===hash('sha256',json_encode(Db::all('SELECT * FROM '.$table.' ORDER BY id'))));
+$after=$fixture();$check('browsing and opening forms never issues PSOOLA orders',$after['posts']===$before['posts']&&$after['creations']===$before['creations']);
+echo "$passed workshop workspace checks passed.\n";

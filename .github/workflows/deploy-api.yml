@@ -143,7 +143,7 @@ jobs:
             curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' \
               http://127.0.0.1:8081/admin/vendor/jsQR.js | cmp - /opt/ismile-test/site/admin/vendor/jsQR.js
             echo "qr_decoder_http=200 (matches deployed file)"
-            for asset in map.js map.css registration-details.js registration-details.css; do
+            for asset in map.js map.css registration-details.js registration-details.css workshops.js workshops.css; do
               curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' \
                 "http://127.0.0.1:8081/admin/${asset}" | cmp - "/opt/ismile-test/site/admin/${asset}"
             done

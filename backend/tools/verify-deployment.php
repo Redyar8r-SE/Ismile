@@ -221,6 +221,9 @@ $check('live graph and Latest arrivals available', str_contains($html, 'data-liv
 $html = $render('psoola-orders');
 $check('Psoola orders page renders (live list, or a clear note when unavailable)', str_contains($html, 'Psoola orders') && (str_contains($html, 'Sales recorded by Psoola') || str_contains($html, 'Psoola orders are not available')));
 $html = $render('workshops');
+$check('Approved workshop directory and attendee layout is deployed', str_contains($html,'data-workshop-workspace') && str_contains($html,'ws-directory') && str_contains($html,'workshops.css') && str_contains($html,'workshops.js'));
+$check('Workshop guest tickets are counted separately from collections', str_contains($html,'Confirmed bookings') && str_contains($html,'Guest tickets excluded') && str_contains($html,'Complimentary · 0 IQD'));
+$check('Workshop default view hides numerical seat availability', !str_contains($html,'Seat availability') && !str_contains($html,'Seats available now') && !str_contains($html,'available now') && !str_contains($html,'<progress'));
 $check('Workshop settings offer the trainer photo, the details page texts and the currency', str_contains($html, 'name="photo"') && str_contains($html, 'name="overview_en"') && str_contains($html, 'name="currency"'));
 $check('Workshop details page and online registration are deployed', is_file(App::siteFile('workshop.html')) && is_file(App::siteFile('api/workshop-register.php')));
 $check('Workshop settings offer "Organized by" iSmile or a company, with the company phone', str_contains($html, 'name="organizer"') && str_contains($html, 'name="company_phone"') && str_contains($html, 'A company (register by phone call)'));

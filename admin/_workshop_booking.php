@@ -1,0 +1,52 @@
+<?php
+declare(strict_types=1);
+use Ismile\Admin\Page;
+use Ismile\Db;
+use Ismile\GuestWorkshops;
+use Ismile\Registrations;
+use Ismile\Workshops;
+if(!isset($user,$selected,$canBook)||!$canBook){http_response_code(404);exit;}
+$bookingUrl=$url(['booking'=>'1','rid'=>$personId?:null,'q'=>$q,'mode'=>$mode],'#book');
+$savedRequest=$person?Db::one('SELECT * FROM guest_workshop_orders WHERE registration_id=? AND workshop_id=? AND active_pair IS NOT NULL',[$person['id'],$open]):null;
+$existingBooking=$person?Db::one('SELECT id FROM workshop_bookings WHERE registration_id=? AND workshop_id=? AND removed_at IS NULL',[$person['id'],$open]):null;
+$existingCheckout=$person?Db::one("SELECT id FROM workshop_checkouts WHERE registration_id=? AND workshop_id=? AND provider_status IN ('created','unknown','awaiting_payment','paid') ORDER BY id DESC LIMIT 1",[$person['id'],$open]):null;
+$guestAllowed=$canGuest&&GuestWorkshops::allowed($selected);
+[$availabilityLabel,$availabilityTone]=$availability($selected);
+?>
+<dialog id="ws-book" class="ws-dialog ws-book-dialog" aria-labelledby="ws-book-title"<?= Page::query('booking')==='1'||$q!==''?' open':'' ?>>
+  <header class="ws-dialog-heading"><div><span class="ws-eyebrow">Workshop booking</span><h2 id="ws-book-title">Book a guest</h2></div><button type="button" class="icon-button" data-ws-close aria-label="Close workshop booking"><?= Page::navIcon('close') ?></button></header>
+  <div class="ws-book-progress"><strong>1 &nbsp; Select attendee</strong><span>›</span><span>2 &nbsp; Review &amp; issue</span></div>
+  <?php foreach($bookingErrors as $message): ?><div class="flash err" role="alert"><?= $e($message) ?></div><?php endforeach; ?>
+  <div class="ws-selected-workshop"><div><span class="ws-eyebrow"><?= $selected['organizer']==='ismile'?'iSmile workshop':'Company workshop' ?></span><span class="ws-badge <?= $e($availabilityTone) ?>"><?= $e($availabilityLabel) ?></span></div><h3><?= $e(Workshops::name($selected)) ?></h3><p><?= $e($words($selected['speaker']??'')) ?> · <?= $e($schedule($selected)) ?></p></div>
+  <?php if($selected['organizer']==='company'): ?><p class="ws-book-notice">This workshop is managed by <?= $e($words($selected['company']??'its organizer')) ?>. Select an iSmile workshop to book a guest here.</p><?php foreach($selected['companyPhones']??[] as $phone): ?><a dir="ltr" href="tel:<?= $e(preg_replace('/[^+0-9]/','',$phone)) ?>"><?= $e($phone) ?></a><?php endforeach; ?>
+  <?php else: ?>
+  <form class="ws-book-search" method="get" action="workshops.php#book"><input type="hidden" name="id" value="<?= $e($open) ?>"><input type="hidden" name="booking" value="1"><input type="hidden" name="mode" value="<?= $e($mode) ?>"><label>Attendee<span class="ws-search"><?= Page::navIcon('search') ?><input type="search" name="q" value="<?= $e($q) ?>" placeholder="Name, phone or reference" required aria-label="Find a registered attendee"><button type="submit" aria-label="Find attendee"><?= Page::navIcon('arrow') ?></button></span></label></form>
+  <?php if($q!==''&&!$found): ?><p class="ws-book-notice" role="status">No active registration found. Search a different name, phone or reference. <?php if(\Ismile\Auth::can($user,'edit')): ?><a href="registration.php?new=1">Register an attendee</a><?php endif; ?></p><?php endif; ?>
+  <?php if(!$person&&$found): ?><div class="ws-found" aria-label="Matching attendees"><?php foreach($found as $match): ?><a href="<?= $e($url(['booking'=>'1','rid'=>(int)$match['id'],'q'=>$q,'mode'=>$mode],'#book')) ?>"><span><strong><?= $e(Registrations::fullName($match)) ?></strong><small><?= $e($match['ref']) ?> · <?= $e($match['phone']) ?></small></span><span class="ws-badge green">Summit confirmed</span></a><?php endforeach; ?></div><?php endif; ?>
+  <?php if($person): ?>
+  <section class="ws-selected-attendee" aria-label="Selected attendee"><div><h3><?= $e(Registrations::fullName($person)) ?></h3><?= Page::navIcon('check') ?></div><small><?= $e($person['ref']) ?> · <?= $e(Registrations::ticketName($person['ticket_type'])) ?></small><p><?= Page::navIcon('mail') ?><span dir="ltr"><?= $e($person['email']) ?></span></p><p><?= Page::navIcon('phone') ?><span dir="ltr"><?= $e($person['phone']) ?></span></p><strong>Summit ticket confirmed · Eligible to book</strong><a class="ws-hint" href="<?= $e($url(['booking'=>'1','q'=>$q,'mode'=>$mode],'#book')) ?>">Choose another attendee</a></section>
+  <?php if($existingBooking||($savedRequest&&$savedRequest['state']==='issued')): ?><div class="ws-book-notice"><strong>This attendee is already booked.</strong><p><a href="registration.php?id=<?= (int)$person['id'] ?>">Open the existing registration and tickets</a></p></div>
+  <?php elseif($savedRequest): ?><div class="ws-book-notice"><strong>Existing guest ticket request: <?= $e($savedRequest['state']) ?></strong><p>Its saved details and request key will be reused. Keep this request until its outcome is confirmed.</p><?php if($user['role']==='owner'||(int)$savedRequest['created_by']===(int)$user['id']): ?><form method="post" action="<?= $e($bookingUrl) ?>" data-ws-issue-form><?= Page::csrfField() ?><input type="hidden" name="do" value="guest_workshop_retry"><input type="hidden" name="rid" value="<?= (int)$person['id'] ?>"><input type="hidden" name="request_id" value="<?= (int)$savedRequest['id'] ?>"><button class="btn ws-primary">Resume saved request</button></form><?php else: ?><p>Ask the issuing staff member or the Owner to resume it.</p><?php endif; ?></div>
+  <?php elseif($existingCheckout): ?><div class="ws-book-notice"><strong>An existing online workshop order needs review.</strong><p><a href="registration.php?id=<?= (int)$person['id'] ?>">Open the original registration</a> before making another booking.</p></div>
+  <?php else: ?>
+  <div class="ws-booking-types" aria-label="Booking type"><?php if($guestAllowed): ?><a href="<?= $e($url(['booking'=>'1','rid'=>$personId,'q'=>$q,'mode'=>'guest'],'#book')) ?>"<?= $mode==='guest'?' class="is-active" aria-current="true"':'' ?>><?= Page::navIcon('ticket') ?>Guest ticket</a><?php endif; ?><a href="<?= $e($url(['booking'=>'1','rid'=>$personId,'q'=>$q,'mode'=>'paid'],'#book')) ?>"<?= $mode==='paid'||!$guestAllowed?' class="is-active" aria-current="true"':'' ?>>Paid booking</a></div>
+  <?php if($mode==='guest'&&$guestAllowed): ?>
+    <form method="post" action="<?= $e($bookingUrl) ?>" class="ws-issue-form" data-ws-issue-form><?= Page::csrfField() ?><input type="hidden" name="do" value="guest_workshop"><input type="hidden" name="rid" value="<?= (int)$person['id'] ?>"><input type="hidden" name="workshop" value="<?= $e($open) ?>"><input type="hidden" name="attempt" value="<?= bin2hex(random_bytes(16)) ?>"><input type="hidden" name="delivery_confirmation" value="">
+    <label class="ws-reason"><span>Reason for guest ticket <small>Required</small></span><textarea name="complimentary_reason" rows="3" required maxlength="500" placeholder="For example, invited speaker"></textarea></label>
+    <div class="ws-delivery"><?= Page::navIcon('mail') ?><div><strong>Email + WhatsApp</strong><p>By issuing, you confirm the guest agreed to WhatsApp ticket messages. PSOOLA handles delivery.</p></div></div>
+    <div class="ws-book-review"><p><span>1 guest ticket</span><b>Complimentary</b></p><p><span>Total</span><strong>0 IQD</strong></p><small>No payment is collected for this booking.</small></div>
+    <?php if($availabilityLabel!=='Available'): ?><p class="ws-book-notice"><?= $e($availabilityLabel) ?>. Refresh availability before issuing a new ticket.</p><?php endif; ?>
+    <footer class="ws-book-footer"><button class="btn ghost" type="button" data-ws-close>Cancel</button><button class="btn ws-primary" data-ws-issue<?= $availabilityLabel!=='Available'?' disabled':'' ?><?= Page::confirm('violet','ticket','Issue free workshop ticket?','Issue one complimentary ticket for this attendee.',[['user',Registrations::fullName($person)],['calendar',Workshops::name($selected)],['cash','Total: 0 IQD']],['note'=>'Confirm the guest agreed to WhatsApp ticket messages.','yes'=>'Issue free tickets','no'=>'Go back']) ?>>Issue free tickets</button></footer>
+    </form>
+  <?php else: ?>
+    <form method="post" class="ws-paid-form stack" action="<?= $e($bookingUrl) ?>" data-ws-issue-form><?= Page::csrfField() ?><input type="hidden" name="do" value="workshop_add"><input type="hidden" name="rid" value="<?= (int)$person['id'] ?>"><input type="hidden" name="workshop" value="<?= $e($open) ?>">
+    <?php if($user['role']==='owner'): ?><label>Agreed price (<?= $e($selected['currency']) ?>)<input name="price" type="number" min="0" max="10000000" step="1" value="<?= (int)$selected['price'] ?>"></label><?php endif; ?>
+    <fieldset class="pay-choice"><legend>Payment status</legend><label><input type="radio" name="payment_status" value="unpaid" checked> Not paid yet</label><label><input type="radio" name="payment_status" value="paid"> Paid now</label></fieldset>
+    <div class="paid-fields"><label>Amount received (exactly the agreed price)<input name="amount_paid" inputmode="numeric" placeholder="<?= $e(Workshops::money((int)$selected['price'],$selected['currency'])) ?>"></label><label>Payment method<select name="paid_how"><option value="">Choose payment method</option><option value="cash">Cash</option><option value="transfer">Transfer</option><option value="psoola">Psoola</option></select></label></div>
+    <?php if($user['role']==='owner'): ?><label class="inline"><input type="checkbox" name="override" value="1"> Override local capacity limit</label><?php endif; ?><p class="ws-hint">This records the workshop booking and payment. Issue its paid PSOOLA ticket after collecting payment.</p><footer class="ws-book-footer"><button type="button" class="btn ghost" data-ws-close>Cancel</button><button class="btn ws-primary">Book the workshop</button></footer>
+    </form>
+  <?php endif; ?>
+  <?php endif; ?>
+  <?php else: ?><p class="ws-hint">Search an active paid or complimentary summit registration to continue.</p><?php endif; ?>
+  <?php endif; ?>
+</dialog>

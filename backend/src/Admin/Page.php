@@ -85,6 +85,8 @@ final class Page
             'user' => '<circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/>',
             'copy' => '<rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V3H3v13h5"/>',
             'plus' => '<path d="M12 4v16M4 12h16"/>',
+            'more' => '<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>',
+            'info' => '<circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10h.01"/>',
             'trash' => '<path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/>',
             'ticket-x' => '<path d="M3 5h18v5a2 2 0 0 0 0 4v5H3v-5a2 2 0 0 0 0-4Z"/><path d="m9 9 6 6m0-6-6 6"/>',
             'hash' => '<path d="m10 3-4 18M18 3l-4 18M3 8h18M2 16h18"/>',
@@ -242,6 +244,7 @@ final class Page
         $v = static fn (string $file): int => (int) @filemtime(App::siteFile('admin/' . $file)) ?: 1;
         echo '<link rel="stylesheet" href="admin.css?v=' . $v('admin.css') . '"><script src="admin.js?v=' . $v('admin.js') . '" defer></script>';
         if ($registrationDetails) echo '<link rel="stylesheet" href="registration-details.css?v=' . $v('registration-details.css') . '"><script src="registration-details.js?v=' . $v('registration-details.js') . '" defer></script>';
+        if ($current === 'workshops') echo '<link rel="stylesheet" href="workshops.css?v=' . $v('workshops.css') . '"><script src="workshops.js?v=' . $v('workshops.js') . '" defer></script>';
         echo '</head><body class="' . ($user ? 'admin-shell' . (self::viewOnlyHere() ? ' view-only' : '') : 'database-auth') . ($registrationDetails ? ' registration-detail-page' : '') . '" data-page="' . self::e($current) . '">';
         if ($user) {
             echo '<a class="skip-link" href="#main-content">Skip to content</a>';
@@ -286,7 +289,7 @@ final class Page
             'association' => 'Prepare guest handovers, record money sent and download each saved batch.',
             'payments' => 'Review payments, follow up on issues and keep every amount accounted for.',
             'psoola-orders' => 'Every sale Psoola recorded for iSmile, card and cash, read live from Psoola and matched to your registrations.',
-            'workshops' => 'Organise workshops, manage bookings and keep track of available seats.',
+            'workshops' => 'Manage your programme. Take care of every attendee.',
             'sponsors' => 'Build your partnerships and keep every conversation moving forward.',
             'booths' => 'Manage Standard booth bookings, agreed amounts, payments and follow-up calls.',
             'map' => 'Explore all 39 sponsor positions. Select a number to see who booked it, payments and follow-up details.',
