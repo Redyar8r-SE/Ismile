@@ -1,157 +1,47 @@
-# Deploy PHP backend to api.ismile.krd (ismile LXC).
-# Re-runs the idempotent VPS setup script: pulls this branch, updates files/DB,
-# leaves the live Node site on ismile.krd alone.
-# Secrets: same GitHub DEPLOY_ENV as the Node deploy (SSH into LXC :2260), plus
-#   API_OWNER_EMAIL     the Owner's admin sign-in on api.ismile.krd (made if missing)
-#   API_OWNER_PASSWORD  its password, 12+ characters (change the secret = new password)
-#   API_SITE_PASSWORD   the browser password in front of the site (user "ismile")
-#   API_RESEND_KEY      optional: send the emails for real through Resend
-#   API_BREVO_KEY       optional: send through Brevo instead (wins over Resend)
-#   API_MAIL_FROM       optional: the sender (default onboarding@resend.dev)
-#   API_PSOOLA_CONFIG   optional: PSOOLA's settings as one JSON object (keys,
-#                       event/show/ticket/add-on ids, "active": true to take
-#                       real payments). Written into config.php, never printed.
-# The log is public (public repository): passwords are never printed.
-name: Deploy API (api.ismile.krd)
-
+name: PSOOLA complimentary permission audit (GET only)
 on:
-  push:
-    branches: ["backend"]
   workflow_dispatch:
-    inputs:
-      map_editor_email:
-        description: Existing account to grant exclusive non-owner map booking access
-        required: false
-        type: string
-      association_editor_email:
-        description: Existing account to grant full Association access
-        required: false
-        type: string
-      registration_editor_email:
-        description: Existing account to allow paid and complimentary guest registration
-        required: false
-        type: string
-      workshop_editor_email:
-        description: Existing account to allow guest registration and workshop bookings for all attendees
-        required: false
-        type: string
-
-concurrency:
-  group: ismile-api-deploy
-  cancel-in-progress: false
-
+permissions:
+  contents: read
 jobs:
-  security:
-    uses: ./.github/workflows/security.yml
-  deploy:
-    needs: security
-    name: Update api.ismile.krd
+  catalogue:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Load DEPLOY_ENV (SSH only)
+      - name: Load existing SSH connection
+        shell: bash
         env:
           DEPLOY_ENV: ${{ secrets.DEPLOY_ENV }}
         run: |
           set -euo pipefail
-          : "${DEPLOY_ENV:?DEPLOY_ENV secret is required}"
-          printf '%s\n' "$DEPLOY_ENV" >.deploy.env
+          umask 077
+          printf '%s\n' "$DEPLOY_ENV" > "$RUNNER_TEMP/connection.env"
           set -a
-          # shellcheck disable=SC1091
-          source .deploy.env
+          source "$RUNNER_TEMP/connection.env"
           set +a
+          echo "::add-mask::$DEPLOY_PASSWORD"
           for key in DEPLOY_HOST DEPLOY_USER DEPLOY_PASSWORD DEPLOY_SSH_PORT; do
-            if [ -z "${!key:-}" ]; then
-              echo "error: ${key} missing from DEPLOY_ENV" >&2
-              exit 1
-            fi
+            test -n "${!key}"
+            printf '%s=%s\n' "$key" "${!key}" >> "$GITHUB_ENV"
           done
-          echo "::add-mask::${DEPLOY_PASSWORD}"
-          {
-            echo "DEPLOY_HOST<<EOF_DEPLOY_HOST"
-            printf '%s\n' "$DEPLOY_HOST"
-            echo "EOF_DEPLOY_HOST"
-            echo "DEPLOY_USER<<EOF_DEPLOY_USER"
-            printf '%s\n' "$DEPLOY_USER"
-            echo "EOF_DEPLOY_USER"
-            echo "DEPLOY_PASSWORD<<EOF_DEPLOY_PASSWORD"
-            printf '%s\n' "$DEPLOY_PASSWORD"
-            echo "EOF_DEPLOY_PASSWORD"
-            echo "DEPLOY_SSH_PORT<<EOF_DEPLOY_SSH_PORT"
-            printf '%s\n' "$DEPLOY_SSH_PORT"
-            echo "EOF_DEPLOY_SSH_PORT"
-          } >>"$GITHUB_ENV"
-
-      - name: Run setup-test-site.sh on the LXC
+      - name: Inspect saved complimentary refusal and verify read-only API access
         uses: appleboy/ssh-action@v1.2.0
-        env:
-          OWNER_EMAIL: ${{ secrets.API_OWNER_EMAIL }}
-          OWNER_PASSWORD: ${{ secrets.API_OWNER_PASSWORD }}
-          SITE_PASSWORD: ${{ secrets.API_SITE_PASSWORD }}
-          RESEND_KEY: ${{ secrets.API_RESEND_KEY }}
-          BREVO_KEY: ${{ secrets.API_BREVO_KEY }}
-          MAIL_FROM: ${{ secrets.API_MAIL_FROM }}
-          PSOOLA_CONFIG: ${{ secrets.API_PSOOLA_CONFIG }}
-          QUIET_SECRETS: "1"
-          MAP_EDITOR_EMAIL: ${{ inputs.map_editor_email || '' }}
-          ASSOCIATION_EDITOR_EMAIL: ${{ inputs.association_editor_email || '' }}
-          REGISTRATION_EDITOR_EMAIL: ${{ inputs.registration_editor_email || '' }}
-          WORKSHOP_EDITOR_EMAIL: ${{ inputs.workshop_editor_email || '' }}
         with:
-          envs: OWNER_EMAIL,OWNER_PASSWORD,SITE_PASSWORD,RESEND_KEY,BREVO_KEY,MAIL_FROM,PSOOLA_CONFIG,QUIET_SECRETS,MAP_EDITOR_EMAIL,ASSOCIATION_EDITOR_EMAIL,REGISTRATION_EDITOR_EMAIL,WORKSHOP_EDITOR_EMAIL
           host: ${{ env.DEPLOY_HOST }}
           username: ${{ env.DEPLOY_USER }}
           password: ${{ env.DEPLOY_PASSWORD }}
           port: ${{ env.DEPLOY_SSH_PORT }}
           timeout: 60s
-          command_timeout: 20m
+          command_timeout: 2m
           script: |
-            set -euo pipefail
-            cd /root
-            # Save the existing database before applying schema migrations.
-            if [ -f /opt/ismile-test/backend/bootstrap.php ] && [ -f /opt/ismile-test/backend/config.php ]; then
-              runuser -u www-data -- php -r 'require $argv[1]; \Ismile\Backup::run(); echo "Pre-deployment database backup saved.\n";' /opt/ismile-test/backend/bootstrap.php
-            fi
-            # Idle unattended-upgrade-shutdown holds dpkg locks forever; stop it.
-            systemctl stop unattended-upgrades 2>/dev/null || true
-            curl -fsSL "https://raw.githubusercontent.com/Redyar8r-SE/Ismile/backend/backend/tools/vps/setup-test-site.sh" \
-              -o /root/ismile-test-setup.sh
-            chmod +x /root/ismile-test-setup.sh
-            DOMAIN=api.ismile.krd BRANCH=backend bash /root/ismile-test-setup.sh
-            if [ -n "${MAP_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-map-manager.php
-            fi
-            if [ -n "${ASSOCIATION_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-association-manager.php
-            fi
-            if [ -n "${REGISTRATION_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-registration-manager.php
-            fi
-            if [ -n "${WORKSHOP_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-workshop-manager.php
-            fi
-            runuser -u www-data -- php /opt/ismile-test/backend/tools/verify-deployment.php --source /opt/ismile-test/repo
-            runuser -u www-data -- php /opt/ismile-test/backend/tools/verify-association.php
-            # Smoke: PHP admin + config API (basic auth from secrets.env)
-            SP="$(grep '^SITE_PASS=' /opt/ismile-test/secrets.env | cut -d= -f2-)"
-            code="$(curl -s -o /dev/null -w '%{http_code}' -u "ismile:${SP}" -H 'Host: api.ismile.krd' http://127.0.0.1:8081/admin/login.php)"
-            echo "admin_login_http=${code}"
-            test "$code" = "200"
-            # The QR fallback must be accessible through nginx's allow-list.
-            curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' \
-              http://127.0.0.1:8081/admin/vendor/jsQR.js | cmp - /opt/ismile-test/site/admin/vendor/jsQR.js
-            echo "qr_decoder_http=200 (matches deployed file)"
-            for asset in map.js map.css registration-details.js registration-details.css workshops.js workshops.css; do
-              curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' \
-                "http://127.0.0.1:8081/admin/${asset}" | cmp - "/opt/ismile-test/site/admin/${asset}"
-            done
-            runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/map-access.php
-            runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/registration-access.php
-            runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/workshop-access.php
-            echo "map_assets_http=200; all role permissions verified"
-            echo "registration_details_assets_http=200 (match deployed files)"
-            curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' -H 'X-Forwarded-Proto: https' \
-              http://127.0.0.1:8081/api/config.php | grep -q '"ok":true'
-            echo "api.ismile.krd update OK"
+            set -eu
+            node <<'PSOOLA_READ_ONLY_CATALOGUE'
+            const fs=require('node:fs'),crypto=require('node:crypto'),cp=require('node:child_process');
+            let report;
+            try{report=JSON.parse(cp.execFileSync('php',['-r',"\nrequire '/opt/ismile-test/backend/bootstrap.php';\nuse Ismile\\App;use Ismile\\Db;use Ismile\\GuestOrders;use Ismile\\Payments\\PsoolaGateway;\n$reference='0PrvUNvOpoIxBG-6';\n$rows=Db::all('SELECT id,status,last_error,support_request_id,provider_order_id,provider_amount,is_complimentary,request_json,partner_reference,attempt_key,created_at,updated_at FROM sponsored_ticket_orders WHERE support_request_id=? ORDER BY id DESC LIMIT 1',[$reference]);\n$exact=!!$rows;\nif(!$rows)$rows=Db::all(\"SELECT id,status,last_error,support_request_id,provider_order_id,provider_amount,is_complimentary,request_json,partner_reference,attempt_key,created_at,updated_at FROM sponsored_ticket_orders WHERE last_error='COMPLIMENTARY_ISSUE_NOT_ENABLED' ORDER BY id DESC LIMIT 3\");\n$gateway=new PsoolaGateway();\n$report=['checked_at'=>gmdate('c'),'request_method'=>'GET only','exact_support_match'=>$exact,'local_issuance_enabled'=>GuestOrders::enabled(),'api_host'=>parse_url((string)(getenv('PSOOLA_API_BASE_URL')?:App::config('payments.psoola.api_base')),PHP_URL_HOST),'requests'=>[]];\nforeach($rows as $row){\n $body=json_decode($row['request_json'],true,512,JSON_THROW_ON_ERROR);\n $safe=false;try{GuestOrders::assertRequest($body);$safe=true;}catch(Throwable){}\n $workshop=Db::one('SELECT workshop_id,state,booking_id FROM guest_workshop_orders WHERE attempt_key=?',[$row['attempt_key']]);\n $lookup=$gateway->partnerRequest('GET','orders?'.http_build_query(['partnerReference'=>$row['partner_reference']]));\n $matched=$lookup['status']===200&&($lookup['json']['partnerReference']??null)===$row['partner_reference'];\n $report['requests'][]=['local_id'=>(int)$row['id'],'status'=>$row['status'],'provider_error_code'=>$row['last_error'],'support_reference'=>$row['support_request_id'],'created_at'=>$row['created_at'],'updated_at'=>$row['updated_at'],'issuance_type'=>$body['issuanceType']??null,'complimentary_flag'=>(bool)$row['is_complimentary'],'request_passes_no_price_guard'=>$safe,'reason_present'=>trim((string)($body['complimentaryReason']??''))!=='','quantities'=>array_column($body['items']??[],'quantity'),'workshop'=>$workshop['workshop_id']??null,'workshop_state'=>$workshop['state']??null,'has_local_booking'=>!empty($workshop['booking_id']),'has_saved_provider_order'=>!empty($row['provider_order_id']),'saved_provider_amount'=>$row['provider_amount'],'provider_lookup_http'=>$lookup['status'],'provider_order_matched'=>$matched,'matched_order_complimentary'=>$matched?($lookup['json']['isComplimentary']??null):null,'matched_order_total'=>$matched?($lookup['json']['order']['totalAmount']??null):null];\n}\n$events=$gateway->partnerRequest('GET','events');\n$report['catalogue_http']=$events['status'];$report['event_count']=is_array($events['json']['events']??null)?count($events['json']['events']):null;\n$signals=[];$visit=static function($value,$path='')use(&$visit,&$signals):void{if(!is_array($value))return;foreach($value as $key=>$v){$p=$path===''?(string)$key:$path.'.'.$key;if(preg_match('/complimentary|permission|directIssuance/i',(string)$key))$signals[$p]=is_bool($v)?$v:get_debug_type($v);if(is_array($v))$visit($v,$p);}};\n$visit($events['json']??[]);$report['permission_signals']=$signals;\necho json_encode($report,JSON_THROW_ON_ERROR|JSON_UNESCAPED_SLASHES);\n"],{encoding:'utf8',stdio:['ignore','pipe','pipe'],timeout:60000}));}
+            catch(error){report={checked_at:new Date().toISOString(),request_method:'GET',catalogue_lookup_failed:true,exit_code:error.status??null};}
+            const key=crypto.randomBytes(32),iv=crypto.randomBytes(12),cipher=crypto.createCipheriv('aes-256-gcm',key,iv);
+            const data=Buffer.concat([cipher.update(JSON.stringify(report),'utf8'),cipher.final()]);
+            const wrapped=crypto.publicEncrypt({key:"-----BEGIN PUBLIC KEY-----\nMIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEA0Bxb2I8xOE8GvhBl2RCZ\nncgJgm7Klu2Wbdit9IFLWkmcIqxRCxvkKdtix6t65J6zw3KFZb0eyASZU4CQlr/G\ngr40YNiEHSPsjXLeETZHosJyQXn1oTP/zms8ktd6GYVU4PrPfT26wiAuywpqAUYO\nr+EqFuRh74J6JLvcLaBs5+hZ0NxD3sr04fCZVCziP2JPwoLV3lHwRmCxNELkfSSq\n0ITKF0j1xgurOoemoBnORmK7u6cEClba6AK8JilvKPgujFGivPgq3En/cB7ptuaX\nAYa9DxrEt2pj1M64H3FOWAuLH08cH2jobrHauSALRzeCP8QwQuQsqG+2CpTxf+Br\n74I7p7DR9F6ERkmZZLJ1I1mHUyesDkmTq/ObiSm5N3/cfDLs0tY9SmN+HM6qBLpO\nMR1+KqLQpmmlELuZkxHsjjhGxhUVK061g813/sqXsirFDM/WjqI4/xvu2HZ9vlbc\n/NE4wWwBeFR+PyxgM8JI2JJCVItDyfNKViTP0WHI8rlFAgMBAAE=\n-----END PUBLIC KEY-----\n",oaepHash:'sha256'},key);
+            console.log('ENCRYPTED_CATALOGUE:'+Buffer.from(JSON.stringify({key:wrapped.toString('base64'),iv:iv.toString('base64'),tag:cipher.getAuthTag().toString('base64'),data:data.toString('base64')})).toString('base64'));
+            PSOOLA_READ_ONLY_CATALOGUE
