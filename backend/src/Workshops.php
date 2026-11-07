@@ -401,6 +401,12 @@ final class Workshops
             }
             $details['overview_' . $lang] = Validate::multiline($in['overview_' . $lang] ?? '', 2000) ?: null;
         }
+        // The simplified Owner editor saves visibility with the other fields.
+        // Older callers that omit this field keep their existing status.
+        if (array_key_exists('website_status', $in)) {
+            if (!in_array($in['website_status'], ['active','hidden'], true)) throw new UserError('Choose whether the workshop is shown or hidden.');
+            $details['status'] = $in['website_status'];
+        }
         return [
             'title_en' => $text('title_en'), 'title_ar' => $text('title_ar'), 'title_ku' => $text('title_ku'),
             'company_en' => $text('company_en'), 'company_ar' => $text('company_ar'), 'company_ku' => $text('company_ku'),

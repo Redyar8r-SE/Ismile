@@ -31,6 +31,27 @@ Confirmed bookings and guest tickets are counted separately. Collections sum onl
 paid booking amounts, grouped by currency, and never count complimentary tickets.
 The redesign requires no database migration and changes no account grants.
 
+Owner settings now use a workshop selector and three sections: Details,
+Registration and Visibility. Extra trainer fields and Arabic/Kurdish translations
+are collapsed until needed. Switching sections or workshops retains unsaved form
+values; only the selected form is submitted. Cancel restores its saved values.
+Photo selection previews the image with full headroom and contain fitting;
+removal is staged until Save and can be undone before saving.
+
+The optional `website_status` form field saves active/hidden visibility in the
+same database update as the workshop details. Capacity and existing booking
+currency validation happen before that update, so a rejected save changes none
+of those fields. Older callers omitting this field retain their existing status.
+Creation still defaults to active for legacy callers. Owner authorization and
+booking-history deletion restrictions remain in Workshops. Validation/success
+messages stay visible inside the settings dialog. No account grant or migration
+is required for the simplified editor.
+
+Additional settings verification: 25 browser checks exercise photo upload,
+translations, company contacts, tab/workshop draft retention, Cancel, validation,
+atomic visibility saves, protected/eligible deletion and 320–1440px layouts.
+Sixteen backend settings checks and 43 existing workshop-detail checks pass.
+
 Verification: 18 read-only workspace checks; 30 browser checks covering search,
 photographs, 320–1440px layout, Owner settings, delegated access, zero-total mock
 issuance, duplicate prevention, exact cash receipt recording, provider-permission

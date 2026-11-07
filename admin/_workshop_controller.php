@@ -28,6 +28,10 @@ $url=static fn(array $values=[],string $hash=''):string=>'workshops.php?'.http_b
 $back=$url();
 $actionBack=($_SERVER['REQUEST_METHOD']??'')==='POST' && in_array($_POST['do']??'',['guest_workshop','guest_workshop_retry','workshop_add'],true)
     ?$url(['booking'=>'1','rid'=>$personId,'q'=>$q,'mode'=>$mode],'#book'):$back;
+if(($_SERVER['REQUEST_METHOD']??'')==='POST'&&str_starts_with((string)($_POST['do']??''),'ws_')){
+    $settingsSection=in_array($_POST['settings_section']??'',['details','registration','visibility'],true)?$_POST['settings_section']:'details';
+    $actionBack=$url(['settings'=>($_POST['do']??'')==='ws_create'?'__new':(string)($_POST['ws']??''),'section'=>$settingsSection],'#manage');
+}
 Page::action(static function()use($user,$back):string{
     $do=(string)($_POST['do']??'');
     if(in_array($do,['workshop_add','guest_workshop','guest_workshop_retry'],true)){
@@ -45,12 +49,12 @@ Page::action(static function()use($user,$back):string{
     if($do==='workshop_change')return Office::changeWorkshop((int)($_POST['booking']??0),$user,$_POST);
     $id=(string)($_POST['ws']??'');
     return match($do){
-        'ws_create'=>(static function()use($user):string{$id=Workshops::create($_POST,$user,$_FILES['photo']??null);return 'Workshop added: '.Workshops::name(Workshops::find($id)).'. It is on the website now.';})(),
+        'ws_create'=>(static function()use($user):string{$id=Workshops::create($_POST,$user,$_FILES['photo']??null);Page::flash('ok','Workshop added: '.Workshops::name(Workshops::find($id)).'.');Page::redirect('workshops.php?'.http_build_query(['id'=>$id,'settings'=>$id]).'#manage');})(),
         'ws_update'=>(static function()use($id,$user):string{Workshops::update($id,$_POST,$user,$_FILES['photo']??null);return 'Workshop saved. The website shows the change.';})(),
         'ws_seats'=>'Seats now: '.Workshops::changeSeats($id,(int)($_POST['delta']??0),$user).'.',
         'ws_hide'=>(static function()use($id,$user):string{Workshops::setStatus($id,'hidden',$user);return 'Workshop hidden. Existing bookings are kept.';})(),
         'ws_show'=>(static function()use($id,$user):string{Workshops::setStatus($id,'active',$user);return 'Workshop shown on the website again.';})(),
-        'ws_delete'=>(static function()use($id,$user):string{Workshops::delete($id,$user);return 'Workshop deleted.';})(),
+        'ws_delete'=>(static function()use($id,$user):string{Workshops::delete($id,$user);Page::flash('ok','Workshop deleted.');Page::redirect('workshops.php#manage');})(),
         default=>throw new UserError('Unknown action.'),
     };
 },$actionBack);
@@ -74,6 +78,7 @@ if($person && !in_array($person['status'],['paid','complimentary'],true))$person
 if($canBook&&$q!==''){$phone=Validate::phone($q);$like='%'.str_replace(['\\','%','_'],['\\\\','\\%','\\_'],$q).'%';$found=Db::all("SELECT r.* FROM registrations r WHERE r.status IN ('paid','complimentary') AND (CONCAT_WS(' ',r.first_name,r.father_name,r.grandfather_name) LIKE ? OR r.ref=?".($phone?' OR r.phone=?':'').') ORDER BY r.first_name LIMIT 15',$phone?[$like,strtoupper($q),$phone]:[$like,strtoupper($q)]);}
 $needsReview=Db::all("SELECT c.registration_id,c.fulfillment_error,r.first_name,r.father_name,r.grandfather_name FROM workshop_checkouts c JOIN registrations r ON r.id=c.registration_id WHERE c.provider_status='paid' AND c.fulfillment_error IS NOT NULL ORDER BY c.id DESC");
 $bookingErrors=array_column(array_filter($_SESSION['flash']??[],static fn($message)=>$message[0]!=='ok'),1);
+$settingsMessages=$_SESSION['flash']??[];
 Page::top('Workshops','workshops',($user['role']==='owner'?'<a class="btn ghost" href="#manage" data-ws-open="ws-settings">'.Page::navIcon('settings').'Workshop settings</a>':'').($canBook&&$selected?'<a class="btn ws-primary" href="'.$e($url(['booking'=>'1'],'#book')).'" data-ws-open="ws-book">'.Page::navIcon('plus').'Book a guest</a>':''));
 require __DIR__.'/_workshop_workspace.php';
 Page::bottom();
