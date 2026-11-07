@@ -1,7 +1,20 @@
 # Complimentary guest tickets
 
 Authorized staff open **Registrations > Guest ticket** alongside cash sales.
-The form collects first, second and third names, specialty, email, WhatsApp
+**Choose event, ticket options and language** opens
+`registration.php?new=free&options=1`. This selectable form loads the authorized
+general-admission catalogue through our server, with dependent event, show and
+ticket-type choices, quantity, supported complimentary add-ons and ticket language
+(`en`, `ar`, `ckb`, `kmr`). Refresh availability retains the current selection.
+It collects guest name, email, phone and the required reason, and reviews the
+selection and **Total: 0 IQD** before issuance. WhatsApp is unchecked by default;
+staff may check it only with actual guest agreement. Otherwise the API payload
+omits WhatsApp consent. The same saved-order, retry, private-link and reporting
+implementation handles both forms. `&ui=ar` or `&ui=ckb` preserves RTL.
+
+The original single iSmile guest form remains available without changes to its
+fixed selection or delivery confirmation:
+This simplified form collects first, second and third names, specialty, email, WhatsApp
 number, sponsoring company and a required reason. It has no language controls,
 event/show/type/quantity selectors, add-on section or availability-refresh button.
 The server selects the configured event and show, one ticket, English and no
@@ -120,6 +133,8 @@ complimentary feature enabled and a local-only key/secret.
 node backend/tests/sponsored-provider.mjs
 # In a separate terminal, using the isolated test configuration:
 php backend/tests/complimentary-orders.php
+# Windows local browser harness, after provisioning .local/sponsored-ticket-test/config.php:
+node backend/tests/guest-ticket-options-browser.mjs
 ```
 
 The fixture sends no real tickets or messages. Coverage includes zero totals,

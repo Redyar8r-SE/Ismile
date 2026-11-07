@@ -2,10 +2,24 @@
 declare(strict_types=1);
 if (!isset($user)||!\Ismile\Auth::canIssueComplimentary($user)) {http_response_code(403);exit;}
 use Ismile\Admin\Page;use Ismile\Admin\GuestTicketText;use Ismile\GuestOrders;use Ismile\UserError;
-$ui='en';$words=GuestTicketText::all($ui);$t=static fn(string $key):string=>$words[$key]??$key;
+$ui=($_GET['options']??'')==='1'?GuestTicketText::locale($_GET['ui']??'en'):'en';$words=GuestTicketText::all($ui);$t=static fn(string $key):string=>$words[$key]??$key;
 $e=[Page::class,'e'];$rootUrl='registration.php?new=free';
+$options=($_GET['options']??'')==='1';
+if($options)$rootUrl.='&options=1&ui='.rawurlencode($ui);
 $method=$_SERVER['REQUEST_METHOD']??'GET';$action=$method==='POST'?($_POST['do']??'issue'):($_GET['do']??'');
 $privateHeaders=static function():void{header('Cache-Control: no-store, private, max-age=0');header('Pragma: no-cache');header('Referrer-Policy: no-referrer');header('X-Robots-Tag: noindex, nofollow');};
+if($action==='catalogue') {
+    $privateHeaders();header('Content-Type: application/json; charset=utf-8');
+    try {
+        if($method!=='GET')throw new UserError('GET required.',null,405);
+        $id=Page::query('event_id');
+        if($id!==''&&!preg_match('/^[A-Za-z0-9_-]{1,190}$/D',$id))throw new UserError('Select a valid event.');
+        $result=$id!==''?['event'=>\Ismile\GuestTicketCatalog::event($id)]:['events'=>\Ismile\GuestTicketCatalog::events()];
+        echo json_encode(['ok'=>true]+$result,JSON_THROW_ON_ERROR|JSON_HEX_TAG);
+    }catch(UserError $error){http_response_code($error->status);echo json_encode(['ok'=>false,'error'=>$error->key],JSON_HEX_TAG);}
+    catch(Throwable){http_response_code(503);echo json_encode(['ok'=>false,'error'=>$t('catalogue_error')],JSON_HEX_TAG);}
+    exit;
+}
 if ($action==='link') {
     $privateHeaders();header('Content-Type: application/json; charset=utf-8');
     try {
@@ -19,7 +33,7 @@ $values=$_POST;$order=null;
 if($method==='POST') {
     try {
         \Ismile\Auth::checkCsrf();
-        $issued=$action==='retry'?GuestOrders::retry($user,is_string($_POST['attempt']??null)?$_POST['attempt']:''):GuestOrders::issueSingle($user,$_POST);
+        $issued=$action==='retry'?GuestOrders::retry($user,is_string($_POST['attempt']??null)?$_POST['attempt']:''):($options?GuestOrders::issue($user,$_POST):GuestOrders::issueSingle($user,$_POST));
         Page::flash('ok',$t('issued'));Page::redirect($rootUrl.'&order='.(int)$issued['id']);
     }catch(UserError $error){
         Page::flash('error',$error->key);
@@ -34,6 +48,7 @@ if($method==='GET'&&isset($_GET['copy']))try{
     $guest=json_decode($previous['guest_json'],true,512,JSON_THROW_ON_ERROR);$body=json_decode($previous['request_json'],true,512,JSON_THROW_ON_ERROR);
     $names=array_pad(preg_split('/\s+/u',$guest['buyer_name']??'',3)?:[],3,'');
     $values=$guest+['first_name'=>$names[0],'father_name'=>$names[1],'grandfather_name'=>$names[2]];
+    if($options)$values+=['event_id'=>$body['eventId'],'show_id'=>$body['showId'],'ticket_type_id'=>$body['items'][0]['ticketTypeId'],'quantity'=>(string)$body['items'][0]['quantity'],'add_on_ids'=>$body['items'][0]['addOnIds']??[]];
     // Deliberate correction starts a new request. Permission must be obtained again.
 }catch(UserError $error){Page::flash('error',$error->key);}
 $privateHeaders();
@@ -68,11 +83,13 @@ $dir=in_array($ui,['ar','ckb'],true)?'rtl':'ltr';
  <?php else: ?><p class="muted"><?= $e($t('saved')) ?></p><?php if($order['last_error']): ?><p class="flash warn"><?= $e($order['last_error']) ?></p><?php endif; ?>
  <?php if($order['support_request_id']): ?><p><?= $e($t('support')) ?>: <code><?= $e($order['support_request_id']) ?></code></p><?php endif; ?>
  <?php if($order['retry_after']): ?><p><?= $e($t('retry_after')) ?>: <?= $e($order['retry_after']) ?></p><?php endif; ?>
- <?php if($order['status']==='rejected'): ?><a class="btn ghost" href="<?= $e($rootUrl.'&copy='.$order['attempt_key']) ?>"><?= $e($t('correct')) ?></a>
+ <?php if($order['status']==='rejected'): ?><a class="btn ghost" href="<?= $e('registration.php?new=free&options=1&ui='.$ui.'&copy='.$order['attempt_key']) ?>"><?= $e($t('correct')) ?></a>
  <?php else: ?><form method="post" action="<?= $e($rootUrl) ?>" data-guest-retry><?= Page::csrfField() ?><input type="hidden" name="do" value="retry"><input type="hidden" name="attempt" value="<?= $e($order['attempt_key']) ?>"><button class="btn violet"<?= !GuestOrders::enabled()||($order['retry_after']&&strtotime($order['retry_after'])>time())?' disabled':'' ?>><?= $e($t('retry')) ?></button></form><?php endif; ?>
  <?php endif; ?>
 </section>
+<?php elseif($options): require __DIR__.'/_guest_ticket_options.php'; ?>
 <?php else: ?>
+<p><a class="btn ghost" href="registration.php?new=free&amp;options=1">Choose event, ticket options and language</a></p>
 <form method="post" action="<?= $e($rootUrl) ?>" id="free-ticket-form" class="guest-issuance-layout" data-guest-ticket-form>
  <?= Page::csrfField() ?><input type="hidden" name="do" value="issue"><input type="hidden" name="attempt" value="<?= $e($attempt) ?>"><input type="hidden" name="delivery_confirmation" value="">
  <section class="guest-details-panel" aria-labelledby="guest-details-title">
