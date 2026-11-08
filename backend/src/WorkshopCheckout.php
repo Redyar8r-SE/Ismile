@@ -16,6 +16,7 @@ final class WorkshopCheckout
         $workshop = Workshops::find($workshopId);
         if (!$workshop || $workshop['status'] !== 'active') throw new UserError('wd_err_missing',null,404);
         if ($workshop['organizer'] === 'company') throw new UserError('wd_err_by_phone',null,409);
+        if ($workshop['price'] === 0 && !$workshop['providerEventId']) return self::registerFree($workshop,$email);
         if (!$workshop['providerEventId']) throw new UserError('wd_err_server',null,503);
         $person = Db::one("SELECT * FROM registrations WHERE LOWER(email)=? AND status='paid' ORDER BY id DESC LIMIT 1",[$email]);
         if (!$person) throw new UserError('wd_err_not_registered','email',404);
@@ -65,6 +66,32 @@ final class WorkshopCheckout
         if ($attempt['provider_status'] === 'paid') return ['ok'=>true,'redirect'=>self::resultUrl($attempt)];
         if ($attempt['provider_status'] !== 'awaiting_payment' || !self::safeCheckoutUrl($attempt['checkout_url'])) throw new UserError('wd_err_server',null,503);
         return ['ok'=>true,'redirect'=>$attempt['checkout_url']];
+    }
+
+    /** Free iSmile workshops reserve local inventory without issuing a chargeable provider order. */
+    private static function registerFree(array $workshop,string $email): array
+    {
+        $person=Db::one("SELECT * FROM registrations WHERE LOWER(email)=? AND status='paid' ORDER BY id DESC LIMIT 1",[$email]);
+        if(!$person)throw new UserError('wd_err_not_registered','email',404);
+        $attempt=Db::transaction(static function()use($workshop,$person):array{
+            $row=Db::one('SELECT * FROM workshops WHERE id=? FOR UPDATE',[$workshop['id']]);
+            if(!$row||$row['status']!=='active')throw new UserError('wd_err_missing',null,404);
+            if($row['organizer']!=='ismile')throw new UserError('wd_err_by_phone',null,409);
+            if((int)$row['price']!==0||$row['provider_event_id']||$row['provider_show_id']||$row['provider_ticket_type_id'])throw new UserError('wd_err_server',null,503);
+            if(Db::value('SELECT status FROM registrations WHERE id=? LOCK IN SHARE MODE',[$person['id']])!=='paid')throw new UserError('wd_err_not_registered','email',404);
+            GuestWorkshops::assertNoOrder((int)$person['id'],$row['id']);
+            if(Db::value('SELECT id FROM workshop_bookings WHERE registration_id=? AND workshop_id=? AND removed_at IS NULL',[$person['id'],$row['id']])
+                ||Db::value("SELECT id FROM workshop_checkouts WHERE registration_id=? AND workshop_id=? AND provider_status IN ('created','unknown','awaiting_payment','paid')",[$person['id'],$row['id']])
+                ||Db::value("SELECT id FROM workshop_ticket_orders WHERE registration_id=? AND workshop_id=? AND provider_status IN ('created','unknown','awaiting_payment','paid')",[$person['id'],$row['id']]))throw new UserError('wd_err_already','email',409);
+            if(Workshops::booked($row['id'])>=(int)$row['total_seats'])throw new UserError('wd_err_full',null,409);
+            $now=App::now();
+            $bookingId=Db::insert('workshop_bookings',['registration_id'=>$person['id'],'workshop_id'=>$row['id'],'price_agreed'=>0,'payment_status'=>'paid','amount_paid'=>0,'paid_how'=>'free','paid_at'=>$now,'paid_recorded_by'=>null,'booked_by'=>null,'over_capacity'=>0,'notes'=>'Free online workshop registration. No payment required.','created_at'=>$now,'updated_at'=>$now]);
+            $id=Db::insert('workshop_checkouts',['registration_id'=>$person['id'],'workshop_id'=>$row['id'],'booking_id'=>$bookingId,'public_token'=>bin2hex(random_bytes(32)),'idempotency_key'=>'ismile-ws-free-'.bin2hex(random_bytes(16)),'partner_reference'=>'ismile-workshop-free-'.bin2hex(random_bytes(16)),'request_json'=>json_encode(['workshopId'=>$row['id'],'registrationId'=>(int)$person['id'],'registrationType'=>'free'],JSON_THROW_ON_ERROR),'provider_status'=>'paid','amount'=>0,'currency'=>'IQD','last_checked_at'=>$now,'created_at'=>$now,'updated_at'=>$now]);
+            Audit::log(null,'workshop.online_registered','registration',(int)$person['id'],['workshop'=>$row['id'],'booking'=>$bookingId,'amount'=>0,'registrationType'=>'free']);
+            return Db::one('SELECT * FROM workshop_checkouts WHERE id=?',[$id]);
+        });
+        Workshops::syncWebsite();
+        return ['ok'=>true,'redirect'=>self::resultUrl($attempt)];
     }
 
     private static function latest(int $personId, string $workshopId): ?array

@@ -455,7 +455,7 @@ CREATE TABLE IF NOT EXISTS workshop_bookings (
   price_agreed      INT UNSIGNED  NOT NULL DEFAULT 0,          -- IQD, fixed when booked
   payment_status    ENUM('unpaid','paid','complimentary') NOT NULL DEFAULT 'unpaid',
   amount_paid       INT UNSIGNED  NULL,                        -- IQD received; must equal price_agreed
-  paid_how          ENUM('cash','transfer','psoola') NULL,
+  paid_how          ENUM('cash','transfer','psoola','free') NULL,
   paid_at           DATETIME      NULL,
   paid_recorded_by  INT UNSIGNED  NULL,                        -- who took / recorded the money
   booked_by         INT UNSIGNED  NULL,
@@ -477,6 +477,7 @@ CREATE TABLE IF NOT EXISTS workshop_bookings (
   CONSTRAINT fk_wb_booked_by    FOREIGN KEY (booked_by)        REFERENCES admin_users (id),
   CONSTRAINT fk_wb_paid_by      FOREIGN KEY (paid_recorded_by) REFERENCES admin_users (id),
   CONSTRAINT fk_wb_removed_by   FOREIGN KEY (removed_by)       REFERENCES admin_users (id),
+  CONSTRAINT ck_wb_free CHECK (paid_how <> 'free' OR (price_agreed = 0 AND amount_paid = 0)),
   CONSTRAINT ck_wb_paid CHECK (
        (payment_status = 'paid'          AND amount_paid = price_agreed AND paid_how IS NOT NULL AND paid_at IS NOT NULL)
     OR (payment_status = 'unpaid'        AND amount_paid IS NULL AND paid_how IS NULL)
