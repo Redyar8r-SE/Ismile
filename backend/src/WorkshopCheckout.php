@@ -63,7 +63,10 @@ final class WorkshopCheckout
             return Db::one('SELECT * FROM workshop_checkouts WHERE id=?',[$id]);
         });
         if (!$attempt['provider_session_id']) $attempt = self::create($attempt);
-        if ($attempt['provider_status'] === 'paid') return ['ok'=>true,'redirect'=>self::resultUrl($attempt)];
+        if ($attempt['provider_status'] === 'paid') {
+            $tickets = (int)$attempt['amount'] === 0 && $attempt['booking_id'] && !$attempt['fulfillment_error'] && self::safeCheckoutUrl($attempt['checkout_url']);
+            return ['ok'=>true,'redirect'=>$tickets ? $attempt['checkout_url'] : self::resultUrl($attempt)];
+        }
         if ($attempt['provider_status'] !== 'awaiting_payment' || !self::safeCheckoutUrl($attempt['checkout_url'])) throw new UserError('wd_err_server',null,503);
         return ['ok'=>true,'redirect'=>$attempt['checkout_url']];
     }
@@ -122,11 +125,13 @@ final class WorkshopCheckout
             }
             $session = $answer['json'] ?? [];
             self::validate($attempt,$session);
+            $ticketsUrl = $session['ticketsUrl'] ?? $session['checkoutUrl'] ?? null;
             if (($session['status'] ?? '') === 'paid') {
                 $verified = (new PsoolaGateway())->fetchStatus($session['id']);
                 $session = json_decode($verified['raw'],true,512,JSON_THROW_ON_ERROR);
                 self::validate($attempt,$session);
             }
+            if (($session['status'] ?? '') === 'paid' && $session['order']['totalAmount'] === 0 && self::safeCheckoutUrl($ticketsUrl)) $session['checkoutUrl'] = $ticketsUrl;
             if (($session['status'] ?? '') === 'awaiting_payment' && !self::safeCheckoutUrl($session['checkoutUrl'] ?? null)) throw new \RuntimeException('Workshop checkout address is invalid.');
             self::apply($attempt,$session);
             @unlink(App::storage('tmp/workshop-catalog-'.$attempt['workshop_id'].'.json'));

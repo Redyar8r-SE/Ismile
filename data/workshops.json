@@ -329,7 +329,11 @@
       "ar": "ساعتان",
       "ku": "2 کاتژمێر"
     },
-    "level": null,
+    "level": {
+      "en": "Suitable for all experience levels",
+      "ar": "مناسب لجميع مستويات الخبرة",
+      "ku": "گونجاوە بۆ هەموو ئاستەکانی ئەزموون"
+    },
     "organizer": "company",
     "company": {
       "en": "Elite Dental",
@@ -385,7 +389,11 @@
       "ar": "ساعتان",
       "ku": "2 کاتژمێر"
     },
-    "level": null,
+    "level": {
+      "en": "Suitable for all experience levels",
+      "ar": "مناسب لجميع مستويات الخبرة",
+      "ku": "گونجاوە بۆ هەموو ئاستەکانی ئەزموون"
+    },
     "organizer": "company",
     "company": {
       "en": "Elite Dental",
@@ -437,7 +445,11 @@
       "ar": "3 ساعات",
       "ku": "3 کاتژمێر"
     },
-    "level": null,
+    "level": {
+      "en": "Suitable for all experience levels",
+      "ar": "مناسب لجميع مستويات الخبرة",
+      "ku": "گونجاوە بۆ هەموو ئاستەکانی ئەزموون"
+    },
     "organizer": "ismile",
     "company": null,
     "companyPhone": null,

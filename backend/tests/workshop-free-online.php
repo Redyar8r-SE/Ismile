@@ -16,7 +16,7 @@ $summitPayments=(int)Db::value('SELECT COUNT(*) FROM payments');$result=Workshop
 $attempt=Db::one('SELECT * FROM workshop_checkouts WHERE workshop_id=? AND registration_id=?',[$id,$person['id']]);$booking=Db::one('SELECT * FROM workshop_bookings WHERE id=?',[$attempt['booking_id']]);
 $check('A verified zero-total checkout immediately confirms free registration',$attempt['provider_status']==='paid'&&(int)$attempt['amount']===0&&WorkshopCheckout::status($attempt['public_token'])['confirmed']);
 $check('Free registration creates a single zero-amount workshop booking',$booking['payment_status']==='paid'&&(int)$booking['amount_paid']===0&&(int)$booking['price_agreed']===0&&$booking['paid_how']==='psoola'&&str_contains($booking['notes'],'No workshop payment required'));
-$check('Free registration returns to its own result page',str_contains($result['redirect'],'workshop.html?id='.$id.'&payment='.$attempt['public_token']));
+$check('Verified free registration opens the provider QR ticket page',$result['redirect']==='https://checkout.psoola.com/private-ticket/'.$attempt['provider_session_id']);
 $after=$fixture();$check('Duplicate free registration does not issue a second ticket',$reject(fn()=>WorkshopCheckout::start($id,$person['email']))&&$fixture()['creations']===$after['creations']);
 $check('Free registration uses existing checkout and no summit payment or cash sale',(int)Db::value('SELECT COUNT(*) FROM payments')===$summitPayments&&$fixture()['direct']===0);
 $catalog=WorkshopCatalog::one($id,true);$check('Confirmed free ticket reduces provider availability',$catalog['seatsLeft']===29);
