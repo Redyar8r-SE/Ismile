@@ -216,8 +216,8 @@
     },
     "speaker": {
       "en": "Dr. Ako Omar & Dr. Rezhin Kawa; assisting: Dr. Zhiwar Omar",
-      "ar": "Dr. Ako Omar & Dr. Rezhin Kawa; assisting: Dr. Zhiwar Omar",
-      "ku": "Dr. Ako Omar & Dr. Rezhin Kawa; assisting: Dr. Zhiwar Omar"
+      "ar": "د. آكو عمر ود. ريزين كاوا؛ بمساعدة د. زيوار عمر",
+      "ku": "د. ئاکۆ عومەر و د. ڕێژین کاوە؛ بە یارمەتی د. ژیوار عومەر"
     },
     "credentials": null,
     "format": {
@@ -243,29 +243,41 @@
     "presenters": [
       {
         "name": {
-          "en": "Dr. Ako Omar"
+          "en": "Dr. Ako Omar",
+          "ar": "د. آكو عمر",
+          "ku": "د. ئاکۆ عومەر"
         },
         "role": "trainer",
         "credentials": {
-          "en": "MSc in Oral and Maxillofacial Radiology"
+          "en": "MSc in Oral and Maxillofacial Radiology",
+          "ar": "ماجستير في أشعة الفم والوجه والفكين",
+          "ku": "ماستەر لە تیشکی دەم و ڕوو و چەناگە"
         }
       },
       {
         "name": {
-          "en": "Dr. Rezhin Kawa"
+          "en": "Dr. Rezhin Kawa",
+          "ar": "د. ريزين كاوا",
+          "ku": "د. ڕێژین کاوە"
         },
         "role": "trainer",
         "credentials": {
-          "en": "Oral and Maxillofacial Surgeon"
+          "en": "Oral and Maxillofacial Surgeon",
+          "ar": "جرّاح الفم والوجه والفكين",
+          "ku": "نەشتەرگەری دەم و ڕوو و چەناگە"
         }
       },
       {
         "name": {
-          "en": "Dr. Zhiwar Omar"
+          "en": "Dr. Zhiwar Omar",
+          "ar": "د. زيوار عمر",
+          "ku": "د. ژیوار عومەر"
         },
         "role": "assistant",
         "credentials": {
-          "en": "Assisting the workshop trainers"
+          "en": "Assisting the workshop trainers",
+          "ar": "يساعد مدرّبي الورشة",
+          "ku": "یارمەتی ڕاهێنەرانی وۆرکشۆپەکە دەدات"
         }
       }
     ],
