@@ -119,6 +119,13 @@
       "tile": true
     },
     {
+      "name": "NEWDENT",
+      "tier": "gold",
+      "logo": "assets/sponsors/newdent-gold-20261108.webp",
+      "bg": "#18363F",
+      "tile": true
+    },
+    {
       "name": "Lacalut",
       "tier": "silver",
       "logo": "assets/sponsors/lacalut-silver.webp",
@@ -154,6 +161,27 @@
       "tile": true
     },
     {
+      "name": "Silver sponsor 3",
+      "tier": "silver",
+      "logo": "assets/sponsors/sponsor-3-silver-20261108.webp",
+      "bg": "#18363F",
+      "tile": true
+    },
+    {
+      "name": "SHINY DENT",
+      "tier": "silver",
+      "logo": "assets/sponsors/shiny-dent-silver-20261108.webp",
+      "bg": "#18363F",
+      "tile": true
+    },
+    {
+      "name": "BAIT ALHIKMA",
+      "tier": "silver",
+      "logo": "assets/sponsors/bait-alhikma-silver-20261108.webp",
+      "bg": "#18363F",
+      "tile": true
+    },
+    {
       "name": "Gengigel",
       "tier": "bronze",
       "logo": "assets/sponsors/gengigel-bronze.webp",
@@ -178,6 +206,13 @@
       "name": "VITIS",
       "tier": "bronze",
       "logo": "assets/sponsors/vitis-bronze-20261103.webp",
+      "bg": "#18363F",
+      "tile": true
+    },
+    {
+      "name": "PRIME",
+      "tier": "bronze",
+      "logo": "assets/sponsors/prime-bronze-20261108.webp",
       "bg": "#18363F",
       "tile": true
     }
