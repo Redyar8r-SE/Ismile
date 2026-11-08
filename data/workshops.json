@@ -156,5 +156,50 @@
     "totalSeats": 25,
     "seatsLeft": 25,
     "availabilityVerified": false
+  },
+  {
+    "id": "matrix-effect",
+    "icon": "tooth",
+    "title": {
+      "en": "Matrix Effect: From Ceramic Powder to Natural Aesthetics",
+      "ar": "تأثير الماتريكس: من مسحوق السيراميك إلى الجمال الطبيعي",
+      "ku": "کاریگەری ماتریکس: لە تۆزی سیرامیکەوە بۆ جوانکاریی سروشتی"
+    },
+    "company": null,
+    "speaker": {
+      "en": "Dt. Kawan Saleh",
+      "ar": "كەوان صالح",
+      "ku": "کەوان ساڵح"
+    },
+    "credentials": null,
+    "format": {
+      "en": "Hands-on workshop",
+      "ar": "ورشة تطبيقية",
+      "ku": "وۆرکشۆپی کرداری"
+    },
+    "duration": {
+      "en": "2 hours",
+      "ar": "ساعتان",
+      "ku": "2 کاتژمێر"
+    },
+    "level": null,
+    "overview": {
+      "en": "From ceramic powder to natural aesthetics.\nHands-on workshop at Grand Millennium Hotel, Sulaimani.",
+      "ar": "من مسحوق السيراميك إلى الجمال الطبيعي.\nورشة تطبيقية في فندق غراند ميلينيوم، السليمانية.",
+      "ku": "لە تۆزی سیرامیکەوە بۆ جوانکاریی سروشتی.\nوۆرکشۆپی کرداری لە هۆتێلی گراند میلینیۆم، سلێمانی."
+    },
+    "photo": "assets/uploads/workshops/matrix-effect-kawan-saleh.webp",
+    "organizer": "ismile",
+    "companyPhone": null,
+    "companyPhones": [],
+    "scheduledDate": "2026-11-20",
+    "startTime": "13:00",
+    "endTime": "15:00",
+    "photoStyle": "cutout",
+    "price": 25000,
+    "currency": "IQD",
+    "totalSeats": 25,
+    "seatsLeft": 25,
+    "availabilityVerified": false
   }
 ]
