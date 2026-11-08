@@ -1,157 +1,150 @@
-# Deploy PHP backend to api.ismile.krd (ismile LXC).
-# Re-runs the idempotent VPS setup script: pulls this branch, updates files/DB,
-# leaves the live Node site on ismile.krd alone.
-# Secrets: same GitHub DEPLOY_ENV as the Node deploy (SSH into LXC :2260), plus
-#   API_OWNER_EMAIL     the Owner's admin sign-in on api.ismile.krd (made if missing)
-#   API_OWNER_PASSWORD  its password, 12+ characters (change the secret = new password)
-#   API_SITE_PASSWORD   the browser password in front of the site (user "ismile")
-#   API_RESEND_KEY      optional: send the emails for real through Resend
-#   API_BREVO_KEY       optional: send through Brevo instead (wins over Resend)
-#   API_MAIL_FROM       optional: the sender (default onboarding@resend.dev)
-#   API_PSOOLA_CONFIG   optional: PSOOLA's settings as one JSON object (keys,
-#                       event/show/ticket/add-on ids, "active": true to take
-#                       real payments). Written into config.php, never printed.
-# The log is public (public repository): passwords are never printed.
-name: Deploy API (api.ismile.krd)
-
+name: Workshop free-provider-final
 on:
-  push:
-    branches: ["backend"]
   workflow_dispatch:
-    inputs:
-      map_editor_email:
-        description: Existing account to grant exclusive non-owner map booking access
-        required: false
-        type: string
-      association_editor_email:
-        description: Existing account to grant full Association access
-        required: false
-        type: string
-      registration_editor_email:
-        description: Existing account to allow paid and complimentary guest registration
-        required: false
-        type: string
-      workshop_editor_email:
-        description: Existing account to allow guest registration and workshop bookings for all attendees
-        required: false
-        type: string
-
-concurrency:
-  group: ismile-api-deploy
-  cancel-in-progress: false
-
+permissions:
+  contents: read
 jobs:
-  security:
-    uses: ./.github/workflows/security.yml
-  deploy:
-    needs: security
-    name: Update api.ismile.krd
+  operation:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 8
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Load DEPLOY_ENV (SSH only)
+      - name: Load saved server connection
+        shell: bash
         env:
           DEPLOY_ENV: ${{ secrets.DEPLOY_ENV }}
         run: |
           set -euo pipefail
-          : "${DEPLOY_ENV:?DEPLOY_ENV secret is required}"
-          printf '%s\n' "$DEPLOY_ENV" >.deploy.env
+          umask 077
+          printf '%s\n' "$DEPLOY_ENV" > "$RUNNER_TEMP/connection.env"
           set -a
-          # shellcheck disable=SC1091
-          source .deploy.env
+          source "$RUNNER_TEMP/connection.env"
           set +a
+          echo "::add-mask::$DEPLOY_PASSWORD"
           for key in DEPLOY_HOST DEPLOY_USER DEPLOY_PASSWORD DEPLOY_SSH_PORT; do
-            if [ -z "${!key:-}" ]; then
-              echo "error: ${key} missing from DEPLOY_ENV" >&2
-              exit 1
-            fi
+            test -n "${!key}"
+            printf '%s=%s\n' "$key" "${!key}" >> "$GITHUB_ENV"
           done
-          echo "::add-mask::${DEPLOY_PASSWORD}"
-          {
-            echo "DEPLOY_HOST<<EOF_DEPLOY_HOST"
-            printf '%s\n' "$DEPLOY_HOST"
-            echo "EOF_DEPLOY_HOST"
-            echo "DEPLOY_USER<<EOF_DEPLOY_USER"
-            printf '%s\n' "$DEPLOY_USER"
-            echo "EOF_DEPLOY_USER"
-            echo "DEPLOY_PASSWORD<<EOF_DEPLOY_PASSWORD"
-            printf '%s\n' "$DEPLOY_PASSWORD"
-            echo "EOF_DEPLOY_PASSWORD"
-            echo "DEPLOY_SSH_PORT<<EOF_DEPLOY_SSH_PORT"
-            printf '%s\n' "$DEPLOY_SSH_PORT"
-            echo "EOF_DEPLOY_SSH_PORT"
-          } >>"$GITHUB_ENV"
-
-      - name: Run setup-test-site.sh on the LXC
+      - name: free-provider-final workshops
         uses: appleboy/ssh-action@v1.2.0
-        env:
-          OWNER_EMAIL: ${{ secrets.API_OWNER_EMAIL }}
-          OWNER_PASSWORD: ${{ secrets.API_OWNER_PASSWORD }}
-          SITE_PASSWORD: ${{ secrets.API_SITE_PASSWORD }}
-          RESEND_KEY: ${{ secrets.API_RESEND_KEY }}
-          BREVO_KEY: ${{ secrets.API_BREVO_KEY }}
-          MAIL_FROM: ${{ secrets.API_MAIL_FROM }}
-          PSOOLA_CONFIG: ${{ secrets.API_PSOOLA_CONFIG }}
-          QUIET_SECRETS: "1"
-          MAP_EDITOR_EMAIL: ${{ inputs.map_editor_email || '' }}
-          ASSOCIATION_EDITOR_EMAIL: ${{ inputs.association_editor_email || '' }}
-          REGISTRATION_EDITOR_EMAIL: ${{ inputs.registration_editor_email || '' }}
-          WORKSHOP_EDITOR_EMAIL: ${{ inputs.workshop_editor_email || '' }}
         with:
-          envs: OWNER_EMAIL,OWNER_PASSWORD,SITE_PASSWORD,RESEND_KEY,BREVO_KEY,MAIL_FROM,PSOOLA_CONFIG,QUIET_SECRETS,MAP_EDITOR_EMAIL,ASSOCIATION_EDITOR_EMAIL,REGISTRATION_EDITOR_EMAIL,WORKSHOP_EDITOR_EMAIL
           host: ${{ env.DEPLOY_HOST }}
           username: ${{ env.DEPLOY_USER }}
           password: ${{ env.DEPLOY_PASSWORD }}
           port: ${{ env.DEPLOY_SSH_PORT }}
           timeout: 60s
-          command_timeout: 20m
+          command_timeout: 6m
           script: |
-            set -euo pipefail
-            cd /root
-            # Save the existing database before applying schema migrations.
-            if [ -f /opt/ismile-test/backend/bootstrap.php ] && [ -f /opt/ismile-test/backend/config.php ]; then
-              runuser -u www-data -- php -r 'require $argv[1]; \Ismile\Backup::run(); echo "Pre-deployment database backup saved.\n";' /opt/ismile-test/backend/bootstrap.php
-            fi
-            # Idle unattended-upgrade-shutdown holds dpkg locks forever; stop it.
-            systemctl stop unattended-upgrades 2>/dev/null || true
-            curl -fsSL "https://raw.githubusercontent.com/Redyar8r-SE/Ismile/backend/backend/tools/vps/setup-test-site.sh" \
-              -o /root/ismile-test-setup.sh
-            chmod +x /root/ismile-test-setup.sh
-            DOMAIN=api.ismile.krd BRANCH=backend bash /root/ismile-test-setup.sh
-            if [ -n "${MAP_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-map-manager.php
-            fi
-            if [ -n "${ASSOCIATION_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-association-manager.php
-            fi
-            if [ -n "${REGISTRATION_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-registration-manager.php
-            fi
-            if [ -n "${WORKSHOP_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-workshop-manager.php
-            fi
-            runuser -u www-data -- php /opt/ismile-test/backend/tools/verify-deployment.php --source /opt/ismile-test/repo
-            runuser -u www-data -- php /opt/ismile-test/backend/tools/verify-association.php
-            # Smoke: PHP admin + config API (basic auth from secrets.env)
-            SP="$(grep '^SITE_PASS=' /opt/ismile-test/secrets.env | cut -d= -f2-)"
-            code="$(curl -s -o /dev/null -w '%{http_code}' -u "ismile:${SP}" -H 'Host: api.ismile.krd' http://127.0.0.1:8081/admin/login.php)"
-            echo "admin_login_http=${code}"
-            test "$code" = "200"
-            # The QR fallback must be accessible through nginx's allow-list.
-            curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' \
-              http://127.0.0.1:8081/admin/vendor/jsQR.js | cmp - /opt/ismile-test/site/admin/vendor/jsQR.js
-            echo "qr_decoder_http=200 (matches deployed file)"
-            for asset in map.js map.css registration-details.js registration-details.css workshops.js workshops.css; do
-              curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' \
-                "http://127.0.0.1:8081/admin/${asset}" | cmp - "/opt/ismile-test/site/admin/${asset}"
-            done
-            runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/map-access.php
-            runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/registration-access.php
-            runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/workshop-access.php
-            echo "map_assets_http=200; all role permissions verified"
-            echo "registration_details_assets_http=200 (match deployed files)"
-            curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' -H 'X-Forwarded-Proto: https' \
-              http://127.0.0.1:8081/api/config.php | grep -q '"ok":true'
-            echo "api.ismile.krd update OK"
+            set -eu
+            runuser -u www-data -- php <<'FREE_PROVIDER_FINAL_PHP'
+            <?php
+            declare(strict_types=1);
+            require '/opt/ismile-test/backend/bootstrap.php';
+            
+            use Ismile\App;
+            use Ismile\Audit;
+            use Ismile\Db;
+            use Ismile\WorkshopCatalog;
+            use Ismile\WorkshopCheckout;
+            use Ismile\Workshops;
+            use Ismile\Registrations;
+            use Ismile\Validate;
+            use Ismile\Payments\PsoolaGateway;
+            
+            $workshopId='subperiosteal-implant-protocol';
+            $file=App::storage('tmp/subperiosteal-implant-protocol-psoola-management.json');
+            $lock=fopen($file.'.lock','c');
+            if(!$lock||!flock($lock,LOCK_EX|LOCK_NB))throw new RuntimeException('Matrix Effect creation is already running.');
+            $definition=json_decode((string)file_get_contents('/opt/ismile-test/backend/assets/subperiosteal-workshop-2026.json'),true,512,JSON_THROW_ON_ERROR);
+            if(!Db::value("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='workshops' AND column_name='presenters_json'"))throw new RuntimeException('Workshop presenters migration is not deployed.');
+            if(!Db::value('SELECT id FROM workshops WHERE id=?',[$workshopId]))Db::insert('workshops',$definition+['sort_order'=>(int)Db::value('SELECT COALESCE(MAX(sort_order),0)+1 FROM workshops'),'created_at'=>App::now(),'updated_at'=>App::now()]);
+            $row=Db::one('SELECT * FROM workshops WHERE id=?',[$workshopId]);
+            if(!$row||$row['organizer']!=='ismile'||(int)$row['price']!==0||(int)$row['total_seats']!==30||$row['scheduled_date']!=='2026-11-20'||substr($row['start_time'],0,5)!=='13:00'||substr($row['end_time'],0,5)!=='15:00')throw new RuntimeException('Confirmed workshop details do not match the saved draft.');
+            $owner=Db::one("SELECT * FROM admin_users WHERE role='owner' AND disabled_at IS NULL ORDER BY id LIMIT 1");
+            if(!$owner)throw new RuntimeException('An enabled Owner is required.');
+            $state=is_file($file)?json_decode((string)file_get_contents($file),true,512,JSON_THROW_ON_ERROR):['originalWorkshop'=>$row,'requests'=>[],'responses'=>[]];
+            $save=static function()use(&$state,$file):void{
+             $json=json_encode($state,JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR);
+             if(file_put_contents($file.'.writing',$json,LOCK_EX)===false)throw new RuntimeException('Cannot persist management progress.');
+             chmod($file.'.writing',0600);rename($file.'.writing',$file);
+            };
+            $save();
+            $gateway=new PsoolaGateway();
+            $request=static function(string $step,string $method,string $path,?array $body=null)use(&$state,$save,$gateway):array{
+             $key='ismile-ws-subperiosteal-implant-protocol-'.$step;
+             if(strlen($key)>64)throw new RuntimeException('Idempotency key is too long.');
+             if($method!=='GET'){
+              $record=['method'=>$method,'path'=>$path,'body'=>$body,'key'=>$key];
+              if(isset($state['requests'][$step])&&$state['requests'][$step]!==$record)throw new RuntimeException('Saved request changed: '.$step);
+              $state['requests'][$step]=$record;$save();
+              if(isset($state['responses'][$step]))return $state['responses'][$step];
+             }
+             for($attempt=0;$attempt<2;$attempt++){
+              $result=$gateway->partnerRequest($method,'manage/'.$path,$body,$method==='GET'?[]:['Idempotency-Key: '.$key]);
+              $json=$result['json']??[];$requestId=$json['requestId']??null;
+              App::log($result['status']>=400?'error':'info','PSOOLA workshop management',['workshop'=>'subperiosteal-implant-protocol','method'=>$method,'path'=>'manage/'.$path,'status'=>$result['status'],'requestId'=>$requestId]);
+              echo 'MANAGEMENT_CALL='.json_encode(['step'=>$step,'method'=>$method,'path'=>'manage/'.$path,'status'=>$result['status'],'requestId'=>$requestId]).PHP_EOL;
+              if($result['status']!==429)break;
+              // Six writes are below the normal limit. Retain the identical request for retry.
+              sleep(5);
+             }
+             if(!in_array($result['status'],[200,201],true))throw new RuntimeException('PSOOLA '.$step.': HTTP '.$result['status'].' '.($json['error']['code']??'').' '.($json['error']['message']??'Request failed').' requestId='.($requestId??'none'));
+             if($method!=='GET'){$state['responses'][$step]=$json;$save();}
+             return $json;
+            };
+            
+            if(!isset($state['eventId'],$state['showId'],$state['ticketTypeId']))throw new RuntimeException('Free provider ticket is not ready');
+            $eventId=$state['eventId'];$showId=$state['showId'];$ticketId=$state['ticketTypeId'];$category='td785em4z4zsgk26cencfv067587a1xd';$start=1795168800000;$end=1795176000000;
+            $level=Db::one('SELECT level_en,level_ar,level_ku FROM workshops WHERE id=?',['matrix-effect']);if(($level['level_en']??'')!=='Suitable for all experience levels')throw new RuntimeException('Expected workshop level text is missing');
+            Db::transaction(static function()use($level,$owner):void{
+             foreach(Db::all("SELECT id,level_en,level_ar,level_ku FROM workshops WHERE status='active' FOR UPDATE") as $workshop){if($workshop['level_en']===$level['level_en']&&$workshop['level_ar']===$level['level_ar']&&$workshop['level_ku']===$level['level_ku'])continue;Db::update('workshops',$level+['updated_at'=>App::now()],'id=?',[$workshop['id']]);Audit::log((int)$owner['id'],'workshop.edit','workshop',null,['id'=>$workshop['id'],'level_en'=>$level['level_en']]);}
+            });
+            Workshops::syncWebsite();
+            $artwork=[
+             'coverImageWeb'=>['r2Key'=>'events/ismile-2026/web-3qta010q.jpg','url'=>'https://assets.psoola.com/events/ismile-2026/web-3qta010q.jpg','width'=>1200,'height'=>1500,'mimeType'=>'image/jpeg'],
+             'coverImageMobile'=>['r2Key'=>'events/ismile-2026/mobile-dvgbspt1.jpg','url'=>'https://assets.psoola.com/events/ismile-2026/mobile-dvgbspt1.jpg','width'=>1300,'height'=>900,'mimeType'=>'image/jpeg'],
+             'heroImageDesktop'=>['r2Key'=>'events/ismile-2026/heroDesktop-9bs8nfyv.jpg','url'=>'https://assets.psoola.com/events/ismile-2026/heroDesktop-9bs8nfyv.jpg','width'=>1920,'height'=>1080,'mimeType'=>'image/jpeg'],
+             'heroImagePhone'=>['r2Key'=>'events/ismile-2026/heroPhone-y90cw3b5.jpg','url'=>'https://assets.psoola.com/events/ismile-2026/heroPhone-y90cw3b5.jpg','width'=>1080,'height'=>1350,'mimeType'=>'image/jpeg']
+            ];
+            $request('artwork','PATCH','events/'.$eventId,['event'=>$artwork]);
+            $request('on-sale','PATCH','events/'.$eventId.'/shows/'.$showId,['status'=>'on_sale']);
+            $request('publish','POST','events/'.$eventId.'/status',['status'=>'published']);
+            $managed=$request('verify','GET','events/'.$eventId);
+            $event=$managed['event']??[];
+            $shows=array_values(array_filter($managed['shows']??[],static fn($s)=>($s['_id']??'')===$showId));
+            $tickets=array_values(array_filter($managed['ticketTypes']??[],static fn($t)=>($t['_id']??'')===$ticketId));
+            if(($event['status']??'')!=='published'||($event['showOnPsoola']??null)!==false||($managed['commerce']['categoryId']??'')!==$category||count($shows)!==1||count($tickets)!==1||$shows[0]['status']!=='on_sale'||(int)$shows[0]['dateTime']!==$start||(int)$shows[0]['endTime']!==$end||(int)$tickets[0]['price']!==0||(int)$tickets[0]['quantity']!==30||$tickets[0]['currency']!=='IQD')throw new RuntimeException('Provider verification failed.');
+            foreach($artwork as $key=>$value)if(($event[$key]??null)!=$value)throw new RuntimeException('Provider artwork mismatch: '.$key);
+            
+            if(($tickets[0]['maxPerOrder']??null)!==1)throw new RuntimeException('Free provider ticket must allow only one seat per order');
+            $migrationCount=Db::transaction(static function()use($workshopId,$eventId,$showId,$ticketId,$gateway,&$state,$save):int{
+             $current=Db::one('SELECT * FROM workshops WHERE id=? FOR UPDATE',[$workshopId]);
+             if(!$current||$current['status']!=='active'||$current['organizer']!=='ismile'||(int)$current['price']!==0||(int)$current['total_seats']!==30||($current['provider_event_id']&&$current['provider_event_id']!==$eventId))throw new RuntimeException('Free workshop changed before switching providers');
+             $unmatched=(int)Db::value("SELECT COUNT(*) FROM workshop_bookings wb WHERE wb.workshop_id=? AND wb.removed_at IS NULL AND NOT EXISTS(SELECT 1 FROM workshop_checkouts wc WHERE wc.booking_id=wb.id AND wc.provider_status='paid')",[$workshopId]);if($unmatched)throw new RuntimeException('An office booking needs separate review before the provider switch');
+             $native=Db::all("SELECT wc.* FROM workshop_checkouts wc JOIN workshop_bookings wb ON wb.id=wc.booking_id WHERE wc.workshop_id=? AND wc.provider_status='paid' AND wc.provider_session_id IS NULL AND wb.removed_at IS NULL AND wb.payment_status='paid' AND wb.price_agreed=0 AND wb.amount_paid=0 ORDER BY wc.id FOR UPDATE",[$workshopId]);
+             Db::update('workshops',['provider_event_id'=>$eventId,'provider_show_id'=>$showId,'provider_ticket_type_id'=>$ticketId,'updated_at'=>App::now()],'id=?',[$workshopId]);
+             foreach($native as $attempt){
+              $person=Db::one('SELECT * FROM registrations WHERE id=? LOCK IN SHARE MODE',[$attempt['registration_id']]);if(!$person||$person['status']!=='paid')throw new RuntimeException('Existing free attendee needs summit eligibility review');
+              $phone=Validate::phone((string)$person['phone']);if(!$phone||!preg_match('/^\+[1-9][0-9]{6,14}$/D',$phone))throw new RuntimeException('Existing free attendee needs a valid international phone');
+              $lang=(string)($person['lang']??'en');$body=['eventId'=>$eventId,'showId'=>$showId,'items'=>[['ticketTypeId'=>$ticketId,'quantity'=>1]],'buyer'=>['name'=>Registrations::fullName($person),'email'=>strtolower($person['email']),'phone'=>$phone],'locale'=>$lang==='ku'?'ckb':(in_array($lang,['en','ar'],true)?$lang:'en'),'partnerReference'=>$attempt['partner_reference'],'returnUrl'=>'https://ismile.krd/workshop.html?id='.$workshopId.'&payment='.$attempt['public_token']];
+              $record=['body'=>$body,'key'=>$attempt['idempotency_key']];if(isset($state['nativeMigrations'][$attempt['id']]['request'])&&$state['nativeMigrations'][$attempt['id']]['request']!==$record)throw new RuntimeException('Saved attendee migration request changed');$state['nativeMigrations'][$attempt['id']]['request']=$record;$save();
+              $expected=$attempt;$expected['request_json']=json_encode($body,JSON_THROW_ON_ERROR);$expected['amount']=0;
+              $answer=$gateway->workshopRequest('POST','checkout-sessions',$body,['Idempotency-Key: '.$attempt['idempotency_key']]);App::log('info','Free workshop existing registration provider migration',['workshop'=>$workshopId,'attempt'=>(int)$attempt['id'],'status'=>$answer['status'],'requestId'=>$answer['json']['requestId']??null]);
+              if(!in_array($answer['status'],[200,201],true))throw new RuntimeException('Free attendee migration HTTP '.$answer['status'].' requestId='.($answer['json']['requestId']??'none'));
+              $session=$answer['json'];WorkshopCheckout::validate($expected,$session);if(($session['status']??'')!=='paid'||$session['order']['totalAmount']!==0)throw new RuntimeException('Existing free attendee must receive a confirmed zero-amount provider ticket');
+              $response=$gateway->fetchStatus($session['id']);$verified=json_decode($response['raw'],true,512,JSON_THROW_ON_ERROR);WorkshopCheckout::validate($expected,$verified);if(($verified['status']??'')!=='paid'||$verified['order']['totalAmount']!==0)throw new RuntimeException('Free provider ticket could not be independently verified');
+              $target=$session['ticketsUrl']??$session['checkoutUrl']??null;$url=is_string($target)?parse_url($target):false;$safe=is_array($url)&&($url['scheme']??'')==='https'&&!isset($url['user'])&&!isset($url['pass'])&&preg_match('/(^|\.)psoola\.com$/Di',(string)($url['host']??''))&&(!isset($url['port'])||$url['port']===443);
+              Db::update('workshop_checkouts',['request_json'=>$expected['request_json'],'provider_session_id'=>$verified['id'],'provider_status'=>'paid','amount'=>0,'currency'=>'IQD','checkout_url'=>$safe?$target:null,'raw_response'=>PsoolaGateway::withoutLinks(json_encode($verified,JSON_THROW_ON_ERROR)),'last_checked_at'=>App::now(),'last_error'=>null,'fulfillment_error'=>null,'updated_at'=>App::now()],'id=?',[$attempt['id']]);
+              Db::update('workshop_bookings',['paid_how'=>'psoola','notes'=>'Free registration preserved and linked to a verified PSOOLA ticket. No workshop payment required.','updated_at'=>App::now()],'id=?',[$attempt['booking_id']]);
+              if(Db::value('SELECT public_token FROM workshop_checkouts WHERE id=?',[$attempt['id']])!==$attempt['public_token'])throw new RuntimeException('Existing confirmation token changed');
+              Audit::log(null,'workshop.free_provider_migration','registration',(int)$person['id'],['workshop'=>$workshopId,'booking'=>(int)$attempt['booking_id'],'amount'=>0,'session'=>$verified['id']]);$state['nativeMigrations'][$attempt['id']]['providerSessionId']=$verified['id'];$state['nativeMigrations'][$attempt['id']]['confirmedZeroAmount']=true;$save();
+             }
+             return count($native);
+            });
+            Workshops::syncWebsite();@unlink(App::storage('tmp/workshop-catalog-'.$workshopId.'.json'));$verified=WorkshopCatalog::one($workshopId,true);
+            if(!$verified||!$verified['availabilityVerified']||$verified['price']!==0||$verified['totalSeats']!==30||$verified['status']!=='active')throw new RuntimeException('Free workshop public provider verification failed');
+            if(Db::value("SELECT COUNT(*) FROM workshop_checkouts WHERE workshop_id=? AND provider_status='paid' AND provider_session_id IS NULL",[$workshopId]))throw new RuntimeException('A native confirmed registration is still unmapped');
+            $missing=(int)Db::value("SELECT COUNT(*) FROM workshops WHERE status='active' AND (level_en IS NULL OR level_en<>'Suitable for all experience levels')");if($missing)throw new RuntimeException('A workshop level is missing');
+            $state['freeApiV2CompletedAt']=App::now();$state['verifiedCatalog']=$verified;$save();
+            echo 'WORKSHOPS_VERIFIED='.json_encode(['workshop'=>$verified,'registration'=>'psoola-free','existingRegistrationsMigrated'=>$migrationCount,'existingConfirmationsPreserved'=>true,'amountChargedForMigration'=>0,'allActiveWorkshopsHaveLevel'=>true,'eventId'=>$eventId,'showId'=>$showId,'ticketTypeId'=>$ticketId,'maxPerOrder'=>1],JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE).PHP_EOL;
+            
+            FREE_PROVIDER_FINAL_PHP
