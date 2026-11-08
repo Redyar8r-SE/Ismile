@@ -6,7 +6,7 @@ import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from ".
 import { initNav } from "./components/nav.js?v=148";
 import { initTheme } from "./components/theme.js?v=148";
 import { initFooter } from "./sections/footer.js?v=148";
-import { initWorkshops } from "./sections/workshops.js?v=161";
+import { initWorkshops } from "./sections/workshops.js?v=162";
 
 async function start() {
   initNav();
