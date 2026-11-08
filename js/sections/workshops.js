@@ -33,6 +33,7 @@ export function esc(value) {
 
 /** The seat price in the workshop's currency: "$100" or "75,000 IQD". */
 export function workshopPrice(w) {
+  if (Number.isInteger(w.displayPrice?.amount) && w.displayPrice.amount > 0 && w.displayPrice.currency === "USD") return `${w.displayPrice.amount.toLocaleString("en-US")}`;
   const value = Number(w.price);
   if (value === 0 && w.price !== null && w.price !== "") return t("w_free");
   if (!value) return t("tk_soon");

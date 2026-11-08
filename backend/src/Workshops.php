@@ -103,6 +103,7 @@ final class Workshops
             'providerShowId' => $row['provider_show_id'] ?? null,
             'providerTicketTypeId' => $row['provider_ticket_type_id'] ?? null,
             'price' => (int) $row['price'], 'currency' => (string) ($row['currency'] ?? 'IQD'),
+            'displayPrice' => isset($row['display_price'], $row['display_currency']) ? ['amount'=>(int)$row['display_price'],'currency'=>(string)$row['display_currency']] : null,
             'totalSeats' => (int) $row['total_seats'], 'seatsLeft' => max(0, (int) $row['total_seats'] - $booked),
             'booked' => $booked, 'status' => $row['status'], 'sortOrder' => (int) $row['sort_order'],
         ];
@@ -156,7 +157,7 @@ final class Workshops
         }
         try {
             $old = Db::transaction(static function () use ($id, $fields): ?string {
-                $row = Db::one('SELECT photo FROM workshops WHERE id = ? FOR UPDATE', [$id]);
+                $row = Db::one('SELECT photo, price, currency FROM workshops WHERE id = ? FOR UPDATE', [$id]);
                 if ($row === null) {
                     throw new UserError('Workshop not found.');
                 }
@@ -169,6 +170,10 @@ final class Workshops
                 $currency = (string) Db::value('SELECT currency FROM workshops WHERE id = ?', [$id]);
                 if ($fields['currency'] !== $currency && (int) Db::value('SELECT COUNT(*) FROM workshop_bookings WHERE workshop_id = ? AND removed_at IS NULL', [$id]) > 0) {
                     throw new UserError("People are booked at $currency prices, so the currency cannot change now.");
+                }
+                if ((int)$fields['price'] !== (int)$row['price'] || $fields['currency'] !== $row['currency']) {
+                    $fields['display_price'] = null;
+                    $fields['display_currency'] = null;
                 }
                 Db::update('workshops', $fields + ['updated_at' => App::now()], 'id = ?', [$id]);
                 return $row['photo'];
@@ -449,7 +454,7 @@ final class Workshops
             'organizer' => $w['organizer'], 'companyPhone' => $w['organizer'] === 'company' ? $w['companyPhone'] : null,
             'companyPhones' => $w['organizer']==='company'?$w['companyPhones']:[],
             'scheduledDate'=>$w['scheduledDate'],'startTime'=>$w['startTime'],'endTime'=>$w['endTime'],'photoStyle'=>$w['photoStyle'],'presenters'=>$w['presenters'],
-            'price' => $w['price'], 'currency' => $w['currency'], 'totalSeats' => $w['totalSeats'], 'seatsLeft' => $w['seatsLeft'],
+            'price' => $w['price'], 'currency' => $w['currency'], 'displayPrice' => $w['displayPrice'], 'totalSeats' => $w['totalSeats'], 'seatsLeft' => $w['seatsLeft'],
         ], self::all());
         $json = json_encode($cards, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n";
         $temp = $file . '.tmp';

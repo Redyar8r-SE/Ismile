@@ -12,7 +12,7 @@ import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang, t, onLan
 import { initNav } from "./components/nav.js?v=148";
 import { initTheme } from "./components/theme.js?v=148";
 import { initFooter } from "./sections/footer.js?v=148";
-import { pick, esc, workshopPrice, photoSrc, byCompany, workshopSchedule, watchWorkshopAvailability, hasWorkshopTeam, workshopTeam, WORKSHOP_ICON } from "./sections/workshops.js?v=159";
+import { pick, esc, workshopPrice, photoSrc, byCompany, workshopSchedule, watchWorkshopAvailability, hasWorkshopTeam, workshopTeam, WORKSHOP_ICON } from "./sections/workshops.js?v=161";
 import { phoneHref, PHONE_ICON } from "./utils/phone.js?v=148";
 
 const ICONS = {
@@ -77,7 +77,8 @@ function initDetails(workshop) {
           </dl>` : ""}`;
     const overviewHtml = `${overview ? `<section class="wd-overview"><h2>${esc(t("wd_overview"))}</h2>${overview.split(/\n+/).map((part) => `<p dir="auto">${esc(part)}</p>`).join("")}</section>` : ""}`;
 
-    const trainer = team ? `<span dir="auto">${esc(w.presenters.filter(p => p.role !== "assistant").map(p => pick(p.name)).join(" & "))}</span><span class="wdc-trainer-assistant" dir="auto">${esc(t("w_team_assisting"))}: ${esc(w.presenters.filter(p => p.role === "assistant").map(p => pick(p.name)).join(", "))}</span>` : [speaker, credentials].filter(Boolean).map((part) => `<span dir="auto">${esc(part)}</span>`).join('');
+    const assistants = team ? w.presenters.filter(p => p.role === "assistant").map(p => pick(p.name)).filter(Boolean).join(", ") : "";
+    const trainer = team ? `<span dir="auto">${esc(w.presenters.filter(p => p.role !== "assistant").map(p => pick(p.name)).join(" & "))}</span>${assistants ? `<span class="wdc-trainer-assistant" dir="auto">${esc(t("w_team_assisting"))}: ${esc(assistants)}</span>` : ""}` : [speaker, credentials].filter(Boolean).map((part) => `<span dir="auto">${esc(part)}</span>`).join('');
     const price = `<div class="wdc-stat is-price"><span class="wdc-stat-ic">${ICONS.wallet}</span><div><b dir="auto">${esc(unavailable ? t("wd_availability_unavailable") : workshopPrice(w))}</b><small>${esc(t("w_price_seat"))}</small></div></div>`;
     const availability = unavailable ? t("wd_availability_unavailable") : full ? t("wd_full") : t("wd_available_now");
     const seats = `<div class="wdc-stat is-seats"><span class="wdc-stat-ic">${ICONS.users}</span><div><b>${esc(availability)}</b></div></div>`;

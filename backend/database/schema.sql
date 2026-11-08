@@ -431,6 +431,8 @@ CREATE TABLE IF NOT EXISTS workshops (
   provider_ticket_type_id VARCHAR(64) NULL,
   price        INT UNSIGNED       NOT NULL DEFAULT 0,         -- per seat, in `currency`; 0 = price not set yet
   currency     CHAR(3)            NOT NULL DEFAULT 'IQD',     -- IQD or USD (the price and every booking's amount)
+  display_price INT UNSIGNED NULL,                           -- optional advertised USD price; accounting keeps the actual IQD charge
+  display_currency CHAR(3) NULL,
   total_seats  SMALLINT UNSIGNED  NOT NULL,                   -- the limit
   status       ENUM('active','hidden') NOT NULL DEFAULT 'active',   -- hidden = not on the website, no new bookings
   sort_order   SMALLINT UNSIGNED  NOT NULL DEFAULT 0,
@@ -440,6 +442,7 @@ CREATE TABLE IF NOT EXISTS workshops (
   KEY k_workshop_status (status, sort_order),
   CONSTRAINT ck_workshop_seats CHECK (total_seats BETWEEN 1 AND 2000),
   CONSTRAINT ck_workshop_currency CHECK (currency IN ('IQD','USD')),
+  CONSTRAINT ck_workshop_display_price CHECK ((display_price IS NULL AND display_currency IS NULL) OR (display_price IS NOT NULL AND display_price > 0 AND display_currency IS NOT NULL AND display_currency = 'USD')),
   CONSTRAINT ck_workshop_organizer CHECK (organizer IN ('ismile','company')),
   CONSTRAINT ck_workshop_id CHECK (id REGEXP '^[a-z0-9-]{2,40}$')
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
