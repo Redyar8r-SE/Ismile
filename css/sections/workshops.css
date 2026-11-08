@@ -151,3 +151,12 @@ html[dir="rtl"] .wsb-cta svg:last-child{transform:scaleX(-1)}
   .wsb-cta{gap:5px;padding:9px 10px;font-size:12px}
   .wsb-cta svg:last-child{display:none}
 }
+
+/* Three-presenter workshop portraits, using one transparent contact sheet. */
+.ws-person{margin:0;min-width:0;text-align:start;direction:ltr}
+.ws-person-portrait{aspect-ratio:627/836;width:100%;background-size:300% auto;background-position:var(--person-x) center;background-repeat:no-repeat;mask-image:linear-gradient(to bottom,#000 92%,transparent)}
+.ws-card.has-team .ws-media{aspect-ratio:4/3;position:relative;display:block;padding:0;container-type:inline-size;isolation:isolate}
+.ws-card.has-team .ws-media::after{display:none}
+.ws-card.has-team .ws-person-portrait{position:absolute;width:45%;left:2%;right:auto;top:calc(50% - 25.6666667cqw + 14px);z-index:1}
+.ws-card.has-team .ws-person:nth-of-type(2) .ws-person-portrait{width:52%;left:24%;top:calc(50% - 34.6666667cqw + 14px);z-index:3}
+.ws-card.has-team .ws-person:nth-of-type(3) .ws-person-portrait{left:auto;right:2%}

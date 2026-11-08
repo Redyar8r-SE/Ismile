@@ -12,7 +12,7 @@ import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang, t, onLan
 import { initNav } from "./components/nav.js?v=148";
 import { initTheme } from "./components/theme.js?v=148";
 import { initFooter } from "./sections/footer.js?v=148";
-import { pick, esc, workshopPrice, photoSrc, byCompany, workshopSchedule, watchWorkshopAvailability, WORKSHOP_ICON } from "./sections/workshops.js?v=157";
+import { pick, esc, workshopPrice, photoSrc, byCompany, workshopSchedule, watchWorkshopAvailability, hasWorkshopTeam, workshopTeam, WORKSHOP_ICON } from "./sections/workshops.js?v=159";
 import { phoneHref, PHONE_ICON } from "./utils/phone.js?v=148";
 
 const ICONS = {
@@ -63,6 +63,8 @@ function initDetails(workshop) {
     const left = Math.max(0, Number(w.seatsLeft) || 0);
     const full = left === 0;
     const company = byCompany(w);
+    const free = w.price === 0;
+    const team = hasWorkshopTeam(w);
     const pending = Math.max(0, Number(w.pendingPayments) || 0);
     document.title = `${title} | iSmile 2026`;
     const schedule = workshopSchedule(w);
@@ -75,18 +77,18 @@ function initDetails(workshop) {
           </dl>` : ""}`;
     const overviewHtml = `${overview ? `<section class="wd-overview"><h2>${esc(t("wd_overview"))}</h2>${overview.split(/\n+/).map((part) => `<p dir="auto">${esc(part)}</p>`).join("")}</section>` : ""}`;
 
-    const trainer = [speaker, credentials].filter(Boolean).map((part) => `<span dir="auto">${esc(part)}</span>`).join('');
+    const trainer = team ? `<span dir="auto">${esc(w.presenters.filter(p => p.role !== "assistant").map(p => pick(p.name)).join(" & "))}</span><span class="wdc-trainer-assistant" dir="auto">${esc(t("w_team_assisting"))}: ${esc(w.presenters.filter(p => p.role === "assistant").map(p => pick(p.name)).join(", "))}</span>` : [speaker, credentials].filter(Boolean).map((part) => `<span dir="auto">${esc(part)}</span>`).join('');
     const price = `<div class="wdc-stat is-price"><span class="wdc-stat-ic">${ICONS.wallet}</span><div><b dir="auto">${esc(unavailable ? t("wd_availability_unavailable") : workshopPrice(w))}</b><small>${esc(t("w_price_seat"))}</small></div></div>`;
-    const availability = unavailable ? t("wd_availability_unavailable") : full ? t("wd_full") : t("wd_available_now");
+    const availability = unavailable ? t("wd_availability_unavailable") : full ? t("wd_full") : free ? t("w_seats_count").replace("{n}", String(left)) : t("wd_available_now");
     const seats = `<div class="wdc-stat is-seats"><span class="wdc-stat-ic">${ICONS.users}</span><div><b>${esc(availability)}</b></div></div>`;
     const steps = (company
       ? [["phone", "wdc_how1", "wdc_how1_d"], ["wallet", "wdc_how2", "wdc_how2_d"], ["ticket", "wdc_how3", "wdc_how3_d"]]
-      : [["ticket", "wdc_how3", "wd_paid_ticket_help"], ["wallet", "wd_online_step", "wd_online_step_text"], ["check", "wd_online_registered", "wd_online_registered_text"]])
+      : free ? [["ticket", "wdc_how3", "wd_paid_ticket_help"], ["check", "wd_free_step", "wd_free_step_text"], ["ticket", "wd_online_registered", "wd_free_registered_text"]] : [["ticket", "wdc_how3", "wd_paid_ticket_help"], ["wallet", "wd_online_step", "wd_online_step_text"], ["check", "wd_online_registered", "wd_online_registered_text"]])
       .map(([icon, head, text]) => `<li><span class="wdc-how-ic">${icon === "phone" ? PHONE_ICON : ICONS[icon]}</span><div><b>${esc(t(head))}</b><p>${esc(t(text))}</p></div></li>`)
       .join("");
 
     root.innerHTML = `
-      <article class="wdc${w.photoStyle === "cutout" ? " is-cutout" : ""}" data-workshop-id="${esc(w.id)}">
+      <article class="wdc${w.photoStyle === "cutout" ? " is-cutout" : ""}${team ? " has-team" : ""}" data-workshop-id="${esc(w.id)}">
         <section class="wdc-hero">
           <div class="wdc-text">
             <p class="wdc-organizer">${esc(company ? t("wd_company_workshop").replace("{company}", pick(w.company)) : t("wd_ismile_workshop"))}</p>
@@ -99,7 +101,7 @@ function initDetails(workshop) {
               ${paymentToken ? paymentBox() : company ? callButton(w) : formBox(full || unavailable)}
             </div>
           </div>
-          <figure class="wdc-photo${photo ? "" : " no-photo"}">${photo ? `<img src="${esc(photo)}" alt="${esc(speaker)}" decoding="async">` : WORKSHOP_ICON}</figure>
+          <figure class="wdc-photo${photo ? "" : " no-photo"}">${team ? `<div class="ws-team" aria-label="${esc(t("w_team_label"))}">${workshopTeam(w)}</div>` : photo ? `<img src="${esc(photo)}" alt="${esc(speaker)}" decoding="async">` : WORKSHOP_ICON}</figure>
         </section>
         ${factsHtml}
         <div class="wdc-below">
@@ -146,7 +148,7 @@ function initDetails(workshop) {
     const href = payment?.checkoutUrl;
     const safeCheckout = typeof href === "string" && /^https:\/\/([a-z0-9-]+\.)*psoola\.com\//i.test(href);
     return `<div class="wd-payment-status" data-payment-status="${esc(status)}" role="status">
-      <div class="wd-done">${confirmed ? ICONS.check : ICONS.wallet}<div><b>${esc(t(`wd_pay_${copy}_title`))}</b><p>${esc(t(`wd_pay_${copy}_text`))}</p></div></div>
+      <div class="wd-done">${confirmed ? ICONS.check : ICONS.wallet}<div><b>${esc(t(`wd_pay_${copy}_title`))}</b><p>${esc(t(confirmed && workshop.price === 0 ? "wd_free_confirmed_text" : `wd_pay_${copy}_text`))}</p></div></div>
       <div class="wd-payment-actions">
       ${!confirmed && status === "awaiting_payment" && safeCheckout ? `<a class="btn btn-primary" href="${esc(href)}" rel="noreferrer">${esc(t("wd_pay_continue"))}</a>` : ""}
       ${!confirmed && ["checking", "created", "unknown", "awaiting_payment"].includes(status) ? `<button class="btn btn-ghost" id="wdCheckPayment" type="button"${state.checking ? " disabled" : ""}>${esc(t("wd_pay_check"))}</button>` : ""}
@@ -189,11 +191,11 @@ function initDetails(workshop) {
             placeholder="${esc(t("wdi_email_ph"))}" value="${esc(state.email)}"${full ? " disabled" : ""}${state.error ? ' aria-invalid="true"' : ""}>
         </label>
         <button class="wdc-submit" type="submit"${full || state.sending ? " disabled" : ""}>
-          <span>${esc(t(full ? (workshop.availabilityVerified === false ? "wd_availability_unavailable" : "wd_full") : state.sending ? "wd_pay_opening" : "wd_pay_action"))}</span>${state.sending ? "" : ICONS.arrow}
+          <span>${esc(t(full ? (workshop.availabilityVerified === false ? "wd_availability_unavailable" : "wd_full") : state.sending ? (workshop.price === 0 ? "wd_free_opening" : "wd_pay_opening") : workshop.price === 0 ? "wsb_online" : "wd_pay_action"))}</span>${state.sending ? "" : ICONS.arrow}
         </button>
       </form>
       ${error}
-      <p class="wdc-help">${esc(t("wd_paid_ticket_help"))} ${esc(t("wd_online_help"))}</p>`;
+      <p class="wdc-help">${esc(t("wd_paid_ticket_help"))} ${esc(t(workshop.price === 0 ? "wd_free_help" : "wd_online_help"))}</p>`;
   }
 
   function bindForm() {

@@ -424,7 +424,7 @@
   "wd_pay_check": "Check payment status",
   "wd_pay_retry": "Try again",
   "wd_err_phone": "Please contact iSmile to update the phone number on your summit registration before paying for a workshop.",
-  "ws_online_catalog_sub": "Explore the iSmile 2026 workshops, meet your trainers and choose your next clinical skill. A paid summit ticket is required. Pay through PSOOLA for iSmile workshops, or contact the company for its workshop.",
+  "ws_online_catalog_sub": "Explore the iSmile 2026 workshops, meet your trainers and choose your next clinical skill. A paid summit ticket is required. Register online for iSmile workshops, or contact the company for its workshop.",
   "wd_err_paid_summit": "A paid iSmile summit registration was not found for this email. Complete summit registration and payment first.",
   "wd_seats_available": "{n} available now",
   "wd_paid_places": "{n} registered",
@@ -434,5 +434,16 @@
   "wd_available_now": "Available",
   "cta_see_workshops": "See workshops",
   "wsb_company_call": "Call to register",
-  "wd_pay_action": "Pay"
+  "wd_pay_action": "Pay",
+  "w_free": "Free",
+  "w_seats_count": "{n} seats",
+  "w_team_label": "Workshop team",
+  "w_team_trainer": "Trainer",
+  "w_team_assisting": "Assisting",
+  "wd_free_step": "Register online",
+  "wd_free_step_text": "Use your summit email to register. No workshop payment is required.",
+  "wd_free_registered_text": "After registration is confirmed, your name is added to the workshop and PSOOLA sends your ticket by email.",
+  "wd_free_help": "Register online with your summit email. No workshop payment is required.",
+  "wd_free_opening": "Opening registration…",
+  "wd_free_confirmed_text": "Your workshop registration is confirmed and your name has been added to the workshop registrations. PSOOLA sends your ticket by email."
 }
