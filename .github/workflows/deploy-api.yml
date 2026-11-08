@@ -1,157 +1,128 @@
-# Deploy PHP backend to api.ismile.krd (ismile LXC).
-# Re-runs the idempotent VPS setup script: pulls this branch, updates files/DB,
-# leaves the live Node site on ismile.krd alone.
-# Secrets: same GitHub DEPLOY_ENV as the Node deploy (SSH into LXC :2260), plus
-#   API_OWNER_EMAIL     the Owner's admin sign-in on api.ismile.krd (made if missing)
-#   API_OWNER_PASSWORD  its password, 12+ characters (change the secret = new password)
-#   API_SITE_PASSWORD   the browser password in front of the site (user "ismile")
-#   API_RESEND_KEY      optional: send the emails for real through Resend
-#   API_BREVO_KEY       optional: send through Brevo instead (wins over Resend)
-#   API_MAIL_FROM       optional: the sender (default onboarding@resend.dev)
-#   API_PSOOLA_CONFIG   optional: PSOOLA's settings as one JSON object (keys,
-#                       event/show/ticket/add-on ids, "active": true to take
-#                       real payments). Written into config.php, never printed.
-# The log is public (public repository): passwords are never printed.
-name: Deploy API (api.ismile.krd)
-
+name: Workshop pediatric-usd-draft
 on:
-  push:
-    branches: ["backend"]
   workflow_dispatch:
-    inputs:
-      map_editor_email:
-        description: Existing account to grant exclusive non-owner map booking access
-        required: false
-        type: string
-      association_editor_email:
-        description: Existing account to grant full Association access
-        required: false
-        type: string
-      registration_editor_email:
-        description: Existing account to allow paid and complimentary guest registration
-        required: false
-        type: string
-      workshop_editor_email:
-        description: Existing account to allow guest registration and workshop bookings for all attendees
-        required: false
-        type: string
-
-concurrency:
-  group: ismile-api-deploy
-  cancel-in-progress: false
-
+permissions:
+  contents: read
 jobs:
-  security:
-    uses: ./.github/workflows/security.yml
-  deploy:
-    needs: security
-    name: Update api.ismile.krd
+  operation:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 8
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Load DEPLOY_ENV (SSH only)
+      - name: Load saved server connection
+        shell: bash
         env:
           DEPLOY_ENV: ${{ secrets.DEPLOY_ENV }}
         run: |
           set -euo pipefail
-          : "${DEPLOY_ENV:?DEPLOY_ENV secret is required}"
-          printf '%s\n' "$DEPLOY_ENV" >.deploy.env
+          umask 077
+          printf '%s\n' "$DEPLOY_ENV" > "$RUNNER_TEMP/connection.env"
           set -a
-          # shellcheck disable=SC1091
-          source .deploy.env
+          source "$RUNNER_TEMP/connection.env"
           set +a
+          echo "::add-mask::$DEPLOY_PASSWORD"
           for key in DEPLOY_HOST DEPLOY_USER DEPLOY_PASSWORD DEPLOY_SSH_PORT; do
-            if [ -z "${!key:-}" ]; then
-              echo "error: ${key} missing from DEPLOY_ENV" >&2
-              exit 1
-            fi
+            test -n "${!key}"
+            printf '%s=%s\n' "$key" "${!key}" >> "$GITHUB_ENV"
           done
-          echo "::add-mask::${DEPLOY_PASSWORD}"
-          {
-            echo "DEPLOY_HOST<<EOF_DEPLOY_HOST"
-            printf '%s\n' "$DEPLOY_HOST"
-            echo "EOF_DEPLOY_HOST"
-            echo "DEPLOY_USER<<EOF_DEPLOY_USER"
-            printf '%s\n' "$DEPLOY_USER"
-            echo "EOF_DEPLOY_USER"
-            echo "DEPLOY_PASSWORD<<EOF_DEPLOY_PASSWORD"
-            printf '%s\n' "$DEPLOY_PASSWORD"
-            echo "EOF_DEPLOY_PASSWORD"
-            echo "DEPLOY_SSH_PORT<<EOF_DEPLOY_SSH_PORT"
-            printf '%s\n' "$DEPLOY_SSH_PORT"
-            echo "EOF_DEPLOY_SSH_PORT"
-          } >>"$GITHUB_ENV"
-
-      - name: Run setup-test-site.sh on the LXC
+      - name: pediatric-usd-draft workshops
         uses: appleboy/ssh-action@v1.2.0
-        env:
-          OWNER_EMAIL: ${{ secrets.API_OWNER_EMAIL }}
-          OWNER_PASSWORD: ${{ secrets.API_OWNER_PASSWORD }}
-          SITE_PASSWORD: ${{ secrets.API_SITE_PASSWORD }}
-          RESEND_KEY: ${{ secrets.API_RESEND_KEY }}
-          BREVO_KEY: ${{ secrets.API_BREVO_KEY }}
-          MAIL_FROM: ${{ secrets.API_MAIL_FROM }}
-          PSOOLA_CONFIG: ${{ secrets.API_PSOOLA_CONFIG }}
-          QUIET_SECRETS: "1"
-          MAP_EDITOR_EMAIL: ${{ inputs.map_editor_email || '' }}
-          ASSOCIATION_EDITOR_EMAIL: ${{ inputs.association_editor_email || '' }}
-          REGISTRATION_EDITOR_EMAIL: ${{ inputs.registration_editor_email || '' }}
-          WORKSHOP_EDITOR_EMAIL: ${{ inputs.workshop_editor_email || '' }}
         with:
-          envs: OWNER_EMAIL,OWNER_PASSWORD,SITE_PASSWORD,RESEND_KEY,BREVO_KEY,MAIL_FROM,PSOOLA_CONFIG,QUIET_SECRETS,MAP_EDITOR_EMAIL,ASSOCIATION_EDITOR_EMAIL,REGISTRATION_EDITOR_EMAIL,WORKSHOP_EDITOR_EMAIL
           host: ${{ env.DEPLOY_HOST }}
           username: ${{ env.DEPLOY_USER }}
           password: ${{ env.DEPLOY_PASSWORD }}
           port: ${{ env.DEPLOY_SSH_PORT }}
           timeout: 60s
-          command_timeout: 20m
+          command_timeout: 6m
           script: |
-            set -euo pipefail
-            cd /root
-            # Save the existing database before applying schema migrations.
-            if [ -f /opt/ismile-test/backend/bootstrap.php ] && [ -f /opt/ismile-test/backend/config.php ]; then
-              runuser -u www-data -- php -r 'require $argv[1]; \Ismile\Backup::run(); echo "Pre-deployment database backup saved.\n";' /opt/ismile-test/backend/bootstrap.php
-            fi
-            # Idle unattended-upgrade-shutdown holds dpkg locks forever; stop it.
-            systemctl stop unattended-upgrades 2>/dev/null || true
-            curl -fsSL "https://raw.githubusercontent.com/Redyar8r-SE/Ismile/backend/backend/tools/vps/setup-test-site.sh" \
-              -o /root/ismile-test-setup.sh
-            chmod +x /root/ismile-test-setup.sh
-            DOMAIN=api.ismile.krd BRANCH=backend bash /root/ismile-test-setup.sh
-            if [ -n "${MAP_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-map-manager.php
-            fi
-            if [ -n "${ASSOCIATION_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-association-manager.php
-            fi
-            if [ -n "${REGISTRATION_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-registration-manager.php
-            fi
-            if [ -n "${WORKSHOP_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-workshop-manager.php
-            fi
-            runuser -u www-data -- php /opt/ismile-test/backend/tools/verify-deployment.php --source /opt/ismile-test/repo
-            runuser -u www-data -- php /opt/ismile-test/backend/tools/verify-association.php
-            # Smoke: PHP admin + config API (basic auth from secrets.env)
-            SP="$(grep '^SITE_PASS=' /opt/ismile-test/secrets.env | cut -d= -f2-)"
-            code="$(curl -s -o /dev/null -w '%{http_code}' -u "ismile:${SP}" -H 'Host: api.ismile.krd' http://127.0.0.1:8081/admin/login.php)"
-            echo "admin_login_http=${code}"
-            test "$code" = "200"
-            # The QR fallback must be accessible through nginx's allow-list.
-            curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' \
-              http://127.0.0.1:8081/admin/vendor/jsQR.js | cmp - /opt/ismile-test/site/admin/vendor/jsQR.js
-            echo "qr_decoder_http=200 (matches deployed file)"
-            for asset in map.js map.css registration-details.js registration-details.css workshops.js workshops.css; do
-              curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' \
-                "http://127.0.0.1:8081/admin/${asset}" | cmp - "/opt/ismile-test/site/admin/${asset}"
-            done
-            runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/map-access.php
-            runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/registration-access.php
-            runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/workshop-access.php
-            echo "map_assets_http=200; all role permissions verified"
-            echo "registration_details_assets_http=200 (match deployed files)"
-            curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' -H 'X-Forwarded-Proto: https' \
-              http://127.0.0.1:8081/api/config.php | grep -q '"ok":true'
-            echo "api.ismile.krd update OK"
+            set -eu
+            runuser -u www-data -- php <<'PEDIATRIC_USD_DRAFT_PHP'
+            <?php
+            declare(strict_types=1);
+            require '/opt/ismile-test/backend/bootstrap.php';
+            
+            use Ismile\App;
+            use Ismile\Audit;
+            use Ismile\Db;
+            use Ismile\WorkshopCatalog;
+            use Ismile\WorkshopCheckout;
+            use Ismile\Workshops;
+            use Ismile\Payments\PsoolaGateway;
+            
+            $workshopId='pediatric-dentistry-masterclass';
+            $file=App::storage('tmp/pediatric-dentistry-masterclass-psoola-management.json');
+            $lock=fopen($file.'.lock','c');
+            if(!$lock||!flock($lock,LOCK_EX|LOCK_NB))throw new RuntimeException('Matrix Effect creation is already running.');
+            $row=json_decode(base64_decode('eyJpZCI6InBlZGlhdHJpYy1kZW50aXN0cnktbWFzdGVyY2xhc3MiLCJpY29uIjoidG9vdGgiLCJvcmdhbml6ZXIiOiJpc21pbGUiLCJjb21wYW55X3Bob25lIjpudWxsLCJjb21wYW55X3Bob25lX3NlY29uZGFyeSI6bnVsbCwic2NoZWR1bGVkX2RhdGUiOiIyMDI2LTExLTIwIiwic3RhcnRfdGltZSI6IjA5OjAwIiwiZW5kX3RpbWUiOiIxMjowMCIsInBob3RvIjoiYXNzZXRzL3dvcmtzaG9wcy9wZWRpYXRyaWMtZGVudGlzdHJ5LXRlYW0ud2VicCIsInBob3RvX3N0eWxlIjoiY3V0b3V0IiwicHJlc2VudGVyc19qc29uIjoiW3tcIm5hbWVcIjp7XCJlblwiOlwiRHIuIFR3YW5hIE90aG1hblwiLFwiYXJcIjpcItivLiDYqtmI2KfZhtinINi52KvZhdin2YZcIixcImt1XCI6XCLYry4g2KrZiNin2YbYpyDYudmI2LPZhdin2YZcIn0sXCJyb2xlXCI6XCJ0cmFpbmVyXCIsXCJjcmVkZW50aWFsc1wiOntcImVuXCI6XCJQaC5ELiBpbiBQZWRpYXRyaWMgRGVudGlzdHJ5IMK3IE5pY29zaWEsIEN5cHJ1c1wiLFwiYXJcIjpcItiv2YPYqtmI2LHYp9mHINmB2Yog2LfYqCDYo9iz2YbYp9mGINin2YTYo9i32YHYp9mEIMK3INmG2YrZgtmI2LPZitin2Iwg2YLYqNix2LVcIixcImt1XCI6XCLYr9qp2Krbhtix2Kcg2YTblSDZvtiy24zYtNqp24wg2K/Yr9in2YbbjCDZhdmG2K/Yp9q12KfZhiDCtyDZhtuM2qnbhtiz24zYp9iMINmC2YjYqNix2LNcIn19LHtcIm5hbWVcIjp7XCJlblwiOlwiRHIuIFNoa2FyIEhvc2hlYXJcIixcImFyXCI6XCLYry4g2LTZg9in2LEg2YfZiNi02YrYp9ixXCIsXCJrdVwiOlwi2K8uINi02qnYp9ixINmH24bYtNuM2KfYsVwifSxcInJvbGVcIjpcInRyYWluZXJcIixcImNyZWRlbnRpYWxzXCI6e1wiZW5cIjpcIkNvbnN1bHRhbnQgUGVkaWF0cmljIERlbnRpc3QgJiBTcGVjaWFsIENhcmUgwrcgQkRTLCBERFMsIE1TYywgRUFQRCDCtyBSZWNvZ25pemVkIFBlZGlhdHJpYyBEZW50aXN0IMK3IEJlbGdpdW0gQm9hcmQgaW4gUGVkaWF0cmljIERlbnRpc3RyeVwiLFwiYXJcIjpcItin2LPYqti02KfYsdmKINi32Kgg2KPYs9mG2KfZhiDYp9mE2KPYt9mB2KfZhCDZiNin2YTYsdi52KfZitipINin2YTYrtin2LXYqSDCtyBCRFMsIEREUywgTVNjLCBFQVBEIMK3INi32KjZitioINij2LPZhtin2YYg2KPYt9mB2KfZhCDZhdi52KrYsdmBINio2Ycgwrcg2KfZhNmF2KzZhNizINin2YTYqNmE2KzZitmD2Yog2YTYt9ioINij2LPZhtin2YYg2KfZhNij2LfZgdin2YRcIixcImt1XCI6XCLaldin2YjbjtqY2qnYp9ix24wg2b7YstuM2LTaqduMINiv2K/Yp9mG24wg2YXZhtiv2Kfatdin2YYg2Ygg2obYp9mI2K/bjtix24wg2KrYp9uM2KjbldiqIMK3IEJEUywgRERTLCBNU2MsIEVBUEQgwrcg2Kjbhtix2K/bjCDYqNuV2YTYrNuM2qnYpyDZhNuVINm+2LLbjNi02qnbjCDYr9iv2KfZhtuMINmF2YbYr9in2rXYp9mGXCJ9fSx7XCJuYW1lXCI6e1wiZW5cIjpcIkhhbHF1cmQgU2FsaWggSmFmXCIsXCJhclwiOlwi2Yfbldq12YLZiNix2K8g2LXYp9mE2K0g2KzYp9mBXCIsXCJrdVwiOlwi2Yfbldq12YLZiNix2K8g2LPYp9q12K0g2KzYp9mBXCJ9LFwicm9sZVwiOlwidHJhaW5lclwiLFwiY3JlZGVudGlhbHNcIjp7XCJlblwiOlwiQkRTLCBNRFBILCBERFBIIFJDUyAoRW5nLikgwrcgVW5pdmVyc2l0eSBvZiBTaGVmZmllbGRcIixcImFyXCI6XCJCRFMsIE1EUEgsIEREUEggUkNTIChFbmcuKSDCtyDYrNin2YXYudipINi02YrZgdmK2YTYr1wiLFwia3VcIjpcIkJEUywgTURQSCwgRERQSCBSQ1MgKEVuZy4pIMK3INiy2KfZhtqp24bbjCDYtNuO2YHbjNq12K9cIn19XSIsInByaWNlIjoxNTAsImN1cnJlbmN5IjoiVVNEIiwidG90YWxfc2VhdHMiOjI1LCJzdGF0dXMiOiJoaWRkZW4iLCJ0aXRsZV9lbiI6Ik1hc3RlcmNsYXNzIGluIFBlZGlhdHJpYyBEZW50aXN0cnk6IFBhaW5sZXNzIExvY2FsIEFuZXN0aGVzaWEsIFN0YWlubGVzcyBTdGVlbCBDcm93bnMsIGFuZCBWaXRhbCBQdWxwIFRoZXJhcHkgaW4gUHJpbWFyeSBhbmQgUGVybWFuZW50IFRlZXRoIiwidGl0bGVfYXIiOiLYr9mI2LHYqSDZhdiq2YLYr9mF2Kkg2YHZiiDYt9ioINij2LPZhtin2YYg2KfZhNij2LfZgdin2YQ6INin2YTYqtiu2K/ZitixINin2YTZhdmI2LbYudmKINiv2YjZhiDYo9mE2YUg2YjYp9mE2KrZitis2KfZhiDYp9mE2YHZiNmE2KfYsNmK2Kkg2YjYudmE2KfYrCDYp9mE2YTYqCDYp9mE2K3ZitmI2Yog2YHZiiDYp9mE2KPYs9mG2KfZhiDYp9mE2YTYqNmG2YrYqSDZiNin2YTYr9in2KbZhdipIiwidGl0bGVfa3UiOiLZhdin2LPYqtuV2LHaqdmE2KfYsyDZhNuVINm+2LLbjNi02qnbjCDYr9iv2KfZhtuMINmF2YbYr9in2rXYp9mGOiDYqNuO2Yfbldiz2Kraqdix2K/ZhtuMINmG2KfZiNqG25XbjNuMINio244g2KbYp9iy2KfYsdiMINqp2LHYp9mI2YbbjCDZvtuG2rXYp9uMINiv2pjbldqY25XZhtqvINmIINqG2KfYsduV2LPbldix24wg2b7Yp9mE2b7bjCDYstuM2YbYr9mI2Ygg2YTblSDYr9iv2KfZhtuMINi024zYsduMINmIINmH25XZhduM2LTblduM24wiLCJzcGVha2VyX2VuIjoiRHIuIFR3YW5hIE90aG1hbiwgRHIuIFNoa2FyIEhvc2hlYXIgJiBIYWxxdXJkIFNhbGloIEphZiIsInNwZWFrZXJfYXIiOiLYry4g2KrZiNin2YbYpyDYudir2YXYp9mG2Iwg2K8uINi02YPYp9ixINmH2YjYtNmK2KfYsSDZiNmH25XatdmC2YjYsdivINi12KfZhNitINis2KfZgSIsInNwZWFrZXJfa3UiOiLYry4g2KrZiNin2YbYpyDYudmI2LPZhdin2YbYjCDYry4g2LTaqdin2LEg2Yfbhti024zYp9ixINmIINmH25XatdmC2YjYsdivINiz2KfatditINis2KfZgSIsImNyZWRlbnRpYWxzX2VuIjpudWxsLCJjcmVkZW50aWFsc19hciI6bnVsbCwiY3JlZGVudGlhbHNfa3UiOm51bGwsIm92ZXJ2aWV3X2VuIjoiUGFpbmxlc3MgbG9jYWwgYW5lc3RoZXNpYVxuU3RhaW5sZXNzIHN0ZWVsIGNyb3duc1xuVml0YWwgcHVscCB0aGVyYXB5IGluIHByaW1hcnkgYW5kIHBlcm1hbmVudCB0ZWV0aCIsIm92ZXJ2aWV3X2FyIjoi2KfZhNiq2K7Yr9mK2LEg2KfZhNmF2YjYtti52Yog2K/ZiNmGINij2YTZhVxu2KfZhNiq2YrYrNin2YYg2KfZhNmB2YjZhNin2LDZitipINin2YTZhdmC2KfZiNmF2Kkg2YTZhNi12K/Yo1xu2LnZhNin2Kwg2KfZhNmE2Kgg2KfZhNit2YrZiNmKINmB2Yog2KfZhNij2LPZhtin2YYg2KfZhNmE2KjZhtmK2Kkg2YjYp9mE2K/Yp9im2YXYqSIsIm92ZXJ2aWV3X2t1Ijoi2KjbjtmH25XYs9iq2qnYsdiv2YbbjCDZhtin2YjahtuV24zbjCDYqNuOINim2KfYstin2LFcbtqp2LHYp9mI2YbbjCDZvtuG2rXYp9uMINiv2pjbldqY25XZhtqvXG7ahtin2LHbldiz25XYsduMINm+2KfZhNm+24wg2LLbjNmG2K/ZiNmIINmE25Ug2K/Yr9in2YbbjCDYtNuM2LHbjCDZiCDZh9uV2YXbjNi025XbjNuMIiwiZm9ybWF0X2VuIjoiSGFuZHMtb24gd29ya3Nob3AiLCJmb3JtYXRfYXIiOiLZiNix2LTYqSDYqti32KjZitmC2YrYqSIsImZvcm1hdF9rdSI6ItmI24bYsdqp2LTbhtm+24wg2qnYsdiv2KfYsduMIiwiZHVyYXRpb25fZW4iOiIzIGhvdXJzIiwiZHVyYXRpb25fYXIiOiIzINiz2KfYudin2KoiLCJkdXJhdGlvbl9rdSI6IjMg2qnYp9iq2pjZhduO2LEiLCJsZXZlbF9lbiI6bnVsbCwibGV2ZWxfYXIiOm51bGwsImxldmVsX2t1IjpudWxsLCJjb21wYW55X2VuIjpudWxsLCJjb21wYW55X2FyIjpudWxsLCJjb21wYW55X2t1IjpudWxsfQ=='),true,512,JSON_THROW_ON_ERROR);
+            if(!$row||$row['organizer']!=='ismile'||(int)$row['price']!==150||(int)$row['total_seats']!==25||$row['scheduled_date']!=='2026-11-20'||substr($row['start_time'],0,5)!=='09:00'||substr($row['end_time'],0,5)!=='12:00')throw new RuntimeException('Confirmed workshop details do not match the saved draft.');
+            $owner=Db::one("SELECT * FROM admin_users WHERE role='owner' AND disabled_at IS NULL ORDER BY id LIMIT 1");
+            if(!$owner)throw new RuntimeException('An enabled Owner is required.');
+            $state=is_file($file)?json_decode((string)file_get_contents($file),true,512,JSON_THROW_ON_ERROR):['originalWorkshop'=>$row,'requests'=>[],'responses'=>[]];
+            $save=static function()use(&$state,$file):void{
+             $json=json_encode($state,JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR);
+             if(file_put_contents($file.'.writing',$json,LOCK_EX)===false)throw new RuntimeException('Cannot persist management progress.');
+             chmod($file.'.writing',0600);rename($file.'.writing',$file);
+            };
+            $save();
+            $gateway=new PsoolaGateway();
+            $request=static function(string $step,string $method,string $path,?array $body=null)use(&$state,$save,$gateway):array{
+             $key='ismile-ws-pediatric-dentistry-masterclass-'.$step;
+             if(strlen($key)>64)throw new RuntimeException('Idempotency key is too long.');
+             if($method!=='GET'){
+              $record=['method'=>$method,'path'=>$path,'body'=>$body,'key'=>$key];
+              if(isset($state['requests'][$step])&&$state['requests'][$step]!==$record)throw new RuntimeException('Saved request changed: '.$step);
+              $state['requests'][$step]=$record;$save();
+              if(isset($state['responses'][$step]))return $state['responses'][$step];
+             }
+             for($attempt=0;$attempt<2;$attempt++){
+              $result=$gateway->partnerRequest($method,'manage/'.$path,$body,$method==='GET'?[]:['Idempotency-Key: '.$key]);
+              $json=$result['json']??[];$requestId=$json['requestId']??null;
+              App::log($result['status']>=400?'error':'info','PSOOLA workshop management',['workshop'=>'pediatric-dentistry-masterclass','method'=>$method,'path'=>'manage/'.$path,'status'=>$result['status'],'requestId'=>$requestId]);
+              echo 'MANAGEMENT_CALL='.json_encode(['step'=>$step,'method'=>$method,'path'=>'manage/'.$path,'status'=>$result['status'],'requestId'=>$requestId]).PHP_EOL;
+              if($result['status']!==429)break;
+              // Six writes are below the normal limit. Retain the identical request for retry.
+              sleep(5);
+             }
+             if(!in_array($result['status'],[200,201],true))throw new RuntimeException('PSOOLA '.$step.': HTTP '.$result['status'].' '.($json['error']['code']??'').' '.($json['error']['message']??'Request failed').' requestId='.($requestId??'none'));
+             if($method!=='GET'){$state['responses'][$step]=$json;$save();}
+             return $json;
+            };
+            $start=(new DateTimeImmutable('2026-11-20T09:00:00+03:00'))->getTimestamp()*1000;
+            $end=(new DateTimeImmutable('2026-11-20T12:00:00+03:00'))->getTimestamp()*1000;
+            if($start!==1795154400000||$end!==1795165200000)throw new RuntimeException('Iraq schedule conversion failed.');
+            $description="iSmile 2026 hands-on Masterclass in Pediatric Dentistry with Dr. Twana Othman, Dr. Shkar Hoshear and Halqurd Salih Jaf.\n\nPainless local anesthesia, stainless steel crowns, and vital pulp therapy in primary and permanent teeth.\n\n20 November 2026, 9:00 AM to 12:00 PM at Grand Millennium Hotel, Sulaimani. All times are local to Iraq (Asia/Baghdad). Limited to 25 attendees. 150 USD per person.\n\nA paid iSmile summit ticket is required. Register online with your summit email.";
+            $ticketDescription="Dr. Twana Othman, Dr. Shkar Hoshear and Halqurd Salih Jaf. 150 USD per person. A paid iSmile summit ticket is required.";
+            $category='td785em4z4zsgk26cencfv067587a1xd';$venue='r571e95gwse9zqj368qhqdv54h8g22kq';
+            if(!isset($state['eventId'])){
+             $catalog=$request('managed-list','GET','events');
+             foreach($catalog['events']??[] as $event)if(($event['title']??'')===$row['title_en'])throw new RuntimeException('A matching provider event already exists; verify it before creating another.');
+             $result=$request('create','POST','events',['categoryId'=>$category,'event'=>[
+              'title'=>$row['title_en'],'titleI18n'=>['en'=>$row['title_en']],
+              'description'=>$description,'locationId'=>'n17btw319q1ffp2gnqkbefgvr987bq43',
+              'startDate'=>$start,'endDate'=>$end,'showEndDateTime'=>true,'tags'=>['ismile-2026','workshop','dentistry']
+             ]]);
+             $state['eventId']=$result['event']['_id']??null;
+             if(!$state['eventId']||($result['event']['showOnPsoola']??null)!==false)throw new RuntimeException('Creation did not return a hidden provider event.');
+             $save();
+            }
+            $eventId=$state['eventId'];
+            if(!empty($row['provider_event_id'])&&$row['provider_event_id']!==$eventId)throw new RuntimeException('Workshop is already linked to another provider event.');
+            if(!isset($state['showId'])){
+             $result=$request('show','POST','events/'.$eventId.'/shows',['venueId'=>$venue,'dateTime'=>$start,'endTime'=>$end]);
+             $shows=array_values(array_filter($result['shows']??[],static fn($s)=>(int)($s['dateTime']??0)===$start&&(int)($s['endTime']??0)===$end&&($s['venueId']??'')===$venue));
+             if(count($shows)!==1)throw new RuntimeException('Expected one matching workshop session.');
+             $state['showId']=$shows[0]['_id'];$save();
+            }
+            $showId=$state['showId'];
+            if(!isset($state['ticketTypeId'])){
+             $result=$request('ticket','POST','events/'.$eventId.'/ticket-types',['showId'=>$showId,'ticket'=>['name'=>'Workshop Admission','description'=>$ticketDescription,'price'=>150,'currency'=>'USD','quantity'=>25]]);
+             $tickets=array_values(array_filter($result['ticketTypes']??[],static fn($t)=>($t['showId']??'')===$showId&&($t['name']??'')==='Workshop Admission'&&(int)($t['quantity']??0)===25));
+             if(count($tickets)!==1)throw new RuntimeException('Expected one matching admission ticket.');
+             $state['ticketTypeId']=$tickets[0]['_id'];$save();
+            }
+            $ticketId=$state['ticketTypeId'];
+            
+            $managed=$request('read-usd-draft','GET','events/'.$eventId);
+            $state['draftInspection']=$managed;$save();
+            echo 'WORKSHOPS_INVENTORY='.json_encode(['workshopId'=>$workshopId,'eventId'=>$eventId,'showId'=>$showId,'ticketTypeId'=>$ticketId,'requestedPrice'=>150,'requestedCurrency'=>'USD','eventStatus'=>$managed['event']['status']??null,'commerce'=>$managed['commerce']??null,'ticketTypes'=>$managed['ticketTypes']??[],'salesEnabled'=>false],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES).PHP_EOL;
+            
+            PEDIATRIC_USD_DRAFT_PHP
