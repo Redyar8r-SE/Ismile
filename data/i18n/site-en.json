@@ -442,8 +442,8 @@
   "w_team_assisting": "Assisting",
   "wd_free_step": "Register online",
   "wd_free_step_text": "Use your summit email to register. No workshop payment is required.",
-  "wd_free_registered_text": "After registration is confirmed, your name is added to the workshop and PSOOLA sends your ticket by email.",
+  "wd_free_registered_text": "After registration is confirmed, your name is added to the workshop attendee list.",
   "wd_free_help": "Register online with your summit email. No workshop payment is required.",
   "wd_free_opening": "Opening registration…",
-  "wd_free_confirmed_text": "Your workshop registration is confirmed and your name has been added to the workshop registrations. PSOOLA sends your ticket by email."
+  "wd_free_confirmed_text": "Your workshop registration is confirmed and your name has been added to the attendee list. No workshop payment is required."
 }
