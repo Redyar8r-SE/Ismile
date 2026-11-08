@@ -79,7 +79,7 @@ function initDetails(workshop) {
 
     const trainer = team ? `<span dir="auto">${esc(w.presenters.filter(p => p.role !== "assistant").map(p => pick(p.name)).join(" & "))}</span><span class="wdc-trainer-assistant" dir="auto">${esc(t("w_team_assisting"))}: ${esc(w.presenters.filter(p => p.role === "assistant").map(p => pick(p.name)).join(", "))}</span>` : [speaker, credentials].filter(Boolean).map((part) => `<span dir="auto">${esc(part)}</span>`).join('');
     const price = `<div class="wdc-stat is-price"><span class="wdc-stat-ic">${ICONS.wallet}</span><div><b dir="auto">${esc(unavailable ? t("wd_availability_unavailable") : workshopPrice(w))}</b><small>${esc(t("w_price_seat"))}</small></div></div>`;
-    const availability = unavailable ? t("wd_availability_unavailable") : full ? t("wd_full") : free ? t("w_seats_count").replace("{n}", String(left)) : t("wd_available_now");
+    const availability = unavailable ? t("wd_availability_unavailable") : full ? t("wd_full") : t("wd_available_now");
     const seats = `<div class="wdc-stat is-seats"><span class="wdc-stat-ic">${ICONS.users}</span><div><b>${esc(availability)}</b></div></div>`;
     const steps = (company
       ? [["phone", "wdc_how1", "wdc_how1_d"], ["wallet", "wdc_how2", "wdc_how2_d"], ["ticket", "wdc_how3", "wdc_how3_d"]]
