@@ -295,5 +295,117 @@
     "totalSeats": 30,
     "seatsLeft": 30,
     "availabilityVerified": false
+  },
+  {
+    "id": "modern-endodontics",
+    "icon": "tooth",
+    "title": {
+      "en": "Modern Endodontics Made Simple and Safe: A Step-by-Step Journey from Access to Obturation",
+      "ar": "علاج جذور الأسنان الحديث ببساطة وأمان: رحلة خطوة بخطوة من فتح الحجرة إلى الحشو",
+      "ku": "چارەسەری ڕەگی ددانی نوێ بە سادەیی و سەلامەتی: هەنگاو بە هەنگاو لە کردنەوە تا پڕکردنەوە"
+    },
+    "speaker": {
+      "en": "Dr. Khidher Mustafa",
+      "ar": "د. خدر مصطفى",
+      "ku": "د. خدر مستەفا"
+    },
+    "credentials": {
+      "en": "B.D.S., M.Sc. in Endodontics",
+      "ar": "بكالوريوس طب وجراحة الأسنان، ماجستير في علاج جذور الأسنان",
+      "ku": "بەکالۆریۆس لە پزیشکی و نەشتەرگەری ددان، ماستەر لە چارەسەری ڕەگی ددان"
+    },
+    "overview": {
+      "en": "A step-by-step hands-on journey from access to obturation.",
+      "ar": "رحلة تطبيقية خطوة بخطوة من فتح الحجرة إلى حشو قنوات الجذور.",
+      "ku": "ڕێگایەکی کرداری هەنگاو بە هەنگاو لە کردنەوەی ژووری ددان تا پڕکردنەوەی کەناڵەکانی ڕەگ."
+    },
+    "format": {
+      "en": "Hands-on workshop",
+      "ar": "ورشة تطبيقية",
+      "ku": "وۆرکشۆپی کرداری"
+    },
+    "duration": {
+      "en": "2 hours",
+      "ar": "ساعتان",
+      "ku": "2 کاتژمێر"
+    },
+    "level": null,
+    "organizer": "company",
+    "company": {
+      "en": "Elite Dental",
+      "ar": "إيليت دنتال",
+      "ku": "ئیلیت دێنتاڵ"
+    },
+    "companyPhone": "0773 059 6161",
+    "companyPhones": [
+      "0773 059 6161"
+    ],
+    "scheduledDate": "2026-11-20",
+    "startTime": "11:00",
+    "endTime": "13:00",
+    "photo": "assets/workshops/khidher-mustafa.webp",
+    "photoStyle": "cutout",
+    "presenters": [],
+    "price": 100,
+    "currency": "USD",
+    "totalSeats": 25,
+    "seatsLeft": 25,
+    "availabilityVerified": true
+  },
+  {
+    "id": "advanced-digital-orthodontics",
+    "icon": "tooth",
+    "title": {
+      "en": "Advanced Digital Orthodontics: MARPE from Case Selection to Digital Design and Appliance Delivery",
+      "ar": "تقويم الأسنان الرقمي المتقدم: MARPE من اختيار الحالة إلى التصميم الرقمي وتسليم الجهاز",
+      "ku": "ڕاستکردنەوەی ددانی دیجیتاڵی پێشکەوتوو: MARPE لە هەڵبژاردنی حاڵەت تا دیزاینی دیجیتاڵ و ڕادەستکردنی ئامێر"
+    },
+    "speaker": {
+      "en": "Dr. Anwar Ahmad Amin",
+      "ar": "د. أنور أحمد أمين",
+      "ku": "د. ئەنوەر ئەحمەد ئەمین"
+    },
+    "credentials": {
+      "en": "B.D.S., CES-ODF, DUOPA",
+      "ar": "B.D.S., CES-ODF, DUOPA",
+      "ku": "B.D.S., CES-ODF, DUOPA"
+    },
+    "overview": {
+      "en": "MARPE: from case selection to digital design and appliance delivery.",
+      "ar": "MARPE: من اختيار الحالة إلى التصميم الرقمي وتسليم الجهاز.",
+      "ku": "MARPE: لە هەڵبژاردنی حاڵەت تا دیزاینی دیجیتاڵ و ڕادەستکردنی ئامێر."
+    },
+    "format": {
+      "en": "Hands-on workshop",
+      "ar": "ورشة تطبيقية",
+      "ku": "وۆرکشۆپی کرداری"
+    },
+    "duration": {
+      "en": "2 hours",
+      "ar": "ساعتان",
+      "ku": "2 کاتژمێر"
+    },
+    "level": null,
+    "organizer": "company",
+    "company": {
+      "en": "Elite Dental",
+      "ar": "إيليت دنتال",
+      "ku": "ئیلیت دێنتاڵ"
+    },
+    "companyPhone": "0773 059 6161",
+    "companyPhones": [
+      "0773 059 6161"
+    ],
+    "scheduledDate": "2026-11-19",
+    "startTime": "11:00",
+    "endTime": "13:00",
+    "photo": "assets/workshops/anwar-ahmad-amin.webp",
+    "photoStyle": "cutout",
+    "presenters": [],
+    "price": 100,
+    "currency": "USD",
+    "totalSeats": 25,
+    "seatsLeft": 25,
+    "availabilityVerified": true
   }
 ]
