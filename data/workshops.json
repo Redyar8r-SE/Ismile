@@ -167,7 +167,7 @@
     },
     "company": null,
     "speaker": {
-      "en": "Dt. Kawan Saleh",
+      "en": "Dr. Kawan Saleh",
       "ar": "كەوان صالح",
       "ku": "کەوان ساڵح"
     },
@@ -182,7 +182,11 @@
       "ar": "ساعتان",
       "ku": "2 کاتژمێر"
     },
-    "level": null,
+    "level": {
+      "en": "Suitable for all experience levels",
+      "ar": "مناسب لجميع مستويات الخبرة",
+      "ku": "گونجاوە بۆ هەموو ئاستەکانی ئەزموون"
+    },
     "overview": {
       "en": "From ceramic powder to natural aesthetics.\nHands-on workshop at Grand Millennium Hotel, Sulaimani.",
       "ar": "من مسحوق السيراميك إلى الجمال الطبيعي.\nورشة تطبيقية في فندق غراند ميلينيوم، السليمانية.",
@@ -200,6 +204,84 @@
     "currency": "IQD",
     "totalSeats": 25,
     "seatsLeft": 25,
+    "availabilityVerified": false
+  },
+  {
+    "id": "subperiosteal-implant-protocol",
+    "icon": "implant",
+    "title": {
+      "en": "The Subperiosteal Implant Protocol: Guidelines for Predictable Fabrication",
+      "ar": "بروتوكول الزرعات تحت السمحاق: إرشادات لتصنيع يمكن التنبؤ بنتائجه",
+      "ku": "پرۆتۆکۆلی ئیمپڵانتی ژێر پەردەی ئێسک: ڕێنمایی بۆ دروستکردنی پێشبینیکراو"
+    },
+    "speaker": {
+      "en": "Dr. Ako Omar & Dr. Rezhin Kawa; assisting: Dr. Zhiwar Omar",
+      "ar": "Dr. Ako Omar & Dr. Rezhin Kawa; assisting: Dr. Zhiwar Omar",
+      "ku": "Dr. Ako Omar & Dr. Rezhin Kawa; assisting: Dr. Zhiwar Omar"
+    },
+    "credentials": null,
+    "format": {
+      "en": "Hands-on workshop",
+      "ar": "ورشة تطبيقية",
+      "ku": "وۆرکشۆپی کرداری"
+    },
+    "overview": {
+      "en": "Indications for subperiosteal implants\nGeneral rules during design and fabrication\nComplications and their management",
+      "ar": "دواعي استخدام الزرعات تحت السمحاق\nالقواعد العامة أثناء التصميم والتصنيع\nالمضاعفات وكيفية التعامل معها",
+      "ku": "حاڵەتە گونجاوەکان بۆ ئیمپڵانتی ژێر پەردەی ئێسک\nیاسا گشتییەکان لە کاتی دیزاین و دروستکردن\nئاڵۆزییەکان و چۆنیەتی بەڕێوەبردنیان"
+    },
+    "duration": {
+      "en": "2 hours",
+      "ar": "ساعتان",
+      "ku": "2 کاتژمێر"
+    },
+    "level": {
+      "en": "Suitable for all experience levels",
+      "ar": "مناسب لجميع مستويات الخبرة",
+      "ku": "گونجاوە بۆ هەموو ئاستەکانی ئەزموون"
+    },
+    "presenters": [
+      {
+        "name": {
+          "en": "Dr. Ako Omar"
+        },
+        "role": "trainer",
+        "credentials": {
+          "en": "MSc in Oral and Maxillofacial Radiology"
+        }
+      },
+      {
+        "name": {
+          "en": "Dr. Rezhin Kawa"
+        },
+        "role": "trainer",
+        "credentials": {
+          "en": "Oral and Maxillofacial Surgeon"
+        }
+      },
+      {
+        "name": {
+          "en": "Dr. Zhiwar Omar"
+        },
+        "role": "assistant",
+        "credentials": {
+          "en": "Assisting the workshop trainers"
+        }
+      }
+    ],
+    "organizer": "ismile",
+    "company": null,
+    "companyPhone": null,
+    "companyPhones": [],
+    "scheduledDate": "2026-11-20",
+    "startTime": "13:00",
+    "endTime": "15:00",
+    "photo": "assets/workshops/subperiosteal-team.webp",
+    "photoStyle": "cutout",
+    "price": 0,
+    "currency": "IQD",
+    "totalSeats": 30,
+    "seatsLeft": 30,
     "availabilityVerified": false
   }
 ]

@@ -46,7 +46,7 @@ final class WorkshopCatalog
         $show=null;$ticket=null;
         foreach(($event['shows']??[]) as $candidate)if(($candidate['id']??null)===$workshop['providerShowId'])$show=$candidate;
         foreach(($show['ticketTypes']??[]) as $candidate)if(($candidate['id']??null)===$workshop['providerTicketTypeId'])$ticket=$candidate;
-        if(!$show || !$ticket || !is_int($ticket['price']??null) || $ticket['price']<1 || !is_int($ticket['available']??null) || $ticket['available']<0 || !is_numeric($show['dateTime']??null) || !is_numeric($show['endTime']??null))throw new \RuntimeException('Workshop session, ticket type or price is unavailable.');
+        if(!$show || !$ticket || !is_int($ticket['price']??null) || $ticket['price']<0 || ($ticket['price']===0 && (int)$workshop['price']!==0) || !is_int($ticket['available']??null) || $ticket['available']<0 || !is_numeric($show['dateTime']??null) || !is_numeric($show['endTime']??null))throw new \RuntimeException('Workshop session, ticket type or price is unavailable.');
         $zone=new \DateTimeZone('Asia/Baghdad');
         $start=(new \DateTimeImmutable('@'.(int)floor((float)$show['dateTime']/1000)))->setTimezone($zone);
         $end=(new \DateTimeImmutable('@'.(int)floor((float)$show['endTime']/1000)))->setTimezone($zone);

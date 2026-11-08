@@ -1,0 +1,23 @@
+<?php
+declare(strict_types=1);
+require __DIR__.'/../bootstrap.php';
+use Ismile\App;use Ismile\Db;use Ismile\WorkshopCheckout;use Ismile\WorkshopCatalog;use Ismile\UserError;
+if(App::isLive()||!str_starts_with((string)App::config('db.name'),'ismile_workshop_test_online_')||App::config('payments.psoola.api_base')!=='http://127.0.0.1:8832')throw new RuntimeException('Isolated local workshop checkout fixture required.');
+$passed=0;$check=static function(string $name,bool $ok)use(&$passed):void{if(!$ok)throw new RuntimeException('FAILED: '.$name);$passed++;echo 'PASS: '.$name.PHP_EOL;};
+$reject=static function(callable $fn):bool{try{$fn();return false;}catch(UserError){return true;}};
+$fixture=static fn(string $path=''):array=>json_decode((string)file_get_contents('http://127.0.0.1:8832/fixture'.$path),true);
+$row=json_decode((string)file_get_contents(__DIR__.'/../assets/subperiosteal-workshop-2026.json'),true);$id=$row['id'];
+$row['status']='active';$row['provider_event_id']='fixture-free-event';$row['provider_show_id']='fixture-free-show';$row['provider_ticket_type_id']='fixture-free-ticket';
+Db::insert('workshops',$row+['sort_order'=>5,'created_at'=>App::now(),'updated_at'=>App::now()]);
+$person=Db::one("SELECT * FROM registrations WHERE email='online-paid@example.invalid'");if(!$person)throw new RuntimeException('Run workshop-online-checkout.php first.');
+$catalog=WorkshopCatalog::one($id,true);$check('Free workshop has verified provider inventory and all three presenters',$catalog['availabilityVerified']&&$catalog['price']===0&&$catalog['totalSeats']===30&&$catalog['seatsLeft']===30&&count($catalog['presenters'])===3);
+$before=$fixture();$check('Free workshop keeps the summit ticket prerequisite',$reject(fn()=>WorkshopCheckout::start($id,'unknown-free@example.invalid'))&&$reject(fn()=>WorkshopCheckout::start($id,'online-free@example.invalid'))&&$fixture()['creations']===$before['creations']);
+$summitPayments=(int)Db::value('SELECT COUNT(*) FROM payments');$result=WorkshopCheckout::start($id,$person['email']);
+$attempt=Db::one('SELECT * FROM workshop_checkouts WHERE workshop_id=? AND registration_id=?',[$id,$person['id']]);$booking=Db::one('SELECT * FROM workshop_bookings WHERE id=?',[$attempt['booking_id']]);
+$check('A verified zero-total checkout immediately confirms free registration',$attempt['provider_status']==='paid'&&(int)$attempt['amount']===0&&WorkshopCheckout::status($attempt['public_token'])['confirmed']);
+$check('Free registration creates a single zero-amount workshop booking',$booking['payment_status']==='paid'&&(int)$booking['amount_paid']===0&&(int)$booking['price_agreed']===0&&$booking['paid_how']==='psoola'&&str_contains($booking['notes'],'No workshop payment required'));
+$check('Free registration returns to its own result page',str_contains($result['redirect'],'workshop.html?id='.$id.'&payment='.$attempt['public_token']));
+$after=$fixture();$check('Duplicate free registration does not issue a second ticket',$reject(fn()=>WorkshopCheckout::start($id,$person['email']))&&$fixture()['creations']===$after['creations']);
+$check('Free registration uses existing checkout and no summit payment or cash sale',(int)Db::value('SELECT COUNT(*) FROM payments')===$summitPayments&&$fixture()['direct']===0);
+$catalog=WorkshopCatalog::one($id,true);$check('Confirmed free ticket reduces provider availability',$catalog['seatsLeft']===29);
+echo $passed.' free workshop integration checks passed.'.PHP_EOL;

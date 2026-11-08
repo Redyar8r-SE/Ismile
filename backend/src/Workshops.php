@@ -98,6 +98,7 @@ final class Workshops
             'startTime' => isset($row['start_time']) ? substr($row['start_time'],0,5) : null,
             'endTime' => isset($row['end_time']) ? substr($row['end_time'],0,5) : null,
             'photoStyle' => $row['photo_style'] ?? 'photo',
+            'presenters' => json_decode((string) ($row['presenters_json'] ?? '[]'), true) ?: [],
             'providerEventId' => $row['provider_event_id'] ?? null,
             'providerShowId' => $row['provider_show_id'] ?? null,
             'providerTicketTypeId' => $row['provider_ticket_type_id'] ?? null,
@@ -447,7 +448,7 @@ final class Workshops
             'overview' => $w['overview'], 'photo' => $w['photo'],
             'organizer' => $w['organizer'], 'companyPhone' => $w['organizer'] === 'company' ? $w['companyPhone'] : null,
             'companyPhones' => $w['organizer']==='company'?$w['companyPhones']:[],
-            'scheduledDate'=>$w['scheduledDate'],'startTime'=>$w['startTime'],'endTime'=>$w['endTime'],'photoStyle'=>$w['photoStyle'],
+            'scheduledDate'=>$w['scheduledDate'],'startTime'=>$w['startTime'],'endTime'=>$w['endTime'],'photoStyle'=>$w['photoStyle'],'presenters'=>$w['presenters'],
             'price' => $w['price'], 'currency' => $w['currency'], 'totalSeats' => $w['totalSeats'], 'seatsLeft' => $w['seatsLeft'],
         ], self::all());
         $json = json_encode($cards, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n";

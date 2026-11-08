@@ -425,6 +425,7 @@ CREATE TABLE IF NOT EXISTS workshops (
   start_time TIME NULL,
   end_time TIME NULL,
   photo_style VARCHAR(12) NOT NULL DEFAULT 'photo',
+  presenters_json JSON NULL,
   provider_event_id VARCHAR(64) NULL,
   provider_show_id VARCHAR(64) NULL,
   provider_ticket_type_id VARCHAR(64) NULL,

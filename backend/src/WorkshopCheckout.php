@@ -56,6 +56,7 @@ final class WorkshopCheckout
                 'registration_id'=>$person['id'],'workshop_id'=>$workshop['id'],'public_token'=>$token,
                 'idempotency_key'=>'ismile-ws-online-'.bin2hex(random_bytes(16)),
                 'partner_reference'=>$reference,'request_json'=>json_encode($body,JSON_THROW_ON_ERROR),
+                'amount'=>$catalog['price'] === 0 ? 0 : null,'currency'=>'IQD',
                 'created_at'=>App::now(),'updated_at'=>App::now(),
             ]);
             return Db::one('SELECT * FROM workshop_checkouts WHERE id=?',[$id]);
@@ -130,7 +131,9 @@ final class WorkshopCheckout
         $request = json_decode($attempt['request_json'],true,512,JSON_THROW_ON_ERROR);
         if (!is_string($session['id'] ?? null) || $session['id'] === '' || ($session['partnerReference'] ?? null) !== $attempt['partner_reference']
             || !PsoolaGateway::sameItems($request['items'],$session['order']['items'] ?? null)
-            || !is_int($session['order']['totalAmount'] ?? null) || $session['order']['totalAmount'] < 1 || ($session['order']['currency'] ?? null) !== 'IQD'
+            || !is_int($session['order']['totalAmount'] ?? null) || $session['order']['totalAmount'] < 0
+            || ($session['order']['totalAmount'] === 0 && (!isset($attempt['amount']) || (int)$attempt['amount'] !== 0))
+            || ($session['order']['currency'] ?? null) !== 'IQD'
             || ($attempt['provider_session_id'] && $attempt['provider_session_id'] !== $session['id'])
             || ($attempt['amount'] !== null && (int)$attempt['amount'] !== $session['order']['totalAmount'])
             || (isset($session['eventId']) && $session['eventId'] !== $request['eventId'])
@@ -191,7 +194,7 @@ final class WorkshopCheckout
                         $bookingId = (int)$booking['id'];
                     } else {
                         $bookingId = Db::insert('workshop_bookings',$paid+['registration_id'=>$person['id'],'workshop_id'=>$workshop['id'],
-                            'notes'=>'Paid online through PSOOLA.','over_capacity'=>Workshops::booked($workshop['id']) >= (int)$workshop['total_seats'] ? 1 : 0,'created_at'=>$now]);
+                            'notes'=>$session['order']['totalAmount'] === 0 ? 'Registered online through PSOOLA. No workshop payment required.' : 'Paid online through PSOOLA.','over_capacity'=>Workshops::booked($workshop['id']) >= (int)$workshop['total_seats'] ? 1 : 0,'created_at'=>$now]);
                     }
                     $changes['booking_id'] = $bookingId;
                     $changes['fulfillment_error'] = null;

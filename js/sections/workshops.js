@@ -34,6 +34,7 @@ export function esc(value) {
 /** The seat price in the workshop's currency: "$100" or "75,000 IQD". */
 export function workshopPrice(w) {
   const value = Number(w.price);
+  if (value === 0 && w.price !== null && w.price !== "") return t("w_free");
   if (!value) return t("tk_soon");
   return w.currency === "USD" ? `$${value.toLocaleString("en-US")}` : formatPrice(value);
 }
@@ -41,6 +42,14 @@ export function workshopPrice(w) {
 /** Only pictures that belong to this website (assets/…) are shown. */
 export function photoSrc(w) {
   return typeof w.photo === "string" && /^assets\/[\w./-]+\.(jpe?g|png|webp)$/i.test(w.photo) && !w.photo.includes("..") ? w.photo : "";
+}
+
+export const hasWorkshopTeam = (w) => Array.isArray(w?.presenters) && w.presenters.length === 3 && !!photoSrc(w);
+
+export function workshopTeam(w, captions = true) {
+  if (!hasWorkshopTeam(w)) return "";
+  const photo = photoSrc(w);
+  return w.presenters.map((person, i) => `<figure class="ws-person"><div class="ws-person-portrait" role="img" aria-label="${esc(pick(person.name))}" style="background-image:url('${esc(photo)}');--person-x:${i * 50}%"></div>${captions ? `<figcaption><span class="ws-person-role">${esc(t(person.role === "assistant" ? "w_team_assisting" : "w_team_trainer"))}</span><strong dir="auto">${esc(pick(person.name))}</strong><small dir="auto">${esc(pick(person.credentials))}</small></figcaption>` : ""}</figure>`).join("");
 }
 
 export const detailsHref = (w) => `workshop.html?id=${encodeURIComponent(w.id)}`;
@@ -116,9 +125,9 @@ export function initWorkshops(workshops) {
       ? `<a class="wsb-cta" href="${detailsHref(w)}">${PHONE_ICON}<span>${esc(t("wsb_company_call"))}</span>${RIGHT}</a>`
       : `<a class="wsb-cta" href="${detailsHref(w)}">${MAIL}<span>${esc(t("wsb_online"))}</span>${RIGHT}</a>`;
     return `
-      <article data-workshop-id="${esc(w.id)}" class="ws ws-card${w.photoStyle === "cutout" ? " is-cutout" : ""}${company ? " is-company" : ""}${left === 0 && w.availabilityVerified !== false ? " full" : ""}">
+      <article data-workshop-id="${esc(w.id)}" class="ws ws-card${w.photoStyle === "cutout" ? " is-cutout" : ""}${hasWorkshopTeam(w) ? " has-team" : ""}${company ? " is-company" : ""}${left === 0 && w.availabilityVerified !== false ? " full" : ""}">
         <div class="ws-media${photo ? "" : " no-photo"}">
-          ${photo ? `<img src="${esc(photo)}" alt="" loading="lazy" decoding="async">` : WORKSHOP_ICON}
+          ${hasWorkshopTeam(w) ? workshopTeam(w, false) : photo ? `<img src="${esc(photo)}" alt="" loading="lazy" decoding="async">` : WORKSHOP_ICON}
         </div>
         <div class="ws-body">
           <h3><a class="ws-link" href="${detailsHref(w)}" aria-label="${esc(`${t("ws_details")}: ${title}`)}" dir="auto">${esc(title)}</a></h3>
