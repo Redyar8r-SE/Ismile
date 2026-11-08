@@ -1,157 +1,66 @@
-# Deploy PHP backend to api.ismile.krd (ismile LXC).
-# Re-runs the idempotent VPS setup script: pulls this branch, updates files/DB,
-# leaves the live Node site on ismile.krd alone.
-# Secrets: same GitHub DEPLOY_ENV as the Node deploy (SSH into LXC :2260), plus
-#   API_OWNER_EMAIL     the Owner's admin sign-in on api.ismile.krd (made if missing)
-#   API_OWNER_PASSWORD  its password, 12+ characters (change the secret = new password)
-#   API_SITE_PASSWORD   the browser password in front of the site (user "ismile")
-#   API_RESEND_KEY      optional: send the emails for real through Resend
-#   API_BREVO_KEY       optional: send through Brevo instead (wins over Resend)
-#   API_MAIL_FROM       optional: the sender (default onboarding@resend.dev)
-#   API_PSOOLA_CONFIG   optional: PSOOLA's settings as one JSON object (keys,
-#                       event/show/ticket/add-on ids, "active": true to take
-#                       real payments). Written into config.php, never printed.
-# The log is public (public repository): passwords are never printed.
-name: Deploy API (api.ismile.krd)
-
+name: Workshop kawan-draft-final
 on:
-  push:
-    branches: ["backend"]
   workflow_dispatch:
-    inputs:
-      map_editor_email:
-        description: Existing account to grant exclusive non-owner map booking access
-        required: false
-        type: string
-      association_editor_email:
-        description: Existing account to grant full Association access
-        required: false
-        type: string
-      registration_editor_email:
-        description: Existing account to allow paid and complimentary guest registration
-        required: false
-        type: string
-      workshop_editor_email:
-        description: Existing account to allow guest registration and workshop bookings for all attendees
-        required: false
-        type: string
-
-concurrency:
-  group: ismile-api-deploy
-  cancel-in-progress: false
-
+permissions:
+  contents: read
 jobs:
-  security:
-    uses: ./.github/workflows/security.yml
-  deploy:
-    needs: security
-    name: Update api.ismile.krd
+  operation:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 8
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Load DEPLOY_ENV (SSH only)
+      - name: Load saved server connection
+        shell: bash
         env:
           DEPLOY_ENV: ${{ secrets.DEPLOY_ENV }}
         run: |
           set -euo pipefail
-          : "${DEPLOY_ENV:?DEPLOY_ENV secret is required}"
-          printf '%s\n' "$DEPLOY_ENV" >.deploy.env
+          umask 077
+          printf '%s\n' "$DEPLOY_ENV" > "$RUNNER_TEMP/connection.env"
           set -a
-          # shellcheck disable=SC1091
-          source .deploy.env
+          source "$RUNNER_TEMP/connection.env"
           set +a
+          echo "::add-mask::$DEPLOY_PASSWORD"
           for key in DEPLOY_HOST DEPLOY_USER DEPLOY_PASSWORD DEPLOY_SSH_PORT; do
-            if [ -z "${!key:-}" ]; then
-              echo "error: ${key} missing from DEPLOY_ENV" >&2
-              exit 1
-            fi
+            test -n "${!key}"
+            printf '%s=%s\n' "$key" "${!key}" >> "$GITHUB_ENV"
           done
-          echo "::add-mask::${DEPLOY_PASSWORD}"
-          {
-            echo "DEPLOY_HOST<<EOF_DEPLOY_HOST"
-            printf '%s\n' "$DEPLOY_HOST"
-            echo "EOF_DEPLOY_HOST"
-            echo "DEPLOY_USER<<EOF_DEPLOY_USER"
-            printf '%s\n' "$DEPLOY_USER"
-            echo "EOF_DEPLOY_USER"
-            echo "DEPLOY_PASSWORD<<EOF_DEPLOY_PASSWORD"
-            printf '%s\n' "$DEPLOY_PASSWORD"
-            echo "EOF_DEPLOY_PASSWORD"
-            echo "DEPLOY_SSH_PORT<<EOF_DEPLOY_SSH_PORT"
-            printf '%s\n' "$DEPLOY_SSH_PORT"
-            echo "EOF_DEPLOY_SSH_PORT"
-          } >>"$GITHUB_ENV"
-
-      - name: Run setup-test-site.sh on the LXC
+      - name: kawan-draft-final workshops
         uses: appleboy/ssh-action@v1.2.0
-        env:
-          OWNER_EMAIL: ${{ secrets.API_OWNER_EMAIL }}
-          OWNER_PASSWORD: ${{ secrets.API_OWNER_PASSWORD }}
-          SITE_PASSWORD: ${{ secrets.API_SITE_PASSWORD }}
-          RESEND_KEY: ${{ secrets.API_RESEND_KEY }}
-          BREVO_KEY: ${{ secrets.API_BREVO_KEY }}
-          MAIL_FROM: ${{ secrets.API_MAIL_FROM }}
-          PSOOLA_CONFIG: ${{ secrets.API_PSOOLA_CONFIG }}
-          QUIET_SECRETS: "1"
-          MAP_EDITOR_EMAIL: ${{ inputs.map_editor_email || '' }}
-          ASSOCIATION_EDITOR_EMAIL: ${{ inputs.association_editor_email || '' }}
-          REGISTRATION_EDITOR_EMAIL: ${{ inputs.registration_editor_email || '' }}
-          WORKSHOP_EDITOR_EMAIL: ${{ inputs.workshop_editor_email || '' }}
         with:
-          envs: OWNER_EMAIL,OWNER_PASSWORD,SITE_PASSWORD,RESEND_KEY,BREVO_KEY,MAIL_FROM,PSOOLA_CONFIG,QUIET_SECRETS,MAP_EDITOR_EMAIL,ASSOCIATION_EDITOR_EMAIL,REGISTRATION_EDITOR_EMAIL,WORKSHOP_EDITOR_EMAIL
           host: ${{ env.DEPLOY_HOST }}
           username: ${{ env.DEPLOY_USER }}
           password: ${{ env.DEPLOY_PASSWORD }}
           port: ${{ env.DEPLOY_SSH_PORT }}
           timeout: 60s
-          command_timeout: 20m
+          command_timeout: 6m
           script: |
-            set -euo pipefail
-            cd /root
-            # Save the existing database before applying schema migrations.
-            if [ -f /opt/ismile-test/backend/bootstrap.php ] && [ -f /opt/ismile-test/backend/config.php ]; then
-              runuser -u www-data -- php -r 'require $argv[1]; \Ismile\Backup::run(); echo "Pre-deployment database backup saved.\n";' /opt/ismile-test/backend/bootstrap.php
-            fi
-            # Idle unattended-upgrade-shutdown holds dpkg locks forever; stop it.
-            systemctl stop unattended-upgrades 2>/dev/null || true
-            curl -fsSL "https://raw.githubusercontent.com/Redyar8r-SE/Ismile/backend/backend/tools/vps/setup-test-site.sh" \
-              -o /root/ismile-test-setup.sh
-            chmod +x /root/ismile-test-setup.sh
-            DOMAIN=api.ismile.krd BRANCH=backend bash /root/ismile-test-setup.sh
-            if [ -n "${MAP_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-map-manager.php
-            fi
-            if [ -n "${ASSOCIATION_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-association-manager.php
-            fi
-            if [ -n "${REGISTRATION_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-registration-manager.php
-            fi
-            if [ -n "${WORKSHOP_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-workshop-manager.php
-            fi
-            runuser -u www-data -- php /opt/ismile-test/backend/tools/verify-deployment.php --source /opt/ismile-test/repo
-            runuser -u www-data -- php /opt/ismile-test/backend/tools/verify-association.php
-            # Smoke: PHP admin + config API (basic auth from secrets.env)
-            SP="$(grep '^SITE_PASS=' /opt/ismile-test/secrets.env | cut -d= -f2-)"
-            code="$(curl -s -o /dev/null -w '%{http_code}' -u "ismile:${SP}" -H 'Host: api.ismile.krd' http://127.0.0.1:8081/admin/login.php)"
-            echo "admin_login_http=${code}"
-            test "$code" = "200"
-            # The QR fallback must be accessible through nginx's allow-list.
-            curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' \
-              http://127.0.0.1:8081/admin/vendor/jsQR.js | cmp - /opt/ismile-test/site/admin/vendor/jsQR.js
-            echo "qr_decoder_http=200 (matches deployed file)"
-            for asset in map.js map.css registration-details.js registration-details.css workshops.js workshops.css; do
-              curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' \
-                "http://127.0.0.1:8081/admin/${asset}" | cmp - "/opt/ismile-test/site/admin/${asset}"
-            done
-            runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/map-access.php
-            runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/registration-access.php
-            runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/workshop-access.php
-            echo "map_assets_http=200; all role permissions verified"
-            echo "registration_details_assets_http=200 (match deployed files)"
-            curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' -H 'X-Forwarded-Proto: https' \
-              http://127.0.0.1:8081/api/config.php | grep -q '"ok":true'
-            echo "api.ismile.krd update OK"
+            set -eu
+            runuser -u www-data -- php <<'KAWAN_DRAFT_PHP'
+            <?php
+            require '/opt/ismile-test/backend/bootstrap.php';
+            $payload=json_decode(base64_decode('eyJyb3ciOnsiaWQiOiJtYXRyaXgtZWZmZWN0IiwiaWNvbiI6InRvb3RoIiwidGl0bGVfZW4iOiJNYXRyaXggRWZmZWN0OiBGcm9tIENlcmFtaWMgUG93ZGVyIHRvIE5hdHVyYWwgQWVzdGhldGljcyIsInRpdGxlX2FyIjoi2KrYo9ir2YrYsSDYp9mE2YXYp9iq2LHZitmD2LM6INmF2YYg2YXYs9it2YjZgiDYp9mE2LPZitix2KfZhdmK2YMg2KXZhNmJINin2YTYrNmF2KfZhCDYp9mE2LfYqNmK2LnZiiIsInRpdGxlX2t1Ijoi2qnYp9ix24zar9uV2LHbjCDZhdin2KrYsduM2qnYszog2YTblSDYqtuG2LLbjCDYs9uM2LHYp9mF24zaqduV2YjblSDYqNuGINis2YjYp9mG2qnYp9ix24zbjCDYs9ix2YjYtNiq24wiLCJzcGVha2VyX2VuIjoiRHQuIEthd2FuIFNhbGVoIiwic3BlYWtlcl9hciI6ItmD25XZiNin2YYg2LXYp9mE2K0iLCJzcGVha2VyX2t1Ijoi2qnbldmI2KfZhiDYs9in2rXYrSIsImNyZWRlbnRpYWxzX2VuIjpudWxsLCJjcmVkZW50aWFsc19hciI6bnVsbCwiY3JlZGVudGlhbHNfa3UiOm51bGwsImZvcm1hdF9lbiI6IkhhbmRzLW9uIHdvcmtzaG9wIiwiZm9ybWF0X2FyIjoi2YjYsdi02Kkg2KrYt9io2YrZgtmK2KkiLCJmb3JtYXRfa3UiOiLZiNuG2LHaqdi024bZvtuMINqp2LHYr9in2LHbjCIsIm92ZXJ2aWV3X2VuIjoiRnJvbSBjZXJhbWljIHBvd2RlciB0byBuYXR1cmFsIGFlc3RoZXRpY3MuXG5IYW5kcy1vbiB3b3Jrc2hvcCBhdCBHcmFuZCBNaWxsZW5uaXVtIEhvdGVsLCBTdWxhaW1hbmkuIiwib3ZlcnZpZXdfYXIiOiLZhdmGINmF2LPYrdmI2YIg2KfZhNiz2YrYsdin2YXZitmDINil2YTZiSDYp9mE2KzZhdin2YQg2KfZhNi32KjZiti52YouXG7ZiNix2LTYqSDYqti32KjZitmC2YrYqSDZgdmKINmB2YbYr9mCINi62LHYp9mG2K8g2YXZitmE2YrZhtmK2YjZhdiMINin2YTYs9mE2YrZhdin2YbZitipLiIsIm92ZXJ2aWV3X2t1Ijoi2YTblSDYqtuG2LLbjCDYs9uM2LHYp9mF24zaqduV2YjblSDYqNuGINis2YjYp9mG2qnYp9ix24zbjCDYs9ix2YjYtNiq24wuXG7ZiNuG2LHaqdi024bZvtuMINqp2LHYr9in2LHbjCDZhNuVINmH24bYqtuO2YTbjCDar9ix2KfZhtivINmF24zZhNuM2YbbjNuG2YXYjCDYs9mE247Zhdin2YbbjC4iLCJkdXJhdGlvbl9lbiI6IjIgaG91cnMiLCJkdXJhdGlvbl9hciI6Itiz2KfYudiq2KfZhiIsImR1cmF0aW9uX2t1IjoiMiDaqdin2KramNmF247YsSIsImxldmVsX2VuIjpudWxsLCJsZXZlbF9hciI6bnVsbCwibGV2ZWxfa3UiOm51bGwsIm9yZ2FuaXplciI6ImlzbWlsZSIsImNvbXBhbnlfZW4iOm51bGwsImNvbXBhbnlfYXIiOm51bGwsImNvbXBhbnlfa3UiOm51bGwsImNvbXBhbnlfcGhvbmUiOm51bGwsImNvbXBhbnlfcGhvbmVfc2Vjb25kYXJ5IjpudWxsLCJzY2hlZHVsZWRfZGF0ZSI6IjIwMjYtMTEtMjAiLCJzdGFydF90aW1lIjoiMTM6MDAiLCJlbmRfdGltZSI6IjE1OjAwIiwicGhvdG8iOiJhc3NldHMvdXBsb2Fkcy93b3Jrc2hvcHMvbWF0cml4LWVmZmVjdC1rYXdhbi1zYWxlaC53ZWJwIiwicGhvdG9fc3R5bGUiOiJjdXRvdXQiLCJwcmljZSI6MjUwMDAsImN1cnJlbmN5IjoiSVFEIiwidG90YWxfc2VhdHMiOjI1LCJzdGF0dXMiOiJoaWRkZW4iLCJwcm92aWRlcl9ldmVudF9pZCI6bnVsbCwicHJvdmlkZXJfc2hvd19pZCI6bnVsbCwicHJvdmlkZXJfdGlja2V0X3R5cGVfaWQiOm51bGx9LCJoYXNoIjoiYTk2NGM4MTQyODYzNGEyNjUxMjNlODUwYWE2NTc4YTU4ODljOTk4NWMxZTZmMzVlMmQyMzY4MzQ2ZjAzYjMzNSIsImltYWdlVXJsIjoiaHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL1JlZHlhcjhyLVNFL0lzbWlsZS9hMDVlMTAxNGE5MjlhMDQyMjAyM2I0NzAwODQ2NTU1NTc0YmFiODA3L2Fzc2V0cy91cGxvYWRzL3dvcmtzaG9wcy9tYXRyaXgtZWZmZWN0LWthd2FuLXNhbGVoLndlYnAifQ=='),true,512,JSON_THROW_ON_ERROR);$row=$payload['row'];
+            $before=\Ismile\Db::all('SELECT * FROM workshops ORDER BY id');
+            $owner=\Ismile\Db::one("SELECT * FROM admin_users WHERE role='owner' AND disabled_at IS NULL ORDER BY id LIMIT 1");
+            if(!$owner)throw new RuntimeException('An enabled Owner is required');
+            $existing=\Ismile\Db::one('SELECT * FROM workshops WHERE id=?',[$row['id']]);
+            if($existing){foreach($row as $key=>$value)if((string)($existing[$key]??'')!==(string)($value??''))throw new RuntimeException('Draft already differs: '.$key);}
+            else \Ismile\Backup::run();
+            $curl=curl_init($payload['imageUrl']);curl_setopt_array($curl,[CURLOPT_RETURNTRANSFER=>true,CURLOPT_CONNECTTIMEOUT=>15,CURLOPT_TIMEOUT=>45]);$image=curl_exec($curl);if(curl_getinfo($curl,CURLINFO_HTTP_CODE)!==200||!is_string($image))throw new RuntimeException('Portrait download failed');curl_close($curl);if(hash('sha256',$image)!==$payload['hash'])throw new RuntimeException('Portrait hash mismatch');
+            $info=getimagesizefromstring($image);if(!$info || $info[2]!==IMAGETYPE_WEBP || strlen($image)>\Ismile\Workshops::PHOTO_MAX_BYTES)throw new RuntimeException('Invalid portrait');
+            $photo=\Ismile\App::siteFile($row['photo']);if(!is_dir(dirname($photo)))mkdir(dirname($photo),0755,true);
+            if(is_file($photo)&&hash_file('sha256',$photo)!==$payload['hash'])throw new RuntimeException('A different photo already exists');
+            if(!is_file($photo)){if(file_put_contents($photo.'.writing',$image,LOCK_EX)===false)throw new RuntimeException('Could not save photo');chmod($photo.'.writing',0644);rename($photo.'.writing',$photo);}
+            if(!$existing){\Ismile\Db::transaction(static function()use($row,$owner):void{
+             if(\Ismile\Db::one('SELECT id FROM workshops WHERE id=? FOR UPDATE',[$row['id']]))throw new RuntimeException('Workshop was created concurrently');
+             \Ismile\Db::insert('workshops',$row+['sort_order'=>(int)\Ismile\Db::value('SELECT COALESCE(MAX(sort_order),0)+1 FROM workshops'),'created_at'=>\Ismile\App::now(),'updated_at'=>\Ismile\App::now()]);
+             \Ismile\Audit::log((int)$owner['id'],'workshop.create','workshop',null,['id'=>$row['id'],'status'=>'hidden','organizer'=>'ismile','price'=>25000,'currency'=>'IQD','total_seats'=>25,'awaiting'=>'PSOOLA event, show and ticket type']);
+            });}
+            $after=\Ismile\Db::all('SELECT * FROM workshops WHERE id<>? ORDER BY id',[$row['id']]);
+            $previous=array_values(array_filter($before,static fn($w)=>$w['id']!==$row['id']));
+            if($after!==$previous)throw new RuntimeException('Existing workshops changed');
+            $draft=\Ismile\Workshops::find($row['id']);
+            if(!$draft||$draft['status']!=='hidden'||$draft['organizer']!=='ismile'||$draft['totalSeats']!==25||$draft['price']!==25000||$draft['providerEventId']!==null)throw new RuntimeException('Saved workshop mismatch');
+            foreach(\Ismile\Workshops::all() as $public)if($public['id']===$row['id'])throw new RuntimeException('Unlinked draft was publicly listed');
+            if(hash_file('sha256',\Ismile\App::siteFile($draft['photo']))!==$payload['hash'])throw new RuntimeException('Saved portrait mismatch');
+            echo 'WORKSHOPS_VERIFIED='.json_encode(['draft'=>$draft,'portraitVerified'=>true,'existingWorkshopsUnchanged'=>true,'publicListing'=>'hidden pending PSOOLA','providerOrdersCreated'=>0],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES).PHP_EOL;
+            KAWAN_DRAFT_PHP
