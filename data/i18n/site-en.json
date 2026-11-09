@@ -452,5 +452,11 @@
   "sp_next": "Next speakers",
   "sp_range": "{start}–{end} of {total} speakers",
   "o_city": "Choose your city",
-  "vip_unavailable": "Unavailable"
+  "vip_unavailable": "Unavailable",
+  "wd_payment_method": "Payment method",
+  "wd_method_online": "Pay online",
+  "wd_method_cash": "Pay by cash",
+  "wd_cash_action": "Register to pay cash",
+  "wd_cash_saved": "Cash request saved",
+  "wd_cash_help": "Pay cash to the iSmile team to confirm your workshop ticket. This request does not reserve a seat; availability is checked when payment is collected."
 }
