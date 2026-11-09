@@ -161,6 +161,8 @@ final class Office
     private static function insertComplimentary(array $row, array $user, string $reason, string $now): int
     {
         return Db::transaction(static function () use ($row, $user, $reason, $now): int {
+            VipCapacity::lockFor($row);
+            VipCapacity::requireAvailable($row);
             $duplicateOf = Db::value("SELECT id FROM registrations WHERE (email = ? OR phone = ?) AND status <> 'cancelled' LIMIT 1", [$row['email'], $row['phone']]);
             $id = Db::insert('registrations', ['pay_method' => null] + $row + [
                 'ref' => Checkouts::newReference(), 'status' => 'complimentary', 'comp_reason' => $reason,

@@ -10,7 +10,7 @@
 // Nothing about the visitor is kept in the browser.
 import { t, getLang, onLangChange } from "../i18n.js?v=148";
 import { formatPrice } from "../utils/money.js?v=148";
-import { initRegistrationExperience } from "./registration-experience.js?v=148";
+import { initRegistrationExperience } from "./registration-experience.js?v=168";
 
 const TOTAL_STEPS = 3;
 
@@ -308,6 +308,15 @@ export function initRegistration({ tickets = {} } = {}) {
 
   // Lunch is optional: with no day ticked the button says so.
   function updateNextLabel() {
+    const unavailable = checkedValue("ticket") === "vip" && server?.vip?.available === false;
+    nextBtn.disabled = unavailable || sending;
+    submitBtn.disabled = unavailable || sending;
+    if (unavailable) {
+      nextBtn.querySelector("span").textContent = t("vip_unavailable");
+      submitBtn.querySelector("span").textContent = t("vip_unavailable");
+      return;
+    }
+    if (!sending) submitBtn.querySelector("span").textContent = t("submit");
     const skipping = step === 2 && checkedValue("ticket") !== "vip" && chosenLunch().length === 0;
     nextBtn.querySelector("span").textContent = t(skipping ? "lunch_skip" : "continue");
   }
@@ -373,6 +382,7 @@ export function initRegistration({ tickets = {} } = {}) {
       renderStudentIdPreview();
     }
     experience?.syncTier();
+    updateNextLabel();
   }
 
   // ---------- "Is everything correct?" ----------
@@ -547,6 +557,7 @@ export function initRegistration({ tickets = {} } = {}) {
     submitBtn.disabled = on;
     backBtn.disabled = on;
     submitBtn.querySelector("span").textContent = t(on ? "reg_sending" : "submit");
+    updateNextLabel();
   }
 
   // A problem the server found: shown next to the field it is about, or under
@@ -667,7 +678,7 @@ export function initRegistration({ tickets = {} } = {}) {
 
     if (!result.ok) {
       setSending(false);
-      if (result.error === "reg_closed" || result.error === "reg_full") {
+      if (result.error === "reg_closed" || result.error === "reg_full" || result.error === "vip_unavailable") {
         await checkServer();
         return;
       }
@@ -796,5 +807,7 @@ export function initRegistration({ tickets = {} } = {}) {
   renderTicketPrices();
   goTo(1, { scroll: false });
   renderAvailability();
+  setInterval(() => { if (!document.hidden && !sending) checkServer(); }, 30000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && !sending) checkServer(); });
   return checkServer();
 }

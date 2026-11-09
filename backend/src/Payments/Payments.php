@@ -92,6 +92,7 @@ final class Payments
         $deadline = time() + 25;
         while (true) {
             $claim = Db::transaction(static function () use ($checkout, $gatewayName, $priceFromGateway, $quote): array {
+                \Ismile\VipCapacity::lockFor($checkout);
                 $form = Db::one('SELECT * FROM checkouts WHERE id = ? FOR UPDATE', [$checkout['id']]);
                 if ($form === null || $form['status'] === 'paid' || $form['registration_id'] !== null) {
                     throw new UserError('pay_already', null, 409);
@@ -99,6 +100,7 @@ final class Payments
                 if (!Checkouts::isOpen($form)) {
                     throw new UserError('pay_expired', null, 409);
                 }
+                \Ismile\VipCapacity::requireAvailable($form);
                 // An attempt made in the last few minutes is reused.
                 $recent = Db::one("SELECT * FROM payments WHERE checkout_id = ? AND status = 'waiting' AND redirect_url IS NOT NULL AND created_at > ? ORDER BY id DESC LIMIT 1",
                     [$checkout['id'], date('Y-m-d H:i:s', time() - self::REUSE_MINUTES * 60)]);
@@ -202,10 +204,12 @@ final class Payments
             throw new UserError('The test site cannot price this ticket (it mixes IQD and USD).');
         }
         $paymentId = Db::transaction(static function () use ($checkout, $gatewayName, $priceFromGateway, $quote): int {
+            \Ismile\VipCapacity::lockFor($checkout);
             $form = Db::one('SELECT * FROM checkouts WHERE id = ? FOR UPDATE', [$checkout['id']]);
             if ($form === null || $form['status'] === 'paid' || $form['registration_id'] !== null) {
                 throw new UserError('This person is already registered.');
             }
+            \Ismile\VipCapacity::requireAvailable($form);
             if (Registrations::isFull(true, (int) $checkout['id'])) {
                 throw new UserError('Registration is full: no places are left.');
             }
@@ -298,7 +302,9 @@ final class Payments
     /** Records one answer from the payment company. Returns the attempt's new status. */
     private static function apply(int $paymentId, array $result): string
     {
-        return Db::transaction(static function () use ($paymentId, $result): string {
+        $type = Db::value('SELECT c.ticket_type FROM payments p JOIN checkouts c ON c.id=p.checkout_id WHERE p.id=?', [$paymentId]);
+        return Db::transaction(static function () use ($paymentId, $result, $type): string {
+            \Ismile\VipCapacity::lockFor(['ticket_type' => $type]);
             $afterwards = [];
             $status = self::record($paymentId, $result, $afterwards);
             // Emails and alerts are queued in the same transaction as the change
@@ -385,6 +391,11 @@ final class Payments
             return 'duplicate';
         }
 
+        if (($checkout['ticket_type'] ?? '') === 'vip' && \Ismile\VipCapacity::full(false)) {
+            Db::run("UPDATE payments SET status='mismatch',amount_confirmed=?,confirmed_at=?,updated_at=?,last_error=? WHERE id=?", [$amount,$now,$now,'VIP is unavailable. Payment held for Finance; no registration issued.',$paymentId]);
+            $afterwards[] = ['alert', "Payment #$paymentId: VIP is unavailable. Held for Finance; no additional VIP was registered."];
+            return 'mismatch';
+        }
         // Paid in full: the person is registered now, and only now.
         $registrationId = Checkouts::toRegistration($checkout, $now);
         Db::run("UPDATE payments SET status = 'paid', registration_id = ?, amount_confirmed = ?, confirmed_at = ?, updated_at = ? WHERE id = ?", [$registrationId, $amount, $now, $now, $paymentId]);

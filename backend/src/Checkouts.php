@@ -128,6 +128,7 @@ final class Checkouts
             'vip_lunch_day' => $vipDay,
             'university' => $university, 'study_stage' => $stage, 'ambassador_code' => $ambassador,
         ];
+        VipCapacity::requireAvailable($row);
         if (!SiteData::pricesReadyFor($row)) {
             throw new UserError('reg_closed', null, 409);
         }
@@ -318,6 +319,7 @@ final class Checkouts
 
     private static function insert(array $row, int $seconds): array
     {
+        VipCapacity::requireAvailable($row);
         $now = App::now();
         for ($try = 0; $try < 5; $try++) {
             $ref = self::newReference();   // never shared with another form or a registration
