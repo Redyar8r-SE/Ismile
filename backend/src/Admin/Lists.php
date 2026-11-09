@@ -305,7 +305,7 @@ final class Lists
             $ambassadors[] = ['code' => (string) $code, 'name' => $names[$code] ?? '', 'count' => $count];
         }
         return [
-            'city' => $values('city'), 'university' => $values('university'),
+            'city' => \Ismile\Cities::values(), 'university' => $values('university'),
             'specialty' => array_values(array_intersect(array_keys(\Ismile\Registrations::SPECIALTY_NAMES), array_column($rows, 'specialty'))),
             'status' => $values('sponsor_status'), 'package' => $values('package'),
             'ambassadors' => $ambassadors, 'no_ambassador' => $none,

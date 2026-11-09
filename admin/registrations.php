@@ -28,7 +28,7 @@ $rows = Db::all(
      FROM " . RegistrationQuery::from() . " WHERE $where ORDER BY r.id DESC LIMIT $perPage OFFSET $offset",
     $params
 );
-$cities = array_column(Db::all('SELECT DISTINCT city FROM registrations ORDER BY city LIMIT 200'), 'city');
+$cities = \Ismile\Cities::values();
 // Everyone who has added a registration (or may), for the "Added by" filter.
 $adders = array_column(Db::all("SELECT id, name FROM admin_users WHERE role IN ('owner','registration') OR id IN (SELECT DISTINCT created_by FROM registrations WHERE created_by IS NOT NULL) ORDER BY name"), 'name', 'id');
 

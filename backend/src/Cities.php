@@ -21,6 +21,11 @@ final class Cities
         return match ($locale) { 'ar' => 'المدينة', 'ku', 'ckb' => 'شار', 'kmr' => 'Bajar', default => 'City' };
     }
 
+    public static function values(): array
+    {
+        return array_column(self::all(), 'value');
+    }
+
     public static function select(mixed $current = '', string $locale = 'en'): string
     {
         $current = Validate::text($current, 80);
