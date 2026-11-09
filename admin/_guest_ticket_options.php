@@ -25,6 +25,7 @@ if(!isset($user)||!\Ismile\Auth::canIssueComplimentary($user)){http_response_cod
    <label><?= $e($t('email')) ?><input type="email" name="email" maxlength="190" autocomplete="email" value="<?= $value('email') ?>" dir="ltr" required></label>
    <label><?= $e($t('phone')) ?><input type="tel" name="phone" maxlength="30" autocomplete="tel" placeholder="+9647501234567" value="<?= $value('phone') ?>" dir="ltr" required></label>
   </div>
+  <label><?= $e(\Ismile\Cities::label($ui)) ?><?= \Ismile\Cities::select($values['city'] ?? '', $ui) ?></label>
   <label><?= $e($t('reason')) ?><textarea name="complimentary_reason" maxlength="500" rows="3" required><?= $value('complimentary_reason') ?></textarea></label>
   <label><input type="checkbox" name="whatsapp_consent" value="1"> <?= $e($t('consent')) ?></label><p class="muted small"><?= $e($t('consent_note')) ?></p>
  </section>

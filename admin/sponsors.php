@@ -78,7 +78,7 @@ if (Page::query('new') === '1') {
       <div class="row3">
         <label>Email (optional)<input name="email" type="email" maxlength="190" autocomplete="email" value="<?= $value('email') ?>"></label>
         <label>Position (optional)<input name="role" maxlength="120" autocomplete="organization-title" value="<?= $value('role') ?>"></label>
-        <label>City (optional)<input name="city" maxlength="80" autocomplete="address-level2" value="<?= $value('city') ?>"></label>
+        <label>City (optional)<?= \Ismile\Cities::select($_POST['city'] ?? '') ?></label>
       </div>
       <div class="row3">
         <?php if($kind==='booth'): ?><label>Booth type<input value="Standard booth" readonly><input type="hidden" name="package_id" value="booth-standard"></label><?php else: ?>
@@ -317,7 +317,7 @@ if ($id > 0 && ($request = Sponsors::find($id))) {
           <div class="row3">
             <label>Email (optional)<input name="email" type="email" maxlength="190" value="<?= $e($edit['email']) ?>"></label>
             <label>Position (optional)<input name="role" maxlength="120" value="<?= $e($edit['contact_role'] ?? '') ?>"></label>
-            <label>City (optional)<input name="city" maxlength="80" value="<?= $e($edit['city'] ?? '') ?>"></label>
+            <label>City (optional)<?= \Ismile\Cities::select($edit['city'] ?? '') ?></label>
           </div>
           <div class="row3">
             <label>Contact language<select name="lang"><?php foreach (['en' => 'English', 'ar' => 'Arabic', 'ku' => 'Kurdish'] as $language => $label): ?><option value="<?= $language ?>"<?= $edit['lang'] === $language ? ' selected' : '' ?>><?= $label ?></option><?php endforeach; ?></select></label>

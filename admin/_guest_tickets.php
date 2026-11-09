@@ -107,6 +107,7 @@ $dir=in_array($ui,['ar','ckb'],true)?'rtl':'ltr';
    <label>Specialty<select name="specialty" required><option value="">Select specialty</option><?php foreach(\Ismile\Registrations::SPECIALTY_NAMES as $key=>$label): ?><option value="<?= $e($key) ?>"<?= ($values['specialty']??'')===$key?' selected':'' ?>><?= $e($label) ?></option><?php endforeach; ?></select></label>
    <label>Sponsoring company<input name="sponsoring_company" maxlength="160" placeholder="Company name (optional)" value="<?= $value('sponsoring_company') ?>"></label>
   </div>
+  <label>City<?= \Ismile\Cities::select($values['city'] ?? '') ?></label>
   <label class="guest-reason-field">Reason for complimentary ticket<textarea name="complimentary_reason" maxlength="500" required rows="3" placeholder="For example, invited speaker or sponsor guest"><?= $value('complimentary_reason') ?></textarea><small>A brief reason helps your team keep a clear record.</small></label>
   <div class="guest-delivery-notice"><?= Page::navIcon('arrow') ?><div><strong>Delivery: Email + WhatsApp</strong><p>By issuing, you confirm the guest agreed to WhatsApp ticket messages.</p></div></div>
   <footer class="guest-details-footer"><span>Guest details stay private.</span><a href="registrations.php">Cancel</a></footer>

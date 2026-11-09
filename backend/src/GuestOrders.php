@@ -26,7 +26,7 @@ final class GuestOrders
         $event=App::config('payments.psoola.event_id','');$show=App::config('payments.psoola.show_id','');
         $ticket=App::config('payments.psoola.ticket_types.'.$type,'');
         if(!$event||!$show||!$ticket)throw new UserError('The free ticket for this event needs server configuration. Ask the Owner to check the PSOOLA event and ticket mapping.');
-        $request=array_intersect_key($in,array_flip(['attempt','email','phone','sponsoring_company','complimentary_reason']));
+        $request=array_intersect_key($in,array_flip(['attempt','email','phone','city','sponsoring_company','complimentary_reason']));
         return self::issue($user,$request+['buyer_name'=>implode(' ',$parts),'specialty'=>$specialty,
             'event_id'=>$event,'show_id'=>$show,'ticket_type_id'=>$ticket,'quantity'=>1,'locale'=>'en','add_on_ids_json'=>'[]','whatsapp_consent'=>'1']);
     }
@@ -55,8 +55,12 @@ final class GuestOrders
         if (!is_string($locale) || !in_array($locale,self::LOCALES,true)) throw new UserError('Choose a supported ticket language.');
         $company=Validate::text($in['sponsoring_company']??'',161);
         if (mb_strlen($company)>160) throw new UserError('Sponsoring company must be 160 characters or fewer.');
-        return ['buyer_name'=>$name,'email'=>$email,'phone'=>$phone,'complimentary_reason'=>$reason,
+        $guest = ['buyer_name'=>$name,'email'=>$email,'phone'=>$phone,'complimentary_reason'=>$reason,
             'locale'=>$locale,'sponsoring_company'=>$company,'specialty'=>Validate::oneOf($in['specialty']??null,Registrations::SPECIALTIES,'gp')];
+        $city = Validate::text($in['city'] ?? '', 80);
+        // Omit absent cities so older saved requests keep their original fingerprint.
+        if ($city !== '') $guest['city'] = $city;
+        return $guest;
     }
 
     public static function issue(array $user,array $in): array
@@ -250,7 +254,7 @@ final class GuestOrders
         $selected=$body['items'][0]['addOnIds']??[];$addOns=(array)App::config('payments.psoola.add_ons',[]);
         $id=Db::insert('registrations',['ref'=>$saved['partner_reference'],'first_name'=>mb_substr($names[0],0,60),
             'father_name'=>mb_substr($names[1],0,60),'grandfather_name'=>mb_substr($names[2],0,60),
-            'email'=>$guest['email'],'phone'=>$guest['phone'],'city'=>'-','gender'=>'prefer-not','specialty'=>$type==='student'?'student':$guest['specialty'],
+            'email'=>$guest['email'],'phone'=>$guest['phone'],'city'=>$guest['city']??'-','gender'=>'prefer-not','specialty'=>$type==='student'?'student':$guest['specialty'],
             'lang'=>$guest['locale']==='ckb'?'ku':(in_array($guest['locale'],['en','ar'],true)?$guest['locale']:'en'),
             'ticket_type'=>$type,'lunch_day1'=>isset($addOns['lunchDay1'])&&in_array($addOns['lunchDay1'],$selected,true)?1:0,
             'lunch_day2'=>isset($addOns['lunchDay2'])&&in_array($addOns['lunchDay2'],$selected,true)?1:0,
