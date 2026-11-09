@@ -7,10 +7,12 @@ $passed=0;$check=static function(string $name,bool $ok)use(&$passed):void{if(!$o
 $reject=static function(callable $fn):bool{try{$fn();return false;}catch(UserError){return true;}};
 $fixture=static fn(string $query=''):array=>json_decode(file_get_contents('http://127.0.0.1:8830/fixture'.$query),true);
 $owner=Db::one("SELECT * FROM admin_users WHERE role='owner' LIMIT 1");
-$staffId=Auth::createUser('cash-sale-staff@example.invalid','Cash Staff','registration',bin2hex(random_bytes(16)));Db::update('admin_users',['workshop_booking_access'=>1],'id=?',[$staffId]);$staff=Db::one('SELECT * FROM admin_users WHERE id=?',[$staffId]);
+$staffId=Auth::createUser('cash-sale-staff@example.invalid','Cash Staff','registration',bin2hex(random_bytes(16)));$staff=Db::one('SELECT * FROM admin_users WHERE id=?',[$staffId]);
+$check('Registration staff can sell paid workshops without an individual grant',Auth::canBookWorkshops($staff)&&(int)$staff['workshop_booking_access']===0&&!Auth::canIssueComplimentary($staff));
 $seed=static function(string $suffix,string $status='paid'):array{$id=Db::insert('registrations',['ref'=>'PC'.strtoupper(bin2hex(random_bytes(5))),'first_name'=>'Paid','father_name'=>'Workshop','grandfather_name'=>$suffix,'email'=>'cash-sale-'.$suffix.'@example.invalid','phone'=>'+9647501234567','city'=>'Sulaimani','specialty'=>'gp','ticket_type'=>'professional','status'=>$status,'comp_reason'=>$status==='complimentary'?'Fixture':null,'view_nonce'=>bin2hex(random_bytes(16)),'created_at'=>App::now(),'updated_at'=>App::now(),'paid_at'=>App::now()]);return Db::one('SELECT * FROM registrations WHERE id=?',[$id]);};
 $id='simplified-direct-veneers';$fixture('/stock?id='.$id.'&available=25');$price=(int)Db::value('SELECT price FROM workshops WHERE id=?',[$id]);Db::update('workshops',['display_price'=>100,'display_currency'=>'USD'],'id=?',[$id]);
 $input=['workshop'=>$id,'cash_received'=>'1','cash_currency'=>'USD','cash_amount'=>'100.00'];$person=$seed('usd');$before=$fixture();$guestBefore=(int)Db::value('SELECT COUNT(*) FROM guest_workshop_orders');
+$check('The attendee was not added by this registrar',$person['created_by']===null);
 $check('Cash must be explicitly received',$reject(fn()=>WorkshopCashSale::register($person,$staff,array_replace($input,['cash_received'=>'0']))));
 $check('Wrong dollar amount is rejected before an order',$reject(fn()=>WorkshopCashSale::register($person,$staff,array_replace($input,['cash_amount'=>'99']))));
 $check('Non-workshop staff cannot issue a paid workshop order',$reject(fn()=>WorkshopCashSale::register($person,['id'=>$staffId,'role'=>'viewer'],$input)));

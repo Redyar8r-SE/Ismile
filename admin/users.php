@@ -91,7 +91,7 @@ $active = array_filter($users, static fn (array $row): bool => !$row['disabled_a
 $secured = count(array_filter($active, static fn (array $row): bool => (bool) $row['totp_enabled']));
 $roleGuide = [
     'owner' => ['settings', 'Owner', 'Full access to the event, settings, team and website.'],
-    'registration' => ['registrations', 'Registration', 'Registers people paid by cash and changes only the people they added. Sees registrations and lists.'],
+    'registration' => ['registrations', 'Registration', 'Registers people paid by cash and registers paid workshops for any attendee. Changes personal details only for people they added.'],
     'finance' => ['payments', 'Finance', 'Payments, money checks and financial exports.'],
     'content' => ['content', 'Content', 'Website wording, photos and content.'],
     'checkin' => ['checkin', 'Check-in', 'Find tickets, scan QR codes and welcome guests.'],
@@ -122,8 +122,12 @@ Page::top('Users', 'users', '<a class="btn" href="#add-person">' . Page::navIcon
       <small class="field-hint"><?= $registrationAccess ? 'Can register paid and complimentary guests.' : 'Complimentary registration requires individual access.' ?></small>
       <form method="post" class="inline-form"><?= Page::csrfField() ?><input type="hidden" name="do" value="registration_access"><input type="hidden" name="id" value="<?= (int) $row['id'] ?>"><input type="hidden" name="enabled" value="<?= $registrationAccess ? '0' : '1' ?>"><button class="btn small ghost"><?= $registrationAccess ? 'Remove paid & free registration access' : 'Allow paid & free registration' ?></button></form>
       <?php $workshopAccess = Auth::canBookWorkshops($row); ?>
+      <?php if ($row['role'] === 'registration'): ?>
+      <small class="field-hint">Paid workshop registration for any attendee is included in the Registration role.</small>
+      <?php else: ?>
       <small class="field-hint"><?= $workshopAccess ? 'Can book workshops for any registered attendee.' : 'Workshop booking requires individual access.' ?></small>
       <form method="post" class="inline-form"><?= Page::csrfField() ?><input type="hidden" name="do" value="workshop_access"><input type="hidden" name="id" value="<?= (int)$row['id'] ?>"><input type="hidden" name="enabled" value="<?= $workshopAccess ? '0' : '1' ?>"><button class="btn small ghost"><?= $workshopAccess ? 'Remove workshop booking access' : 'Allow workshop booking for everyone' ?></button></form>
+      <?php endif; ?>
       <?php endif; ?></td>
     <td><span class="security-status <?= (int)$row['totp_enabled'] ? 'enabled':'pending' ?>"><?= Page::navIcon('security') ?><span><?= (int)$row['totp_enabled'] ? 'Phone code on' : 'Phone code off' ?></span></span><small class="field-hint"><?= Auth::needsTwoFactor($row) ? 'Required for this account' : 'Optional for this account' ?></small></td>
     <td><span class="team-last-login"><?= $row['last_login_at'] ? Page::when($row['last_login_at']) : 'Not signed in yet' ?></span></td>

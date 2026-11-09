@@ -20,7 +20,7 @@ $workshops=SiteData::workshops();
 $open=Page::query('id');$q=Page::query('q');$personId=(int)Page::query('rid');
 $group=in_array(Page::query('group'),['ismile','company'],true)?Page::query('group'):'';
 $workshopQuery=Page::query('search');
-$mode=Page::query('mode')==='cash'?'cash':(Page::query('mode')==='paid'||!$canGuest?'paid':'guest');
+$mode=Page::query('mode')==='cash'||(Page::query('mode')===''&&$user['role']==='registration')?'cash':(Page::query('mode')==='paid'||!$canGuest?'paid':'guest');
 if($mode==='cash')$workshops=array_values(array_filter($workshops,static fn($w)=>$w['organizer']==='ismile'&&!empty($w['providerEventId'])&&(int)$w['price']>0));
 $view=in_array(Page::query('view'),['overview','activity'],true)?Page::query('view'):'attendees';
 $selected=null;foreach($workshops as $w)if($w['id']===$open&&(!$group||$w['organizer']===$group))$selected=$w;

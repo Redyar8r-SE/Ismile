@@ -19,7 +19,7 @@ final class Auth
     public const ROLES = ['owner', 'registration', 'finance', 'content', 'checkin', 'viewer', 'sponsors', 'map_viewer'];
     public const ROLE_NAMES = [
         'owner'        => 'Owner (everything)',
-        'registration' => 'Registration (register people paid by cash; changes only the people they added)',
+        'registration' => 'Registration (paid cash registration and paid workshops for any attendee; edits only people they added)',
         'finance'      => 'Finance (payments, money checks, exports)',
         'content'      => 'Content (site text only)',
         'checkin'      => 'Check-in (arrivals, attendance, guest list and totals)',
@@ -236,10 +236,10 @@ final class Auth
         return $user['role'] === 'owner' || (int) ($user['registration_manage_access'] ?? 0) === 1;
     }
 
-    /** Book for any registered attendee without granting workshop configuration or Owner powers. */
+    /** Registration staff book paid workshops for any attendee; other roles need an individual grant. */
     public static function canBookWorkshops(array $user): bool
     {
-        return $user['role'] === 'owner' || (int) ($user['workshop_booking_access'] ?? 0) === 1;
+        return in_array($user['role'], ['owner', 'registration'], true) || (int) ($user['workshop_booking_access'] ?? 0) === 1;
     }
 
     /** False when a Viewer sends something that would change data on this page. */

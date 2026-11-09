@@ -1,12 +1,13 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__.'/../src/Auth.php';
+require_once __DIR__.'/../src/Office.php';
 use Ismile\Auth;
 $passed=0;
 $check=static function(string $label,bool $ok)use(&$passed):void{if(!$ok)throw new RuntimeException('FAILED: '.$label);$passed++;echo "PASS: $label\n";};
 foreach(Auth::ROLES as $role){
     $base=['role'=>$role];$granted=$base+['workshop_booking_access'=>1];
-    $check($role.' default workshop booking remains owner-only',Auth::canBookWorkshops($base)===($role==='owner'));
+    $check($role.' default workshop booking follows the role',Auth::canBookWorkshops($base)===in_array($role,['owner','registration'],true));
     $check($role.' individual workshop grant permits booking routes',Auth::canBookWorkshops($granted)&&Auth::can($granted,'workshops')&&Auth::viewerMayPost($granted,'registration.php')&&Auth::viewerMayPost($granted,'workshops.php')&&Auth::needsTwoFactor($granted));
     foreach(['edit','content','registrations','payments','association','sponsors','checkin','certificates','photos']as$area)$check($role.' workshop grant preserves '.$area,Auth::can($granted,$area)===Auth::can($base,$area));
     foreach(['users.php','settings.php','sponsors.php','map.php','association.php','payments.php','content.php']as$page)$check($role.' workshop grant preserves changes on '.$page,Auth::viewerMayPost($granted,$page)===Auth::viewerMayPost($base,$page));
@@ -15,6 +16,13 @@ foreach(Auth::ROLES as $role){
     $check($role.' combined grant permits guests and workshops',Auth::canIssueComplimentary($both)&&Auth::canBookWorkshops($both));
 }
 foreach([0,2,-1]as$flag)$check('invalid workshop flag grants no booking: '.$flag,!Auth::canBookWorkshops(['role'=>'viewer','workshop_booking_access'=>$flag]));
+$registrar=['id'=>17,'role'=>'registration','workshop_booking_access'=>0,'registration_manage_access'=>0];
+$check('Registration role can open and submit workshop registration without an individual grant',Auth::canBookWorkshops($registrar)&&Auth::can($registrar,'workshops')&&Auth::viewerMayPost($registrar,'workshops.php'));
+$check('Registration role alone cannot issue complimentary tickets',!Auth::canIssueComplimentary($registrar));
+$check('Workshop access keeps other staff registrations protected',!\Ismile\Office::canChange($registrar,['created_by'=>99])&&!\Ismile\Office::canChange($registrar,['created_by'=>null]));
+$check('Registration staff still edit their own registrations',\Ismile\Office::canChange($registrar,['created_by'=>17]));
+$revokedRole=array_replace($registrar,['role'=>'viewer']);
+$check('Changing the role removes its built-in workshop access',!Auth::canBookWorkshops($revokedRole));
 if(in_array('--database',$argv,true)){
     require __DIR__.'/../bootstrap.php';
     if(\Ismile\App::isLive() || !str_starts_with((string)\Ismile\App::config('db.name'),'ismile_sponsored_test_'))throw new RuntimeException('Local isolated database required.');
