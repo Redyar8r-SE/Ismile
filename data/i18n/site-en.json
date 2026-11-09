@@ -445,5 +445,10 @@
   "wd_free_registered_text": "After registration is confirmed, your name is added to the workshop attendee list.",
   "wd_free_help": "Register online with your summit email. No workshop payment is required.",
   "wd_free_opening": "Opening registration…",
-  "wd_free_confirmed_text": "Your workshop registration is confirmed and your name has been added to the attendee list. No workshop payment is required."
+  "wd_free_confirmed_text": "Your workshop registration is confirmed and your name has been added to the attendee list. No workshop payment is required.",
+  "sp_carousel_label": "Summit speakers",
+  "sp_browse_hint": "Use the arrows or swipe to explore our speakers.",
+  "sp_previous": "Previous speakers",
+  "sp_next": "Next speakers",
+  "sp_range": "{start}–{end} of {total} speakers"
 }
