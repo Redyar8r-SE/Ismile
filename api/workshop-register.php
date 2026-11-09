@@ -22,5 +22,9 @@ Api::run(static function (): void {
     if (trim((string) ($_POST['website'] ?? '')) !== '') {
         throw new UserError('err_server', null, 400);
     }
-    Api::json(200, \Ismile\WorkshopCheckout::start((string) ($_POST['workshop'] ?? ''), (string) ($_POST['email'] ?? '')));
+    $method = (string) ($_POST['payment_method'] ?? 'online');
+    if (!in_array($method, ['online','cash'], true)) throw new UserError('wd_err_server', null, 400);
+    $workshop = (string) ($_POST['workshop'] ?? '');
+    $email = (string) ($_POST['email'] ?? '');
+    Api::json(200, $method === 'cash' ? \Ismile\WorkshopCash::request($workshop, $email) : \Ismile\WorkshopCheckout::start($workshop, $email));
 });

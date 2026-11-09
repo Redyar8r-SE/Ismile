@@ -20,11 +20,11 @@ $workshops=SiteData::workshops();
 $open=Page::query('id');$q=Page::query('q');$personId=(int)Page::query('rid');
 $group=in_array(Page::query('group'),['ismile','company'],true)?Page::query('group'):'';
 $workshopQuery=Page::query('search');
-$mode=Page::query('mode')==='paid'||!$canGuest?'paid':'guest';
+$mode=Page::query('mode')==='cash'?'cash':(Page::query('mode')==='paid'||!$canGuest?'paid':'guest');
 $view=in_array(Page::query('view'),['overview','activity'],true)?Page::query('view'):'attendees';
 $selected=null;foreach($workshops as $w)if($w['id']===$open&&(!$group||$w['organizer']===$group))$selected=$w;
 if(!$selected){foreach($workshops as $w)if(!$group||$w['organizer']===$group){$selected=$w;$open=$w['id'];break;}}
-$url=static fn(array $values=[],string $hash=''):string=>'workshops.php?'.http_build_query(array_filter(array_replace(['id'=>$open,'group'=>$group,'search'=>$workshopQuery],$values),static fn($v)=>$v!==''&&$v!==null)).$hash;
+$url=static fn(array $values=[],string $hash=''):string=>'workshops.php?'.http_build_query(array_filter(array_replace(['id'=>$open,'group'=>$group,'search'=>$workshopQuery,'mode'=>$mode==='cash'?'cash':null],$values),static fn($v)=>$v!==''&&$v!==null)).$hash;
 $back=$url();
 $actionBack=($_SERVER['REQUEST_METHOD']??'')==='POST' && in_array($_POST['do']??'',['guest_workshop','guest_workshop_retry','workshop_add'],true)
     ?$url(['booking'=>'1','rid'=>$personId,'q'=>$q,'mode'=>$mode],'#book'):$back;

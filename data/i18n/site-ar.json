@@ -773,5 +773,11 @@
   "sp_next": "المتحدثون التاليون",
   "sp_range": "{start}–{end} من {total} متحدثاً",
   "o_city": "اختر مدينتك",
-  "vip_unavailable": "غير متاح"
+  "vip_unavailable": "غير متاح",
+  "wd_payment_method": "طريقة الدفع",
+  "wd_method_online": "الدفع الإلكتروني",
+  "wd_method_cash": "الدفع نقداً",
+  "wd_cash_action": "التسجيل للدفع نقداً",
+  "wd_cash_saved": "تم حفظ طلب الدفع النقدي",
+  "wd_cash_help": "ادفع نقداً لفريق iSmile لتأكيد تذكرة الورشة. هذا الطلب لا يحجز مقعداً؛ يتم التحقق من التوفر عند استلام الدفع."
 }

@@ -35,6 +35,7 @@ $adders = array_column(Db::all("SELECT id, name FROM admin_users WHERE role IN (
 $overview = Db::one("SELECT COALESCE(SUM(status IN ('paid','complimentary')),0) AS registered, COALESCE(SUM(status IN ('paid','complimentary') AND ticket_type = 'professional'),0) AS professionals, COALESCE(SUM(status IN ('paid','complimentary') AND ticket_type = 'student'),0) AS students, COALESCE(SUM(status IN ('paid','complimentary') AND ticket_type = 'vip'),0) AS vip, COALESCE(SUM(status = 'cancelled'),0) AS cancelled FROM registrations");
 $registrationActions = Auth::can($user,'edit') ? '<a class="btn" href="registration.php?new=1">+ Register (cash)</a>' : '';
 if (Auth::canIssueComplimentary($user)) $registrationActions .= '<a class="btn violet" href="registration.php?new=free">+ Guest ticket</a>';
+if (Auth::canBookWorkshops($user)) $registrationActions .= '<a class="btn" href="workshops.php?group=ismile&amp;booking=1&amp;mode=cash#book">+ Workshop (cash)</a>';
 Page::top('Registrations', 'registrations', $registrationActions);
 $e = [Page::class, 'e'];
 $select = static function (string $name, array $options, string $current): string {
