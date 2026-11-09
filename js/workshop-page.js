@@ -83,7 +83,7 @@ function initDetails(workshop) {
     const availability = unavailable ? t("wd_availability_unavailable") : full ? t("wd_full") : t("wd_available_now");
     const seats = `<div class="wdc-stat is-seats"><span class="wdc-stat-ic">${ICONS.users}</span><div><b>${esc(availability)}</b></div></div>`;
     const steps = (company
-      ? [["phone", "wdc_how1", "wdc_how1_d"], ["wallet", "wdc_how2", "wdc_how2_d"], ["ticket", "wdc_how3", "wdc_how3_d"]]
+      ? [["phone", "wdc_how1", "wdc_how1_d"], ...(!free ? [["wallet", "wdc_how2", "wdc_how2_d"]] : []), ["ticket", "wdc_how3", "wdc_how3_d"]]
       : free ? [["ticket", "wdc_how3", "wd_paid_ticket_help"], ["check", "wd_free_step", "wd_free_step_text"], ["ticket", "wd_online_registered", "wd_free_registered_text"]] : [["ticket", "wdc_how3", "wd_paid_ticket_help"], ["wallet", "wd_online_step", "wd_online_step_text"], ["check", "wd_online_registered", "wd_online_registered_text"]])
       .map(([icon, head, text]) => `<li><span class="wdc-how-ic">${icon === "phone" ? PHONE_ICON : ICONS[icon]}</span><div><b>${esc(t(head))}</b><p>${esc(t(text))}</p></div></li>`)
       .join("");
