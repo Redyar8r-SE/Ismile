@@ -20,19 +20,17 @@ describe("website content and database controls", () => {
       vi.stubEnv("WEBSITE_API_URL", "https://backend.example/api/");
       vi.stubGlobal(
         "fetch",
-        vi
-          .fn()
-          .mockResolvedValue(
-            new Response(
-              JSON.stringify({
-                ok: true,
-                open: true,
-                prices: { vip: 100 },
-                lunch: { day1: true },
-                vip: { available, remaining: 4, capacity: 6 },
-              }),
-            ),
+        vi.fn().mockResolvedValue(
+          new Response(
+            JSON.stringify({
+              ok: true,
+              open: true,
+              prices: { vip: 100 },
+              lunch: { day1: true },
+              vip: { available, remaining: 4, capacity: 6 },
+            }),
           ),
+        ),
       );
       const result = await websiteState("config.php");
       expect(result.statusCode).toBe(200);
