@@ -8,7 +8,7 @@ import { initTheme } from "./components/theme.js?v=148";
 import { initFooter } from "./sections/footer.js?v=148";
 import { initSponsorForm } from "./sections/sponsor-form.js?v=148";
 import { initCitySelect } from "./utils/cities.js?v=167";
-import { initBoothMap } from "./sections/booth-map.js?v=150";
+import { initBoothMap } from "./sections/booth-map.js?v=170";
 
 async function start() {
   initNav();

@@ -12,13 +12,13 @@ const plan = JSON.parse(readFileSync(new URL("../data/booth-tiers.json", import.
 const booths = buildBooths(plan.rows);
 const ids = [
   1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 30,
-  32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44,
+  32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45,
 ];
 
-describe("39-booth layout and permanent reservation identities", () => {
-  it("uses all 39 approved position IDs and visible numbers 1–39 exactly once", () => {
+describe("40-booth layout and permanent reservation identities", () => {
+  it("uses all 40 approved position IDs and visible numbers 1–40 exactly once", () => {
     expect(booths.map((b) => b.number)).toEqual(ids);
-    expect(booths.map((b) => b.displayNumber)).toEqual(Array.from({ length: 39 }, (_, i) => i + 1));
+    expect(booths.map((b) => b.displayNumber)).toEqual(Array.from({ length: 40 }, (_, i) => i + 1));
     expect(booths.every((b) => b.points?.length >= 4)).toBe(true);
   });
 
@@ -99,7 +99,7 @@ describe("39-booth layout and permanent reservation identities", () => {
     expect(booths.find((b) => b.number === 7)?.points).toContainEqual([647, 686]);
   });
 
-  it("keeps every booth in its original tier and uses the requested new sizes", () => {
+  it("keeps unaffected tiers and applies the approved Bronze row sizes", () => {
     expect(booths.filter((b) => b.tier === "gold").map((b) => b.number)).toEqual([
       1, 6, 24, 30, 36, 43, 44,
     ]);
@@ -107,11 +107,17 @@ describe("39-booth layout and permanent reservation identities", () => {
       37, 38, 39, 40, 41, 42,
     ]);
     expect(booths.filter((b) => b.tier === "bronze").map((b) => b.number)).toEqual([
-      15, 16, 17, 18, 19, 20, 21, 22, 23,
+      15, 16, 17, 18, 19, 20, 21, 22, 23, 25, 26, 27, 28,
     ]);
     for (const b of booths.filter((b) => b.tier === "silver")) {
       expect(b.size).toBe(
-        [2, 3, 5].includes(b.number) ? "3.5 × 2 m" : b.number <= 12 ? "3.2 × 2 m" : "3 × 2 m",
+        [2, 3, 5].includes(b.number)
+          ? "3.5 × 2 m"
+          : b.number <= 12
+            ? "3.2 × 2 m"
+            : b.number === 45
+              ? "2 × 3 m"
+              : "3 × 2 m",
       );
     }
   });
@@ -126,7 +132,7 @@ describe("39-booth layout and permanent reservation identities", () => {
     });
     expect(svg).toMatch(/data-booth="7".*?aria-label="Booth 6".*?>6<\/text>/s);
     expect(svg).toMatch(/data-booth="44".*?aria-label="Booth 39".*?>39<\/text>/s);
-    expect((svg.match(/class="map-booth/g) || []).length).toBe(39);
+    expect((svg.match(/class="map-booth/g) || []).length).toBe(40);
     expect((svg.match(/is-booked/g) || []).length).toBe(2);
   });
 });
