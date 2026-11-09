@@ -1,6 +1,14 @@
 document.addEventListener("DOMContentLoaded", () => {
   const root = document.querySelector("[data-workshop-workspace]");
   if (!root) return;
+  const directory = root.querySelector(".ws-directory-list");
+  const selectedCard = directory?.querySelector('.ws-workshop-card[aria-current="true"]');
+  if (selectedCard) {
+    const listBox = directory.getBoundingClientRect();
+    const cardBox = selectedCard.getBoundingClientRect();
+    if (cardBox.bottom > listBox.bottom) directory.scrollTop += cardBox.bottom - listBox.bottom + 4;
+    else if (cardBox.top < listBox.top) directory.scrollTop -= listBox.top - cardBox.top + 4;
+  }
   const settings = root.querySelector("[data-workshop-settings]");
   const settingsForms = settings ? [...settings.querySelectorAll("[data-settings-form]")] : [];
   const photoStates = new WeakMap();

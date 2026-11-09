@@ -40,6 +40,7 @@ $initials=static fn(array $r):string=>mb_strtoupper(mb_substr($r['first_name'],0
 </div>
 <div class="ws-columns">
   <aside class="ws-directory" aria-label="Workshop directory">
+    <div class="ws-directory-list" role="region" aria-label="Workshop list" tabindex="0">
     <?php foreach($displayWorkshops as $w): $counts=$workshopCounts[$w['id']]??$emptyCounts;[$label,$tone]=$availability($w); ?>
     <a class="ws-workshop-card<?= $w['id']===$open?' is-selected':'' ?>" href="<?= $e($url(['id'=>$w['id']], '#people')) ?>"<?= $w['id']===$open?' aria-current="true"':'' ?>>
       <span class="ws-card-organizer"><?= $w['organizer']==='ismile'?'iSmile workshop':'Organized by '.$e($words($w['company']??'Company')) ?><?= Page::navIcon('arrow') ?></span>
@@ -49,6 +50,7 @@ $initials=static fn(array $r):string=>mb_strtoupper(mb_substr($r['first_name'],0
     </a>
     <?php endforeach; ?>
     <?php if(!$displayWorkshops): ?><div class="ws-empty"><h2><?= $workshops?'No matching workshops':'Your workshops start here' ?></h2><p><?= $workshops?'Try another search or organizer.':'Add a workshop in Workshop settings to begin.' ?></p><?php if($workshops): ?><a href="<?= $e($url(['search'=>'','group'=>''])) ?>">Clear filters</a><?php endif; ?></div><?php endif; ?>
+    </div>
     <p class="ws-directory-help"><?= Page::navIcon('info') ?><span>Select an iSmile workshop to book a guest. Company workshops are managed by their organizer.</span></p>
   </aside>
   <?php if($selected): $counts=$workshopCounts[$open]??$emptyCounts;[$label,$tone]=$availability($selected); ?>
