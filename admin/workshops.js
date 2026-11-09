@@ -1,6 +1,29 @@
 document.addEventListener("DOMContentLoaded", () => {
   const root = document.querySelector("[data-workshop-workspace]");
   if (!root) return;
+  root.querySelectorAll('[data-workshop-cash]').forEach(form => {
+    const currency = form.elements.cash_currency;
+    const amount = form.elements.cash_amount;
+    const iqd = Number(form.dataset.iqd);
+    const usdMinor = Number(form.dataset.usdMinor);
+    const refresh = () => {
+      const dollars = currency.value === 'USD';
+      const received = Number(amount.value);
+      const converted = dollars && usdMinor > 0 ? Math.round(received * 100 * iqd / usdMinor) : Math.round(received);
+      const matches = Number.isFinite(received) && received > 0 && (dollars ? Math.round(received * 100) === usdMinor : received === iqd);
+      form.querySelector('[data-cash-converted]').textContent = Number.isFinite(converted) ? converted.toLocaleString('en-US') + ' IQD' : '—';
+      form.querySelector('[data-cash-match]').textContent = matches ? 'Matches the PSOOLA ticket price.' : 'Amount must match the full workshop price.';
+    };
+    currency.addEventListener('change', () => {
+      const dollars = currency.value === 'USD';
+      amount.step = dollars ? '0.01' : '1';
+      amount.min = dollars ? '0.01' : '1';
+      amount.value = String(dollars ? usdMinor / 100 : iqd);
+      refresh();
+    });
+    amount.addEventListener('input', refresh);
+    refresh();
+  });
   const directory = root.querySelector(".ws-directory-list");
   const selectedCard = directory?.querySelector('.ws-workshop-card[aria-current="true"]');
   if (selectedCard) {

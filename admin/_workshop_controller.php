@@ -21,12 +21,13 @@ $open=Page::query('id');$q=Page::query('q');$personId=(int)Page::query('rid');
 $group=in_array(Page::query('group'),['ismile','company'],true)?Page::query('group'):'';
 $workshopQuery=Page::query('search');
 $mode=Page::query('mode')==='cash'?'cash':(Page::query('mode')==='paid'||!$canGuest?'paid':'guest');
+if($mode==='cash')$workshops=array_values(array_filter($workshops,static fn($w)=>$w['organizer']==='ismile'&&!empty($w['providerEventId'])&&(int)$w['price']>0));
 $view=in_array(Page::query('view'),['overview','activity'],true)?Page::query('view'):'attendees';
 $selected=null;foreach($workshops as $w)if($w['id']===$open&&(!$group||$w['organizer']===$group))$selected=$w;
 if(!$selected){foreach($workshops as $w)if(!$group||$w['organizer']===$group){$selected=$w;$open=$w['id'];break;}}
 $url=static fn(array $values=[],string $hash=''):string=>'workshops.php?'.http_build_query(array_filter(array_replace(['id'=>$open,'group'=>$group,'search'=>$workshopQuery,'mode'=>$mode==='cash'?'cash':null],$values),static fn($v)=>$v!==''&&$v!==null)).$hash;
 $back=$url();
-$actionBack=($_SERVER['REQUEST_METHOD']??'')==='POST' && in_array($_POST['do']??'',['guest_workshop','guest_workshop_retry','workshop_add'],true)
+$actionBack=($_SERVER['REQUEST_METHOD']??'')==='POST' && in_array($_POST['do']??'',['guest_workshop','guest_workshop_retry','workshop_add','workshop_cash_sale'],true)
     ?$url(['booking'=>'1','rid'=>$personId,'q'=>$q,'mode'=>$mode],'#book'):$back;
 if(($_SERVER['REQUEST_METHOD']??'')==='POST'&&str_starts_with((string)($_POST['do']??''),'ws_')){
     $settingsSection=in_array($_POST['settings_section']??'',['details','registration','visibility'],true)?$_POST['settings_section']:'details';
@@ -34,10 +35,11 @@ if(($_SERVER['REQUEST_METHOD']??'')==='POST'&&str_starts_with((string)($_POST['d
 }
 Page::action(static function()use($user,$back):string{
     $do=(string)($_POST['do']??'');
-    if(in_array($do,['workshop_add','guest_workshop','guest_workshop_retry'],true)){
+    if(in_array($do,['workshop_add','workshop_cash_sale','guest_workshop','guest_workshop_retry'],true)){
         $registration=Registrations::find((int)($_POST['rid']??0));
         if(!$registration)throw new UserError('Person not found.');
-        if($do==='workshop_add')$message=Office::addWorkshop($registration,$user,$_POST);
+        if($do==='workshop_cash_sale')$message=\Ismile\WorkshopCashSale::register($registration,$user,$_POST);
+        elseif($do==='workshop_add')$message=Office::addWorkshop($registration,$user,$_POST);
         else{
             if($do==='guest_workshop')GuestWorkshops::start($user,$registration,$_POST);
             else GuestWorkshops::resume($user,$registration,(int)($_POST['request_id']??0));
@@ -74,11 +76,11 @@ if($selected){
 $filteredPeople=array_values(array_filter($people,static fn($p)=>(!$ticketFilter||$p['payment_status']===$ticketFilter)&&($attendeeQuery===''||mb_stripos(Registrations::fullName($p).' '.$p['ref'].' '.$p['phone'],$attendeeQuery)!==false)));
 $page=max(1,(int)Page::query('page'));$pages=max(1,(int)ceil(count($filteredPeople)/10));$page=min($page,$pages);$shownPeople=array_slice($filteredPeople,($page-1)*10,10);
 $found=[];$person=$canBook&&$personId?Registrations::find($personId):null;
-if($person && !in_array($person['status'],['paid','complimentary'],true))$person=null;
-if($canBook&&$q!==''){$phone=Validate::phone($q);$like='%'.str_replace(['\\','%','_'],['\\\\','\\%','\\_'],$q).'%';$found=Db::all("SELECT r.* FROM registrations r WHERE r.status IN ('paid','complimentary') AND (CONCAT_WS(' ',r.first_name,r.father_name,r.grandfather_name) LIKE ? OR r.ref=?".($phone?' OR r.phone=?':'').') ORDER BY r.first_name LIMIT 15',$phone?[$like,strtoupper($q),$phone]:[$like,strtoupper($q)]);}
+if($person && !in_array($person['status'],$mode==='cash'?['paid']:['paid','complimentary'],true))$person=null;
+if($canBook&&$q!==''){$phone=Validate::phone($q);$like='%'.str_replace(['\\','%','_'],['\\\\','\\%','\\_'],$q).'%';$found=Db::all("SELECT r.* FROM registrations r WHERE ".($mode==='cash'?"r.status='paid'":"r.status IN ('paid','complimentary')")." AND (CONCAT_WS(' ',r.first_name,r.father_name,r.grandfather_name) LIKE ? OR r.ref=?".($phone?' OR r.phone=?':'').') ORDER BY r.first_name LIMIT 15',$phone?[$like,strtoupper($q),$phone]:[$like,strtoupper($q)]);}
 $needsReview=Db::all("SELECT c.registration_id,c.fulfillment_error,r.first_name,r.father_name,r.grandfather_name FROM workshop_checkouts c JOIN registrations r ON r.id=c.registration_id WHERE c.provider_status='paid' AND c.fulfillment_error IS NOT NULL ORDER BY c.id DESC");
 $bookingErrors=array_column(array_filter($_SESSION['flash']??[],static fn($message)=>$message[0]!=='ok'),1);
 $settingsMessages=$_SESSION['flash']??[];
-Page::top('Workshops','workshops',($user['role']==='owner'?'<a class="btn ghost" href="#manage" data-ws-open="ws-settings">'.Page::navIcon('settings').'Workshop settings</a>':'').($canBook&&$selected?'<a class="btn ws-primary" href="'.$e($url(['booking'=>'1'],'#book')).'" data-ws-open="ws-book">'.Page::navIcon('plus').'Book a guest</a>':''));
+Page::top('Workshops','workshops',($user['role']==='owner'?'<a class="btn ghost" href="#manage" data-ws-open="ws-settings">'.Page::navIcon('settings').'Workshop settings</a>':'').($canBook&&$selected?'<a class="btn ws-primary" href="'.$e($url(['booking'=>'1'],'#book')).'" data-ws-open="ws-book">'.Page::navIcon('plus').($mode==='cash'?'Register attendee':'Book a guest').'</a>':''));
 require __DIR__.'/_workshop_workspace.php';
 Page::bottom();
