@@ -450,5 +450,6 @@
   "sp_browse_hint": "Use the arrows or swipe to explore our speakers.",
   "sp_previous": "Previous speakers",
   "sp_next": "Next speakers",
-  "sp_range": "{start}–{end} of {total} speakers"
+  "sp_range": "{start}–{end} of {total} speakers",
+  "o_city": "Choose your city"
 }

@@ -446,7 +446,7 @@ export function initRegistration({ tickets = {} } = {}) {
     rows.push([t("f_third"), $("p_third").value.trim()]);
     rows.push([t("f_phone_number"), $("p_phone").value.trim()]);
     rows.push([t("f_email"), $("p_email").value.trim()]);
-    rows.push([t("f_city"), $("p_city").value.trim()]);
+    rows.push([t("f_city"), optionText($("p_city"))]);
     rows.push([t("f_gender"), optionText($("p_gender"))]);
     rows.push([t("f_age"), $("p_age").value.trim()]);
     rows.push([t("f_spec"), optionText(specialty)]);

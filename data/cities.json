@@ -1,0 +1,21 @@
+[
+  {"value":"Amarah","governorate":"Maysan","name":{"en":"Amarah","ar":"العمارة","ku":"عەمارە"}},
+  {"value":"Baghdad","governorate":"Baghdad","name":{"en":"Baghdad","ar":"بغداد","ku":"بەغدا"}},
+  {"value":"Baqubah","governorate":"Diyala","name":{"en":"Baqubah","ar":"بعقوبة","ku":"بەعقووبە"}},
+  {"value":"Basra","governorate":"Basra","name":{"en":"Basra","ar":"البصرة","ku":"بەسرە"}},
+  {"value":"Diwaniyah","governorate":"Al-Qadisiyyah","name":{"en":"Diwaniyah","ar":"الديوانية","ku":"دیوانیە"}},
+  {"value":"Duhok","governorate":"Duhok","name":{"en":"Duhok","ar":"دهوك","ku":"دهۆک"}},
+  {"value":"Erbil","governorate":"Erbil","name":{"en":"Erbil","ar":"أربيل","ku":"هەولێر"}},
+  {"value":"Halabja","governorate":"Halabja","name":{"en":"Halabja","ar":"حلبجة","ku":"هەڵەبجە"}},
+  {"value":"Hillah","governorate":"Babil","name":{"en":"Hillah","ar":"الحلة","ku":"حیللە"}},
+  {"value":"Karbala","governorate":"Karbala","name":{"en":"Karbala","ar":"كربلاء","ku":"کەربەلا"}},
+  {"value":"Kirkuk","governorate":"Kirkuk","name":{"en":"Kirkuk","ar":"كركوك","ku":"کەرکووک"}},
+  {"value":"Kut","governorate":"Wasit","name":{"en":"Kut","ar":"الكوت","ku":"کووت"}},
+  {"value":"Mosul","governorate":"Nineveh","name":{"en":"Mosul","ar":"الموصل","ku":"مووسڵ"}},
+  {"value":"Najaf","governorate":"Najaf","name":{"en":"Najaf","ar":"النجف","ku":"نەجەف"}},
+  {"value":"Nasiriyah","governorate":"Dhi Qar","name":{"en":"Nasiriyah","ar":"الناصرية","ku":"ناسیریە"}},
+  {"value":"Ramadi","governorate":"Al-Anbar","name":{"en":"Ramadi","ar":"الرمادي","ku":"ڕەمادی"}},
+  {"value":"Samawah","governorate":"Al-Muthanna","name":{"en":"Samawah","ar":"السماوة","ku":"سەماوە"}},
+  {"value":"Sulaimani","governorate":"Sulaymaniyah","name":{"en":"Sulaimani","ar":"السليمانية","ku":"سلێمانی"}},
+  {"value":"Tikrit","governorate":"Salah al-Din","name":{"en":"Tikrit","ar":"تكريت","ku":"تکریت"}}
+]

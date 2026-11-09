@@ -7,6 +7,7 @@ import { initNav } from "./components/nav.js?v=148";
 import { initTheme } from "./components/theme.js?v=148";
 import { initFooter } from "./sections/footer.js?v=148";
 import { initSponsorForm } from "./sections/sponsor-form.js?v=148";
+import { initCitySelect } from "./utils/cities.js?v=167";
 import { initBoothMap } from "./sections/booth-map.js?v=150";
 
 async function start() {
@@ -31,6 +32,7 @@ async function start() {
     if (kurdish) addLanguage("ku", kurdish);
 
     initFooter(footer);
+    await initCitySelect(document.getElementById("s_city"));
     initSponsorForm(sponsors);
     initBoothMap({ ...boothPlan, colors: { ...boothPlan.colors, platinum: "#5EEAD4", gold: "#FBBF24", silver: "#A5B4FC", bronze: "#FB923C" } });
 
