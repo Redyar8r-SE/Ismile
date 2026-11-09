@@ -509,5 +509,66 @@
       "amount": 150,
       "currency": "USD"
     }
+  },
+  {
+    "id": "live-cbct-digital-applications",
+    "icon": "tools",
+    "title": {
+      "en": "Live CBCT Interpretation & Digital Applications",
+      "ar": "التفسير المباشر لتصوير CBCT والتطبيقات الرقمية",
+      "ku": "لێکدانەوەی ڕاستەوخۆی CBCT و بەکارهێنانە دیجیتاڵییەکان"
+    },
+    "speaker": {
+      "en": "Dr. Bakhan Ahmed Mohammed",
+      "ar": "د. باخان أحمد محمد",
+      "ku": "د. باخان ئەحمەد محەمەد"
+    },
+    "credentials": {
+      "en": "BDS, MSc in Oral & Maxillofacial Radiology",
+      "ar": "بكالوريوس طب وجراحة الأسنان، ماجستير في أشعة الفم والوجه والفكين",
+      "ku": "بەکالۆریۆس لە پزیشکی و نەشتەرگەری ددان، ماستەر لە تیشکی دەم و ڕوو و چەناگە"
+    },
+    "company": {
+      "en": "Varsa",
+      "ar": "فارسا",
+      "ku": "ڤارسا"
+    },
+    "format": {
+      "en": "Workshop",
+      "ar": "ورشة عمل",
+      "ku": "وۆرکشۆپ"
+    },
+    "duration": {
+      "en": "2 hours",
+      "ar": "ساعتان",
+      "ku": "2 کاتژمێر"
+    },
+    "level": {
+      "en": "Suitable for all experience levels",
+      "ar": "مناسب لجميع مستويات الخبرة",
+      "ku": "گونجاوە بۆ هەموو ئاستەکانی ئەزموون"
+    },
+    "overview": {
+      "en": "Live CBCT interpretation and digital applications.\nFree workshop organized by Varsa.\nRegistration: call 07707171112.",
+      "ar": "التفسير المباشر لتصوير CBCT والتطبيقات الرقمية.\nورشة مجانية تنظمها فارسا.\nللتسجيل: اتصل على 07707171112.",
+      "ku": "لێکدانەوەی ڕاستەوخۆی CBCT و بەکارهێنانە دیجیتاڵییەکان.\nوۆرکشۆپێکی بەخۆڕایی لەلایەن ڤارساوە.\nبۆ تۆمارکردن: پەیوەندی بە 07707171112 بکە."
+    },
+    "photo": "assets/workshops/bakhan-ahmed-mohammed.webp",
+    "photoStyle": "cutout",
+    "presenters": [],
+    "organizer": "company",
+    "companyPhone": "07707171112",
+    "companyPhones": [
+      "07707171112"
+    ],
+    "scheduledDate": "2026-11-20",
+    "startTime": "15:00",
+    "endTime": "17:00",
+    "price": 0,
+    "currency": "IQD",
+    "displayPrice": null,
+    "totalSeats": 25,
+    "seatsLeft": 25,
+    "availabilityVerified": true
   }
 ]
