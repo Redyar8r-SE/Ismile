@@ -86,7 +86,6 @@ export async function workshopRegistration(req) {
     });
     const data = await response.json();
     if (response.ok && data?.ok === true) {
-      if (data.cashRequested === true) return reply(200, { ok: true, cashRequested: true });
       const redirect = paymentRedirect(data.redirect);
       if (!redirect) return reply(503, { ok: false, error: "wd_err_server" });
       return reply(200, { ok: true, redirect });
