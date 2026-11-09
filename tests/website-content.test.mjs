@@ -14,6 +14,48 @@ afterEach(() => {
 });
 
 describe("website content and database controls", () => {
+  it.each([true, false])(
+    "forwards VIP availability %s without exposing capacity or remaining places",
+    async (available) => {
+      vi.stubEnv("WEBSITE_API_URL", "https://backend.example/api/");
+      vi.stubGlobal(
+        "fetch",
+        vi
+          .fn()
+          .mockResolvedValue(
+            new Response(
+              JSON.stringify({
+                ok: true,
+                open: true,
+                prices: { vip: 100 },
+                lunch: { day1: true },
+                vip: { available, remaining: 4, capacity: 6 },
+              }),
+            ),
+          ),
+      );
+      const result = await websiteState("config.php");
+      expect(result.statusCode).toBe(200);
+      expect(JSON.parse(result.body).vip).toEqual({ available });
+      expect(result.body).not.toContain("remaining");
+      expect(result.body).not.toContain("capacity");
+    },
+  );
+
+  it("keeps VIP unavailable when the backend does not provide its availability", async () => {
+    vi.stubEnv("WEBSITE_API_URL", "https://backend.example/api/");
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValue(
+          new Response(
+            JSON.stringify({ ok: true, open: true, prices: { vip: 100 }, lunch: { day1: true } }),
+          ),
+        ),
+    );
+    expect(JSON.parse((await websiteState("config.php")).body).vip).toEqual({ available: false });
+  });
   it("keeps the map directory with the deployed geometry and reservation rules", () => {
     expect(editableContent("data/booth-tiers.json")).toBe(false);
     const result = contentRequest(
