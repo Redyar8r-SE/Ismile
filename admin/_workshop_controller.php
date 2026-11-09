@@ -15,6 +15,15 @@ use Ismile\WorkshopCatalog;
 
 $user=Page::guard('workshops');
 $canBook=Auth::canBookWorkshops($user);
+if(Page::query('attendee_search')==='1'){
+    \Ismile\Api::requireMethod('GET');
+    if(!$canBook)\Ismile\Api::json(403,['ok'=>false,'error'=>'not_allowed']);
+    session_write_close();
+    \Ismile\Api::run(static function():void{
+        $matches=\Ismile\Admin\WorkshopAttendeeSearch::find(Page::query('q'),Page::query('mode')==='cash',(int)Page::query('offset'));
+        \Ismile\Api::json(200,['ok'=>true]+$matches);
+    });
+}
 $canGuest=$canBook && Auth::canIssueComplimentary($user) && \Ismile\GuestOrders::enabled();
 $workshops=SiteData::workshops();
 $open=Page::query('id');$q=Page::query('q');$personId=(int)Page::query('rid');
@@ -77,7 +86,8 @@ $filteredPeople=array_values(array_filter($people,static fn($p)=>(!$ticketFilter
 $page=max(1,(int)Page::query('page'));$pages=max(1,(int)ceil(count($filteredPeople)/10));$page=min($page,$pages);$shownPeople=array_slice($filteredPeople,($page-1)*10,10);
 $found=[];$person=$canBook&&$personId?Registrations::find($personId):null;
 if($person && !in_array($person['status'],$mode==='cash'?['paid']:['paid','complimentary'],true))$person=null;
-if($canBook&&$q!==''){$phone=Validate::phone($q);$like='%'.str_replace(['\\','%','_'],['\\\\','\\%','\\_'],$q).'%';$found=Db::all("SELECT r.* FROM registrations r WHERE ".($mode==='cash'?"r.status='paid'":"r.status IN ('paid','complimentary')")." AND (CONCAT_WS(' ',r.first_name,r.father_name,r.grandfather_name) LIKE ? OR r.ref=?".($phone?' OR r.phone=?':'').') ORDER BY r.first_name LIMIT 15',$phone?[$like,strtoupper($q),$phone]:[$like,strtoupper($q)]);}
+$attendeeMatches=$canBook?\Ismile\Admin\WorkshopAttendeeSearch::find($q,$mode==='cash'):['people'=>[],'total'=>0,'offset'=>0];
+$found=$attendeeMatches['people'];
 $needsReview=Db::all("SELECT c.registration_id,c.fulfillment_error,r.first_name,r.father_name,r.grandfather_name FROM workshop_checkouts c JOIN registrations r ON r.id=c.registration_id WHERE c.provider_status='paid' AND c.fulfillment_error IS NOT NULL ORDER BY c.id DESC");
 $bookingErrors=array_column(array_filter($_SESSION['flash']??[],static fn($message)=>$message[0]!=='ok'),1);
 $settingsMessages=$_SESSION['flash']??[];

@@ -131,6 +131,30 @@ body[data-page="workshops"] .ws-primary{background:var(--ws-purple);border-color
 .ws-selected-workshop p{font-size:11px;color:var(--ws-muted)}
 .ws-book-search label{display:grid;gap:10px;font-size:12px;font-weight:600}
 .ws-book-search .ws-search{font-weight:400}
+.ws-dialog-intro{margin-top:9px!important;font-size:13px;color:var(--ws-muted);font-weight:400;line-height:1.6}
+.ws-workshop-picker{padding:17px 18px;background:#f5f3fc;border:1px solid #e9e5f8;border-radius:12px;display:grid;gap:10px}
+.ws-workshop-picker label{display:grid;gap:12px;font-size:12px;font-weight:600}.ws-workshop-picker label>span{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.ws-workshop-picker select{width:100%;min-width:0;max-width:100%;font-size:13px;font-weight:500;background:#fff;min-height:46px;border-color:#ded9ef;border-radius:8px}
+.ws-workshop-picker p{font-size:11px;line-height:1.6;color:var(--ws-muted)}
+.ws-attendee-lookup{display:grid;gap:12px;min-width:0}.ws-book-search{display:grid;gap:10px}.ws-book-search>label{font-size:13px}
+.ws-book-search .ws-search{width:100%;min-height:48px;background:#fff;border-radius:10px;transition:border-color .15s,box-shadow .15s}.ws-book-search .ws-search:focus-within{border-color:#8c80d6;box-shadow:0 0 0 3px #5145bf12}
+.ws-book-search input{min-width:0}.ws-lookup-status{font-size:12px;color:var(--ws-muted);line-height:1.6;min-height:20px}
+.ws-attendee-lookup .ws-found{gap:8px}.ws-attendee-lookup .ws-found:empty{display:none}
+.ws-attendee-lookup .ws-attendee-result{display:flex;flex-wrap:nowrap;gap:12px;padding:13px 14px;background:#fff;border-radius:10px;transition:background .15s,border-color .15s;min-width:0}
+.ws-attendee-lookup .ws-attendee-result:hover,.ws-attendee-lookup .ws-attendee-result:focus-visible{background:#f8f6ff;border-color:#b7aeea}
+.ws-attendee-avatar{display:grid;place-items:center;width:38px;height:38px;flex:0 0 38px;border-radius:12px;background:#eeebfa;color:var(--ws-purple);font-size:16px;font-weight:600}
+.ws-attendee-identity{flex:1;min-width:0}.ws-attendee-identity strong{font-size:13px;line-height:1.5;overflow-wrap:anywhere}.ws-attendee-lookup .ws-found small{font-size:11px;line-height:1.6;margin-top:3px;overflow-wrap:anywhere;color:var(--ws-muted)}
+.ws-attendee-result>.nav-icon{width:15px;color:#8c80b2}.ws-more-attendees{justify-content:center;min-height:42px;font-size:12px}
+.ws-workshop-picker [hidden],.ws-attendee-lookup [hidden]{display:none!important}
+.ws-attendee-lookup .ws-found{max-height:min(46dvh,420px);overflow-y:auto;overscroll-behavior-y:contain;scrollbar-gutter:stable;padding:3px 6px 3px 3px}
+.ws-attendees{max-height:min(60dvh,480px);overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable;scrollbar-width:thin;scrollbar-color:#a69bdc #f1eef9;scroll-padding-top:42px}
+.ws-attendees .ws-attendee-head{position:sticky;top:0;z-index:2;background:#fff;box-shadow:0 1px 0 var(--ws-line)}
+.ws-attendee-lookup .ws-found{scrollbar-width:thin;scrollbar-color:#a69bdc #f1eef9}
+.ws-attendees::-webkit-scrollbar,.ws-attendee-lookup .ws-found::-webkit-scrollbar{width:7px;height:7px}
+.ws-attendees::-webkit-scrollbar-track,.ws-attendee-lookup .ws-found::-webkit-scrollbar-track{background:#f1eef9;border-radius:8px}
+.ws-attendees::-webkit-scrollbar-thumb,.ws-attendee-lookup .ws-found::-webkit-scrollbar-thumb{background:#a69bdc;border-radius:8px}
+.ws-attendee .ws-menu-content.is-floating{position:fixed;z-index:150;right:auto;max-height:calc(100dvh - 24px);overflow:auto}
+@media print{.ws-attendees,.ws-attendee-lookup .ws-found{max-height:none!important;overflow:visible!important}.ws-attendees .ws-attendee-head{position:static}}
 .ws-found{display:grid;gap:8px}.ws-found>a{display:flex;justify-content:space-between;align-items:center;gap:14px;border:1px solid var(--ws-line);border-radius:8px;padding:14px;text-decoration:none;color:var(--ws-ink)}.ws-found small{display:block;margin-top:6px;font-size:11px;color:var(--ws-muted)}
 .ws-selected-attendee{border:1px solid var(--ws-line);padding:18px;border-radius:8px;display:grid;gap:13px;min-width:0}
 .ws-selected-attendee>div{display:flex;justify-content:space-between;align-items:center;gap:12px}.ws-selected-attendee h3{font-size:16px;font-weight:600}.ws-selected-attendee>div>.nav-icon{color:#24765e}

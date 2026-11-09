@@ -1,6 +1,94 @@
 document.addEventListener("DOMContentLoaded", () => {
   const root = document.querySelector("[data-workshop-workspace]");
   if (!root) return;
+  root.querySelectorAll('[data-ws-workshop-picker]').forEach(form => {
+    form.querySelector('[data-ws-picker-submit]').hidden = true;
+    form.elements.id.addEventListener('change', () => form.requestSubmit());
+  });
+  const lookup = root.querySelector('[data-ws-attendee-lookup]');
+  if (lookup) {
+    const form = lookup.querySelector('[data-ws-attendee-search]');
+    const input = form.elements.q;
+    const results = lookup.querySelector('[data-ws-attendee-results]');
+    const status = lookup.querySelector('[role=status]');
+    const more = lookup.querySelector('[data-ws-more-attendees]');
+    const arrow = form.querySelector('button svg')?.cloneNode(true);
+    let timer, controller, revision = 0, composing = false, stopped = false;
+    let query = input.value.trim();
+    const initialTotal = Number(more.dataset.total);
+    const idle = () => { status.textContent = 'Start typing to see matching attendees.'; };
+    const row = person => {
+      const link = document.createElement('a');
+      link.className = 'ws-attendee-result';
+      const url = new URL(form.action, location.href);
+      url.search = new URLSearchParams(new FormData(form));
+      url.searchParams.set('rid', person.id);
+      url.hash = 'book';
+      link.href = url.href;
+      const avatar = document.createElement('span');
+      avatar.className = 'ws-attendee-avatar'; avatar.setAttribute('aria-hidden', 'true');
+      avatar.textContent = Array.from(person.first_name || '')[0]?.toLocaleUpperCase() || '';
+      const identity = document.createElement('span'); identity.className = 'ws-attendee-identity';
+      const name = document.createElement('strong');
+      name.textContent = [person.first_name, person.father_name, person.grandfather_name].filter(Boolean).join(' ');
+      const contact = document.createElement('small');
+      contact.textContent = [person.phone, person.email].filter(Boolean).join(' · ');
+      identity.append(name, contact); link.append(avatar, identity);
+      if (arrow) link.append(arrow.cloneNode(true));
+      return link;
+    };
+    const search = async (append = false) => {
+      if (composing || stopped) return;
+      clearTimeout(timer); controller?.abort();
+      const current = ++revision;
+      query = input.value.trim();
+      if (!query) { results.replaceChildren(); more.hidden = true; idle(); return; }
+      if (!append) results.replaceChildren();
+      more.hidden = true; status.textContent = 'Searching…';
+      results.setAttribute('aria-busy', 'true');
+      const url = new URL(form.action, location.href);
+      url.hash = ''; url.search = new URLSearchParams({ attendee_search: '1', mode: form.elements.mode.value, q: query, offset: String(append ? results.children.length : 0) });
+      const active = new AbortController(); controller = active;
+      const timeout = setTimeout(() => active.abort(), 10000);
+      try {
+        const response = await fetch(url, { credentials: 'same-origin', cache: 'no-store', signal: active.signal, headers: { Accept: 'application/json' } });
+        if (!response.ok || response.redirected) throw new Error('Search unavailable');
+        const data = await response.json();
+        if (current !== revision || stopped) return;
+        if (!data.ok || !Array.isArray(data.people) || !Number.isInteger(data.total)) throw new Error('Invalid search response');
+        results.append(...data.people.map(row));
+        const shown = results.children.length;
+        more.hidden = shown >= data.total;
+        status.textContent = data.total ? (shown < data.total ? `Showing ${shown} of ${data.total} attendees` : `${data.total} ${data.total === 1 ? 'attendee' : 'attendees'} found`) : 'No attendee found. Try another name, phone number or email.';
+      } catch {
+        if (current === revision && !stopped) status.textContent = 'Search unavailable. Press the search arrow to try again.';
+      } finally {
+        clearTimeout(timeout);
+        if (current === revision) results.removeAttribute('aria-busy');
+      }
+    };
+    const changed = () => {
+      revision++; controller?.abort(); clearTimeout(timer);
+      results.replaceChildren(); results.removeAttribute('aria-busy'); more.hidden = true;
+      if (!input.value.trim()) { idle(); return; }
+      status.textContent = 'Searching…';
+      if (!composing) timer = setTimeout(() => search(), 180);
+    };
+    input.addEventListener('input', event => { if (!event.isComposing) changed(); });
+    input.addEventListener('compositionstart', () => { composing = true; revision++; controller?.abort(); clearTimeout(timer); results.replaceChildren(); more.hidden = true; });
+    input.addEventListener('compositionend', () => { composing = false; changed(); });
+    form.addEventListener('submit', event => { event.preventDefault(); search(); });
+    more.addEventListener('click', () => search(true));
+    lookup.addEventListener('keydown', event => {
+      const links = [...results.querySelectorAll('a')];
+      if (event.key === 'ArrowDown') { const next = event.target === input ? links[0] : links[links.indexOf(event.target) + 1]; if (next) { event.preventDefault(); next.focus(); } }
+      if (event.key === 'ArrowUp' && links.includes(event.target)) { event.preventDefault(); (links[links.indexOf(event.target) - 1] || input).focus(); }
+    });
+    if (!query) idle();
+    else if (initialTotal > results.children.length) more.hidden = false;
+    window.addEventListener('pagehide', () => { stopped = true; revision++; clearTimeout(timer); controller?.abort(); });
+    window.addEventListener('pageshow', event => { if (event.persisted) { stopped = false; search(); } });
+  }
   root.querySelectorAll('[data-workshop-cash]').forEach(form => {
     const currency = form.elements.cash_currency;
     const amount = form.elements.cash_amount;
@@ -25,6 +113,23 @@ document.addEventListener("DOMContentLoaded", () => {
     refresh();
   });
   const directory = root.querySelector(".ws-directory-list");
+  const attendeeTable = root.querySelector('.ws-attendees');
+  if (attendeeTable) {
+    const menus = [...attendeeTable.querySelectorAll('details.ws-menu')];
+    menus.forEach(menu => menu.addEventListener('toggle', () => {
+      const panel = menu.querySelector('.ws-menu-content');
+      if (!panel) return;
+      if (!menu.open) { panel.classList.remove('is-floating'); panel.style.removeProperty('top'); panel.style.removeProperty('left'); return; }
+      const anchor = menu.querySelector('summary').getBoundingClientRect();
+      panel.classList.add('is-floating');
+      const box = panel.getBoundingClientRect();
+      panel.style.left = Math.max(12, Math.min(anchor.right - box.width, innerWidth - box.width - 12)) + 'px';
+      panel.style.top = Math.max(12, anchor.bottom + box.height + 8 > innerHeight ? anchor.top - box.height - 8 : anchor.bottom + 8) + 'px';
+    }));
+    const closeMenus = () => menus.forEach(menu => { menu.open = false; });
+    attendeeTable.addEventListener('scroll', closeMenus);
+    window.addEventListener('resize', closeMenus);
+  }
   const selectedCard = directory?.querySelector('.ws-workshop-card[aria-current="true"]');
   if (selectedCard) {
     const listBox = directory.getBoundingClientRect();
