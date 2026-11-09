@@ -47,7 +47,7 @@ foreach ($files as $file) {
         $changed = false;
         foreach (['bm_intro', 'pg_map_text', 'pm_text'] as $key) {
             if (!is_string($server[$key] ?? null)) continue;
-            $updated = str_replace(['44', '٤٤'], ['39', '٣٩'], $server[$key]);
+            $updated = preg_replace(['/(?<![0-9٠-٩])(?:44|39)(?![0-9٠-٩])/u', '/(?<![0-9٠-٩])(?:٤٤|٣٩)(?![0-9٠-٩])/u'], ['40', '٤٠'], $server[$key]);
             if ($updated !== $server[$key]) {
                 $server[$key] = $updated;
                 $changed = true;

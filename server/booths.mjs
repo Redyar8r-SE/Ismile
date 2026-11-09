@@ -2,7 +2,7 @@
 // Any backend HTTP credentials remain on the server. Forward numbers only.
 import { readFileSync } from "node:fs";
 
-// These are immutable reservation IDs, including ID 44 (visible booth 39).
+// Immutable reservation IDs include 44 (visible booth 39) and 45 (visible booth 40).
 /** @type {{ rows: { numbers: number[], labels: number[], size: string }[] }} */
 const plan = JSON.parse(readFileSync(new URL("../data/booth-tiers.json", import.meta.url), "utf8"));
 const positionIds = new Set(plan.rows.flatMap((row) => row.numbers));
@@ -13,8 +13,8 @@ export function normalizeMapText(dictionary) {
   const result = { ...dictionary };
   for (const key of ["bm_intro", "pg_map_text", "pm_text"]) {
     if (typeof result[key] === "string") {
-      result[key] = result[key].replace(/44|٤٤/g, (match) =>
-        match === "٤٤"
+      result[key] = result[key].replace(/(?<![0-9٠-٩])(?:44|39|٤٤|٣٩)(?![0-9٠-٩])/g, (match) =>
+        /[٠-٩]/.test(match)
           ? String(positionIds.size).replace(/\d/g, (digit) => "٠١٢٣٤٥٦٧٨٩"[Number(digit)])
           : String(positionIds.size),
       );

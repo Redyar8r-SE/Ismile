@@ -15,4 +15,4 @@ foreach ($proof['tables'] as $table => $before) {
     echo 'Verified: all ' . count($rows) . ' ' . $table . " records are unchanged.\n";
 }
 \Ismile\BoothPlan::assertDatabaseMatches();
-echo "Verified: database directory matches all 39 website positions.\n";
+echo "Verified: database directory matches all 40 website positions.\n";

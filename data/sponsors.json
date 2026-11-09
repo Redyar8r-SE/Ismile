@@ -39,11 +39,11 @@
       },
       "className": "tc-silver",
       "subtitle": {
-        "en": "17 exhibition spaces",
-        "ar": "17 مساحات في المعرض",
-        "ku": "17 شوێنی پێشانگا"
+        "en": "14 exhibition spaces",
+        "ar": "14 مساحات في المعرض",
+        "ku": "14 شوێنی پێشانگا"
       },
-      "spots": 17
+      "spots": 14
     },
     {
       "id": "bronze",
@@ -54,11 +54,11 @@
       },
       "className": "tc-bronze",
       "subtitle": {
-        "en": "9 exhibition spaces",
-        "ar": "9 مساحات في المعرض",
-        "ku": "9 شوێنی پێشانگا"
+        "en": "13 exhibition spaces",
+        "ar": "13 مساحات في المعرض",
+        "ku": "13 شوێنی پێشانگا"
       },
-      "spots": 9
+      "spots": 13
     }
   ],
   "sponsors": [

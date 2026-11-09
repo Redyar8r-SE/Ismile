@@ -292,7 +292,7 @@ final class Page
             'workshops' => 'Manage your programme. Take care of every attendee.',
             'sponsors' => 'Build your partnerships and keep every conversation moving forward.',
             'booths' => 'Manage Standard booth bookings, agreed amounts, payments and follow-up calls.',
-            'map' => 'Explore all 39 sponsor positions. Select a number to see who booked it, payments and follow-up details.',
+            'map' => 'Explore all 40 sponsor positions. Select a number to see who booked it, payments and follow-up details.',
             'checkin' => 'Psoola scans the tickets at the door. Follow who attended, the guest list and the live event report.',
             'settings' => 'Make the database work for your team. Manage registration, emails and ambassador codes.',
             'users' => 'Give your team the right access to support a smooth event.',

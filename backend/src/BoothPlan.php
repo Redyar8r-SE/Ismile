@@ -6,7 +6,8 @@ namespace Ismile;
 /** Immutable reservation IDs and their current, user-facing map numbers. */
 final class BoothPlan
 {
-    public const COUNT = 39;
+    public const COUNT = 40;
+    public const MAX_POSITION_ID = 45;
     public const TIERS = ['platinum' => 'Platinum', 'gold' => 'Gold', 'silver' => 'Silver', 'bronze' => 'Bronze'];
     private static ?array $positions = null;
 
@@ -22,7 +23,7 @@ final class BoothPlan
             if (count($row['numbers'] ?? []) !== count($row['labels'] ?? [])) throw new \RuntimeException('Every map position needs a display number.');
             foreach ($row['numbers'] as $index => $id) {
                 $label = $row['labels'][$index];
-                if (!is_int($id) || $id < 1 || $id > 44 || isset($positions[$id])
+                if (!is_int($id) || $id < 1 || $id > self::MAX_POSITION_ID || isset($positions[$id])
                     || !is_int($label) || $label < 1 || $label > self::COUNT || isset($labels[$label])) {
                     throw new \RuntimeException('Invalid or duplicate floor-plan numbering.');
                 }
@@ -31,7 +32,7 @@ final class BoothPlan
             }
         }
         if (count($positions) !== self::COUNT || array_diff(range(1, self::COUNT), array_keys($labels))) {
-            throw new \RuntimeException('The floor plan must show every number from 1 to 39 once.');
+            throw new \RuntimeException('The floor plan must show every number from 1 to 40 once.');
         }
         ksort($positions, SORT_NUMERIC);
         return self::$positions = $positions;
@@ -112,7 +113,7 @@ final class BoothPlan
                 $change = ['places' => $count];
                 foreach (['en', 'ar', 'ku'] as $lang) {
                     $key = 'subtitle_' . $lang;
-                    if (is_string($package[$key]) && preg_match('/^(6|7|21|10)(?=\s)/u', $package[$key])) {
+                    if (is_string($package[$key]) && preg_match('/^\d+(?=\s)/u', $package[$key])) {
                         $change[$key] = preg_replace('/^\d+/u', (string) $count, $package[$key]);
                     }
                 }

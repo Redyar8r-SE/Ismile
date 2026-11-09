@@ -23,8 +23,8 @@ $check('upgrade preserves every field of all 12 paid sponsor records', $existing
 $check('all 12 original call agreements are preserved',count($callsBefore)===12 && Db::all('SELECT * FROM sponsor_calls ORDER BY id')===$callsBefore);
 BoothPlan::assertDatabaseMatches();
 $positions=Db::all('SELECT * FROM sponsor_map_positions ORDER BY display_number');
-$ids=[1,2,3,5,6,7,8,9,10,11,12,15,16,17,18,19,20,21,22,23,24,25,26,27,28,30,32,33,34,35,36,37,38,39,40,41,42,43,44];
-$check('database has exactly 39 distinct consecutive display numbers',array_map('intval',array_column($positions,'display_number'))===range(1,39));
+$ids=[1,2,3,5,6,7,8,9,10,11,12,15,16,17,18,19,20,21,22,23,24,25,26,27,28,30,32,33,34,35,36,37,38,39,40,41,42,43,44,45];
+$check('database has exactly 40 distinct consecutive display numbers',array_map('intval',array_column($positions,'display_number'))===range(1,40));
 $check('every displayed number maps to the approved original position ID',array_map('intval',array_column($positions,'position_id'))===$ids);
 $check('public availability retains all original booked position IDs',Sponsors::bookedBooths()===[1,5,7,15,16,17,18,19,20,23,43,44]);
 $expectedBooked=[1=>1,5=>4,7=>6,15=>12,16=>13,17=>14,18=>15,19=>16,20=>17,23=>20,43=>38,44=>39];
@@ -47,7 +47,7 @@ foreach($positions as $p){
     }
     $check('visible booth '.$p['display_number'].' cannot be double booked',$rejects(static fn()=>Sponsors::createByStaff($input,$owner)));
 }
-$check('every one of the 39 physical positions is represented once when fully booked',count(Sponsors::bookedBooths())===39 && (int)Db::value('SELECT COUNT(*) FROM `15_sponsor_map` WHERE `Company` IS NOT NULL')===39);
+$check('every one of the 40 physical positions is represented once when fully booked',count(Sponsors::bookedBooths())===40 && (int)Db::value('SELECT COUNT(*) FROM `15_sponsor_map` WHERE `Company` IS NOT NULL')===40);
 foreach($created as $id)Sponsors::cancel($id,'End of isolated map test.',$owner);
 $check('releasing the new test bookings preserves all original reservations',Sponsors::bookedBooths()===[1,5,7,15,16,17,18,19,20,23,43,44]);
 $check('all original companies, contacts, prices, payments and history remain unchanged',$existing()===$before);
@@ -78,7 +78,7 @@ BoothPlan::syncDatabase();
 BoothPlan::syncDatabase();
 $check('repeated map synchronization preserves every existing booking',$existing()===$before);
 $check('database sponsor directory exposes new numbers',Db::value('SELECT `Map position` FROM `07_sponsors` WHERE `Reference`=?',[$before[1]['ref']])===4);
-$check('all map numbers stay in sync after repeat deployments',BoothPlan::count()===39 && count(Db::all('SELECT * FROM `15_sponsor_map`'))===39);
+$check('all map numbers stay in sync after repeat deployments',BoothPlan::count()===40 && count(Db::all('SELECT * FROM `15_sponsor_map`'))===40);
 foreach(['platinum'=>6,'gold'=>7,'silver'=>17,'bronze'=>9] as $tier=>$count){
     $check($tier.' package capacity matches its new map count',(int)Db::value('SELECT places FROM sponsor_packages WHERE id=?',[$tier])===$count);
 }

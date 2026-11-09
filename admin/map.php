@@ -27,7 +27,7 @@ Page::action(static function () use ($user): string {
     Page::useOnce();
     $booking = Sponsors::createByStaff(array_replace($_POST, ['kind' => 'sponsor', 'booth_number' => $number]), $user);
     return 'Position ' . BoothPlan::label($number) . ' booked for ' . $booking['company'] . '.';
-}, 'map.php?number=' . max(1, min(44, (int) ($_POST['booth_number'] ?? 1))));
+}, 'map.php?number=' . max(1, min(BoothPlan::MAX_POSITION_ID, (int) ($_POST['booth_number'] ?? 1))));
 
 // Private, authenticated map data. The public availability API stays anonymous
 // and contains numbers only. Use the same generated reservation as booking.
@@ -39,7 +39,7 @@ if (Page::query('format') === 'json') {
             s.reserved_booth, s.status, p.name_en AS package_name
             FROM sponsor_requests s LEFT JOIN sponsor_packages p ON p.id=s.package_id
             WHERE s.kind='sponsor' AND s.reserved_booth IS NOT NULL ORDER BY s.id");
-        $number = filter_var($_GET['number'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 44]]);
+        $number = filter_var($_GET['number'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => BoothPlan::MAX_POSITION_ID]]);
         $detail = null;
         if ($number !== false && $number !== null) {
             $detail = Db::one("SELECT s.id, s.ref, s.company, s.contact_name, s.contact_role,

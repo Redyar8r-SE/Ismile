@@ -127,8 +127,8 @@ if ($database) {
     $check('Finance can add a sponsor without a booth or agreed amount', $noStand['status'] === 'new' && $noStand['booth_number'] === null && $noStand['amount_agreed'] === null);
     $expected = [
         'platinum' => [37,38,39,40,41,42], 'gold' => [1,6,24,30,36,43,44],
-        'silver' => [2,3,5,7,8,9,10,11,12,25,26,27,28,32,33,34,35],
-        'bronze' => [15,16,17,18,19,20,21,22,23],
+        'silver' => [2,3,5,7,8,9,10,11,12,32,33,34,35,45],
+        'bronze' => [15,16,17,18,19,20,21,22,23,25,26,27,28],
     ];
     foreach ($expected as $tier => $numbers) {
         $check($tier . ' matches the revised map position IDs', Ismile\BoothPlan::numbers($tier) === $numbers);

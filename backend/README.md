@@ -281,7 +281,7 @@ the event’s phones before opening the doors.
 
 ### Live exhibition map
 
-`sponsor.html#exhibition` shows the revised 39-booth floor plan and its tier,
+`sponsor.html#exhibition` shows the revised 40-booth floor plan and its tier,
 number and size table. `GET /api/booths.php` returns only booked numbers; no
 company, request ID, contact, payment or staff information is public. Visible
 pages refresh every three seconds and immediately when returning to the tab.
@@ -300,7 +300,7 @@ map. Assignment reserves immediately, before payment. Declined, waiting-list
 and cancelled requests release the position. The database unique key refuses
 simultaneous reservations of one sponsor position.
 
-**Event operations > Map** (`admin/map.php`) shows all 39 numbered sponsor
+**Event operations > Map** (`admin/map.php`) shows all 40 numbered sponsor
 positions using the same floor-plan geometry and generated `reserved_booth`
 database column as public availability. Select a map number or directory entry
 to see its company, contact, package, assigned staff, agreed/received/outstanding
@@ -324,11 +324,11 @@ numbered positions.
 
 Sponsorship tiers are Platinum, Gold, Silver and Bronze. Package `booth_tier`
 controls the sponsor selector. Visible numbers: Platinum 32–37; Gold 1, 5, 21, 26, 31, 38, 39;
-Silver 2–4, 6–11, 22–25, 27–30; Bronze 12–20.
+Silver 2–4, 6–11, 27–30, 40; Bronze 12–20, 22–25.
 `data/booth-tiers.json` supplies both clients and backend validation. `numbers`
-are immutable database position IDs; `labels` are the visible 1–39 numbers.
+are immutable database position IDs; `labels` are the visible 1–40 numbers.
 `booth_number` and `reserved_booth` keep their original IDs, so no company,
-payment or call record is rewritten. Form values, API availability and DOM
+payment or call record is duplicated. The authorised 22-to-40 transfer changes only the existing booking’s position and update timestamp, with a private backup and audit entry. Form values, API availability and DOM
 `data-booth` attributes also use stable IDs. User-facing text and CSV exports
 use labels. `sponsor_map_positions` records the mapping, tier and size; the
 `15_sponsor_map` database view shows current numbers alongside reservations.

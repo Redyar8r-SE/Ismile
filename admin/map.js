@@ -1,5 +1,5 @@
-import { buildBooths } from '../js/config/booth-layout.js?v=150';
-import { floorPlanSVG } from '../js/sections/floor-plan.js?v=150';
+import { buildBooths } from '../js/config/booth-layout.js?v=170';
+import { floorPlanSVG } from '../js/sections/floor-plan.js?v=170';
 
 const el = (id) => document.getElementById(id);
 const canManage = el('operationsMap').dataset.canManage === '1';
@@ -9,7 +9,7 @@ const title = (value) => String(value ?? '').replaceAll('_', ' ').replace(/^./, 
 let booths = [], colors = {}, bookings = new Map(), selected = null, detail = null;
 let connected = false, zoom = 1, controller, timer;
 const initial = Number(new URL(location.href).searchParams.get('number'));
-if (Number.isInteger(initial) && initial >= 1 && initial <= 44) selected = initial;
+if (Number.isInteger(initial) && initial >= 1 && initial <= 45) selected = initial;
 
 function label(booth) {
   return `Position ${booth.displayNumber}, ${title(booth.tier)}, ${booth.size}, ${!connected ? 'availability unknown' : bookings.has(booth.number) ? `reserved by ${bookings.get(booth.number).company}` : 'available'}`;

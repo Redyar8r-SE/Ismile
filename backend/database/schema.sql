@@ -612,9 +612,9 @@ CREATE TABLE IF NOT EXISTS sponsor_map_positions (
   size VARCHAR(30) NOT NULL,
   PRIMARY KEY (position_id),
   UNIQUE KEY uq_map_display_number (display_number),
-  CONSTRAINT ck_map_display_number CHECK (display_number BETWEEN 1 AND 39)
+  CONSTRAINT ck_map_display_number CHECK (display_number BETWEEN 1 AND 40)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-  COMMENT='Stable booking position IDs and their visible 1-39 map numbers';
+  COMMENT='Stable booking position IDs and their visible 1-40 map numbers';
 
 -- Sponsorship and booth requests: handled by a person, never sold like tickets.
 -- The steps: New → Contacted (called) → Agreed (amount agreed) → Paid → Confirmed,
