@@ -30,7 +30,7 @@ function request(origin, body) {
 }
 
 describe("workshop backend integration", () => {
-  it("forwards a cash request and returns only its unpaid acknowledgement", async () => {
+  it("rejects a cash acknowledgement because website registration requires a checkout redirect", async () => {
     connection();
     const fetcher = vi.fn().mockResolvedValue(
       new Response(
@@ -45,25 +45,20 @@ describe("workshop backend integration", () => {
     vi.stubGlobal("fetch", fetcher);
     const body = "workshop=crown-vs-veneer&email=paid%40example.invalid&payment_method=cash";
     const result = await workshopRegistration(request("https://ismile.krd", body));
-    expect(result.statusCode).toBe(200);
-    expect(JSON.parse(result.body)).toEqual({ ok: true, cashRequested: true });
+    expect(result.statusCode).toBe(503);
+    expect(JSON.parse(result.body)).toEqual({ ok: false, error: "wd_err_server" });
     expect(Buffer.from(fetcher.mock.calls[0][1].body).toString()).toBe(body);
   });
-  it("requires an explicit cash acknowledgement from the backend", async () => {
+  it("preserves the backend rejection of public cash registration", async () => {
     connection();
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue(
-        new Response(
-          JSON.stringify({
-            ok: true,
-            cashRequested: "true",
-          }),
-        ),
-      ),
+      vi
+        .fn()
+        .mockResolvedValue(new Response('{"ok":false,"error":"wd_err_server"}', { status: 400 })),
     );
     const result = await workshopRegistration(request("https://ismile.krd", "payment_method=cash"));
-    expect(result.statusCode).toBe(503);
+    expect(result.statusCode).toBe(400);
   });
   it("serves the current database catalog instead of stale local demos", async () => {
     connection();
