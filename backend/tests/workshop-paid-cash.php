@@ -35,5 +35,7 @@ Db::update('workshops',['display_price'=>null,'display_currency'=>null],'id=?',[
 $fixture('/stock?id='.$id.'&available=0');$check('Sold out workshop cannot create another cash sale',$reject(fn()=>WorkshopCashSale::register($bad,$staff,array_replace($input,['cash_currency'=>'IQD','cash_amount'=>(string)$price]))));
 $beforeRetry=count($fixture()['orders']);WorkshopCashSale::register($person,$staff,$input);$check('Existing receipt remains retryable when sold out or quote changes',count($fixture()['orders'])===$beforeRetry);
 $fixture('/stock?id='.$id.'&available=25');
+$oldBooking=Db::one('SELECT * FROM workshop_bookings WHERE registration_id=?',[$iqd['id']]);Db::update('workshop_bookings',['removed_at'=>App::now(),'removed_by'=>$owner['id']],'id=?',[$oldBooking['id']]);$receiptCount=(int)Db::value('SELECT COUNT(*) FROM workshop_cash_receipts');
+$check('Removing a local booking does not permit collecting the paid ticket twice',$reject(fn()=>WorkshopCashSale::register($iqd,$staff,array_replace($input,['cash_currency'=>'IQD','cash_amount'=>(string)$price])))&&(int)Db::value('SELECT COUNT(*) FROM workshop_cash_receipts')===$receiptCount);
 Db::update('workshops',['display_price'=>100,'display_currency'=>'USD'],'id=?',[$id]);
 echo $passed.' paid cash workshop checks passed.'.PHP_EOL;

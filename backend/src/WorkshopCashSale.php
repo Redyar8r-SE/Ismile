@@ -41,6 +41,7 @@ final class WorkshopCashSale
                 return (int)$existing['id'];
             }
             WorkshopCheckout::assertNoOpenPurchase((int)$person['id'],$workshop['id']);
+            if(Db::value("SELECT id FROM workshop_ticket_orders WHERE registration_id=? AND workshop_id=? AND provider_status IN ('created','unknown','awaiting_payment','paid')",[$person['id'],$workshop['id']]))throw new UserError('This attendee already has a paid workshop order or an order awaiting confirmation. Review the original ticket before collecting another payment.');
             $lockedWorkshop=Workshops::find($workshop['id']);$quote=self::quote($lockedWorkshop,$catalog);
             if($currency==='USD'){
                 if(!$quote['usdMinor'])throw new UserError('This workshop has no saved USD price. Collect its PSOOLA price in IQD.');
