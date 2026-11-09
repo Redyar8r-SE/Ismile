@@ -58,7 +58,17 @@ export async function websiteState(route, query = new URLSearchParams()) {
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ ok: true, open, reason, message, messages, prices, lunch, gateway }),
+      body: JSON.stringify({
+        ok: true,
+        open,
+        reason,
+        message,
+        messages,
+        prices,
+        lunch,
+        gateway,
+        vip: { available: state.vip?.available === true },
+      }),
     };
   } catch {
     return unavailable();
