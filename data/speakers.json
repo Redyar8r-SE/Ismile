@@ -91,21 +91,21 @@
   },
   {
     "name": {
-      "en": "Dr. Dastan Tahir Abdulla",
+      "en": "Dr. Dastan Tahir Abdallah",
       "ar": "د. داستان طاهر عبد الله",
       "ku": "د. داستان تاهیر عەبدوڵڵا"
     },
     "role": {
-      "en": "Oral and Maxillofacial Surgeon",
-      "ar": "جرّاح الفم والوجه والفكين",
-      "ku": "نەشتەرگەری دەم و ڕوو و شەویلاک"
+      "en": "BDS, MSc, FKHCMS · Oral and Maxillofacial Surgeon",
+      "ar": "BDS، MSc، FKHCMS · جرّاح الفم والوجه والفكين",
+      "ku": "BDS، MSc، FKHCMS · نەشتەرگەری دەم و ڕوو و چەناگە"
     },
     "topic": {
       "en": "Contemporary Strategies in Orthognathic Surgery Planning",
       "ar": "الاستراتيجيات الحديثة في التخطيط لجراحة تقويم الفكين",
-      "ku": "ستراتیژییە نوێکان لە پلاندانان بۆ نەشتەرگەریی ڕاستکردنەوەی شەویلاکەکان"
+      "ku": "ستراتیژییە نوێکان لە پلاندانان بۆ نەشتەرگەریی ڕاستکردنەوەی چەناگەکان"
     },
-    "photo": "assets/speakers/dastan.webp"
+    "photo": "assets/speakers/dastan-tahir-abdallah.webp"
   },
   {
     "name": {
@@ -178,5 +178,113 @@
       "ku": "لە ئەندازەی ئامادەکردنەوە تا پشتڕاستکردنەوەی دیجیتاڵ: بایۆمیکانیکی ئۆڤەرلەیەکانی ددانی دواوە"
     },
     "photo": "assets/speakers/fatien-al-naqshabandi.webp"
+  },
+  {
+    "name": {
+      "en": "Dr. Halqurd Salih Jaf",
+      "ar": "د. هەڵقورد صالح جاف",
+      "ku": "د. هەڵقورد ساڵح جاف"
+    },
+    "role": {
+      "en": "BDS, MDPH, DDPH RCS (Eng.) · International lecturer",
+      "ar": "BDS، MDPH، DDPH RCS (Eng.) · محاضر دولي",
+      "ku": "BDS، MDPH، DDPH RCS (Eng.) · وانەبێژی نێودەوڵەتی"
+    },
+    "topic": {
+      "en": "Beyond the Pain: Restoring Smiles in Childhood Cancer",
+      "ar": "ما وراء الألم: استعادة الابتسامات لدى الأطفال المصابين بالسرطان",
+      "ku": "لە دەرەوەی ئازار: گەڕاندنەوەی پێکەنین لە شێرپەنجەی منداڵاندا"
+    },
+    "photo": "assets/speakers/halqurd-salih-jaf.webp"
+  },
+  {
+    "name": {
+      "en": "Dr. Khidher Mustafa Khidher",
+      "ar": "د. خضر مصطفى خضر",
+      "ku": "د. خدر مستەفا خدر"
+    },
+    "role": {
+      "en": "BDS, MSc in Endodontics",
+      "ar": "بكالوريوس طب وجراحة الأسنان، ماجستير في علاج جذور الأسنان",
+      "ku": "بەکالۆریۆس لە پزیشکی و نەشتەرگەری ددان، ماستەر لە چارەسەری ڕەگی ددان"
+    },
+    "topic": {
+      "en": "Next-Generation: Modern Endodontic Irrigation — Safer, More Efficient, More Practical, with Fewer Complications",
+      "ar": "الجيل القادم: الإرواء الحديث لقنوات الجذور — أكثر أماناً وكفاءة وعملية، مع مضاعفات أقل",
+      "ku": "نەوەی داهاتوو: شۆردنەوەی نوێی کەناڵی ڕەگی ددان — سەلامەتتر، کاراتر و کرداریتـر، بە ئاڵۆزیی کەمتر"
+    },
+    "photo": "assets/speakers/khidher-mustafa-khidher.webp"
+  },
+  {
+    "name": {
+      "en": "Dr. Ako Omar Abdulla",
+      "ar": "د. آكو عمر عبد الله",
+      "ku": "د. ئەکۆ عومەر عەبدوڵڵا"
+    },
+    "role": {
+      "en": "MSc in Oral and Maxillofacial Radiology",
+      "ar": "ماجستير في أشعة الفم والوجه والفكين",
+      "ku": "ماستەر لە تیشکی دەم و ڕوو و چەناگە"
+    },
+    "topic": {
+      "en": "4D Full Mouth Rehabilitation: Rebuilding the Bite with Jaw Motion Tracking",
+      "ar": "إعادة تأهيل الفم بالكامل بتقنية 4D: إعادة بناء الإطباق باستخدام تتبع حركة الفك",
+      "ku": "دووبارە توانابەخشینەوەی تەواوی دەم بە 4D: دروستکردنەوەی گازگرتن بە شوێنکەوتنی جووڵەی چەناگە"
+    },
+    "photo": "assets/speakers/ako-omar-abdulla.webp"
+  },
+  {
+    "name": {
+      "en": "Dr. Mohammad Qadoumi",
+      "ar": "د. محمد قدومي",
+      "ku": "د. محەممەد قەدومی"
+    },
+    "role": {
+      "en": "BDS, MSc in Prosthodontics",
+      "ar": "بكالوريوس طب وجراحة الأسنان، ماجستير في التعويضات السنية",
+      "ku": "بەکالۆریۆس لە پزیشکی و نەشتەرگەری ددان، ماستەر لە جێگرەوەکانی ددان"
+    },
+    "topic": {
+      "en": "The New Era of Veneers: Zirconia Meets the Full Digital Workflow",
+      "ar": "العصر الجديد للقشور السنية: الزركونيا تلتقي بسير العمل الرقمي الكامل",
+      "ku": "سەردەمی نوێی ڤینیر: زیرکۆنیا لەگەڵ ڕەوتی کاری تەواو دیجیتاڵدا"
+    },
+    "photo": "assets/speakers/mohammad-qadoumi.webp"
+  },
+  {
+    "name": {
+      "en": "Dr. Handren Kurda",
+      "ar": "د. هەندرێن كوردا",
+      "ku": "د. هەندرێن کوردە"
+    },
+    "role": {
+      "en": "MSc in Orthodontics",
+      "ar": "ماجستير في تقويم الأسنان",
+      "ku": "ماستەر لە ڕاستکردنەوەی ددان"
+    },
+    "topic": {
+      "en": "Smile Makeover with Damon Ultima: Designing Beautiful Smiles Without Premolar Extraction",
+      "ar": "تجميل الابتسامة باستخدام Damon Ultima: تصميم ابتسامات جميلة دون خلع الضواحك",
+      "ku": "گۆڕینی پێکەنین بە Damon Ultima: دیزاینکردنی پێکەنینی جوان بەبێ ڕاکێشانی ددانە پێشئاسیاکان"
+    },
+    "photo": "assets/speakers/handren-kurda.webp"
+  },
+  {
+    "name": {
+      "en": "Assist. Prof. Dr. Othman A. Omar",
+      "ar": "الأستاذ المساعد د. عثمان أ. عمر",
+      "ku": "پ. ی. د. عوسمان ئە. عومەر"
+    },
+    "role": {
+      "en": "Assistant Professor",
+      "ar": "أستاذ مساعد",
+      "ku": "پرۆفیسۆری یاریدەدەر"
+    },
+    "topic": {
+      "en": "From Routine to Complex: A Case-Based Experience of 10,000 Dental Implants",
+      "ar": "من الحالات الروتينية إلى المعقدة: خبرة قائمة على حالات 10,000 زرعة سنية",
+      "ku": "لە ئاساییەوە بۆ ئاڵۆز: ئەزموونێکی پشتبەستوو بە کەیس لە 10,000 چاندنی ددان"
+    },
+    "photo": "assets/speakers/othman-a-omar.webp"
   }
 ]
