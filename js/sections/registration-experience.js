@@ -189,7 +189,8 @@ export function initRegistrationExperience({ tickets, shown, onLunchChange, getS
         input.closest("label").classList.toggle("is-unavailable", input.disabled);
       });
       const vipInput = document.querySelector('[name="experience"][value="vip"]');
-      vipInput.disabled = data?.open !== true || Number(data?.prices?.vip || 0) <= 0 || (!availability.day1 && !availability.day2);
+      vipInput.disabled = data?.open !== true || data?.vip?.available === false || Number(data?.prices?.vip || 0) <= 0 || (!availability.day1 && !availability.day2);
+      vipInput.closest("label").querySelector(".choice-copy small").textContent = t(data?.vip?.available === false ? "vip_unavailable" : "xp_vip_caption");
       document.querySelectorAll('[name="experience"]').forEach((input) => { if (input.value !== "vip") input.disabled = data?.open !== true; });
       syncLunch();
       if (!opened && hasSelection && open && "IntersectionObserver" in window && !motion.matches) {

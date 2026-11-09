@@ -451,5 +451,6 @@
   "sp_previous": "Previous speakers",
   "sp_next": "Next speakers",
   "sp_range": "{start}–{end} of {total} speakers",
-  "o_city": "Choose your city"
+  "o_city": "Choose your city",
+  "vip_unavailable": "Unavailable"
 }

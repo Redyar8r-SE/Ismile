@@ -778,5 +778,6 @@
   "sp_previous": "المتحدثون السابقون",
   "sp_next": "المتحدثون التاليون",
   "sp_range": "{start}–{end} من {total} متحدثاً",
-  "o_city": "اختر مدينتك"
+  "o_city": "اختر مدينتك",
+  "vip_unavailable": "غير متاح"
 }
