@@ -30,6 +30,41 @@ function request(origin, body) {
 }
 
 describe("workshop backend integration", () => {
+  it("forwards a cash request and returns only its unpaid acknowledgement", async () => {
+    connection();
+    const fetcher = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ok: true,
+          cashRequested: true,
+          email: "private@example.invalid",
+          amount: 120000,
+        }),
+      ),
+    );
+    vi.stubGlobal("fetch", fetcher);
+    const body = "workshop=crown-vs-veneer&email=paid%40example.invalid&payment_method=cash";
+    const result = await workshopRegistration(request("https://ismile.krd", body));
+    expect(result.statusCode).toBe(200);
+    expect(JSON.parse(result.body)).toEqual({ ok: true, cashRequested: true });
+    expect(Buffer.from(fetcher.mock.calls[0][1].body).toString()).toBe(body);
+  });
+  it("requires an explicit cash acknowledgement from the backend", async () => {
+    connection();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            ok: true,
+            cashRequested: "true",
+          }),
+        ),
+      ),
+    );
+    const result = await workshopRegistration(request("https://ismile.krd", "payment_method=cash"));
+    expect(result.statusCode).toBe(503);
+  });
   it("serves the current database catalog instead of stale local demos", async () => {
     connection();
     const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify([sample])));
