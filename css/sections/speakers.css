@@ -2,7 +2,7 @@
    Speakers grid
    ========================================================== */
 .sp-carousel{margin-top:32px;min-width:0}
-.sp-grid{--sp-visible:4;--sp-gap:24px;display:grid;grid-auto-flow:column;grid-auto-columns:calc((100% - (var(--sp-visible) - 1)*var(--sp-gap))/var(--sp-visible));gap:var(--sp-gap);overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;scrollbar-width:none;padding:8px 0 16px;min-width:0;align-items:stretch}
+.sp-grid{--sp-visible:3;--sp-gap:24px;display:grid;grid-auto-flow:column;grid-auto-columns:calc((100% - (var(--sp-visible) - 1)*var(--sp-gap))/var(--sp-visible));gap:var(--sp-gap);overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;scrollbar-width:none;padding:8px 0 16px;min-width:0;align-items:stretch}
 .sp-grid::-webkit-scrollbar{display:none}
 .sp-grid:focus-visible{outline:2px solid var(--teal);outline-offset:6px;border-radius:var(--r-lg)}
 .sp-grid>.sp{scroll-snap-align:start;min-width:0}
