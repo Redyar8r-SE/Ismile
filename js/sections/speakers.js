@@ -34,10 +34,6 @@ export function initSpeakers(speakers) {
     if (!previous || !next) return;
     previous.disabled = index === 0;
     next.disabled = index >= last();
-    toolbar.querySelector(".sp-position").textContent = t("sp_range")
-      .replace("{start}", speakers.length ? index + 1 : 0)
-      .replace("{end}", Math.min(index + visible(), speakers.length))
-      .replace("{total}", speakers.length);
     toolbar.hidden = speakers.length <= visible();
   }
 
@@ -70,7 +66,7 @@ export function initSpeakers(speakers) {
     carousel.setAttribute("aria-label", t("sp_carousel_label"));
     grid.setAttribute("aria-label", t("sp_browse_hint"));
     const arrow = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg>';
-    toolbar.innerHTML = `<p class="sp-browse-hint">${escape(t("sp_browse_hint"))}</p><div class="sp-navigation"><button type="button" class="sp-arrow" data-sp-previous aria-controls="spGrid" aria-label="${escape(t("sp_previous"))}">${arrow}</button><span class="sp-position" role="status" aria-live="polite" aria-atomic="true"></span><button type="button" class="sp-arrow sp-arrow-next" data-sp-next aria-controls="spGrid" aria-label="${escape(t("sp_next"))}">${arrow}</button></div>`;
+    toolbar.innerHTML = `<p class="sp-browse-hint">${escape(t("sp_browse_hint"))}</p><div class="sp-navigation"><button type="button" class="sp-arrow" data-sp-previous aria-controls="spGrid" aria-label="${escape(t("sp_previous"))}">${arrow}</button><button type="button" class="sp-arrow sp-arrow-next" data-sp-next aria-controls="spGrid" aria-label="${escape(t("sp_next"))}">${arrow}</button></div>`;
     toolbar.querySelector("[data-sp-previous]").addEventListener("click", () => align(index - visible()));
     toolbar.querySelector("[data-sp-next]").addEventListener("click", () => align(index + visible()));
     requestAnimationFrame(() => align(index, false));
