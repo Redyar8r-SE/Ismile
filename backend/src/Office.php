@@ -195,6 +195,9 @@ final class Office
         if ($workshop === null) {
             throw new UserError('Choose a workshop.');
         }
+        if ($workshop['organizer'] === 'company') {
+            throw new UserError('Contact the workshop company by phone to register.', null, 403);
+        }
         $isOwner = $user['role'] === 'owner';
         // Only registered people (they paid) take a workshop seat.
         if (!empty($workshop['providerEventId'])) {
