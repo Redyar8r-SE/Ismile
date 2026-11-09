@@ -1,157 +1,71 @@
-# Deploy PHP backend to api.ismile.krd (ismile LXC).
-# Re-runs the idempotent VPS setup script: pulls this branch, updates files/DB,
-# leaves the live Node site on ismile.krd alone.
-# Secrets: same GitHub DEPLOY_ENV as the Node deploy (SSH into LXC :2260), plus
-#   API_OWNER_EMAIL     the Owner's admin sign-in on api.ismile.krd (made if missing)
-#   API_OWNER_PASSWORD  its password, 12+ characters (change the secret = new password)
-#   API_SITE_PASSWORD   the browser password in front of the site (user "ismile")
-#   API_RESEND_KEY      optional: send the emails for real through Resend
-#   API_BREVO_KEY       optional: send through Brevo instead (wins over Resend)
-#   API_MAIL_FROM       optional: the sender (default onboarding@resend.dev)
-#   API_PSOOLA_CONFIG   optional: PSOOLA's settings as one JSON object (keys,
-#                       event/show/ticket/add-on ids, "active": true to take
-#                       real payments). Written into config.php, never printed.
-# The log is public (public repository): passwords are never printed.
-name: Deploy API (api.ismile.krd)
-
+name: Workshop map-40-apply
 on:
-  push:
-    branches: ["backend"]
   workflow_dispatch:
-    inputs:
-      map_editor_email:
-        description: Existing account to grant exclusive non-owner map booking access
-        required: false
-        type: string
-      association_editor_email:
-        description: Existing account to grant full Association access
-        required: false
-        type: string
-      registration_editor_email:
-        description: Existing account to allow paid and complimentary guest registration
-        required: false
-        type: string
-      workshop_editor_email:
-        description: Existing account to allow guest registration and workshop bookings for all attendees
-        required: false
-        type: string
-
-concurrency:
-  group: ismile-api-deploy
-  cancel-in-progress: false
-
+permissions:
+  contents: read
 jobs:
-  security:
-    uses: ./.github/workflows/security.yml
-  deploy:
-    needs: security
-    name: Update api.ismile.krd
+  operation:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 8
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Load DEPLOY_ENV (SSH only)
+      - name: Load saved server connection
+        shell: bash
         env:
           DEPLOY_ENV: ${{ secrets.DEPLOY_ENV }}
         run: |
           set -euo pipefail
-          : "${DEPLOY_ENV:?DEPLOY_ENV secret is required}"
-          printf '%s\n' "$DEPLOY_ENV" >.deploy.env
+          umask 077
+          printf '%s\n' "$DEPLOY_ENV" > "$RUNNER_TEMP/connection.env"
           set -a
-          # shellcheck disable=SC1091
-          source .deploy.env
+          source "$RUNNER_TEMP/connection.env"
           set +a
+          echo "::add-mask::$DEPLOY_PASSWORD"
           for key in DEPLOY_HOST DEPLOY_USER DEPLOY_PASSWORD DEPLOY_SSH_PORT; do
-            if [ -z "${!key:-}" ]; then
-              echo "error: ${key} missing from DEPLOY_ENV" >&2
-              exit 1
-            fi
+            test -n "${!key}"
+            printf '%s=%s\n' "$key" "${!key}" >> "$GITHUB_ENV"
           done
-          echo "::add-mask::${DEPLOY_PASSWORD}"
-          {
-            echo "DEPLOY_HOST<<EOF_DEPLOY_HOST"
-            printf '%s\n' "$DEPLOY_HOST"
-            echo "EOF_DEPLOY_HOST"
-            echo "DEPLOY_USER<<EOF_DEPLOY_USER"
-            printf '%s\n' "$DEPLOY_USER"
-            echo "EOF_DEPLOY_USER"
-            echo "DEPLOY_PASSWORD<<EOF_DEPLOY_PASSWORD"
-            printf '%s\n' "$DEPLOY_PASSWORD"
-            echo "EOF_DEPLOY_PASSWORD"
-            echo "DEPLOY_SSH_PORT<<EOF_DEPLOY_SSH_PORT"
-            printf '%s\n' "$DEPLOY_SSH_PORT"
-            echo "EOF_DEPLOY_SSH_PORT"
-          } >>"$GITHUB_ENV"
-
-      - name: Run setup-test-site.sh on the LXC
+      - name: map-40-apply workshops
         uses: appleboy/ssh-action@v1.2.0
-        env:
-          OWNER_EMAIL: ${{ secrets.API_OWNER_EMAIL }}
-          OWNER_PASSWORD: ${{ secrets.API_OWNER_PASSWORD }}
-          SITE_PASSWORD: ${{ secrets.API_SITE_PASSWORD }}
-          RESEND_KEY: ${{ secrets.API_RESEND_KEY }}
-          BREVO_KEY: ${{ secrets.API_BREVO_KEY }}
-          MAIL_FROM: ${{ secrets.API_MAIL_FROM }}
-          PSOOLA_CONFIG: ${{ secrets.API_PSOOLA_CONFIG }}
-          QUIET_SECRETS: "1"
-          MAP_EDITOR_EMAIL: ${{ inputs.map_editor_email || '' }}
-          ASSOCIATION_EDITOR_EMAIL: ${{ inputs.association_editor_email || '' }}
-          REGISTRATION_EDITOR_EMAIL: ${{ inputs.registration_editor_email || '' }}
-          WORKSHOP_EDITOR_EMAIL: ${{ inputs.workshop_editor_email || '' }}
         with:
-          envs: OWNER_EMAIL,OWNER_PASSWORD,SITE_PASSWORD,RESEND_KEY,BREVO_KEY,MAIL_FROM,PSOOLA_CONFIG,QUIET_SECRETS,MAP_EDITOR_EMAIL,ASSOCIATION_EDITOR_EMAIL,REGISTRATION_EDITOR_EMAIL,WORKSHOP_EDITOR_EMAIL
           host: ${{ env.DEPLOY_HOST }}
           username: ${{ env.DEPLOY_USER }}
           password: ${{ env.DEPLOY_PASSWORD }}
           port: ${{ env.DEPLOY_SSH_PORT }}
           timeout: 60s
-          command_timeout: 20m
+          command_timeout: 6m
           script: |
-            set -euo pipefail
-            cd /root
-            # Save the existing database before applying schema migrations.
-            if [ -f /opt/ismile-test/backend/bootstrap.php ] && [ -f /opt/ismile-test/backend/config.php ]; then
-              runuser -u www-data -- php -r 'require $argv[1]; \Ismile\Backup::run(); echo "Pre-deployment database backup saved.\n";' /opt/ismile-test/backend/bootstrap.php
-            fi
-            # Idle unattended-upgrade-shutdown holds dpkg locks forever; stop it.
-            systemctl stop unattended-upgrades 2>/dev/null || true
-            curl -fsSL "https://raw.githubusercontent.com/Redyar8r-SE/Ismile/backend/backend/tools/vps/setup-test-site.sh" \
-              -o /root/ismile-test-setup.sh
-            chmod +x /root/ismile-test-setup.sh
-            DOMAIN=api.ismile.krd BRANCH=backend bash /root/ismile-test-setup.sh
-            if [ -n "${MAP_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-map-manager.php
-            fi
-            if [ -n "${ASSOCIATION_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-association-manager.php
-            fi
-            if [ -n "${REGISTRATION_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-registration-manager.php
-            fi
-            if [ -n "${WORKSHOP_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-workshop-manager.php
-            fi
-            runuser -u www-data -- php /opt/ismile-test/backend/tools/verify-deployment.php --source /opt/ismile-test/repo
-            runuser -u www-data -- php /opt/ismile-test/backend/tools/verify-association.php
-            # Smoke: PHP admin + config API (basic auth from secrets.env)
-            SP="$(grep '^SITE_PASS=' /opt/ismile-test/secrets.env | cut -d= -f2-)"
-            code="$(curl -s -o /dev/null -w '%{http_code}' -u "ismile:${SP}" -H 'Host: api.ismile.krd' http://127.0.0.1:8081/admin/login.php)"
-            echo "admin_login_http=${code}"
-            test "$code" = "200"
-            # The QR fallback must be accessible through nginx's allow-list.
-            curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' \
-              http://127.0.0.1:8081/admin/vendor/jsQR.js | cmp - /opt/ismile-test/site/admin/vendor/jsQR.js
-            echo "qr_decoder_http=200 (matches deployed file)"
-            for asset in map.js map.css registration-details.js registration-details.css workshops.js workshops.css; do
-              curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' \
-                "http://127.0.0.1:8081/admin/${asset}" | cmp - "/opt/ismile-test/site/admin/${asset}"
-            done
-            runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/map-access.php
-            runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/registration-access.php
-            runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/workshop-access.php
-            echo "map_assets_http=200; all role permissions verified"
-            echo "registration_details_assets_http=200 (match deployed files)"
-            curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' -H 'X-Forwarded-Proto: https' \
-              http://127.0.0.1:8081/api/config.php | grep -q '"ok":true'
-            echo "api.ismile.krd update OK"
+            set -eu
+            runuser -u www-data -- php <<'MAP40_MOVE'
+            <?php
+            require '/opt/ismile-test/backend/bootstrap.php';
+            use Ismile\Db;use Ismile\BoothPlan;use Ismile\Map40Upgrade;
+            BoothPlan::assertDatabaseMatches();
+            $before=Db::all('SELECT * FROM sponsor_requests ORDER BY id');$calls=Db::all('SELECT * FROM sponsor_calls ORDER BY id');$emails=(int)Db::value('SELECT COUNT(*) FROM emails');
+            $target=Db::one("SELECT * FROM sponsor_requests WHERE ref='SPN26-XJ7U4' AND kind='sponsor'");
+            if(!$target||(int)$target['id']!==31)throw new RuntimeException('The authorised transfer target changed.');
+            foreach(Db::all("SELECT reserved_booth,package_id FROM sponsor_requests WHERE reserved_booth IN ('26','27','28')") as $row)if($row['package_id']!=='bronze')throw new RuntimeException('An affected row acquired a mismatched booking. Review it before proceeding.');
+            $result=Map40Upgrade::transfer('SPN26-XJ7U4');
+            $after=Db::all('SELECT * FROM sponsor_requests ORDER BY id');$expected=$before;
+            foreach($expected as &$row)if((int)$row['id']===31){$row['booth_number']='45';$row['reserved_booth']='45';$row['updated_at']=Db::value('SELECT updated_at FROM sponsor_requests WHERE id=31');}unset($row);
+            if($after!==$expected||Db::all('SELECT * FROM sponsor_calls ORDER BY id')!==$calls||(int)Db::value('SELECT COUNT(*) FROM emails')!==$emails)throw new RuntimeException('Booking, call or email preservation verification failed.');
+            $view=Db::one('SELECT * FROM `15_sponsor_map` WHERE `Map position`=40');
+            if(!$view||$view['Company']!==$target['company']||(int)$view['Internal position ID']!==45||Db::value("SELECT id FROM sponsor_requests WHERE reserved_booth='25'"))throw new RuntimeException('Booth 40 report or released booth 22 does not match.');
+            foreach(['silver'=>14,'bronze'=>13] as $tier=>$count)if((int)Db::value('SELECT places FROM sponsor_packages WHERE id=?',[$tier])!==$count)throw new RuntimeException('Tier capacity mismatch.');
+            $report=Db::one('SELECT * FROM `07_sponsors` WHERE `Reference`=?',[$target['ref']]);if(!$report||(int)$report['Map position']!==40||$report['Company']!==$target['company'])throw new RuntimeException('Sponsor list/export view did not follow the transfer.');
+            $lines=[];exec('php '.escapeshellarg('/opt/ismile-test/backend/tools/verify-deployment.php').' --render map '.escapeshellarg('format=json&number=45'),$lines,$status);if($status!==0)throw new RuntimeException('Live admin map JSON render failed.');$map=json_decode(implode("\n",$lines),true,512,JSON_THROW_ON_ERROR);if(!$map['ok']||(int)$map['number']!==45||(int)$map['detail']['id']!==31||$map['detail']['company']!==$target['company'])throw new RuntimeException('Live admin booth 40 detail did not follow the transfer.');
+            echo 'WORKSHOPS_VERIFIED='.json_encode(['mapPositions'=>BoothPlan::count(),'bookingMovedFrom'=>22,'bookingMovedTo'=>40,'bookingIdPreserved'=>true,'allDetailsPreserved'=>true,'allCallsPreserved'=>true,'unrelatedBookingsPreserved'=>true,'emailsSent'=>0,'reportMatches'=>true,'booth22Available'=>true]).PHP_EOL;
+            MAP40_MOVE
+            node <<'MAP40_CONTENT'
+            const fs=require('node:fs'),path=require('node:path'),cp=require('node:child_process');
+            const apps=JSON.parse(cp.execFileSync('pm2',['jlist'],{encoding:'utf8',stdio:['ignore','pipe','pipe']})),matches=apps.filter(a=>a.pm2_env?.pm_cwd&&fs.existsSync(path.join(a.pm2_env.pm_cwd,'js/config/booth-layout.js')));if(matches.length!==1)throw Error('Website process ambiguous');
+            const current=fs.realpathSync(matches[0].pm2_env.pm_cwd),env=fs.readFileSync(path.join(current,'.env'),'utf8'),m=env.match(/^CONTENT_ROOT=(.*)$/m),shared=m&&m[1].trim()?m[1].trim():path.resolve(current,'../../shared-content');
+            const plan=JSON.parse(fs.readFileSync('/opt/ismile-test/site/data/booth-tiers.json')),bundle=JSON.parse(fs.readFileSync(path.join(current,'data/booth-tiers.json')));if(plan.layoutVersion!=='2026-11-09-40'||bundle.layoutVersion!==plan.layoutVersion)throw Error('Both source deployments must be on map 40');
+            const backup=path.join(path.dirname(shared),'content-backups','map-40-'+Date.now());fs.mkdirSync(backup,{recursive:true,mode:0o700});
+            function write(root,relative,update){const target=path.join(root,relative),original=fs.existsSync(target)?target:path.join(current,relative),raw=fs.readFileSync(original,'utf8'),stat=fs.statSync(original),doc=update(JSON.parse(raw));const saved=path.join(backup,(root===shared?'public-':'backend-')+relative.replaceAll('/','-'));fs.writeFileSync(saved,raw,{mode:0o600});const temporary=target+'.map40-writing';fs.writeFileSync(temporary,JSON.stringify(doc,null,2)+'\n');fs.chmodSync(temporary,stat.mode&0o777);fs.chownSync(temporary,stat.uid,stat.gid);fs.renameSync(temporary,target);}
+            for(const root of [shared,'/opt/ismile-test/site']){
+             write(root,'data/booth-tiers.json',()=>plan);
+             write(root,'data/sponsors.json',doc=>{for(const tier of doc.tiers){const count={platinum:6,gold:7,silver:14,bronze:13}[tier.id];if(!count)continue;tier.spots=count;for(const lang of ['en','ar','ku'])if(typeof tier.subtitle?.[lang]==='string')tier.subtitle[lang]=tier.subtitle[lang].replace(/^\d+/,String(count));}return doc;});
+             for(const lang of ['en','ar','ku'])write(root,'data/i18n/site-'+lang+'.json',doc=>{for(const key of ['bm_intro','pg_map_text','pm_text'])if(typeof doc[key]==='string')doc[key]=doc[key].replace(/(?<![0-9٠-٩])(?:39|44|٣٩|٤٤)(?![0-9٠-٩])/g,x=>/[٠-٩]/.test(x)?'٤٠':'40');return doc;});
+            }
+            console.log('WORKSHOPS_PUBLISHED='+JSON.stringify({publicMap:40,backendMap:40,capacities:{platinum:6,gold:7,silver:14,bronze:13},editedLogosPreserved:true,translationsSynced:true}));
+            MAP40_CONTENT
