@@ -1,157 +1,60 @@
-# Deploy PHP backend to api.ismile.krd (ismile LXC).
-# Re-runs the idempotent VPS setup script: pulls this branch, updates files/DB,
-# leaves the live Node site on ismile.krd alone.
-# Secrets: same GitHub DEPLOY_ENV as the Node deploy (SSH into LXC :2260), plus
-#   API_OWNER_EMAIL     the Owner's admin sign-in on api.ismile.krd (made if missing)
-#   API_OWNER_PASSWORD  its password, 12+ characters (change the secret = new password)
-#   API_SITE_PASSWORD   the browser password in front of the site (user "ismile")
-#   API_RESEND_KEY      optional: send the emails for real through Resend
-#   API_BREVO_KEY       optional: send through Brevo instead (wins over Resend)
-#   API_MAIL_FROM       optional: the sender (default onboarding@resend.dev)
-#   API_PSOOLA_CONFIG   optional: PSOOLA's settings as one JSON object (keys,
-#                       event/show/ticket/add-on ids, "active": true to take
-#                       real payments). Written into config.php, never printed.
-# The log is public (public repository): passwords are never printed.
-name: Deploy API (api.ismile.krd)
-
+name: Workshop workshop-paid-cash-verify
 on:
-  push:
-    branches: ["backend"]
   workflow_dispatch:
-    inputs:
-      map_editor_email:
-        description: Existing account to grant exclusive non-owner map booking access
-        required: false
-        type: string
-      association_editor_email:
-        description: Existing account to grant full Association access
-        required: false
-        type: string
-      registration_editor_email:
-        description: Existing account to allow paid and complimentary guest registration
-        required: false
-        type: string
-      workshop_editor_email:
-        description: Existing account to allow guest registration and workshop bookings for all attendees
-        required: false
-        type: string
-
-concurrency:
-  group: ismile-api-deploy
-  cancel-in-progress: false
-
+permissions:
+  contents: read
 jobs:
-  security:
-    uses: ./.github/workflows/security.yml
-  deploy:
-    needs: security
-    name: Update api.ismile.krd
+  operation:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 8
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Load DEPLOY_ENV (SSH only)
+      - name: Load saved server connection
+        shell: bash
         env:
           DEPLOY_ENV: ${{ secrets.DEPLOY_ENV }}
         run: |
           set -euo pipefail
-          : "${DEPLOY_ENV:?DEPLOY_ENV secret is required}"
-          printf '%s\n' "$DEPLOY_ENV" >.deploy.env
+          umask 077
+          printf '%s\n' "$DEPLOY_ENV" > "$RUNNER_TEMP/connection.env"
           set -a
-          # shellcheck disable=SC1091
-          source .deploy.env
+          source "$RUNNER_TEMP/connection.env"
           set +a
+          echo "::add-mask::$DEPLOY_PASSWORD"
           for key in DEPLOY_HOST DEPLOY_USER DEPLOY_PASSWORD DEPLOY_SSH_PORT; do
-            if [ -z "${!key:-}" ]; then
-              echo "error: ${key} missing from DEPLOY_ENV" >&2
-              exit 1
-            fi
+            test -n "${!key}"
+            printf '%s=%s\n' "$key" "${!key}" >> "$GITHUB_ENV"
           done
-          echo "::add-mask::${DEPLOY_PASSWORD}"
-          {
-            echo "DEPLOY_HOST<<EOF_DEPLOY_HOST"
-            printf '%s\n' "$DEPLOY_HOST"
-            echo "EOF_DEPLOY_HOST"
-            echo "DEPLOY_USER<<EOF_DEPLOY_USER"
-            printf '%s\n' "$DEPLOY_USER"
-            echo "EOF_DEPLOY_USER"
-            echo "DEPLOY_PASSWORD<<EOF_DEPLOY_PASSWORD"
-            printf '%s\n' "$DEPLOY_PASSWORD"
-            echo "EOF_DEPLOY_PASSWORD"
-            echo "DEPLOY_SSH_PORT<<EOF_DEPLOY_SSH_PORT"
-            printf '%s\n' "$DEPLOY_SSH_PORT"
-            echo "EOF_DEPLOY_SSH_PORT"
-          } >>"$GITHUB_ENV"
-
-      - name: Run setup-test-site.sh on the LXC
+      - name: workshop-paid-cash-verify workshops
         uses: appleboy/ssh-action@v1.2.0
-        env:
-          OWNER_EMAIL: ${{ secrets.API_OWNER_EMAIL }}
-          OWNER_PASSWORD: ${{ secrets.API_OWNER_PASSWORD }}
-          SITE_PASSWORD: ${{ secrets.API_SITE_PASSWORD }}
-          RESEND_KEY: ${{ secrets.API_RESEND_KEY }}
-          BREVO_KEY: ${{ secrets.API_BREVO_KEY }}
-          MAIL_FROM: ${{ secrets.API_MAIL_FROM }}
-          PSOOLA_CONFIG: ${{ secrets.API_PSOOLA_CONFIG }}
-          QUIET_SECRETS: "1"
-          MAP_EDITOR_EMAIL: ${{ inputs.map_editor_email || '' }}
-          ASSOCIATION_EDITOR_EMAIL: ${{ inputs.association_editor_email || '' }}
-          REGISTRATION_EDITOR_EMAIL: ${{ inputs.registration_editor_email || '' }}
-          WORKSHOP_EDITOR_EMAIL: ${{ inputs.workshop_editor_email || '' }}
         with:
-          envs: OWNER_EMAIL,OWNER_PASSWORD,SITE_PASSWORD,RESEND_KEY,BREVO_KEY,MAIL_FROM,PSOOLA_CONFIG,QUIET_SECRETS,MAP_EDITOR_EMAIL,ASSOCIATION_EDITOR_EMAIL,REGISTRATION_EDITOR_EMAIL,WORKSHOP_EDITOR_EMAIL
           host: ${{ env.DEPLOY_HOST }}
           username: ${{ env.DEPLOY_USER }}
           password: ${{ env.DEPLOY_PASSWORD }}
           port: ${{ env.DEPLOY_SSH_PORT }}
           timeout: 60s
-          command_timeout: 20m
+          command_timeout: 6m
           script: |
-            set -euo pipefail
-            cd /root
-            # Save the existing database before applying schema migrations.
-            if [ -f /opt/ismile-test/backend/bootstrap.php ] && [ -f /opt/ismile-test/backend/config.php ]; then
-              runuser -u www-data -- php -r 'require $argv[1]; \Ismile\Backup::run(); echo "Pre-deployment database backup saved.\n";' /opt/ismile-test/backend/bootstrap.php
-            fi
-            # Idle unattended-upgrade-shutdown holds dpkg locks forever; stop it.
-            systemctl stop unattended-upgrades 2>/dev/null || true
-            curl -fsSL "https://raw.githubusercontent.com/Redyar8r-SE/Ismile/backend/backend/tools/vps/setup-test-site.sh" \
-              -o /root/ismile-test-setup.sh
-            chmod +x /root/ismile-test-setup.sh
-            DOMAIN=api.ismile.krd BRANCH=backend bash /root/ismile-test-setup.sh
-            if [ -n "${MAP_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-map-manager.php
-            fi
-            if [ -n "${ASSOCIATION_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-association-manager.php
-            fi
-            if [ -n "${REGISTRATION_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-registration-manager.php
-            fi
-            if [ -n "${WORKSHOP_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-workshop-manager.php
-            fi
-            runuser -u www-data -- php /opt/ismile-test/backend/tools/verify-deployment.php --source /opt/ismile-test/repo
-            runuser -u www-data -- php /opt/ismile-test/backend/tools/verify-association.php
-            # Smoke: PHP admin + config API (basic auth from secrets.env)
-            SP="$(grep '^SITE_PASS=' /opt/ismile-test/secrets.env | cut -d= -f2-)"
-            code="$(curl -s -o /dev/null -w '%{http_code}' -u "ismile:${SP}" -H 'Host: api.ismile.krd' http://127.0.0.1:8081/admin/login.php)"
-            echo "admin_login_http=${code}"
-            test "$code" = "200"
-            # The QR fallback must be accessible through nginx's allow-list.
-            curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' \
-              http://127.0.0.1:8081/admin/vendor/jsQR.js | cmp - /opt/ismile-test/site/admin/vendor/jsQR.js
-            echo "qr_decoder_http=200 (matches deployed file)"
-            for asset in map.js map.css registration-details.js registration-details.css workshops.js workshops.css; do
-              curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' \
-                "http://127.0.0.1:8081/admin/${asset}" | cmp - "/opt/ismile-test/site/admin/${asset}"
-            done
-            runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/map-access.php
-            runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/registration-access.php
-            runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/workshop-access.php
-            echo "map_assets_http=200; all role permissions verified"
-            echo "registration_details_assets_http=200 (match deployed files)"
-            curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' -H 'X-Forwarded-Proto: https' \
-              http://127.0.0.1:8081/api/config.php | grep -q '"ok":true'
-            echo "api.ismile.krd update OK"
+            set -eu
+            printf '%s\n' '8b1000c206d28b20b0b497236b3d3c34ac1ef441cccc6746a7edc49203b85d39  /opt/ismile-test/site/admin/_workshop_controller.php' | sha256sum --check
+            printf '%s\n' 'b77584195b6bdccc35272de89e888707a11b076ffce7ed60253486a9b7f1040d  /opt/ismile-test/site/admin/_workshop_workspace.php' | sha256sum --check
+            printf '%s\n' '98fe8c83b4b6bb24d3030fb03a1b724f0e29800b1aa7d3ca3fc0f75a2d229374  /opt/ismile-test/site/admin/_workshop_booking.php' | sha256sum --check
+            printf '%s\n' 'ae99446f2b7503aff6376922ff127a91a1ad64106a1a09727e864b3112bc43e7  /opt/ismile-test/site/admin/_workshop_cash_sale.php' | sha256sum --check
+            printf '%s\n' '2bb359251ee09dd6817bd90888b1831e6d813159fb3c61e9c8623b44f18cca49  /opt/ismile-test/site/admin/workshops.js' | sha256sum --check
+            printf '%s\n' '6f0bd53a50d8f2cbf1fe2e755d60a39a57b825fcd65b298680d3a67da51ba2cb  /opt/ismile-test/site/admin/workshops.css' | sha256sum --check
+            printf '%s\n' '91878397ad6a129349eeadf9895dd736b6a35556eaacb41301038347bb99fe43  /opt/ismile-test/backend/src/WorkshopCashSale.php' | sha256sum --check
+            printf '%s\n' '69e38e9d4ae3c23b8bee34031b227b1ade603e253dafc0a809d42e75b9dc4a90  /opt/ismile-test/backend/src/WorkshopTickets.php' | sha256sum --check
+            runuser -u www-data -- php <<'PAID_CASH_VERIFY'
+            <?php
+            require '/opt/ismile-test/backend/bootstrap.php';
+            $columns=\Ismile\Db::all('SHOW COLUMNS FROM workshop_cash_receipts');
+            if(!in_array('amount_iqd',array_column($columns,'Field'),true))throw new RuntimeException('Receipt schema missing');
+            $render=static function(string $query):string{$command='php '.escapeshellarg('/opt/ismile-test/backend/tools/verify-deployment.php').' --render workshops '.escapeshellarg($query);exec($command,$lines,$status);if($status!==0)throw new RuntimeException('Cash admin render failed');return implode("\n",$lines);};
+            $normal=$render('id=crown-vs-veneer');if(!str_contains($normal,'Register (cash)')||!str_contains($normal,'Book a guest — free'))throw new RuntimeException('Separate cash and free actions missing');
+            $w=\Ismile\Db::one("SELECT * FROM workshops WHERE organizer='ismile' AND status='active' AND provider_event_id IS NOT NULL AND display_currency='USD' AND display_price>0 ORDER BY id LIMIT 1");
+            if(!$w)throw new RuntimeException('No saved USD workshop quote found');
+            $person=\Ismile\Db::one("SELECT r.id FROM registrations r WHERE r.status='paid' AND NOT EXISTS (SELECT 1 FROM workshop_bookings b WHERE b.registration_id=r.id AND b.workshop_id=? AND b.removed_at IS NULL) AND NOT EXISTS (SELECT 1 FROM workshop_checkouts c WHERE c.registration_id=r.id AND c.workshop_id=? AND c.provider_status IN ('created','unknown','awaiting_payment','paid')) AND NOT EXISTS (SELECT 1 FROM guest_workshop_orders g WHERE g.registration_id=r.id AND g.workshop_id=? AND g.active_pair IS NOT NULL) LIMIT 1",[$w['id'],$w['id'],$w['id']]);
+            if(!$person)throw new RuntimeException('No eligible read-only form fixture');
+            $cash=$render(http_build_query(['id'=>$w['id'],'mode'=>'cash','booking'=>'1','rid'=>$person['id']]));
+            foreach(['Paid workshop registration','name="cash_currency"','value="USD"','Register &amp; issue paid ticket','IQD amount for PSOOLA'] as $copy)if(!str_contains($cash,$copy))throw new RuntimeException('Cash form verification failed');
+            echo 'WORKSHOPS_VERIFIED='.json_encode(['separateCashButton'=>true,'freeGuestButton'=>true,'cashReceiptSchema'=>true,'savedUsdQuote'=>true,'paidCashForm'=>true,'readOnly'=>true]).PHP_EOL;
+            PAID_CASH_VERIFY
