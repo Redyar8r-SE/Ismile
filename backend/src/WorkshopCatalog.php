@@ -17,8 +17,11 @@ final class WorkshopCatalog
         if(!$w || $w['status']!=='active')return null;
         $w['paidRegistrations']=(int)Db::value("SELECT COUNT(*) FROM workshop_bookings WHERE workshop_id=? AND removed_at IS NULL AND payment_status='paid'",[$id]);
         $w['pendingPayments']=(int)Db::value("SELECT COUNT(*) FROM workshop_checkouts WHERE workshop_id=? AND provider_status='awaiting_payment' AND provider_session_id IS NOT NULL",[$id]);
-        $w['availabilityVerified']=!$w['providerEventId'];
-        if($w['providerEventId']){
+        // Company workshops use their saved price and phone registration,
+        // including those previously connected to a PSOOLA event.
+        $usesProvider=$w['organizer']==='ismile'&&!empty($w['providerEventId']);
+        $w['availabilityVerified']=!$usesProvider;
+        if($usesProvider){
             $file=App::storage('tmp/workshop-catalog-'.$id.'.json');
             $cache=is_file($file)?json_decode((string)file_get_contents($file),true):null;
             if($fresh || !$cache || time()-(int)($cache['at']??0)>=30){
