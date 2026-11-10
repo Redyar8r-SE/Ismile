@@ -65,6 +65,7 @@ export const PUBLIC_FILES = new Set([
   "index.html",
   "admin.html",
   "register.html",
+  "vip.html",
   "sponsor.html",
   "workshops.html",
   "workshop.html",
