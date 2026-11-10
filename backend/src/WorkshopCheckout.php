@@ -9,7 +9,7 @@ final class WorkshopCheckout
 {
     private const OPEN = ['created','unknown','awaiting_payment'];
 
-    public static function start(string $workshopId, string $email): array
+    public static function start(string $workshopId, string $email, int $registrationId = 0, ?int $expectedAmount = null): array
     {
         $email = strtolower(trim($email));
         if (!Validate::email($email)) throw new UserError('wd_err_email','email');
@@ -18,7 +18,9 @@ final class WorkshopCheckout
         if ($workshop['organizer'] === 'company') throw new UserError('wd_err_by_phone',null,409);
         if ($workshop['price'] === 0 && !$workshop['providerEventId']) return self::registerFree($workshop,$email);
         if (!$workshop['providerEventId']) throw new UserError('wd_err_server',null,503);
-        $person = Db::one("SELECT * FROM registrations WHERE LOWER(email)=? AND status='paid' ORDER BY id DESC LIMIT 1",[$email]);
+        $person = $registrationId > 0
+            ? Db::one("SELECT * FROM registrations WHERE id=? AND LOWER(email)=? AND status='paid'",[$registrationId,$email])
+            : Db::one("SELECT * FROM registrations WHERE LOWER(email)=? AND status='paid' ORDER BY id DESC LIMIT 1",[$email]);
         if (!$person) throw new UserError('wd_err_not_registered','email',404);
         // An existing attempt is checked before making a new one. Lost responses keep the same key/body.
         $previous = self::latest((int)$person['id'],$workshopId);
@@ -26,14 +28,16 @@ final class WorkshopCheckout
             self::reconcile($previous['provider_session_id'],$previous['partner_reference']);
         }
         $catalog = WorkshopCatalog::one($workshopId);
-        $attempt = Db::transaction(static function()use($person,$workshop,$catalog):array {
+        $attempt = Db::transaction(static function()use($person,$workshop,$catalog,$expectedAmount):array {
             $row = Db::one('SELECT * FROM workshops WHERE id=? FOR UPDATE',[$workshop['id']]);
             if (!$row || $row['status'] !== 'active') throw new UserError('wd_err_missing',null,404);
             if ($row['organizer'] === 'company') throw new UserError('wd_err_by_phone',null,409);
+            if ($expectedAmount !== null && (!$catalog || !$catalog['availabilityVerified'] || $catalog['price'] !== $expectedAmount || (int)$row['price'] !== $expectedAmount)) throw new UserError('The workshop price changed. Refresh before registering this attendee.');
             GuestWorkshops::assertNoOrder((int)$person['id'], $workshop['id']);
             if (Db::value('SELECT status FROM registrations WHERE id=? LOCK IN SHARE MODE',[$person['id']]) !== 'paid') throw new UserError('wd_err_not_registered','email',404);
             $saved = self::latest((int)$person['id'],$workshop['id']);
             if ($saved && $saved['provider_status'] === 'paid') throw new UserError('wd_err_already','email',409);
+            if ($expectedAmount !== null && $saved && in_array($saved['provider_status'],self::OPEN,true) && ($saved['amount'] === null || (int)$saved['amount'] !== $expectedAmount)) throw new UserError('An existing workshop request has a different price. Review it before registering this attendee.');
             $booking = Db::one('SELECT * FROM workshop_bookings WHERE registration_id=? AND workshop_id=? AND removed_at IS NULL FOR UPDATE',[$person['id'],$workshop['id']]);
             if ($booking && $booking['payment_status'] !== 'unpaid') throw new UserError('wd_err_already','email',409);
             if (Db::value("SELECT id FROM workshop_ticket_orders WHERE registration_id=? AND workshop_id=? AND provider_status IN ('created','unknown','awaiting_payment','paid')",[$person['id'],$workshop['id']])) throw new UserError('wd_err_already','email',409);

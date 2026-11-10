@@ -2,14 +2,14 @@
 declare(strict_types=1);
 namespace Ismile;
 
-/** Collected cash is saved once in IQD; PSOOLA issues a paid direct order. */
+/** Staff registration: collected cash uses a direct order; free tickets use verified zero-price checkout. */
 final class WorkshopCashSale
 {
     public static function quote(array $workshop, ?array $catalog): array
     {
-        if(!$catalog||!$catalog['availabilityVerified']||$catalog['currency']!=='IQD'||$catalog['price']<=0)throw new UserError('The current PSOOLA price could not be verified.');
+        if(!$catalog||!$catalog['availabilityVerified']||$catalog['currency']!=='IQD'||$catalog['price']<0)throw new UserError('The current PSOOLA price could not be verified.');
         $usd=$workshop['displayPrice']??null;
-        return ['iqd'=>(int)$catalog['price'],'usdMinor'=>is_array($usd)&&$usd['currency']==='USD'&&(int)$usd['amount']>0?(int)$usd['amount']*100:null];
+        return ['iqd'=>(int)$catalog['price'],'usdMinor'=>$catalog['price']>0&&is_array($usd)&&$usd['currency']==='USD'&&(int)$usd['amount']>0?(int)$usd['amount']*100:null];
     }
 
     public static function amount(string $text, string $currency): int
@@ -25,6 +25,7 @@ final class WorkshopCashSale
     public static function register(array $person,array $user,array $in): string
     {
         if(!Auth::canBookWorkshops($user))throw new UserError('Your account cannot register workshop attendees.',null,403);
+        if(($in['free_registration']??'')==='1')return self::registerFree($person,$user,$in);
         if(($in['cash_received']??'')!=='1')throw new UserError('Confirm that you have received the cash before issuing a paid ticket.');
         $currency=(string)($in['cash_currency']??'IQD');$minor=self::amount((string)($in['cash_amount']??''),$currency);
         $workshop=Workshops::find((string)($in['workshop']??''));
@@ -56,5 +57,24 @@ final class WorkshopCashSale
         });
         Workshops::syncWebsite();
         return WorkshopTickets::issue($bookingId,$user);
+    }
+
+    private static function registerFree(array $person,array $user,array $in): string
+    {
+        if(($in['cash_amount']??'0')!=='0'||($in['cash_currency']??'IQD')!=='IQD')throw new UserError('No cash is collected for this 0 IQD workshop.');
+        $workshop=Workshops::find((string)($in['workshop']??''));
+        if(!$workshop||$workshop['organizer']!=='ismile'||$workshop['status']!=='active'||!$workshop['providerEventId']||$workshop['price']!==0)throw new UserError('Choose a free iSmile workshop configured with PSOOLA.');
+        $quote=self::quote($workshop,WorkshopCatalog::one($workshop['id'],true));
+        if($quote['iqd']!==0)throw new UserError('The current PSOOLA workshop price is not 0 IQD. Refresh before registering this attendee.');
+        WorkshopCheckout::start($workshop['id'],(string)$person['email'],(int)$person['id'],0);
+        $attempt=Db::one('SELECT * FROM workshop_checkouts WHERE registration_id=? AND workshop_id=? ORDER BY id DESC LIMIT 1',[$person['id'],$workshop['id']]);
+        if(!$attempt||$attempt['provider_status']!=='paid'||(int)$attempt['amount']!==0||!$attempt['booking_id']||$attempt['fulfillment_error'])throw new UserError('PSOOLA has not confirmed the free ticket yet. Retry this same registration; no payment is required.');
+        Db::transaction(static function()use($attempt,$person,$user,$workshop):void{
+            $booking=Db::one('SELECT * FROM workshop_bookings WHERE id=? AND removed_at IS NULL FOR UPDATE',[$attempt['booking_id']]);
+            if(!$booking||$booking['payment_status']!=='paid'||(int)$booking['amount_paid']!==0)throw new UserError('The free workshop registration needs review.');
+            Db::update('workshop_bookings',['booked_by'=>$user['id'],'notes'=>'Registered by staff through PSOOLA at 0 IQD. No cash collected.','updated_at'=>App::now()],'id=?',[$booking['id']]);
+            Audit::log((int)$user['id'],'workshop.staff_registered','registration',(int)$person['id'],['workshop'=>$workshop['id'],'booking'=>$booking['id'],'amount'=>0,'registrationType'=>'free']);
+        });
+        return 'Workshop registered at 0 IQD. No cash collected. PSOOLA sends the ticket to the attendee.';
     }
 }
