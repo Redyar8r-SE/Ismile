@@ -120,8 +120,8 @@
     },
     {
       "name": "NEWDENT",
-      "tier": "gold",
-      "logo": "assets/sponsors/newdent-gold-20261108.webp",
+      "tier": "silver",
+      "logo": "assets/sponsors/newdent-silver-20261110.webp",
       "bg": "#18363F",
       "tile": true
     },
@@ -191,14 +191,14 @@
     {
       "name": "CHANGAN",
       "tier": "silver",
-      "logo": "assets/sponsors/changan-silver-20261110.webp",
+      "logo": "assets/sponsors/changan-white-20261110.webp",
       "bg": "#18363F",
       "tile": true
     },
     {
       "name": "SNOW",
       "tier": "silver",
-      "logo": "assets/sponsors/snow-silver-20261110.webp",
+      "logo": "assets/sponsors/snow-white-20261110.webp",
       "bg": "#18363F",
       "tile": true
     },
@@ -240,14 +240,14 @@
     {
       "name": "Crown",
       "tier": "bronze",
-      "logo": "assets/sponsors/crown-bronze-20261110.webp",
+      "logo": "assets/sponsors/crown-white-20261110.webp",
       "bg": "#18363F",
       "tile": true
     },
     {
       "name": "BA DENT",
       "tier": "bronze",
-      "logo": "assets/sponsors/ba-dent-bronze-20261110.webp",
+      "logo": "assets/sponsors/ba-dent-white-20261110.webp",
       "bg": "#18363F",
       "tile": true
     }
