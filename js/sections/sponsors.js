@@ -4,7 +4,7 @@ import { ICONS } from "../config/icons.js?v=148";
 import { initials } from "../utils/initials.js?v=148";
 import { t, tr, onLangChange } from "../i18n.js?v=148";
 
-export function initSponsors({ tiers, sponsors = [] }) {
+export function initSponsors({ tiers, sponsors = [], displayPlaces = {} }) {
   const container = document.getElementById("sponsorTiers");
 
   function logo(sponsor) {
@@ -28,7 +28,7 @@ export function initSponsors({ tiers, sponsors = [] }) {
         const free =
           tier.className === "tc-dia" && mine.length
             ? 0
-            : Math.max(0, (Number(tier.spots) || 0) - mine.length);
+            : Math.max(0, (Number(displayPlaces[tier.id] ?? tier.spots) || 0) - mine.length);
         const slot = `<a class="logo-slot" href="#companies" aria-label="${t("spon_slot")}"><span class="slot-plus">${ICONS.plus}</span><span class="slot-text">${t("spon_slot")}</span></a>`;
         const sub = tr(tier.subtitle);
         return `
