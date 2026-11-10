@@ -153,10 +153,6 @@ final class Registrations
         if ($psoola !== null) {
             $prices = Payments\PsoolaPrices::asSitePrices($psoola);
         }
-        if (VipPackages::enabled()) {
-            $prices['vipPackageEnabled'] = true;
-            $prices['vipPackageUSD'] = VipPackages::PRICE_USD;
-        }
         $reason = null;
         if (!self::isOpen()) {
             $reason = 'closed';
@@ -171,7 +167,7 @@ final class Registrations
             'message'  => $reason === 'closed' ? Settings::closedMessage($lang) : null,
             'messages' => $reason === 'closed' ? ['en' => Settings::closedMessage('en'), 'ar' => Settings::closedMessage('ar'), 'ku' => Settings::closedMessage('ku')] : null,
             'prices'   => $prices,
-            'vip'      => ['available' => !VipCapacity::full() && (!VipPackages::enabled() || VipPackages::ready())],
+            'vip'      => ['available' => !VipCapacity::full()],
             'lunch'    => [
                 'day1' => $prices['lunchDay1'] > 0 && !self::lunchFull(1),
                 'day2' => $prices['lunchDay2'] > 0 && !self::lunchFull(2),

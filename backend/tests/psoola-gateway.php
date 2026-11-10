@@ -187,8 +187,7 @@ $check('a malformed order does not match', !PsoolaGateway::sameItems($sent, 'nop
 // ---------------- PSOOLA's price list ----------------
 $parsed = PsoolaPrices::fromEvent($event, 'show_ismile', $ticketTypes, $addOns);
 $check("PSOOLA's IQD prices are read for the configured show only", $parsed === ['currency' => 'IQD',
-    'ticketTypes' => ['professional' => 40000, 'student' => 30000, 'vip' => 131000], 'lunch' => ['day1' => 55020, 'day2' => 55020], 'usdRate' => 1310.0]);
-$check('USD conversion comes from provider original-price metadata', $parsed['usdRate'] === 1310.0);
+    'ticketTypes' => ['professional' => 40000, 'student' => 30000, 'vip' => 131000], 'lunch' => ['day1' => 55020, 'day2' => 55020]]);
 $check('an unknown show is refused', $throws(fn () => PsoolaPrices::fromEvent($event, 'show_missing', $ticketTypes, $addOns)));
 $check('a missing ticket type is refused', $throws(fn () => PsoolaPrices::fromEvent($event, 'show_ismile', ['vip' => 'tt_gone'] + $ticketTypes, $addOns)));
 $check('a missing lunch add-on is refused', $throws(fn () => PsoolaPrices::fromEvent($event, 'show_ismile', $ticketTypes, ['lunchDay2' => 'ao_gone'] + $addOns)));

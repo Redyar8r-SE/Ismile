@@ -129,7 +129,6 @@ final class Checkouts
             'university' => $university, 'study_stage' => $stage, 'ambassador_code' => $ambassador,
         ];
         VipCapacity::requireAvailable($row);
-        $vipWorkshop = VipPackages::choiceFromInput($in, $row);
         if (!SiteData::pricesReadyFor($row)) {
             throw new UserError('reg_closed', null, 409);
         }
@@ -143,7 +142,7 @@ final class Checkouts
             throw new UserError($error->key, 'p_student_id');
         }
         try {
-            return self::insert($row + ['source' => 'website', 'created_ip' => App::clientIp(), 'terms_accepted_at' => App::now(), 'client_attempt' => $attempt], self::WEBSITE_HOURS * 3600, $vipWorkshop);
+            return self::insert($row + ['source' => 'website', 'created_ip' => App::clientIp(), 'terms_accepted_at' => App::now(), 'client_attempt' => $attempt], self::WEBSITE_HOURS * 3600);
         } catch (\Throwable $error) {
             IdPhotos::delete($row['id_photo_id']);
             // Both copies of a form sent twice at the same moment: the first one won.
@@ -168,7 +167,7 @@ final class Checkouts
         }
         $row['id_photo_id'] = self::officePhoto($row, $photo);
         try {
-            $checkout = self::insert($row + ['source' => 'office', 'created_by' => (int) $user['id'], 'created_ip' => 'office'], max(1, Settings::int('pay_link_days')) * 86400, VipPackages::choiceFromInput($in, $row));
+            $checkout = self::insert($row + ['source' => 'office', 'created_by' => (int) $user['id'], 'created_ip' => 'office'], max(1, Settings::int('pay_link_days')) * 86400);
         } catch (\Throwable $error) {
             IdPhotos::delete($row['id_photo_id']);
             throw $error;
@@ -191,7 +190,7 @@ final class Checkouts
         }
         $row['id_photo_id'] = self::officePhoto($row, $photo);
         try {
-            $checkout = self::insert($row + ['source' => 'office', 'created_by' => (int) $user['id'], 'created_ip' => 'office'], max(1, Settings::int('pay_link_days')) * 86400, VipPackages::choiceFromInput($in, $row));
+            $checkout = self::insert($row + ['source' => 'office', 'created_by' => (int) $user['id'], 'created_ip' => 'office'], max(1, Settings::int('pay_link_days')) * 86400);
         } catch (\Throwable $error) {
             IdPhotos::delete($row['id_photo_id']);
             throw $error;
@@ -318,15 +317,8 @@ final class Checkouts
         throw new \RuntimeException('Could not make a unique reference.');
     }
 
-    private static function insert(array $row, int $seconds, ?string $vipWorkshop = null): array
+    private static function insert(array $row, int $seconds): array
     {
-        if ($vipWorkshop !== null) return Db::transaction(static function () use ($row, $seconds, $vipWorkshop): array {
-            VipCapacity::lockFor($row);
-            VipPackages::requireWorkshop($vipWorkshop);
-            $checkout = self::insert($row, $seconds);
-            VipPackages::remember($checkout, $vipWorkshop);
-            return $checkout;
-        });
         VipCapacity::requireAvailable($row);
         $now = App::now();
         for ($try = 0; $try < 5; $try++) {
@@ -370,7 +362,6 @@ final class Checkouts
         // Other attempts for the same form now belong to this person too, so a
         // second payment arriving later is recognised as "paid twice".
         Db::run('UPDATE payments SET registration_id = ? WHERE checkout_id = ? AND registration_id IS NULL', [$id, $checkout['id']]);
-        VipPackages::paid($checkout, $id);
         return $id;
     }
 

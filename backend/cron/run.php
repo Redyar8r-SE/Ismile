@@ -57,7 +57,6 @@ try {
         // so payments and emails use what the website shows right now.
         $followed = SiteData::followWebsite();
         $report = Outbox::process(MailerFactory::make());
-        $report['vip_workshops'] = \Ismile\VipPackages::process();
         if ($followed) {
             $report['website_content'] = $followed;
         }

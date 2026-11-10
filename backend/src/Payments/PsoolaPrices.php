@@ -77,8 +77,6 @@ final class PsoolaPrices
         };
         $types = [];
         $lunch = [];
-        $usdRates = [];
-        $vipUsd = null;
         foreach ((array) ($show['ticketTypes'] ?? []) as $type) {
             if (!is_array($type)) {
                 continue;
@@ -86,28 +84,23 @@ final class PsoolaPrices
             $key = array_search($type['id'] ?? null, $ticketTypes, true);
             if (is_string($key) && in_array($key, ['professional', 'student', 'vip'], true)) {
                 $types[$key] = $price($type['price'] ?? null, $type['currency'] ?? $event['currency'] ?? '');
-                if ($key === 'vip' && ($type['originalPrice']['currency'] ?? '') === 'USD' && is_numeric($type['originalPrice']['amount'] ?? null)) $vipUsd = (float)$type['originalPrice']['amount'];
             }
             // Add-on prices are per ticket and in the event currency.
             foreach ((array) ($type['addOns'] ?? []) as $addOn) {
                 $day = is_array($addOn) ? array_search($addOn['id'] ?? null, $addOns, true) : false;
                 if (in_array($day, ['lunchDay1', 'lunchDay2'], true) && !isset($lunch[$day])) {
                     $lunch[$day] = $price($addOn['price'] ?? null, $type['currency'] ?? $event['currency'] ?? '');
-                    if (($addOn['originalPrice']['currency'] ?? '') === 'USD' && is_numeric($addOn['originalPrice']['amount'] ?? null) && (float)$addOn['originalPrice']['amount'] > 0) $usdRates[] = $addOn['price'] / (float)$addOn['originalPrice']['amount'];
                 }
             }
         }
         if (count($types) !== 3 || count($lunch) !== 2) {
             throw new GatewayNotReady('Psoola event does not list every iSmile ticket type and lunch day.');
         }
-        $metadata = [];
-        if ($usdRates && count(array_filter($usdRates,static fn($rate)=>abs($rate-$usdRates[0])>0.00001))===0) $metadata['usdRate'] = $usdRates[0];
-        if ($vipUsd !== null) $metadata['vipUsd'] = $vipUsd;
         return [
             'currency'    => (string) $currency,
             'ticketTypes' => ['professional' => $types['professional'], 'student' => $types['student'], 'vip' => $types['vip']],
             'lunch'       => ['day1' => $lunch['lunchDay1'], 'day2' => $lunch['lunchDay2']],
-        ] + $metadata;
+        ];
     }
 
     /**

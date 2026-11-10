@@ -261,7 +261,7 @@
   "xp_add_package": "Add to my VIP package",
   "xp_call_heading": "We’ll take care of the details.",
   "xp_call_copy": "Our team will call you after registration to arrange your VIP experience and home badge delivery.",
-  "xp_extras_note": "Your $200 VIP package includes one lunch and one selected workshop.",
+  "xp_extras_note": "Your chosen lunch is included in the ⁨$100⁩ package. Workshop fees are separate.",
   "xp_almost_there": "ALMOST THERE",
   "xp_review_title": "Your experience, at a glance.",
   "xp_review_copy": "Check your details and package before continuing.",
@@ -458,10 +458,5 @@
   "wd_method_cash": "Pay by cash",
   "wd_cash_action": "Register to pay cash",
   "wd_cash_saved": "Cash request saved",
-  "wd_cash_help": "Pay cash to the iSmile team to confirm your workshop ticket. This request does not reserve a seat; availability is checked when payment is collected.",
-  "vip_explore": "Explore the $200 VIP package and workshops",
-  "vip_package_not_ready": "VIP registration will open soon. Please check back shortly.",
-  "vip_workshop_required": "Choose one included workshop.",
-  "vip_workshop_full": "Your chosen workshop is full. Please select the other workshop.",
-  "vip_lunch_one": "Choose exactly one included lunch day."
+  "wd_cash_help": "Pay cash to the iSmile team to confirm your workshop ticket. This request does not reserve a seat; availability is checked when payment is collected."
 }

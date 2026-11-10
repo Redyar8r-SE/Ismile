@@ -699,11 +699,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (photo) photo.required = studentTicket;
     const vipFields = document.getElementById("caller-vip-lunch");
     const vipDay = form.querySelector('[name="vip_lunch_day"]');
-    const vipWorkshop = document.getElementById("caller-vip-workshop");
-    if (vipWorkshop) {
-      vipWorkshop.hidden = ticket.value !== "vip";
-      vipWorkshop.querySelector("select").disabled = ticket.value !== "vip";
-    }
     if (vipFields && vipDay) {
       const vip = ticket.value === "vip";
       vipFields.hidden = !vip;
@@ -711,7 +706,6 @@ document.addEventListener("DOMContentLoaded", () => {
       vipDay.required = vip;
       form.querySelectorAll('[name="lunch_day1"], [name="lunch_day2"]').forEach((input) => {
         const included = vip && input.name === `lunch_day${vipDay.value}`;
-        if (vipWorkshop && vip) input.checked = included;
         // Keep included lunch in the POST even though it cannot be unticked.
         if (included) input.checked = true;
       });

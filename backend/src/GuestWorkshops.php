@@ -21,22 +21,9 @@ final class GuestWorkshops
     public static function start(array $user, array $registration, array $in): array
     {
         self::authorize($user, $registration);
-        if (($in['delivery_confirmation'] ?? '') !== 'email-whatsapp-v1') throw new UserError('Confirm permission to send the guest workshop by WhatsApp.');
-        return self::begin($user,$registration,$in,true);
-    }
-
-    /** The paid VIP entitlement is checked server-side; email delivery needs no WhatsApp consent. */
-    public static function startIncludedVip(array $user,array $registration,array $in): array
-    {
-        self::authorize($user,$registration);
-        if(!VipPackages::entitled((int)$registration['id'],(string)($in['workshop']??''),(string)($in['attempt']??'')))throw new UserError('No paid VIP workshop entitlement exists.',null,403);
-        return self::begin($user,$registration,$in,false);
-    }
-
-    private static function begin(array $user,array $registration,array $in,bool $whatsapp): array
-    {
         $key = $in['attempt'] ?? '';
         if (!is_string($key) || !preg_match('/^[a-f0-9]{32}$/D', $key)) throw new UserError('Reload the workshop form before booking.');
+        if (($in['delivery_confirmation'] ?? '') !== 'email-whatsapp-v1') throw new UserError('Confirm permission to send the guest workshop by WhatsApp.');
         $workshop = Workshops::find((string) ($in['workshop'] ?? ''));
         if (!$workshop || !self::allowed($workshop)) throw new UserError('Choose an available iSmile workshop. Company workshops are booked with their organizer.');
         if (!in_array($registration['status'], ['paid','complimentary'], true)) throw new UserError('An active paid or complimentary summit registration is required.');
@@ -44,9 +31,9 @@ final class GuestWorkshops
             'phone'=>$registration['phone'], 'locale'=>$registration['lang'] === 'ku' ? 'ckb' : $registration['lang'],
             'specialty'=>$registration['specialty'], 'complimentary_reason'=>$in['complimentary_reason'] ?? '',
             'event_id'=>$workshop['providerEventId'], 'show_id'=>$workshop['providerShowId'],
-            'ticket_type_id'=>$workshop['providerTicketTypeId'], 'quantity'=>1, 'whatsapp_consent'=>$whatsapp?'1':'0'];
+            'ticket_type_id'=>$workshop['providerTicketTypeId'], 'quantity'=>1, 'whatsapp_consent'=>'1'];
         GuestOrders::guest($payload);
-        $saved = Db::transaction(static function () use ($user, $registration, $workshop, $payload, $key, $whatsapp): array {
+        $saved = Db::transaction(static function () use ($user, $registration, $workshop, $payload, $key): array {
             $lockedWorkshop = Db::one('SELECT * FROM workshops WHERE id=? FOR UPDATE', [$workshop['id']]);
             if (!$lockedWorkshop || $lockedWorkshop['organizer'] !== 'ismile' || $lockedWorkshop['status'] !== 'active'
                 || $lockedWorkshop['provider_event_id'] !== $workshop['providerEventId'] || $lockedWorkshop['provider_show_id'] !== $workshop['providerShowId']
@@ -58,10 +45,6 @@ final class GuestWorkshops
                 if ((int)$old['registration_id'] !== (int)$registration['id'] || $old['workshop_id'] !== $workshop['id']
                     || json_decode($old['payload_json'], true, 512, JSON_THROW_ON_ERROR) != $payload) throw new UserError('This request has different details. Resume its saved request instead.');
                 return $old;
-            }
-            if($whatsapp&&in_array($workshop['id'],VipPackages::WORKSHOPS,true)&&VipPackages::held($workshop['id'])>0){
-                $catalog=WorkshopCatalog::one($workshop['id'],true);
-                if(!$catalog||!$catalog['availabilityVerified']||$catalog['seatsLeft']<1||Workshops::booked($workshop['id'])+VipPackages::held($workshop['id'])>=(int)$lockedWorkshop['total_seats'])throw new UserError('This workshop has no unreserved places available.');
             }
             WorkshopCheckout::assertNoOpenPurchase((int)$registration['id'], $workshop['id']);
             if (Db::value('SELECT id FROM workshop_bookings WHERE registration_id=? AND workshop_id=? AND removed_at IS NULL', [$registration['id'], $workshop['id']])
@@ -122,7 +105,6 @@ final class GuestWorkshops
                 ['workshop'=>$saved['workshop_id'], 'booking'=>$bookingId, 'order'=>$order['provider_order_id'], 'total'=>0, 'reason'=>$order['complimentary_reason']]);
         }
         Db::update('guest_workshop_orders', ['state'=>'issued','guest_order_id'=>$order['id'],'booking_id'=>$bookingId,'updated_at'=>App::now()], 'id=?', [$saved['id']]);
-        VipPackages::issued($saved['attempt_key'],(int)$bookingId,(int)$saved['id']);
         @unlink(App::storage('tmp/workshop-catalog-'.$saved['workshop_id'].'.json'));
     }
 }

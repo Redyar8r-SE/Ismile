@@ -17,11 +17,9 @@ final class VipCapacity
 
     public static function full(bool $includePending = true, int $exceptCheckout = 0): bool
     {
-        $limit = Settings::int('vip_registration_limit');
-        if ($limit <= 0) return false;
         $taken = (int) Db::value("SELECT COUNT(*) FROM registrations WHERE ticket_type='vip' AND status IN ('paid','complimentary')");
         $held = $includePending ? (int) Db::value("SELECT COUNT(DISTINCT c.id) FROM checkouts c JOIN payments p ON p.checkout_id=c.id WHERE c.ticket_type='vip' AND c.status='open' AND c.id<>? AND p.status IN ('created','waiting')", [$exceptCheckout]) : 0;
-        return $taken + $held >= $limit;
+        return $taken + $held >= self::LIMIT;
     }
 
     public static function requireAvailable(array $checkout): void
