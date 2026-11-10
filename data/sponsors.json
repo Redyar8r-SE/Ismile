@@ -1,6 +1,21 @@
 {
   "tiers": [
     {
+      "id": "diamond",
+      "name": {
+        "en": "Diamond",
+        "ar": "الماسي",
+        "ku": "ئەڵماس"
+      },
+      "className": "tc-dia",
+      "subtitle": {
+        "en": "Headline partners",
+        "ar": "الشركاء الرئيسيون",
+        "ku": "هاوبەشە سەرەکییەکان"
+      },
+      "spots": 5
+    },
+    {
       "id": "platinum",
       "name": {
         "en": "Platinum",
@@ -101,6 +116,13 @@
       "name": "Bnama Medical",
       "tier": "diamond",
       "logo": "assets/sponsors/bnama-medical-diamond-matched-20261111.webp",
+      "bg": "#18363F",
+      "tile": true
+    },
+    {
+      "name": "NORMON",
+      "tier": "platinum",
+      "logo": "assets/sponsors/normon-platinum-20261111.webp",
       "bg": "#18363F",
       "tile": true
     },
@@ -255,13 +277,6 @@
       "name": "BA DENT",
       "tier": "bronze",
       "logo": "assets/sponsors/ba-dent-white-20261110.webp",
-      "bg": "#18363F",
-      "tile": true
-    },
-    {
-      "name": "NORMON",
-      "tier": "platinum",
-      "logo": "assets/sponsors/normon-platinum-20261111.webp",
       "bg": "#18363F",
       "tile": true
     }

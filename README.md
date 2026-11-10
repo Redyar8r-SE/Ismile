@@ -1,5 +1,8 @@
 # iSmile 2026 website
 
+See [repository maintenance](docs/repository-maintenance.md) for the source layout,
+generated files, validation commands, and deployment branches.
+
 ## Folder structure
 
 ```
