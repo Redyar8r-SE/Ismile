@@ -126,6 +126,13 @@
       "tile": true
     },
     {
+      "name": "Salam Dent",
+      "tier": "gold",
+      "logo": "assets/sponsors/salam-gold-20261110.webp",
+      "bg": "#18363F",
+      "tile": true
+    },
+    {
       "name": "DentStar Company",
       "tier": "silver",
       "logo": "assets/sponsors/dentstar-silver-white.webp",
@@ -171,13 +178,6 @@
       "name": "BAIT ALHIKMA",
       "tier": "silver",
       "logo": "assets/sponsors/bait-alhikma-silver-20261108.webp",
-      "bg": "#18363F",
-      "tile": true
-    },
-    {
-      "name": "Salam Dent",
-      "tier": "silver",
-      "logo": "assets/sponsors/salam-dent-silver-20261110.webp",
       "bg": "#18363F",
       "tile": true
     },
