@@ -92,10 +92,17 @@ $found=$attendeeMatches['people'];
 $needsReview=Db::all("SELECT c.registration_id,c.fulfillment_error,r.first_name,r.father_name,r.grandfather_name FROM workshop_checkouts c JOIN registrations r ON r.id=c.registration_id WHERE c.provider_status='paid' AND c.fulfillment_error IS NOT NULL ORDER BY c.id DESC");
 $bookingErrors=array_column(array_filter($_SESSION['flash']??[],static fn($message)=>$message[0]!=='ok'),1);
 $settingsMessages=$_SESSION['flash']??[];
-$canRegisterSelected=$canBook&&$selected&&$selected['organizer']==='ismile'&&($mode!=='cash'||(!empty($selected['providerEventId'])&&(int)$selected['price']>0));
+$canRegisterSelected=$canBook&&$selected&&$selected['organizer']==='ismile';
+$bookingActions='';
+if($canRegisterSelected){
+    $bookingLink=static fn(string $targetMode,string $label,string $style):string=>'<a class="btn '.$style.'" href="'.$e($url(['booking'=>'1','mode'=>$targetMode],'#book')).'"'.($mode===$targetMode?' data-ws-open="ws-book"':'').'>'.Page::navIcon('plus').$label.'</a>';
+    if(!empty($selected['providerEventId']))$bookingActions.=$bookingLink('cash','Register (cash)','ws-primary');
+    if($canGuest&&GuestWorkshops::allowed($selected))$bookingActions.=$bookingLink('guest','Book a guest','ghost');
+    elseif(empty($selected['providerEventId']))$bookingActions.=$bookingLink('paid','Book attendee','ws-primary');
+}
 $workshopActions=$user['role']==='owner'?'<a class="btn ghost" href="#manage" data-ws-open="ws-settings">'.Page::navIcon('settings').'Workshop settings</a>':'';
 if($selected&&$selected['organizer']==='company')foreach($selected['companyPhones']??[]as$phone)$workshopActions.='<a class="btn ws-primary" href="tel:'.$e(preg_replace('/[^+0-9]/','',$phone)).'">'.Page::navIcon('phone').'<span dir="ltr">'.$e($phone).'</span></a>';
-elseif($canRegisterSelected)$workshopActions.='<a class="btn ws-primary" href="'.$e($url(['booking'=>'1'],'#book')).'" data-ws-open="ws-book">'.Page::navIcon('plus').($mode==='cash'?'Register attendee':'Book a guest').'</a>';
+elseif($canRegisterSelected)$workshopActions.=$bookingActions;
 Page::top('Workshops','workshops',$workshopActions);
 require __DIR__.'/_workshop_workspace.php';
 Page::bottom();
