@@ -101,6 +101,7 @@ final class Payments
                     throw new UserError('pay_expired', null, 409);
                 }
                 \Ismile\VipCapacity::requireAvailable($form);
+                \Ismile\VipPackages::assertCheckout($form);
                 // An attempt made in the last few minutes is reused.
                 $recent = Db::one("SELECT * FROM payments WHERE checkout_id = ? AND status = 'waiting' AND redirect_url IS NOT NULL AND created_at > ? ORDER BY id DESC LIMIT 1",
                     [$checkout['id'], date('Y-m-d H:i:s', time() - self::REUSE_MINUTES * 60)]);
@@ -157,6 +158,7 @@ final class Payments
         $sourcePrices = SiteData::prices();
         try {
             $created = self::gateway($gatewayName)->createPayment($payment, $checkout);
+            \Ismile\VipPackages::assertPrice($checkout, $created);
             if ($priceFromGateway && (!is_int($created['amount'] ?? null) || $created['amount'] <= 0 || !preg_match('/^[A-Z]{3}$/', (string) ($created['currency'] ?? '')))) {
                 throw new GatewayNotReady('The payment company did not say what it will charge.');
             }
@@ -210,6 +212,7 @@ final class Payments
                 throw new UserError('This person is already registered.');
             }
             \Ismile\VipCapacity::requireAvailable($form);
+            \Ismile\VipPackages::assertCheckout($form);
             if (Registrations::isFull(true, (int) $checkout['id'])) {
                 throw new UserError('Registration is full: no places are left.');
             }
@@ -237,6 +240,7 @@ final class Payments
         $sourcePrices = SiteData::prices();
         try {
             $sale = $gateway->createCashSale($payment, $checkout);
+            \Ismile\VipPackages::assertPrice($checkout, $sale);
         } catch (PsoolaRefused $refused) {
             Db::update('payments', ['status' => 'failed', 'last_error' => mb_substr($refused->detail, 0, 500), 'updated_at' => App::now()], 'id = ?', [$paymentId]);
             throw new UserError($refused->getMessage());
@@ -258,6 +262,13 @@ final class Payments
             }
         }
 
+        // Recovery must pass the same package-price check as the first response.
+        try { \Ismile\VipPackages::assertPrice($checkout,$sale); }
+        catch (\Throwable $error) {
+            Db::update('payments',['provider_payment_id'=>$sale['id'],'status'=>'mismatch','amount_confirmed'=>$sale['amount']??null,'last_error'=>'VIP cash sale price differs from the verified $200 package. Finance review required.','updated_at'=>App::now()],'id=?',[$paymentId]);
+            Outbox::alert('VIP cash payment #'.$paymentId.' has a different provider price. Review with PSOOLA before issuing the package.');
+            throw new UserError('PSOOLA returned a different VIP price. The payment is saved for Finance review; do not collect or submit another payment.');
+        }
         // PSOOLA sets the price: its total is the amount check() must hear back.
         Db::update('payments', ($priceFromGateway ? ['amount_expected' => $sale['amount'], 'currency' => $sale['currency']] : []) + [
             'provider_payment_id' => $sale['id'],
@@ -303,7 +314,7 @@ final class Payments
     private static function apply(int $paymentId, array $result): string
     {
         $type = Db::value('SELECT c.ticket_type FROM payments p JOIN checkouts c ON c.id=p.checkout_id WHERE p.id=?', [$paymentId]);
-        return Db::transaction(static function () use ($paymentId, $result, $type): string {
+        $status = Db::transaction(static function () use ($paymentId, $result, $type): string {
             \Ismile\VipCapacity::lockFor(['ticket_type' => $type]);
             $afterwards = [];
             $status = self::record($paymentId, $result, $afterwards);
@@ -324,6 +335,11 @@ final class Payments
             }
             return $status;
         });
+        if ($status === 'paid') {
+            try { \Ismile\VipPackages::process(1,(int)Db::value('SELECT checkout_id FROM payments WHERE id=?',[$paymentId])); }
+            catch (\Throwable $error) { App::log('error','VIP fulfilment remains queued',['payment'=>$paymentId,'error'=>$error->getMessage()]); }
+        }
+        return $status;
     }
 
     /** The decision itself, inside apply()'s transaction. */
@@ -394,6 +410,11 @@ final class Payments
         if (($checkout['ticket_type'] ?? '') === 'vip' && \Ismile\VipCapacity::full(false)) {
             Db::run("UPDATE payments SET status='mismatch',amount_confirmed=?,confirmed_at=?,updated_at=?,last_error=? WHERE id=?", [$amount,$now,$now,'VIP is unavailable. Payment held for Finance; no registration issued.',$paymentId]);
             $afterwards[] = ['alert', "Payment #$paymentId: VIP is unavailable. Held for Finance; no additional VIP was registered."];
+            return 'mismatch';
+        }
+        if (!\Ismile\VipPackages::canConfirm($checkout)) {
+            Db::run("UPDATE payments SET status='mismatch',amount_confirmed=?,confirmed_at=?,updated_at=?,last_error=? WHERE id=?",[$amount,$now,$now,'The selected VIP workshop is unavailable. Held for Finance; no registration issued.',$paymentId]);
+            $afterwards[]=['alert',"Payment #$paymentId: the VIP workshop place could not be confirmed. Held for Finance; no registration was issued."];
             return 'mismatch';
         }
         // Paid in full: the person is registered now, and only now.

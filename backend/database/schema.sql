@@ -1130,3 +1130,29 @@ CREATE TABLE IF NOT EXISTS workshop_cash_receipts (
  CONSTRAINT fk_workshop_cash_receipt_staff FOREIGN KEY (recorded_by) REFERENCES admin_users(id),
  CONSTRAINT ck_workshop_cash_receipt_amount CHECK (amount_minor > 0 AND amount_iqd > 0 AND (currency='IQD' OR quote_usd_minor > 0))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE IF NOT EXISTS vip_package_choices (
+ id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+ checkout_id INT UNSIGNED NULL,
+ registration_id INT UNSIGNED NULL,
+ workshop_id VARCHAR(40) NOT NULL,
+ request_key CHAR(32) NOT NULL,
+ state ENUM('held','pending','issued','review','cancelled') NOT NULL DEFAULT 'held',
+ hold_until DATETIME NOT NULL,
+ guest_request_id INT UNSIGNED NULL,
+ booking_id INT UNSIGNED NULL,
+ attempts INT UNSIGNED NOT NULL DEFAULT 0,
+ last_error VARCHAR(500) NULL,
+ created_at DATETIME NOT NULL,
+ updated_at DATETIME NOT NULL,
+ UNIQUE KEY uq_vip_package_checkout (checkout_id),
+ UNIQUE KEY uq_vip_package_registration (registration_id),
+ UNIQUE KEY uq_vip_package_request (request_key),
+ UNIQUE KEY uq_vip_package_booking (booking_id),
+ KEY k_vip_package_holds (workshop_id,state,hold_until),
+ CONSTRAINT fk_vip_package_checkout FOREIGN KEY (checkout_id) REFERENCES checkouts(id) ON DELETE SET NULL,
+ CONSTRAINT fk_vip_package_registration FOREIGN KEY (registration_id) REFERENCES registrations(id) ON DELETE CASCADE,
+ CONSTRAINT fk_vip_package_workshop FOREIGN KEY (workshop_id) REFERENCES workshops(id),
+ CONSTRAINT fk_vip_package_request FOREIGN KEY (guest_request_id) REFERENCES guest_workshop_orders(id) ON DELETE SET NULL,
+ CONSTRAINT fk_vip_package_booking FOREIGN KEY (booking_id) REFERENCES workshop_bookings(id) ON DELETE SET NULL,
+ CONSTRAINT ck_vip_package_workshop CHECK (workshop_id IN ('simplified-direct-veneers','crown-vs-veneer'))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

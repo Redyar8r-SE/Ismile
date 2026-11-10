@@ -11,7 +11,7 @@ final class WorkshopCatalog
         return array_values(array_map(static fn($w)=>self::one($w['id']),Workshops::all()));
     }
 
-    public static function one(string $id, bool $fresh = false): ?array
+    public static function one(string $id, bool $fresh = false, int $exceptVipCheckout = 0): ?array
     {
         $w=Workshops::find($id);
         if(!$w || $w['status']!=='active')return null;
@@ -39,6 +39,7 @@ final class WorkshopCatalog
         // Expiration and inventory release can differ by a provider processing
         // interval. Keep a hold visible while PSOOLA still withholds that seat.
         if($w['availabilityVerified'])$w['pendingPayments']=min($w['pendingPayments'],max(0,$w['totalSeats']-$w['paidRegistrations']-$w['seatsLeft']));
+        if($w['organizer']==='ismile'&&in_array($w['id'],VipPackages::WORKSHOPS,true))$w['seatsLeft']=max(0,$w['seatsLeft']-VipPackages::held($w['id'],$exceptVipCheckout));
         unset($w['providerEventId'],$w['providerShowId'],$w['providerTicketTypeId']);
         return $w;
     }

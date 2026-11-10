@@ -104,6 +104,10 @@ if ($inCheckin) echo \Ismile\Admin\CheckinWorkspace::navigation('guests',$user,$
       <details class="rd-card rd-information"><summary><span>Registration information</span><span aria-hidden="true">⌄</span></summary><p class="rd-hint">Ticket type, lunch, language and record details</p><dl class="rd-fields">
         <?php $field('Ticket type',Registrations::ticketName($registration['ticket_type']),'ticket'); $field('Lunch',trim(($registration['lunch_day1'] ? 'Day 1 ' : '').($registration['lunch_day2'] ? 'Day 2' : '')) ?: 'None','lunch');
         if ($registration['ticket_type'] === 'vip') $field('VIP included lunch','Day '.$registration['vip_lunch_day'].' · Arrange home badge delivery.','lunch');
+        if ($registration['ticket_type'] === 'vip' && ($vipPackage=\Ismile\VipPackages::forRegistration((int)$registration['id']))) {
+            $field('VIP included workshop',$vipPackage['workshop_name'],'workshops');
+            $field('VIP workshop ticket',match($vipPackage['state']){'issued'=>'Issued by PSOOLA','pending'=>'Waiting for ticket issuance','review'=>'Saved request needs review',default=>ucfirst($vipPackage['state'])},'ticket');
+        }
         $field('Language',$registration['lang'],'content'); $field('Form sent',Page::when($registration['created_at']),'calendar');
         $field('Added by',$registration['created_by'] === null ? 'Website' : ($addedBy ?? 'A removed account'),'user');
         $field('No-refund terms',$registration['terms_accepted_at'] ? 'Accepted '.Page::when($registration['terms_accepted_at']) : 'Registered by the office','check');

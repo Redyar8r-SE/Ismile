@@ -20,6 +20,9 @@ final class Settings
         'closed_message_ar'     => '',
         'closed_message_ku'     => '',
         'ticket_capacity'       => '0',     // 0 = no limit set yet (the dashboard warns)
+        'vip_registration_limit'=> '6',     // 0 removes the earlier website VIP cap.
+        'vip_package_enabled'   => '0',
+        'vip_package_sales_open'=> '0',     // Separate activation after PSOOLA confirms $200.
         'lunch_capacity_day1'   => '0',
         'lunch_capacity_day2'   => '0',
         'email_test_mode'       => '1',
