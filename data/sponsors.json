@@ -250,6 +250,20 @@
       "logo": "assets/sponsors/ba-dent-white-20261110.webp",
       "bg": "#18363F",
       "tile": true
+    },
+    {
+      "name": "Bnama Medical",
+      "tier": "platinum",
+      "logo": "assets/sponsors/bnama-medical-platinum-20261111.webp",
+      "bg": "#18363F",
+      "tile": true
+    },
+    {
+      "name": "NORMON",
+      "tier": "platinum",
+      "logo": "assets/sponsors/normon-platinum-20261111.webp",
+      "bg": "#18363F",
+      "tile": true
     }
   ],
   "enquiry": {
