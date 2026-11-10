@@ -21,6 +21,8 @@ deploy.env
 
 node_modules/
 coverage/
+# Generated previews, screenshots, audit output, and browser profiles.
+output/
 .DS_Store
 
 # Local assistant settings and private key material.
