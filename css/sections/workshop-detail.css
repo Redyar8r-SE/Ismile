@@ -256,3 +256,22 @@ html[dir="rtl"] .ws-team{right:auto;left:20px}
 @media(max-width:960px){.wdc.has-team .wdc-photo{height:auto!important;aspect-ratio:auto!important}.ws-team,html[dir="rtl"] .ws-team{position:relative;inset:auto;top:auto;transform:none;width:auto;margin:28px 18px 20px;gap:0 5px}.wdc.is-cutout.has-team .wdc-text{width:auto}.ws-person strong{font-size:16px}.ws-person small{font-size:12px}}
 @media(max-width:560px){.ws-team,html[dir="rtl"] .ws-team{margin:14px 10px 10px}.ws-team figcaption{padding:10px 3px 0}.ws-person-role{font-size:9px}.ws-person strong{font-size:12px}.ws-person small{font-size:10px;line-height:1.45}}
 
+/* On phones and tablets the portrait and workshop copy occupy separate panels. */
+@media(max-width:960px){
+  .wdc.is-cutout .wdc-hero{background:var(--surface)}
+  .wdc.is-cutout .wdc-photo{overflow:hidden;isolation:isolate;background-image:var(--workshop-studio);background-size:cover;background-position:center}
+  .wdc.is-cutout .wdc-text{background:var(--surface);padding:24px}
+  .wdc.is-cutout[data-workshop-id="crown-vs-veneer"] .wdc-photo img{height:100%;width:100%;bottom:0}
+}
+@media(max-width:560px){
+  .wdc.is-cutout .wdc-photo{height:clamp(240px,76vw,320px)}
+  .wdc.is-cutout .wdc-text{padding:22px 18px 24px;gap:16px}
+  .wdc-text h1{font-size:clamp(24px,6.7vw,30px);line-height:1.2}
+  .wdc-trainer{font-size:14px;line-height:1.55;gap:4px}
+  .wdc-schedule{display:grid;gap:10px;font-size:13px}
+  .wdc-panel{padding:14px;border-radius:18px;margin-top:2px}
+  .wdc .wdc-stats,html[dir="rtl"] .wdc-stats{grid-template-columns:1fr;gap:12px}
+  .wdc .wdc-stat{flex-direction:row;align-items:center;gap:12px;padding-inline:0}
+  .wdc .wdc-stat+.wdc-stat,html[dir="rtl"] .wdc-stat+.wdc-stat{padding-inline-start:0;padding-top:12px;border-inline-start:0;border-top:1px solid var(--line)}
+  .wdc .wdc-stat b{font-size:20px;line-height:1.25;overflow-wrap:normal}
+}
