@@ -20,6 +20,7 @@ final class Settings
         'closed_message_ar'     => '',
         'closed_message_ku'     => '',
         'ticket_capacity'       => '0',     // 0 = no limit set yet (the dashboard warns)
+        'vip_registration_limit'=> '0',     // 0 = no website VIP cap.
         'lunch_capacity_day1'   => '0',
         'lunch_capacity_day2'   => '0',
         'email_test_mode'       => '1',
