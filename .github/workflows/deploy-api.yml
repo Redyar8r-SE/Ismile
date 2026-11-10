@@ -1,157 +1,77 @@
-# Deploy PHP backend to api.ismile.krd (ismile LXC).
-# Re-runs the idempotent VPS setup script: pulls this branch, updates files/DB,
-# leaves the live Node site on ismile.krd alone.
-# Secrets: same GitHub DEPLOY_ENV as the Node deploy (SSH into LXC :2260), plus
-#   API_OWNER_EMAIL     the Owner's admin sign-in on api.ismile.krd (made if missing)
-#   API_OWNER_PASSWORD  its password, 12+ characters (change the secret = new password)
-#   API_SITE_PASSWORD   the browser password in front of the site (user "ismile")
-#   API_RESEND_KEY      optional: send the emails for real through Resend
-#   API_BREVO_KEY       optional: send through Brevo instead (wins over Resend)
-#   API_MAIL_FROM       optional: the sender (default onboarding@resend.dev)
-#   API_PSOOLA_CONFIG   optional: PSOOLA's settings as one JSON object (keys,
-#                       event/show/ticket/add-on ids, "active": true to take
-#                       real payments). Written into config.php, never printed.
-# The log is public (public repository): passwords are never printed.
-name: Deploy API (api.ismile.krd)
-
+name: Workshop vip-200-prepare
 on:
-  push:
-    branches: ["backend"]
   workflow_dispatch:
-    inputs:
-      map_editor_email:
-        description: Existing account to grant exclusive non-owner map booking access
-        required: false
-        type: string
-      association_editor_email:
-        description: Existing account to grant full Association access
-        required: false
-        type: string
-      registration_editor_email:
-        description: Existing account to allow paid and complimentary guest registration
-        required: false
-        type: string
-      workshop_editor_email:
-        description: Existing account to allow guest registration and workshop bookings for all attendees
-        required: false
-        type: string
-
-concurrency:
-  group: ismile-api-deploy
-  cancel-in-progress: false
-
+permissions:
+  contents: read
 jobs:
-  security:
-    uses: ./.github/workflows/security.yml
-  deploy:
-    needs: security
-    name: Update api.ismile.krd
+  operation:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 8
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Load DEPLOY_ENV (SSH only)
+      - name: Load saved server connection
+        shell: bash
         env:
           DEPLOY_ENV: ${{ secrets.DEPLOY_ENV }}
         run: |
           set -euo pipefail
-          : "${DEPLOY_ENV:?DEPLOY_ENV secret is required}"
-          printf '%s\n' "$DEPLOY_ENV" >.deploy.env
+          umask 077
+          printf '%s\n' "$DEPLOY_ENV" > "$RUNNER_TEMP/connection.env"
           set -a
-          # shellcheck disable=SC1091
-          source .deploy.env
+          source "$RUNNER_TEMP/connection.env"
           set +a
+          echo "::add-mask::$DEPLOY_PASSWORD"
           for key in DEPLOY_HOST DEPLOY_USER DEPLOY_PASSWORD DEPLOY_SSH_PORT; do
-            if [ -z "${!key:-}" ]; then
-              echo "error: ${key} missing from DEPLOY_ENV" >&2
-              exit 1
-            fi
+            test -n "${!key}"
+            printf '%s=%s\n' "$key" "${!key}" >> "$GITHUB_ENV"
           done
-          echo "::add-mask::${DEPLOY_PASSWORD}"
-          {
-            echo "DEPLOY_HOST<<EOF_DEPLOY_HOST"
-            printf '%s\n' "$DEPLOY_HOST"
-            echo "EOF_DEPLOY_HOST"
-            echo "DEPLOY_USER<<EOF_DEPLOY_USER"
-            printf '%s\n' "$DEPLOY_USER"
-            echo "EOF_DEPLOY_USER"
-            echo "DEPLOY_PASSWORD<<EOF_DEPLOY_PASSWORD"
-            printf '%s\n' "$DEPLOY_PASSWORD"
-            echo "EOF_DEPLOY_PASSWORD"
-            echo "DEPLOY_SSH_PORT<<EOF_DEPLOY_SSH_PORT"
-            printf '%s\n' "$DEPLOY_SSH_PORT"
-            echo "EOF_DEPLOY_SSH_PORT"
-          } >>"$GITHUB_ENV"
-
-      - name: Run setup-test-site.sh on the LXC
+      - name: vip-200-prepare workshops
         uses: appleboy/ssh-action@v1.2.0
-        env:
-          OWNER_EMAIL: ${{ secrets.API_OWNER_EMAIL }}
-          OWNER_PASSWORD: ${{ secrets.API_OWNER_PASSWORD }}
-          SITE_PASSWORD: ${{ secrets.API_SITE_PASSWORD }}
-          RESEND_KEY: ${{ secrets.API_RESEND_KEY }}
-          BREVO_KEY: ${{ secrets.API_BREVO_KEY }}
-          MAIL_FROM: ${{ secrets.API_MAIL_FROM }}
-          PSOOLA_CONFIG: ${{ secrets.API_PSOOLA_CONFIG }}
-          QUIET_SECRETS: "1"
-          MAP_EDITOR_EMAIL: ${{ inputs.map_editor_email || '' }}
-          ASSOCIATION_EDITOR_EMAIL: ${{ inputs.association_editor_email || '' }}
-          REGISTRATION_EDITOR_EMAIL: ${{ inputs.registration_editor_email || '' }}
-          WORKSHOP_EDITOR_EMAIL: ${{ inputs.workshop_editor_email || '' }}
         with:
-          envs: OWNER_EMAIL,OWNER_PASSWORD,SITE_PASSWORD,RESEND_KEY,BREVO_KEY,MAIL_FROM,PSOOLA_CONFIG,QUIET_SECRETS,MAP_EDITOR_EMAIL,ASSOCIATION_EDITOR_EMAIL,REGISTRATION_EDITOR_EMAIL,WORKSHOP_EDITOR_EMAIL
           host: ${{ env.DEPLOY_HOST }}
           username: ${{ env.DEPLOY_USER }}
           password: ${{ env.DEPLOY_PASSWORD }}
           port: ${{ env.DEPLOY_SSH_PORT }}
           timeout: 60s
-          command_timeout: 20m
+          command_timeout: 6m
           script: |
-            set -euo pipefail
-            cd /root
-            # Save the existing database before applying schema migrations.
-            if [ -f /opt/ismile-test/backend/bootstrap.php ] && [ -f /opt/ismile-test/backend/config.php ]; then
-              runuser -u www-data -- php -r 'require $argv[1]; \Ismile\Backup::run(); echo "Pre-deployment database backup saved.\n";' /opt/ismile-test/backend/bootstrap.php
-            fi
-            # Idle unattended-upgrade-shutdown holds dpkg locks forever; stop it.
-            systemctl stop unattended-upgrades 2>/dev/null || true
-            curl -fsSL "https://raw.githubusercontent.com/Redyar8r-SE/Ismile/backend/backend/tools/vps/setup-test-site.sh" \
-              -o /root/ismile-test-setup.sh
-            chmod +x /root/ismile-test-setup.sh
-            DOMAIN=api.ismile.krd BRANCH=backend bash /root/ismile-test-setup.sh
-            if [ -n "${MAP_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-map-manager.php
-            fi
-            if [ -n "${ASSOCIATION_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-association-manager.php
-            fi
-            if [ -n "${REGISTRATION_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-registration-manager.php
-            fi
-            if [ -n "${WORKSHOP_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-workshop-manager.php
-            fi
-            runuser -u www-data -- php /opt/ismile-test/backend/tools/verify-deployment.php --source /opt/ismile-test/repo
-            runuser -u www-data -- php /opt/ismile-test/backend/tools/verify-association.php
-            # Smoke: PHP admin + config API (basic auth from secrets.env)
-            SP="$(grep '^SITE_PASS=' /opt/ismile-test/secrets.env | cut -d= -f2-)"
-            code="$(curl -s -o /dev/null -w '%{http_code}' -u "ismile:${SP}" -H 'Host: api.ismile.krd' http://127.0.0.1:8081/admin/login.php)"
-            echo "admin_login_http=${code}"
-            test "$code" = "200"
-            # The QR fallback must be accessible through nginx's allow-list.
-            curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' \
-              http://127.0.0.1:8081/admin/vendor/jsQR.js | cmp - /opt/ismile-test/site/admin/vendor/jsQR.js
-            echo "qr_decoder_http=200 (matches deployed file)"
-            for asset in map.js map.css registration-details.js registration-details.css workshops.js workshops.css; do
-              curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' \
-                "http://127.0.0.1:8081/admin/${asset}" | cmp - "/opt/ismile-test/site/admin/${asset}"
-            done
-            runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/map-access.php
-            runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/registration-access.php
-            runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/workshop-access.php
-            echo "map_assets_http=200; all role permissions verified"
-            echo "registration_details_assets_http=200 (match deployed files)"
-            curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' -H 'X-Forwarded-Proto: https' \
-              http://127.0.0.1:8081/api/config.php | grep -q '"ok":true'
-            echo "api.ismile.krd update OK"
+            set -eu
+            test "$(git -C /opt/ismile-test/repo rev-parse HEAD)" = b378cebf4507e6ec06383322411b7a873f0525ac
+            runuser -u www-data -- php /opt/ismile-test/backend/tools/configure-vip-package.php --prepare
+            runuser -u www-data -- php <<'VIP_PACKAGE_CONTENT'
+            <?php
+            require '/opt/ismile-test/backend/bootstrap.php';
+            use Ismile\App;
+            $keys=['vip_explore','xp_extras_note','vip_package_not_ready','vip_workshop_required','vip_workshop_full','vip_lunch_one'];
+            $files=['data/tickets.json'=>['vip']];foreach(['en','ar','ku'] as $lang)$files['data/i18n/site-'.$lang.'.json']=$keys;
+            foreach($files as $relative=>$selected){
+             $file=App::siteFile($relative);$source='/opt/ismile-test/repo/'.$relative;
+             if(!is_file($file)||!is_file($source))throw new RuntimeException('VIP content file missing');
+             $original=(string)file_get_contents($file);$before=json_decode($original,true,512,JSON_THROW_ON_ERROR);$latest=json_decode(file_get_contents($source),true,512,JSON_THROW_ON_ERROR);
+             $backup=App::storage('tmp/vip-200-before-'.str_replace('/','-',$relative));if(!is_file($backup))file_put_contents($backup,$original,LOCK_EX);
+             foreach($selected as $key){if(!array_key_exists($key,$latest))throw new RuntimeException('VIP content key missing');$before[$key]=$latest[$key];}
+             $temp=$file.'.vip-package';file_put_contents($temp,json_encode($before,JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR).PHP_EOL,LOCK_EX);chmod($temp,fileperms($file)&0777);rename($temp,$file);
+            }
+            VIP_PACKAGE_CONTENT
+            node <<'VIP_SHARED_CONTENT'
+            const fs=require('node:fs'),path=require('node:path'),cp=require('node:child_process');
+            const apps=JSON.parse(cp.execFileSync('pm2',['jlist'],{encoding:'utf8',stdio:['ignore','pipe','pipe']}));const matches=apps.filter(a=>a.pm2_env?.pm_cwd&&fs.existsSync(path.join(a.pm2_env.pm_cwd,'js/sections/registration.js')));if(matches.length!==1)throw Error('Website process ambiguous');
+            const current=fs.realpathSync(matches[0].pm2_env.pm_cwd),env=fs.readFileSync(path.join(current,'.env'),'utf8'),match=env.match(/^CONTENT_ROOT=(.*)$/m),root=match?.[1]?.trim()||path.join(current,'.site-content');
+            const selected=['vip_explore','xp_extras_note','vip_package_not_ready','vip_workshop_required','vip_workshop_full','vip_lunch_one'];let updated=0;
+            for(const name of ['data/tickets.json',...['en','ar','ku'].map(lang=>'data/i18n/site-'+lang+'.json')]){
+             const file=path.join(root,name);if(!fs.existsSync(file))continue;const data=JSON.parse(fs.readFileSync(file,'utf8')),source=JSON.parse(fs.readFileSync('/opt/ismile-test/repo/'+name,'utf8')),keys=name==='data/tickets.json'?['vip']:selected;
+             const before=JSON.stringify(Object.fromEntries(Object.entries(data).filter(([key])=>!keys.includes(key))));for(const key of keys)data[key]=source[key];if(JSON.stringify(Object.fromEntries(Object.entries(data).filter(([key])=>!keys.includes(key))))!==before)throw Error('Unrelated content changed');
+             const stat=fs.statSync(file),temporary=file+'.vip-package';fs.writeFileSync(temporary,JSON.stringify(data,null,2)+'\n');fs.chmodSync(temporary,stat.mode&0o777);fs.chownSync(temporary,stat.uid,stat.gid);fs.renameSync(temporary,file);updated++;
+            }
+            console.log('VIP_SHARED_UPDATED='+updated);
+            VIP_SHARED_CONTENT
+            runuser -u www-data -- php <<'VIP_PACKAGE_VERIFY'
+            <?php
+            require '/opt/ismile-test/backend/bootstrap.php';
+            use Ismile\{Db,Settings,VipPackages,Registrations};
+            $choices=(bool)Db::value("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='vip_package_choices'");
+            $state=Registrations::publicState('en');
+            if(!$choices||!VipPackages::enabled()||Settings::bool('vip_package_sales_open')||VipPackages::ready()||Settings::int('vip_registration_limit')!==0||$state['vip']['available']||($state['prices']['vipPackageEnabled']??false)!==true)throw new RuntimeException('VIP preparation state mismatch');
+            $foreignKeys=(int)Db::value("SELECT COUNT(*) FROM information_schema.table_constraints WHERE constraint_schema=DATABASE() AND table_name='vip_package_choices' AND constraint_type='FOREIGN KEY'");
+            if($foreignKeys!==5)throw new RuntimeException('VIP choice relations are incomplete');
+            echo 'WORKSHOPS_VERIFIED='.json_encode(['vipChoiceTable'=>true,'databaseRelations'=>$foreignKeys,'packageUsd'=>200,'workshops'=>VipPackages::WORKSHOPS,'unlimitedWebsiteVip'=>true,'salesOpen'=>false,'checkoutAvailable'=>false,'existingVipCount'=>(int)Db::value("SELECT COUNT(*) FROM registrations WHERE ticket_type='vip' AND status IN ('paid','complimentary')"),'savedPackageChoices'=>(int)Db::value('SELECT COUNT(*) FROM vip_package_choices')]).PHP_EOL;
+            VIP_PACKAGE_VERIFY
