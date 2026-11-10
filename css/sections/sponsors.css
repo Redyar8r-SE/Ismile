@@ -42,7 +42,10 @@ html[dir="rtl"] .sw-pill{letter-spacing:0}
 .sw-sub{margin:12px 0 0;text-align:center;font-size:14px;color:var(--muted)}
 .sw-logos{display:flex;flex-wrap:wrap;justify-content:center;gap:var(--gap);margin-top:22px}
 .tc-plat .sw-logos{max-width:790px;margin-inline:auto}
+.tc-gold .sw-logos{max-width:694px;margin-inline:auto}
 .tc-dia .sw-logos{max-width:1130px;margin-inline:auto}
+/* Gold: four equal boxes, followed by a centered row of three. */
+@media (min-width:561px){.swall.tc-gold .sw-logos>*{width:min(var(--w),calc((100% - 3 * var(--gap)) / 4));height:auto;aspect-ratio:9/5}}
 /* Diamond: three boxes per row on a computer, two on smaller screens */
 .swall.tc-dia .sw-logos>*{width:min(var(--w),calc((100% - 2 * var(--gap)) / 3))}
 @media (max-width:900px){.swall.tc-dia .sw-logos>*{width:min(var(--w),calc((100% - var(--gap)) / 2))}}

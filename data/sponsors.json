@@ -286,6 +286,8 @@
     "email": "ismile@italk.krd"
   },
   "displayPlaces": {
-    "platinum": 5
+    "platinum": 5,
+    "silver": 0,
+    "bronze": 0
   }
 }
