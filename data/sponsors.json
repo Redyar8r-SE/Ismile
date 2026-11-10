@@ -269,5 +269,8 @@
   "enquiry": {
     "whatsapp": "",
     "email": "ismile@italk.krd"
+  },
+  "displayPlaces": {
+    "platinum": 5
   }
 }
