@@ -15,12 +15,6 @@ export function initRegistrationExperience({ tickets, shown, onLunchChange, getS
   const money = (amount, currency) => (currency || "USD") === "USD" ? `$${Number(amount)}` : formatPrice(amount);
   const $ = (id) => document.getElementById(id);
   const ticket = () => form.querySelector('[name="ticket"]:checked')?.value || "professional";
-  // The VIP package has its own workshop, lunch and payment form.
-  let packageEnabled = false;
-  document.querySelector('[data-choice="vip"]').addEventListener('click', event => {
-    if (!packageEnabled) return;
-    event.preventDefault(); event.stopImmediatePropagation(); location.assign('vip.html');
-  }, true);
   let includedDay = "day1";
   let extraLunch = false;
   let availability = { day1: true, day2: true };
@@ -171,7 +165,6 @@ export function initRegistrationExperience({ tickets, shown, onLunchChange, getS
     beforeStep: finishOpening,
     includedDay: () => includedDay,
     availability(data) {
-      packageEnabled = data?.prices?.vipPackageEnabled === true;
       const open = data?.open === true;
       choices.hidden = !open;
       grid.hidden = open && !hasSelection;
