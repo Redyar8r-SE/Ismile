@@ -5,7 +5,7 @@ import { initI18n, addLanguage, initLangSwitch, preferredLang, setLang } from ".
 import { initNav } from "./components/nav.js?v=148";
 import { initTheme } from "./components/theme.js?v=148";
 import { initFooter } from "./sections/footer.js?v=148";
-import { initRegistration } from "./sections/registration.js?v=180";
+import { initRegistration } from "./sections/registration.js?v=181";
 import { initCitySelect } from "./utils/cities.js?v=167";
 
 async function start() {

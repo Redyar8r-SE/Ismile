@@ -326,7 +326,8 @@ export function initRegistration({ tickets = {} } = {}) {
   }
 
   function updateCount() {
-    $("regCount").textContent = t("step_of").replace("{n}", step).replace("{total}", TOTAL_STEPS);
+    const counter = $("regCount");
+    if (counter) counter.textContent = t("step_of").replace("{n}", step).replace("{total}", TOTAL_STEPS);
   }
 
   nextBtn.addEventListener("click", () => {
