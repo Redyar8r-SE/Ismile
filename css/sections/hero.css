@@ -143,3 +143,7 @@ html[lang="ar"] .hero-ed-big sup{order:-1;font-size:.3em;margin-top:.3em;font-we
   .wordmark span,.hero-mark img{animation:none;opacity:1;transform:none}
   .hero-mark{animation:none;left:calc(0px - var(--mark-nudge));transform:translateY(-50%) scale(var(--mark-final-scale))}
 }
+
+/* Official ADA CERP artwork contains accreditation text: retain a readable full row. */
+.hero-partners{grid-template-columns:minmax(0,1fr) minmax(0,2.451477fr) minmax(0,2.606558fr)}
+.hero-partner-ada{grid-column:1/-1;background:#fff;border-radius:12px;width:100%;height:auto;margin-top:4px}
