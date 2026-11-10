@@ -119,13 +119,6 @@
       "tile": true
     },
     {
-      "name": "NEWDENT",
-      "tier": "silver",
-      "logo": "assets/sponsors/newdent-silver-20261110.webp",
-      "bg": "#18363F",
-      "tile": true
-    },
-    {
       "name": "Lacalut",
       "tier": "silver",
       "logo": "assets/sponsors/lacalut-silver.webp",
@@ -199,6 +192,13 @@
       "name": "SNOW",
       "tier": "silver",
       "logo": "assets/sponsors/snow-white-20261110.webp",
+      "bg": "#18363F",
+      "tile": true
+    },
+    {
+      "name": "NEWDENT",
+      "tier": "silver",
+      "logo": "assets/sponsors/newdent-silver-20261110.webp",
       "bg": "#18363F",
       "tile": true
     },
