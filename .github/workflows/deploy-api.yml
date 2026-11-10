@@ -1,157 +1,69 @@
-# Deploy PHP backend to api.ismile.krd (ismile LXC).
-# Re-runs the idempotent VPS setup script: pulls this branch, updates files/DB,
-# leaves the live Node site on ismile.krd alone.
-# Secrets: same GitHub DEPLOY_ENV as the Node deploy (SSH into LXC :2260), plus
-#   API_OWNER_EMAIL     the Owner's admin sign-in on api.ismile.krd (made if missing)
-#   API_OWNER_PASSWORD  its password, 12+ characters (change the secret = new password)
-#   API_SITE_PASSWORD   the browser password in front of the site (user "ismile")
-#   API_RESEND_KEY      optional: send the emails for real through Resend
-#   API_BREVO_KEY       optional: send through Brevo instead (wins over Resend)
-#   API_MAIL_FROM       optional: the sender (default onboarding@resend.dev)
-#   API_PSOOLA_CONFIG   optional: PSOOLA's settings as one JSON object (keys,
-#                       event/show/ticket/add-on ids, "active": true to take
-#                       real payments). Written into config.php, never printed.
-# The log is public (public repository): passwords are never printed.
-name: Deploy API (api.ismile.krd)
-
+name: Workshop pediatric-company-150
 on:
-  push:
-    branches: ["backend"]
   workflow_dispatch:
-    inputs:
-      map_editor_email:
-        description: Existing account to grant exclusive non-owner map booking access
-        required: false
-        type: string
-      association_editor_email:
-        description: Existing account to grant full Association access
-        required: false
-        type: string
-      registration_editor_email:
-        description: Existing account to allow paid and complimentary guest registration
-        required: false
-        type: string
-      workshop_editor_email:
-        description: Existing account to allow guest registration and workshop bookings for all attendees
-        required: false
-        type: string
-
-concurrency:
-  group: ismile-api-deploy
-  cancel-in-progress: false
-
+permissions:
+  contents: read
 jobs:
-  security:
-    uses: ./.github/workflows/security.yml
-  deploy:
-    needs: security
-    name: Update api.ismile.krd
+  operation:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 8
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Load DEPLOY_ENV (SSH only)
+      - name: Load saved server connection
+        shell: bash
         env:
           DEPLOY_ENV: ${{ secrets.DEPLOY_ENV }}
         run: |
           set -euo pipefail
-          : "${DEPLOY_ENV:?DEPLOY_ENV secret is required}"
-          printf '%s\n' "$DEPLOY_ENV" >.deploy.env
+          umask 077
+          printf '%s\n' "$DEPLOY_ENV" > "$RUNNER_TEMP/connection.env"
           set -a
-          # shellcheck disable=SC1091
-          source .deploy.env
+          source "$RUNNER_TEMP/connection.env"
           set +a
+          echo "::add-mask::$DEPLOY_PASSWORD"
           for key in DEPLOY_HOST DEPLOY_USER DEPLOY_PASSWORD DEPLOY_SSH_PORT; do
-            if [ -z "${!key:-}" ]; then
-              echo "error: ${key} missing from DEPLOY_ENV" >&2
-              exit 1
-            fi
+            test -n "${!key}"
+            printf '%s=%s\n' "$key" "${!key}" >> "$GITHUB_ENV"
           done
-          echo "::add-mask::${DEPLOY_PASSWORD}"
-          {
-            echo "DEPLOY_HOST<<EOF_DEPLOY_HOST"
-            printf '%s\n' "$DEPLOY_HOST"
-            echo "EOF_DEPLOY_HOST"
-            echo "DEPLOY_USER<<EOF_DEPLOY_USER"
-            printf '%s\n' "$DEPLOY_USER"
-            echo "EOF_DEPLOY_USER"
-            echo "DEPLOY_PASSWORD<<EOF_DEPLOY_PASSWORD"
-            printf '%s\n' "$DEPLOY_PASSWORD"
-            echo "EOF_DEPLOY_PASSWORD"
-            echo "DEPLOY_SSH_PORT<<EOF_DEPLOY_SSH_PORT"
-            printf '%s\n' "$DEPLOY_SSH_PORT"
-            echo "EOF_DEPLOY_SSH_PORT"
-          } >>"$GITHUB_ENV"
-
-      - name: Run setup-test-site.sh on the LXC
+      - name: pediatric-company-150 workshops
         uses: appleboy/ssh-action@v1.2.0
-        env:
-          OWNER_EMAIL: ${{ secrets.API_OWNER_EMAIL }}
-          OWNER_PASSWORD: ${{ secrets.API_OWNER_PASSWORD }}
-          SITE_PASSWORD: ${{ secrets.API_SITE_PASSWORD }}
-          RESEND_KEY: ${{ secrets.API_RESEND_KEY }}
-          BREVO_KEY: ${{ secrets.API_BREVO_KEY }}
-          MAIL_FROM: ${{ secrets.API_MAIL_FROM }}
-          PSOOLA_CONFIG: ${{ secrets.API_PSOOLA_CONFIG }}
-          QUIET_SECRETS: "1"
-          MAP_EDITOR_EMAIL: ${{ inputs.map_editor_email || '' }}
-          ASSOCIATION_EDITOR_EMAIL: ${{ inputs.association_editor_email || '' }}
-          REGISTRATION_EDITOR_EMAIL: ${{ inputs.registration_editor_email || '' }}
-          WORKSHOP_EDITOR_EMAIL: ${{ inputs.workshop_editor_email || '' }}
         with:
-          envs: OWNER_EMAIL,OWNER_PASSWORD,SITE_PASSWORD,RESEND_KEY,BREVO_KEY,MAIL_FROM,PSOOLA_CONFIG,QUIET_SECRETS,MAP_EDITOR_EMAIL,ASSOCIATION_EDITOR_EMAIL,REGISTRATION_EDITOR_EMAIL,WORKSHOP_EDITOR_EMAIL
           host: ${{ env.DEPLOY_HOST }}
           username: ${{ env.DEPLOY_USER }}
           password: ${{ env.DEPLOY_PASSWORD }}
           port: ${{ env.DEPLOY_SSH_PORT }}
           timeout: 60s
-          command_timeout: 20m
+          command_timeout: 6m
           script: |
-            set -euo pipefail
-            cd /root
-            # Save the existing database before applying schema migrations.
-            if [ -f /opt/ismile-test/backend/bootstrap.php ] && [ -f /opt/ismile-test/backend/config.php ]; then
-              runuser -u www-data -- php -r 'require $argv[1]; \Ismile\Backup::run(); echo "Pre-deployment database backup saved.\n";' /opt/ismile-test/backend/bootstrap.php
-            fi
-            # Idle unattended-upgrade-shutdown holds dpkg locks forever; stop it.
-            systemctl stop unattended-upgrades 2>/dev/null || true
-            curl -fsSL "https://raw.githubusercontent.com/Redyar8r-SE/Ismile/backend/backend/tools/vps/setup-test-site.sh" \
-              -o /root/ismile-test-setup.sh
-            chmod +x /root/ismile-test-setup.sh
-            DOMAIN=api.ismile.krd BRANCH=backend bash /root/ismile-test-setup.sh
-            if [ -n "${MAP_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-map-manager.php
-            fi
-            if [ -n "${ASSOCIATION_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-association-manager.php
-            fi
-            if [ -n "${REGISTRATION_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-registration-manager.php
-            fi
-            if [ -n "${WORKSHOP_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-workshop-manager.php
-            fi
-            runuser -u www-data -- php /opt/ismile-test/backend/tools/verify-deployment.php --source /opt/ismile-test/repo
-            runuser -u www-data -- php /opt/ismile-test/backend/tools/verify-association.php
-            # Smoke: PHP admin + config API (basic auth from secrets.env)
-            SP="$(grep '^SITE_PASS=' /opt/ismile-test/secrets.env | cut -d= -f2-)"
-            code="$(curl -s -o /dev/null -w '%{http_code}' -u "ismile:${SP}" -H 'Host: api.ismile.krd' http://127.0.0.1:8081/admin/login.php)"
-            echo "admin_login_http=${code}"
-            test "$code" = "200"
-            # The QR fallback must be accessible through nginx's allow-list.
-            curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' \
-              http://127.0.0.1:8081/admin/vendor/jsQR.js | cmp - /opt/ismile-test/site/admin/vendor/jsQR.js
-            echo "qr_decoder_http=200 (matches deployed file)"
-            for asset in map.js map.css registration-details.js registration-details.css workshops.js workshops.css; do
-              curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' \
-                "http://127.0.0.1:8081/admin/${asset}" | cmp - "/opt/ismile-test/site/admin/${asset}"
-            done
-            runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/map-access.php
-            runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/registration-access.php
-            runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/workshop-access.php
-            echo "map_assets_http=200; all role permissions verified"
-            echo "registration_details_assets_http=200 (match deployed files)"
-            curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' -H 'X-Forwarded-Proto: https' \
-              http://127.0.0.1:8081/api/config.php | grep -q '"ok":true'
-            echo "api.ismile.krd update OK"
+            set -eu
+            runuser -u www-data -- php <<'PEDIATRIC_COMPANY_PRICE'
+            <?php
+            declare(strict_types=1);
+            require '/opt/ismile-test/backend/bootstrap.php';
+            use Ismile\App;use Ismile\Db;use Ismile\Audit;use Ismile\Workshops;use Ismile\WorkshopCatalog;
+            $id='pediatric-dentistry-masterclass';
+            Db::transaction(static function()use($id):void{
+             $row=Db::one('SELECT * FROM workshops WHERE id=? FOR UPDATE',[$id]);
+             if(!$row||$row['organizer']!=='company'||$row['company_phone']!=='07708252200'||$row['company_phone_secondary']!=='07709005881')throw new RuntimeException('Company workshop or contact details changed');
+             if((int)Db::value('SELECT COUNT(*) FROM workshop_bookings WHERE workshop_id=? AND removed_at IS NULL',[$id])>0&&(string)$row['currency']!=='USD')throw new RuntimeException('Existing bookings require price review');
+             if(Db::value("SELECT id FROM workshop_checkouts WHERE workshop_id=? AND provider_status IN ('created','unknown','awaiting_payment') LIMIT 1",[$id]))throw new RuntimeException('An existing online order needs review');
+             if(!is_file(App::storage('tmp/pediatric-company-150-before.json')))file_put_contents(App::storage('tmp/pediatric-company-150-before.json'),json_encode($row),LOCK_EX);
+             $team=json_decode($row['presenters_json'],true,512,JSON_THROW_ON_ERROR);$matched=0;foreach($team as &$trainer){if(in_array($trainer['name']['en']??'', ['Halqurd Salih Jaf','Dr. Halqurd Salih Jaf'],true)){$trainer['name']['en']='Dr. Halqurd Salih Jaf';$matched++;}}unset($trainer);if($matched!==1)throw new RuntimeException('Trainer identity changed');
+             $fields=['price'=>150,'currency'=>'USD','display_price'=>null,'display_currency'=>null,'presenters_json'=>json_encode($team,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR),'speaker_en'=>str_replace('& Halqurd Salih Jaf','& Dr. Halqurd Salih Jaf',$row['speaker_en']),'updated_at'=>App::now()];
+             Db::update('workshops',$fields,'id=?',[$id]);
+             $after=Db::one('SELECT * FROM workshops WHERE id=?',[$id]);if($after!==array_replace($row,$fields))throw new RuntimeException('Unexpected workshop fields changed');
+             $owner=(int)Db::value("SELECT id FROM admin_users WHERE role='owner' AND disabled_at IS NULL ORDER BY id LIMIT 1");if(!$owner)throw new RuntimeException('Owner required');
+             Audit::log($owner,'workshop.price_updated','workshop',null,['id'=>$id,'price'=>150,'currency'=>'USD','source'=>'Confirmed workshop poster']);
+            });
+            Workshops::syncWebsite();$w=WorkshopCatalog::one($id,true);if($w['organizer']!=='company'||$w['price']!==150||$w['currency']!=='USD')throw new RuntimeException('Company catalog price mismatch');
+            if(!in_array('Dr. Halqurd Salih Jaf',array_column(array_column($w['presenters'],'name'),'en'),true))throw new RuntimeException('Trainer title mismatch');
+            echo 'WORKSHOPS_VERIFIED='.json_encode(['id'=>$id,'organizer'=>$w['organizer'],'price'=>$w['price'],'currency'=>$w['currency'],'trainer'=>'Dr. Halqurd Salih Jaf','companyPhones'=>$w['companyPhones'],'date'=>$w['scheduledDate'],'start'=>$w['startTime'],'end'=>$w['endTime'],'otherDetailsPreserved'=>true]).PHP_EOL;
+            PEDIATRIC_COMPANY_PRICE
+            node <<'COMPANY_PRICE_SHARED'
+            const fs=require('node:fs'),path=require('node:path'),cp=require('node:child_process');
+            const apps=JSON.parse(cp.execFileSync('pm2',['jlist'],{encoding:'utf8',stdio:['ignore','pipe','pipe']})),matches=apps.filter(a=>a.pm2_env?.pm_cwd&&fs.existsSync(path.join(a.pm2_env.pm_cwd,'js/sections/registration.js')));if(matches.length!==1)throw Error('Website process ambiguous');
+            const current=fs.realpathSync(matches[0].pm2_env.pm_cwd),env=fs.readFileSync(path.join(current,'.env'),'utf8'),match=env.match(/^CONTENT_ROOT=(.*)$/m),shared=match&&match[1].trim()?match[1].trim():path.resolve(current,'../../shared-content'),file=path.join(shared,'data/workshops.json');
+            const rows=JSON.parse(fs.readFileSync(file,'utf8')),source=JSON.parse(fs.readFileSync('/opt/ismile-test/site/data/workshops.json','utf8')),id='pediatric-dentistry-masterclass',card=source.find(w=>w.id===id),index=rows.findIndex(w=>w.id===id);if(!card||index<0||card.organizer!=='company'||card.price!==150||card.currency!=='USD')throw Error('Company card mismatch');
+            const stat=fs.statSync(file),before=JSON.stringify(rows.map(w=>w.id===id?null:w));rows[index]=card;if(JSON.stringify(rows.map(w=>w.id===id?null:w))!==before)throw Error('Other cards changed');
+            const temp=file+'.company-price';fs.writeFileSync(temp,JSON.stringify(rows,null,2)+String.fromCharCode(10));fs.chmodSync(temp,stat.mode&0o777);fs.chownSync(temp,stat.uid,stat.gid);fs.renameSync(temp,file);
+            console.log('COMPANY_PRICE_SHARED='+JSON.stringify({company:true,price:150,currency:'USD',otherCardsPreserved:true}));
+            COMPANY_PRICE_SHARED
