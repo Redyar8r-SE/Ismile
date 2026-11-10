@@ -10,7 +10,8 @@
 // Nothing about the visitor is kept in the browser.
 import { t, getLang, onLangChange } from "../i18n.js?v=148";
 import { formatPrice } from "../utils/money.js?v=148";
-import { initRegistrationExperience } from "./registration-experience.js?v=168";
+import { initRegistrationExperience } from "./registration-experience.js?v=174";
+import { initVipWorkshops } from "../components/vip-workshops.js?v=174";
 
 const TOTAL_STEPS = 3;
 
@@ -62,6 +63,7 @@ export function initRegistration({ tickets = {} } = {}) {
   const backBtn = $("regBack");
   const nextBtn = $("regNext");
   const submitBtn = $("regSubmit");
+  const vipWorkshops = initVipWorkshops();
   const specialty = $("p_spec");
   const specialtyOptions = [...specialty.options];
   const age = $("p_age");
@@ -239,6 +241,7 @@ export function initRegistration({ tickets = {} } = {}) {
       if (!terms.checked) terms.focus();
       return terms.checked;
     }
+    if (number === 2 && checkedValue("ticket") === "vip") return vipWorkshops?.validate() ?? true;
     return true;
   }
 
@@ -309,14 +312,15 @@ export function initRegistration({ tickets = {} } = {}) {
   // Lunch is optional: with no day ticked the button says so.
   function updateNextLabel() {
     const unavailable = checkedValue("ticket") === "vip" && server?.vip?.available === false;
-    nextBtn.disabled = unavailable || sending;
+    const browsingPackage = unavailable && server?.prices?.vipPackageEnabled === true;
+    nextBtn.disabled = (unavailable && !browsingPackage) || sending;
     submitBtn.disabled = unavailable || sending;
-    if (unavailable) {
+    if (unavailable && !browsingPackage) {
       nextBtn.querySelector("span").textContent = t("vip_unavailable");
       submitBtn.querySelector("span").textContent = t("vip_unavailable");
       return;
     }
-    if (!sending) submitBtn.querySelector("span").textContent = t("submit");
+    if (!sending) submitBtn.querySelector("span").textContent = t(browsingPackage ? "vip_unavailable" : "submit");
     const skipping = step === 2 && checkedValue("ticket") !== "vip" && chosenLunch().length === 0;
     nextBtn.querySelector("span").textContent = t(skipping ? "lunch_skip" : "continue");
   }
@@ -471,6 +475,7 @@ export function initRegistration({ tickets = {} } = {}) {
     rows.push([t("rv_lunch"), lunch.length ? lunch.join(", ") : t("rv_lunch_none")]);
     if (checkedValue("ticket") === "vip") {
       rows.push([t("xp_review_included"), t(`xp_${experience.includedDay()}_full`)]);
+      if (vipWorkshops?.title()) rows.push([t("vip_workshop_label"), vipWorkshops.title()]);
       rows.push([t("xp_review_followup"), t("xp_review_call").replace("{phone}", isolate($("p_phone").value.trim()))]);
     }
     fillList($("reviewList"), rows);
@@ -494,10 +499,11 @@ export function initRegistration({ tickets = {} } = {}) {
     const lines = orderLines();
     fillList($("orderList"), lines.map((line) => [line.label, priceText(line.shownPrice, line.shownCurrency)]));
     const totals = new Map();
-    lines.forEach((line) => totals.set(line.currency, (totals.get(line.currency) || 0) + line.price));
+    const preparing = checkedValue("ticket") === "vip" && server?.prices?.vipPackageEnabled && server?.vip?.available === false;
+    lines.forEach((line) => { const currency = preparing ? line.shownCurrency : line.currency; const amount = preparing ? line.shownPrice : line.price; totals.set(currency, (totals.get(currency) || 0) + amount); });
     $("orderTotal").textContent = [...totals].map(([currency, amount]) => isolate(priceText(amount, currency))).join(" + ");
     // Dollar prices above, a dinar total: say why the numbers differ.
-    $("orderTotalNote").hidden = !lines.some((line) => line.shownCurrency !== line.currency);
+    $("orderTotalNote").hidden = preparing || !lines.some((line) => line.shownCurrency !== line.currency);
   }
 
   // ---------- Submit ----------
@@ -513,6 +519,7 @@ export function initRegistration({ tickets = {} } = {}) {
       validateStep(1);
       return;
     }
+    if (checkedValue("ticket") === "vip" && !validateStep(2)) { goTo(2); return; }
     if (!validateStep(3)) return;
     submitRegistration();
   });
@@ -535,6 +542,7 @@ export function initRegistration({ tickets = {} } = {}) {
     data.append("specialty", specialty.value);
     data.append("ticket", checkedValue("ticket"));
     if (checkedValue("ticket") === "vip") data.append("vip_lunch_day", experience.includedDay() === "day1" ? "1" : "2");
+    if (checkedValue("ticket") === "vip" && vipWorkshops?.selected()) data.append("vip_workshop", vipWorkshops.selected());
     chosenLunch().forEach((day) => data.append(`lunch_${day.id}`, "1"));
     data.append("terms", $("terms").checked ? "1" : "0");
     data.append("website", $("regTrap")?.value || "");   // spam trap: people never fill it
@@ -666,6 +674,7 @@ export function initRegistration({ tickets = {} } = {}) {
 
   async function submitRegistration() {
     if (sending) return;
+    if (checkedValue("ticket") === "vip" && server?.vip?.available === false) return;
     setSending(true);
     $("termsError").hidden = true;
     let result = null;
@@ -718,6 +727,7 @@ export function initRegistration({ tickets = {} } = {}) {
       const data = await response.json();
       server = data && data.ok === true ? data : null;
       if (server?.prices) { Object.assign(tickets, server.prices); renderTicketPrices(); }
+      if ($("vipPackageStatus")) $("vipPackageStatus").hidden = !(server?.prices?.vipPackageEnabled && server?.vip?.available === false);
     } catch {
       server = null;
     }

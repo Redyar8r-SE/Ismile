@@ -699,6 +699,11 @@ document.addEventListener("DOMContentLoaded", () => {
     if (photo) photo.required = studentTicket;
     const vipFields = document.getElementById("caller-vip-lunch");
     const vipDay = form.querySelector('[name="vip_lunch_day"]');
+    const vipWorkshop = document.getElementById("caller-vip-workshop");
+    if (vipWorkshop) {
+      vipWorkshop.hidden = ticket.value !== "vip";
+      vipWorkshop.querySelector("select").disabled = ticket.value !== "vip";
+    }
     if (vipFields && vipDay) {
       const vip = ticket.value === "vip";
       vipFields.hidden = !vip;
