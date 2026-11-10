@@ -424,17 +424,17 @@
       "ar": "دورة متقدمة في طب أسنان الأطفال: التخدير الموضعي دون ألم والتيجان الفولاذية وعلاج اللب الحيوي في الأسنان اللبنية والدائمة",
       "ku": "ماستەرکلاس لە پزیشکی ددانی منداڵان: بێهەستکردنی ناوچەیی بێ ئازار، کراونی پۆڵای دژەژەنگ و چارەسەری پالپی زیندوو لە ددانی شیری و هەمیشەیی"
     },
+    "company": {
+      "en": "idk",
+      "ar": "",
+      "ku": ""
+    },
     "speaker": {
-      "en": "Dr. Twana Othman, Dr. Shkar Hoshear & Halqurd Salih Jaf",
-      "ar": "د. توانا عثمان، د. شكار هوشيار وهەڵقورد صالح جاف",
-      "ku": "د. توانا عوسمان، د. شکار هۆشیار و هەڵقورد ساڵح جاف"
+      "en": "Dr. Twana Othman, Dr. Shkar Hoshear & Dr. Halqurd Salih Jaf",
+      "ar": "د. توانا عثمان، د. شكار هوشيار و د. هەڵقورد صالح جاف",
+      "ku": "د. توانا عوسمان، د. شکار هۆشیار و د. هەڵقورد ساڵح جاف"
     },
     "credentials": null,
-    "overview": {
-      "en": "Painless local anesthesia\nStainless steel crowns\nVital pulp therapy in primary and permanent teeth\nVenue: Grand Millennium Hotel, Sulaimani.",
-      "ar": "التخدير الموضعي دون ألم\nالتيجان الفولاذية المقاومة للصدأ\nعلاج اللب الحيوي في الأسنان اللبنية والدائمة\nالمكان: فندق غراند ميلينيوم، السليمانية.",
-      "ku": "بێهەستکردنی ناوچەیی بێ ئازار\nکراونی پۆڵای دژەژەنگ\nچارەسەری پالپی زیندوو لە ددانی شیری و هەمیشەیی\nشوێن: هۆتێلی گراند میلینیۆم، سلێمانی."
-    },
     "format": {
       "en": "Hands-on workshop",
       "ar": "ورشة تطبيقية",
@@ -450,14 +450,21 @@
       "ar": "مناسب لجميع مستويات الخبرة",
       "ku": "گونجاوە بۆ هەموو ئاستەکانی ئەزموون"
     },
-    "organizer": "ismile",
-    "company": null,
-    "companyPhone": null,
-    "companyPhones": [],
+    "overview": {
+      "en": "Painless local anesthesia\r\nStainless steel crowns\r\nVital pulp therapy in primary and permanent teeth\r\nVenue: Grand Millennium Hotel, Sulaimani.",
+      "ar": "التخدير الموضعي دون ألم\r\nالتيجان الفولاذية المقاومة للصدأ\r\nعلاج اللب الحيوي في الأسنان اللبنية والدائمة\r\nالمكان: فندق غراند ميلينيوم، السليمانية.",
+      "ku": "بێهەستکردنی ناوچەیی بێ ئازار\r\nکراونی پۆڵای دژەژەنگ\r\nچارەسەری پالپی زیندوو لە ددانی شیری و هەمیشەیی\r\nشوێن: هۆتێلی گراند میلینیۆم، سلێمانی."
+    },
+    "photo": "assets/workshops/pediatric-dentistry-team.webp",
+    "organizer": "company",
+    "companyPhone": "07708252200",
+    "companyPhones": [
+      "07708252200",
+      "07709005881"
+    ],
     "scheduledDate": "2026-11-20",
     "startTime": "09:00",
     "endTime": "12:00",
-    "photo": "assets/workshops/pediatric-dentistry-team.webp",
     "photoStyle": "cutout",
     "presenters": [
       {
@@ -488,7 +495,7 @@
       },
       {
         "name": {
-          "en": "Halqurd Salih Jaf",
+          "en": "Dr. Halqurd Salih Jaf",
           "ar": "هەڵقورد صالح جاف",
           "ku": "هەڵقورد ساڵح جاف"
         },
@@ -500,15 +507,17 @@
         }
       }
     ],
-    "price": 252750,
-    "currency": "IQD",
+    "price": 150,
+    "currency": "USD",
+    "displayPrice": null,
     "totalSeats": 25,
     "seatsLeft": 25,
-    "availabilityVerified": false,
-    "displayPrice": {
-      "amount": 150,
-      "currency": "USD"
-    }
+    "booked": 0,
+    "status": "active",
+    "sortOrder": 8,
+    "paidRegistrations": 0,
+    "pendingPayments": 0,
+    "availabilityVerified": true
   },
   {
     "id": "live-cbct-digital-applications",
