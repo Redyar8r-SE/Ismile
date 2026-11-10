@@ -126,13 +126,6 @@
       "tile": true
     },
     {
-      "name": "Lacalut",
-      "tier": "gold",
-      "logo": "assets/sponsors/lacalut-gold-20261110.webp",
-      "bg": "#18363F",
-      "tile": true
-    },
-    {
       "name": "Salam Dent",
       "tier": "gold",
       "logo": "assets/sponsors/salam-gold-20261110.webp",
@@ -199,6 +192,13 @@
       "name": "SNOW",
       "tier": "silver",
       "logo": "assets/sponsors/snow-white-20261110.webp",
+      "bg": "#18363F",
+      "tile": true
+    },
+    {
+      "name": "Lacalut",
+      "tier": "silver",
+      "logo": "assets/sponsors/lacalut-silver.webp",
       "bg": "#18363F",
       "tile": true
     },
