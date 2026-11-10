@@ -9,11 +9,11 @@
       },
       "className": "tc-plat",
       "subtitle": {
-        "en": "6 exhibition spaces",
-        "ar": "6 مساحات في المعرض",
-        "ku": "6 شوێنی پێشانگا"
+        "en": "5 exhibition spaces",
+        "ar": "5 مساحات في المعرض",
+        "ku": "5 شوێنی پێشانگا"
       },
-      "spots": 6
+      "spots": 5
     },
     {
       "id": "gold",
@@ -94,6 +94,13 @@
       "name": "J Dental Care",
       "tier": "diamond",
       "logo": "assets/sponsors/j-dental-care-o10.webp",
+      "bg": "#18363F",
+      "tile": true
+    },
+    {
+      "name": "Bnama Medical",
+      "tier": "diamond",
+      "logo": "assets/sponsors/bnama-medical-diamond-20261111.webp",
       "bg": "#18363F",
       "tile": true
     },
@@ -248,13 +255,6 @@
       "name": "BA DENT",
       "tier": "bronze",
       "logo": "assets/sponsors/ba-dent-white-20261110.webp",
-      "bg": "#18363F",
-      "tile": true
-    },
-    {
-      "name": "Bnama Medical",
-      "tier": "platinum",
-      "logo": "assets/sponsors/bnama-medical-platinum-20261111.webp",
       "bg": "#18363F",
       "tile": true
     },
