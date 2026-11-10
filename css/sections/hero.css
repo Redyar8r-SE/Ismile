@@ -82,7 +82,7 @@ html[lang="ar"] .hero-ed-big sup{order:-1;font-size:.3em;margin-top:.3em;font-we
 /* Transparent logos keep their original colors above the event pass. */
 .hero-pass{display:grid;gap:24px;min-width:0}
 /* Artwork proportions keep gaps even: CAPP is slightly smaller, ADA half-height. */
-.hero-partners{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2.451477fr) minmax(0,2.606558fr) minmax(0,1fr);align-items:center;gap:clamp(8px,1.2vw,16px);width:100%;max-width:632px;justify-self:center;padding:14px 0;background:transparent;direction:ltr}
+.hero-partners{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2.451477fr) minmax(0,2.606558fr) minmax(0,1.2fr);align-items:center;gap:clamp(8px,1.2vw,16px);width:100%;max-width:632px;justify-self:center;padding:14px 0;background:transparent;direction:ltr}
 .hero-partner{display:block;width:100%;min-width:0;height:auto;overflow:hidden}
 
 /* Ticket card */
