@@ -91,3 +91,6 @@ html[dir="rtl"] .sp::before{transform-origin:right}
   .sp:hover{transform:none}
   .sp:hover .ph img{transform:none}
 }
+
+/* Fill the portrait panel with Dr. Qais's square cutout. */
+.sp:not(.is-soon) .ph img[src$="/qais-aljumaily.webp"]{object-fit:cover;object-position:50% 100%}
