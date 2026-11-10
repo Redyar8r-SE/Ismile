@@ -11,7 +11,7 @@
 import { t, getLang, onLangChange } from "../i18n.js?v=148";
 import { formatPrice } from "../utils/money.js?v=148";
 import { initRegistrationExperience } from "./registration-experience.js?v=174";
-import { initVipWorkshops } from "../components/vip-workshops.js?v=177";
+import { initVipWorkshops } from "../components/vip-workshops.js?v=178";
 
 const TOTAL_STEPS = 3;
 
