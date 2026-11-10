@@ -286,5 +286,23 @@
       "ku": "لە ئاساییەوە بۆ ئاڵۆز: ئەزموونێکی پشتبەستوو بە کەیس لە 10,000 چاندنی ددان"
     },
     "photo": "assets/speakers/othman-a-omar.webp"
+  },
+  {
+    "name": {
+      "en": "Dr. Qais Aljumaily",
+      "ar": "د. قيس الجميلي",
+      "ku": "د. قەیس ئەلجومەیلی"
+    },
+    "role": {
+      "en": "B.D.S., H.D.D. (Prosthodontics), F.K.H.C.M.S. (Restorative Dentistry)",
+      "ar": "B.D.S.، H.D.D. (التعويضات السنية)، F.K.H.C.M.S. (طب الأسنان الترميمي)",
+      "ku": "B.D.S.، H.D.D. (جێگرەوەی ددان)، F.K.H.C.M.S. (چاککردنەوەی ددان)"
+    },
+    "topic": {
+      "en": "Beyond the Layers (Deep Impact of Indirect Restorations)",
+      "ar": "ما وراء الطبقات (التأثير العميق للترميمات غير المباشرة)",
+      "ku": "لە پشت چینەکانەوە (کاریگەریی قووڵی چاککردنەوە ناڕاستەوخۆکانی ددان)"
+    },
+    "photo": "assets/speakers/qais-aljumaily.webp"
   }
 ]
