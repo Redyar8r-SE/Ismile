@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
     refresh();
   });
 
-  root.querySelectorAll("[data-letter]").forEach(button => button.addEventListener("click", () => {
+  root.querySelectorAll(".ticket-az [data-letter]").forEach(button => button.addEventListener("click", () => {
     const row = rows.find(r => !r.hidden && r.dataset.letter === button.dataset.letter);
     if (!row || !scroller) return;
     const head = scroller.querySelector("thead");

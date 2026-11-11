@@ -94,7 +94,6 @@ if ($batchId && !$batch): ?>
     <?= $select('badge', 'Badge', ['' => 'All', 'none' => 'Not made yet', 'made' => 'Already made'], $made) ?>
     <?= $select('arrived', 'Attendance', ['' => 'All', 'yes' => 'Arrived', 'no' => 'Not arrived'], $arrived) ?>
     <?= $select('sort', 'Order', ['name' => 'Name A–Z', 'name_desc' => 'Name Z–A', 'newest' => 'Newest first'], $sort) ?>
-    <button class="btn ghost"><?= Page::navIcon('search') ?><span>Apply</span></button>
     <?php if ($search !== '' || $type !== '' || $made !== '' || $arrived !== '' || $sort !== 'name'): ?><a class="btn ghost" href="tickets.php">Clear</a><?php endif; ?>
   </form>
   <?php if ($sort !== 'newest' && $rows): ?><nav class="ticket-az" aria-label="Jump to a letter"><?php foreach (array_merge(range('A', 'Z'), ['#']) as $letter): ?><button type="button" data-letter="<?= $letter ?>"<?= in_array($letter, $letters, true) ? '' : ' disabled' ?>><?= $letter ?></button><?php endforeach; ?></nav><?php endif; ?>
