@@ -63,22 +63,22 @@
     {
       "kind": "accreditation",
       "role": {
-        "en": "Joint Accreditation Provider Partner",
-        "ar": "شريك مزوّد الاعتماد المشترك",
-        "ku": "هاوبەشی دابینکەری ئیعتیمادی هاوبەش"
+        "en": "Joint Providership",
+        "ar": "تقديم مشترك",
+        "ku": "پێشکەشکردنی هاوبەش"
       },
       "name": {
-        "en": "CAPP & ADA",
-        "ar": "CAPP و ADA",
-        "ku": "CAPP و ADA"
+        "en": "CAPP & iSMILE",
+        "ar": "CAPP & iSMILE",
+        "ku": "CAPP & iSMILE"
       },
       "note": {
-        "en": "Continuing-education accreditation",
-        "ar": "اعتماد التعليم الطبي المستمر",
-        "ku": "ئیعتیمادی خوێندنی بەردەوامی پزیشکی"
+        "en": "14 CE ADA Credits",
+        "ar": "14 رصيدًا للتعليم المستمر ADA",
+        "ku": "14 کرێدیتی CE ADA"
       },
       "logo": "assets/partners/capp-2026.webp",
-      "logo2": "assets/partners/ada-2026.webp"
+      "logo2": null
     }
   ]
 }
