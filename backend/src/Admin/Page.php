@@ -256,6 +256,7 @@ final class Page
         echo '<link rel="stylesheet" href="admin.css?v=' . $v('admin.css') . '"><script src="admin.js?v=' . $v('admin.js') . '" defer></script>';
         // The Tickets & Certificates pages reuse the PSOOLA ticket dialog.
         if ($registrationDetails || $current === 'tickets') echo '<link rel="stylesheet" href="registration-details.css?v=' . $v('registration-details.css') . '"><script src="registration-details.js?v=' . $v('registration-details.js') . '" defer></script>';
+        if ($current === 'tickets') echo '<script src="tickets.js?v=' . $v('tickets.js') . '" defer></script>';
         if ($current === 'workshops') echo '<link rel="stylesheet" href="workshops.css?v=' . $v('workshops.css') . '"><script src="workshops.js?v=' . $v('workshops.js') . '" defer></script>';
         echo '</head><body class="' . ($user ? 'admin-shell' . (self::viewOnlyHere() ? ' view-only' : '') : 'database-auth') . ($registrationDetails ? ' registration-detail-page' : '') . '" data-page="' . self::e($current) . '">';
         if ($user) {

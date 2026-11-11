@@ -137,3 +137,18 @@
 .badge-font summary{cursor:pointer;font-size:13px}
 .badge-font form{margin-top:10px}
 .badge-font label{display:flex;align-items:center;gap:6px;font-size:12px}
+.ticket-filters{display:flex;flex-wrap:wrap;align-items:end;gap:10px;margin:6px 0 14px}
+.ticket-filter{display:grid;gap:4px;font-size:11px;font-weight:600;color:var(--rd-muted)}
+.ticket-filter select{min-width:130px}
+.ticket-search{flex:1 1 280px}
+.ticket-search input{width:100%}
+.ticket-az{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px}
+.ticket-az button{min-width:30px;height:30px;border:1px solid var(--rd-line);border-radius:8px;background:#fff;color:#0f5e8c;font-weight:700;cursor:pointer}
+.ticket-az button:hover:not(:disabled){background:#e9f3fa;border-color:#0f5e8c}
+.ticket-az button:disabled{opacity:.35;cursor:default}
+.ticket-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.ticket-scroll{max-height:70vh;overflow:auto}
+.ticket-scroll thead th{position:sticky;top:0;z-index:1;background:#f4f7f9}
+.ticket-scroll tr[hidden]{display:none}
+@keyframes ticket-flash{from{background:#fff3c4}to{background:transparent}}
+.ticket-flash td{animation:ticket-flash 1.6s ease-out}

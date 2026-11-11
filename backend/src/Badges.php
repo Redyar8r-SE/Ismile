@@ -19,10 +19,20 @@ final class Badges
     /** One badge per PSOOLA ticket code of this guest (normally one). */
     public static function pdf(array $registration, array $codes): string
     {
+        return self::pdfMany([[$registration, $codes]], 'iSmile 2026 badge · ' . Registrations::fullName($registration));
+    }
+
+    /**
+     * Several guests' badges in one PDF, in the given order: front then back for each code.
+     *
+     * @param list<array{0: array, 1: list<string>}> $guests [registration, codes]
+     */
+    public static function pdfMany(array $guests, string $title): string
+    {
         $pdf = new \TCPDF('P', 'mm', [self::WIDTH, self::HEIGHT], true, 'UTF-8');
         $pdf->SetCreator('iSmile 2026');
         $pdf->SetAuthor('iSmile 2026');
-        $pdf->SetTitle('iSmile 2026 badge · ' . Registrations::fullName($registration));
+        $pdf->SetTitle($title);
         $pdf->setPrintHeader(false);
         $pdf->setPrintFooter(false);
         $pdf->SetMargins(0, 0, 0);
@@ -30,9 +40,11 @@ final class Badges
         $fonts = self::fonts($pdf);
         // Print at 100% on both sides of the card (front, then back).
         $pdf->setViewerPreferences(['PrintScaling' => 'None', 'Duplex' => 'DuplexFlipLongEdge', 'PickTrayByPDFSize' => true]);
-        foreach ($codes as $code) {
-            self::front($pdf);
-            self::back($pdf, $registration, $code, $fonts);
+        foreach ($guests as [$registration, $codes]) {
+            foreach ($codes as $code) {
+                self::front($pdf);
+                self::back($pdf, $registration, $code, $fonts);
+            }
         }
         return $pdf->Output('', 'S');
     }

@@ -115,14 +115,80 @@ final class PsoolaTickets
             'isComplimentary'=>($rich['isComplimentary']??false)===true,'emailStatus'=>$rich['emailStatus']??null,'whatsappStatus'=>$rich['whatsappStatus']??null];
     }
 
-    /** The code of each active PSOOLA ticket of this guest, as the API returns it (for the badge). */
-    public static function codes(array $user, int $registrationId): array
+    /**
+     * The active PSOOLA ticket codes of many guests, as the API returns them
+     * (for badges): one pass over each event's order list, with the same
+     * checks as the ticket preview. All or nothing: if any guest has no
+     * active code, nothing is returned and the names are listed.
+     *
+     * @param list<array> $registrations
+     * @return array<int, list<string>> registration id => codes
+     */
+    public static function codesFor(array $user, array $registrations): array
     {
-        $codes = [];
-        foreach (self::preview($user, $registrationId)['tickets'] as $ticket) {
-            if (in_array($ticket['status'], ['valid', 'transferred'], true)) $codes[] = $ticket['code'];
+        $wanted = [];
+        $missing = [];
+        foreach ($registrations as $registration) {
+            if (!self::canView($user, $registration)) throw new UserError('Your account cannot view the PSOOLA ticket of ' . Registrations::fullName($registration) . '.');
+            $ticket = Tickets::forRegistration((int) $registration['id']);
+            $source = in_array($registration['status'], ['paid', 'complimentary'], true) && $ticket && $ticket['cancelled_at'] === null ? self::source((int) $registration['id']) : null;
+            if (!$source || !$source['id']) {
+                $missing[] = Registrations::fullName($registration);
+                continue;
+            }
+            $eventId = (string) ($source['guest']['event_id'] ?? App::config('payments.psoola.event_id', ''));
+            $wanted[$eventId][(string) $source['id']] = [$registration, $source];
         }
-        if (!$codes) throw new UserError('PSOOLA did not return an active ticket code for this guest. Try again later.');
+        $codes = [];
+        $gateway = new PsoolaGateway();
+        foreach ($wanted as $eventId => $orders) {
+            $cursor = null;
+            $seen = [];
+            $started = microtime(true);
+            for ($page = 0; $page < 50 && $orders && microtime(true) - $started < 90; $page++) {
+                $query = ['eventId' => $eventId, 'limit' => 100];
+                if ($cursor !== null) $query['cursor'] = $cursor;
+                $answer = $gateway->partnerRequest('GET', 'orders?' . http_build_query($query));
+                if ($answer['status'] !== 200 || !is_array($answer['json']['orders'] ?? null)) throw new UserError('PSOOLA could not return the ticket list. Try again in a moment; nothing was downloaded.');
+                foreach ($answer['json']['orders'] as $candidate) {
+                    $id = is_array($candidate) ? ($candidate['id'] ?? null) : null;
+                    if (!is_string($id) || !isset($orders[$id])) continue;
+                    [$registration, $source] = $orders[$id];
+                    self::verify($registration, $source, $candidate);
+                    if (($candidate['event']['id'] ?? $candidate['eventId'] ?? null) !== $eventId) throw new UserError('PSOOLA returned a ticket for a different event.');
+                    $list = self::activeCodes($candidate);
+                    if ($list) $codes[(int) $registration['id']] = $list;
+                    unset($orders[$id]);
+                }
+                $cursor = $answer['json']['nextCursor'] ?? null;
+                if (!is_string($cursor) || $cursor === '' || isset($seen[$cursor])) break;
+                $seen[$cursor] = true;
+            }
+        }
+        foreach ($registrations as $registration) {
+            if (!isset($codes[(int) $registration['id']]) && !in_array(Registrations::fullName($registration), $missing, true)) $missing[] = Registrations::fullName($registration);
+        }
+        if ($missing) {
+            $names = implode(', ', array_slice($missing, 0, 8)) . (count($missing) > 8 ? ' and ' . (count($missing) - 8) . ' more' : '');
+            throw new UserError('PSOOLA has no active ticket code for: ' . $names . '. Nothing was downloaded.');
+        }
+        return $codes;
+    }
+
+    /** The codes of an order's valid tickets, checked like the preview. */
+    private static function activeCodes(array $order): array
+    {
+        $tickets = $order['tickets'] ?? null;
+        $count = $order['order']['ticketCount'] ?? null;
+        if (!is_array($tickets) || !is_int($count) || $count < 1 || $count > 100 || count($tickets) !== $count) {
+            throw new UserError('PSOOLA returned incomplete ticket details. Try again later.');
+        }
+        $codes = [];
+        foreach ($tickets as $ticket) {
+            $code = is_array($ticket) ? ($ticket['code'] ?? null) : null;
+            if (!is_string($code) || trim($code) === '' || strlen($code) > 512 || in_array($code, $codes, true)) throw new UserError('PSOOLA returned invalid ticket codes. Ask the Owner to review this order.');
+            if (in_array($ticket['status'] ?? null, ['valid', 'transferred'], true)) $codes[] = $code;
+        }
         return $codes;
     }
 
