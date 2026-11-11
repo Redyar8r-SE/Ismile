@@ -30,7 +30,7 @@ final class Page
         'booths'        => ['Booths', 'sponsors'],
         'map'           => ['Map', 'map'],
         'checkin'       => ['Registration', 'checkin'],
-        'certificates'  => ['Certificates', 'certificates'],
+        'certificates'  => ['Certificates & Tickets', 'certificates'],
         'settings'      => ['Settings', 'owner'],
         'users'         => ['Users', 'owner'],
         'communications' => ['Communication center', 'communications'],
@@ -243,7 +243,8 @@ final class Page
         // The version follows the files' date, so a change is never hidden by the browser's cache.
         $v = static fn (string $file): int => (int) @filemtime(App::siteFile('admin/' . $file)) ?: 1;
         echo '<link rel="stylesheet" href="admin.css?v=' . $v('admin.css') . '"><script src="admin.js?v=' . $v('admin.js') . '" defer></script>';
-        if ($registrationDetails) echo '<link rel="stylesheet" href="registration-details.css?v=' . $v('registration-details.css') . '"><script src="registration-details.js?v=' . $v('registration-details.js') . '" defer></script>';
+        // The Certificates & Tickets page reuses the PSOOLA ticket dialog.
+        if ($registrationDetails || $current === 'certificates') echo '<link rel="stylesheet" href="registration-details.css?v=' . $v('registration-details.css') . '"><script src="registration-details.js?v=' . $v('registration-details.js') . '" defer></script>';
         if ($current === 'workshops') echo '<link rel="stylesheet" href="workshops.css?v=' . $v('workshops.css') . '"><script src="workshops.js?v=' . $v('workshops.js') . '" defer></script>';
         echo '</head><body class="' . ($user ? 'admin-shell' . (self::viewOnlyHere() ? ' view-only' : '') : 'database-auth') . ($registrationDetails ? ' registration-detail-page' : '') . '" data-page="' . self::e($current) . '">';
         if ($user) {
