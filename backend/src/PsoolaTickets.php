@@ -115,6 +115,17 @@ final class PsoolaTickets
             'isComplimentary'=>($rich['isComplimentary']??false)===true,'emailStatus'=>$rich['emailStatus']??null,'whatsappStatus'=>$rich['whatsappStatus']??null];
     }
 
+    /** The code of each active PSOOLA ticket of this guest, as the API returns it (for the badge). */
+    public static function codes(array $user, int $registrationId): array
+    {
+        $codes = [];
+        foreach (self::preview($user, $registrationId)['tickets'] as $ticket) {
+            if (in_array($ticket['status'], ['valid', 'transferred'], true)) $codes[] = $ticket['code'];
+        }
+        if (!$codes) throw new UserError('PSOOLA did not return an active ticket code for this guest. Try again later.');
+        return $codes;
+    }
+
     private static function qrImage(string $payload): string
     {
         require_once dirname(__DIR__).'/vendor/tecnickcom/tcpdf/tcpdf_barcodes_2d.php';
