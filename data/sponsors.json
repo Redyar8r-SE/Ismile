@@ -232,6 +232,13 @@
       "tile": true
     },
     {
+      "name": "PAYTEKHT",
+      "tier": "silver",
+      "logo": "assets/sponsors/paytekht-silver-20261111.jpeg",
+      "bg": "#FFFFFF",
+      "tile": true
+    },
+    {
       "name": "Gengigel",
       "tier": "bronze",
       "logo": "assets/sponsors/gengigel-bronze.webp",

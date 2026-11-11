@@ -579,5 +579,58 @@
     "totalSeats": 25,
     "seatsLeft": 25,
     "availabilityVerified": true
+  },
+  {
+    "id": "implant-digital-prosthetic-workflow",
+    "icon": "implant",
+    "title": {
+      "en": "Implant Digital Prosthetic Workflow",
+      "ar": "سير العمل الرقمي للتعويضات فوق الزرعات",
+      "ku": "ڕەوتی کاری دیجیتاڵی پڕۆستێتیکی ئیمپڵانت"
+    },
+    "speaker": {
+      "en": "Dr. Chenar Subhi",
+      "ar": "د. چنار صبحي",
+      "ku": "د. چنار سوبحی"
+    },
+    "credentials": {
+      "en": "BDS, MSc in Conservative Dentistry",
+      "ar": "بكالوريوس طب وجراحة الأسنان، ماجستير في طب الأسنان التحفظي",
+      "ku": "بەکالۆریۆس لە پزیشکی و نەشتەرگەری ددان، ماستەر لە پزیشکیی ددانی پارێزگاری"
+    },
+    "company": null,
+    "organizer": "company",
+    "companyPhone": "0750 427 0507",
+    "companyPhones": [
+      "0750 427 0507"
+    ],
+    "format": {
+      "en": "Round table",
+      "ar": "طاولة مستديرة",
+      "ku": "مێزی خڕ"
+    },
+    "duration": {
+      "en": "1 hour",
+      "ar": "ساعة واحدة",
+      "ku": "1 کاتژمێر"
+    },
+    "level": null,
+    "overview": {
+      "en": "DIGITAL IMPLANT PROSTHETICS\nFrom Scanning to Final Restoration\nRound-table workshop at Grand Millennium Hotel, Sulaimani.\nWhat You Will Learn:\n• Complete Digital Implant Prosthetic Workflow\n• Implant Scanning Techniques & Scan Body Protocols\n• Common Scanning Errors & How to Avoid Them\n• Implant Libraries & CAD/CAM Design\n• Troubleshooting Prosthetic Misfit & Workflow Errors\n• Clinical–Laboratory Communication for Predictable Results\nScan Accurately. Design Precisely. Restore Predictably.",
+      "ar": "التعويضات الرقمية فوق الزرعات\nمن المسح إلى الترميم النهائي\nورشة طاولة مستديرة في فندق غراند ميلينيوم، السليمانية.\nما ستتعلمه:\n• سير العمل الرقمي الكامل للتعويضات فوق الزرعات\n• تقنيات مسح الزرعات وبروتوكولات أجسام المسح\n• أخطاء المسح الشائعة وكيفية تجنبها\n• مكتبات الزرعات والتصميم باستخدام CAD/CAM\n• معالجة عدم تطابق التعويضات وأخطاء سير العمل\n• التواصل بين العيادة والمختبر لتحقيق نتائج متوقعة\nامسح بدقة. صمّم بإتقان. حقّق ترميمات بنتائج متوقعة.",
+      "ku": "پڕۆستێتیکی دیجیتاڵی ئیمپڵانت\nلە سکانکردنەوە تا ڕیستۆرەیشنی کۆتایی\nوۆرکشۆپی مێزی خڕ لە هۆتێلی گراند میلینیۆم، سلێمانی.\nچی فێر دەبیت:\n• ڕەوتی کاری تەواوی دیجیتاڵی پڕۆستێتیکی ئیمپڵانت\n• تەکنیکەکانی سکانکردنی ئیمپڵانت و پڕۆتۆکۆلەکانی Scan Body\n• هەڵە باوەکانی سکانکردن و چۆنیەتی خۆپاراستن لێیان\n• کتێبخانەکانی ئیمپڵانت و دیزاینی CAD/CAM\n• چارەسەرکردنی ناگونجانی پڕۆستێتیک و هەڵەکانی ڕەوتی کار\n• پەیوەندیی نێوان کلینیک و تاقیگە بۆ ئەنجامی پێشبینیکراو\nبە وردی سکان بکە. بە وردی دیزاین بکە. ئەنجامی پێشبینیکراو بەدەست بهێنە."
+    },
+    "photo": "assets/workshops/chenar-subhi.png",
+    "photoStyle": "photo",
+    "presenters": [],
+    "scheduledDate": "2026-11-20",
+    "startTime": "15:30",
+    "endTime": "16:30",
+    "price": 0,
+    "currency": "IQD",
+    "displayPrice": null,
+    "totalSeats": 25,
+    "seatsLeft": 25,
+    "availabilityVerified": true
   }
 ]
