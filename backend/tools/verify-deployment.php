@@ -10,7 +10,7 @@ use Ismile\Auth;
 use Ismile\Db;
 use Ismile\Admin\PdfReport;
 
-$pages = ['index','checkin','registrations','association','certificates','sponsors','booths','map','lists','communications','payments','psoola-orders','registration','workshops','settings','users','backups','content'];
+$pages = ['index','checkin','registrations','association','certificates','tickets','sponsors','booths','map','lists','communications','payments','psoola-orders','registration','workshops','settings','users','backups','content'];
 if (($argv[1] ?? '') === '--render') {
     $page = $argv[2] ?? '';
     if (!in_array($page, $pages, true)) throw new RuntimeException('Unknown verification page.');
@@ -242,6 +242,8 @@ $html = $render('lists', 'list=registered');
 $check('Registered list offers the Sale type filter (cash, card, free)', str_contains($html, '<legend>Sale type</legend>') && str_contains($html, 'name="sale" value="cash"') && str_contains($html, 'Card (online)'));
 $html = $render('certificates');
 $check('certificate delivery remains manual', str_contains($html, 'Check-in never sends certificate emails.') && str_contains($html, 'Download attendance report (PDF)'));
+$html = $render('tickets');
+$check('Tickets page lists event tickets with the PSOOLA QR window', str_contains($html, 'Event tickets') && str_contains($html, 'data-rd-psoola-dialog') && str_contains($html, 'registration-details.js'));
 // Viewer: opens every event page in view-only mode, never the Owner pages or the website editor.
 foreach (['index','registrations','lists','payments','psoola-orders','workshops','sponsors','booths','checkin','certificates','communications'] as $page) {
     $html = $render($page, '', 'viewer');

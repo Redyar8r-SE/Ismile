@@ -30,7 +30,8 @@ final class Page
         'booths'        => ['Booths', 'sponsors'],
         'map'           => ['Map', 'map'],
         'checkin'       => ['Registration', 'checkin'],
-        'certificates'  => ['Certificates & Tickets', 'certificates'],
+        'certificates'  => ['Certificates', 'certificates'],
+        'tickets'       => ['Tickets', 'certificates'],
         'settings'      => ['Settings', 'owner'],
         'users'         => ['Users', 'owner'],
         'communications' => ['Communication center', 'communications'],
@@ -54,6 +55,7 @@ final class Page
             'map' => '<path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6Zm6-3v15m6-12v15"/>',
             'checkin' => '<path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5M8 12l3 3 5-6"/>',
             'psoola-orders' => '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
+            'tickets' => '<path d="M3 5h18v5a2 2 0 0 0 0 4v5H3v-5a2 2 0 0 0 0-4Z"/><path d="M15 5v3m0 3v2m0 3v3"/>',
             'certificates' => '<circle cx="12" cy="9" r="6"/><path d="m8 14-2 7 6-3 6 3-2-7m-7-6 2 2 3-4"/>',
             'settings' => '<path d="m9 3-.7 2.2-2 .9L4 5.6 2 9l1.7 1.6v2.8L2 15l2 3.4 2.3-.5 2 .9L9 21h6l.7-2.2 2-.9 2.3.5 2-3.4-1.7-1.6v-2.8L22 9l-2-3.4-2.3.5-2-.9L15 3Z"/><circle cx="12" cy="12" r="3"/>',
             'users' => '<circle cx="9" cy="8" r="3"/><path d="M3 21v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 0 1 0 6m2 4a5 5 0 0 1 3 4v2"/>',
@@ -243,8 +245,8 @@ final class Page
         // The version follows the files' date, so a change is never hidden by the browser's cache.
         $v = static fn (string $file): int => (int) @filemtime(App::siteFile('admin/' . $file)) ?: 1;
         echo '<link rel="stylesheet" href="admin.css?v=' . $v('admin.css') . '"><script src="admin.js?v=' . $v('admin.js') . '" defer></script>';
-        // The Certificates & Tickets page reuses the PSOOLA ticket dialog.
-        if ($registrationDetails || $current === 'certificates') echo '<link rel="stylesheet" href="registration-details.css?v=' . $v('registration-details.css') . '"><script src="registration-details.js?v=' . $v('registration-details.js') . '" defer></script>';
+        // The Tickets page reuses the PSOOLA ticket dialog.
+        if ($registrationDetails || $current === 'tickets') echo '<link rel="stylesheet" href="registration-details.css?v=' . $v('registration-details.css') . '"><script src="registration-details.js?v=' . $v('registration-details.js') . '" defer></script>';
         if ($current === 'workshops') echo '<link rel="stylesheet" href="workshops.css?v=' . $v('workshops.css') . '"><script src="workshops.js?v=' . $v('workshops.js') . '" defer></script>';
         echo '</head><body class="' . ($user ? 'admin-shell' . (self::viewOnlyHere() ? ' view-only' : '') : 'database-auth') . ($registrationDetails ? ' registration-detail-page' : '') . '" data-page="' . self::e($current) . '">';
         if ($user) {
@@ -254,7 +256,7 @@ final class Page
             echo '<nav class="sidebar-nav" aria-label="Database pages">';
             $groups = [
                 'Workspace' => ['index'],
-                'Event operations' => ['registrations', 'lists', 'association', 'payments', 'psoola-orders', 'workshops', 'sponsors', 'booths', 'map', 'checkin', 'certificates'],
+                'Event operations' => ['registrations', 'lists', 'association', 'payments', 'psoola-orders', 'workshops', 'sponsors', 'booths', 'map', 'checkin', 'certificates', 'tickets'],
                 'Database' => ['communications', 'settings', 'users', 'backups'],
             ];
             foreach ($groups as $group => $files) {
