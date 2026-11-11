@@ -20,7 +20,9 @@ Page::action(static function () use ($user, $canBadge): string {
     $action = (string) ($_POST['do'] ?? '');
     if (in_array($action, ['badge_batch', 'badge_batch_delete'], true) && !$canBadge) throw new UserError('Your account cannot make badges.');
     if ($action === 'badge_batch') {
-        $id = BadgeBatches::create($user, array_map('intval', (array) ($_POST['guests'] ?? [])));
+        // One JSON field, like Association: the admin turns list fields (name[]=…) into empty text.
+        $ticked = json_decode((string) ($_POST['guests_json'] ?? ''), true);
+        $id = BadgeBatches::create($user, is_array($ticked) ? array_map('intval', array_filter($ticked, 'is_int')) : []);
         Page::flash('ok', BadgeBatches::label(BadgeBatches::find($id)) . ' created. Download or print its PDF below.');
         Page::redirect('tickets.php?batch=' . $id);
     }
@@ -102,7 +104,7 @@ if ($batchId && !$batch): ?>
   </tbody></table></div>
 </section>
 <?php else: ?>
-<form id="badge-batch-form" method="post" action="tickets.php" data-badge-batch-form><?= Page::csrfField() ?><input type="hidden" name="do" value="badge_batch"></form>
+<form id="badge-batch-form" method="post" action="tickets.php" data-badge-batch-form><?= Page::csrfField() ?><input type="hidden" name="do" value="badge_batch"><input type="hidden" name="guests_json" value="" data-badge-guests></form>
 <section class="card" id="tickets" data-registration-details data-ticket-directory data-no-live data-csrf="<?= $e(Auth::csrf()) ?>">
   <div class="panel-top"><?= Page::panelHeading('Event tickets', 'Find a guest and show their original PSOOLA QR. Tick guests and press Create batch to make their printed badges as one batch.', 'ticket') ?></div>
   <form method="get" action="tickets.php" class="ticket-filters" role="search">
@@ -123,7 +125,7 @@ if ($batchId && !$batch): ?>
   <div class="table-wrap ticket-scroll"><table><thead><tr><th><?php if ($canBadge): ?><input type="checkbox" data-ticket-all aria-label="Select every guest shown"><?php endif; ?></th><th>Name</th><th>Reference</th><th>Ticket</th><th>Type</th><th>Attendance</th><th>Badge</th><th>Actions</th></tr></thead><tbody>
   <?php foreach ($rows as $row): $canQr = $row['has_psoola'] && PsoolaTickets::canView($user, $row); $name = Registrations::fullName($row); ?>
   <tr data-letter="<?= $letterOf($row) ?>" data-search="<?= $e(mb_strtolower($name . ' ' . $row['ref'] . ' ' . $row['phone'] . ' ' . $row['ticket_no'])) ?>">
-    <td><?php if ($canQr && $canBadge): ?><input type="checkbox" name="guests[]" value="<?= (int) $row['id'] ?>" form="badge-batch-form" aria-label="<?= $e('Select ' . $name) ?>"><?php endif; ?></td>
+    <td><?php if ($canQr && $canBadge): ?><input type="checkbox" data-guest="<?= (int) $row['id'] ?>" aria-label="<?= $e('Select ' . $name) ?>"><?php endif; ?></td>
     <td><a href="registration.php?id=<?= (int) $row['id'] ?>"><b><?= $e($name) ?></b></a></td><td><?= $e($row['ref']) ?></td><td><code><?= $e($row['ticket_no']) ?></code></td>
     <td><?= $e(Registrations::ticketName($row['ticket_type'])) ?></td><td><?= $row['attended_days'] ? $e($row['attended_days']) : 'Not yet' ?></td>
     <td><?php if ($row['last_batch']): ?><a class="pill teal" href="<?= $e($batchUrl((int) $row['last_batch'])) ?>">Batch #<?= (int) $row['last_batch_number'] ?></a><?= (int) $row['batch_count'] > 1 ? ' <small class="muted">×' . (int) $row['batch_count'] . '</small>' : '' ?><?php else: ?><span class="pill gold">Not made</span><?php endif; ?></td>

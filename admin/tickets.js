@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const selected = root.querySelector("[data-ticket-selected]");
   const batchButtons = [...root.querySelectorAll("[data-ticket-batch]")];
   const form = document.querySelector("[data-badge-batch-form]");
-  const boxes = () => [...root.querySelectorAll("input[name='guests[]']")];
+  const boxes = () => [...root.querySelectorAll("input[data-guest]")];
   const shownBoxes = () => boxes().filter(box => !box.closest("tr").hidden);
 
   const refresh = () => {
@@ -50,11 +50,13 @@ document.addEventListener("DOMContentLoaded", () => {
   }));
 
   all?.addEventListener("change", () => { shownBoxes().forEach(box => { box.checked = all.checked; }); refresh(); });
-  root.addEventListener("change", event => { if (event.target.matches("input[name='guests[]']")) refresh(); });
+  root.addEventListener("change", event => { if (event.target.matches("input[data-guest]")) refresh(); });
   root.querySelectorAll("select[data-auto-submit]").forEach(select => select.addEventListener("change", () => select.form.requestSubmit()));
 
   form?.addEventListener("submit", () => {
-    const ticked = boxes().filter(box => box.checked).length;
+    const ids = boxes().filter(box => box.checked).map(box => Number(box.dataset.guest));
+    form.querySelector("[data-badge-guests]").value = JSON.stringify(ids);
+    const ticked = ids.length;
     if (selected) selected.textContent = "Creating a batch of " + ticked + " guest(s)…";
     // After the browser has sent the form, so the button cannot be pressed twice.
     setTimeout(() => batchButtons.forEach(button => { button.disabled = true; }));
