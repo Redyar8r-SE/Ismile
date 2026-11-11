@@ -127,6 +127,13 @@
       "tile": true
     },
     {
+      "name": "SNOW",
+      "tier": "platinum",
+      "logo": "assets/sponsors/snow-white-20261110.webp",
+      "bg": "#18363F",
+      "tile": true
+    },
+    {
       "name": "Mandali Company",
       "tier": "gold",
       "logo": "assets/sponsors/mandali-gold.webp",
@@ -151,6 +158,13 @@
       "name": "Salam Dent",
       "tier": "gold",
       "logo": "assets/sponsors/salam-gold-20261110.webp",
+      "bg": "#18363F",
+      "tile": true
+    },
+    {
+      "name": "NEWDENT",
+      "tier": "gold",
+      "logo": "assets/sponsors/newdent-gold-20261111.webp",
       "bg": "#18363F",
       "tile": true
     },
@@ -211,23 +225,9 @@
       "tile": true
     },
     {
-      "name": "SNOW",
-      "tier": "silver",
-      "logo": "assets/sponsors/snow-white-20261110.webp",
-      "bg": "#18363F",
-      "tile": true
-    },
-    {
       "name": "Lacalut",
       "tier": "silver",
       "logo": "assets/sponsors/lacalut-silver.webp",
-      "bg": "#18363F",
-      "tile": true
-    },
-    {
-      "name": "NEWDENT",
-      "tier": "silver",
-      "logo": "assets/sponsors/newdent-silver-20261110.webp",
       "bg": "#18363F",
       "tile": true
     },
