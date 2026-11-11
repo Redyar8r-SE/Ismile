@@ -27,8 +27,9 @@ $waiting = (int) Db::value("SELECT COUNT(*) FROM registrations r JOIN tickets t 
 $page = max(1, (int) ($_GET['page'] ?? 1));
 $offset = min($page - 1, 100000) * 50;
 $rows = Db::all("SELECT c.*, r.ref, r.email, (SELECT CASE WHEN e.provider_message_id LIKE 'skipped:%' THEN 'skipped' ELSE e.status END FROM emails e WHERE e.registration_id=r.id AND e.kind='certificate' AND e.to_email=r.email ORDER BY e.id DESC LIMIT 1) AS email_status, (SELECT GROUP_CONCAT(CONCAT('Day ', a.event_day) ORDER BY a.event_day SEPARATOR ' & ') FROM ticket_attendance a WHERE a.ticket_id=t.id) AS attended_days FROM certificates c JOIN registrations r ON r.id=c.registration_id JOIN tickets t ON t.registration_id=r.id WHERE " . Certificates::ELIGIBLE_SQL . " ORDER BY c.recipient_name, c.id LIMIT 50 OFFSET $offset");
-Page::top('Certificates', 'certificates', $total ? '<form method="post" class="inline-form">'.Page::csrfField().'<input type="hidden" name="do" value="email_all"><button class="btn">'.Page::navIcon('mail').'<span>Send all certificates by email</span></button></form><a class="btn green" href="certificate-download.php">Download all certificates (PDF)</a>' : '');
+Page::top('Certificates', 'tickets', $total ? '<form method="post" class="inline-form">'.Page::csrfField().'<input type="hidden" name="do" value="email_all"><button class="btn">'.Page::navIcon('mail').'<span>Send all certificates by email</span></button></form><a class="btn green" href="certificate-download.php">Download all certificates (PDF)</a>' : '');
 if ($inCheckin) echo CheckinWorkspace::navigation('certificate',$user,isset($_GET['day']) ? (int)$_GET['day'] : null);
+else echo Page::ticketTabs('certificates');
 $e = [Page::class, 'e'];
 $detailContext = $inCheckin ? '&workspace=checkin' . (isset($_GET['day']) && in_array((int)$_GET['day'],[1,2],true) ? '&day='.(int)$_GET['day'] : '') : '';
 ?>

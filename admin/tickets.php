@@ -30,6 +30,7 @@ $rows = Db::all("SELECT r.id, r.ref, r.first_name, r.father_name, r.grandfather_
     ORDER BY r.first_name, r.father_name, r.grandfather_name, r.id LIMIT 50 OFFSET $offset", $params);
 $pageUrl = static fn (int $to): string => '?' . http_build_query(['q' => $search !== '' ? $search : null, 'page' => $to]);
 Page::top('Tickets', 'tickets');
+echo Page::ticketTabs('tickets');
 ?>
 <section class="card" id="tickets" data-registration-details data-csrf="<?= $e(Auth::csrf()) ?>">
   <div class="panel-top"><?= Page::panelHeading('Event tickets', 'Show a guest’s original PSOOLA QR, one by one. PSOOLA’s gate app scans it at the door.', 'ticket') ?></div>

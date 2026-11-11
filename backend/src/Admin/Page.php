@@ -30,8 +30,7 @@ final class Page
         'booths'        => ['Booths', 'sponsors'],
         'map'           => ['Map', 'map'],
         'checkin'       => ['Registration', 'checkin'],
-        'certificates'  => ['Certificates', 'certificates'],
-        'tickets'       => ['Tickets', 'certificates'],
+        'tickets'       => ['Tickets & Certificates', 'certificates'],
         'settings'      => ['Settings', 'owner'],
         'users'         => ['Users', 'owner'],
         'communications' => ['Communication center', 'communications'],
@@ -116,6 +115,16 @@ final class Page
     public static function panelHeading(string $title, string $description, string $icon): string
     {
         return '<div class="panel-heading"><span class="panel-icon">' . self::navIcon($icon) . '</span><div><h2>' . self::e($title) . '</h2><p>' . self::e($description) . '</p></div></div>';
+    }
+
+    /** The two tabs of the Tickets & Certificates menu item. */
+    public static function ticketTabs(string $active): string
+    {
+        $html = '<nav class="checkin-tabs ticket-tabs no-print" aria-label="Tickets and certificates">';
+        foreach (['tickets' => ['Tickets', 'ticket'], 'certificates' => ['Certificates', 'certificates']] as $file => [$label, $icon]) {
+            $html .= '<a class="checkin-tab' . ($file === $active ? ' on' : '') . '" href="' . $file . '.php"' . ($file === $active ? ' aria-current="page"' : '') . '>' . self::navIcon($icon) . '<span>' . $label . '</span></a>';
+        }
+        return $html . '</nav>';
     }
 
     public static function emptyState(string $title, string $description, string $icon): string
@@ -245,7 +254,7 @@ final class Page
         // The version follows the files' date, so a change is never hidden by the browser's cache.
         $v = static fn (string $file): int => (int) @filemtime(App::siteFile('admin/' . $file)) ?: 1;
         echo '<link rel="stylesheet" href="admin.css?v=' . $v('admin.css') . '"><script src="admin.js?v=' . $v('admin.js') . '" defer></script>';
-        // The Tickets page reuses the PSOOLA ticket dialog.
+        // The Tickets & Certificates pages reuse the PSOOLA ticket dialog.
         if ($registrationDetails || $current === 'tickets') echo '<link rel="stylesheet" href="registration-details.css?v=' . $v('registration-details.css') . '"><script src="registration-details.js?v=' . $v('registration-details.js') . '" defer></script>';
         if ($current === 'workshops') echo '<link rel="stylesheet" href="workshops.css?v=' . $v('workshops.css') . '"><script src="workshops.js?v=' . $v('workshops.js') . '" defer></script>';
         echo '</head><body class="' . ($user ? 'admin-shell' . (self::viewOnlyHere() ? ' view-only' : '') : 'database-auth') . ($registrationDetails ? ' registration-detail-page' : '') . '" data-page="' . self::e($current) . '">';
@@ -256,7 +265,7 @@ final class Page
             echo '<nav class="sidebar-nav" aria-label="Database pages">';
             $groups = [
                 'Workspace' => ['index'],
-                'Event operations' => ['registrations', 'lists', 'association', 'payments', 'psoola-orders', 'workshops', 'sponsors', 'booths', 'map', 'checkin', 'certificates', 'tickets'],
+                'Event operations' => ['registrations', 'lists', 'association', 'payments', 'psoola-orders', 'workshops', 'sponsors', 'booths', 'map', 'checkin', 'tickets'],
                 'Database' => ['communications', 'settings', 'users', 'backups'],
             ];
             foreach ($groups as $group => $files) {

@@ -2,6 +2,7 @@
 .registration-detail-page{--rd-purple:#5145bf;--rd-muted:#657887;--rd-line:#dfe7eb;background:#f4f7f8}
 [data-registration-details]{--rd-purple:#5145bf;--rd-muted:#657887;--rd-line:#dfe7eb}
 #tickets .inline-form{justify-content:flex-start;margin:4px 0 12px}
+.checkin-tabs.ticket-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}
 .registration-detail-page .page{max-width:1440px;padding:28px 36px 60px}
 .registration-detail-page .page>.page-heading{display:none}
 .rd-profile{display:grid;gap:22px;color:#15354a;min-width:0}
