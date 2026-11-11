@@ -30,8 +30,10 @@ final class BadgeBatches
         $marks = implode(',', array_fill(0, count($ids), '?'));
         $guests = Db::all("SELECT * FROM registrations WHERE id IN ($marks) ORDER BY first_name, father_name, grandfather_name, id", $ids);
         if (count($guests) !== count($ids)) throw new UserError('A ticked guest no longer exists. Reload the page and tick again.');
+        self::refuseAlreadyInBatch($ids);
         PsoolaTickets::codesFor($user, $guests);
-        return Db::transaction(static function () use ($user, $guests): int {
+        return Db::transaction(static function () use ($user, $guests, $ids): int {
+            self::refuseAlreadyInBatch($ids, true);
             $number = 1;
             foreach (Db::all('SELECT batch_number FROM badge_batches ORDER BY batch_number FOR UPDATE') as $taken) {
                 if ((int) $taken['batch_number'] !== $number) break;
@@ -73,6 +75,18 @@ final class BadgeBatches
             Audit::log((int) $user['id'], 'badge.batch_deleted', 'badge_batch', $batchId, ['batch_number' => (int) $batch['batch_number'], 'guests' => $names]);
             return self::label($batch) . ' deleted. Its number will be used for the next new batch.';
         });
+    }
+
+    /** A guest belongs to one batch only; deleting that batch frees them again. */
+    private static function refuseAlreadyInBatch(array $ids, bool $lock = false): void
+    {
+        $marks = implode(',', array_fill(0, count($ids), '?'));
+        $taken = Db::all("SELECT i.printed_name, b.batch_number FROM badge_batch_items i JOIN badge_batches b ON b.id = i.batch_id
+            WHERE i.registration_id IN ($marks) ORDER BY b.batch_number, i.position" . ($lock ? ' FOR UPDATE' : ''), $ids);
+        if (!$taken) return;
+        $names = array_map(static fn (array $t): string => $t['printed_name'] . ' (#' . (int) $t['batch_number'] . ')', array_slice($taken, 0, 6));
+        throw new UserError('Already in a batch: ' . implode(', ', $names) . (count($taken) > 6 ? ' and ' . (count($taken) - 6) . ' more' : '')
+            . '. A guest can be in one batch only; delete that batch to choose them again.');
     }
 
     public static function find(int $batchId): ?array

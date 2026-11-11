@@ -10,6 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const scroller = root.querySelector(".ticket-scroll");
   const all = root.querySelector("[data-ticket-all]");
   const labels = [...root.querySelectorAll("[data-ticket-selected]")];
+  const selbar = root.querySelector("[data-ticket-selbar]");
   const batchButtons = [...root.querySelectorAll("[data-ticket-batch]")];
   const form = document.querySelector("[data-badge-batch-form]");
   const boxes = () => [...root.querySelectorAll("input[data-guest]")];
@@ -17,7 +18,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const refresh = () => {
     const ticked = boxes().filter(box => box.checked).length;
-    labels.forEach(label => { label.textContent = ticked ? ticked + " selected" : "None selected"; });
+    labels.forEach(label => { label.textContent = ticked ? ticked + " guest" + (ticked === 1 ? "" : "s") + " selected" : "None selected"; });
+    selbar?.classList.toggle("has-selection", ticked > 0);
     batchButtons.forEach(button => { button.disabled = ticked === 0; });
     if (all) {
       const shown = shownBoxes();
@@ -50,6 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }));
 
   all?.addEventListener("change", () => { shownBoxes().forEach(box => { box.checked = all.checked; }); refresh(); });
+  root.querySelector("[data-ticket-clear]")?.addEventListener("click", () => { boxes().forEach(box => { box.checked = false; }); refresh(); });
   root.addEventListener("change", event => { if (event.target.matches("input[data-guest]")) refresh(); });
   root.querySelectorAll("select[data-auto-submit]").forEach(select => select.addEventListener("change", () => select.form.requestSubmit()));
 
