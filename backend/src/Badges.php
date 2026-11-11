@@ -163,12 +163,9 @@ final class Badges
         $pdf->SetXY(32.76, 34.4);
         $pdf->Cell(34.74, 0, Registrations::ticketName($registration['ticket_type']), 0, 0, 'C', false, '', 0, false, 'L', 'M');
 
-        // The box: white inside, filled by the QR (as tall as the box allows). No printed code.
-        $pdf->SetFillColor(255, 255, 255);
-        $pdf->Rect(23.35, 38.3, 53.2, 41.4, 'F');
-        self::qr($pdf, $code, 50.0, 38.7, 40.6);
-        $pdf->SetLineWidth(0.27);
-        $pdf->Rect(23.35, 38.3, 53.2, 41.4, 'D');
+        // The QR takes the artwork box's place: as wide as the box (53.2 mm), no border,
+        // ending above the partner logos (which start at 94.7 mm). No printed code.
+        self::qr($pdf, $code, 50.0, 38.3, 53.2);
     }
 
     /**
