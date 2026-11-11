@@ -27,16 +27,96 @@ final class Badges
         $pdf->setPrintFooter(false);
         $pdf->SetMargins(0, 0, 0);
         $pdf->SetAutoPageBreak(false);
-        // Inter Display (SIL Open Font License): the closest free match to the artwork's Helvetica Now Display.
-        $pdf->AddFont('interdisplayblack', '', self::asset('fonts/interdisplayblack.php'));
-        $pdf->AddFont('interdisplaymedium', '', self::asset('fonts/interdisplaymedium.php'));
+        $fonts = self::fonts($pdf);
         // Print at 100% on both sides of the card (front, then back).
         $pdf->setViewerPreferences(['PrintScaling' => 'None', 'Duplex' => 'DuplexFlipLongEdge', 'PickTrayByPDFSize' => true]);
         foreach ($codes as $code) {
             self::front($pdf);
-            self::back($pdf, $registration, $code);
+            self::back($pdf, $registration, $code, $fonts);
         }
         return $pdf->Output('', 'S');
+    }
+
+    /** True when the Owner has uploaded the licensed Helvetica Now Display. */
+    public static function hasLicensedFont(): bool
+    {
+        $dir = self::privateFontDir();
+        return $dir !== null && is_file("$dir/helveticanowdisplayblack.php") && is_file("$dir/helveticanowdisplaymedium.php");
+    }
+
+    /**
+     * Installs the Owner's licensed Helvetica Now Display (Black and Medium
+     * TrueType files) in the server's private storage. It is never put in
+     * the repository; badge PDFs embed only the letters they use.
+     */
+    public static function installFont(array $user, array $files): string
+    {
+        if (($user['role'] ?? '') !== 'owner') throw new UserError('Only the Owner can change the badge font.');
+        $dir = self::privateFontDir();
+        if ($dir === null) throw new UserError('Private storage is not configured on this server.');
+        $sources = [];
+        foreach (['black' => 'Black', 'medium' => 'Medium'] as $key => $weight) {
+            $file = $files['font_' . $key] ?? null;
+            if (!is_array($file) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || !is_uploaded_file((string) $file['tmp_name'])) {
+                throw new UserError("Choose the HelveticaNowDisplay-$weight.ttf file.");
+            }
+            if ((int) $file['size'] < 1000 || (int) $file['size'] > 3_000_000) throw new UserError("The $weight font file is not a usable font.");
+            $magic = (string) file_get_contents((string) $file['tmp_name'], false, null, 0, 4);
+            if ($magic === 'OTTO') throw new UserError("Upload the .ttf version of $weight, not the .otf.");
+            if ($magic !== "\x00\x01\x00\x00" && $magic !== 'true') throw new UserError("The $weight file is not a TrueType (.ttf) font.");
+            $sources[$weight] = (string) $file['tmp_name'];
+        }
+        if (!is_dir("$dir/src") && !@mkdir("$dir/src", 0750, true)) throw new UserError('The private font folder could not be created.');
+        foreach ($sources as $weight => $tmp) {
+            $target = "$dir/src/HelveticaNowDisplay-$weight.ttf";
+            if (!move_uploaded_file($tmp, $target)) throw new UserError("The $weight font could not be saved.");
+            $name = \TCPDF_FONTS::addTTFfont($target, 'TrueTypeUnicode', '', 32, $dir . '/');
+            if ($name !== 'helveticanowdisplay' . strtolower($weight)) {
+                self::removeFont($user);
+                throw new UserError("The $weight font could not be prepared for PDFs.");
+            }
+        }
+        try {
+            self::pdf(['first_name' => 'Font', 'father_name' => 'Check', 'grandfather_name' => '', 'ticket_type' => 'professional', 'specialty' => 'gp'], ['FONTTEST']);
+        } catch (\Throwable) {
+            self::removeFont($user);
+            throw new UserError('The font files could not be used in a badge. The free Inter Display font is still used.');
+        }
+        Audit::log((int) $user['id'], 'badge.font', null, null, ['font' => 'Helvetica Now Display']);
+        return 'Helvetica Now Display is installed privately on the server. New badges use it.';
+    }
+
+    /** Back to the free Inter Display font. */
+    public static function removeFont(array $user): string
+    {
+        if (($user['role'] ?? '') !== 'owner') throw new UserError('Only the Owner can change the badge font.');
+        $dir = self::privateFontDir();
+        foreach ($dir === null ? [] : [...(glob("$dir/helveticanowdisplay*") ?: []), ...(glob("$dir/src/HelveticaNowDisplay-*") ?: [])] as $file) {
+            @unlink($file);
+        }
+        Audit::log((int) $user['id'], 'badge.font_removed');
+        return 'The uploaded font was removed. Badges use the free Inter Display font.';
+    }
+
+    /** [name font, label font]: the licensed font when uploaded, otherwise Inter Display. */
+    private static function fonts(\TCPDF $pdf): array
+    {
+        if (self::hasLicensedFont()) {
+            $dir = self::privateFontDir();
+            $pdf->AddFont('helveticanowdisplayblack', '', "$dir/helveticanowdisplayblack.php");
+            $pdf->AddFont('helveticanowdisplaymedium', '', "$dir/helveticanowdisplaymedium.php");
+            return ['helveticanowdisplayblack', 'helveticanowdisplaymedium'];
+        }
+        // Inter Display (SIL Open Font License): the closest free match to the artwork's Helvetica Now Display.
+        $pdf->AddFont('interdisplayblack', '', self::asset('fonts/interdisplayblack.php'));
+        $pdf->AddFont('interdisplaymedium', '', self::asset('fonts/interdisplaymedium.php'));
+        return ['interdisplayblack', 'interdisplaymedium'];
+    }
+
+    /** storage/fonts: private, never in the repository or the web folder. */
+    private static function privateFontDir(): ?string
+    {
+        return (string) App::config('storage', '') === '' ? null : App::storage('fonts');
     }
 
     /** "DR. FIRST FATHER" for dentists (and VIP dentists), "FIRST FATHER" for students and lab technicians. */
@@ -53,7 +133,7 @@ final class Badges
         $pdf->Image(self::asset('badge-front.jpg'), 0, 0, self::WIDTH, self::HEIGHT, 'JPG', '', '', false, 600);
     }
 
-    private static function back(\TCPDF $pdf, array $registration, string $code): void
+    private static function back(\TCPDF $pdf, array $registration, string $code, array $fonts): void
     {
         $pdf->AddPage();
         $pdf->Image(self::asset('badge-back.jpg'), 0, 0, self::WIDTH, self::HEIGHT, 'JPG', '', '', false, 600);
@@ -65,7 +145,7 @@ final class Badges
         // The name: one line across the card, smaller when it is long.
         $name = self::displayName($registration);
         // Kurdish or Arabic letters need DejaVu; Latin names use the artwork's heavy display face.
-        [$font, $style] = preg_match('/[^\x{0000}-\x{024F}]/u', $name) ? ['dejavusans', 'B'] : ['interdisplayblack', ''];
+        [$font, $style] = preg_match('/[^\x{0000}-\x{024F}]/u', $name) ? ['dejavusans', 'B'] : [$fonts[0], ''];
         $size = 25.8;
         $pdf->SetFont($font, $style, $size);
         while ($size > 9 && $pdf->GetStringWidth($name) > 84) {
@@ -80,7 +160,7 @@ final class Badges
         $pdf->Line(68.75, 32.6, 92.45, 32.6);
         $pdf->RoundedRect(32.76, 29.8, 34.74, 5.8, 2.9, '1111', 'F');
         $pdf->SetTextColor(255, 255, 255);
-        $pdf->SetFont('interdisplaymedium', '', 14.3);
+        $pdf->SetFont($fonts[1], '', 14.3);
         $pdf->SetXY(32.76, 34.4);
         $pdf->Cell(34.74, 0, Registrations::ticketName($registration['ticket_type']), 0, 0, 'C', false, '', 0, false, 'L', 'M');
 
@@ -89,7 +169,7 @@ final class Badges
         $pdf->Rect(23.35, 38.3, 53.2, 41.4, 'D');
         self::qr($pdf, $code, 50.0, 40.6, 30.0);
         $pdf->SetTextColor($r, $g, $b);
-        $pdf->SetFont('interdisplaymedium', '', 10);
+        $pdf->SetFont($fonts[1], '', 10);
         $pdf->setFontSpacing(0.6);
         $pdf->SetXY(23.35, 75.6);
         $pdf->Cell(53.2, 0, $code, 0, 0, 'C', false, '', 0, false, 'L', 'M');

@@ -4,12 +4,20 @@ require __DIR__ . '/_boot.php';
 
 use Ismile\Admin\Page;
 use Ismile\Auth;
+use Ismile\Badges;
 use Ismile\Db;
 use Ismile\PsoolaTickets;
 use Ismile\Registrations;
+use Ismile\UserError;
 
 // Event tickets: everyone with an active ticket, with their original PSOOLA QR.
 $user = Page::guard('certificates');
+// The Owner's licensed badge font, kept in private storage (never in the repository).
+Page::action(static fn (): string => match ((string) ($_POST['do'] ?? '')) {
+    'badge_font' => Badges::installFont($user, $_FILES),
+    'badge_font_remove' => Badges::removeFont($user),
+    default => throw new UserError('Choose a badge font action.'),
+}, 'tickets.php');
 $e = [Page::class, 'e'];
 $search = mb_substr(trim((string) ($_GET['q'] ?? '')), 0, 100);
 $where = "r.status IN ('paid','complimentary') AND t.cancelled_at IS NULL";
@@ -49,6 +57,17 @@ echo Page::ticketTabs('tickets');
   <?php if ($page > 1): ?><a class="btn ghost" href="<?= $e($pageUrl($page - 1)) ?>">Previous</a><?php endif; ?>
   <?php if ($offset + 50 < $total): ?><a class="btn ghost" href="<?= $e($pageUrl($page + 1)) ?>">Next</a><?php endif; ?>
   </div>
+  <?php if ($user['role'] === 'owner'): $licensed = Badges::hasLicensedFont(); ?>
+  <details class="badge-font"><summary>Badge font: <b><?= $licensed ? 'Helvetica Now Display (uploaded)' : 'Inter Display (free match)' ?></b></summary>
+    <form method="post" enctype="multipart/form-data" class="inline-form"><?= Page::csrfField() ?><input type="hidden" name="do" value="badge_font">
+      <label>Black (.ttf) <input type="file" name="font_black" accept=".ttf" required></label>
+      <label>Medium (.ttf) <input type="file" name="font_medium" accept=".ttf" required></label>
+      <button class="btn small">Upload licensed font</button>
+    </form>
+    <?php if ($licensed): ?><form method="post" class="inline-form"><?= Page::csrfField() ?><input type="hidden" name="do" value="badge_font_remove"><button class="btn small ghost">Use the free font again</button></form><?php endif; ?>
+    <p class="muted small">Only upload a font your licence covers. It is stored privately on the server, never on GitHub.</p>
+  </details>
+  <?php endif; ?>
   <dialog class="rd-dialog rd-provider-dialog" data-rd-psoola-dialog aria-labelledby="rd-psoola-title"><div class="rd-dialog-heading"><div><h2 id="rd-psoola-title">PSOOLA tickets</h2><p>Original ticket details and QR code</p></div><button type="button" class="icon-button" data-rd-close aria-label="Close PSOOLA tickets"><?= Page::navIcon('close') ?></button></div><div data-rd-psoola-body></div></dialog>
 </section>
 <?php Page::bottom();
