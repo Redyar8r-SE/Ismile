@@ -111,15 +111,6 @@ html[dir="rtl"] .wd-submit svg{transform:scaleX(-1)}
    ========================================================== */
 .wdc{display:flex;flex-direction:column;gap:32px}
 .wdc-hero{--fade:to right;position:relative;display:flex;align-items:center;aspect-ratio:var(--ar,1.4);min-height:500px;border-radius:28px;overflow:hidden;background:var(--surface);border:1px solid var(--line)}
-/* Keep Chenar's original portrait beside the copy without stretching the banner. */
-.wdc[data-workshop-id="implant-digital-prosthetic-workflow"] .wdc-hero{aspect-ratio:auto;min-height:640px}
-.wdc[data-workshop-id="implant-digital-prosthetic-workflow"] .wdc-photo{inset-inline-start:50%;background:#fff}
-.wdc[data-workshop-id="implant-digital-prosthetic-workflow"] .wdc-photo::after{display:none}
-.wdc[data-workshop-id="implant-digital-prosthetic-workflow"] .wdc-photo img{object-position:center 40%;transform:none}
-@media(max-width:960px){
-  .wdc[data-workshop-id="implant-digital-prosthetic-workflow"] .wdc-hero{min-height:0}
-  .wdc[data-workshop-id="implant-digital-prosthetic-workflow"] .wdc-photo{inset-inline-start:auto;height:360px;aspect-ratio:auto}
-}
 html[dir="rtl"] .wdc-hero{--fade:to left}
 .wdc-text{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:center;gap:16px;width:min(540px,46%);min-width:0;padding-block:40px;padding-inline:48px 0}
 .wdc-text h1{margin:0;font-size:clamp(28px,2.8vw,38px);line-height:1.12;font-weight:800;letter-spacing:-.01em}

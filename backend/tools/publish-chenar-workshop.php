@@ -24,9 +24,19 @@ if (!in_array('--apply', $argv, true)) {
 if (!is_file(App::siteFile($definition['photo']))) throw new RuntimeException('Presenter portrait missing.');
 $ownerId = (int) Db::value("SELECT id FROM admin_users WHERE role='owner' AND disabled_at IS NULL ORDER BY id LIMIT 1");
 if (!$ownerId) throw new RuntimeException('Enabled Owner required.');
-Db::transaction(static function () use ($definition, $ownerId): void {
+$updatePortrait = in_array('--update-portrait', $argv, true);
+Db::transaction(static function () use ($definition, $ownerId, $updatePortrait): void {
     $existing = Db::one('SELECT * FROM workshops WHERE id=? FOR UPDATE', [$definition['id']]);
     if ($existing) {
+        if ($updatePortrait && $existing['photo'] === 'assets/workshops/chenar-subhi.png' && $existing['photo_style'] === 'photo') {
+            if ($definition['photo'] !== 'assets/workshops/chenar-subhi-cutout-20261111.png' || $definition['photo_style'] !== 'cutout') {
+                throw new RuntimeException('Unexpected portrait replacement.');
+            }
+            Db::update('workshops', ['photo' => $definition['photo'], 'photo_style' => 'cutout', 'updated_at' => App::now()], 'id=?', [$definition['id']]);
+            Audit::log($ownerId, 'workshop.edit', 'workshop', null, ['id' => $definition['id'], 'photo' => $definition['photo'], 'photo_style' => 'cutout']);
+            $existing['photo'] = $definition['photo'];
+            $existing['photo_style'] = 'cutout';
+        }
         foreach ($definition as $field => $value) {
             $actual = in_array($field, ['start_time', 'end_time'], true) ? substr((string) $existing[$field], 0, 5) : (string) $existing[$field];
             if ($actual !== (string) $value) throw new RuntimeException('Existing workshop differs: ' . $field);
