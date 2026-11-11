@@ -90,20 +90,62 @@ echo Page::ticketTabs('tickets');
 
 if ($batchId && !$batch): ?>
 <section class="card"><h2>Badge batch not found</h2><a class="btn" href="tickets.php">Back to tickets</a></section>
-<?php elseif ($batch): $items = BadgeBatches::items($batchId); ?>
-<section class="card directory-panel">
-  <div class="toolbar list-head"><div><h2><?= $e(BadgeBatches::label($batch)) ?></h2>
-    <p class="muted"><?= (int) $batch['guest_count'] ?> guest(s) &middot; made <?= $e($batch['created_at']) ?> (Iraq) by <?= $e($batch['created_by_name']) ?> &middot; downloaded <?= (int) $batch['downloads'] ?> time(s)<?= $batch['last_downloaded_at'] ? ', last ' . $e($batch['last_downloaded_at']) : '' ?></p></div>
-    <?php if ($canBadge): ?><div class="certificate-delivery-actions"><?= $deleteButton($batch, '') ?></div><?php endif; ?></div>
-  <?php if ($canBadge): ?><form method="get" action="badge.php" class="ticket-filters badge-paper"><input type="hidden" name="batch" value="<?= $batchId ?>">
-    <label class="ticket-filter"><span>Paper for printing</span><select name="sheet"><?php foreach (Badges::SHEETS as $key => [$paper]): ?><option value="<?= $e($key) ?>"><?= $e($paper) ?></option><?php endforeach; ?></select></label>
-    <button class="btn green"><?= Page::navIcon('download') ?><span>Download batch PDF</span></button>
-    <button class="btn ghost" name="print" value="1" formtarget="_blank">Print batch</button>
+<?php elseif ($batch):
+    $items = BadgeBatches::items($batchId);
+    $kinds = array_count_values(array_column($items, 'ticket_type'));
+    $arrivedCount = count(array_filter($items, static fn (array $i): bool => (bool) $i['attended_days']));
+    $typePill = static fn (string $type): string => match ($type) { 'Student' => 'green', 'VIP' => 'gold', default => 'blue' };
+?>
+<section class="card bb-hero">
+  <div class="bb-number" aria-hidden="true"><small>Batch</small><b>#<?= (int) $batch['batch_number'] ?></b></div>
+  <div class="bb-summary">
+    <h2><?= count($items) ?> badge<?= count($items) === 1 ? '' : 's' ?> ready to print</h2>
+    <p class="muted">Made <?= $e(date('j M Y, H:i', strtotime((string) $batch['created_at']))) ?> (Iraq) by <b><?= $e($batch['created_by_name']) ?></b></p>
+    <div class="bb-chips">
+      <span class="bb-chip"><?= Page::navIcon('users') ?><b><?= count($items) ?></b> guest<?= count($items) === 1 ? '' : 's' ?></span>
+      <?php foreach (['Dentist', 'Student', 'VIP'] as $kind): if (!empty($kinds[$kind])): ?><span class="pill <?= $typePill($kind) ?>"><?= (int) $kinds[$kind] ?> <?= $kind ?></span><?php endif; endforeach; ?>
+      <span class="bb-chip"><?= Page::navIcon('download') ?><?= (int) $batch['downloads'] ?> download<?= (int) $batch['downloads'] === 1 ? '' : 's' ?><?= $batch['last_downloaded_at'] ? ' · last ' . $e(date('j M, H:i', strtotime((string) $batch['last_downloaded_at']))) : '' ?></span>
+      <span class="bb-chip"><?= Page::navIcon('checkin') ?><?= $arrivedCount ?> arrived</span>
+    </div>
+  </div>
+  <?php if ($canBadge): ?><div class="bb-danger"><?= $deleteButton($batch, '') ?></div><?php endif; ?>
+</section>
+<?php if ($canBadge): ?>
+<section class="card bb-print">
+  <div class="panel-top"><?= Page::panelHeading('Print this batch', 'Choose the paper, then download the PDF. Every badge comes out exactly 10 × 11.5 cm.', 'ticket') ?></div>
+  <form method="get" action="badge.php"><input type="hidden" name="batch" value="<?= $batchId ?>">
+    <fieldset class="bb-papers"><legend class="sr-only">Paper</legend>
+    <?php foreach (Badges::SHEETS as $key => [$paper, $w, $h, $cols, $rows]): $sheets = (int) ceil(count($items) / ($cols * $rows)); [$name, $per] = array_map('trim', explode('·', $paper) + [1 => '']); ?>
+      <label class="bb-paper">
+        <input type="radio" name="sheet" value="<?= $e($key) ?>"<?= $key === 'a4' ? ' checked' : '' ?>>
+        <?php $px = min(84 / $h, 120 / $w); /* the real paper, drawn small */ ?><span class="bb-sheet" style="width:<?= round($w * $px) ?>px;height:<?= round($h * $px) ?>px;padding:<?= round(($h - $rows * 115) / 2 * $px, 1) ?>px <?= round(($w - $cols * 100) / 2 * $px, 1) ?>px;--cols:<?= $cols ?>;--rows:<?= $rows ?>"><?= str_repeat('<i></i>', $cols * $rows) ?></span>
+        <b><?= $e($key === 'single' ? 'Card printer' : $name) ?></b>
+        <small><?= $e($key === 'single' ? 'One badge per page' : $per) ?></small>
+        <em><?= $key === 'single' ? count($items) * 2 . ' pages' : $sheets . ' sheet' . ($sheets === 1 ? '' : 's') . ' · ' . $sheets * 2 . ' pages' ?></em>
+      </label>
+    <?php endforeach; ?>
+    </fieldset>
+    <div class="bb-actions">
+      <button class="btn green bb-big"><?= Page::navIcon('download') ?><span>Download PDF</span></button>
+    </div>
   </form>
-  <p class="muted small">Every badge is exactly 10 × 11.5 cm. On A4, A3 and SRA3 the badges sit side by side with cut marks; each sheet of fronts is followed by its sheet of backs. Print at <b>100% / Actual size</b>, <b>double-sided</b>, then cut on the marks.</p><?php endif; ?>
-  <p class="muted small">The PDF always uses each guest’s current name and PSOOLA ticket.</p>
+  <ol class="bb-steps">
+    <li><b>Actual size</b><span>Print at 100%, never “Fit to page”.</span></li>
+    <li><b>Both sides</b><span>Double-sided: flip on the long edge (A3: short edge).</span></li>
+    <li><b>Cut on the marks</b><span>Each badge is then exactly 10 × 11.5 cm.</span></li>
+  </ol>
+</section>
+<?php endif; ?>
+<section class="card directory-panel">
+  <div class="toolbar list-head"><div><h2>Guests in this batch <span class="result-count"><?= count($items) ?></span></h2><p class="muted small">In print order. The PDF always uses each guest’s current name and PSOOLA ticket.</p></div></div>
   <div class="table-wrap"><table><thead><tr><th>#</th><th>Name on badge</th><th>Type</th><th>Reference</th><th>Ticket</th><th>Attendance</th></tr></thead><tbody>
-  <?php foreach ($items as $item): ?><tr><td><?= (int) $item['position'] ?></td><td><a href="registration.php?id=<?= (int) $item['registration_id'] ?>"><b><?= $e($item['printed_name']) ?></b></a><?= $item['status'] === 'cancelled' ? ' <span class="pill gold">Cancelled since</span>' : '' ?></td><td><?= $e($item['ticket_type']) ?></td><td><code><?= $e($item['ref']) ?></code></td><td><code><?= $e((string) $item['ticket_no']) ?></code></td><td><?= $item['attended_days'] ? $e($item['attended_days']) : 'Not yet' ?></td></tr><?php endforeach; ?>
+  <?php foreach ($items as $item): ?><tr>
+    <td class="bb-pos"><?= (int) $item['position'] ?></td>
+    <td><a class="bb-guest" href="registration.php?id=<?= (int) $item['registration_id'] ?>"><span class="bb-initial"><?= $e(mb_substr((string) $item['printed_name'], 0, 1)) ?></span><b><?= $e($item['printed_name']) ?></b></a><?= $item['status'] === 'cancelled' ? ' <span class="pill red">Cancelled since</span>' : '' ?></td>
+    <td><span class="pill <?= $typePill((string) $item['ticket_type']) ?>"><?= $e($item['ticket_type']) ?></span></td>
+    <td><code><?= $e($item['ref']) ?></code></td><td><code><?= $e((string) $item['ticket_no']) ?></code></td>
+    <td><?= $item['attended_days'] ? '<span class="pill green">' . $e($item['attended_days']) . '</span>' : '<span class="pill grey">Not yet</span>' ?></td>
+  </tr><?php endforeach; ?>
   </tbody></table></div>
 </section>
 <?php else: ?>
@@ -132,7 +174,7 @@ if ($batchId && !$batch): ?>
     <td><a href="registration.php?id=<?= (int) $row['id'] ?>"><b><?= $e($name) ?></b></a></td><td><?= $e($row['ref']) ?></td><td><code><?= $e($row['ticket_no']) ?></code></td>
     <td><?= $e(Registrations::ticketName($row['ticket_type'])) ?></td><td><?= $row['attended_days'] ? $e($row['attended_days']) : 'Not yet' ?></td>
     <td><?php if ($row['last_batch']): ?><a class="pill teal" href="<?= $e($batchUrl((int) $row['last_batch'])) ?>">Batch #<?= (int) $row['last_batch_number'] ?></a><?= (int) $row['batch_count'] > 1 ? ' <small class="muted">×' . (int) $row['batch_count'] . '</small>' : '' ?><?php else: ?><span class="pill gold">Not made</span><?php endif; ?></td>
-    <td><?php if (!$row['has_psoola']): ?><span class="muted small">No PSOOLA ticket</span><?php elseif (!$canQr): ?><span class="muted small">No access</span><?php else: ?><div class="certificate-delivery-actions"><button class="btn small" type="button" data-rd-ticket="psoola" data-registration-id="<?= (int) $row['id'] ?>"><?= Page::navIcon('ticket') ?><span>Show QR</span></button><?php if ($canBadge): ?><a class="btn small ghost" href="badge.php?id=<?= (int) $row['id'] ?>"><?= Page::navIcon('download') ?><span>Badge PDF</span></a><a class="btn small ghost" href="badge.php?id=<?= (int) $row['id'] ?>&amp;print=1" target="_blank" rel="noopener">Print</a><?php endif; ?></div><?php endif; ?></td>
+    <td><?php if (!$row['has_psoola']): ?><span class="muted small">No PSOOLA ticket</span><?php elseif (!$canQr): ?><span class="muted small">No access</span><?php else: ?><div class="certificate-delivery-actions"><button class="btn small" type="button" data-rd-ticket="psoola" data-registration-id="<?= (int) $row['id'] ?>"><?= Page::navIcon('ticket') ?><span>Show QR</span></button><?php if ($canBadge): ?><a class="btn small ghost" href="badge.php?id=<?= (int) $row['id'] ?>"><?= Page::navIcon('download') ?><span>Badge PDF</span></a><?php endif; ?></div><?php endif; ?></td>
   </tr><?php endforeach; ?>
   <tr data-ticket-empty<?= $rows ? ' hidden' : '' ?>><td colspan="8"><?= Page::emptyState('No guest found', 'Try another name, or clear the filters.', 'search') ?></td></tr>
   </tbody></table></div>

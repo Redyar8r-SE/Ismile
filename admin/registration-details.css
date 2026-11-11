@@ -153,3 +153,41 @@
 @keyframes ticket-flash{from{background:#fff3c4}to{background:transparent}}
 .ticket-flash td{animation:ticket-flash 1.6s ease-out}
 .ticket-bar-bottom{justify-content:flex-end;margin:12px 0 0}
+/* Badge batch page */
+.bb-hero{display:flex;align-items:center;gap:22px;flex-wrap:wrap;background:linear-gradient(120deg,#fff 55%,#e9f5fb)}
+.bb-number{display:grid;place-items:center;width:92px;height:92px;flex:none;border-radius:22px;background:linear-gradient(145deg,#0f5e8c,#1bb3c4);color:#fff;box-shadow:0 10px 24px #0f5e8c33;text-align:center;line-height:1}
+.bb-number small{display:block;font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;opacity:.85;margin-bottom:4px}
+.bb-number b{font-size:34px;letter-spacing:-.02em}
+.bb-summary{flex:1 1 320px;min-width:0}
+.bb-summary h2{font-size:22px;margin-bottom:4px}
+.bb-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.bb-chips .pill{font-size:12px;padding:6px 12px;border-radius:999px}
+.bb-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:#f1f6f9;border:1px solid #dce8f1;font-size:12px;color:#29506b}
+.bb-chip .nav-icon{width:15px;height:15px}
+.bb-danger .btn{color:var(--red-d);border-color:#f0c4bb;background:#fff}
+.bb-danger .btn:hover{background:var(--red-l)}
+.bb-papers{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;border:0;padding:0;margin:4px 0 18px}
+.bb-paper{position:relative;display:grid;justify-items:center;gap:4px;padding:16px 12px 14px;border:2px solid #dce8f1;border-radius:16px;background:#fff;cursor:pointer;text-align:center;transition:border-color .15s,box-shadow .15s,transform .15s}
+.bb-paper:hover{border-color:#8cc6e4;transform:translateY(-2px)}
+.bb-paper input{position:absolute;opacity:0;pointer-events:none}
+.bb-paper:has(input:checked){border-color:#0f5e8c;box-shadow:0 0 0 4px #0f5e8c1f;background:#f5fbfe}
+.bb-paper:has(input:checked)::after{content:"✓";position:absolute;top:10px;right:12px;width:22px;height:22px;border-radius:50%;background:#0f5e8c;color:#fff;font-size:13px;line-height:22px;font-weight:700}
+.bb-paper:has(input:focus-visible){outline:3px solid #1bb3c4;outline-offset:2px}
+.bb-sheet{display:grid;grid-template-columns:repeat(var(--cols),1fr);grid-template-rows:repeat(var(--rows),1fr);background:#fff;border:1px solid #c7d6e0;border-radius:4px;box-shadow:0 4px 10px #16334d14;margin-bottom:8px;box-sizing:border-box}
+.bb-sheet i{border:1px dashed #9ec3d8;background:linear-gradient(180deg,#e6f3fa 0 34%,#fff 34%)}
+.bb-paper b{font-size:15px;color:#16334d}
+.bb-paper small{font-size:12px;color:var(--rd-muted)}
+.bb-paper em{font-style:normal;font-size:11px;font-weight:700;color:#0f5e8c;background:#e9f3fa;border-radius:999px;padding:3px 10px;margin-top:4px}
+.bb-actions{display:flex;flex-wrap:wrap;gap:12px}
+.bb-big{padding:14px 26px;font-size:15px;border-radius:12px}
+.bb-big .nav-icon{width:18px;height:18px}
+.bb-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;list-style:none;counter-reset:step;margin:20px 0 0;padding:16px 0 0;border-top:1px solid var(--rd-line)}
+.bb-steps li{counter-increment:step;display:grid;grid-template-columns:30px 1fr;column-gap:10px;align-items:start;font-size:12px;color:var(--rd-muted)}
+.bb-steps li::before{content:counter(step);grid-row:span 2;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:#fcefd3;color:#8a5a0f;font-weight:800;font-size:13px}
+.bb-steps b{font-size:13px;color:#16334d}
+.bb-pos{color:var(--rd-muted);font-weight:700;width:36px}
+.bb-guest{display:inline-flex;align-items:center;gap:10px;text-decoration:none}
+.bb-guest b{text-decoration:underline;text-decoration-color:#bcd3e2;text-underline-offset:3px}
+.bb-initial{display:grid;place-items:center;width:30px;height:30px;flex:none;border-radius:50%;background:#e9f3fa;color:#0f5e8c;font-weight:800;font-size:13px}
+@media(max-width:700px){.bb-hero{gap:14px}.bb-number{width:70px;height:70px;border-radius:18px}.bb-number b{font-size:26px}.bb-big{flex:1;justify-content:center}}
+.bb-guest b{white-space:nowrap}

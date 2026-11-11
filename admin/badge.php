@@ -13,9 +13,7 @@ use Ismile\UserError;
 // The two-sided badge PDF (10 × 11.5 cm pages).
 //   GET badge.php?id=REGISTRATION   one guest, for yourself: not saved as a batch
 //   GET badge.php?batch=ID&sheet=a4 every guest of a saved badge batch, on print sheets (a4, a3, sra3, single)
-// &print=1 opens it to print instead of downloading.
 $user = Page::guard('registrations');
-$print = ($_GET['print'] ?? '') === '1';
 $back = 'tickets.php';
 try {
     if (isset($_GET['batch'])) {
@@ -30,7 +28,7 @@ try {
         $registration = Registrations::find($id) ?? throw new UserError('Registration not found.');
         $codes = PsoolaTickets::codesFor($user, [$registration]);
         [$pdf, $name] = [Badges::pdf($registration, $codes[$id]), 'ismile-badge-' . $registration['ref']];
-        Audit::log((int) $user['id'], $print ? 'badge.print' : 'badge.download', 'registration', $id);
+        Audit::log((int) $user['id'], 'badge.download', 'registration', $id);
     }
 } catch (UserError $error) {
     Page::flash('error', $error->key);
@@ -40,7 +38,7 @@ try {
     Page::redirect($back);
 }
 header('Content-Type: application/pdf');
-header('Content-Disposition: ' . ($print ? 'inline' : 'attachment') . '; filename="' . $name . '.pdf"');
+header('Content-Disposition: attachment; filename="' . $name . '.pdf"');
 header('Cache-Control: no-store, private, max-age=0');
 header('Referrer-Policy: no-referrer');
 echo $pdf;
