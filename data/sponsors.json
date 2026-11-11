@@ -239,6 +239,13 @@
       "tile": true
     },
     {
+      "name": "SKY DENT",
+      "tier": "silver",
+      "logo": "assets/sponsors/sky-dent-silver-20261112.webp",
+      "bg": "#18363F",
+      "tile": true
+    },
+    {
       "name": "Gengigel",
       "tier": "bronze",
       "logo": "assets/sponsors/gengigel-bronze.webp",
