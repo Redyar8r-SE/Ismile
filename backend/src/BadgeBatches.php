@@ -48,16 +48,16 @@ final class BadgeBatches
         });
     }
 
-    /** Every guest's badge in the batch, as they are now (a corrected name is printed corrected). */
-    public static function pdf(array $user, int $batchId): string
+    /** Every guest's badge in the batch on the chosen paper, as they are now (a corrected name is printed corrected). */
+    public static function pdf(array $user, int $batchId, string $sheet = 'a4'): string
     {
         $batch = self::find($batchId);
         if (!$batch) throw new UserError('Badge batch not found.');
         $guests = Db::all('SELECT r.* FROM badge_batch_items i JOIN registrations r ON r.id = i.registration_id WHERE i.batch_id = ? ORDER BY i.position', [$batchId]);
         $codes = PsoolaTickets::codesFor($user, $guests);
-        $pdf = Badges::pdfMany(array_map(static fn (array $guest): array => [$guest, $codes[(int) $guest['id']]], $guests), 'iSmile 2026 badges · ' . self::label($batch));
+        $pdf = Badges::pdfSheets(array_map(static fn (array $guest): array => [$guest, $codes[(int) $guest['id']]], $guests), 'iSmile 2026 badges · ' . self::label($batch), $sheet);
         Db::run('UPDATE badge_batches SET downloads = downloads + 1, last_downloaded_at = ? WHERE id = ?', [App::now(), $batchId]);
-        Audit::log((int) $user['id'], 'badge.batch_download', 'badge_batch', $batchId, ['batch_number' => (int) $batch['batch_number']]);
+        Audit::log((int) $user['id'], 'badge.batch_download', 'badge_batch', $batchId, ['batch_number' => (int) $batch['batch_number'], 'paper' => $sheet]);
         return $pdf;
     }
 

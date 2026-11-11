@@ -12,7 +12,7 @@ use Ismile\UserError;
 
 // The two-sided badge PDF (10 × 11.5 cm pages).
 //   GET badge.php?id=REGISTRATION   one guest, for yourself: not saved as a batch
-//   GET badge.php?batch=ID          every guest of a saved badge batch
+//   GET badge.php?batch=ID&sheet=a4 every guest of a saved badge batch, on print sheets (a4, a3, sra3, single)
 // &print=1 opens it to print instead of downloading.
 $user = Page::guard('registrations');
 $print = ($_GET['print'] ?? '') === '1';
@@ -22,7 +22,8 @@ try {
         $batchId = max(0, (int) $_GET['batch']);
         $back = 'tickets.php?batch=' . $batchId;
         $batch = BadgeBatches::find($batchId) ?? throw new UserError('Badge batch not found. It may have been deleted.');
-        [$pdf, $name] = [BadgeBatches::pdf($user, $batchId), 'ismile-badges-batch-' . (int) $batch['batch_number']];
+        $sheet = isset(Badges::SHEETS[$_GET['sheet'] ?? '']) ? (string) $_GET['sheet'] : 'a4';
+        [$pdf, $name] = [BadgeBatches::pdf($user, $batchId, $sheet), 'ismile-badges-batch-' . (int) $batch['batch_number'] . '-' . $sheet];
     } else {
         $id = max(0, (int) ($_GET['id'] ?? 0));
         $back = 'registration.php?id=' . $id;

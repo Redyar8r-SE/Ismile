@@ -42,11 +42,93 @@ final class Badges
         $pdf->setViewerPreferences(['PrintScaling' => 'None', 'Duplex' => 'DuplexFlipLongEdge', 'PickTrayByPDFSize' => true]);
         foreach ($guests as [$registration, $codes]) {
             foreach ($codes as $code) {
-                self::front($pdf);
-                self::back($pdf, $registration, $code, $fonts);
+                $pdf->AddPage();
+                self::front($pdf, 0, 0);
+                $pdf->AddPage();
+                self::back($pdf, 0, 0, $registration, $code, $fonts);
             }
         }
         return $pdf->Output('', 'S');
+    }
+
+    /**
+     * Paper for printing many badges at once: [label, width, height, columns, rows] in mm.
+     * 'single' is one 10 × 11.5 cm badge per page (a card printer).
+     */
+    public const SHEETS = [
+        'a4' => ['A4 · 4 badges per sheet', 210.0, 297.0, 2, 2],
+        'a3' => ['A3 · 8 badges per sheet', 420.0, 297.0, 4, 2],
+        'sra3' => ['SRA3 · 9 badges per sheet', 320.0, 450.0, 3, 3],
+        'single' => ['One badge per page (10 × 11.5 cm)', 100.0, 115.0, 1, 1],
+    ];
+
+    /**
+     * Every badge on print sheets: the badges touch (one cut between two),
+     * with cut marks outside, each exactly 10 × 11.5 cm at 100% scale. Each
+     * sheet of fronts is followed by its sheet of backs, laid out mirrored so
+     * that double-sided printing puts every back behind its own front.
+     *
+     * @param list<array{0: array, 1: list<string>}> $guests [registration, codes]
+     */
+    public static function pdfSheets(array $guests, string $title, string $sheet): string
+    {
+        if ($sheet === 'single' || !isset(self::SHEETS[$sheet])) return self::pdfMany($guests, $title);
+        [, $width, $height, $columns, $rows] = self::SHEETS[$sheet];
+        $landscape = $width > $height;
+        $pdf = new \TCPDF($landscape ? 'L' : 'P', 'mm', [$width, $height], true, 'UTF-8');
+        $pdf->SetCreator('iSmile 2026');
+        $pdf->SetAuthor('iSmile 2026');
+        $pdf->SetTitle($title);
+        $pdf->setPrintHeader(false);
+        $pdf->setPrintFooter(false);
+        $pdf->SetMargins(0, 0, 0);
+        $pdf->SetAutoPageBreak(false);
+        $fonts = self::fonts($pdf);
+        // Flipping around the vertical edge brings each back behind its front:
+        // the long edge for upright paper, the short edge for sideways paper.
+        $pdf->setViewerPreferences(['PrintScaling' => 'None', 'Duplex' => $landscape ? 'DuplexFlipShortEdge' : 'DuplexFlipLongEdge', 'PickTrayByPDFSize' => true]);
+        $badges = [];
+        foreach ($guests as [$registration, $codes]) {
+            foreach ($codes as $code) $badges[] = [$registration, $code];
+        }
+        $left = ($width - $columns * self::WIDTH) / 2;
+        $top = ($height - $rows * self::HEIGHT) / 2;
+        foreach (array_chunk($badges, $columns * $rows) as $page) {
+            $pdf->AddPage($landscape ? 'L' : 'P', [$width, $height]);
+            foreach ($page as $i => $badge) {
+                self::front($pdf, $left + ($i % $columns) * self::WIDTH, $top + intdiv($i, $columns) * self::HEIGHT);
+            }
+            self::cutMarks($pdf, $left, $top, $columns, $rows);
+            $pdf->AddPage($landscape ? 'L' : 'P', [$width, $height]);
+            foreach ($page as $i => [$registration, $code]) {
+                $mirrored = $columns - 1 - ($i % $columns);
+                self::back($pdf, $left + $mirrored * self::WIDTH, $top + intdiv($i, $columns) * self::HEIGHT, $registration, $code, $fonts);
+            }
+            self::cutMarks($pdf, $left, $top, $columns, $rows);
+        }
+        return $pdf->Output('', 'S');
+    }
+
+    /** Thin marks outside the grid where every cut goes (none on the badges themselves). */
+    private static function cutMarks(\TCPDF $pdf, float $left, float $top, int $columns, int $rows): void
+    {
+        $right = $left + $columns * self::WIDTH;
+        $bottom = $top + $rows * self::HEIGHT;
+        $gap = 1.0;
+        $length = min(4.0, $left - $gap, $top - $gap);
+        if ($length < 1.0) return;
+        $pdf->SetDrawColor(0, 0, 0);
+        $pdf->SetLineWidth(0.15);
+        for ($c = 0; $c <= $columns; $c++) {
+            $x = $left + $c * self::WIDTH;
+            $pdf->Line($x, $top - $gap - $length, $x, $top - $gap);
+            $pdf->Line($x, $bottom + $gap, $x, $bottom + $gap + $length);
+        }
+        for ($r = 0; $r <= $rows; $r++) {
+            $y = $top + $r * self::HEIGHT;
+            $pdf->Line($left - $gap - $length, $y, $left - $gap, $y);
+            $pdf->Line($right + $gap, $y, $right + $gap + $length, $y);
+        }
     }
 
     /** True when the Owner has uploaded the licensed Helvetica Now Display. */
@@ -137,16 +219,16 @@ final class Badges
         return mb_strtoupper(trim(preg_replace('/\s+/u', ' ', Registrations::fullName($registration))), 'UTF-8');
     }
 
-    private static function front(\TCPDF $pdf): void
+    /** The front of one badge, its top-left corner at ($x, $y) mm on the current page. */
+    private static function front(\TCPDF $pdf, float $x, float $y): void
     {
-        $pdf->AddPage();
-        $pdf->Image(self::asset('badge-front.jpg'), 0, 0, self::WIDTH, self::HEIGHT, 'JPG', '', '', false, 600);
+        $pdf->Image(self::asset('badge-front.jpg'), $x, $y, self::WIDTH, self::HEIGHT, 'JPG', '', '', false, 600);
     }
 
-    private static function back(\TCPDF $pdf, array $registration, string $code, array $fonts): void
+    /** The back of one badge, its top-left corner at ($x, $y) mm on the current page. */
+    private static function back(\TCPDF $pdf, float $x, float $y, array $registration, string $code, array $fonts): void
     {
-        $pdf->AddPage();
-        $pdf->Image(self::asset('badge-back.jpg'), 0, 0, self::WIDTH, self::HEIGHT, 'JPG', '', '', false, 600);
+        $pdf->Image(self::asset('badge-back.jpg'), $x, $y, self::WIDTH, self::HEIGHT, 'JPG', '', '', false, 600);
         [$r, $g, $b] = self::BLUE;
         $pdf->SetTextColor($r, $g, $b);
         $pdf->SetDrawColor($r, $g, $b);
@@ -162,22 +244,22 @@ final class Badges
             $pdf->SetFont($font, $style, $size -= 0.5);
         }
         // Kurdish and Arabic letters reach below the line, so those names sit a little higher.
-        $pdf->SetXY(0, $font === 'dejavusans' ? 26.6 : 28.0);
+        $pdf->SetXY($x, $y + ($font === 'dejavusans' ? 26.6 : 28.0));
         $pdf->Cell(self::WIDTH, 0, $name, 0, 0, 'C', false, '', 0, false, 'L', 'M');
 
         // The ticket type in the blue pill, with a line on each side.
         $pdf->SetLineWidth(0.27);
-        $pdf->Line(7.55, 32.6, 31.5, 32.6);
-        $pdf->Line(68.75, 32.6, 92.45, 32.6);
-        $pdf->RoundedRect(32.76, 29.8, 34.74, 5.8, 2.9, '1111', 'F');
+        $pdf->Line($x + 7.55, $y + 32.6, $x + 31.5, $y + 32.6);
+        $pdf->Line($x + 68.75, $y + 32.6, $x + 92.45, $y + 32.6);
+        $pdf->RoundedRect($x + 32.76, $y + 29.8, 34.74, 5.8, 2.9, '1111', 'F');
         $pdf->SetTextColor(255, 255, 255);
         $pdf->SetFont($fonts[1], '', 14.3);
-        $pdf->SetXY(32.76, 34.4);
+        $pdf->SetXY($x + 32.76, $y + 34.4);
         $pdf->Cell(34.74, 0, Registrations::ticketName($registration['ticket_type']), 0, 0, 'C', false, '', 0, false, 'L', 'M');
 
         // The QR takes the artwork box's place: as wide as the box (53.2 mm), no border,
         // ending above the partner logos (which start at 94.7 mm). No printed code.
-        self::qr($pdf, $code, 50.0, 38.3, 53.2);
+        self::qr($pdf, $code, $x + 50.0, $y + 38.3, 53.2);
     }
 
     /**
