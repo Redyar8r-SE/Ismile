@@ -76,7 +76,7 @@ jobs:
           zip -r -q deploy-bundle.zip \
             index.html admin.html register.html sponsor.html workshops.html workshop.html payment.html favicon.ico \
             assets css data docs js netlify server \
-            package.json ecosystem.config.cjs .env \
+            package.json ecosystem.config.cjs .env scripts/merge-code-sponsors.mjs \
             -x '*.DS_Store' -x '**/deploy.env' -x '**/.deploy.env' -x '**/.git/*' -x '**/node_modules/*' -x '**/tests/*'
           ls -lh deploy-bundle.zip
           unzip -t -q deploy-bundle.zip
@@ -259,6 +259,10 @@ jobs:
               exit 1
             fi
             echo "Boot test passed."
+
+            # A sponsor added in the code (data/sponsors.json) goes into the live list
+            # edited in Site content, once. A failure here never stops the deploy.
+            node scripts/merge-code-sponsors.mjs || echo "WARNING: code sponsors were not merged; the live sponsor list is unchanged."
 
             restore_previous() {
               set +e
