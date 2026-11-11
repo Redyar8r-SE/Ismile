@@ -863,10 +863,12 @@ CREATE TABLE IF NOT EXISTS association_batch_items (
   CONSTRAINT ck_association_active CHECK ((active = 1 AND reversed_at IS NULL) OR (active IS NULL AND reversed_at IS NOT NULL))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Badge batches: every printed-badge PDF made in the admin (Tickets tab), so
--- the team can always see which guests' badges were made, when and by whom.
+-- Badge batches: guests ticked on the Tickets tab and saved together, so the
+-- team can see whose badges were made, when and by whom. Numbered like
+-- Association: a deleted batch's number goes to the next new batch.
 CREATE TABLE IF NOT EXISTS badge_batches (
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  batch_number INT UNSIGNED NOT NULL,
   guest_count SMALLINT UNSIGNED NOT NULL,
   created_by INT UNSIGNED NOT NULL,
   created_by_name VARCHAR(120) NOT NULL,
@@ -874,6 +876,7 @@ CREATE TABLE IF NOT EXISTS badge_batches (
   downloads INT UNSIGNED NOT NULL DEFAULT 0,
   last_downloaded_at DATETIME NULL,
   PRIMARY KEY (id),
+  UNIQUE KEY uq_badge_batch_number (batch_number),
   KEY k_badge_batch_created (created_at),
   CONSTRAINT fk_badge_batch_creator FOREIGN KEY (created_by) REFERENCES admin_users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci

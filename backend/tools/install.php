@@ -81,6 +81,9 @@ foreach ($migrations as $file) {
         if ($name === '2026-11-02-association-batch-numbers.sql') {
             $methodAlreadyPresent = (bool) Db::value("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'association_batches' AND column_name = 'batch_number'");
         }
+        if ($name === '2026-11-12-badge-batch-numbers.sql') {
+            $methodAlreadyPresent = (bool) Db::value("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'badge_batches' AND column_name = 'batch_number'");
+        }
         if ($name === '2026-11-09-map-40.sql') {
             $maria = stripos((string)Db::value('SELECT VERSION()'),'MariaDB') !== false;
             foreach ($statements($file) as $statement) $run([$maria ? str_replace('DROP CHECK ','DROP CONSTRAINT ',$statement) : $statement]);

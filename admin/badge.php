@@ -3,44 +3,40 @@ declare(strict_types=1);
 require __DIR__ . '/_boot.php';
 
 use Ismile\Admin\Page;
-use Ismile\Auth;
+use Ismile\Audit;
 use Ismile\BadgeBatches;
+use Ismile\Badges;
+use Ismile\PsoolaTickets;
+use Ismile\Registrations;
 use Ismile\UserError;
 
-// The two-sided badge PDF. Every badge made here is saved in the badge batch history.
-//   GET  badge.php?id=REGISTRATION   one guest (a new batch of one)
-//   POST badge.php  guests[]=…       the guests ticked on the Tickets tab (a new batch)
-//   GET  badge.php?batch=N           a saved batch again
-// &print=1 (or print=1 in the form) opens it to print instead of downloading.
+// The two-sided badge PDF (10 × 11.5 cm pages).
+//   GET badge.php?id=REGISTRATION   one guest, for yourself: not saved as a batch
+//   GET badge.php?batch=ID          every guest of a saved badge batch
+// &print=1 opens it to print instead of downloading.
 $user = Page::guard('registrations');
-$print = ($_GET['print'] ?? $_POST['print'] ?? '') === '1';
+$print = ($_GET['print'] ?? '') === '1';
 $back = 'tickets.php';
 try {
-    if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
-        Auth::checkCsrf();
-        $made = BadgeBatches::create($user, array_map('intval', (array) ($_POST['guests'] ?? [])));
-        [$pdf, $name] = [$made['pdf'], 'ismile-badges-batch-' . $made['id']];
-    } elseif (isset($_GET['batch'])) {
+    if (isset($_GET['batch'])) {
         $batchId = max(0, (int) $_GET['batch']);
         $back = 'tickets.php?batch=' . $batchId;
-        [$pdf, $name] = [BadgeBatches::download($user, $batchId), 'ismile-badges-batch-' . $batchId];
+        $batch = BadgeBatches::find($batchId) ?? throw new UserError('Badge batch not found. It may have been deleted.');
+        [$pdf, $name] = [BadgeBatches::pdf($user, $batchId), 'ismile-badges-batch-' . (int) $batch['batch_number']];
     } else {
         $id = max(0, (int) ($_GET['id'] ?? 0));
         $back = 'registration.php?id=' . $id;
-        $made = BadgeBatches::create($user, [$id]);
-        [$pdf, $name] = [$made['pdf'], 'ismile-badge-batch-' . $made['id']];
+        $registration = Registrations::find($id) ?? throw new UserError('Registration not found.');
+        $codes = PsoolaTickets::codesFor($user, [$registration]);
+        [$pdf, $name] = [Badges::pdf($registration, $codes[$id]), 'ismile-badge-' . $registration['ref']];
+        Audit::log((int) $user['id'], $print ? 'badge.print' : 'badge.download', 'registration', $id);
     }
 } catch (UserError $error) {
     Page::flash('error', $error->key);
     Page::redirect($back);
 } catch (Throwable) {
-    Page::flash('error', 'The badges could not be made: PSOOLA did not answer. Try again in a moment; nothing was saved.');
+    Page::flash('error', 'The badges could not be made: PSOOLA did not answer. Try again in a moment.');
     Page::redirect($back);
-}
-// Tells the Tickets tab the PDF is ready, so it can reload and show the new batch.
-$done = (string) ($_POST['done'] ?? '');
-if (preg_match('/^[a-z0-9]{8,32}$/', $done)) {
-    setcookie('badge_done', $done, ['path' => '/admin/', 'samesite' => 'Lax', 'secure' => !empty($_SERVER['HTTPS']), 'expires' => time() + 300]);
 }
 header('Content-Type: application/pdf');
 header('Content-Disposition: ' . ($print ? 'inline' : 'attachment') . '; filename="' . $name . '.pdf"');

@@ -11,17 +11,28 @@ use Ismile\PsoolaTickets;
 use Ismile\Registrations;
 use Ismile\UserError;
 
-// Event tickets: everyone with an active ticket, their original PSOOLA QR and
-// printed badges, with a batch history of every badge PDF (like Association).
+// Event tickets: everyone with an active ticket and their original PSOOLA QR.
+// Ticked guests become a badge batch (like Association), with one PDF of all
+// their badges; batches can be deleted and their numbers are reused.
 $user = Page::guard('certificates');
-// The Owner's licensed badge font, kept in private storage (never in the repository).
-Page::action(static fn (): string => match ((string) ($_POST['do'] ?? '')) {
-    'badge_font' => Badges::installFont($user, $_FILES),
-    'badge_font_remove' => Badges::removeFont($user),
-    default => throw new UserError('Choose a badge font action.'),
-}, 'tickets.php');
-$e = [Page::class, 'e'];
 $canBadge = Auth::can($user, 'registrations');
+Page::action(static function () use ($user, $canBadge): string {
+    $action = (string) ($_POST['do'] ?? '');
+    if (in_array($action, ['badge_batch', 'badge_batch_delete'], true) && !$canBadge) throw new UserError('Your account cannot make badges.');
+    if ($action === 'badge_batch') {
+        $id = BadgeBatches::create($user, array_map('intval', (array) ($_POST['guests'] ?? [])));
+        Page::flash('ok', BadgeBatches::label(BadgeBatches::find($id)) . ' created. Download or print its PDF below.');
+        Page::redirect('tickets.php?batch=' . $id);
+    }
+    return match ($action) {
+        'badge_batch_delete' => BadgeBatches::delete($user, (int) ($_POST['batch_id'] ?? 0)),
+        // The Owner's licensed badge font, kept in private storage (never in the repository).
+        'badge_font' => Badges::installFont($user, $_FILES),
+        'badge_font_remove' => Badges::removeFont($user),
+        default => throw new UserError('Choose an action.'),
+    };
+}, 'tickets.php#badge-history');
+$e = [Page::class, 'e'];
 $batchId = max(0, (int) ($_GET['batch'] ?? 0));
 $batch = $batchId ? BadgeBatches::find($batchId) : null;
 
@@ -54,6 +65,7 @@ $rows = $batch ? [] : Db::all("SELECT r.id, r.ref, r.phone, r.first_name, r.fath
      OR EXISTS (SELECT 1 FROM payments p WHERE p.registration_id=r.id AND p.gateway='psoola' AND p.status='paid' AND p.provider_payment_id IS NOT NULL)) AS has_psoola,
     (SELECT GROUP_CONCAT(CONCAT('Day ', a.event_day) ORDER BY a.event_day SEPARATOR ' & ') FROM ticket_attendance a WHERE a.ticket_id=t.id) AS attended_days,
     (SELECT MAX(bi.batch_id) FROM badge_batch_items bi WHERE bi.registration_id=r.id) AS last_batch,
+    (SELECT b.batch_number FROM badge_batch_items bi JOIN badge_batches b ON b.id=bi.batch_id WHERE bi.registration_id=r.id ORDER BY b.id DESC LIMIT 1) AS last_batch_number,
     (SELECT COUNT(*) FROM badge_batch_items bi WHERE bi.registration_id=r.id) AS batch_count
     FROM registrations r JOIN tickets t ON t.registration_id=r.id WHERE $where ORDER BY $order LIMIT 2000", $params);
 $letterOf = static function (array $row): string {
@@ -64,28 +76,33 @@ $letters = array_unique(array_map($letterOf, $rows));
 $madeCount = count(array_filter($rows, static fn (array $r): bool => (int) $r['batch_count'] > 0));
 $history = $batch ? [] : BadgeBatches::history();
 $batchUrl = static fn (int $id): string => 'tickets.php?batch=' . $id;
+$deleteButton = static function (array $b, string $size) use ($e): string {
+    $label = BadgeBatches::label($b);
+    return '<form method="post" action="tickets.php" class="inline-form">' . Page::csrfField() . '<input type="hidden" name="do" value="badge_batch_delete"><input type="hidden" name="batch_id" value="' . (int) $b['id'] . '">'
+        . '<button class="btn ' . $size . ' ghost"' . Page::confirm('red', 'trash', 'Delete ' . $label . '?', 'Only the batch and its list are removed; the guests and their tickets stay. Its number goes to the next new batch.', [['users', (int) $b['guest_count'] . ' guest(s) in this batch']], ['deletes' => [$label]]) . '>Delete</button></form>';
+};
 $select = static function (string $name, string $label, array $options, string $value) use ($e): string {
     $html = '<label class="ticket-filter"><span>' . $e($label) . '</span><select name="' . $name . '" data-auto-submit>';
     foreach ($options as $key => $text) $html .= '<option value="' . $e($key) . '"' . ((string) $key === $value ? ' selected' : '') . '>' . $e($text) . '</option>';
     return $html . '</select></label>';
 };
-Page::top($batch ? BadgeBatches::label($batchId) : 'Tickets', 'tickets', $batch ? '<a class="btn ghost" href="tickets.php">Back to tickets</a>' : '<a class="btn ghost" href="#badge-history">Batch history</a>');
+Page::top($batch ? BadgeBatches::label($batch) : 'Tickets', 'tickets', $batch ? '<a class="btn ghost" href="tickets.php">Back to tickets</a>' : '<a class="btn ghost" href="#badge-history">Batch history</a>');
 echo Page::ticketTabs('tickets');
 
 if ($batchId && !$batch): ?>
 <section class="card"><h2>Badge batch not found</h2><a class="btn" href="tickets.php">Back to tickets</a></section>
 <?php elseif ($batch): $items = BadgeBatches::items($batchId); ?>
 <section class="card directory-panel">
-  <div class="toolbar list-head"><div><h2><?= $e(BadgeBatches::label($batchId)) ?></h2>
+  <div class="toolbar list-head"><div><h2><?= $e(BadgeBatches::label($batch)) ?></h2>
     <p class="muted"><?= (int) $batch['guest_count'] ?> guest(s) &middot; made <?= $e($batch['created_at']) ?> (Iraq) by <?= $e($batch['created_by_name']) ?> &middot; downloaded <?= (int) $batch['downloads'] ?> time(s)<?= $batch['last_downloaded_at'] ? ', last ' . $e($batch['last_downloaded_at']) : '' ?></p></div>
-    <?php if ($canBadge): ?><div class="certificate-delivery-actions"><a class="btn green" href="badge.php?batch=<?= $batchId ?>"><?= Page::navIcon('download') ?><span>Download batch PDF</span></a><a class="btn ghost" href="badge.php?batch=<?= $batchId ?>&amp;print=1" target="_blank" rel="noopener">Print batch</a></div><?php endif; ?></div>
-  <p class="muted small">Names as printed in this batch. Downloading again uses each guest’s current name and PSOOLA ticket.</p>
+    <?php if ($canBadge): ?><div class="certificate-delivery-actions"><a class="btn green" href="badge.php?batch=<?= $batchId ?>"><?= Page::navIcon('download') ?><span>Download batch PDF</span></a><a class="btn ghost" href="badge.php?batch=<?= $batchId ?>&amp;print=1" target="_blank" rel="noopener">Print batch</a><?= $deleteButton($batch, '') ?></div><?php endif; ?></div>
+  <p class="muted small">The PDF holds every guest’s badge, front and back, each page 10 × 11.5 cm. It always uses each guest’s current name and PSOOLA ticket.</p>
   <div class="table-wrap"><table><thead><tr><th>#</th><th>Name on badge</th><th>Type</th><th>Reference</th><th>Ticket</th><th>Attendance</th></tr></thead><tbody>
   <?php foreach ($items as $item): ?><tr><td><?= (int) $item['position'] ?></td><td><a href="registration.php?id=<?= (int) $item['registration_id'] ?>"><b><?= $e($item['printed_name']) ?></b></a><?= $item['status'] === 'cancelled' ? ' <span class="pill gold">Cancelled since</span>' : '' ?></td><td><?= $e($item['ticket_type']) ?></td><td><code><?= $e($item['ref']) ?></code></td><td><code><?= $e((string) $item['ticket_no']) ?></code></td><td><?= $item['attended_days'] ? $e($item['attended_days']) : 'Not yet' ?></td></tr><?php endforeach; ?>
   </tbody></table></div>
 </section>
 <?php else: ?>
-<form id="badge-batch-form" method="post" action="badge.php" data-badge-batch-form><?= Page::csrfField() ?><input type="hidden" name="done" value="" data-badge-done></form>
+<form id="badge-batch-form" method="post" action="tickets.php" data-badge-batch-form><?= Page::csrfField() ?><input type="hidden" name="do" value="badge_batch"></form>
 <section class="card" id="tickets" data-registration-details data-ticket-directory data-no-live data-csrf="<?= $e(Auth::csrf()) ?>">
   <div class="panel-top"><?= Page::panelHeading('Event tickets', 'Find a guest, show their original PSOOLA QR, or make printed badges. Every badge PDF is saved in the batch history below.', 'ticket') ?></div>
   <form method="get" action="tickets.php" class="ticket-filters" role="search">
@@ -100,8 +117,7 @@ if ($batchId && !$batch): ?>
   <div class="ticket-bar">
     <p class="muted small"><b data-ticket-count><?= count($rows) ?></b> guest(s) shown &middot; badges made for <?= $madeCount ?> of them</p>
     <?php if ($canBadge): ?><div class="certificate-delivery-actions"><span class="muted small" data-ticket-selected>None selected</span>
-      <button class="btn small green" form="badge-batch-form" data-ticket-batch disabled><?= Page::navIcon('download') ?><span>Download selected</span></button>
-      <button class="btn small ghost" form="badge-batch-form" name="print" value="1" formtarget="_blank" data-ticket-batch disabled>Print selected</button></div><?php endif; ?>
+      <button class="btn small green" form="badge-batch-form" data-ticket-batch disabled><?= Page::navIcon('ticket') ?><span>Create batch</span></button></div><?php endif; ?>
   </div>
   <p class="rd-link-result" role="status" data-rd-link-result></p>
   <div class="table-wrap ticket-scroll"><table><thead><tr><th><?php if ($canBadge): ?><input type="checkbox" data-ticket-all aria-label="Select every guest shown"><?php endif; ?></th><th>Name</th><th>Reference</th><th>Ticket</th><th>Type</th><th>Attendance</th><th>Badge</th><th>Actions</th></tr></thead><tbody>
@@ -110,7 +126,7 @@ if ($batchId && !$batch): ?>
     <td><?php if ($canQr && $canBadge): ?><input type="checkbox" name="guests[]" value="<?= (int) $row['id'] ?>" form="badge-batch-form" aria-label="<?= $e('Select ' . $name) ?>"><?php endif; ?></td>
     <td><a href="registration.php?id=<?= (int) $row['id'] ?>"><b><?= $e($name) ?></b></a></td><td><?= $e($row['ref']) ?></td><td><code><?= $e($row['ticket_no']) ?></code></td>
     <td><?= $e(Registrations::ticketName($row['ticket_type'])) ?></td><td><?= $row['attended_days'] ? $e($row['attended_days']) : 'Not yet' ?></td>
-    <td><?php if ($row['last_batch']): ?><a class="pill teal" href="<?= $e($batchUrl((int) $row['last_batch'])) ?>">Batch #<?= (int) $row['last_batch'] ?></a><?= (int) $row['batch_count'] > 1 ? ' <small class="muted">×' . (int) $row['batch_count'] . '</small>' : '' ?><?php else: ?><span class="pill gold">Not made</span><?php endif; ?></td>
+    <td><?php if ($row['last_batch']): ?><a class="pill teal" href="<?= $e($batchUrl((int) $row['last_batch'])) ?>">Batch #<?= (int) $row['last_batch_number'] ?></a><?= (int) $row['batch_count'] > 1 ? ' <small class="muted">×' . (int) $row['batch_count'] . '</small>' : '' ?><?php else: ?><span class="pill gold">Not made</span><?php endif; ?></td>
     <td><?php if (!$row['has_psoola']): ?><span class="muted small">No PSOOLA ticket</span><?php elseif (!$canQr): ?><span class="muted small">No access</span><?php else: ?><div class="certificate-delivery-actions"><button class="btn small" type="button" data-rd-ticket="psoola" data-registration-id="<?= (int) $row['id'] ?>"><?= Page::navIcon('ticket') ?><span>Show QR</span></button><?php if ($canBadge): ?><a class="btn small ghost" href="badge.php?id=<?= (int) $row['id'] ?>"><?= Page::navIcon('download') ?><span>Badge PDF</span></a><a class="btn small ghost" href="badge.php?id=<?= (int) $row['id'] ?>&amp;print=1" target="_blank" rel="noopener">Print</a><?php endif; ?></div><?php endif; ?></td>
   </tr><?php endforeach; ?>
   <tr data-ticket-empty<?= $rows ? ' hidden' : '' ?>><td colspan="8"><?= Page::emptyState('No guest found', 'Try another name, or clear the filters.', 'search') ?></td></tr>
@@ -129,13 +145,13 @@ if ($batchId && !$batch): ?>
   <?php endif; ?>
   <dialog class="rd-dialog rd-provider-dialog" data-rd-psoola-dialog aria-labelledby="rd-psoola-title"><div class="rd-dialog-heading"><div><h2 id="rd-psoola-title">PSOOLA tickets</h2><p>Original ticket details and QR code</p></div><button type="button" class="icon-button" data-rd-close aria-label="Close PSOOLA tickets"><?= Page::navIcon('close') ?></button></div><div data-rd-psoola-body></div></dialog>
 </section>
-<section class="card directory-panel" id="badge-history"><div class="toolbar list-head"><div><h2>Batch history</h2><p class="muted small">Every badge PDF made in the admin, newest first: one guest from their page, or many ticked above.</p></div></div>
+<section class="card directory-panel" id="badge-history"><div class="toolbar list-head"><div><h2>Batch history</h2><p class="muted small">Guests ticked above and saved with Create batch. Deleting a batch frees its number for the next new batch. One guest printed from their own page is not a batch.</p></div></div>
   <div class="table-wrap"><table><thead><tr><th>Batch</th><th>Made (Iraq)</th><th>Guests</th><th>Names</th><th>Made by</th><th>Downloads</th><th>PDF</th></tr></thead><tbody>
-  <?php foreach ($history as $h): ?><tr><td><a href="<?= $e($batchUrl((int) $h['id'])) ?>"><b><?= $e(BadgeBatches::label((int) $h['id'])) ?></b></a></td><td><?= $e($h['created_at']) ?></td><td><?= (int) $h['guest_count'] ?></td>
+  <?php foreach ($history as $h): ?><tr><td><a href="<?= $e($batchUrl((int) $h['id'])) ?>"><b><?= $e(BadgeBatches::label($h)) ?></b></a></td><td><?= $e($h['created_at']) ?></td><td><?= (int) $h['guest_count'] ?></td>
     <td><?= $e((string) $h['first_names']) ?><?= (int) $h['guest_count'] > 3 ? ' <span class="muted small">and ' . ((int) $h['guest_count'] - 3) . ' more</span>' : '' ?></td><td><?= $e($h['created_by_name']) ?></td>
     <td><?= (int) $h['downloads'] ?><?= $h['last_downloaded_at'] ? '<br><small class="muted">last ' . $e($h['last_downloaded_at']) . '</small>' : '' ?></td>
-    <td><div class="certificate-delivery-actions"><a class="btn small ghost" href="<?= $e($batchUrl((int) $h['id'])) ?>">Open</a><?php if ($canBadge): ?><a class="btn small ghost" href="badge.php?batch=<?= (int) $h['id'] ?>">PDF</a><a class="btn small ghost" href="badge.php?batch=<?= (int) $h['id'] ?>&amp;print=1" target="_blank" rel="noopener">Print</a><?php endif; ?></div></td></tr><?php endforeach; ?>
-  <?php if (!$history): ?><tr><td colspan="7"><?= Page::emptyState('No badges made yet', 'Tick guests above and press Download selected, or use Badge PDF on one guest.', 'ticket') ?></td></tr><?php endif; ?>
+    <td><div class="certificate-delivery-actions"><a class="btn small ghost" href="<?= $e($batchUrl((int) $h['id'])) ?>">Open</a><?php if ($canBadge): ?><a class="btn small ghost" href="badge.php?batch=<?= (int) $h['id'] ?>">PDF</a><a class="btn small ghost" href="badge.php?batch=<?= (int) $h['id'] ?>&amp;print=1" target="_blank" rel="noopener">Print</a><?= $deleteButton($h, 'small') ?><?php endif; ?></div></td></tr><?php endforeach; ?>
+  <?php if (!$history): ?><tr><td colspan="7"><?= Page::emptyState('No badge batches yet', 'Tick guests above and press Create batch.', 'ticket') ?></td></tr><?php endif; ?>
   </tbody></table></div>
 </section>
 <?php endif;

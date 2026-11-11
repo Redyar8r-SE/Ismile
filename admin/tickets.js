@@ -1,5 +1,5 @@
-// Tickets tab: find a name instantly, jump to a letter, tick guests for a
-// badge batch, and reload once the PDF is ready so the batch history shows it.
+// Tickets tab: find a name instantly, jump to a letter, and tick guests to
+// save them as a badge batch (Create batch).
 document.addEventListener("DOMContentLoaded", () => {
   const root = document.querySelector("[data-ticket-directory]");
   if (!root) return;
@@ -55,19 +55,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   form?.addEventListener("submit", () => {
     const ticked = boxes().filter(box => box.checked).length;
-    const token = Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
-    form.querySelector("[data-badge-done]").value = token;
-    if (selected) selected.textContent = "Making " + ticked + " badge(s)… this can take a little while.";
-    // After the browser has read the pressed button (Print sends print=1).
+    if (selected) selected.textContent = "Creating a batch of " + ticked + " guest(s)…";
+    // After the browser has sent the form, so the button cannot be pressed twice.
     setTimeout(() => batchButtons.forEach(button => { button.disabled = true; }));
-    // badge.php sets this cookie when the PDF is sent; then the new batch is in the history.
-    const started = Date.now();
-    const timer = setInterval(() => {
-      if (document.cookie.split("; ").includes("badge_done=" + token) || Date.now() - started > 180000) {
-        clearInterval(timer);
-        location.reload();
-      }
-    }, 700);
   });
   refresh();
 });
