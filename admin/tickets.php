@@ -28,9 +28,6 @@ Page::action(static function () use ($user, $canBadge): string {
     }
     return match ($action) {
         'badge_batch_delete' => BadgeBatches::delete($user, (int) ($_POST['batch_id'] ?? 0)),
-        // The Owner's licensed badge font, kept in private storage (never in the repository).
-        'badge_font' => Badges::installFont($user, $_FILES),
-        'badge_font_remove' => Badges::removeFont($user),
         default => throw new UserError('Choose an action.'),
     };
 }, 'tickets.php#badge-history');
@@ -139,18 +136,8 @@ if ($batchId && !$batch): ?>
   </tr><?php endforeach; ?>
   <tr data-ticket-empty<?= $rows ? ' hidden' : '' ?>><td colspan="8"><?= Page::emptyState('No guest found', 'Try another name, or clear the filters.', 'search') ?></td></tr>
   </tbody></table></div>
-  <p class="muted small">Private ticket access: show a QR only to its holder. Badges are made with each guest’s PSOOLA ticket code.</p>
-  <?php if ($user['role'] === 'owner'): $licensed = Badges::hasLicensedFont(); ?>
-  <details class="badge-font"><summary>Badge font: <b><?= $licensed ? 'Helvetica Now Display (uploaded)' : 'Inter Display (free match)' ?></b></summary>
-    <form method="post" enctype="multipart/form-data" class="inline-form"><?= Page::csrfField() ?><input type="hidden" name="do" value="badge_font">
-      <label>Black (.ttf) <input type="file" name="font_black" accept=".ttf" required></label>
-      <label>Medium (.ttf) <input type="file" name="font_medium" accept=".ttf" required></label>
-      <button class="btn small">Upload licensed font</button>
-    </form>
-    <?php if ($licensed): ?><form method="post" class="inline-form"><?= Page::csrfField() ?><input type="hidden" name="do" value="badge_font_remove"><button class="btn small ghost">Use the free font again</button></form><?php endif; ?>
-    <p class="muted small">Only upload a font your licence covers. It is stored privately on the server, never on GitHub.</p>
-  </details>
-  <?php endif; ?>
+  <?php if ($canBadge): ?><div class="ticket-bar ticket-bar-bottom"><span class="muted small" data-ticket-selected>None selected</span>
+    <button class="btn green" form="badge-batch-form" data-ticket-batch disabled><?= Page::navIcon('ticket') ?><span>Create batch</span></button></div><?php endif; ?>
   <dialog class="rd-dialog rd-provider-dialog" data-rd-psoola-dialog aria-labelledby="rd-psoola-title"><div class="rd-dialog-heading"><div><h2 id="rd-psoola-title">PSOOLA tickets</h2><p>Original ticket details and QR code</p></div><button type="button" class="icon-button" data-rd-close aria-label="Close PSOOLA tickets"><?= Page::navIcon('close') ?></button></div><div data-rd-psoola-body></div></dialog>
 </section>
 <section class="card directory-panel" id="badge-history"><div class="toolbar list-head"><div><h2>Batch history</h2><p class="muted small">Guests ticked above and saved with Create batch. Deleting a batch frees its number for the next new batch. One guest printed from their own page is not a batch.</p></div></div>
