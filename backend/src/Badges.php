@@ -27,6 +27,9 @@ final class Badges
         $pdf->setPrintFooter(false);
         $pdf->SetMargins(0, 0, 0);
         $pdf->SetAutoPageBreak(false);
+        // Inter Display (SIL Open Font License): the closest free match to the artwork's Helvetica Now Display.
+        $pdf->AddFont('interdisplayblack', '', self::asset('fonts/interdisplayblack.php'));
+        $pdf->AddFont('interdisplaymedium', '', self::asset('fonts/interdisplaymedium.php'));
         // Print at 100% on both sides of the card (front, then back).
         $pdf->setViewerPreferences(['PrintScaling' => 'None', 'Duplex' => 'DuplexFlipLongEdge', 'PickTrayByPDFSize' => true]);
         foreach ($codes as $code) {
@@ -61,11 +64,12 @@ final class Badges
 
         // The name: one line across the card, smaller when it is long.
         $name = self::displayName($registration);
-        $font = preg_match('/[^\x{0000}-\x{024F}]/u', $name) ? 'dejavusans' : 'helvetica';
+        // Kurdish or Arabic letters need DejaVu; Latin names use the artwork's heavy display face.
+        [$font, $style] = preg_match('/[^\x{0000}-\x{024F}]/u', $name) ? ['dejavusans', 'B'] : ['interdisplayblack', ''];
         $size = 25.8;
-        $pdf->SetFont($font, 'B', $size);
+        $pdf->SetFont($font, $style, $size);
         while ($size > 9 && $pdf->GetStringWidth($name) > 84) {
-            $pdf->SetFont($font, 'B', $size -= 0.5);
+            $pdf->SetFont($font, $style, $size -= 0.5);
         }
         $pdf->SetXY(0, 28.0);
         $pdf->Cell(self::WIDTH, 0, $name, 0, 0, 'C', false, '', 0, false, 'L', 'M');
@@ -76,7 +80,7 @@ final class Badges
         $pdf->Line(68.75, 32.6, 92.45, 32.6);
         $pdf->RoundedRect(32.76, 29.8, 34.74, 5.8, 2.9, '1111', 'F');
         $pdf->SetTextColor(255, 255, 255);
-        $pdf->SetFont('helvetica', '', 14.3);
+        $pdf->SetFont('interdisplaymedium', '', 14.3);
         $pdf->SetXY(32.76, 34.4);
         $pdf->Cell(34.74, 0, Registrations::ticketName($registration['ticket_type']), 0, 0, 'C', false, '', 0, false, 'L', 'M');
 
@@ -85,7 +89,7 @@ final class Badges
         $pdf->Rect(23.35, 38.3, 53.2, 41.4, 'D');
         self::qr($pdf, $code, 50.0, 40.6, 30.0);
         $pdf->SetTextColor($r, $g, $b);
-        $pdf->SetFont('helvetica', 'B', 10);
+        $pdf->SetFont('interdisplaymedium', '', 10);
         $pdf->setFontSpacing(0.6);
         $pdf->SetXY(23.35, 75.6);
         $pdf->Cell(53.2, 0, $code, 0, 0, 'C', false, '', 0, false, 'L', 'M');
