@@ -77,6 +77,17 @@ try {
             }
         }
 
+        // Badges are ready ahead: each new guest's PSOOLA ticket code is saved
+        // (every guest's is refreshed once an hour). One failure never stops the rest.
+        if (PsoolaCheckIns::active()) {
+            try {
+                $report['badge_codes'] = \Ismile\PsoolaTickets::syncCodes((int) date('i') < 5);
+            } catch (\Throwable $error) {
+                App::log('error', 'Badge codes could not be saved', ['error' => $error->getMessage()]);
+                $report['badge_codes'] = 'error';
+            }
+        }
+
         // Forms not paid in time are closed, and deleted two days later with
         // their student ID photo: nobody is kept who did not pay.
         $report['unpaid_forms'] = Checkouts::cleanUp();

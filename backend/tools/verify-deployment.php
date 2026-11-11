@@ -243,7 +243,7 @@ $check('Registered list offers the Sale type filter (cash, card, free)', str_con
 $html = $render('certificates');
 $check('certificate delivery remains manual', str_contains($html, 'Check-in never sends certificate emails.') && str_contains($html, 'Download attendance report (PDF)'));
 $html = $render('tickets');
-$check('Tickets page lists event tickets with the PSOOLA QR window', str_contains($html, 'Event tickets') && str_contains($html, 'ticket-tabs') && str_contains($html, 'data-rd-psoola-dialog') && str_contains($html, 'id="badge-history"') && str_contains($html, 'tickets.js') && str_contains($html, 'registration-details.js'));
+$check('Tickets page lists event tickets with the PSOOLA QR window', str_contains($html, 'tk-panel') && str_contains($html, 'ticket-tabs') && str_contains($html, 'data-rd-psoola-dialog') && str_contains($html, 'id="badge-history"') && str_contains($html, 'tickets.js') && str_contains($html, 'registration-details.js'));
 // Viewer: opens every event page in view-only mode, never the Owner pages or the website editor.
 foreach (['index','registrations','lists','payments','psoola-orders','workshops','sponsors','booths','checkin','certificates','communications'] as $page) {
     $html = $render($page, '', 'viewer');

@@ -234,3 +234,5 @@
 .tk-taken{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:6px;background:var(--teal-d);color:#fff;font-size:12px;font-weight:800;cursor:help}
 .tk-in-batch td{background:#f7fbfc}
 .tk-in-batch .bb-initial{background:var(--teal-l);color:var(--teal-d)}
+.tk-ready{display:inline-flex;align-items:center;gap:5px;color:var(--green-d);font-weight:600}
+.tk-ready .nav-icon{width:14px;height:14px}

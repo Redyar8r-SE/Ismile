@@ -116,26 +116,107 @@ final class PsoolaTickets
     }
 
     /**
-     * The active PSOOLA ticket codes of many guests, as the API returns them
-     * (for badges): one pass over each event's order list, with the same
-     * checks as the ticket preview. All or nothing: if any guest has no
-     * active code, nothing is returned and the names are listed.
+     * The active PSOOLA ticket codes of many guests (for badges): the codes the
+     * 5-minute job saved, and for anyone not saved yet, one live pass over
+     * each event's order list with the same checks as the ticket preview.
+     * All or nothing: if any guest has no active code, nothing is returned
+     * and the names are listed.
      *
      * @param list<array> $registrations
      * @return array<int, list<string>> registration id => codes
      */
     public static function codesFor(array $user, array $registrations): array
     {
-        $wanted = [];
-        $missing = [];
         foreach ($registrations as $registration) {
             if (!self::canView($user, $registration)) throw new UserError('Your account cannot view the PSOOLA ticket of ' . Registrations::fullName($registration) . '.');
+        }
+        $codes = self::savedCodes($registrations);
+        $need = array_values(array_filter($registrations, static fn (array $r): bool => !isset($codes[(int) $r['id']])));
+        if ($need) {
+            $live = self::liveCodes($need, true);
+            self::saveCodes($live);
+            $codes += $live;
+        }
+        $missing = [];
+        foreach ($registrations as $registration) {
+            if (!isset($codes[(int) $registration['id']])) $missing[] = Registrations::fullName($registration);
+        }
+        if ($missing) {
+            $names = implode(', ', array_slice($missing, 0, 8)) . (count($missing) > 8 ? ' and ' . (count($missing) - 8) . ' more' : '');
+            throw new UserError('PSOOLA has no active ticket code for: ' . $names . '. Nothing was downloaded.');
+        }
+        return $codes;
+    }
+
+    /**
+     * The 5-minute job: fetches and saves the codes of guests who have none
+     * saved yet (new registrations); with $all, refreshes every guest.
+     *
+     * @return array{checked: int, saved: int}
+     */
+    public static function syncCodes(bool $all = false): array
+    {
+        $rows = Db::all("SELECT r.* FROM registrations r JOIN tickets t ON t.registration_id = r.id
+            WHERE r.status IN ('paid','complimentary') AND t.cancelled_at IS NULL"
+            . ($all ? '' : ' AND NOT EXISTS (SELECT 1 FROM badge_ticket_codes c WHERE c.registration_id = r.id)'));
+        $live = $rows ? self::liveCodes($rows, false) : [];
+        self::saveCodes($live);
+        if ($all) {
+            // A guest whose PSOOLA ticket is no longer active keeps no stale code.
+            $stale = array_diff(array_map(static fn (array $r): int => (int) $r['id'], $rows), array_keys($live));
+            foreach ($stale as $id) Db::run('DELETE FROM badge_ticket_codes WHERE registration_id = ?', [$id]);
+        }
+        Db::run("DELETE c FROM badge_ticket_codes c JOIN registrations r ON r.id = c.registration_id LEFT JOIN tickets t ON t.registration_id = r.id
+            WHERE r.status NOT IN ('paid','complimentary') OR t.id IS NULL OR t.cancelled_at IS NOT NULL");
+        return ['checked' => count($rows), 'saved' => count($live)];
+    }
+
+    /** How many guests already have their code saved. */
+    public static function savedCount(): int
+    {
+        return (int) Db::value('SELECT COUNT(*) FROM badge_ticket_codes');
+    }
+
+    /** Saved codes of the guests whose ticket is still active. */
+    private static function savedCodes(array $registrations): array
+    {
+        $active = [];
+        foreach ($registrations as $registration) {
+            $ticket = Tickets::forRegistration((int) $registration['id']);
+            if (in_array($registration['status'], ['paid', 'complimentary'], true) && $ticket && $ticket['cancelled_at'] === null) $active[] = (int) $registration['id'];
+        }
+        if (!$active) return [];
+        $codes = [];
+        foreach (Db::all('SELECT registration_id, codes FROM badge_ticket_codes WHERE registration_id IN (' . implode(',', array_fill(0, count($active), '?')) . ')', $active) as $row) {
+            $list = json_decode((string) $row['codes'], true);
+            if (is_array($list) && $list && array_filter($list, 'is_string') === $list) $codes[(int) $row['registration_id']] = array_values($list);
+        }
+        return $codes;
+    }
+
+    /** @param array<int, list<string>> $codes */
+    private static function saveCodes(array $codes): void
+    {
+        foreach ($codes as $id => $list) {
+            Db::run('INSERT INTO badge_ticket_codes (registration_id, codes, synced_at) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE codes = VALUES(codes), synced_at = VALUES(synced_at)',
+                [$id, json_encode(array_values($list)), App::now()]);
+        }
+    }
+
+    /**
+     * One pass over each event's PSOOLA order list. Strict (a download): any
+     * problem stops everything. Otherwise (the background job) a guest whose
+     * order does not check out is skipped and logged; the others are kept.
+     *
+     * @return array<int, list<string>>
+     */
+    private static function liveCodes(array $registrations, bool $strict): array
+    {
+        $wanted = [];
+        foreach ($registrations as $registration) {
             $ticket = Tickets::forRegistration((int) $registration['id']);
             $source = in_array($registration['status'], ['paid', 'complimentary'], true) && $ticket && $ticket['cancelled_at'] === null ? self::source((int) $registration['id']) : null;
-            if (!$source || !$source['id']) {
-                $missing[] = Registrations::fullName($registration);
-                continue;
-            }
+            if (!$source || !$source['id']) continue;
             $eventId = (string) ($source['guest']['event_id'] ?? App::config('payments.psoola.event_id', ''));
             $wanted[$eventId][(string) $source['id']] = [$registration, $source];
         }
@@ -154,23 +235,22 @@ final class PsoolaTickets
                     $id = is_array($candidate) ? ($candidate['id'] ?? null) : null;
                     if (!is_string($id) || !isset($orders[$id])) continue;
                     [$registration, $source] = $orders[$id];
-                    self::verify($registration, $source, $candidate);
-                    if (($candidate['event']['id'] ?? $candidate['eventId'] ?? null) !== $eventId) throw new UserError('PSOOLA returned a ticket for a different event.');
-                    $list = self::activeCodes($candidate);
-                    if ($list) $codes[(int) $registration['id']] = $list;
                     unset($orders[$id]);
+                    try {
+                        self::verify($registration, $source, $candidate);
+                        if (($candidate['event']['id'] ?? $candidate['eventId'] ?? null) !== $eventId) throw new UserError('PSOOLA returned a ticket for a different event.');
+                        $list = self::activeCodes($candidate);
+                    } catch (UserError $error) {
+                        if ($strict) throw $error;
+                        App::log('warning', 'Badge code not saved', ['registration' => (int) $registration['id'], 'reason' => $error->key]);
+                        continue;
+                    }
+                    if ($list) $codes[(int) $registration['id']] = $list;
                 }
                 $cursor = $answer['json']['nextCursor'] ?? null;
                 if (!is_string($cursor) || $cursor === '' || isset($seen[$cursor])) break;
                 $seen[$cursor] = true;
             }
-        }
-        foreach ($registrations as $registration) {
-            if (!isset($codes[(int) $registration['id']]) && !in_array(Registrations::fullName($registration), $missing, true)) $missing[] = Registrations::fullName($registration);
-        }
-        if ($missing) {
-            $names = implode(', ', array_slice($missing, 0, 8)) . (count($missing) > 8 ? ' and ' . (count($missing) - 8) . ' more' : '');
-            throw new UserError('PSOOLA has no active ticket code for: ' . $names . '. Nothing was downloaded.');
         }
         return $codes;
     }
