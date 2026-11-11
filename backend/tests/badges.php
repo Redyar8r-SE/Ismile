@@ -17,10 +17,9 @@ $check = static function (string $name, bool $ok) use (&$passed): void {
 };
 $guest = static fn (string $type, string $specialty): array => ['first_name' => 'Khiam', 'father_name' => ' Rohan ', 'grandfather_name' => 'Ahmed', 'ticket_type' => $type, 'specialty' => $specialty];
 
-$check('dentists are written DR. first + father', Badges::displayName($guest('professional', 'gp')) === 'DR. KHIAM ROHAN');
-$check('VIP dentists are written with DR.', Badges::displayName($guest('vip', 'spec')) === 'DR. KHIAM ROHAN');
-$check('students have no DR.', Badges::displayName($guest('student', 'student')) === 'KHIAM ROHAN');
-$check('lab technicians have no DR.', Badges::displayName($guest('professional', 'lab')) === 'KHIAM ROHAN');
+$check('the full name is used exactly as typed, in capitals', Badges::displayName($guest('professional', 'gp')) === 'KHIAM ROHAN AHMED');
+$check('no DR. is added for dentists or VIP', Badges::displayName($guest('vip', 'spec')) === 'KHIAM ROHAN AHMED');
+$check('a title the guest typed is kept', Badges::displayName(['first_name' => 'Dr. Sara', 'father_name' => 'Ali', 'grandfather_name' => 'Omar']) === 'DR. SARA ALI OMAR');
 
 $pdf = Badges::pdf($guest('professional', 'gp'), ['098G3F86', 'AB12CD34']);
 $check('the badge is a PDF', str_starts_with($pdf, '%PDF-'));

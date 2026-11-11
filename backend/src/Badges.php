@@ -119,12 +119,10 @@ final class Badges
         return (string) App::config('storage', '') === '' ? null : App::storage('fonts');
     }
 
-    /** "DR. FIRST FATHER" for dentists (and VIP dentists), "FIRST FATHER" for students and lab technicians. */
+    /** The full name exactly as typed on the website, in the artwork's capitals; no title is added. */
     public static function displayName(array $registration): string
     {
-        $name = trim(preg_replace('/\s+/u', ' ', $registration['first_name'] . ' ' . $registration['father_name']));
-        $doctor = $registration['ticket_type'] !== 'student' && !in_array($registration['specialty'] ?? '', ['student', 'lab'], true);
-        return mb_strtoupper(($doctor ? 'Dr. ' : '') . $name, 'UTF-8');
+        return mb_strtoupper(trim(preg_replace('/\s+/u', ' ', Registrations::fullName($registration))), 'UTF-8');
     }
 
     private static function front(\TCPDF $pdf): void
@@ -151,7 +149,8 @@ final class Badges
         while ($size > 9 && $pdf->GetStringWidth($name) > 84) {
             $pdf->SetFont($font, $style, $size -= 0.5);
         }
-        $pdf->SetXY(0, 28.0);
+        // Kurdish and Arabic letters reach below the line, so those names sit a little higher.
+        $pdf->SetXY(0, $font === 'dejavusans' ? 26.6 : 28.0);
         $pdf->Cell(self::WIDTH, 0, $name, 0, 0, 'C', false, '', 0, false, 'L', 'M');
 
         // The ticket type in the blue pill, with a line on each side.
