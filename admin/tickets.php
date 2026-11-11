@@ -104,7 +104,7 @@ if ($batchId && !$batch): ?>
 <?php else: ?>
 <form id="badge-batch-form" method="post" action="tickets.php" data-badge-batch-form><?= Page::csrfField() ?><input type="hidden" name="do" value="badge_batch"></form>
 <section class="card" id="tickets" data-registration-details data-ticket-directory data-no-live data-csrf="<?= $e(Auth::csrf()) ?>">
-  <div class="panel-top"><?= Page::panelHeading('Event tickets', 'Find a guest, show their original PSOOLA QR, or make printed badges. Every badge PDF is saved in the batch history below.', 'ticket') ?></div>
+  <div class="panel-top"><?= Page::panelHeading('Event tickets', 'Find a guest and show their original PSOOLA QR. Tick guests and press Create batch to make their printed badges as one batch.', 'ticket') ?></div>
   <form method="get" action="tickets.php" class="ticket-filters" role="search">
     <label class="ticket-filter ticket-search"><span>Find a name</span><input type="search" name="q" value="<?= $e($search) ?>" placeholder="Type a name, reference, phone or ticket number" aria-label="Find a guest" data-ticket-search autocomplete="off"></label>
     <?= $select('type', 'Type', ['' => 'All types', 'professional' => 'Dentist', 'student' => 'Student', 'vip' => 'VIP'], $type) ?>
