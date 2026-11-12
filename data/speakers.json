@@ -304,5 +304,95 @@
       "ku": "لە پشت چینەکانەوە (کاریگەریی قووڵی چاککردنەوە ناڕاستەوخۆکانی ددان)"
     },
     "photo": "assets/speakers/qais-aljumaily.webp"
+  },
+  {
+    "name": {
+      "en": "Dr. Kazhan Mohammed",
+      "ar": "د. كاژان محمد",
+      "ku": "د. کاژان محەممەد"
+    },
+    "role": {
+      "en": "B.D.S., M.Sc. in Conservative Dentistry",
+      "ar": "B.D.S.، M.Sc. في طب الأسنان التحفظي",
+      "ku": "B.D.S.، M.Sc. لە چارەسەری پارێزگارانەی ددان"
+    },
+    "topic": {
+      "en": "The Invisible Approach to a Natural Smile",
+      "ar": "النهج غير المرئي لابتسامة طبيعية",
+      "ku": "ڕێگای نەبینراو بۆ زەردەخەنەیەکی سروشتی"
+    },
+    "photo": "assets/speakers/kazhan-mohammed.webp"
+  },
+  {
+    "name": {
+      "en": "Assist. Prof. Dr. Mustafa Rasul Muhammed",
+      "ar": "الأستاذ المساعد د. مصطفى رسول محمد",
+      "ku": "پ. ی. د. مستەفا ڕەسوڵ محەممەد"
+    },
+    "role": {
+      "en": "Oral and Maxillofacial Surgeon · BDS, MSc (OMFS), PhD (OS)",
+      "ar": "جرّاح الفم والوجه والفكين · BDS، MSc (OMFS)، PhD (OS)",
+      "ku": "نەشتەرگەری دەم و ڕوو و چەناگە · BDS، MSc (OMFS)، PhD (OS)"
+    },
+    "topic": {
+      "en": "Effect of Dextrose Prolotherapy on Internal Derangement of the Temporomandibular Joint",
+      "ar": "تأثير العلاج التكاثري بالدكستروز على الاضطراب الداخلي للمفصل الصدغي الفكي",
+      "ku": "کاریگەریی چارەسەری پرۆلۆتێراپی بە دێکسترۆز لەسەر تێکچوونی ناوەوەی جومگەی شەویلگە"
+    },
+    "photo": "assets/speakers/mustafa-rasul-muhammed.webp"
+  },
+  {
+    "name": {
+      "en": "Dr. Sozyar Omer",
+      "ar": "د. سوزيار عمر",
+      "ku": "د. سۆزیار عومەر"
+    },
+    "role": {
+      "en": "BDS · GDP · FKHCMS in Restorative Dentistry",
+      "ar": "BDS · GDP · FKHCMS في طب الأسنان الترميمي",
+      "ku": "BDS · GDP · FKHCMS لە چاککردنەوەی ددان"
+    },
+    "topic": {
+      "en": "Design Before You Treat: Digital Smile Planning for Predictable Esthetic Outcomes",
+      "ar": "صمّم قبل أن تعالج: التخطيط الرقمي للابتسامة لنتائج تجميلية متوقعة",
+      "ku": "پێش چارەسەر دیزاین بکە: پلاندانانی دیجیتاڵیی زەردەخەنە بۆ ئەنجامی جوانکاریی پێشبینیکراو"
+    },
+    "photo": "assets/speakers/sozyar-omer.webp"
+  },
+  {
+    "name": {
+      "en": "Dr. Faisal Muteb Awad",
+      "ar": "د. فيصل متعب عواد",
+      "ku": "د. فەیسەڵ موتعیب عەواد"
+    },
+    "role": {
+      "en": "Prosthodontist · BDS, MFD RCSI, M-Prosth RCSEd",
+      "ar": "أخصائي التعويضات السنية · BDS، MFD RCSI، M-Prosth RCSEd",
+      "ku": "پسپۆڕی جێگرەوەکانی ددان · BDS، MFD RCSI، M-Prosth RCSEd"
+    },
+    "topic": {
+      "en": "The Digital Continuum: Merging Implant Scanning, Facial Scanning, and Esthetic Smile Design",
+      "ar": "الاستمرارية الرقمية: دمج مسح الزرعات ومسح الوجه وتصميم الابتسامة التجميلية",
+      "ku": "زنجیرەی دیجیتاڵ: تێکەڵکردنی سکانی چاندن، سکانی ڕوخسار و دیزاینی جوانکاریی زەردەخەنە"
+    },
+    "photo": "assets/speakers/faisal-muteb-awad.webp"
+  },
+  {
+    "name": {
+      "en": "Dr. Hiwa Karim",
+      "ar": "د. هيوا كريم",
+      "ku": "د. هیوا کەریم"
+    },
+    "role": {
+      "en": "Oral and Maxillofacial Surgeon · BDS, FKHCMS · Lecturer, College of Dentistry, Hawler Medical University",
+      "ar": "جرّاح الفم والوجه والفكين · BDS، FKHCMS · محاضر في كلية طب الأسنان، جامعة هولير الطبية",
+      "ku": "نەشتەرگەری دەم و ڕوو و چەناگە · BDS، FKHCMS · وانەبێژ لە کۆلێژی پزیشکیی ددان، زانکۆی پزیشکیی هەولێر"
+    },
+    "topic": {
+      "en": "Soft Tissue Change After Orthognathic Surgery",
+      "ar": "تغيرات الأنسجة الرخوة بعد جراحة تقويم الفكين",
+      "ku": "گۆڕانی شانە نەرمەکان دوای نەشتەرگەریی ڕاستکردنەوەی چەناگە"
+    },
+    "photo": "assets/speakers/hiwa-karim.webp"
   }
 ]
