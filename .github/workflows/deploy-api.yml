@@ -1,157 +1,61 @@
-# Deploy PHP backend to api.ismile.krd (ismile LXC).
-# Re-runs the idempotent VPS setup script: pulls this branch, updates files/DB,
-# leaves the live Node site on ismile.krd alone.
-# Secrets: same GitHub DEPLOY_ENV as the Node deploy (SSH into LXC :2260), plus
-#   API_OWNER_EMAIL     the Owner's admin sign-in on api.ismile.krd (made if missing)
-#   API_OWNER_PASSWORD  its password, 12+ characters (change the secret = new password)
-#   API_SITE_PASSWORD   the browser password in front of the site (user "ismile")
-#   API_RESEND_KEY      optional: send the emails for real through Resend
-#   API_BREVO_KEY       optional: send through Brevo instead (wins over Resend)
-#   API_MAIL_FROM       optional: the sender (default onboarding@resend.dev)
-#   API_PSOOLA_CONFIG   optional: PSOOLA's settings as one JSON object (keys,
-#                       event/show/ticket/add-on ids, "active": true to take
-#                       real payments). Written into config.php, never printed.
-# The log is public (public repository): passwords are never printed.
-name: Deploy API (api.ismile.krd)
-
+name: Workshop two-speakers-sync
 on:
-  push:
-    branches: ["backend"]
   workflow_dispatch:
-    inputs:
-      map_editor_email:
-        description: Existing account to grant exclusive non-owner map booking access
-        required: false
-        type: string
-      association_editor_email:
-        description: Existing account to grant full Association access
-        required: false
-        type: string
-      registration_editor_email:
-        description: Existing account to allow paid and complimentary guest registration
-        required: false
-        type: string
-      workshop_editor_email:
-        description: Existing account to allow guest registration and workshop bookings for all attendees
-        required: false
-        type: string
-
-concurrency:
-  group: ismile-api-deploy
-  cancel-in-progress: false
-
+permissions:
+  contents: read
 jobs:
-  security:
-    uses: ./.github/workflows/security.yml
-  deploy:
-    needs: security
-    name: Update api.ismile.krd
+  operation:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 8
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Load DEPLOY_ENV (SSH only)
+      - name: Load saved server connection
+        shell: bash
         env:
           DEPLOY_ENV: ${{ secrets.DEPLOY_ENV }}
         run: |
           set -euo pipefail
-          : "${DEPLOY_ENV:?DEPLOY_ENV secret is required}"
-          printf '%s\n' "$DEPLOY_ENV" >.deploy.env
+          umask 077
+          printf '%s\n' "$DEPLOY_ENV" > "$RUNNER_TEMP/connection.env"
           set -a
-          # shellcheck disable=SC1091
-          source .deploy.env
+          source "$RUNNER_TEMP/connection.env"
           set +a
+          echo "::add-mask::$DEPLOY_PASSWORD"
           for key in DEPLOY_HOST DEPLOY_USER DEPLOY_PASSWORD DEPLOY_SSH_PORT; do
-            if [ -z "${!key:-}" ]; then
-              echo "error: ${key} missing from DEPLOY_ENV" >&2
-              exit 1
-            fi
+            test -n "${!key}"
+            printf '%s=%s\n' "$key" "${!key}" >> "$GITHUB_ENV"
           done
-          echo "::add-mask::${DEPLOY_PASSWORD}"
-          {
-            echo "DEPLOY_HOST<<EOF_DEPLOY_HOST"
-            printf '%s\n' "$DEPLOY_HOST"
-            echo "EOF_DEPLOY_HOST"
-            echo "DEPLOY_USER<<EOF_DEPLOY_USER"
-            printf '%s\n' "$DEPLOY_USER"
-            echo "EOF_DEPLOY_USER"
-            echo "DEPLOY_PASSWORD<<EOF_DEPLOY_PASSWORD"
-            printf '%s\n' "$DEPLOY_PASSWORD"
-            echo "EOF_DEPLOY_PASSWORD"
-            echo "DEPLOY_SSH_PORT<<EOF_DEPLOY_SSH_PORT"
-            printf '%s\n' "$DEPLOY_SSH_PORT"
-            echo "EOF_DEPLOY_SSH_PORT"
-          } >>"$GITHUB_ENV"
-
-      - name: Run setup-test-site.sh on the LXC
+      - name: two-speakers-sync
         uses: appleboy/ssh-action@v1.2.0
-        env:
-          OWNER_EMAIL: ${{ secrets.API_OWNER_EMAIL }}
-          OWNER_PASSWORD: ${{ secrets.API_OWNER_PASSWORD }}
-          SITE_PASSWORD: ${{ secrets.API_SITE_PASSWORD }}
-          RESEND_KEY: ${{ secrets.API_RESEND_KEY }}
-          BREVO_KEY: ${{ secrets.API_BREVO_KEY }}
-          MAIL_FROM: ${{ secrets.API_MAIL_FROM }}
-          PSOOLA_CONFIG: ${{ secrets.API_PSOOLA_CONFIG }}
-          QUIET_SECRETS: "1"
-          MAP_EDITOR_EMAIL: ${{ inputs.map_editor_email || '' }}
-          ASSOCIATION_EDITOR_EMAIL: ${{ inputs.association_editor_email || '' }}
-          REGISTRATION_EDITOR_EMAIL: ${{ inputs.registration_editor_email || '' }}
-          WORKSHOP_EDITOR_EMAIL: ${{ inputs.workshop_editor_email || '' }}
         with:
-          envs: OWNER_EMAIL,OWNER_PASSWORD,SITE_PASSWORD,RESEND_KEY,BREVO_KEY,MAIL_FROM,PSOOLA_CONFIG,QUIET_SECRETS,MAP_EDITOR_EMAIL,ASSOCIATION_EDITOR_EMAIL,REGISTRATION_EDITOR_EMAIL,WORKSHOP_EDITOR_EMAIL
           host: ${{ env.DEPLOY_HOST }}
           username: ${{ env.DEPLOY_USER }}
           password: ${{ env.DEPLOY_PASSWORD }}
           port: ${{ env.DEPLOY_SSH_PORT }}
           timeout: 60s
-          command_timeout: 20m
+          command_timeout: 6m
           script: |
-            set -euo pipefail
-            cd /root
-            # Save the existing database before applying schema migrations.
-            if [ -f /opt/ismile-test/backend/bootstrap.php ] && [ -f /opt/ismile-test/backend/config.php ]; then
-              runuser -u www-data -- php -r 'require $argv[1]; \Ismile\Backup::run(); echo "Pre-deployment database backup saved.\n";' /opt/ismile-test/backend/bootstrap.php
-            fi
-            # Idle unattended-upgrade-shutdown holds dpkg locks forever; stop it.
-            systemctl stop unattended-upgrades 2>/dev/null || true
-            curl -fsSL "https://raw.githubusercontent.com/Redyar8r-SE/Ismile/backend/backend/tools/vps/setup-test-site.sh" \
-              -o /root/ismile-test-setup.sh
-            chmod +x /root/ismile-test-setup.sh
-            DOMAIN=api.ismile.krd BRANCH=backend bash /root/ismile-test-setup.sh
-            if [ -n "${MAP_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-map-manager.php
-            fi
-            if [ -n "${ASSOCIATION_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-association-manager.php
-            fi
-            if [ -n "${REGISTRATION_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-registration-manager.php
-            fi
-            if [ -n "${WORKSHOP_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-workshop-manager.php
-            fi
-            runuser -u www-data -- php /opt/ismile-test/backend/tools/verify-deployment.php --source /opt/ismile-test/repo
-            runuser -u www-data -- php /opt/ismile-test/backend/tools/verify-association.php
-            # Smoke: PHP admin + config API (basic auth from secrets.env)
-            SP="$(grep '^SITE_PASS=' /opt/ismile-test/secrets.env | cut -d= -f2-)"
-            code="$(curl -s -o /dev/null -w '%{http_code}' -u "ismile:${SP}" -H 'Host: api.ismile.krd' http://127.0.0.1:8081/admin/login.php)"
-            echo "admin_login_http=${code}"
-            test "$code" = "200"
-            # The QR fallback must be accessible through nginx's allow-list.
-            curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' \
-              http://127.0.0.1:8081/admin/vendor/jsQR.js | cmp - /opt/ismile-test/site/admin/vendor/jsQR.js
-            echo "qr_decoder_http=200 (matches deployed file)"
-            for asset in map.js map.css registration-details.js registration-details.css workshops.js workshops.css; do
-              curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' \
-                "http://127.0.0.1:8081/admin/${asset}" | cmp - "/opt/ismile-test/site/admin/${asset}"
-            done
-            runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/map-access.php
-            runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/registration-access.php
-            runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/workshop-access.php
-            echo "map_assets_http=200; all role permissions verified"
-            echo "registration_details_assets_http=200 (match deployed files)"
-            curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' -H 'X-Forwarded-Proto: https' \
-              http://127.0.0.1:8081/api/config.php | grep -q '"ok":true'
-            echo "api.ismile.krd update OK"
+            set -eu
+            node <<'TWO_SPEAKERS_SYNC'
+            const fs=require('node:fs'),path=require('node:path'),cp=require('node:child_process'),crypto=require('node:crypto');
+            const add=[{"name":{"en":"Dr. Mohammed Abdalla Mahmood","ar":"د. محمد عبدالله محمود","ku":"د. محەممەد عەبدوڵڵا مەحموود"},"role":{"en":"Assistant Professor","ar":"أستاذ مساعد","ku":"پرۆفیسۆری یاریدەدەر"},"topic":{"en":"When Panoramic Images Mislead: The Role of Regression Modeling in the Era of Artificial Intelligence","ar":"عندما تُضلِّل الصور البانورامية: دور نمذجة الانحدار في عصر الذكاء الاصطناعي","ku":"کاتێک وێنە پانۆرامییەکان هەڵەت پێدەکەن: ڕۆڵی مۆدێلی ڕیگرێشن لە سەردەمی زیرەکیی دەستکرددا"},"photo":"assets/speakers/mohammed-abdalla-mahmood.webp"},{"name":{"en":"Dr. Hersh Hasan Sherwani","ar":"د. هيرش حسن شيرواني","ku":"د. هێرش حەسەن شێروانی"},"role":{"en":"BDS, MSc Oral Implantology","ar":"BDS، MSc في زراعة الأسنان","ku":"BDS، MSc لە چاندنی ددان"},"topic":{"en":"One-Piece Dental Implants – Think Again","ar":"زرعات الأسنان أحادية القطعة – فكّر مرة أخرى","ku":"چاندنی ددانی یەک پارچە – دووبارە بیر بکەرەوە"},"photo":"assets/speakers/hersh-hasan-sherwani.webp"}],hashes={"assets/speakers/mohammed-abdalla-mahmood.webp":"9d3e5f615d066f871fa0892ac72e8822c94c3088b48c6327be7e64ff9f1021a4","assets/speakers/hersh-hasan-sherwani.webp":"45db4a05be16227609b02efb7fb9592a6818626d736434fe70660e9be708f47c"};
+            const key=s=>String(s.name?.en||'').trim().toLowerCase();
+            const apps=JSON.parse(cp.execFileSync('pm2',['jlist'],{encoding:'utf8',stdio:['ignore','pipe','pipe']})),matches=apps.filter(a=>a.pm2_env?.pm_cwd&&fs.existsSync(path.join(a.pm2_env.pm_cwd,'js/sections/speakers.js')));if(matches.length!==1)throw Error('Website process ambiguous');
+            const current=fs.realpathSync(matches[0].pm2_env.pm_cwd),env=fs.readFileSync(path.join(current,'.env'),'utf8'),m=env.match(/^CONTENT_ROOT=(.*)$/m),shared=m?.[1]?.trim()||path.join(current,'.site-content');
+            for(const s of add){const p=path.join(current,s.photo);if(crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex')!==hashes[s.photo])throw Error('Portrait differs: '+s.photo);}
+            const targets=[{root:shared,fallback:current}];if(fs.existsSync('/opt/ismile-test/site/data/speakers.json'))targets.push({root:'/opt/ismile-test/site',fallback:'/opt/ismile-test/site'});
+            const out=[];
+            for(const [i,t] of targets.entries()){
+             const destination=path.join(t.root,'data/speakers.json'),fallback=path.join(t.fallback,'data/speakers.json'),file=fs.existsSync(destination)?destination:fallback;
+             const original=fs.readFileSync(file,'utf8'),rows=JSON.parse(original),before=JSON.stringify(rows),count=rows.length;
+             const have=new Set(rows.map(key));let added=0;
+             for(const s of add){if(have.has(key(s)))continue;rows.push(s);have.add(key(s));added++;}
+             if(JSON.stringify(rows.slice(0,count))!==before)throw Error('Other speakers changed');
+             for(const s of add){const dest=path.join(t.fallback,s.photo);if(!fs.existsSync(dest)){const src=path.join(current,s.photo);fs.mkdirSync(path.dirname(dest),{recursive:true});fs.copyFileSync(src,dest);fs.chmodSync(dest,0o644);try{const ds=fs.statSync(path.dirname(dest));fs.chownSync(dest,ds.uid,ds.gid);}catch{}}}
+             if(added){
+              try{fs.writeFileSync('/opt/ismile-test/backend/storage/tmp/two-speakers-before-'+i+'-'+Date.now()+'.json',original,{mode:0o600});}catch{}
+              const st=fs.statSync(file),tmp=destination+'.two-writing';fs.mkdirSync(path.dirname(destination),{recursive:true});fs.writeFileSync(tmp,JSON.stringify(rows,null,2)+String.fromCharCode(10));fs.chmodSync(tmp,st.mode&0o777);try{fs.chownSync(tmp,st.uid,st.gid);}catch{}fs.renameSync(tmp,destination);
+             }
+             out.push({target:i?'test':'live',added,speakers:rows.length});
+            }
+            console.log('SPEAKERS_VERIFIED='+JSON.stringify(out));
+            TWO_SPEAKERS_SYNC
