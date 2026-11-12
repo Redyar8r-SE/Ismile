@@ -394,5 +394,41 @@
       "ku": "گۆڕانی شانە نەرمەکان دوای نەشتەرگەریی ڕاستکردنەوەی چەناگە"
     },
     "photo": "assets/speakers/hiwa-karim.webp"
+  },
+  {
+    "name": {
+      "en": "Dr. Mohammed Abdalla Mahmood",
+      "ar": "د. محمد عبدالله محمود",
+      "ku": "د. محەممەد عەبدوڵڵا مەحموود"
+    },
+    "role": {
+      "en": "Assistant Professor",
+      "ar": "أستاذ مساعد",
+      "ku": "پرۆفیسۆری یاریدەدەر"
+    },
+    "topic": {
+      "en": "When Panoramic Images Mislead: The Role of Regression Modeling in the Era of Artificial Intelligence",
+      "ar": "عندما تُضلِّل الصور البانورامية: دور نمذجة الانحدار في عصر الذكاء الاصطناعي",
+      "ku": "کاتێک وێنە پانۆرامییەکان هەڵەت پێدەکەن: ڕۆڵی مۆدێلی ڕیگرێشن لە سەردەمی زیرەکیی دەستکرددا"
+    },
+    "photo": "assets/speakers/mohammed-abdalla-mahmood.webp"
+  },
+  {
+    "name": {
+      "en": "Dr. Hersh Hasan Sherwani",
+      "ar": "د. هيرش حسن شيرواني",
+      "ku": "د. هێرش حەسەن شێروانی"
+    },
+    "role": {
+      "en": "BDS, MSc Oral Implantology",
+      "ar": "BDS، MSc في زراعة الأسنان",
+      "ku": "BDS، MSc لە چاندنی ددان"
+    },
+    "topic": {
+      "en": "One-Piece Dental Implants – Think Again",
+      "ar": "زرعات الأسنان أحادية القطعة – فكّر مرة أخرى",
+      "ku": "چاندنی ددانی یەک پارچە – دووبارە بیر بکەرەوە"
+    },
+    "photo": "assets/speakers/hersh-hasan-sherwani.webp"
   }
 ]
