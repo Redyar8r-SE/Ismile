@@ -176,7 +176,7 @@ final class Auth
     public static function needsTwoFactor(array $user): bool
     {
         return in_array($user['role'], self::NEEDS_TWO_FACTOR, true)
-            || (int) ($user['registration_manage_access'] ?? 0) === 1 || self::canBookWorkshops($user);
+            || (int) ($user['registration_manage_access'] ?? 0) === 1 || self::canBookWorkshops($user) || self::canManageBadges($user);
     }
 
     /** True when this role may use this area. The Owner may use everything. */
@@ -189,6 +189,8 @@ final class Auth
         if ($area === 'sponsors' && self::canManageMap($user)) return true;
         if ($area === 'association' && self::canManageAssociation($user)) return true;
         if ($area === 'workshops' && self::canBookWorkshops($user)) return true;
+        // Badges & certificates: the guest list (to pick guests), badge batches and certificates.
+        if (in_array($area, ['registrations', 'certificates'], true) && self::canManageBadges($user)) return true;
         // The Viewer (and Viewer + Sponsors) opens every event page but never 'edit'
         // or 'content' (the website editor). What it sends is refused by viewerMayPost().
         $allowed = [
@@ -236,6 +238,12 @@ final class Auth
         return $user['role'] === 'owner' || (int) ($user['registration_manage_access'] ?? 0) === 1;
     }
 
+    /** Account-specific grant: make, download and delete badge batches and certificates. */
+    public static function canManageBadges(array $user): bool
+    {
+        return $user['role'] === 'owner' || (int) ($user['badge_certificate_access'] ?? 0) === 1;
+    }
+
     /** Registration staff book paid workshops for any attendee; other roles need an individual grant. */
     public static function canBookWorkshops(array $user): bool
     {
@@ -249,6 +257,7 @@ final class Auth
         if ($page === 'psoola-ticket.php') return Auth::can($user,'edit') || self::canBookWorkshops($user);
         if (in_array($page, ['registration.php','workshops.php'], true) && self::canBookWorkshops($user)) return true;
         if (in_array($page, ['registration.php', 'registrations.php'], true) && (int) ($user['registration_manage_access'] ?? 0) === 1) return true;
+        if (in_array($page, ['tickets.php', 'certificates.php'], true) && self::canManageBadges($user)) return true;
         if ($page === 'association.php') return self::canManageAssociation($user);
         if (in_array($page, ['map.php', 'sponsors.php'], true)) return self::canManageMap($user);
         return !self::viewOnly($user) || in_array($page, self::VIEWER_MAY_POST, true)

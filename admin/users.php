@@ -43,6 +43,11 @@ Page::action(static function () use ($user): string {
             Db::update('admin_users', ['workshop_booking_access'=>$enabled], 'id=?', [$target['id']]);
             Audit::log((int)$user['id'], $enabled ? 'user.workshop_booking_grant' : 'user.workshop_booking_revoke', 'admin_user', (int)$target['id']);
             return $enabled ? 'Workshop booking for all registered attendees granted.' : 'Delegated workshop booking removed.';
+        case 'badge_access':
+            $enabled = ($_POST['enabled'] ?? '') === '1' ? 1 : 0;
+            Db::update('admin_users', ['badge_certificate_access' => $enabled], 'id=?', [$target['id']]);
+            Audit::log((int) $user['id'], $enabled ? 'user.badge_certificate_grant' : 'user.badge_certificate_revoke', 'admin_user', (int) $target['id']);
+            return $enabled ? 'Badges and certificates access granted.' : 'Badges and certificates access removed.';
         case 'registration_access':
             $enabled = ($_POST['enabled'] ?? '') === '1' ? 1 : 0;
             Db::update('admin_users', ['registration_manage_access' => $enabled], 'id=?', [$target['id']]);
@@ -128,6 +133,9 @@ Page::top('Users', 'users', '<a class="btn" href="#add-person">' . Page::navIcon
       <small class="field-hint"><?= $workshopAccess ? 'Can book workshops for any registered attendee.' : 'Workshop booking requires individual access.' ?></small>
       <form method="post" class="inline-form"><?= Page::csrfField() ?><input type="hidden" name="do" value="workshop_access"><input type="hidden" name="id" value="<?= (int)$row['id'] ?>"><input type="hidden" name="enabled" value="<?= $workshopAccess ? '0' : '1' ?>"><button class="btn small ghost"><?= $workshopAccess ? 'Remove workshop booking access' : 'Allow workshop booking for everyone' ?></button></form>
       <?php endif; ?>
+      <?php $badgeAccess = Auth::canManageBadges($row); ?>
+      <small class="field-hint"><?= $badgeAccess ? 'Can make and download badge batches and certificates.' : 'Badges and certificates require individual access.' ?></small>
+      <form method="post" class="inline-form"><?= Page::csrfField() ?><input type="hidden" name="do" value="badge_access"><input type="hidden" name="id" value="<?= (int)$row['id'] ?>"><input type="hidden" name="enabled" value="<?= $badgeAccess ? '0' : '1' ?>"><button class="btn small ghost"><?= $badgeAccess ? 'Remove badges & certificates access' : 'Allow badges & certificates' ?></button></form>
       <?php endif; ?></td>
     <td><span class="security-status <?= (int)$row['totp_enabled'] ? 'enabled':'pending' ?>"><?= Page::navIcon('security') ?><span><?= (int)$row['totp_enabled'] ? 'Phone code on' : 'Phone code off' ?></span></span><small class="field-hint"><?= Auth::needsTwoFactor($row) ? 'Required for this account' : 'Optional for this account' ?></small></td>
     <td><span class="team-last-login"><?= $row['last_login_at'] ? Page::when($row['last_login_at']) : 'Not signed in yet' ?></span></td>
