@@ -1,157 +1,114 @@
-# Deploy PHP backend to api.ismile.krd (ismile LXC).
-# Re-runs the idempotent VPS setup script: pulls this branch, updates files/DB,
-# leaves the live Node site on ismile.krd alone.
-# Secrets: same GitHub DEPLOY_ENV as the Node deploy (SSH into LXC :2260), plus
-#   API_OWNER_EMAIL     the Owner's admin sign-in on api.ismile.krd (made if missing)
-#   API_OWNER_PASSWORD  its password, 12+ characters (change the secret = new password)
-#   API_SITE_PASSWORD   the browser password in front of the site (user "ismile")
-#   API_RESEND_KEY      optional: send the emails for real through Resend
-#   API_BREVO_KEY       optional: send through Brevo instead (wins over Resend)
-#   API_MAIL_FROM       optional: the sender (default onboarding@resend.dev)
-#   API_PSOOLA_CONFIG   optional: PSOOLA's settings as one JSON object (keys,
-#                       event/show/ticket/add-on ids, "active": true to take
-#                       real payments). Written into config.php, never printed.
-# The log is public (public repository): passwords are never printed.
-name: Deploy API (api.ismile.krd)
-
+name: Workshop aligner-hezha-live
 on:
-  push:
-    branches: ["backend"]
   workflow_dispatch:
-    inputs:
-      map_editor_email:
-        description: Existing account to grant exclusive non-owner map booking access
-        required: false
-        type: string
-      association_editor_email:
-        description: Existing account to grant full Association access
-        required: false
-        type: string
-      registration_editor_email:
-        description: Existing account to allow paid and complimentary guest registration
-        required: false
-        type: string
-      workshop_editor_email:
-        description: Existing account to allow guest registration and workshop bookings for all attendees
-        required: false
-        type: string
-
-concurrency:
-  group: ismile-api-deploy
-  cancel-in-progress: false
-
+permissions:
+  contents: read
 jobs:
-  security:
-    uses: ./.github/workflows/security.yml
-  deploy:
-    needs: security
-    name: Update api.ismile.krd
+  operation:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 8
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Load DEPLOY_ENV (SSH only)
+      - name: Load saved server connection
+        shell: bash
         env:
           DEPLOY_ENV: ${{ secrets.DEPLOY_ENV }}
         run: |
           set -euo pipefail
-          : "${DEPLOY_ENV:?DEPLOY_ENV secret is required}"
-          printf '%s\n' "$DEPLOY_ENV" >.deploy.env
+          umask 077
+          printf '%s\n' "$DEPLOY_ENV" > "$RUNNER_TEMP/connection.env"
           set -a
-          # shellcheck disable=SC1091
-          source .deploy.env
+          source "$RUNNER_TEMP/connection.env"
           set +a
+          echo "::add-mask::$DEPLOY_PASSWORD"
           for key in DEPLOY_HOST DEPLOY_USER DEPLOY_PASSWORD DEPLOY_SSH_PORT; do
-            if [ -z "${!key:-}" ]; then
-              echo "error: ${key} missing from DEPLOY_ENV" >&2
-              exit 1
-            fi
+            test -n "${!key}"
+            printf '%s=%s\n' "$key" "${!key}" >> "$GITHUB_ENV"
           done
-          echo "::add-mask::${DEPLOY_PASSWORD}"
-          {
-            echo "DEPLOY_HOST<<EOF_DEPLOY_HOST"
-            printf '%s\n' "$DEPLOY_HOST"
-            echo "EOF_DEPLOY_HOST"
-            echo "DEPLOY_USER<<EOF_DEPLOY_USER"
-            printf '%s\n' "$DEPLOY_USER"
-            echo "EOF_DEPLOY_USER"
-            echo "DEPLOY_PASSWORD<<EOF_DEPLOY_PASSWORD"
-            printf '%s\n' "$DEPLOY_PASSWORD"
-            echo "EOF_DEPLOY_PASSWORD"
-            echo "DEPLOY_SSH_PORT<<EOF_DEPLOY_SSH_PORT"
-            printf '%s\n' "$DEPLOY_SSH_PORT"
-            echo "EOF_DEPLOY_SSH_PORT"
-          } >>"$GITHUB_ENV"
-
-      - name: Run setup-test-site.sh on the LXC
+      - name: aligner-hezha-live
         uses: appleboy/ssh-action@v1.2.0
-        env:
-          OWNER_EMAIL: ${{ secrets.API_OWNER_EMAIL }}
-          OWNER_PASSWORD: ${{ secrets.API_OWNER_PASSWORD }}
-          SITE_PASSWORD: ${{ secrets.API_SITE_PASSWORD }}
-          RESEND_KEY: ${{ secrets.API_RESEND_KEY }}
-          BREVO_KEY: ${{ secrets.API_BREVO_KEY }}
-          MAIL_FROM: ${{ secrets.API_MAIL_FROM }}
-          PSOOLA_CONFIG: ${{ secrets.API_PSOOLA_CONFIG }}
-          QUIET_SECRETS: "1"
-          MAP_EDITOR_EMAIL: ${{ inputs.map_editor_email || '' }}
-          ASSOCIATION_EDITOR_EMAIL: ${{ inputs.association_editor_email || '' }}
-          REGISTRATION_EDITOR_EMAIL: ${{ inputs.registration_editor_email || '' }}
-          WORKSHOP_EDITOR_EMAIL: ${{ inputs.workshop_editor_email || '' }}
         with:
-          envs: OWNER_EMAIL,OWNER_PASSWORD,SITE_PASSWORD,RESEND_KEY,BREVO_KEY,MAIL_FROM,PSOOLA_CONFIG,QUIET_SECRETS,MAP_EDITOR_EMAIL,ASSOCIATION_EDITOR_EMAIL,REGISTRATION_EDITOR_EMAIL,WORKSHOP_EDITOR_EMAIL
           host: ${{ env.DEPLOY_HOST }}
           username: ${{ env.DEPLOY_USER }}
           password: ${{ env.DEPLOY_PASSWORD }}
           port: ${{ env.DEPLOY_SSH_PORT }}
           timeout: 60s
-          command_timeout: 20m
+          command_timeout: 6m
           script: |
-            set -euo pipefail
-            cd /root
-            # Save the existing database before applying schema migrations.
-            if [ -f /opt/ismile-test/backend/bootstrap.php ] && [ -f /opt/ismile-test/backend/config.php ]; then
-              runuser -u www-data -- php -r 'require $argv[1]; \Ismile\Backup::run(); echo "Pre-deployment database backup saved.\n";' /opt/ismile-test/backend/bootstrap.php
-            fi
-            # Idle unattended-upgrade-shutdown holds dpkg locks forever; stop it.
-            systemctl stop unattended-upgrades 2>/dev/null || true
-            curl -fsSL "https://raw.githubusercontent.com/Redyar8r-SE/Ismile/backend/backend/tools/vps/setup-test-site.sh" \
-              -o /root/ismile-test-setup.sh
-            chmod +x /root/ismile-test-setup.sh
-            DOMAIN=api.ismile.krd BRANCH=backend bash /root/ismile-test-setup.sh
-            if [ -n "${MAP_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-map-manager.php
-            fi
-            if [ -n "${ASSOCIATION_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-association-manager.php
-            fi
-            if [ -n "${REGISTRATION_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-registration-manager.php
-            fi
-            if [ -n "${WORKSHOP_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-workshop-manager.php
-            fi
-            runuser -u www-data -- php /opt/ismile-test/backend/tools/verify-deployment.php --source /opt/ismile-test/repo
-            runuser -u www-data -- php /opt/ismile-test/backend/tools/verify-association.php
-            # Smoke: PHP admin + config API (basic auth from secrets.env)
-            SP="$(grep '^SITE_PASS=' /opt/ismile-test/secrets.env | cut -d= -f2-)"
-            code="$(curl -s -o /dev/null -w '%{http_code}' -u "ismile:${SP}" -H 'Host: api.ismile.krd' http://127.0.0.1:8081/admin/login.php)"
-            echo "admin_login_http=${code}"
-            test "$code" = "200"
-            # The QR fallback must be accessible through nginx's allow-list.
-            curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' \
-              http://127.0.0.1:8081/admin/vendor/jsQR.js | cmp - /opt/ismile-test/site/admin/vendor/jsQR.js
-            echo "qr_decoder_http=200 (matches deployed file)"
-            for asset in map.js map.css registration-details.js registration-details.css workshops.js workshops.css; do
-              curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' \
-                "http://127.0.0.1:8081/admin/${asset}" | cmp - "/opt/ismile-test/site/admin/${asset}"
-            done
-            runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/map-access.php
-            runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/registration-access.php
-            runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/workshop-access.php
-            echo "map_assets_http=200; all role permissions verified"
-            echo "registration_details_assets_http=200 (match deployed files)"
-            curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' -H 'X-Forwarded-Proto: https' \
-              http://127.0.0.1:8081/api/config.php | grep -q '"ok":true'
-            echo "api.ismile.krd update OK"
+            set -eu
+            test -f /opt/ismile-test/backend/assets/aligner-workshop-2026.json
+            runuser -u www-data -- php <<'ALIGNER_LINK_PHP'
+            <?php
+            declare(strict_types=1);
+            require '/opt/ismile-test/backend/bootstrap.php';
+            use Ismile\App;use Ismile\Audit;use Ismile\Db;use Ismile\WorkshopCatalog;use Ismile\WorkshopCheckout;use Ismile\Workshops;use Ismile\Payments\PsoolaGateway;
+            $id='in-office-clear-aligners';
+            $def=json_decode((string)file_get_contents('/opt/ismile-test/backend/assets/aligner-workshop-2026.json'),true,512,JSON_THROW_ON_ERROR);
+            if($def['id']!==$id||$def['organizer']!=='ismile'||$def['price']!==0||$def['total_seats']!==25||$def['scheduled_date']!=='2026-11-19'||$def['start_time']!=='15:00'||$def['end_time']!=='17:00')throw new RuntimeException('Definition differs from the approved details.');
+            if(!is_file(App::siteFile($def['photo'])))throw new RuntimeException('Portrait not deployed yet.');
+            $owner=Db::one("SELECT * FROM admin_users WHERE role='owner' AND disabled_at IS NULL ORDER BY id LIMIT 1");if(!$owner)throw new RuntimeException('Enabled Owner required.');
+            $g=new PsoolaGateway();
+            $get=static function(string $path)use($g):array{$r=$g->partnerRequest('GET','manage/'.$path);if($r['status']!==200)throw new RuntimeException('PSOOLA GET manage/'.$path.' HTTP '.$r['status'].' requestId='.($r['json']['requestId']??'none'));return $r['json'];};
+            $linked=array_map(static fn($r)=>(string)$r['provider_event_id'],Db::all('SELECT provider_event_id FROM workshops WHERE provider_event_id IS NOT NULL AND id<>?',[$id]));
+            $existing=Db::one('SELECT * FROM workshops WHERE id=?',[$id]);
+            $list=$get('events')['events']??[];
+            $text=static fn(array $e):string=>mb_strtolower(json_encode([$e['title']??'',$e['titleI18n']??null,$e['description']??''],JSON_UNESCAPED_UNICODE));
+            $all=[];$hits=[];
+            foreach($list as $e){$eid=(string)($e['_id']??$e['id']??'');if($eid===''||in_array($eid,$linked,true))continue;
+             $all[]=['id'=>$eid,'title'=>$e['title']??null,'status'=>$e['status']??null,'start'=>isset($e['startDate'])?gmdate('Y-m-d H:i',intdiv((int)$e['startDate'],1000)+10800):null];
+             if(preg_match('/hezha|هێژا|هيژا|titan|aligner/u',$text($e)))$hits[]=$eid;}
+            if($existing&&$existing['provider_event_id'])$hits=[(string)$existing['provider_event_id']];
+            if(count($hits)!==1){echo 'PSOOLA_NOT_FOUND='.json_encode(['matches'=>count($hits),'unlinkedEvents'=>$all],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES).PHP_EOL;throw new RuntimeException('Expected exactly one PSOOLA event for this workshop; nothing was changed.');}
+            $eventId=$hits[0];$m=$get('events/'.$eventId);$event=$m['event']??[];
+            $day0=(new DateTimeImmutable('2026-11-19T00:00:00+03:00'))->getTimestamp()*1000;$day1=$day0+86400000;
+            $fmt=static fn($ms)=>gmdate('Y-m-d H:i',intdiv((int)$ms,1000)+10800);
+            $shows=array_values(array_filter($m['shows']??[],static fn($s)=>(int)($s['dateTime']??0)>=$day0&&(int)($s['dateTime']??0)<$day1));
+            $summary=['eventId'=>$eventId,'title'=>$event['title']??null,'status'=>$event['status']??null,
+             'shows'=>array_map(static fn($s)=>['id'=>$s['_id']??null,'status'=>$s['status']??null,'start'=>$fmt($s['dateTime']??0),'end'=>$fmt($s['endTime']??0)],$m['shows']??[]),
+             'tickets'=>array_map(static fn($t)=>['id'=>$t['_id']??null,'show'=>$t['showId']??null,'name'=>$t['name']??null,'price'=>$t['price']??null,'currency'=>$t['currency']??null,'quantity'=>$t['quantity']??null,'maxPerOrder'=>$t['maxPerOrder']??null],$m['ticketTypes']??[])];
+            echo 'PSOOLA_EVENT='.json_encode($summary,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES).PHP_EOL;
+            if(count($shows)!==1)throw new RuntimeException('Expected one PSOOLA session on 19 November; nothing was changed.');
+            $showId=(string)$shows[0]['_id'];
+            $tickets=array_values(array_filter($m['ticketTypes']??[],static fn($t)=>($t['showId']??'')===$showId&&(int)($t['price']??-1)===0));
+            if(count($tickets)!==1)throw new RuntimeException('Expected one free PSOOLA ticket type; nothing was changed.');
+            $ticketId=(string)$tickets[0]['_id'];
+            if(($event['status']??'')!=='published'||($shows[0]['status']??'')!=='on_sale')throw new RuntimeException('PSOOLA event is not published and on sale yet; nothing was changed.');
+            $sales=$g->partnerRequest('GET','events/'.$eventId);if($sales['status']!==200)throw new RuntimeException('Event not available through the PSOOLA sales API; nothing was changed.');
+            Db::transaction(static function()use($def,$id,$owner,$eventId,$showId,$ticketId):void{
+             $row=Db::one('SELECT * FROM workshops WHERE id=? FOR UPDATE',[$id]);
+             $links=['provider_event_id'=>$eventId,'provider_show_id'=>$showId,'provider_ticket_type_id'=>$ticketId];
+             if(!$row)Db::insert('workshops',$def+$links+['sort_order'=>(int)Db::value('SELECT COALESCE(MAX(sort_order),0)+1 FROM workshops'),'created_at'=>App::now(),'updated_at'=>App::now()]);
+             elseif($row['provider_event_id']&&$row['provider_event_id']!==$eventId)throw new RuntimeException('Workshop already linked to another PSOOLA event.');
+             else Db::update('workshops',$links+['updated_at'=>App::now()],'id=?',[$id]);
+             Db::update('workshops',['status'=>'active','updated_at'=>App::now()],'id=?',[$id]);
+             Audit::log((int)$owner['id'],'workshop.psoola_publication','workshop',null,['id'=>$id]+$links+['price'=>0,'total_seats'=>25]);
+            });
+            Workshops::syncWebsite();@unlink(App::storage('tmp/workshop-catalog-'.$id.'.json'));
+            $v=WorkshopCatalog::one($id,true);
+            if(!$v||!$v['availabilityVerified']||$v['status']!=='active'||$v['price']!==0||$v['organizer']!=='ismile'||$v['scheduledDate']!=='2026-11-19')throw new RuntimeException('Catalog verification failed: '.json_encode($v));
+            $probe='aligner-workshop-check@example.invalid';
+            if(!Db::value('SELECT id FROM registrations WHERE LOWER(email)=?',[$probe])){try{WorkshopCheckout::start($id,$probe);throw new RuntimeException('Unregistered email was accepted.');}catch(\Ismile\UserError $e){if($e->getMessage()!=='wd_err_not_registered')throw $e;}}
+            echo 'WORKSHOPS_VERIFIED='.json_encode(['workshop'=>$v,'eventId'=>$eventId,'showId'=>$showId,'ticketTypeId'=>$ticketId],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES).PHP_EOL;
+            ALIGNER_LINK_PHP
+            node <<'ALIGNER_LIVE_JS'
+            const fs=require('node:fs'),path=require('node:path'),cp=require('node:child_process'),crypto=require('node:crypto');
+            const id='in-office-clear-aligners',photo='assets/workshops/hezha-shafiq-rashid.webp',hash='a3fd2bd1e24fdbb7a0aebcee7212399460c87a3c3b37cbc21f32253872059495';
+            const apps=JSON.parse(cp.execFileSync('pm2',['jlist'],{encoding:'utf8',stdio:['ignore','pipe','pipe']}));
+            const found=apps.filter(a=>a.pm2_env?.pm_cwd&&fs.existsSync(path.join(a.pm2_env.pm_cwd,photo)));
+            if(found.length!==1)throw Error('Expected one deployed website with the new portrait');
+            const current=fs.realpathSync(found[0].pm2_env.pm_cwd);
+            if(crypto.createHash('sha256').update(fs.readFileSync(path.join(current,photo))).digest('hex')!==hash)throw Error('Portrait differs');
+            const env=fs.readFileSync(path.join(current,'.env'),'utf8'),m=env.match(/^CONTENT_ROOT=(.*)$/m);
+            const shared=m&&m[1].trim()?m[1].trim():path.resolve(current,'../../shared-content');
+            const rows=JSON.parse(fs.readFileSync('/opt/ismile-test/site/data/workshops.json','utf8'));
+            const w=rows.find(r=>r.id===id);
+            if(!w||w.organizer!=='ismile'||w.price!==0||w.totalSeats!==25||w.scheduledDate!=='2026-11-19'||w.photo!==photo)throw Error('Workshop missing from database publication');
+            const file=path.join(shared,'data/workshops.json');
+            const raw=fs.readFileSync(file,'utf8'),doc=JSON.parse(raw),st=fs.statSync(file);
+            if(!Array.isArray(doc))throw Error('Invalid workshop content');
+            const backup=path.join(path.dirname(shared),'content-backups','aligner-workshop-'+Date.now());fs.mkdirSync(backup,{recursive:true,mode:0o700});
+            fs.writeFileSync(path.join(backup,'workshops.json'),raw,{mode:0o600});
+            const i=doc.findIndex(r=>r.id===id);if(doc.filter(r=>r.id===id).length>1)throw Error('Duplicate workshop');
+            if(i>=0)doc[i]=w;else doc.push(w);
+            const tmp=file+'.aligner-writing';fs.writeFileSync(tmp,JSON.stringify(doc,null,2)+String.fromCharCode(10));fs.chmodSync(tmp,st.mode&0o777);fs.chownSync(tmp,st.uid,st.gid);fs.renameSync(tmp,file);
+            console.log('WORKSHOPS_PUBLISHED='+JSON.stringify({id,live:file,count:doc.length,backup}));
+            ALIGNER_LIVE_JS
