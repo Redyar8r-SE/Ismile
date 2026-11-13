@@ -169,6 +169,13 @@
       "tile": true
     },
     {
+      "name": "Pacotech",
+      "tier": "gold",
+      "logo": "assets/sponsors/pacotech-gold-20261114.webp",
+      "bg": "#18363F",
+      "tile": true
+    },
+    {
       "name": "DentStar Company",
       "tier": "silver",
       "logo": "assets/sponsors/dentstar-silver-white.webp",
