@@ -43,6 +43,12 @@ $detailContext = $inCheckin ? '&workspace=checkin' . (isset($_GET['day']) && in_
 ]) ?>
 </div>
 <div class="grid2">
+  <?php $design=Certificates::designFile(); ?>
+  <?php if ($design): ?>
+  <section class="card certificate-design-preview" aria-label="Certificate design preview">
+    <div class="certificate-design-frame"><img src="certificate-design.php" alt="iSmile Certificate of Attendance design" loading="lazy"><strong>GUEST’S FULL NAME</strong></div>
+  </section>
+  <?php else: ?>
   <section class="card certificate-art" aria-label="Certificate design preview">
     <span class="certificate-brand">iSmile <b>2026</b></span><small>DENTAL SUMMIT · SULAIMANI</small>
     <h2>Certificate of<br>Participation</h2><p>This certificate is proudly presented to</p>
@@ -50,9 +56,9 @@ $detailContext = $inCheckin ? '&workspace=checkin' . (isset($_GET['day']) && in_
     <p>In recognition of participation in iSmile 2026<br>Grand Millennium Sulaimani · 19–20 November 2026</p>
     <b>iSmile Organizing Committee</b><small>Certificate number · Verified attendance</small>
   </section>
+  <?php endif; ?>
   <section class="card"><?= Page::panelHeading('Attendance earns the certificate', 'Every confirmed arrival creates the guest’s named certificate.', 'checkin') ?>
     <ol class="welcome-steps"><li><b>Confirm attendance</b><span>Psoola scans the ticket at the door; the scans are copied here every 5 minutes. Free tickets are marked attended in Registration.</span></li><li><b>Their name is added automatically</b><span>Attendance on either day qualifies. Payment without attendance does not.</span></li><li><b>Send or download manually</b><span>Press an email button to send personal PDFs. Download one certificate or all eligible certificates in a combined PDF. Check-in never sends certificate emails.</span></li></ol>
-    <?php $design=Certificates::designFile(); ?>
     <p class="muted small"><?= $design ? 'The PDF uses the iSmile Certificate of Attendance design with each guest’s name in capitals.' : 'The PDF uses this iSmile design.' ?> Correcting a guest’s name updates their certificate.</p>
     <a class="btn ghost" href="certificate-download.php?sample=1">Download a sample certificate (PDF)</a>
     <a class="btn ghost" href="export.php?what=attendance&amp;format=pdf">Download attendance report (PDF)</a>

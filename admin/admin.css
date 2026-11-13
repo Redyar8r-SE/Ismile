@@ -1426,3 +1426,9 @@ body:has([data-guest-tickets]) .page-actions .btn{background:transparent;border:
  .guest-pass-total strong small{font-size:14px}
  .guest-pass-total p{display:none}
 }
+
+/* Certificate preview: the installed artwork with the name where the PDF prints it (x 23 mm, centre 94.8 mm of 297 x 210 mm). */
+.certificate-design-preview{display:flex;align-items:center;padding:16px!important}
+.certificate-design-frame{position:relative;width:100%;container-type:inline-size;border-radius:10px;overflow:hidden;box-shadow:0 6px 24px rgba(0,40,80,.12)}
+.certificate-design-frame img{display:block;width:100%;height:auto}
+.certificate-design-frame strong{position:absolute;left:7.74%;top:45.14%;transform:translateY(-50%);color:#004E88;font-weight:900;font-size:3.9cqw;letter-spacing:-.01em;white-space:nowrap}
