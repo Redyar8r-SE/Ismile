@@ -193,7 +193,7 @@ final class Badges
     }
 
     /** [name font, label font]: the licensed font when uploaded, otherwise Inter Display. */
-    private static function fonts(\TCPDF $pdf): array
+    public static function fonts(\TCPDF $pdf): array
     {
         if (self::hasLicensedFont()) {
             $dir = self::privateFontDir();

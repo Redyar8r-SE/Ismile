@@ -37,8 +37,94 @@ final class Certificates
         $pdf->setPrintFooter(false);
         $pdf->SetMargins(0, 0, 0);
         $pdf->SetAutoPageBreak(false);
-        foreach ($rows as $row) self::page($pdf, $row);
+        $design = self::designFile();
+        $font = $design !== null ? Badges::fonts($pdf)[0] : null;
+        foreach ($rows as $row) {
+            if ($design !== null) self::designPage($pdf, $row, $design, (string) $font);
+            else self::page($pdf, $row);
+        }
         return $pdf->Output('', 'S');
+    }
+
+    /** The Owner's uploaded certificate artwork: private storage only, never the public repository. */
+    public static function designFile(): ?string
+    {
+        if ((string) App::config('storage', '') === '') return null;
+        foreach (['jpg', 'png'] as $ext) {
+            $file = App::storage('certificates/design.' . $ext);
+            if (is_file($file)) return $file;
+        }
+        return null;
+    }
+
+    /** Saves an A4 landscape PNG or JPEG as the certificate design (Owner only). */
+    public static function installDesign(array $user, mixed $file): string
+    {
+        if (($user['role'] ?? '') !== 'owner') throw new UserError('Only the Owner can change the certificate design.');
+        if ((string) App::config('storage', '') === '') throw new UserError('Private storage is not configured on this server.');
+        if (!is_array($file) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || !is_uploaded_file((string) $file['tmp_name'])) {
+            throw new UserError('Choose the certificate design image (PNG or JPEG).');
+        }
+        if ((int) $file['size'] < 10_000 || (int) $file['size'] > 25_000_000) throw new UserError('The design must be an image up to 25 MB.');
+        $info = @getimagesize((string) $file['tmp_name']);
+        if (!$info || !in_array($info[2], [IMAGETYPE_PNG, IMAGETYPE_JPEG], true)) throw new UserError('The design must be a PNG or JPEG image.');
+        [$w, $h] = $info;
+        if ($w < 2000 || abs($w / $h - 297 / 210) > 0.03) throw new UserError('The design must be A4 landscape, at least 2000 pixels wide (for example 3508 × 2480).');
+        $dir = App::storage('certificates');
+        if (!is_dir($dir) && !@mkdir($dir, 0750, true)) throw new UserError('The private certificate folder could not be created.');
+        $target = $dir . '/design.' . ($info[2] === IMAGETYPE_JPEG ? 'jpg' : 'png');
+        $temp = $target . '.uploading';
+        if (!move_uploaded_file((string) $file['tmp_name'], $temp)) throw new UserError('The design could not be saved.');
+        // A PNG becomes a high-quality JPEG when the server can, so each emailed PDF stays small.
+        if ($info[2] === IMAGETYPE_PNG && function_exists('imagecreatefrompng') && ($image = @imagecreatefrompng($temp))) {
+            $jpeg = $dir . '/design.jpg.uploading';
+            $ok = imagejpeg($image, $jpeg, 92);
+            imagedestroy($image);
+            if ($ok) { @unlink($temp); $temp = $jpeg; $target = $dir . '/design.jpg'; }
+        }
+        foreach (glob($dir . '/design.*') ?: [] as $old) if (!str_ends_with($old, '.uploading')) @unlink($old);
+        if (!rename($temp, $target)) throw new UserError('The design could not be saved.');
+        @chmod($target, 0640);
+        try {
+            self::pdf([['recipient_name' => 'Design Check', 'certificate_no' => 'ISM26-C-00000', 'attended_days' => 'Day 1']]);
+        } catch (\Throwable) {
+            self::removeDesign($user);
+            throw new UserError('This image could not be used in a PDF. The previous certificate design is used.');
+        }
+        Audit::log((int) $user['id'], 'certificate.design', null, null, ['width' => $w, 'height' => $h]);
+        return 'Certificate design saved privately on the server. Every certificate PDF now uses it.';
+    }
+
+    public static function removeDesign(array $user): string
+    {
+        if (($user['role'] ?? '') !== 'owner') throw new UserError('Only the Owner can change the certificate design.');
+        if ((string) App::config('storage', '') !== '') foreach (glob(App::storage('certificates') . '/design.*') ?: [] as $file) @unlink($file);
+        Audit::log((int) $user['id'], 'certificate.design_removed');
+        return 'The certificate design was removed. Certificates use the built-in design.';
+    }
+
+    /**
+     * The approved artwork (A4 landscape) with the guest's name in the blank
+     * line under "THIS CERTIFICATE IS PROUDLY PRESENTED TO": badge name font,
+     * capitals, in the certificate's blue (#004E88), left-aligned with the text.
+     */
+    private static function designPage(\TCPDF $pdf, array $row, string $design, string $font): void
+    {
+        $pdf->AddPage();
+        $pdf->Image($design, 0, 0, 297, 210, '', '', '', false, 300);
+        $name = mb_strtoupper(trim((string) preg_replace('/\s+/u', ' ', (string) $row['recipient_name'])), 'UTF-8');
+        // Kurdish or Arabic letters need DejaVu, as on the badge.
+        $rtl = (bool) preg_match('/[^\x{0000}-\x{024F}]/u', $name);
+        [$face, $style] = $rtl ? ['dejavusans', 'B'] : [$font, ''];
+        $size = 32.0;
+        $pdf->SetFont($face, $style, $size);
+        while ($size > 14 && $pdf->GetStringWidth($name) > 249) $pdf->SetFont($face, $style, $size -= 0.5);
+        $pdf->SetTextColor(0, 78, 136);
+        // Baseline chosen so the capitals sit centred in the empty band (86.0–103.6 mm).
+        $baseline = 94.8 + 0.727 * $size * 25.4 / 72 / 2 - ($rtl ? 1.5 : 0);
+        $pdf->setCellPaddings(0, 0, 0, 0);
+        $pdf->SetXY(23.0, $baseline);
+        $pdf->Cell(249, 0, $name, 0, 0, 'L', false, '', 0, false, 'L', 'M');
     }
 
     /** Bulk sends skip already sent/pending certificates; an individual can be resent. */

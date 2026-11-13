@@ -14,6 +14,8 @@ $inCheckin = ($_GET['workspace'] ?? '') === 'checkin';
 if ($inCheckin) Page::redirect('certificates.php');
 Page::action(static function () use ($user): string {
     $action=(string)($_POST['do']??'');
+    if ($action==='design_upload') return Certificates::installDesign($user,$_FILES['design']??null);
+    if ($action==='design_remove') return Certificates::removeDesign($user);
     if (!in_array($action,['email_all','email_one'],true)) throw new UserError('Choose a certificate email action.');
     $id=$action==='email_one'?(int)($_POST['registration_id']??0):null;
     if ($id!==null && $id<1) throw new UserError('Choose a participant.');
@@ -52,7 +54,17 @@ $detailContext = $inCheckin ? '&workspace=checkin' . (isset($_GET['day']) && in_
   </section>
   <section class="card"><?= Page::panelHeading('Attendance earns the certificate', 'Every confirmed arrival creates the guest’s named certificate.', 'checkin') ?>
     <ol class="welcome-steps"><li><b>Confirm attendance</b><span>Psoola scans the ticket at the door; the scans are copied here every 5 minutes. Free tickets are marked attended in Registration.</span></li><li><b>Their name is added automatically</b><span>Attendance on either day qualifies. Payment without attendance does not.</span></li><li><b>Send or download manually</b><span>Press an email button to send personal PDFs. Download one certificate or all eligible certificates in a combined PDF. Check-in never sends certificate emails.</span></li></ol>
-    <p class="muted small">The PDF uses this iSmile design. Final artwork can replace the background later. Correcting a guest’s name updates their certificate.</p>
+    <?php $design=Certificates::designFile(); ?>
+    <p class="muted small"><?= $design ? 'The PDF uses your uploaded certificate design with each guest’s name in capitals.' : 'The PDF uses this iSmile design until the Owner uploads the final artwork.' ?> Correcting a guest’s name updates their certificate.</p>
+    <a class="btn ghost" href="certificate-download.php?sample=1">Download a sample certificate (PDF)</a>
+    <?php if ($user['role']==='owner'): ?>
+    <form method="post" enctype="multipart/form-data" class="inline-form">
+      <?= Page::csrfField() ?><input type="hidden" name="do" value="design_upload">
+      <label><b>Certificate design</b> <span class="muted small">A4 landscape PNG or JPEG, kept privately on the server (Owner only)</span><input type="file" name="design" accept="image/png,image/jpeg" required></label>
+      <button class="btn"><?= $design ? 'Replace design' : 'Upload design' ?></button>
+    </form>
+    <?php if ($design): ?><form method="post" class="inline-form"><?= Page::csrfField() ?><input type="hidden" name="do" value="design_remove"><button class="btn small ghost">Remove uploaded design</button></form><?php endif; ?>
+    <?php endif; ?>
     <a class="btn ghost" href="export.php?what=attendance&amp;format=pdf">Download attendance report (PDF)</a>
   </section>
 </div>
