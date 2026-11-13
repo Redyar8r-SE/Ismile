@@ -632,5 +632,58 @@
     "totalSeats": 25,
     "seatsLeft": 25,
     "availabilityVerified": true
+  },
+  {
+    "id": "in-office-clear-aligners",
+    "icon": "tooth",
+    "title": {
+      "en": "In-Office Clear Aligners with Titan Dental Design",
+      "ar": "التقويم الشفاف داخل العيادة باستخدام Titan Dental Design",
+      "ku": "ئەلاینەری ڕوون لەناو کلینیک بە Titan Dental Design"
+    },
+    "company": null,
+    "speaker": {
+      "en": "Dr. Hezha Shafiq H. Rashid",
+      "ar": "د. هيژا شفيق ح. رشيد",
+      "ku": "د. هێژا شەفیق ح. ڕەشید"
+    },
+    "credentials": {
+      "en": "Orthodontist",
+      "ar": "أخصائي تقويم الأسنان",
+      "ku": "پسپۆڕی ڕاستکردنەوەی ددان"
+    },
+    "format": {
+      "en": "Hands-on workshop",
+      "ar": "ورشة تطبيقية",
+      "ku": "وۆرکشۆپی کرداری"
+    },
+    "duration": {
+      "en": "2 hours",
+      "ar": "ساعتان",
+      "ku": "2 کاتژمێر"
+    },
+    "level": {
+      "en": "Suitable for all experience levels",
+      "ar": "مناسب لجميع مستويات الخبرة",
+      "ku": "گونجاوە بۆ هەموو ئاستەکانی ئەزموون"
+    },
+    "overview": {
+      "en": "Plan a real case, print the model, press the aligner and prepare it for the patient, step by step with Titan Dental Design software.\nHands-on workshop at Grand Millennium Hotel, Sulaimani.",
+      "ar": "خطّط لحالة حقيقية، اطبع النموذج، اكبس المصفّف الشفاف وجهّزه للمريض، خطوة بخطوة باستخدام برنامج Titan Dental Design.\nورشة تطبيقية في فندق غراند ميلينيوم، السليمانية.",
+      "ku": "پلانی کەیسێکی ڕاستەقینە دابنێ، مۆدێلەکە چاپ بکە، ئەلاینەرەکە پرێس بکە و بۆ نەخۆشەکە ئامادەی بکە، هەنگاو بە هەنگاو بە بەرنامەی Titan Dental Design.\nوۆرکشۆپی کرداری لە هۆتێلی گراند میلینیۆم، سلێمانی."
+    },
+    "photo": "assets/workshops/hezha-shafiq-rashid.webp",
+    "organizer": "ismile",
+    "companyPhone": null,
+    "companyPhones": [],
+    "scheduledDate": "2026-11-19",
+    "startTime": "15:00",
+    "endTime": "17:00",
+    "photoStyle": "cutout",
+    "price": 0,
+    "currency": "IQD",
+    "totalSeats": 25,
+    "seatsLeft": 25,
+    "availabilityVerified": false
   }
 ]
