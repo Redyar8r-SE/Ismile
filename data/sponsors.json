@@ -176,6 +176,13 @@
       "tile": true
     },
     {
+      "name": "Prettau Dental Lab",
+      "tier": "gold",
+      "logo": "assets/sponsors/prettau-dental-lab-gold-20261115.webp",
+      "bg": "#18363F",
+      "tile": true
+    },
+    {
       "name": "DentStar Company",
       "tier": "silver",
       "logo": "assets/sponsors/dentstar-silver-white.webp",
@@ -249,6 +256,13 @@
       "name": "SKY DENT",
       "tier": "silver",
       "logo": "assets/sponsors/sky-dent-silver-20261112.webp",
+      "bg": "#18363F",
+      "tile": true
+    },
+    {
+      "name": "Foresight",
+      "tier": "silver",
+      "logo": "assets/sponsors/foresight-silver-20261115.webp",
       "bg": "#18363F",
       "tile": true
     },
