@@ -40,4 +40,13 @@ $fixture('/stock?id='.$id.'&available=25');
 $oldBooking=Db::one('SELECT * FROM workshop_bookings WHERE registration_id=?',[$iqd['id']]);Db::update('workshop_bookings',['removed_at'=>App::now(),'removed_by'=>$owner['id']],'id=?',[$oldBooking['id']]);$receiptCount=(int)Db::value('SELECT COUNT(*) FROM workshop_cash_receipts');
 $check('Removing a local booking does not permit collecting the paid ticket twice',$reject(fn()=>WorkshopCashSale::register($iqd,$staff,array_replace($input,['cash_currency'=>'IQD','cash_amount'=>(string)$price])))&&(int)Db::value('SELECT COUNT(*) FROM workshop_cash_receipts')===$receiptCount);
 Db::update('workshops',['display_price'=>100,'display_currency'=>'USD'],'id=?',[$id]);
+// Workshop & Register: a Volunteer sells a workshop for cash exactly as staff do.
+$volunteerId=Auth::createUser('desk-volunteer-'.bin2hex(random_bytes(3)).'@example.invalid','Desk Volunteer','volunteer',bin2hex(random_bytes(16)));$volunteer=Db::one('SELECT * FROM admin_users WHERE id=?',[$volunteerId]);
+$deskPerson=$seed('desk');$deskBefore=count($fixture()['orders']);
+$check('A Volunteer must confirm the cash too',$reject(fn()=>WorkshopCashSale::register($deskPerson,$volunteer,['workshop'=>$id,'cash_currency'=>'IQD','cash_amount'=>(string)$price])));
+$deskMessage=WorkshopCashSale::register($deskPerson,$volunteer,['workshop'=>$id,'cash_received'=>'1','cash_currency'=>'IQD','cash_amount'=>(string)$price]);
+$deskBooking=Db::one('SELECT * FROM workshop_bookings WHERE registration_id=?',[$deskPerson['id']]);$deskOrder=Db::one('SELECT * FROM workshop_ticket_orders WHERE booking_id=?',[$deskBooking['id']]);
+$check('A Volunteer sells a paid workshop: cash booking and a paid PSOOLA order',is_string($deskMessage)&&$deskBooking['paid_how']==='cash'&&(int)$deskBooking['booked_by']===$volunteerId&&$deskOrder['provider_status']==='paid'&&count($fixture()['orders'])===$deskBefore+1);
+$check('A Volunteer cannot sell to someone without a paid summit ticket',$reject(fn()=>WorkshopCashSale::register($seed('desk-guest','complimentary'),$volunteer,['workshop'=>$id,'cash_received'=>'1','cash_currency'=>'IQD','cash_amount'=>(string)$price])));
+$check('Another Volunteer cannot reissue that receipt',$reject(fn()=>WorkshopTickets::issue((int)$deskBooking['id'],['role'=>'volunteer','id'=>$volunteerId+1000])));
 echo $passed.' paid cash workshop checks passed.'.PHP_EOL;

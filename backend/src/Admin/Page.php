@@ -20,6 +20,7 @@ final class Page
 {
     public const MENU = [
         'index'         => ['Dashboard', 'dashboard'],
+        'desk'          => ['Workshop & Register', 'desk'],
         'registrations' => ['Registrations', 'registrations'],
         'lists'         => ['Lists', 'registrations'],
         'association'   => ['Association', 'association'],
@@ -55,6 +56,7 @@ final class Page
             'checkin' => '<path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5M8 12l3 3 5-6"/>',
             'psoola-orders' => '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
             'tickets' => '<path d="M3 5h18v5a2 2 0 0 0 0 4v5H3v-5a2 2 0 0 0 0-4Z"/><path d="M15 5v3m0 3v2m0 3v3"/>',
+            'desk' => '<rect x="2.5" y="6" width="19" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.6"/><path d="M6 12h.01M18 12h.01"/>',
             'certificates' => '<circle cx="12" cy="9" r="6"/><path d="m8 14-2 7 6-3 6 3-2-7m-7-6 2 2 3-4"/>',
             'settings' => '<path d="m9 3-.7 2.2-2 .9L4 5.6 2 9l1.7 1.6v2.8L2 15l2 3.4 2.3-.5 2 .9L9 21h6l.7-2.2 2-.9 2.3.5 2-3.4-1.7-1.6v-2.8L22 9l-2-3.4-2.3.5-2-.9L15 3Z"/><circle cx="12" cy="12" r="3"/>',
             'users' => '<circle cx="9" cy="8" r="3"/><path d="M3 21v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 0 1 0 6m2 4a5 5 0 0 1 3 4v2"/>',
@@ -210,6 +212,7 @@ final class Page
             'content' => self::contentUrl(),
             'map_viewer' => 'map.php',
             'badges'     => 'tickets.php',
+            'volunteer'  => 'desk.php',
             default   => 'index.php',
         };
     }
@@ -259,6 +262,7 @@ final class Page
         if ($registrationDetails || $current === 'tickets') echo '<link rel="stylesheet" href="registration-details.css?v=' . $v('registration-details.css') . '"><script src="registration-details.js?v=' . $v('registration-details.js') . '" defer></script>';
         if ($current === 'tickets') echo '<script src="tickets.js?v=' . $v('tickets.js') . '" defer></script>';
         if ($current === 'workshops') echo '<link rel="stylesheet" href="workshops.css?v=' . $v('workshops.css') . '"><script src="workshops.js?v=' . $v('workshops.js') . '" defer></script>';
+        if ($current === 'desk') echo '<link rel="stylesheet" href="desk.css?v=' . $v('desk.css') . '">';
         echo '</head><body class="' . ($user ? 'admin-shell' . (self::viewOnlyHere() ? ' view-only' : '') : 'database-auth') . ($registrationDetails ? ' registration-detail-page' : '') . '" data-page="' . self::e($current) . '">';
         if ($user) {
             echo '<a class="skip-link" href="#main-content">Skip to content</a>';
@@ -267,7 +271,7 @@ final class Page
             echo '<nav class="sidebar-nav" aria-label="Database pages">';
             $groups = [
                 'Workspace' => ['index'],
-                'Event operations' => ['registrations', 'lists', 'association', 'payments', 'psoola-orders', 'workshops', 'sponsors', 'booths', 'map', 'checkin', 'tickets'],
+                'Event operations' => ['desk', 'registrations', 'lists', 'association', 'payments', 'psoola-orders', 'workshops', 'sponsors', 'booths', 'map', 'checkin', 'tickets'],
                 'Database' => ['communications', 'settings', 'users', 'backups'],
             ];
             foreach ($groups as $group => $files) {
@@ -308,6 +312,7 @@ final class Page
             'booths' => 'Manage Standard booth bookings, agreed amounts, payments and follow-up calls.',
             'map' => 'Explore all 40 sponsor positions. Select a number to see who booked it, payments and follow-up details.',
             'checkin' => 'Psoola scans the tickets at the door. Follow who attended, the guest list and the live event report.',
+            'desk' => 'Take cash and register people: a summit ticket in Register, a workshop in Workshop. Psoola emails every ticket.',
             'settings' => 'Make the database work for your team. Manage registration, emails and ambassador codes.',
             'users' => 'Give your team the right access to support a smooth event.',
             'content' => 'Bring your event to life. Manage the words, photos and details your guests see.',

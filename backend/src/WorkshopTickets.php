@@ -10,7 +10,7 @@ final class WorkshopTickets
     public static function issue(int $bookingId,array $owner): string
     {
         $booking=Db::one('SELECT * FROM workshop_bookings WHERE id=? AND removed_at IS NULL',[$bookingId]);
-        if(($owner['role']??'')!=='owner'&&(!Auth::canBookWorkshops($owner)||!$booking||$booking['paid_how']!=='cash'||(int)$booking['booked_by']!==(int)$owner['id']))throw new UserError('Your account cannot issue this workshop ticket.',null,403);
+        if(($owner['role']??'')!=='owner'&&(!Auth::canDeskWorkshop($owner)||!$booking||$booking['paid_how']!=='cash'||(int)$booking['booked_by']!==(int)$owner['id']))throw new UserError('Your account cannot issue this workshop ticket.',null,403);
         if(!$booking || $booking['payment_status']!=='paid')throw new UserError('Record the collected workshop payment before issuing a ticket.');
         $registration=Db::one("SELECT * FROM registrations WHERE id=? AND status='paid'",[$booking['registration_id']]);
         if(!$registration)throw new UserError('A paid summit registration is required before a workshop ticket can be issued.');

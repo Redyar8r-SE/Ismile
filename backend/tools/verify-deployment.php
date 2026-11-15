@@ -10,7 +10,7 @@ use Ismile\Auth;
 use Ismile\Db;
 use Ismile\Admin\PdfReport;
 
-$pages = ['index','checkin','registrations','association','certificates','tickets','sponsors','booths','map','lists','communications','payments','psoola-orders','registration','workshops','settings','users','backups','content'];
+$pages = ['index','desk','checkin','registrations','association','certificates','tickets','sponsors','booths','map','lists','communications','payments','psoola-orders','registration','workshops','settings','users','backups','content'];
 if (($argv[1] ?? '') === '--render') {
     $page = $argv[2] ?? '';
     if (!in_array($page, $pages, true)) throw new RuntimeException('Unknown verification page.');
@@ -193,7 +193,7 @@ if (getenv('REGISTRATION_EDITOR_EMAIL')) {
     $check('selected live account has the Register action in its guest list', str_contains($html, 'href="registration.php?new=1"') && !str_contains($html, 'class="admin-shell view-only"'));
 }
 $check('Association sent totals match the active guest ledger', (int)$associationTotals['amount'] === (int)Db::value("SELECT COALESCE(SUM(total_paid),0) FROM association_batch_items WHERE active=1 AND payment_channel<>'Cash'") && (int)$associationTotals['guests'] === (int)Db::value('SELECT COUNT(*) FROM association_batch_items WHERE active=1'));
-foreach (array_diff(Auth::ROLES, ['badges']) as $role) {
+foreach (array_diff(Auth::ROLES, ['badges', 'volunteer']) as $role) {
     $html = $render('map', '', $role);
     $manage = $role === 'owner';
     $check($role . ' has correct Map access', str_contains($html, 'id="operationsMap"')
@@ -244,6 +244,15 @@ $html = $render('certificates');
 $check('certificate delivery remains manual', str_contains($html, 'Check-in never sends certificate emails.') && str_contains($html, 'Download attendance report (PDF)'));
 $html = $render('tickets');
 $check('Tickets page lists event tickets with the PSOOLA QR window', str_contains($html, 'tk-panel') && str_contains($html, 'ticket-tabs') && str_contains($html, 'data-rd-psoola-dialog') && str_contains($html, 'id="badge-history"') && str_contains($html, 'tickets.js') && str_contains($html, 'registration-details.js'));
+// Workshop & Register: a Volunteer sees one menu item, the guide and both cash tabs.
+$html = $render('desk', '', 'volunteer');
+$check('Volunteer sees only Workshop & Register with the guide and the cash form', substr_count($html, 'class="nav-link') === 1 && str_contains($html, 'href="desk.php"')
+    && str_contains($html, 'How to use this page') && str_contains($html, 'id="caller-form"') && str_contains($html, 'id="cash-confirm"') && str_contains($html, 'desk.css')
+    && !str_contains($html, 'value="vip"') && !str_contains($html, 'Register with a free ticket') && !str_contains($html, 'action="registrations.php"'));
+$html = $render('desk', 'tab=workshop', 'volunteer');
+$check('Volunteer Workshop tab starts with finding the person', str_contains($html, 'Step 1 · Find the person') && str_contains($html, 'name="q"'));
+$html = $render('desk', '');
+$check('Owner sees Workshop & Register in Event operations', str_contains($html, 'href="desk.php"') && str_contains($html, 'id="caller-form"'));
 // Viewer: opens every event page in view-only mode, never the Owner pages or the website editor.
 foreach (['index','registrations','lists','payments','psoola-orders','workshops','sponsors','booths','checkin','certificates','communications'] as $page) {
     $html = $render($page, '', 'viewer');

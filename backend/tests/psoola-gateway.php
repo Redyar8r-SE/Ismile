@@ -500,6 +500,21 @@ if ($database) {
         && (int) Db::value("SELECT COUNT(*) FROM emails WHERE kind = 'ticket' AND registration_id = ?", [$cashReg['id']]) === 0);
     $check('the cash ticket link is not stored', !str_contains((string) $cashRow['raw_create'] . (string) $cashRow['raw_status'], 'secret-link'));
 
+    // ---- Workshop & Register: a Volunteer sells a summit ticket for cash, PSOOLA emails it ----
+    $volunteer = Db::one('SELECT * FROM admin_users WHERE id = ?', [\Ismile\Auth::createUser('volunteer-' . bin2hex(random_bytes(3)) . '@test.invalid', 'Volunteer', 'volunteer', bin2hex(random_bytes(12)))]);
+    $deskForm = Checkouts::createForCash(['first_name' => 'Hawre', 'father_name' => 'Kamal', 'grandfather_name' => 'Aziz',
+        'phone' => '+9647' . random_int(100000000, 999999999), 'email' => 'desk-' . bin2hex(random_bytes(3)) . '@example.invalid',
+        'specialty' => 'gp', 'ticket' => 'professional', 'lunch_day1' => '1'], $volunteer);
+    $respondTo('POST /api/partner/v1/orders', 201, $paidOrder('ord_desk1', $deskForm['ref']));
+    $respond(200, $paidOrder('ord_desk1', $deskForm['ref']));
+    $deskSale = Payments::sellForCash($deskForm, $volunteer);
+    $deskReg = $deskSale['registration_id'] ? Registrations::find($deskSale['registration_id']) : null;
+    $check('a Volunteer sells a summit ticket for cash: registered, paid by cash, sent to PSOOLA', $deskSale['status'] === 'paid' && $deskReg !== null
+        && $deskReg['pay_method'] === 'cash' && (int) $deskForm['created_by'] === (int) $volunteer['id']
+        && Db::value('SELECT provider_payment_id FROM payments WHERE checkout_id = ?', [$deskForm['id']]) === 'ord_desk1');
+    $check('PSOOLA emails the Volunteer\'s sale: iSmile queues no ticket email', Tickets::issuedByPsoola(Tickets::forRegistration((int) $deskReg['id']))
+        && (int) Db::value("SELECT COUNT(*) FROM emails WHERE kind = 'ticket' AND registration_id = ?", [$deskReg['id']]) === 0);
+
     // ---- entry QRs: saved from PSOOLA's answer, shown only on the buyer's page ----
     $qrFor = static fn (string $code, string $status = 'valid', ?string $qr = 'PSOOLA:T:Q'): array => ['code' => $code, 'ticketTypeName' => 'Professional',
         'holderName' => 'Karwan Ali', 'status' => $status, 'addOns' => ['Lunch – Day 1'], 'qrCode' => $qr === null ? null : $qr . $code,

@@ -16,7 +16,7 @@ namespace Ismile;
 
 final class Auth
 {
-    public const ROLES = ['owner', 'registration', 'finance', 'content', 'checkin', 'viewer', 'sponsors', 'map_viewer', 'badges'];
+    public const ROLES = ['owner', 'registration', 'finance', 'content', 'checkin', 'viewer', 'sponsors', 'map_viewer', 'badges', 'volunteer'];
     public const ROLE_NAMES = [
         'owner'        => 'Owner (everything)',
         'registration' => 'Registration (paid cash registration and paid workshops for any attendee; edits only people they added)',
@@ -27,11 +27,13 @@ final class Auth
         'sponsors'     => 'Viewer + Booths (sees event pages; sponsor map booking needs individual access)',
         'map_viewer'   => 'Map viewer (sees only Map; cannot book or change anything)',
         'badges'       => 'Tickets & Certificates only (makes badges and certificates; sees no other page)',
+        'volunteer'    => 'Volunteer (only Workshop & Register: sells summit tickets and workshops for cash; sees no other page)',
     ];
     // Registration takes cash and makes real PSOOLA tickets, so it needs the phone code too.
     // The Viewer sees people's details and the money, so it does as well.
     // Sponsors sees company contacts and records sponsor payments, like Finance.
-    public const NEEDS_TWO_FACTOR = ['owner', 'finance', 'registration', 'viewer', 'sponsors', 'map_viewer', 'badges'];
+    // A Volunteer takes cash and makes real PSOOLA tickets, like Registration.
+    public const NEEDS_TWO_FACTOR = ['owner', 'finance', 'registration', 'viewer', 'sponsors', 'map_viewer', 'badges', 'volunteer'];
     // What a Viewer may still send: signing out and setting up their own phone code.
     private const VIEWER_MAY_POST = ['login.php', 'logout.php', 'two-factor.php'];
     // Viewer + Sponsors may also save on these pages: sponsor bookings, map places and booths.
@@ -190,6 +192,12 @@ final class Auth
         if ($user['role'] === 'badges') {
             return in_array($area, ['certificates', 'badges', 'attendance'], true);
         }
+        // Volunteer: only Workshop & Register, whatever else is ticked.
+        if ($user['role'] === 'volunteer') {
+            return $area === 'desk';
+        }
+        // Workshop & Register: anyone who may sell summit tickets or workshops for cash.
+        if ($area === 'desk') return self::canDeskRegister($user) || self::canDeskWorkshop($user);
         // Badge PDFs and PSOOLA QR previews: guest-list roles, or badge access.
         if ($area === 'badges') return self::can($user, 'registrations') || self::canManageBadges($user);
         // The attendance report on Certificates: export roles, as before.
@@ -257,6 +265,18 @@ final class Auth
     public static function canBookWorkshops(array $user): bool
     {
         return in_array($user['role'], ['owner', 'registration'], true) || (int) ($user['workshop_booking_access'] ?? 0) === 1;
+    }
+
+    /** Workshop & Register, Register tab: sell a summit ticket for cash. */
+    public static function canDeskRegister(array $user): bool
+    {
+        return $user['role'] === 'volunteer' || ($user['role'] !== 'badges' && self::can($user, 'edit'));
+    }
+
+    /** Workshop & Register, Workshop tab: sell a workshop for cash to a registered guest. */
+    public static function canDeskWorkshop(array $user): bool
+    {
+        return $user['role'] === 'volunteer' || self::canBookWorkshops($user);
     }
 
     /** False when a Viewer sends something that would change data on this page. */

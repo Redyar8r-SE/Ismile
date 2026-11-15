@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS admin_users (
   id               INT UNSIGNED      NOT NULL AUTO_INCREMENT,
   email            VARCHAR(190)      NOT NULL,                 -- stored lower-case
   name             VARCHAR(120)      NOT NULL,
-  role             ENUM('owner','registration','finance','content','checkin','viewer','sponsors','map_viewer','badges') NOT NULL,
+  role             ENUM('owner','registration','finance','content','checkin','viewer','sponsors','map_viewer','badges','volunteer') NOT NULL,
   map_booking_access TINYINT(1) NOT NULL DEFAULT 0,
   association_manage_access TINYINT(1) NOT NULL DEFAULT 0,
   registration_manage_access TINYINT(1) NOT NULL DEFAULT 0,

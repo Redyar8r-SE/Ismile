@@ -5,7 +5,7 @@ require_once __DIR__.'/../src/Office.php';
 use Ismile\Auth;
 $passed=0;
 $check=static function(string $label,bool $ok)use(&$passed):void{if(!$ok)throw new RuntimeException('FAILED: '.$label);$passed++;echo "PASS: $label\n";};
-foreach(array_diff(Auth::ROLES, ['badges']) as $role){
+foreach(array_diff(Auth::ROLES, ['badges', 'volunteer']) as $role){
     $base=['role'=>$role];$granted=$base+['workshop_booking_access'=>1];
     $check($role.' default workshop booking follows the role',Auth::canBookWorkshops($base)===in_array($role,['owner','registration'],true));
     $check($role.' individual workshop grant permits booking routes',Auth::canBookWorkshops($granted)&&Auth::can($granted,'workshops')&&Auth::viewerMayPost($granted,'registration.php')&&Auth::viewerMayPost($granted,'workshops.php')&&Auth::needsTwoFactor($granted));

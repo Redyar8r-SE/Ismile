@@ -151,6 +151,7 @@ jobs:
             runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/registration-access.php
             runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/workshop-access.php
             runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/badges-only-role.php
+            runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/volunteer-role.php
             echo "map_assets_http=200; all role permissions verified"
             echo "registration_details_assets_http=200 (match deployed files)"
             curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' -H 'X-Forwarded-Proto: https' \
