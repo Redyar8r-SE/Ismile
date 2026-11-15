@@ -250,12 +250,11 @@ $check('Volunteer sees only Workshop & Register with the cash form', substr_coun
     && !str_contains($html, 'How to use this page') && str_contains($html, 'id="caller-form"') && str_contains($html, 'id="cash-confirm"') && str_contains($html, 'desk.css')
     && str_contains($html, 'value="vip"') && !str_contains($html, 'Register with a free ticket') && !str_contains($html, 'action="registrations.php"'));
 $html = $render('desk', 'tab=workshop', 'volunteer');
-// Every iSmile workshop is shown, full and free ones too (free ones have no Register button).
+// Every iSmile workshop is shown, full and free ones too.
 $deskWorkshops = array_values(array_filter(\Ismile\Workshops::all(), static fn (array $w): bool => $w['organizer'] === 'ismile'));
 $check('Volunteer Workshop tab shows every iSmile workshop (full and free too) as a website-style card', str_contains($html, 'Organized by iSmile')
     && substr_count($html, 'class="dk-card') === count($deskWorkshops) && substr_count($html, '<div class="dk-pay"><span>') === count($deskWorkshops)
-    && array_reduce($deskWorkshops, static fn (bool $all, array $w): bool => $all && str_contains($html, \Ismile\Admin\Page::e(\Ismile\Workshops::name($w))), true)
-    && !str_contains($html, 'Register (free)'));
+    && array_reduce($deskWorkshops, static fn (bool $all, array $w): bool => $all && str_contains($html, \Ismile\Admin\Page::e(\Ismile\Workshops::name($w))), true));
 $html = $render('desk', '');
 $check('Owner sees Workshop & Register in Event operations', str_contains($html, 'href="desk.php"') && str_contains($html, 'id="caller-form"'));
 // Viewer: opens every event page in view-only mode, never the Owner pages or the website editor.

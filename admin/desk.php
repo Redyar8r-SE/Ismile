@@ -51,7 +51,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             if (!$sold || $sold['organizer'] !== 'ismile') throw new UserError('Choose an iSmile workshop.');
             $quote = WorkshopCashSale::quote($sold, WorkshopCatalog::one($sold['id'], true));
             if ($quote['iqd'] === 0) {
-                throw new UserError('Free workshops are not registered here. Ask the team.');
+                $in = ['free_registration' => '1', 'cash_amount' => '0', 'cash_currency' => 'IQD'] + $in;   // a free workshop: no cash
             } elseif (($_POST['cash_currency'] ?? 'IQD') === 'USD' && $quote['usdMinor']) {
                 $in = ['cash_currency' => 'USD', 'cash_amount' => number_format($quote['usdMinor'] / 100, 2, '.', '')] + $in;
             } else {
@@ -81,12 +81,11 @@ if ($tab === 'workshop') {
         $catalog = $linked ? WorkshopCatalog::one($w['id']) : null;
         $quote = null;
         if ($linked) { try { $quote = WorkshopCashSale::quote($w, $catalog); } catch (UserError) {} }
-        // Every iSmile workshop is shown (full ones too). Free ones are not sold here:
-        // volunteers only take cash, so they have no Register button.
+        // Every iSmile workshop is shown (full ones too). Free ones are registered with no cash.
         $free = ($quote && $quote['iqd'] === 0) || (!$quote && (int) $w['price'] === 0);
         $seats = (int) ($catalog['seatsLeft'] ?? 0);
         $workshops[$w['id']] = ['w' => $w, 'quote' => $quote, 'seats' => $seats, 'free' => $free,
-            'blocked' => !$linked ? 'Not on sale through Psoola. Ask the team.' : (!$quote ? 'Price not available from Psoola right now. Try again in a minute.' : ($seats < 1 ? 'Sold out.' : ($free ? 'Free' : '')))];
+            'blocked' => !$linked ? 'Not on sale through Psoola. Ask the team.' : (!$quote ? 'Price not available from Psoola right now. Try again in a minute.' : ($seats < 1 ? 'Sold out.' : ''))];
     }
 }
 $ws = $workshops[Page::query('ws')] ?? null;
@@ -269,20 +268,21 @@ $icon = static fn (string $d): string => '<svg viewBox="0 0 24 24" fill="none" s
       <div class="dk-pay"><span><?= $isFree ? 'Payment' : 'Payment (cash)' ?></span><b><?= $isFree ? 'Free' : ($quote ? $e(number_format($quote['iqd'])) . ' IQD' : '–') ?></b><?php if ($quote && $usd($quote) !== ''): ?><small>or <?= $e($usd($quote)) ?></small><?php endif; ?></div>
       <div class="dk-foot">
         <div class="dk-seats"><span class="dk-seats-ic"><?= $icon('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>') ?></span><div><b><?= $full ? 'Fully booked' : ($blocked !== '' && !$freeOpen ? 'Not available' : 'Available') ?></b><?php if ($quote && ($blocked === '' || $freeOpen)): ?><small><?= $seats ?> seat<?= $seats === 1 ? '' : 's' ?> left</small><?php elseif ($full): ?><small>No seats left</small><?php endif; ?></div></div>
-        <?php if ($blocked === ''): ?><a class="dk-cta" href="<?= $e($deskUrl('workshop', ['ws' => $id] + ($person ? ['rid' => (int) $person['id']] : []))) ?>#register"><?= $icon('<rect x="2.5" y="6" width="19" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.6"/>') ?>Register (cash)<?= $icon('<path d="M5 12h14M13 6l6 6-6 6"/>') ?></a><?php endif; ?>
+        <?php if ($blocked === ''): ?><a class="dk-cta" href="<?= $e($deskUrl('workshop', ['ws' => $id] + ($person ? ['rid' => (int) $person['id']] : []))) ?>#register"><?= $isFree ? $icon('<path d="M20 12v9H4v-9M2 7h20v5H2zM12 22V7M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7z"/>') : $icon('<rect x="2.5" y="6" width="19" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.6"/>') ?><?= $isFree ? 'Register (free)' : 'Register (cash)' ?><?= $icon('<path d="M5 12h14M13 6l6 6-6 6"/>') ?></a><?php endif; ?>
       </div>
-      <?php if ($isFree): ?><p class="dk-free-note">Free workshop: the team registers it, not the desk.</p><?php elseif ($blocked !== '' && !$full): ?><p class="desk-blocked"><?= $e($blocked) ?></p><?php endif; ?>
+      <?php if ($blocked !== '' && !$full): ?><p class="desk-blocked"><?= $e($blocked) ?></p><?php endif; ?>
     </div>
   </article>
 <?php endforeach; ?>
 </div>
 
-<?php if ($ws && $ws['blocked'] === ''): $quote = $ws['quote']; $wid = $ws['w']['id']; $img = $photo($ws['w']); ?>
+<?php if ($ws && $ws['blocked'] === ''): $quote = $ws['quote']; $wid = $ws['w']['id']; $img = $photo($ws['w']); $wsFree = $quote['iqd'] === 0; ?>
 <section class="dk-panel" id="register">
   <header class="dk-panel-head">
     <?php if ($img !== ''): ?><span class="dk-panel-photo"><img src="<?= $e($img) ?>" alt=""></span><?php endif; ?>
-    <div><small>Register for this workshop · paid in cash</small><h2><?= $e(Workshops::name($ws['w'])) ?></h2><p><?= $e($words($ws['w']['speaker'] ?? '')) ?></p></div>
-    <div class="dk-panel-price"><small>Collect</small><b><?= $e(number_format($quote['iqd'])) ?> IQD</b><?php if ($usd($quote) !== ''): ?><span>or <?= $e($usd($quote)) ?></span><?php endif; ?></div>
+    <div><small>Register for this workshop · <?= $wsFree ? 'free, no cash' : 'paid in cash' ?></small><h2><?= $e(Workshops::name($ws['w'])) ?></h2><p><?= $e($words($ws['w']['speaker'] ?? '')) ?></p></div>
+    <?php if ($wsFree): ?><div class="dk-panel-price"><small>Payment</small><b>Free</b><span>No cash</span></div>
+    <?php else: ?><div class="dk-panel-price"><small>Collect</small><b><?= $e(number_format($quote['iqd'])) ?> IQD</b><?php if ($usd($quote) !== ''): ?><span>or <?= $e($usd($quote)) ?></span><?php endif; ?></div><?php endif; ?>
   </header>
   <form method="get" action="desk.php#register" class="dk-find">
     <input type="hidden" name="tab" value="workshop"><input type="hidden" name="ws" value="<?= $e($wid) ?>">
@@ -310,18 +310,22 @@ $icon = static fn (string $d): string => '<svg viewBox="0 0 24 24" fill="none" s
 
   <?php if ($person): ?>
   <div class="dk-pay-step" id="pay">
-    <p class="dk-step"><b>2</b> Take the cash from <strong><?= $e(Registrations::fullName($person)) ?></strong>. Psoola emails the workshop ticket to <span dir="ltr"><?= $e((string) $person['email']) ?></span>.</p>
+    <p class="dk-step"><b>2</b> <?= $wsFree ? 'Register' : 'Take the cash from' ?> <strong><?= $e(Registrations::fullName($person)) ?></strong><?= $wsFree ? ' for free (no cash)' : '' ?>. Psoola emails the workshop ticket to <span dir="ltr"><?= $e((string) $person['email']) ?></span>.</p>
     <?php if ($has): ?>
       <p class="desk-blocked">Already registered for this workshop.</p>
     <?php else: ?>
     <form method="post" action="<?= $e($deskUrl('workshop', ['ws' => $wid] + $keep + ['rid' => (int) $person['id']])) ?>#pay" class="stack">
       <?= Page::csrfField() ?><?= Page::onceField() ?>
       <input type="hidden" name="do" value="workshop_cash_sale"><input type="hidden" name="rid" value="<?= (int) $person['id'] ?>"><input type="hidden" name="workshop" value="<?= $e($wid) ?>">
+      <?php if ($wsFree): ?>
+      <div class="dk-pay-buttons"><button class="dk-cta dk-big">Register for free · Send ticket</button></div>
+      <?php else: ?>
       <label class="desk-received"><input type="checkbox" name="cash_received" value="1" required> I have received the cash for this workshop.</label>
       <div class="dk-pay-buttons">
         <button class="dk-cta dk-big" name="cash_currency" value="IQD">Received <?= $e(number_format($quote['iqd'])) ?> IQD · Register</button>
         <?php if ($usd($quote) !== ''): ?><button class="dk-cta dk-big" name="cash_currency" value="USD">Received <?= $e($usd($quote)) ?> · Register</button><?php endif; ?>
       </div>
+      <?php endif; ?>
     </form>
     <?php endif; ?>
   </div>
