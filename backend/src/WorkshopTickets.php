@@ -12,7 +12,7 @@ final class WorkshopTickets
         $booking=Db::one('SELECT * FROM workshop_bookings WHERE id=? AND removed_at IS NULL',[$bookingId]);
         if(($owner['role']??'')!=='owner'&&(!Auth::canDeskWorkshop($owner)||!$booking||$booking['paid_how']!=='cash'||(int)$booking['booked_by']!==(int)$owner['id']))throw new UserError('Your account cannot issue this workshop ticket.',null,403);
         if(!$booking || $booking['payment_status']!=='paid')throw new UserError('Record the collected workshop payment before issuing a ticket.');
-        $registration=Db::one("SELECT * FROM registrations WHERE id=? AND status='paid'",[$booking['registration_id']]);
+        $registration=Db::one("SELECT * FROM registrations WHERE id=? AND status IN ('paid','complimentary')",[$booking['registration_id']]);
         if(!$registration)throw new UserError('A paid summit registration is required before a workshop ticket can be issued.');
         $workshop=Workshops::find($booking['workshop_id']);
         if(!$workshop || !$workshop['providerEventId'])throw new UserError('This workshop is not configured for PSOOLA tickets.');
@@ -36,7 +36,7 @@ final class WorkshopTickets
         }
         $attempt=Db::transaction(static function()use($bookingId,$workshop,$registration):array{
             $locked=Db::one('SELECT * FROM workshop_bookings WHERE id=? AND removed_at IS NULL FOR UPDATE',[$bookingId]);
-            if(!$locked || $locked['payment_status']!=='paid' || Db::value('SELECT status FROM registrations WHERE id=? LOCK IN SHARE MODE',[$registration['id']])!=='paid')throw new UserError('A paid summit registration and collected workshop payment are required.');
+            if(!$locked || $locked['payment_status']!=='paid' || !in_array(Db::value('SELECT status FROM registrations WHERE id=? LOCK IN SHARE MODE',[$registration['id']]),['paid','complimentary'],true))throw new UserError('A paid summit registration and collected workshop payment are required.');
             $saved=Db::one('SELECT * FROM workshop_ticket_orders WHERE booking_id=?',[$bookingId]);
             if($saved)return $saved;
             WorkshopCheckout::assertNoOpenPurchase((int)$registration['id'],$workshop['id']);

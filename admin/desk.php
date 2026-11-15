@@ -44,7 +44,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             if (!$canWorkshop) throw new UserError('Your account cannot register workshops.', null, 403);
             Page::useOnce();
             $person = Registrations::find((int) ($_POST['rid'] ?? 0));
-            if (!$person || $person['status'] !== 'paid') throw new UserError('This person has no paid summit ticket. Register them first in the Register tab.');
+            if (!$person || !in_array($person['status'], ['paid', 'complimentary'], true)) throw new UserError('This person has no active summit ticket. Register them first in the Register tab.');
             // The amount is PSOOLA's current price for the chosen currency; the volunteer confirms receiving it.
             $in = ['workshop' => (string) ($_POST['workshop'] ?? ''), 'cash_received' => (string) ($_POST['cash_received'] ?? ''), 'cash_currency' => 'IQD'];
             $sold = Workshops::find($in['workshop']);
@@ -123,7 +123,6 @@ $searched = $findQ !== '';
 $found = $tab === 'workshop' && $searched ? $findPeople($findQ) : [];
 $keep = $findQ !== '' ? ['q' => $findQ] : [];
 $whyNot = static fn (array $r): string => match ($r['status']) {
-    'complimentary' => 'Guest (free) summit ticket: the team registers their workshop.',
     'cancelled' => 'Summit ticket cancelled. Ask the team.',
     default => '',
 };
@@ -134,15 +133,15 @@ if ($tab === 'workshop' && Page::query('live') === '1') {
     header('Cache-Control: no-store');
     echo json_encode(['q' => $findQ, 'short' => $findQ === '', 'people' => array_map(static fn (array $r): array => [
         'name' => Registrations::fullName($r), 'email' => (string) $r['email'], 'phone' => '•••• ' . substr((string) preg_replace('/\D+/', '', (string) $r['phone']), -4),
-        'ticket' => Registrations::ticketName((string) $r['ticket_type']), 'why' => $whyNot($r),
-        'url' => $r['status'] === 'paid' ? 'desk.php?' . http_build_query(['tab' => 'workshop', 'ws' => $wsId, 'q' => $findQ, 'rid' => (int) $r['id']]) . '#pay' : null,
+        'ticket' => Registrations::ticketName((string) $r['ticket_type']) . ($r['status'] === 'complimentary' ? ' · Guest ticket' : ''), 'why' => $whyNot($r),
+        'url' => $whyNot($r) === '' ? 'desk.php?' . http_build_query(['tab' => 'workshop', 'ws' => $wsId, 'q' => $findQ, 'rid' => (int) $r['id']]) . '#pay' : null,
     ], $found)], JSON_UNESCAPED_UNICODE);
     exit;
 }
 $person = null;
 if ($tab === 'workshop' && (int) Page::query('rid') > 0) {
     $person = Registrations::find((int) Page::query('rid'));
-    if ($person && $person['status'] !== 'paid') $person = null;
+    if ($person && !in_array($person['status'], ['paid', 'complimentary'], true)) $person = null;   // any active summit ticket: paid (Dentist, Student, VIP) or guest
 }
 $has = $ws && $person && (bool) Db::value('SELECT id FROM workshop_bookings WHERE registration_id = ? AND workshop_id = ? AND removed_at IS NULL', [$person['id'], $ws['w']['id']]);
 $money = static fn (array $quote): string => number_format($quote['iqd']) . ' IQD';
@@ -334,7 +333,7 @@ $icon = static fn (string $d): string => '<svg viewBox="0 0 24 24" fill="none" s
     <?php foreach ($found as $row): $chosen = $person && (int) $person['id'] === (int) $row['id']; $why = $whyNot($row); ?>
     <<?= $why === '' ? 'a href="' . $e($deskUrl('workshop', ['ws' => $wid] + $keep + ['rid' => (int) $row['id']])) . '#pay"' : 'div' ?> class="dk-person<?= $chosen ? ' is-on' : '' ?><?= $why !== '' ? ' is-off' : '' ?>">
       <span class="dk-avatar"><?= $e(mb_strtoupper(mb_substr((string) $row['first_name'], 0, 1) . mb_substr((string) $row['father_name'], 0, 1))) ?></span>
-      <span class="dk-person-text"><b><?= $e(Registrations::fullName($row)) ?></b><small dir="ltr"><?= $e((string) $row['email']) ?> · <?= $e($masked((string) $row['phone'])) ?> · <?= $e(Registrations::ticketName((string) $row['ticket_type'])) ?></small><?php if ($why !== ''): ?><small class="dk-why"><?= $e($why) ?></small><?php endif; ?></span>
+      <span class="dk-person-text"><b><?= $e(Registrations::fullName($row)) ?></b><small dir="ltr"><?= $e((string) $row['email']) ?> · <?= $e($masked((string) $row['phone'])) ?> · <?= $e(Registrations::ticketName((string) $row['ticket_type']) . ($row['status'] === 'complimentary' ? ' · Guest ticket' : '')) ?></small><?php if ($why !== ''): ?><small class="dk-why"><?= $e($why) ?></small><?php endif; ?></span>
       <?php if ($why === ''): ?><em><?= $chosen ? 'Chosen' : 'Choose' ?></em><?php endif; ?>
     </<?= $why === '' ? 'a' : 'div' ?>>
     <?php endforeach; ?>

@@ -15,7 +15,8 @@ final class WorkshopAttendeeSearch
         $offset = max(0, min(100000, $offset));
         if ($query === '') return ['people'=>[], 'total'=>0, 'offset'=>$offset];
         $prefix = str_replace(['\\','%','_'], ['\\\\','\\%','\\_'], $query).'%';
-        $where = $paidOnly ? "r.status='paid'" : "r.status IN ('paid','complimentary')";
+        // Every active summit ticket (paid or guest) may buy a workshop; $paidOnly is kept for callers.
+        $where = "r.status IN ('paid','complimentary')";
         // Letter-by-letter name search always starts at the first name: A -> Ab.
         $match = "CONCAT_WS(' ',r.first_name,r.father_name,r.grandfather_name) LIKE ?";
         $params = [$prefix];

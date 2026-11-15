@@ -348,7 +348,7 @@
   "wd_ok_title": "Your seat is reserved",
   "wd_ok_text": "Our office will contact you to confirm and arrange payment.",
   "wd_err_email": "Please type a valid email address.",
-  "wd_err_not_registered": "A paid iSmile summit registration was not found for this email. Complete summit registration and payment first.",
+  "wd_err_not_registered": "No iSmile summit registration was found for this email. Register for the summit first.",
   "wd_err_already": "You are already registered for this workshop.",
   "wd_err_full": "Sorry, this workshop is fully booked.",
   "wd_err_missing": "This workshop is no longer available.",

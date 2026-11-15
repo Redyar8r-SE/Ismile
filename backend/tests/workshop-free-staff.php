@@ -15,7 +15,7 @@ $person=$seed('attendee');$input=['workshop'=>$row['id'],'free_registration'=>'1
 $check('Ordinary registration staff can assist without guest issuance access',Auth::canBookWorkshops($staff)&&!Auth::canIssueComplimentary($staff));
 $check('Viewer cannot issue an assisted free ticket',$reject(fn()=>WorkshopCashSale::register($person,['id'=>$staffId,'role'=>'viewer'],$input)));
 $check('Free registration cannot record cash',$reject(fn()=>WorkshopCashSale::register($person,$staff,$input+['cash_amount'=>'1'])));
-$check('Guest and cancelled summit registrations stay ineligible',$reject(fn()=>WorkshopCashSale::register($seed('guest','complimentary'),$staff,$input))&&$reject(fn()=>WorkshopCashSale::register($seed('cancelled','cancelled'),$staff,$input)));
+$check('Cancelled summit registrations stay ineligible',$reject(fn()=>WorkshopCashSale::register($seed('cancelled','cancelled'),$staff,$input)));
 $check('Paid workshop cannot be submitted as a free staff registration',$reject(fn()=>WorkshopCashSale::register($person,$staff,array_replace($input,['workshop'=>'simplified-direct-veneers']))));
 $check('Rejected requests create no provider session',$fixture()['creations']===$before['creations']);
 $old=$seed('old-paid-attempt');Db::insert('workshop_checkouts',['registration_id'=>$old['id'],'workshop_id'=>$row['id'],'public_token'=>bin2hex(random_bytes(32)),'idempotency_key'=>'staff-old-'.bin2hex(random_bytes(8)),'partner_reference'=>'staff-old-'.bin2hex(random_bytes(8)),'request_json'=>'{}','amount'=>100,'currency'=>'IQD','created_at'=>App::now(),'updated_at'=>App::now()]);$check('An older chargeable request cannot be reused as a free ticket',$reject(fn()=>WorkshopCashSale::register($old,$staff,$input))&&$fixture()['creations']===$before['creations']);
@@ -34,6 +34,8 @@ $volunteerId=Auth::createUser('desk-free-volunteer-'.bin2hex(random_bytes(3)).'@
 $deskPerson=$seed('desk-volunteer');$deskMessage=WorkshopCashSale::register($deskPerson,$volunteer,$input);
 $deskAttempt=Db::one('SELECT * FROM workshop_checkouts WHERE registration_id=? AND workshop_id=?',[$deskPerson['id'],$row['id']]);$deskBooking=Db::one('SELECT * FROM workshop_bookings WHERE id=?',[$deskAttempt['booking_id']]);
 $check('A Volunteer registers a free workshop: 0 IQD PSOOLA ticket, booked by the volunteer',str_contains($deskMessage,'0 IQD')&&$deskAttempt['provider_status']==='paid'&&(int)$deskAttempt['amount']===0&&(int)$deskBooking['booked_by']===$volunteerId);
+$freeGuest=$seed('desk-guest','complimentary');$freeGuestMessage=WorkshopCashSale::register($freeGuest,$volunteer,$input);
+$check('A guest (free summit ticket) can be registered for a free workshop',str_contains($freeGuestMessage,'0 IQD')&&Db::value("SELECT provider_status FROM workshop_checkouts WHERE registration_id=?",[$freeGuest['id']])==='paid');
 $check('A Volunteer cannot record cash on a free workshop',$reject(fn()=>WorkshopCashSale::register($seed('desk-cash'),$volunteer,$input+['cash_amount'=>'1'])));
 $fixture('/stock?workshop=subperiosteal-implant-protocol&available=0');$check('Sold out provider inventory blocks staff registration',$reject(fn()=>WorkshopCashSale::register($seed('soldout'),$staff,$input)));
 echo $passed.' free staff workshop checks passed.'.PHP_EOL;

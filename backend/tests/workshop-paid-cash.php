@@ -16,7 +16,7 @@ $check('The attendee was not added by this registrar',$person['created_by']===nu
 $check('Cash must be explicitly received',$reject(fn()=>WorkshopCashSale::register($person,$staff,array_replace($input,['cash_received'=>'0']))));
 $check('Wrong dollar amount is rejected before an order',$reject(fn()=>WorkshopCashSale::register($person,$staff,array_replace($input,['cash_amount'=>'99']))));
 $check('Non-workshop staff cannot issue a paid workshop order',$reject(fn()=>WorkshopCashSale::register($person,['id'=>$staffId,'role'=>'viewer'],$input)));
-$check('Unpaid or guest summit attendees cannot buy workshop tickets',$reject(fn()=>WorkshopCashSale::register($seed('cancelled','cancelled'),$staff,$input))&&$reject(fn()=>WorkshopCashSale::register($seed('guest','complimentary'),$staff,$input)));
+$check('Cancelled summit attendees cannot buy workshop tickets',$reject(fn()=>WorkshopCashSale::register($seed('cancelled','cancelled'),$staff,$input)));
 $check('Failed validation creates no provider sale',count($fixture()['orders'])===count($before['orders']));
 WorkshopCashSale::register($person,$staff,$input);$booking=Db::one('SELECT * FROM workshop_bookings WHERE registration_id=?',[$person['id']]);$receipt=Db::one('SELECT * FROM workshop_cash_receipts WHERE booking_id=?',[$booking['id']]);$order=Db::one('SELECT * FROM workshop_ticket_orders WHERE booking_id=?',[$booking['id']]);
 $check('Dollar cash is saved as a paid IQD booking',$booking['payment_status']==='paid'&&$booking['paid_how']==='cash'&&(int)$booking['amount_paid']===$price&&(int)$booking['price_agreed']===$price);
@@ -47,6 +47,10 @@ $check('A Volunteer must confirm the cash too',$reject(fn()=>WorkshopCashSale::r
 $deskMessage=WorkshopCashSale::register($deskPerson,$volunteer,['workshop'=>$id,'cash_received'=>'1','cash_currency'=>'IQD','cash_amount'=>(string)$price]);
 $deskBooking=Db::one('SELECT * FROM workshop_bookings WHERE registration_id=?',[$deskPerson['id']]);$deskOrder=Db::one('SELECT * FROM workshop_ticket_orders WHERE booking_id=?',[$deskBooking['id']]);
 $check('A Volunteer sells a paid workshop: cash booking and a paid PSOOLA order',is_string($deskMessage)&&$deskBooking['paid_how']==='cash'&&(int)$deskBooking['booked_by']===$volunteerId&&$deskOrder['provider_status']==='paid'&&count($fixture()['orders'])===$deskBefore+1);
-$check('A Volunteer cannot sell to someone without a paid summit ticket',$reject(fn()=>WorkshopCashSale::register($seed('desk-guest','complimentary'),$volunteer,['workshop'=>$id,'cash_received'=>'1','cash_currency'=>'IQD','cash_amount'=>(string)$price])));
+$check('A Volunteer cannot sell to someone whose summit ticket is cancelled',$reject(fn()=>WorkshopCashSale::register($seed('desk-cancelled','cancelled'),$volunteer,['workshop'=>$id,'cash_received'=>'1','cash_currency'=>'IQD','cash_amount'=>(string)$price])));
+// Everyone with an active summit ticket may buy a workshop: guests (free summit ticket) too.
+$guest=$seed('desk-guest','complimentary');$guestMessage=WorkshopCashSale::register($guest,$volunteer,['workshop'=>$id,'cash_received'=>'1','cash_currency'=>'IQD','cash_amount'=>(string)$price]);
+$guestBooking=Db::one('SELECT * FROM workshop_bookings WHERE registration_id=?',[$guest['id']]);$guestOrder=Db::one('SELECT * FROM workshop_ticket_orders WHERE booking_id=?',[$guestBooking['id']]);
+$check('A guest (free summit ticket) can buy a paid workshop for cash',is_string($guestMessage)&&$guestBooking['paid_how']==='cash'&&$guestOrder['provider_status']==='paid');
 $check('Another Volunteer cannot reissue that receipt',$reject(fn()=>WorkshopTickets::issue((int)$deskBooking['id'],['role'=>'volunteer','id'=>$volunteerId+1000])));
 echo $passed.' paid cash workshop checks passed.'.PHP_EOL;

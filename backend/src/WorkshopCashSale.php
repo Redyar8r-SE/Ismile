@@ -34,7 +34,7 @@ final class WorkshopCashSale
         $bookingId=Db::transaction(static function()use($person,$user,$workshop,$catalog,$minor,$currency):int{
             $row=Db::one('SELECT * FROM workshops WHERE id=? FOR UPDATE',[$workshop['id']]);
             if(!$row||$row['status']!=='active'||$row['organizer']!=='ismile')throw new UserError('This workshop is unavailable.');
-            if(Db::value('SELECT status FROM registrations WHERE id=? LOCK IN SHARE MODE',[$person['id']])!=='paid')throw new UserError('A paid summit registration is required.');
+            if(!in_array(Db::value('SELECT status FROM registrations WHERE id=? LOCK IN SHARE MODE',[$person['id']]),['paid','complimentary'],true))throw new UserError('A summit registration (paid or guest) is required.');
             $existing=Db::one('SELECT * FROM workshop_bookings WHERE registration_id=? AND workshop_id=? AND removed_at IS NULL',[$person['id'],$workshop['id']]);
             if($existing){
                 $receipt=Db::one('SELECT * FROM workshop_cash_receipts WHERE booking_id=?',[$existing['id']]);
