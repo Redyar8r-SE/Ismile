@@ -7,7 +7,8 @@
 //
 // minute  : copies the website's prices / switch / texts when the website
 //           runs on another server (content_source_url), then sends the
-//           emails that are due (tickets go out within a minute)
+//           emails that are due (tickets go out within a minute), and
+//           saves new guests' PSOOLA QR codes for their badges
 // five    : asks the payment company about payments still waiting (lost
 //           webhooks), copies PSOOLA's gate scans into the attendance,
 //           deletes forms that were not paid in time, raises alerts
@@ -61,6 +62,17 @@ try {
         if ($followed) {
             $report['website_content'] = $followed;
         }
+
+        // A new guest's PSOOLA QR code is saved within a minute of paying, so
+        // their badge is ready at once. Nothing is asked when nobody is new.
+        if (PsoolaCheckIns::active()) {
+            try {
+                $report['badge_codes'] = \Ismile\PsoolaTickets::syncCodes();
+            } catch (\Throwable $error) {
+                App::log('error', 'Badge codes could not be saved', ['error' => $error->getMessage()]);
+                $report['badge_codes'] = 'error';
+            }
+        }
     }
 
     if ($job === 'five') {
@@ -77,11 +89,11 @@ try {
             }
         }
 
-        // Badges are ready ahead: each new guest's PSOOLA ticket code is saved
-        // (every guest's is refreshed once an hour). One failure never stops the rest.
-        if (PsoolaCheckIns::active()) {
+        // Once an hour every guest's saved PSOOLA code is checked again (new
+        // guests are done by the minute job). One failure never stops the rest.
+        if (PsoolaCheckIns::active() && (int) date('i') < 5) {
             try {
-                $report['badge_codes'] = \Ismile\PsoolaTickets::syncCodes((int) date('i') < 5);
+                $report['badge_codes'] = \Ismile\PsoolaTickets::syncCodes(true);
             } catch (\Throwable $error) {
                 App::log('error', 'Badge codes could not be saved', ['error' => $error->getMessage()]);
                 $report['badge_codes'] = 'error';
