@@ -19,28 +19,13 @@ $canBadge = Auth::can($user, 'registrations') || Auth::canManageBadges($user);
 $guestLink = Auth::can($user, 'registrations');
 Page::action(static function () use ($user, $canBadge): string {
     $action = (string) ($_POST['do'] ?? '');
-    if (in_array($action, ['badge_batch', 'badge_batch_delete', 'qr_sync'], true) && !$canBadge) throw new UserError('Your account cannot make badges.');
+    if (in_array($action, ['badge_batch', 'badge_batch_delete'], true) && !$canBadge) throw new UserError('Your account cannot make badges.');
     if ($action === 'badge_batch') {
         // One JSON field, like Association: the admin turns list fields (name[]=…) into empty text.
         $ticked = json_decode((string) ($_POST['guests_json'] ?? ''), true);
         $id = BadgeBatches::create($user, is_array($ticked) ? array_map('intval', array_filter($ticked, 'is_int')) : []);
         Page::flash('ok', BadgeBatches::label(BadgeBatches::find($id)) . ' created. Download or print its PDF below.');
         Page::redirect('tickets.php?batch=' . $id);
-    }
-    if ($action === 'qr_sync') {
-        // Asks PSOOLA again for every guest's QR code (the same as the hourly refresh).
-        @set_time_limit(180); // PSOOLA's list can take up to 90 seconds per event;
-        ignore_user_abort(true); // the codes are still saved if the page gives up waiting.
-        try {
-            PsoolaTickets::syncCodes(true);
-        } catch (UserError $error) {
-            throw $error;
-        } catch (\Throwable $error) {
-            throw new UserError('PSOOLA could not be reached. Try again in a minute.');
-        }
-        $missing = (int) Db::value("SELECT COUNT(*) FROM registrations r JOIN tickets t ON t.registration_id=r.id WHERE r.status IN ('paid','complimentary') AND t.cancelled_at IS NULL AND NOT EXISTS (SELECT 1 FROM badge_ticket_codes c WHERE c.registration_id=r.id)");
-        Page::flash('ok', $missing === 0 ? 'Done: PSOOLA sent the QR code of every guest.' : 'Done. ' . $missing . ' guest(s) still have no QR code from PSOOLA. They are listed below.');
-        Page::redirect($missing === 0 ? 'tickets.php' : 'tickets.php?qr=missing');
     }
     return match ($action) {
         'badge_batch_delete' => BadgeBatches::delete($user, (int) ($_POST['batch_id'] ?? 0)),
@@ -177,7 +162,6 @@ if ($batchId && !$batch): ?>
 </section>
 <?php else: ?>
 <form id="badge-batch-form" method="post" action="tickets.php" data-badge-batch-form><?= Page::csrfField() ?><input type="hidden" name="do" value="badge_batch"><input type="hidden" name="guests_json" value="" data-badge-guests></form>
-<?php if ($canBadge): ?><form id="qr-sync-form" method="post" action="tickets.php"><?= Page::csrfField() ?><input type="hidden" name="do" value="qr_sync"></form><?php endif; ?>
 <?= Page::stats([
     ['Guests with a ticket', number_format((int) $totals['guests']), (int) $totals['professional'] . ' Dentist · ' . (int) $totals['student'] . ' Student · ' . (int) $totals['vip'] . ' VIP', 'users', 'blue'],
     ['Badges made', number_format((int) $totals['made']), number_format((int) $totals['guests'] - (int) $totals['made']) . ' not made yet', 'ticket', 'teal'],
@@ -214,7 +198,7 @@ if ($batchId && !$batch): ?>
     </form>
   </div>
   <?php if ($sort !== 'newest' && $rows): ?><nav class="ticket-az" aria-label="Jump to a letter"><?php foreach (array_merge(range('A', 'Z'), ['#']) as $letter): ?><button type="button" data-letter="<?= $letter ?>"<?= in_array($letter, $letters, true) ? '' : ' disabled' ?>><?= $letter ?></button><?php endforeach; ?></nav><?php endif; ?>
-  <p class="tk-count"><span class="tk-ready" title="A new guest's QR code is fetched from PSOOLA and saved within a minute of paying, so their badges are ready at once."><?= Page::navIcon('check') ?>QR ready for <b><?= number_format((int) $totals['qr_saved']) ?></b> of <?= number_format((int) $totals['guests']) ?> guests</span><?php if ($canBadge): ?> <button class="btn small ghost tk-qr-sync" form="qr-sync-form" title="Asks PSOOLA again for every guest's QR code. Takes up to a minute."><?= Page::navIcon('download') ?><span>Get all QR codes from PSOOLA now</span></button><?php endif; ?> · <b data-ticket-count><?= count($rows) ?></b> guest(s) shown<?php if ($search !== '' || $type !== '' || $made !== '' || $qr !== '' || $arrived !== '' || $sort !== 'name'): ?> · <a href="tickets.php">Clear all filters</a><?php endif; ?></p>
+  <p class="tk-count"><b data-ticket-count><?= count($rows) ?></b> guest(s) shown<?php if ($search !== '' || $type !== '' || $made !== '' || $qr !== '' || $arrived !== '' || $sort !== 'name'): ?> · <a href="tickets.php">Clear all filters</a><?php endif; ?></p>
   <p class="rd-link-result" role="status" data-rd-link-result></p>
   <div class="table-wrap ticket-scroll"><table><thead><tr><th><?php if ($canBadge): ?><input type="checkbox" data-ticket-all aria-label="Select every guest shown"><?php endif; ?></th><th>Guest</th><th>Type</th><th>Ticket</th><th>Attendance</th><th>Badge</th><th>Actions</th></tr></thead><tbody>
   <?php foreach ($rows as $row): $canQr = $row['has_psoola'] && PsoolaTickets::canView($user, $row); $name = Registrations::fullName($row); $kind = Registrations::ticketName($row['ticket_type']); ?>
