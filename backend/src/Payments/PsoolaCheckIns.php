@@ -102,8 +102,51 @@ final class PsoolaCheckIns
         return $days;
     }
 
+    /**
+     * PSOOLA gate scans made outside the two event days (tests before the
+     * summit): each ticket is admitted once, so PSOOLA must reset these.
+     * Read live from PSOOLA; nothing is saved. Oldest scan first.
+     *
+     * @return list<array{registration: ?array, ticketCode: string, orderId: string, first: ?string, last: ?string}>
+     */
+    public static function outsideEventDays(): array
+    {
+        $gateway = new PsoolaGateway();
+        $list = [];
+        $cursor = null;
+        $pages = 0;
+        do {
+            $page = $gateway->listCheckIns($cursor);
+            foreach ($page['checkIns'] as $scan) {
+                if (self::days($scan) !== []) continue;
+                $time = static function (mixed $ms): ?string {
+                    return is_int($ms) || is_float($ms) ? date('Y-m-d H:i', (int) floor($ms / 1000)) : null;
+                };
+                $list[] = [
+                    'registration' => self::registrationFor($scan),
+                    'ticketCode'   => (string) ($scan['ticketCode'] ?? ''),
+                    'orderId'      => (string) ($scan['order']['id'] ?? ''),
+                    'first'        => $time($scan['firstScannedAt'] ?? null),
+                    'last'         => $time($scan['lastScannedAt'] ?? null),
+                ];
+            }
+            $cursor = $page['next'];
+        } while ($cursor !== null && ++$pages < self::MAX_PAGES);
+        usort($list, static fn (array $a, array $b): int => strcmp((string) $a['first'], (string) $b['first']));
+        return $list;
+    }
+
     /** Our ticket for a PSOOLA scan: by our reference, else by PSOOLA's order id. */
     private static function ticketIdFor(array $scan): ?int
+    {
+        $registration = self::registrationFor($scan);
+        if ($registration === null) return null;
+        $ticket = Tickets::forRegistration((int) $registration['id']);
+        return $ticket !== null && $ticket['cancelled_at'] === null ? (int) $ticket['id'] : null;
+    }
+
+    /** Our active registration for a PSOOLA scan, or null. */
+    private static function registrationFor(array $scan): ?array
     {
         $registration = null;
         $reference = $scan['order']['partnerReference'] ?? null;
@@ -119,8 +162,7 @@ final class PsoolaCheckIns
         if ($registration === null || !in_array($registration['status'], ['paid', 'complimentary'], true)) {
             return null;
         }
-        $ticket = Tickets::forRegistration((int) $registration['id']);
-        return $ticket !== null && $ticket['cancelled_at'] === null ? (int) $ticket['id'] : null;
+        return $registration;
     }
 
     /** One admission for one day, the same way the door would record it. */

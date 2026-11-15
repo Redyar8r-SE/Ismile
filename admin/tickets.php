@@ -35,6 +35,17 @@ Page::action(static function () use ($user, $canBadge): string {
 $e = [Page::class, 'e'];
 $batchId = max(0, (int) ($_GET['batch'] ?? 0));
 $batch = $batchId ? BadgeBatches::find($batchId) : null;
+// Guests whose PSOOLA ticket was scanned before the summit (read live from PSOOLA).
+$early = !$batchId && isset($_GET['early']);
+$earlyScans = [];
+$earlyError = null;
+if ($early) {
+    try {
+        $earlyScans = \Ismile\Payments\PsoolaCheckIns::outsideEventDays();
+    } catch (\Throwable) {
+        $earlyError = 'PSOOLA could not be reached. Try again in a minute.';
+    }
+}
 
 // Filters: kept in the address, so a filtered list can be reopened.
 $search = mb_substr(trim((string) ($_GET['q'] ?? '')), 0, 100);
@@ -103,7 +114,8 @@ $listUrl = static function (array $change) use ($search, $type, $made, $qr, $arr
 $chip = static function (string $label, int $count, bool $on, string $href, string $tone = '') use ($e): string {
     return '<a class="tk-chip' . ($on ? ' on' : '') . ($tone !== '' ? ' ' . $tone : '') . '" href="' . $e($href) . '"' . ($on ? ' aria-current="true"' : '') . '>' . $e($label) . '<b>' . number_format($count) . '</b></a>';
 };
-Page::top($batch ? BadgeBatches::label($batch) : 'Tickets', 'tickets', $batch ? '<a class="btn ghost" href="tickets.php">Back to tickets</a>' : '<a class="btn ghost" href="#badge-history">Batch history</a>');
+Page::top($batch ? BadgeBatches::label($batch) : ($early ? 'Scanned before the summit' : 'Tickets'), 'tickets', $batch || $early ? '<a class="btn ghost" href="tickets.php">Back to tickets</a>'
+    : '<a class="btn ghost" href="tickets.php?early=1">Scanned before the summit</a> <a class="btn ghost" href="#badge-history">Batch history</a>');
 echo Page::ticketTabs('tickets');
 
 if ($batchId && !$batch): ?>
@@ -160,6 +172,42 @@ if ($batchId && !$batch): ?>
     <td><?= $item['attended_days'] ? '<span class="pill green">' . $e($item['attended_days']) . '</span>' : '<span class="pill grey">Not yet</span>' ?></td>
   </tr><?php endforeach; ?>
   </tbody></table></div>
+</section>
+<?php elseif ($early):
+    $earlyText = '';
+    foreach ($earlyScans as $n => $scan) {
+        $r = $scan['registration'];
+        $earlyText .= ($n + 1) . '. ' . ($r ? Registrations::fullName($r) . ' (' . $r['ref'] . ', ' . $r['phone'] . ')' : 'Not in our database')
+            . ' - PSOOLA ticket ' . ($scan['ticketCode'] !== '' ? $scan['ticketCode'] : '?') . ' - order ' . $scan['orderId']
+            . ' - scanned ' . ($scan['first'] ?? '?') . ($scan['last'] && $scan['last'] !== $scan['first'] ? ' (last ' . $scan['last'] . ')' : '') . "\n";
+    }
+?>
+<section class="card directory-panel">
+  <div class="toolbar list-head"><div>
+    <h2>Scanned before the summit <span class="result-count"><?= count($earlyScans) ?></span></h2>
+    <p class="muted">These PSOOLA tickets were scanned at a gate before 19–20 Nov. PSOOLA admits each ticket once, so ask PSOOLA to reset them to unused. Read live from PSOOLA; Iraq time.</p>
+  </div></div>
+  <?php if ($earlyError): ?>
+    <p class="pill red"><?= $e($earlyError) ?></p>
+  <?php elseif (!$earlyScans): ?>
+    <?= Page::emptyState('No early scans', 'No PSOOLA ticket has been scanned outside the summit days.', 'checkin') ?>
+  <?php else: ?>
+  <div class="table-wrap"><table><thead><tr><th>#</th><th>Name</th><th>Type</th><th>Reference</th><th>Phone</th><th>PSOOLA ticket</th><th>First scan</th><th>Last scan</th></tr></thead><tbody>
+  <?php foreach ($earlyScans as $n => $scan): $r = $scan['registration']; ?><tr>
+    <td class="bb-pos"><?= $n + 1 ?></td>
+    <td><?php if ($r): ?><a<?= $guestLink ? ' href="registration.php?id=' . (int) $r['id'] . '"' : '' ?>><b><?= $e(Registrations::fullName($r)) ?></b></a><?php else: ?><span class="pill grey">Not in our database</span><?php endif; ?></td>
+    <td><?= $r ? $e(Registrations::ticketName((string) $r['ticket_type'])) : '—' ?></td>
+    <td><?= $r ? '<code>' . $e($r['ref']) . '</code>' : '—' ?></td>
+    <td dir="ltr"><?= $r ? $e((string) $r['phone']) : '—' ?></td>
+    <td><code><?= $e($scan['ticketCode']) ?></code><small class="muted"> order <?= $e($scan['orderId']) ?></small></td>
+    <td><?= $e((string) ($scan['first'] ?? '—')) ?></td>
+    <td><?= $e((string) ($scan['last'] ?? '—')) ?></td>
+  </tr><?php endforeach; ?>
+  </tbody></table></div>
+  <h3>Text to send to PSOOLA</h3>
+  <p class="muted">Select all and copy.</p>
+  <textarea readonly rows="<?= min(20, count($earlyScans) + 3) ?>" style="width:100%;font-family:monospace"><?= $e("Please reset these iSmile 2026 tickets to unused (scanned during testing before the summit):\n\n" . $earlyText) ?></textarea>
+  <?php endif; ?>
 </section>
 <?php else: ?>
 <form id="badge-batch-form" method="post" action="tickets.php" data-badge-batch-form><?= Page::csrfField() ?><input type="hidden" name="do" value="badge_batch"><input type="hidden" name="guests_json" value="" data-badge-guests></form>

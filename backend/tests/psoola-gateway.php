@@ -562,6 +562,26 @@ if ($database) {
     $check('a cancelled ticket gets no badge QR', $throws(fn () => \Ismile\PsoolaTickets::codesFor($owner, [Registrations::find($cancelledGuest)]), UserError::class, 'no active ticket code'));
     $check('the badge QR of a PSOOLA gate value is drawn', str_starts_with(\Ismile\Badges::pdf(Registrations::find($withQr), ['PSOOLA:T:0K2M8Q4ZJ5X7C1V9B3N6L8P2D']), '%PDF'));
 
+    // Scans before the summit are listed for PSOOLA to reset; event-day scans are not.
+    Settings::set('event_day1', '2026-11-19');
+    Settings::set('event_day2', '2026-11-20');
+    $ms = static fn (string $at): int => strtotime($at) * 1000;
+    $respondTo('GET /api/partner/v1/check-ins', 200, ['checkIns' => [
+        ['ticketCode' => 'BDG1', 'order' => ['id' => 'ord_badge_qr', 'partnerReference' => Registrations::find($withQr)['ref']], 'firstScannedAt' => $ms('2026-11-15 21:10:00'), 'lastScannedAt' => $ms('2026-11-16 00:20:00')],
+        ['ticketCode' => 'BDG3', 'order' => ['id' => 'ord_badge_used'], 'firstScannedAt' => $ms('2026-11-19 09:00:00'), 'lastScannedAt' => $ms('2026-11-19 09:00:00')],
+        ['ticketCode' => 'ZZZ9', 'order' => ['id' => 'ord_stranger', 'partnerReference' => 'NOT-OURS'], 'firstScannedAt' => $ms('2026-11-04 12:00:00'), 'lastScannedAt' => null],
+    ], 'nextCursor' => null]);
+    $early = \Ismile\Payments\PsoolaCheckIns::outsideEventDays();
+    $check('scans before the summit are listed, oldest first, event-day scans left out', count($early) === 2 && $early[0]['ticketCode'] === 'ZZZ9' && $early[0]['registration'] === null
+        && $early[1]['ticketCode'] === 'BDG1' && (int) $early[1]['registration']['id'] === $withQr && $early[1]['first'] === '2026-11-15 21:10' && $early[1]['last'] === '2026-11-16 00:20');
+    $dayOne = ['ticketCode' => 'BDG3', 'order' => ['id' => 'ord_badge_used'], 'firstScannedAt' => $ms('2026-11-19 09:00:00'), 'lastScannedAt' => $ms('2026-11-19 09:00:00')];
+    $check('an event-day scan becomes attendance, matched by PSOOLA order id', \Ismile\Payments\PsoolaCheckIns::record([$dayOne]) === ['seen' => 1, 'added' => 1, 'unmatched' => 0, 'outside_event_days' => 0]
+        && (int) Db::value("SELECT COUNT(*) FROM ticket_attendance a JOIN tickets t ON t.id = a.ticket_id WHERE t.registration_id = ? AND a.event_day = 1 AND a.checkin_method = 'psoola'", [$used]) === 1);
+    $check('the same scan copied again changes nothing; strangers and early scans are not attendance',
+        \Ismile\Payments\PsoolaCheckIns::record([$dayOne])['added'] === 0
+        && \Ismile\Payments\PsoolaCheckIns::record([['order' => ['id' => 'ord_nobody', 'partnerReference' => 'NOPE'], 'firstScannedAt' => $ms('2026-11-19 10:00:00')]])['unmatched'] === 1
+        && \Ismile\Payments\PsoolaCheckIns::record([['order' => ['id' => 'ord_badge_qr'], 'firstScannedAt' => $ms('2026-11-15 21:10:00')]])['outside_event_days'] === 1);
+
     // A checkout sale (order.paid webhook): QRs come from GET /checkout-sessions/{id}.
     $hookForm = $newForm();
     $respond(...$created(40000, 'IQD', 201, [['ticketTypeId' => 'tt_pro', 'quantity' => 1, 'addOns' => []]], 'ses_qrhook'));
