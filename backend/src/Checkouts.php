@@ -183,13 +183,13 @@ final class Checkouts
      * sold at once (Payments::sellForCash); no payment link is sent. A form the
      * company did not sell is closed like any unpaid form.
      */
-    public static function createForCash(array $in, array $user, ?array $photo = null): array
+    public static function createForCash(array $in, array $user, ?array $photo = null, bool $photoRequired = true): array
     {
         $row = ['pay_method' => 'cash'] + self::officeRow($in);
         if (!SiteData::pricesReadyFor($row)) {
             throw new UserError('The ticket prices are not set yet, so nothing can be sold.');
         }
-        $row['id_photo_id'] = self::officePhoto($row, $photo);
+        $row['id_photo_id'] = self::officePhoto($row, $photo, $photoRequired);
         try {
             $checkout = self::insert($row + ['source' => 'office', 'created_by' => (int) $user['id'], 'created_ip' => 'office'], max(1, Settings::int('pay_link_days')) * 86400, VipPackages::choiceFromInput($in, $row));
         } catch (\Throwable $error) {
@@ -204,8 +204,12 @@ final class Checkouts
      * A student's ID photo, uploaded by the office (sent by the student, for
      * example on WhatsApp). Required for a student ticket, as on the website.
      */
-    public static function officePhoto(array $row, ?array $photo): ?int
+    public static function officePhoto(array $row, ?array $photo, bool $required = true): ?int
     {
+        // Workshop & Register sells a student ticket without a photo: the volunteer sees the card.
+        if (!$required && (!is_array($photo) || ($photo['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE)) {
+            return null;
+        }
         if ($row['ticket_type'] !== 'student') {
             return null;
         }

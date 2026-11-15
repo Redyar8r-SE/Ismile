@@ -515,6 +515,13 @@ if ($database) {
     $check('PSOOLA emails the Volunteer\'s sale: iSmile queues no ticket email', Tickets::issuedByPsoola(Tickets::forRegistration((int) $deskReg['id']))
         && (int) Db::value("SELECT COUNT(*) FROM emails WHERE kind = 'ticket' AND registration_id = ?", [$deskReg['id']]) === 0);
 
+    // A student ticket at the desk needs no card photo; elsewhere the photo stays required.
+    $studentIn = ['first_name' => 'Rozh', 'father_name' => 'Omar', 'grandfather_name' => 'Ali', 'phone' => '+9647' . random_int(100000000, 999999999),
+        'email' => 'desk-student-' . bin2hex(random_bytes(3)) . '@example.invalid', 'specialty' => 'student', 'ticket' => 'student', 'university' => 'University of Sulaimani', 'stage' => '3'];
+    $check('the Registrations page still requires the student card photo', $throws(fn () => Checkouts::createForCash($studentIn, $volunteer), UserError::class, 'ID photo'));
+    $deskStudent = Checkouts::createForCash($studentIn, $volunteer, null, false);
+    $check('Workshop & Register makes a student form without a photo', $deskStudent['ticket_type'] === 'student' && $deskStudent['id_photo_id'] === null);
+
     // ---- entry QRs: saved from PSOOLA's answer, shown only on the buyer's page ----
     $qrFor = static fn (string $code, string $status = 'valid', ?string $qr = 'PSOOLA:T:Q'): array => ['code' => $code, 'ticketTypeName' => 'Professional',
         'holderName' => 'Karwan Ali', 'status' => $status, 'addOns' => ['Lunch – Day 1'], 'qrCode' => $qr === null ? null : $qr . $code,

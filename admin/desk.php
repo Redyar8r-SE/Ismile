@@ -32,7 +32,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             // VIP badges and packages are arranged by the team, not at the desk.
             if (($_POST['ticket'] ?? '') === 'vip') throw new UserError('VIP tickets are not sold here. Ask the team.');
             Page::useOnce();
-            $checkout = \Ismile\Checkouts::createForCash($_POST, $user, $_FILES['student_id'] ?? null);
+            $checkout = \Ismile\Checkouts::createForCash($_POST, $user, null, false);   // no student card photo at the desk
             $sale = \Ismile\Payments\Payments::sellForCash($checkout, $user);
             $price = number_format($sale['amount']) . ' ' . $sale['currency'];
             if ($sale['status'] === 'paid' && $sale['registration_id']) {
@@ -147,15 +147,6 @@ Page::top('Workshop & Register', 'desk');
     <div class="row3" id="caller-student-fields">
       <label>University *<input name="university" id="caller-university" maxlength="160" value="<?= $value('university') ?>"<?= $student ? ' required' : '' ?>></label>
       <label>Stage *<select name="stage" id="caller-stage"<?= $student ? ' required' : '' ?>><option value="">Choose the stage</option><?php foreach (range(\Ismile\Checkouts::FIRST_STUDENT_STAGE, \Ismile\Checkouts::LAST_STUDENT_STAGE) as $stage): ?><option value="<?= $stage ?>"<?= $selected('stage', (string) $stage) ?>><?= $e(Registrations::stageName($stage)) ?></option><?php endforeach; ?></select></label>
-      <label class="id-upload" id="caller-id-upload">
-        <input type="file" name="student_id" id="caller-student-id" accept="image/jpeg,image/png,image/webp"<?= $student ? ' required' : '' ?>>
-        <span class="id-upload-text">
-          <b>Student card photo <em>Required for students</em></b>
-          <span class="id-upload-file" data-empty=""></span>
-        </span>
-        <span class="id-upload-preview" hidden><img alt="The chosen student card photo"></span>
-        <span class="btn ghost id-upload-button" aria-hidden="true">Choose photo</span>
-      </label>
     </div>
   </fieldset>
   <fieldset class="form-section">
