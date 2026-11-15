@@ -19,13 +19,28 @@ $canBadge = Auth::can($user, 'registrations') || Auth::canManageBadges($user);
 $guestLink = Auth::can($user, 'registrations');
 Page::action(static function () use ($user, $canBadge): string {
     $action = (string) ($_POST['do'] ?? '');
-    if (in_array($action, ['badge_batch', 'badge_batch_delete'], true) && !$canBadge) throw new UserError('Your account cannot make badges.');
+    if (in_array($action, ['badge_batch', 'badge_batch_delete', 'qr_sync'], true) && !$canBadge) throw new UserError('Your account cannot make badges.');
     if ($action === 'badge_batch') {
         // One JSON field, like Association: the admin turns list fields (name[]=…) into empty text.
         $ticked = json_decode((string) ($_POST['guests_json'] ?? ''), true);
         $id = BadgeBatches::create($user, is_array($ticked) ? array_map('intval', array_filter($ticked, 'is_int')) : []);
         Page::flash('ok', BadgeBatches::label(BadgeBatches::find($id)) . ' created. Download or print its PDF below.');
         Page::redirect('tickets.php?batch=' . $id);
+    }
+    if ($action === 'qr_sync') {
+        // Asks PSOOLA again for every guest's QR code (the same as the hourly refresh).
+        @set_time_limit(180); // PSOOLA's list can take up to 90 seconds per event;
+        ignore_user_abort(true); // the codes are still saved if the page gives up waiting.
+        try {
+            PsoolaTickets::syncCodes(true);
+        } catch (UserError $error) {
+            throw $error;
+        } catch (\Throwable $error) {
+            throw new UserError('PSOOLA could not be reached. Try again in a minute.');
+        }
+        $missing = (int) Db::value("SELECT COUNT(*) FROM registrations r JOIN tickets t ON t.registration_id=r.id WHERE r.status IN ('paid','complimentary') AND t.cancelled_at IS NULL AND NOT EXISTS (SELECT 1 FROM badge_ticket_codes c WHERE c.registration_id=r.id)");
+        Page::flash('ok', $missing === 0 ? 'Done: PSOOLA sent the QR code of every guest.' : 'Done. ' . $missing . ' guest(s) still have no QR code from PSOOLA. They are listed below.');
+        Page::redirect($missing === 0 ? 'tickets.php' : 'tickets.php?qr=missing');
     }
     return match ($action) {
         'badge_batch_delete' => BadgeBatches::delete($user, (int) ($_POST['batch_id'] ?? 0)),
@@ -41,6 +56,7 @@ $search = mb_substr(trim((string) ($_GET['q'] ?? '')), 0, 100);
 $type = in_array($_GET['type'] ?? '', ['professional', 'student', 'vip'], true) ? $_GET['type'] : '';
 $made = in_array($_GET['badge'] ?? '', ['none', 'made'], true) ? $_GET['badge'] : '';
 $arrived = in_array($_GET['arrived'] ?? '', ['yes', 'no'], true) ? $_GET['arrived'] : '';
+$qr = ($_GET['qr'] ?? '') === 'missing' ? 'missing' : '';
 $sort = in_array($_GET['sort'] ?? '', ['name_desc', 'newest'], true) ? $_GET['sort'] : 'name';
 $where = "r.status IN ('paid','complimentary') AND t.cancelled_at IS NULL";
 $params = [];
@@ -54,6 +70,7 @@ if ($type !== '') {
     $params[] = $type;
 }
 if ($made !== '') $where .= ' AND' . ($made === 'made' ? '' : ' NOT') . ' EXISTS (SELECT 1 FROM badge_batch_items bi WHERE bi.registration_id = r.id)';
+if ($qr !== '') $where .= ' AND NOT EXISTS (SELECT 1 FROM badge_ticket_codes c WHERE c.registration_id = r.id)';
 if ($arrived !== '') $where .= ' AND' . ($arrived === 'yes' ? '' : ' NOT') . ' EXISTS (SELECT 1 FROM ticket_attendance a WHERE a.ticket_id = t.id)';
 $order = match ($sort) {
     'name_desc' => 'r.first_name DESC, r.father_name DESC, r.grandfather_name DESC, r.id DESC',
@@ -63,6 +80,7 @@ $order = match ($sort) {
 $rows = $batch ? [] : Db::all("SELECT r.id, r.ref, r.phone, r.first_name, r.father_name, r.grandfather_name, r.ticket_type, r.status, r.created_by, t.ticket_no,
     (EXISTS (SELECT 1 FROM sponsored_ticket_orders s WHERE s.registration_id=r.id AND s.status='issued' AND s.provider_order_id IS NOT NULL)
      OR EXISTS (SELECT 1 FROM payments p WHERE p.registration_id=r.id AND p.gateway='psoola' AND p.status='paid' AND p.provider_payment_id IS NOT NULL)) AS has_psoola,
+    EXISTS (SELECT 1 FROM badge_ticket_codes c WHERE c.registration_id=r.id) AS has_code,
     (SELECT GROUP_CONCAT(CONCAT('Day ', a.event_day) ORDER BY a.event_day SEPARATOR ' & ') FROM ticket_attendance a WHERE a.ticket_id=t.id) AS attended_days,
     (SELECT MAX(bi.batch_id) FROM badge_batch_items bi WHERE bi.registration_id=r.id) AS last_batch,
     (SELECT b.batch_number FROM badge_batch_items bi JOIN badge_batches b ON b.id=bi.batch_id WHERE bi.registration_id=r.id ORDER BY b.id DESC LIMIT 1) AS last_batch_number,
@@ -87,11 +105,13 @@ $select = static function (string $name, string $label, array $options, string $
 };
 $totals = $batch ? [] : Db::one("SELECT COUNT(*) AS guests, COALESCE(SUM(r.ticket_type='professional'),0) AS professional, COALESCE(SUM(r.ticket_type='student'),0) AS student, COALESCE(SUM(r.ticket_type='vip'),0) AS vip,
     COALESCE(SUM(EXISTS (SELECT 1 FROM badge_batch_items bi WHERE bi.registration_id=r.id)),0) AS made,
-    COALESCE(SUM(EXISTS (SELECT 1 FROM ticket_attendance a WHERE a.ticket_id=t.id)),0) AS arrived
+    COALESCE(SUM(EXISTS (SELECT 1 FROM ticket_attendance a WHERE a.ticket_id=t.id)),0) AS arrived,
+    COALESCE(SUM(EXISTS (SELECT 1 FROM badge_ticket_codes c WHERE c.registration_id=r.id)),0) AS qr_saved
     FROM registrations r JOIN tickets t ON t.registration_id=r.id WHERE r.status IN ('paid','complimentary') AND t.cancelled_at IS NULL");
+$qrMissing = $batch ? 0 : (int) $totals['guests'] - (int) $totals['qr_saved'];
 // A link to this list with one filter changed (the others kept).
-$listUrl = static function (array $change) use ($search, $type, $made, $arrived, $sort): string {
-    $query = array_filter($change + ['q' => $search, 'type' => $type, 'badge' => $made, 'arrived' => $arrived, 'sort' => $sort === 'name' ? '' : $sort], static fn ($v): bool => $v !== '');
+$listUrl = static function (array $change) use ($search, $type, $made, $qr, $arrived, $sort): string {
+    $query = array_filter($change + ['q' => $search, 'type' => $type, 'badge' => $made, 'qr' => $qr, 'arrived' => $arrived, 'sort' => $sort === 'name' ? '' : $sort], static fn ($v): bool => $v !== '');
     return 'tickets.php' . ($query ? '?' . http_build_query($query) : '');
 };
 $chip = static function (string $label, int $count, bool $on, string $href, string $tone = '') use ($e): string {
@@ -157,6 +177,7 @@ if ($batchId && !$batch): ?>
 </section>
 <?php else: ?>
 <form id="badge-batch-form" method="post" action="tickets.php" data-badge-batch-form><?= Page::csrfField() ?><input type="hidden" name="do" value="badge_batch"><input type="hidden" name="guests_json" value="" data-badge-guests></form>
+<?php if ($canBadge): ?><form id="qr-sync-form" method="post" action="tickets.php"><?= Page::csrfField() ?><input type="hidden" name="do" value="qr_sync"></form><?php endif; ?>
 <?= Page::stats([
     ['Guests with a ticket', number_format((int) $totals['guests']), (int) $totals['professional'] . ' Dentist · ' . (int) $totals['student'] . ' Student · ' . (int) $totals['vip'] . ' VIP', 'users', 'blue'],
     ['Badges made', number_format((int) $totals['made']), number_format((int) $totals['guests'] - (int) $totals['made']) . ' not made yet', 'ticket', 'teal'],
@@ -169,7 +190,7 @@ if ($batchId && !$batch): ?>
     <form method="get" action="tickets.php" class="tk-search" role="search">
       <?= Page::navIcon('search') ?>
       <input type="search" name="q" value="<?= $e($search) ?>" placeholder="Find a name, reference, phone or ticket…" aria-label="Find a guest" data-ticket-search autocomplete="off">
-      <?php foreach (['type' => $type, 'badge' => $made, 'arrived' => $arrived, 'sort' => $sort === 'name' ? '' : $sort] as $key => $value): if ($value !== ''): ?><input type="hidden" name="<?= $key ?>" value="<?= $e($value) ?>"><?php endif; endforeach; ?>
+      <?php foreach (['type' => $type, 'badge' => $made, 'qr' => $qr, 'arrived' => $arrived, 'sort' => $sort === 'name' ? '' : $sort] as $key => $value): if ($value !== ''): ?><input type="hidden" name="<?= $key ?>" value="<?= $e($value) ?>"><?php endif; endforeach; ?>
     </form>
   </div>
   <div class="tk-toolbar">
@@ -183,14 +204,17 @@ if ($batchId && !$batch): ?>
       <?= $chip('Not in a batch', (int) $totals['guests'] - (int) $totals['made'], $made === 'none', $listUrl(['badge' => $made === 'none' ? '' : 'none']), 'gold') ?>
       <?= $chip('In a batch', (int) $totals['made'], $made === 'made', $listUrl(['badge' => $made === 'made' ? '' : 'made']), 'teal') ?>
     </div>
+    <?php if ($qrMissing > 0 || $qr !== ''): ?><div class="tk-chips" role="group" aria-label="QR code">
+      <?= $chip('QR missing', $qrMissing, $qr === 'missing', $listUrl(['qr' => $qr === 'missing' ? '' : 'missing']), 'red') ?>
+    </div><?php endif; ?>
     <form method="get" action="tickets.php" class="tk-selects">
-      <?php foreach (['q' => $search, 'type' => $type, 'badge' => $made] as $key => $value): if ($value !== ''): ?><input type="hidden" name="<?= $key ?>" value="<?= $e($value) ?>"><?php endif; endforeach; ?>
+      <?php foreach (['q' => $search, 'type' => $type, 'badge' => $made, 'qr' => $qr] as $key => $value): if ($value !== ''): ?><input type="hidden" name="<?= $key ?>" value="<?= $e($value) ?>"><?php endif; endforeach; ?>
       <?= $select('arrived', 'Attendance', ['' => 'Everyone', 'yes' => 'Arrived', 'no' => 'Not arrived'], $arrived) ?>
       <?= $select('sort', 'Order', ['name' => 'Name A–Z', 'name_desc' => 'Name Z–A', 'newest' => 'Newest first'], $sort) ?>
     </form>
   </div>
   <?php if ($sort !== 'newest' && $rows): ?><nav class="ticket-az" aria-label="Jump to a letter"><?php foreach (array_merge(range('A', 'Z'), ['#']) as $letter): ?><button type="button" data-letter="<?= $letter ?>"<?= in_array($letter, $letters, true) ? '' : ' disabled' ?>><?= $letter ?></button><?php endforeach; ?></nav><?php endif; ?>
-  <p class="tk-count"><span class="tk-ready" title="New guests' QR codes are fetched from PSOOLA and saved every 5 minutes, so their badges are ready at once."><?= Page::navIcon('check') ?>QR ready for <b><?= number_format(min(PsoolaTickets::savedCount(), (int) $totals['guests'])) ?></b> of <?= number_format((int) $totals['guests']) ?> guests</span> · <b data-ticket-count><?= count($rows) ?></b> guest(s) shown<?php if ($search !== '' || $type !== '' || $made !== '' || $arrived !== '' || $sort !== 'name'): ?> · <a href="tickets.php">Clear all filters</a><?php endif; ?></p>
+  <p class="tk-count"><span class="tk-ready" title="New guests' QR codes are fetched from PSOOLA and saved every 5 minutes, so their badges are ready at once."><?= Page::navIcon('check') ?>QR ready for <b><?= number_format((int) $totals['qr_saved']) ?></b> of <?= number_format((int) $totals['guests']) ?> guests</span><?php if ($canBadge): ?> <button class="btn small ghost tk-qr-sync" form="qr-sync-form" title="Asks PSOOLA again for every guest's QR code. Takes up to a minute."><?= Page::navIcon('download') ?><span>Get all QR codes from PSOOLA now</span></button><?php endif; ?> · <b data-ticket-count><?= count($rows) ?></b> guest(s) shown<?php if ($search !== '' || $type !== '' || $made !== '' || $qr !== '' || $arrived !== '' || $sort !== 'name'): ?> · <a href="tickets.php">Clear all filters</a><?php endif; ?></p>
   <p class="rd-link-result" role="status" data-rd-link-result></p>
   <div class="table-wrap ticket-scroll"><table><thead><tr><th><?php if ($canBadge): ?><input type="checkbox" data-ticket-all aria-label="Select every guest shown"><?php endif; ?></th><th>Guest</th><th>Type</th><th>Ticket</th><th>Attendance</th><th>Badge</th><th>Actions</th></tr></thead><tbody>
   <?php foreach ($rows as $row): $canQr = $row['has_psoola'] && PsoolaTickets::canView($user, $row); $name = Registrations::fullName($row); $kind = Registrations::ticketName($row['ticket_type']); ?>
@@ -198,7 +222,7 @@ if ($batchId && !$batch): ?>
     <td><?php if ($row['last_batch']): ?><span class="tk-taken" title="<?= $e('Already in Badge batch #' . (int) $row['last_batch_number']) ?>">✓</span><?php elseif ($canQr && $canBadge): ?><input type="checkbox" data-guest="<?= (int) $row['id'] ?>" aria-label="<?= $e('Select ' . $name) ?>"><?php endif; ?></td>
     <td><a class="bb-guest"<?= $guestLink ? ' href="registration.php?id=' . (int) $row['id'] . '"' : '' ?>><span class="bb-initial"><?= $e(mb_strtoupper(mb_substr($name, 0, 1))) ?></span><span><b><?= $e($name) ?></b><small class="tk-ref"><?= $e($row['ref']) ?></small></span></a></td>
     <td><span class="pill <?= $kind === 'Student' ? 'green' : ($kind === 'VIP' ? 'gold' : 'blue') ?>"><?= $e($kind) ?></span></td>
-    <td><code><?= $e($row['ticket_no']) ?></code></td>
+    <td><code><?= $e($row['ticket_no']) ?></code><?php if (!$row['has_code']): ?><br><span class="pill red" title="<?= $e($row['has_psoola'] ? 'PSOOLA has not sent the QR code for this guest yet.' : 'This guest has no PSOOLA order, so PSOOLA has no QR code for them.') ?>">QR missing</span><?php endif; ?></td>
     <td><?= $row['attended_days'] ? '<span class="pill green">' . $e($row['attended_days']) . '</span>' : '<span class="pill grey">Not yet</span>' ?></td>
     <td><?php if ($row['last_batch']): ?><a class="pill teal" href="<?= $e($batchUrl((int) $row['last_batch'])) ?>">In batch #<?= (int) $row['last_batch_number'] ?></a><?php else: ?><span class="pill gold">Not made</span><?php endif; ?></td>
     <td><?php if (!$row['has_psoola']): ?><span class="muted small">No PSOOLA ticket</span><?php elseif (!$canQr): ?><span class="muted small">No access</span><?php else: ?><div class="certificate-delivery-actions"><button class="btn small" type="button" data-rd-ticket="psoola" data-registration-id="<?= (int) $row['id'] ?>"><?= Page::navIcon('ticket') ?><span>Show QR</span></button><?php if ($canBadge): ?><a class="btn small ghost" href="badge.php?id=<?= (int) $row['id'] ?>"><?= Page::navIcon('download') ?><span>Badge PDF</span></a><?php endif; ?></div><?php endif; ?></td>

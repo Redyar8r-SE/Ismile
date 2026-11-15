@@ -205,6 +205,10 @@
 .tk-chip.green.on{background:var(--green-d);border-color:var(--green-d)}
 .tk-chip.gold.on{background:var(--gold-d);border-color:var(--gold-d)}
 .tk-chip.teal.on{background:var(--teal-d);border-color:var(--teal-d)}
+.tk-chip.red{border-color:var(--red);color:var(--red-d)}
+.tk-chip.red b{background:var(--red-l);color:var(--red-d)}
+.tk-chip.red.on{background:var(--red-d);border-color:var(--red-d);color:#fff}
+.tk-qr-sync{margin-left:6px;vertical-align:middle}
 .tk-selects{display:flex;flex-wrap:wrap;gap:10px;margin-left:auto}
 .tk-selects select{min-width:150px;border-radius:10px}
 .tk-count{font-size:12px;color:var(--rd-muted);margin:2px 0 10px}
