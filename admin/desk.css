@@ -1,21 +1,5 @@
-/* Workshop & Register (desk.php): big, colourful and obviously clickable for volunteers. */
+/* Workshop & Register (desk.php). Tabs look like Tickets & Certificates: two equal halves. */
 .desk-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}
-.desk-tabs .checkin-tab{min-height:64px;font-size:15px;gap:12px}
-.desk-tabs .checkin-tab b{font-size:17px}
-.desk-tabs .checkin-tab small{display:block;font-size:12px;font-weight:500;opacity:.8}
-.desk-tabs .checkin-tab .nav-icon{width:24px;height:24px}
-.desk-tabs .checkin-tab.on{background:linear-gradient(135deg,#0f7a62,#17a37f);color:#fff;box-shadow:0 6px 18px rgba(15,122,98,.28)}
-
-.desk-guide{border-left:6px solid #f2a516;background:#fffaf0}
-.desk-guide>summary{cursor:pointer;font-weight:800;font-size:16px;color:#7a4b00;display:flex;align-items:center;gap:10px;list-style:none}
-.desk-guide>summary::-webkit-details-marker{display:none}
-.desk-guide>summary::after{content:"Show";margin-left:auto;font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px;background:#f2a516;color:#fff}
-.desk-guide[open]>summary::after{content:"Hide"}
-.desk-guide-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:14px}
-.desk-guide-grid h3{font-size:15px;margin:0 0 8px;color:#12302f}
-.desk-guide-grid ol,.desk-guide-grid ul{margin:0;padding-left:20px;display:grid;gap:6px;font-size:14px;line-height:1.45}
-.desk-rules{background:#fff1ef;border-radius:12px;padding:12px 14px;border:1px solid #f4c7bf}
-.desk-rules h3{color:#a3321f}
 
 .desk-big{min-height:54px;font-size:17px;font-weight:800;padding:0 26px}
 .desk-next{display:flex;flex-wrap:wrap;align-items:center;gap:12px;border-left:6px solid #17a37f;background:#effaf5}
@@ -39,5 +23,4 @@
 .desk-ws.is-blocked .desk-price{color:#8a9aa3}
 .desk-blocked{padding:8px 10px;border-radius:8px;background:#fff1ef;color:#a3321f;font-weight:600;font-size:13px}
 
-@media(max-width:900px){.desk-guide-grid{grid-template-columns:1fr}}
-@media(max-width:600px){.desk-tabs .checkin-tab{min-height:56px;font-size:13px}.desk-tabs .checkin-tab b{font-size:15px}.desk-search{flex-direction:column}}
+@media(max-width:600px){.desk-search{flex-direction:column}}

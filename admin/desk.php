@@ -96,49 +96,11 @@ $when = static function (array $w): string {
 Page::top('Workshop & Register', 'desk');
 ?>
 <nav class="checkin-tabs ticket-tabs no-print desk-tabs" aria-label="Workshop and Register">
-  <?php foreach (['register' => ['1. Register', 'Summit ticket', 'registrations', $canRegister], 'workshop' => ['2. Workshop', 'Workshop ticket', 'workshops', $canWorkshop]] as $key => [$label, $sub, $icon, $allowed]): if (!$allowed) continue; ?>
-  <a class="checkin-tab<?= $tab === $key ? ' on' : '' ?>" href="<?= $e($deskUrl($key)) ?>"<?= $tab === $key ? ' aria-current="page"' : '' ?>><?= Page::navIcon($icon) ?><span><b><?= $e($label) ?></b> <small><?= $e($sub) ?></small></span></a>
+  <?php foreach (['register' => ['Register', 'registrations', $canRegister], 'workshop' => ['Workshop', 'workshops', $canWorkshop]] as $key => [$label, $icon, $allowed]): if (!$allowed) continue; ?>
+  <a class="checkin-tab<?= $tab === $key ? ' on' : '' ?>" href="<?= $e($deskUrl($key)) ?>"<?= $tab === $key ? ' aria-current="page"' : '' ?>><?= Page::navIcon($icon) ?><span><?= $e($label) ?></span></a>
   <?php endforeach; ?>
 </nav>
 
-<details class="card desk-guide"<?= $user['role'] === 'volunteer' ? ' open' : '' ?>>
-  <summary><?= Page::navIcon('lists') ?> How to use this page (read me first)</summary>
-  <div class="desk-guide-grid">
-    <section>
-      <h3>1. Register: a summit ticket</h3>
-      <ol>
-        <li>Open the <b>Register</b> tab.</li>
-        <li>Type the person's <b>3 names, phone and email</b>. Check the email letter by letter: the ticket goes there.</li>
-        <li>Choose <b>Dentist</b> or <b>Student</b>. A student needs the <b>university, stage and a photo of the student card</b>.</li>
-        <li>Tick a <b>lunch day</b> only if they want lunch.</li>
-        <li>Look at <b>Total to collect</b> on the right. Take exactly that cash.</li>
-        <li>Press <b>Paid by cash</b>, tick <b>I have received the cash</b>, then <b>Yes, sell the ticket</b>.</li>
-        <li>Wait for the green <b>Done!</b> message. Psoola emails the ticket with the QR.</li>
-      </ol>
-    </section>
-    <section>
-      <h3>2. Workshop: a workshop ticket</h3>
-      <ol>
-        <li>Open the <b>Workshop</b> tab.</li>
-        <li>Search the person by <b>name, phone or reference</b> and press <b>Choose</b>.</li>
-        <li>No summit ticket yet? Register them in <b>Register</b> first, then come back.</li>
-        <li>Pick the <b>workshop</b>. Take exactly the price shown.</li>
-        <li>Tick <b>I have received this cash</b> and press <b>Register &amp; send ticket</b>.</li>
-        <li>Wait for the green <b>Done!</b> message. Psoola emails the workshop ticket.</li>
-      </ol>
-    </section>
-    <section class="desk-rules">
-      <h3>Rules</h3>
-      <ul>
-        <li><b>Cash only.</b> Never sell before you have the money in your hand.</li>
-        <li><b>Red message?</b> Nothing was sold. Do not take the money. Read the message or ask the team.</li>
-        <li><b>Press once.</b> If the page is slow, wait. Do not press again.</li>
-        <li><b>VIP</b> and <b>company workshops</b> are not sold here: send the person to the team.</li>
-        <li>The ticket did not arrive? Check the spam folder, then ask the team.</li>
-      </ul>
-    </section>
-  </div>
-</details>
 
 <?php if ($tab === 'register'):
     $value = static fn (string $key): string => Page::e(is_string($_POST[$key] ?? null) ? $_POST[$key] : '');
@@ -168,7 +130,6 @@ Page::top('Workshop & Register', 'desk');
 <div class="cash-main">
 <form method="post" action="<?= $e($deskUrl('register')) ?>" class="card stack caller-form" id="caller-form" enctype="multipart/form-data" data-prices="<?= $e((string) $priceData) ?>">
   <?= Page::csrfField() ?><?= Page::onceField() ?>
-  <p class="muted">Fill in the person's details and press <b>Paid by cash</b>. Psoola sends the ticket with the QR to their email. Fields marked * are required.</p>
   <fieldset class="form-section">
     <legend>1. Person's details</legend>
     <div class="row3"><label>First name *<input name="first_name" maxlength="60" value="<?= $value('first_name') ?>" autocomplete="off" required></label><label>Second name *<input name="father_name" maxlength="60" value="<?= $value('father_name') ?>" autocomplete="off" required></label><label>Last name *<input name="grandfather_name" maxlength="60" value="<?= $value('grandfather_name') ?>" autocomplete="off" required></label></div>
@@ -183,16 +144,14 @@ Page::top('Workshop & Register', 'desk');
       </select></label>
       <label>Ticket *<select name="ticket" id="caller-ticket"><option value="professional"<?= !$student ? ' selected' : '' ?>>Dentist</option><option value="student"<?= $student ? ' selected' : '' ?>>Student</option></select></label>
     </div>
-    <p class="muted small">Dental students (1st to 5th stage) get a student ticket. Check their student card.</p>
     <div class="row3" id="caller-student-fields">
       <label>University *<input name="university" id="caller-university" maxlength="160" value="<?= $value('university') ?>"<?= $student ? ' required' : '' ?>></label>
       <label>Stage *<select name="stage" id="caller-stage"<?= $student ? ' required' : '' ?>><option value="">Choose the stage</option><?php foreach (range(\Ismile\Checkouts::FIRST_STUDENT_STAGE, \Ismile\Checkouts::LAST_STUDENT_STAGE) as $stage): ?><option value="<?= $stage ?>"<?= $selected('stage', (string) $stage) ?>><?= $e(Registrations::stageName($stage)) ?></option><?php endforeach; ?></select></label>
       <label class="id-upload" id="caller-id-upload">
-        <input type="file" name="student_id" id="caller-student-id" accept="image/jpeg,image/png,image/webp"<?= $student ? ' required' : '' ?> aria-describedby="caller-id-hint">
+        <input type="file" name="student_id" id="caller-student-id" accept="image/jpeg,image/png,image/webp"<?= $student ? ' required' : '' ?>>
         <span class="id-upload-text">
           <b>Student card photo <em>Required for students</em></b>
-          <small id="caller-id-hint">Take a clear photo of the student card · JPG, PNG or WebP, 8 MB at most.</small>
-          <span class="id-upload-file" data-empty="No photo yet. Click here to take or choose the photo.">No photo yet. Click here to take or choose the photo.</span>
+          <span class="id-upload-file" data-empty=""></span>
         </span>
         <span class="id-upload-preview" hidden><img alt="The chosen student card photo"></span>
         <span class="btn ghost id-upload-button" aria-hidden="true">Choose photo</span>
@@ -200,12 +159,12 @@ Page::top('Workshop & Register', 'desk');
     </div>
   </fieldset>
   <fieldset class="form-section">
-    <legend>3. Lunch <span class="legend-note">· optional, per day</span></legend>
+    <legend>3. Lunch <span class="legend-note">· optional</span></legend>
     <div class="lunch-cards">
       <?php foreach ([1 => 'Thursday 19 Nov', 2 => 'Friday 20 Nov'] as $day => $date): ?>
       <label class="lunch-card"><input type="checkbox" name="lunch_day<?= $day ?>" value="1"<?= ($_POST['lunch_day' . $day] ?? '') === '1' ? ' checked' : '' ?>>
         <span class="lunch-card-text"><b>Lunch day <?= $day ?></b><small><?= $e($date) ?></small></span>
-        <span class="lunch-card-price"><b data-lunch-price="<?= $day ?>"><?= $e($shown['lunch' . $day]) ?></b><small>per day</small></span>
+        <span class="lunch-card-price"><b data-lunch-price="<?= $day ?>"><?= $e($shown['lunch' . $day]) ?></b></span>
       </label>
       <?php endforeach; ?>
     </div>
@@ -233,8 +192,7 @@ Page::top('Workshop & Register', 'desk');
 </div>
 <aside class="cash-panel" aria-label="Prices and total">
   <section class="card cash-prices">
-    <div class="cash-prices-head"><h2>Prices</h2><?php if ($psoola): ?><span class="cash-live"><i aria-hidden="true"></i>Live from Psoola</span><?php endif; ?></div>
-    <p class="muted small">Click a ticket to choose it.</p>
+    <div class="cash-prices-head"><h2>Prices</h2></div>
     <?php foreach ([['professional', 'Dentist', 'Professionals', 'teal'], ['student', 'Student', 'Every stage, 1st to 5th', 'blue']] as [$key, $name, $sub, $tone]): ?>
     <button type="button" class="cash-package tone-<?= $tone ?>" data-pick-ticket="<?= $key ?>" aria-pressed="false">
       <span class="cash-package-text"><b><?= $e($name) ?> <em>Selected</em></b><small><?= $e($sub) ?></small></span>
@@ -247,7 +205,6 @@ Page::top('Workshop & Register', 'desk');
     <ul class="cash-lines" id="cash-lines"></ul>
     <p class="cash-total-label">Total to collect</p>
     <p class="cash-total-amount<?= $psoola ? '' : ' is-waiting' ?>" id="cash-total"><?= $psoola ? '–' : 'After the sale' ?></p>
-    <p class="cash-total-note small"><?= $psoola ? 'Psoola confirms the final amount when you press Paid by cash.' : 'Psoola cannot be reached for prices right now, so the amount is shown after the sale.' ?></p>
   </section>
 </aside>
 </div>

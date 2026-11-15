@@ -312,7 +312,6 @@ final class Page
             'booths' => 'Manage Standard booth bookings, agreed amounts, payments and follow-up calls.',
             'map' => 'Explore all 40 sponsor positions. Select a number to see who booked it, payments and follow-up details.',
             'checkin' => 'Psoola scans the tickets at the door. Follow who attended, the guest list and the live event report.',
-            'desk' => 'Take cash and register people: a summit ticket in Register, a workshop in Workshop. Psoola emails every ticket.',
             'settings' => 'Make the database work for your team. Manage registration, emails and ambassador codes.',
             'users' => 'Give your team the right access to support a smooth event.',
             'content' => 'Bring your event to life. Manage the words, photos and details your guests see.',
