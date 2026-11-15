@@ -538,6 +538,25 @@ if ($database) {
     $check('with QR access off the buyer gets the ticket page link, no card, no error', $off['tickets'] === [] && $off['ticketsUrl'] === 'https://psoola.com/t/private-off');
     $check('with QR access off the ticket is still saved (not asked every minute)', (int) Db::value('SELECT COUNT(*) FROM psoola_ticket_qrs WHERE registration_id = ? AND qr_code IS NULL', [$offReg['id']]) === 1);
 
+    // Badges hold PSOOLA's exact gate value (qrCode); the short code only when there is none.
+    $badgeOf = static function (string $orderId, array $ticket) use ($cashForm, $paidOrder, $respondTo, $respond, $desk): int {
+        $form = $cashForm();
+        $order = ['event' => ['id' => 'evt_ismile']] + $paidOrder($orderId, $form['ref']) + ['tickets' => [$ticket]];
+        $respondTo('POST /api/partner/v1/orders', 201, $order);
+        $respond(200, $order);
+        $id = (int) Payments::sellForCash($form, $desk)['registration_id'];
+        $respondTo('GET /api/partner/v1/orders', 200, ['orders' => [$order], 'nextCursor' => null]);
+        return $id;
+    };
+    $withQr = $badgeOf('ord_badge_qr', $qrFor('BDG1'));
+    $owner = Db::one('SELECT * FROM admin_users WHERE id = ?', [\Ismile\Auth::createUser('own-' . bin2hex(random_bytes(3)) . '@test.invalid', 'Owner', 'owner', bin2hex(random_bytes(12)))]);
+    $codes = \Ismile\PsoolaTickets::codesFor($owner, [Registrations::find($withQr)]);
+    $check('a badge holds PSOOLA\'s qrCode exactly', $codes[$withQr] === ['PSOOLA:T:QBDG1']);
+    $noQr = $badgeOf('ord_badge_short', $qrFor('BDG2', 'valid', null));
+    $codes = \Ismile\PsoolaTickets::codesFor($owner, [Registrations::find($noQr)]);
+    $check('without a qrCode the badge keeps the short ticket code', $codes[$noQr] === ['BDG2']);
+    $check('the badge QR of a PSOOLA gate value is drawn', str_starts_with(\Ismile\Badges::pdf(Registrations::find($withQr), ['PSOOLA:T:0K2M8Q4ZJ5X7C1V9B3N6L8P2D']), '%PDF'));
+
     // A checkout sale (order.paid webhook): QRs come from GET /checkout-sessions/{id}.
     $hookForm = $newForm();
     $respond(...$created(40000, 'IQD', 201, [['ticketTypeId' => 'tt_pro', 'quantity' => 1, 'addOns' => []]], 'ses_qrhook'));

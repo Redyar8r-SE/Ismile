@@ -6,7 +6,7 @@ namespace Ismile;
 /**
  * The printed attendee badge: 10 × 11.5 cm, two sides. The front is the
  * approved ATTENDEE artwork; the back is the approved artwork with the
- * guest's name, ticket type and the PSOOLA ticket code as a QR, placed and
+ * guest's name, ticket type and the PSOOLA gate QR (qrCode) as a QR, placed and
  * coloured exactly like the approved sample. Read-only: nothing is saved.
  */
 final class Badges
@@ -265,7 +265,8 @@ final class Badges
     /**
      * The QR in iSmile style: rounded blue modules and softly rounded corner
      * eyes (more rounding stops scanners finding them) on a white card, the iSmile tooth in the middle. High error correction keeps it
-     * readable with the logo; the content is exactly the PSOOLA code.
+     * readable with the logo; the content is exactly PSOOLA's qrCode (or the
+     * short ticket code when PSOOLA gives none), unchanged.
      */
     private static function qr(\TCPDF $pdf, string $code, float $centerX, float $top, float $card): void
     {

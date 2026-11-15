@@ -260,7 +260,11 @@ final class PsoolaTickets
         return $codes;
     }
 
-    /** The codes of an order's valid tickets, checked like the preview. */
+    /**
+     * What each valid ticket's badge QR holds, checked like the preview:
+     * PSOOLA's exact gate value (qrCode) since its QR access, or the short
+     * ticket code when PSOOLA gives no qrCode.
+     */
     private static function activeCodes(array $order): array
     {
         $tickets = $order['tickets'] ?? null;
@@ -269,10 +273,15 @@ final class PsoolaTickets
             throw new UserError('PSOOLA returned incomplete ticket details. Try again later.');
         }
         $codes = [];
+        $seen = [];
         foreach ($tickets as $ticket) {
             $code = is_array($ticket) ? ($ticket['code'] ?? null) : null;
-            if (!is_string($code) || trim($code) === '' || strlen($code) > 512 || in_array($code, $codes, true)) throw new UserError('PSOOLA returned invalid ticket codes. Ask the Owner to review this order.');
-            if (in_array($ticket['status'] ?? null, ['valid', 'transferred'], true)) $codes[] = $code;
+            if (!is_string($code) || trim($code) === '' || strlen($code) > 512 || isset($seen[$code])) throw new UserError('PSOOLA returned invalid ticket codes. Ask the Owner to review this order.');
+            $seen[$code] = true;
+            if (!in_array($ticket['status'] ?? null, ['valid', 'transferred'], true)) continue;
+            // Encoded exactly as PSOOLA gives it: no trimming or other change.
+            $qr = $ticket['qrCode'] ?? null;
+            $codes[] = is_string($qr) && $qr !== '' && strlen($qr) <= 512 ? $qr : $code;
         }
         return $codes;
     }
