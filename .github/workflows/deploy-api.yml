@@ -37,7 +37,7 @@ jobs:
             set -eu
             printf '%s\n' 'e5deb43f70dbfd9e8ace7bd24b140c1aea5551212b07fba25a5fe55b017f81d8  /opt/ismile-test/backend/src/Payments/PsoolaCheckIns.php' | sha256sum --check
             CRON=$(grep -c 'run.php five' /etc/cron.d/ismile-test || true)
-            runuser -u www-data -- php -d display_errors=1 /dev/stdin "$CRON" <<'CHECKINS'
+            runuser -u www-data -- env CRON_FIVE="$CRON" php <<'CHECKINS'
             <?php
             require '/opt/ismile-test/backend/bootstrap.php';
             use Ismile\Db; use Ismile\Settings; use Ismile\Payments\PsoolaCheckIns;
@@ -56,7 +56,7 @@ jobs:
                 'gatewayIsPsoola' => PsoolaCheckIns::active(),
                 'eventDay1' => Settings::get('event_day1'), 'eventDay2' => Settings::get('event_day2'),
                 'serverTimezone' => date_default_timezone_get(), 'serverNow' => date('Y-m-d H:i'),
-                'fiveMinuteCronInstalled' => (int) $argv[1] > 0,
+                'fiveMinuteCronInstalled' => (int) getenv('CRON_FIVE') > 0,
                 'lastCopiedFromPsoola' => Settings::get('psoola_checkins_synced_at'),
                 'psoolaScansSoFar' => count($scans), 'scansMatchedToOurGuests' => $matched, 'scansOnEventDays' => $onEventDays, 'scanDates' => $scanDates,
                 'attendanceRows' => Db::all('SELECT event_day, checkin_method, COUNT(*) AS n FROM ticket_attendance GROUP BY event_day, checkin_method'),
