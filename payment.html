@@ -22,8 +22,8 @@
 <link rel="stylesheet" href="css/layout/footer.css?v=196">
 <link rel="stylesheet" href="css/sections/register.css?v=148">
 <link rel="stylesheet" href="css/sections/register-page.css?v=148">
-<link rel="stylesheet" href="css/sections/payment-page.css?v=148">
-<script type="module" src="js/payment.js?v=148"></script>
+<link rel="stylesheet" href="css/sections/payment-page.css?v=149">
+<script type="module" src="js/payment.js?v=149"></script>
 </head>
 <body>
 <div class="siteboot" id="siteboot" aria-hidden="true">
@@ -96,9 +96,14 @@
         <small data-i18n="pm_ticket_no">Ticket number</small>
         <b id="pmTicketNo" dir="ltr"></b>
       </div>
+      <div class="pm-psoola" id="pmPsoola" hidden>
+        <p class="pm-psoola-note" data-i18n="pm_psoola_qr_note">Show each QR code at the entrance. Every ticket needs its own scan.</p>
+        <div class="pm-psoola-list" id="pmPsoolaList"></div>
+      </div>
       <div class="success-ref" id="pmRefBox" hidden><small data-i18n="success_ref">Your reference number</small><b id="pmRef" dir="ltr"></b></div>
       <div class="pm-actions">
         <a class="btn btn-primary" id="pmRetry" href="#" hidden><span data-i18n="pm_retry">Pay now</span></a>
+        <a class="btn btn-primary" id="pmPsoolaPage" href="#" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer" hidden><span data-i18n="pm_psoola_page">Open your ticket</span></a>
         <a class="btn btn-outline" href="workshops.html" id="pmWorkshops" hidden><span data-i18n="success_ws_btn">See the workshops</span></a>
       </div>
       <p class="pm-help"><span data-i18n="help_title">Need help registering?</span> <a href="mailto:ismile@italk.krd" data-contact-email dir="ltr">ismile@italk.krd</a></p>

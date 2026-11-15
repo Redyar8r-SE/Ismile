@@ -73,6 +73,11 @@ Api::run(static function (): void {
     // PSOOLA emailed the ticket itself: the page says so instead of showing an iSmile QR.
     $byPsoola = $hasTicket && Tickets::issuedByPsoola($ticket);
     $hasTicket = $hasTicket && !$byPsoola;
+    // PSOOLA's entry QRs, one card per ticket: only behind this person's own
+    // private link (checked above). With QR access off, PSOOLA's ticket page instead.
+    $psoola = $byPsoola ? \Ismile\PsoolaTicketQrs::forBuyer($registration) : ['tickets' => [], 'ticketsUrl' => null];
+    header('Cache-Control: no-store, private');
+    header('Referrer-Policy: no-referrer');
     Api::json(200, [
         'ok'        => true,
         'ref'       => $registration['ref'],
@@ -87,5 +92,7 @@ Api::run(static function (): void {
         'ticketNo'  => $hasTicket ? $ticket['ticket_no'] : null,
         'qr'        => $hasTicket ? 'api/qr.php?r=' . rawurlencode($registration['ref']) . '&k=' . rawurlencode($key) . '&v=' . $ticket['version'] : null,
         'ticketIssuer' => $byPsoola ? 'psoola' : 'ismile',
+        'psoolaTickets' => $psoola['tickets'],
+        'psoolaTicketsUrl' => $psoola['ticketsUrl'],
     ]);
 });

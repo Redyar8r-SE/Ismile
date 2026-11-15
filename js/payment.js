@@ -55,6 +55,14 @@ function initPayment() {
     const paid = view.state === "paid";
     // PSOOLA emails its own ticket: no iSmile QR to show then.
     $("pmTicket").hidden = !paid || status?.ticketIssuer === "psoola";
+    // PSOOLA's own entry QRs, one card per ticket (only for this link's owner).
+    const psoolaTickets = paid && Array.isArray(status?.psoolaTickets) ? status.psoolaTickets : [];
+    $("pmPsoola").hidden = !psoolaTickets.length;
+    renderPsoolaTickets(psoolaTickets);
+    const page = $("pmPsoolaPage");
+    const pageUrl = paid && !psoolaTickets.length && typeof status?.psoolaTicketsUrl === "string" && status.psoolaTicketsUrl.startsWith("https://") ? status.psoolaTicketsUrl : "";
+    page.hidden = !pageUrl;
+    if (pageUrl) page.href = pageUrl;
     $("pmWorkshops").hidden = !paid;
     if (paid && status.qr && $("pmQr").getAttribute("src") !== status.qr) $("pmQr").src = status.qr;
     $("pmTicketNo").textContent = paid ? status.ticketNo : "";
@@ -63,6 +71,44 @@ function initPayment() {
     if (view.retry) retry.href = `api/pay.php?r=${encodeURIComponent(ref)}&k=${encodeURIComponent(key)}`;
     if (view.again) retry.href = "register.html";
     retry.textContent = t(view.again ? "pm_again" : "pm_retry");
+  }
+
+  // Built with textContent only: nothing from the server is read as HTML.
+  function renderPsoolaTickets(tickets) {
+    const list = $("pmPsoolaList");
+    list.replaceChildren();
+    for (const ticket of tickets) {
+      if (typeof ticket?.qrImageUrl !== "string" || !ticket.qrImageUrl.startsWith("https://")) continue;
+      const card = document.createElement("article");
+      card.className = "pm-psoola-card";
+      if (ticket.status === "used") card.dataset.used = "1";
+      const image = document.createElement("img");
+      image.src = ticket.qrImageUrl;
+      image.alt = t("pm_psoola_qr_alt");
+      image.width = 240;
+      image.height = 240;
+      image.referrerPolicy = "no-referrer";
+      image.decoding = "async";
+      card.append(image);
+      const add = (tag, className, text) => {
+        if (!text) return;
+        const node = document.createElement(tag);
+        node.className = className;
+        node.textContent = text;
+        card.append(node);
+      };
+      add("b", "pm-psoola-type", ticket.type);
+      add("span", "pm-psoola-holder", ticket.holder);
+      add("small", "pm-psoola-label", t("pm_psoola_code"));
+      const code = document.createElement("code");
+      code.className = "pm-psoola-code";
+      code.dir = "ltr";
+      code.textContent = ticket.code || "";
+      card.append(code);
+      if (Array.isArray(ticket.addOns) && ticket.addOns.length) add("span", "pm-psoola-addons", ticket.addOns.join(" · "));
+      if (ticket.status === "used") add("span", "pm-psoola-used", t("pm_psoola_used"));
+      list.append(card);
+    }
   }
 
   function show(next) {
@@ -88,7 +134,8 @@ function initPayment() {
     if (answer && answer.ok) {
       status = answer;
       if (answer.status === "paid" || answer.status === "complimentary") {
-        show({ state: "paid", title: "pm_paid_title", text: answer.ticketIssuer === "psoola" ? "pm_paid_psoola_text" : "pm_paid_text" });
+        const psoolaText = answer.psoolaTickets?.length ? "pm_paid_psoola_qr_text" : "pm_paid_psoola_text";
+        show({ state: "paid", title: "pm_paid_title", text: answer.ticketIssuer === "psoola" ? psoolaText : "pm_paid_text" });
         return;
       }
       if (answer.status === "expired") {

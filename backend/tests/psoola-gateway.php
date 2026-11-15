@@ -347,6 +347,27 @@ $check('an unknown session decides nothing either', $throws(fn () => $gateway->f
 $respond(200, ['id' => 'ord_cash', 'status' => 'paid', 'channel' => 'direct', 'ticketsUrl' => 'https://psoola.test/tickets/secret-link', 'order' => ['totalAmount' => 40000, 'currency' => 'IQD']]);
 $check('the ticket link in a status answer is never kept', !str_contains($gateway->fetchStatus('ord_cash')['raw'], 'secret-link'));
 
+// ---------------- entry QRs (PSOOLA's QR access) ----------------
+$qrTicket = ['code' => 'RH8G4VB6', 'ticketTypeName' => 'Professional', 'holderName' => 'Aram Ali', 'status' => 'valid', 'addOns' => ['Lunch – Day 1'],
+    'qrCode' => 'PSOOLA:T:SECRETQRVALUE', 'qrImageUrl' => 'https://actions.psoola.com/api/partner/v1/qr.png?code=PSOOLA%3AT%3ASECRETQRVALUE'];
+$respond(200, ['id' => 'ord_qr', 'status' => 'paid', 'order' => ['totalAmount' => 40000, 'currency' => 'IQD', 'ticketCount' => 1], 'tickets' => [$qrTicket]]);
+$status = $gateway->fetchStatus('ord_qr');
+$check('a paid status answer hands over its tickets with their QRs', ($status['tickets'][0]['qrCode'] ?? null) === $qrTicket['qrCode']);
+$check('the entry QR is never kept in the stored answer', !str_contains($status['raw'], 'SECRETQRVALUE') && str_contains($status['raw'], 'RH8G4VB6'));
+$check('withoutLinks removes qrCode and qrImageUrl at any depth', !str_contains(PsoolaGateway::withoutLinks((string) json_encode(['orders' => [['tickets' => [$qrTicket]]]])), 'SECRETQRVALUE'));
+$respond(200, ['id' => 'ord/qr 2', 'status' => 'paid', 'ticketsUrl' => 'https://psoola.com/t/x', 'tickets' => [$qrTicket, 'junk']]);
+$tickets = $gateway->getOrderTickets('ord/qr 2');
+$sent = $lastRequest();
+$check('getOrderTickets is GET /api/partner/v1/orders/{id}, id encoded', $sent['method'] === 'GET' && $sent['uri'] === '/api/partner/v1/orders/ord%2Fqr%202');
+$check('getOrderTickets returns the tickets array', count($tickets) === 1 && $tickets[0]['code'] === 'RH8G4VB6' && $tickets[0]['qrImageUrl'] === $qrTicket['qrImageUrl']);
+$check('the API key is sent only in the Authorization header', str_contains(json_encode($sent), 'Bearer psk_test_key1_secretvalue') && !str_contains($sent['uri'], 'psk_'));
+$respond(200, ['id' => 'ord_other', 'tickets' => [$qrTicket]]);
+$check('an order answer about another order is not believed', $throws(fn () => $gateway->getOrderTickets('ord_mine')));
+$respond(404, ['error' => ['code' => 'NOT_FOUND']]);
+$check('a missing order is an error, not an empty list', $throws(fn () => $gateway->getOrderTickets('ord_mine'), GatewayNotReady::class, 'NOT_FOUND'));
+$respond(200, ['id' => 'ord_unpaid', 'status' => 'awaiting_payment', 'tickets' => []]);
+$check('an unpaid order has no tickets yet', $gateway->getOrderTickets('ord_unpaid') === []);
+
 // ---------------- a cash sale (POST /orders) ----------------
 $cashOrder = static fn (int $total, int $status = 201, ?array $items = null): array => [$status, [
     'id' => 'ord_cash', 'status' => 'paid', 'channel' => 'direct', 'checkoutUrl' => null, 'ticketsUrl' => 'https://psoola.test/tickets/secret-link',
@@ -478,6 +499,56 @@ if ($database) {
     $check('PSOOLA sends the cash ticket: iSmile queues no ticket email', Tickets::issuedByPsoola(Tickets::forRegistration((int) $cashReg['id']))
         && (int) Db::value("SELECT COUNT(*) FROM emails WHERE kind = 'ticket' AND registration_id = ?", [$cashReg['id']]) === 0);
     $check('the cash ticket link is not stored', !str_contains((string) $cashRow['raw_create'] . (string) $cashRow['raw_status'], 'secret-link'));
+
+    // ---- entry QRs: saved from PSOOLA's answer, shown only on the buyer's page ----
+    $qrFor = static fn (string $code, string $status = 'valid', ?string $qr = 'PSOOLA:T:Q'): array => ['code' => $code, 'ticketTypeName' => 'Professional',
+        'holderName' => 'Karwan Ali', 'status' => $status, 'addOns' => ['Lunch – Day 1'], 'qrCode' => $qr === null ? null : $qr . $code,
+        'qrImageUrl' => $qr === null ? null : 'https://actions.psoola.com/api/partner/v1/qr.png?code=' . rawurlencode($qr . $code)];
+    $qrForm = $cashForm();
+    $qrOrder = $paidOrder('ord_qr1', $qrForm['ref']) + ['tickets' => [$qrFor('QRA1'), $qrFor('QRA2', 'cancelled')]];
+    $respondTo('POST /api/partner/v1/orders', 201, $qrOrder);
+    $respond(200, $qrOrder);
+    $qrSale = Payments::sellForCash($qrForm, $desk);
+    $qrReg = Registrations::find((int) $qrSale['registration_id']);
+    $qrRows = Db::all('SELECT * FROM psoola_ticket_qrs WHERE registration_id = ? ORDER BY code', [$qrReg['id']]);
+    $check('each PSOOLA ticket is saved with its order, code, type, holder, QR and status', count($qrRows) === 2 && $qrRows[0]['psoola_order_id'] === 'ord_qr1'
+        && $qrRows[0]['code'] === 'QRA1' && $qrRows[0]['ticket_type_name'] === 'Professional' && $qrRows[0]['holder_name'] === 'Karwan Ali'
+        && $qrRows[0]['qr_code'] === 'PSOOLA:T:QQRA1' && str_starts_with((string) $qrRows[0]['qr_image_url'], 'https://actions.psoola.com/') && $qrRows[1]['status'] === 'cancelled');
+    $qrPay = Db::one('SELECT * FROM payments WHERE registration_id = ?', [$qrReg['id']]);
+    $check('the QR is not in the stored PSOOLA answers', !str_contains((string) $qrPay['raw_create'] . (string) $qrPay['raw_status'], 'PSOOLA:T:Q')
+        && !str_contains((string) $qrPay['raw_create'] . (string) $qrPay['raw_status'], 'qr.png'));
+    $buyer = \Ismile\PsoolaTicketQrs::forBuyer($qrReg);
+    $check('the buyer sees one card per valid ticket, never a cancelled one', count($buyer['tickets']) === 1 && $buyer['tickets'][0]['code'] === 'QRA1'
+        && $buyer['tickets'][0]['holder'] === 'Karwan Ali' && $buyer['tickets'][0]['addOns'] === ['Lunch – Day 1'] && $buyer['ticketsUrl'] === null);
+    \Ismile\PsoolaTicketQrs::save((int) $qrReg['id'], 'ord_qr1', [$qrFor('QRA1', 'used'), $qrFor('QRA2', 'cancelled')]);
+    $check('a used ticket still shows its QR, marked used', \Ismile\PsoolaTicketQrs::forBuyer($qrReg)['tickets'][0]['status'] === 'used');
+    \Ismile\PsoolaTicketQrs::save((int) $qrReg['id'], 'ord_qr1', [$qrFor('QRA1', 'refunded')]);
+    $check('a refunded ticket loses its card and a ticket PSOOLA no longer lists is removed', (int) Db::value('SELECT COUNT(*) FROM psoola_ticket_qrs WHERE registration_id = ?', [$qrReg['id']]) === 1);
+    \Ismile\PsoolaTicketQrs::save((int) $qrReg['id'], 'ord_qr1', [['code' => 'QRA1', 'status' => 'valid', 'qrCode' => 'x', 'qrImageUrl' => 'https://evil.example/qr.png']]);
+    $check('a QR image address outside psoola.com is never shown', Db::value('SELECT qr_image_url FROM psoola_ticket_qrs WHERE registration_id = ?', [$qrReg['id']]) === null);
+
+    // QR access off (qrCode null): no card, PSOOLA's own ticket page instead, no error.
+    $offForm = $cashForm();
+    $offOrder = ['ticketsUrl' => 'https://psoola.com/t/private-off'] + $paidOrder('ord_qroff', $offForm['ref']) + ['tickets' => [$qrFor('OFF1', 'valid', null)]];
+    $respondTo('POST /api/partner/v1/orders', 201, $offOrder);
+    $respond(200, $offOrder);
+    $offReg = Registrations::find((int) Payments::sellForCash($offForm, $desk)['registration_id']);
+    $respondTo('GET /api/partner/v1/orders/ord_qroff', 200, $offOrder);
+    $off = \Ismile\PsoolaTicketQrs::forBuyer($offReg);
+    $check('with QR access off the buyer gets the ticket page link, no card, no error', $off['tickets'] === [] && $off['ticketsUrl'] === 'https://psoola.com/t/private-off');
+    $check('with QR access off the ticket is still saved (not asked every minute)', (int) Db::value('SELECT COUNT(*) FROM psoola_ticket_qrs WHERE registration_id = ? AND qr_code IS NULL', [$offReg['id']]) === 1);
+
+    // A checkout sale (order.paid webhook): QRs come from GET /checkout-sessions/{id}.
+    $hookForm = $newForm();
+    $respond(...$created(40000, 'IQD', 201, [['ticketTypeId' => 'tt_pro', 'quantity' => 1, 'addOns' => []]], 'ses_qrhook'));
+    Payments::start($hookForm);
+    $respond(200, ['id' => 'ses_qrhook', 'status' => 'paid', 'partnerReference' => $hookForm['ref'], 'order' => ['totalAmount' => 40000, 'currency' => 'IQD', 'ticketCount' => 1], 'tickets' => [$qrFor('HOOK1')]]);
+    $hookBody = json_encode(['id' => 'evt_qr', 'type' => 'order.paid', 'data' => ['sessionId' => 'ses_qrhook', 'partnerReference' => $hookForm['ref']]]);
+    $hooked = Payments::handleWebhook('psoola', ['X-Psoola-Signature' => $sign(time(), $hookBody)], $hookBody);
+    $hookReg = Registrations::findByRef($hookForm['ref']);
+    $check('after a signed order.paid webhook the QRs are saved', $hooked['status'] === 200 && $hookReg !== null
+        && Db::value('SELECT code FROM psoola_ticket_qrs WHERE registration_id = ?', [$hookReg['id']]) === 'HOOK1');
+    $check('the webhook log never holds a QR', !str_contains((string) json_encode(Db::all('SELECT * FROM webhook_log')), 'PSOOLA:T:Q'));
 
     // The answer to POST /orders is lost: the sale is found by its reference, never made twice.
     $lost = $cashForm();

@@ -278,6 +278,14 @@ final class Payments
         ], 'id = ?', [$paymentId]);
         $status = self::check(self::find($paymentId));
         $payment = self::find($paymentId);
+        // A direct order already holds its tickets in PSOOLA's POST /orders answer.
+        if ($status === 'paid' && !empty($sale['tickets']) && $payment['registration_id'] !== null) {
+            try {
+                \Ismile\PsoolaTicketQrs::save((int) $payment['registration_id'], (string) $sale['id'], $sale['tickets']);
+            } catch (\Throwable $error) {
+                App::log('warning', 'PSOOLA ticket QRs not saved yet', ['payment' => $paymentId, 'error' => mb_substr($error->getMessage(), 0, 200)]);
+            }
+        }
         Audit::log((int) $user['id'], 'payment.cash', 'payment', $paymentId, ['ref' => $checkout['ref'], 'amount' => (int) $payment['amount_expected'], 'currency' => $payment['currency'], 'status' => $status]);
         return [
             'status'          => $status,
@@ -335,6 +343,19 @@ final class Payments
             }
             return $status;
         });
+        if ($status === 'paid' && !empty($result['tickets'])) {
+            // PSOOLA's answer for a paid order carries each ticket's entry QR:
+            // saved for the buyer's page. Never blocks the payment; the minute
+            // job asks again for anyone missed.
+            try {
+                $paid = Db::one("SELECT registration_id, provider_payment_id FROM payments WHERE id = ? AND gateway = 'psoola' AND status = 'paid'", [$paymentId]);
+                if ($paid && $paid['registration_id'] !== null) {
+                    \Ismile\PsoolaTicketQrs::save((int) $paid['registration_id'], (string) $paid['provider_payment_id'], $result['tickets']);
+                }
+            } catch (\Throwable $error) {
+                App::log('warning', 'PSOOLA ticket QRs not saved yet', ['payment' => $paymentId, 'error' => mb_substr($error->getMessage(), 0, 200)]);
+            }
+        }
         if ($status === 'paid') {
             try { \Ismile\VipPackages::process(1,(int)Db::value('SELECT checkout_id FROM payments WHERE id=?',[$paymentId])); }
             catch (\Throwable $error) { App::log('error','VIP fulfilment remains queued',['payment'=>$paymentId,'error'=>$error->getMessage()]); }

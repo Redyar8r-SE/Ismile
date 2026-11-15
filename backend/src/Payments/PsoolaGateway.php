@@ -82,7 +82,7 @@ final class PsoolaGateway implements Gateway, CashSales
             App::log('error', 'Psoola priced different items', ['session' => $id, 'ref' => $registration['ref'] ?? null]);
             throw new GatewayNotReady("Psoola session $id does not contain the ticket and lunches iSmile asked for.");
         }
-        return ['id' => $id, 'redirect_url' => $url, 'raw' => $answer['body'], 'amount' => $total, 'currency' => $currency];
+        return ['id' => $id, 'redirect_url' => $url, 'raw' => self::withoutLinks($answer['body']), 'amount' => $total, 'currency' => $currency];
     }
 
     /**
@@ -113,7 +113,8 @@ final class PsoolaGateway implements Gateway, CashSales
         if (isset($json['order']['items']) && !self::sameItems($body['items'], $json['order']['items'])) {
             App::log('error', 'Psoola cash sale has different items', ['order' => $id, 'ref' => $checkout['ref'] ?? null]);
         }
-        return ['id' => $id, 'raw' => self::withoutLinks($answer['body']), 'amount' => $total, 'currency' => $currency];
+        $tickets = is_array($json['tickets'] ?? null) ? array_values(array_filter($json['tickets'], 'is_array')) : [];
+        return ['id' => $id, 'raw' => self::withoutLinks($answer['body']), 'amount' => $total, 'currency' => $currency, 'tickets' => $tickets];
     }
 
     /**
@@ -228,6 +229,33 @@ final class PsoolaGateway implements Gateway, CashSales
         return $answer['json']['event'];
     }
 
+    /**
+     * One order (GET /orders/{id}) as PSOOLA returns it, with its current
+     * `tickets`. Holds the entry QRs and the private ticket page: never log
+     * or store this answer as it is.
+     */
+    public function getOrder(string $psoolaOrderId): array
+    {
+        $this->ready();
+        $answer = $this->request('GET', 'api/partner/v1/orders/' . rawurlencode($psoolaOrderId));
+        if ($answer['status'] !== 200 || !is_array($answer['json']) || ($answer['json']['id'] ?? null) !== $psoolaOrderId) {
+            throw new GatewayNotReady('Psoola order lookup failed: ' . self::describeError($answer));
+        }
+        return $answer['json'];
+    }
+
+    /**
+     * The tickets of one order (GET /orders/{id}): code, ticketTypeName,
+     * holderName, status, addOns, qrCode, qrImageUrl... Empty until paid.
+     *
+     * @return list<array>
+     */
+    public function getOrderTickets(string $psoolaOrderId): array
+    {
+        $tickets = $this->getOrder($psoolaOrderId)['tickets'] ?? [];
+        return is_array($tickets) ? array_values(array_filter($tickets, 'is_array')) : [];
+    }
+
     public function fetchStatus(string $providerPaymentId): array
     {
         $this->ready();
@@ -240,7 +268,9 @@ final class PsoolaGateway implements Gateway, CashSales
         if (($json['id'] ?? null) !== $providerPaymentId) {
             throw new GatewayNotReady('Psoola answered about a different session.');
         }
-        return self::mapStatus($json) + ['raw' => self::withoutLinks($answer['body'])];
+        // The tickets (with their QRs) go to PsoolaTicketQrs only; 'raw' never holds them.
+        $tickets = is_array($json['tickets'] ?? null) ? array_values(array_filter($json['tickets'], 'is_array')) : [];
+        return self::mapStatus($json) + ['raw' => self::withoutLinks($answer['body']), 'tickets' => $tickets];
     }
 
     public function readWebhook(array $headers, string $body): ?string
@@ -395,8 +425,10 @@ final class PsoolaGateway implements Gateway, CashSales
     }
 
     /**
-     * PSOOLA's answer without the buyer's ticket link: PSOOLA asks that ticket
-     * links are never logged or stored.
+     * PSOOLA's answer without the buyer's ticket link and without the entry
+     * QRs: PSOOLA asks that ticket links are never logged or stored, and a QR
+     * (its value or its image address) admits whoever holds it. The QRs are
+     * kept only in psoola_ticket_qrs, for the buyer's own page.
      */
     public static function withoutLinks(string $body): string
     {
@@ -405,7 +437,7 @@ final class PsoolaGateway implements Gateway, CashSales
         $changed = false;
         $strip = static function(array $data) use (&$strip, &$changed): array {
             foreach ($data as $key=>$value) {
-                if (in_array($key,['ticketsUrl','ticketUrl'],true)) { unset($data[$key]); $changed=true; }
+                if (in_array($key,['ticketsUrl','ticketUrl','qrCode','qrImageUrl'],true)) { unset($data[$key]); $changed=true; }
                 elseif (is_array($value)) $data[$key]=$strip($value);
             }
             return $data;

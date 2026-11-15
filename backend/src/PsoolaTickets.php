@@ -18,7 +18,8 @@ final class PsoolaTickets
         return self::canView($user,$registration) && in_array($registration['status'],['paid','complimentary'],true) && self::source((int)$registration['id']) !== null;
     }
 
-    private static function source(int $registrationId): ?array
+    /** The PSOOLA order behind a registration (a guest order, or the paid PSOOLA payment). */
+    public static function source(int $registrationId): ?array
     {
         $guest = Db::one("SELECT * FROM sponsored_ticket_orders WHERE registration_id=? AND status='issued' AND provider_order_id IS NOT NULL",[$registrationId]);
         if ($guest) return ['id'=>$guest['provider_order_id'],'reference'=>$guest['partner_reference'],'amount'=>$guest['provider_amount'],
@@ -241,6 +242,9 @@ final class PsoolaTickets
                         self::verify($registration, $source, $candidate);
                         if (($candidate['event']['id'] ?? $candidate['eventId'] ?? null) !== $eventId) throw new UserError('PSOOLA returned a ticket for a different event.');
                         $list = self::activeCodes($candidate);
+                        // Same pass keeps the buyer's entry QRs and their states (used, cancelled) current.
+                        try { PsoolaTicketQrs::save((int) $registration['id'], $id, (array) $candidate['tickets']); }
+                        catch (\Throwable) { App::log('warning', 'PSOOLA ticket QRs not refreshed', ['registration' => (int) $registration['id']]); }
                     } catch (UserError $error) {
                         if ($strict) throw $error;
                         App::log('warning', 'Badge code not saved', ['registration' => (int) $registration['id'], 'reason' => $error->key]);

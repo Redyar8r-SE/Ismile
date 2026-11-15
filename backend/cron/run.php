@@ -72,6 +72,13 @@ try {
                 App::log('error', 'Badge codes could not be saved', ['error' => $error->getMessage()]);
                 $report['badge_codes'] = 'error';
             }
+            // Each new buyer's PSOOLA entry QRs, for their own status page.
+            try {
+                $report['ticket_qrs'] = \Ismile\PsoolaTicketQrs::syncMissing();
+            } catch (\Throwable $error) {
+                App::log('error', 'PSOOLA ticket QRs could not be saved', ['error' => mb_substr($error->getMessage(), 0, 200)]);
+                $report['ticket_qrs'] = 'error';
+            }
         }
     }
 

@@ -211,7 +211,7 @@ final class GuestOrders
     private static function complete(array $saved,array $session,?string $webhookId=null): array
     {
         self::validate($saved,$session);
-        return Db::transaction(static function()use($saved,$session,$webhookId):array{
+        $issued = Db::transaction(static function()use($saved,$session,$webhookId):array{
             $locked=Db::one('SELECT * FROM sponsored_ticket_orders WHERE id=? FOR UPDATE',[$saved['id']]);
             self::validate($locked,$session);
             if ($webhookId) {
@@ -237,6 +237,12 @@ final class GuestOrders
             GuestWorkshops::mirror($issued);
             return $issued;
         });
+        // A direct order's answer already holds each ticket's entry QR: saved for the guest's page.
+        if ($issued['registration_id'] !== null && is_array($session['tickets'] ?? null) && $session['tickets']) {
+            try { PsoolaTicketQrs::save((int)$issued['registration_id'],(string)$session['id'],$session['tickets']); }
+            catch (\Throwable $error) { App::log('warning','PSOOLA ticket QRs not saved yet',['order'=>(int)$issued['id'],'error'=>mb_substr($error->getMessage(),0,200)]); }
+        }
+        return $issued;
     }
 
     private static function registerSingleSummitGuest(array $saved): ?int
