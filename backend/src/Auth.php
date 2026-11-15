@@ -188,10 +188,12 @@ final class Auth
         }
         // Tickets & Certificates only: no guest list, map or any other page, whatever else is ticked.
         if ($user['role'] === 'badges') {
-            return in_array($area, ['certificates', 'badges'], true);
+            return in_array($area, ['certificates', 'badges', 'attendance'], true);
         }
         // Badge PDFs and PSOOLA QR previews: guest-list roles, or badge access.
         if ($area === 'badges') return self::can($user, 'registrations') || self::canManageBadges($user);
+        // The attendance report on Certificates: export roles, as before.
+        if ($area === 'attendance') return self::can($user, 'export');
         if (in_array($area, ['registrations', 'edit'], true) && (int) ($user['registration_manage_access'] ?? 0) === 1) return true;
         if ($area === 'sponsors' && self::canManageMap($user)) return true;
         if ($area === 'association' && self::canManageAssociation($user)) return true;

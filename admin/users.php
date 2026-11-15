@@ -103,7 +103,7 @@ $roleGuide = [
     'viewer' => ['view', 'Viewer', 'Sees every event page (people, payments, sponsors, check-in) but cannot change anything.'],
     'sponsors' => ['sponsors', 'Viewer + Booths', 'Sees event pages and can book exhibition booths. Sponsor map bookings require individual access from the Owner.'],
     'map_viewer' => ['map', 'Map viewer', 'Sees only Map and booking details. Cannot add, edit, cancel or delete bookings.'],
-    'badges' => ['certificates', 'Tickets & Certificates only', 'Sees only Tickets & Certificates: makes, downloads and deletes badge batches, downloads and emails certificates. No other page.'],
+    'badges' => ['certificates', 'Tickets & Certificates only', 'Sees only Tickets & Certificates: makes, downloads and deletes badge batches, downloads and emails certificates, downloads the attendance report. No other page.'],
 ];
 Page::top('Users', 'users', '<a class="btn" href="#add-person">' . Page::navIcon('users') . '<span>Add a person</span></a>');
 ?>
