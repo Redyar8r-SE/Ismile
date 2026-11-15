@@ -36,3 +36,81 @@
 .desk-ws.is-on{border-color:#0f7a62;box-shadow:0 0 0 3px rgba(15,122,98,.18)}
 .desk-ws .btn{text-align:center;justify-content:center}
 .desk-ws.is-blocked .desk-pay b{color:#8a9aa3}
+
+/* ---------- Workshop cards: the website's design (workshops page) ---------- */
+.dk-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px;margin-bottom:22px}
+@media(max-width:1100px){.dk-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.dk-grid{grid-template-columns:1fr}}
+.dk-card{position:relative;display:flex;flex-direction:column;overflow:hidden;border-radius:24px;background:#F7FBFB;border:1.5px solid rgba(22,166,161,.45);box-shadow:0 18px 40px -24px rgba(22,166,161,.55);transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
+.dk-card:hover{transform:translateY(-4px);border-color:#16A6A1;box-shadow:0 24px 46px -20px rgba(22,166,161,.7)}
+.dk-card.is-on{border-color:#0E7F7B;box-shadow:0 0 0 4px rgba(22,166,161,.25),0 24px 46px -20px rgba(22,166,161,.7)}
+.dk-media{position:relative;aspect-ratio:16/10;overflow:hidden;background:#EAF5F4}
+.dk-card.is-cutout .dk-media{aspect-ratio:4/3;background:url('../assets/workshops/studio-light.webp') center/cover}
+.dk-media img{display:block;width:100%;height:100%;object-fit:cover;object-position:60% 22%;transition:transform .35s ease}
+.dk-card.is-cutout .dk-media img{object-fit:contain;object-position:center bottom}
+.dk-card[data-workshop-id="crown-vs-veneer"] .dk-media img{transform:translateY(9%) scale(1.12)}
+.dk-card:hover .dk-media img{transform:scale(1.04)}
+.dk-card[data-workshop-id="crown-vs-veneer"]:hover .dk-media img{transform:translateY(9%) scale(1.16)}
+.dk-media::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 62%,rgba(247,251,251,.85) 100%);pointer-events:none}
+.dk-media.no-photo{display:grid;place-items:center;background:radial-gradient(circle at 50% 42%,#d7efee,#EAF5F4)}
+.dk-badge{position:absolute;z-index:2;top:12px;left:12px;display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:99px;border:1px solid #D3E6E6;background:rgba(255,255,255,.88);color:#123B4A;font-size:12.5px;font-weight:700;backdrop-filter:blur(6px)}
+.dk-badge::before{content:"";width:6px;height:6px;border-radius:50%;background:#16A6A1}
+.dk-body{flex:1;display:flex;flex-direction:column;gap:10px;padding:20px}
+.dk-body h3{margin:0;font-size:19px;line-height:1.28;color:#123B4A}
+.dk-trainer{margin:0;color:#58707A;font-size:14px;font-weight:600}
+.dk-schedule{margin:0;color:#0E7F7B;font-size:13px;font-weight:600;line-height:1.7}
+.dk-chips{display:flex;flex-wrap:wrap;gap:8px}
+.dk-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:99px;background:#EAF5F4;color:#123B4A;font-size:12.5px;font-weight:600}
+.dk-chip svg{width:14px;height:14px;color:#16A6A1}
+.dk-pay{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;padding:10px 12px;border-radius:14px;background:#fff;border:1px dashed #9fd6d3}
+.dk-pay span{width:100%;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#58707A}
+.dk-pay b{font-size:22px;font-weight:800;color:#0E7F7B}
+.dk-pay small{font-size:14px;font-weight:600;color:#58707A}
+.dk-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:auto;padding-top:14px;border-top:1px solid #D3E6E6}
+.dk-seats{display:flex;align-items:center;gap:10px}
+.dk-seats-ic{flex:none;width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:rgba(22,166,161,.16);color:#16A6A1}
+.dk-seats-ic svg{width:19px;height:19px}
+.dk-seats b{display:block;font-size:16px;font-weight:800;color:#123B4A}
+.dk-seats small{display:block;color:#58707A;font-size:12px}
+.dk-card.is-full .dk-seats b{color:#B3261E}
+.dk-card.is-full .dk-seats-ic{background:rgba(179,38,30,.12);color:#B3261E}
+.dk-card.is-full,.dk-card.is-blocked{border-color:#e3c9c6;box-shadow:none}
+.dk-card.is-full .dk-pay b,.dk-card.is-blocked .dk-pay b{color:#8a9aa3}
+.dk-card.is-full .dk-media img,.dk-card.is-blocked .dk-media img{filter:grayscale(.6);opacity:.8}
+.dk-cta{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 14px;white-space:nowrap;border:0;border-radius:99px;color:#fff;font:inherit;font-size:14.5px;font-weight:800;text-decoration:none;cursor:pointer;background:linear-gradient(135deg,#16A6A1,#0E7F7B);box-shadow:0 10px 20px -10px rgba(22,166,161,.9)}
+.dk-cta:hover{color:#fff;filter:brightness(1.08)}
+.dk-cta svg{width:16px;height:16px;flex:none}
+.dk-big{min-height:54px;padding:0 24px;font-size:16.5px}
+
+/* ---------- Register panel: like the website's workshop page ---------- */
+.dk-panel{display:grid;gap:16px;margin-bottom:22px;padding:22px;border-radius:24px;background:#fff;border:1.5px solid rgba(22,166,161,.45);box-shadow:0 18px 40px -24px rgba(22,166,161,.55)}
+.dk-panel-head{display:flex;flex-wrap:wrap;align-items:center;gap:16px}
+.dk-panel-photo{width:84px;height:84px;flex:none;border-radius:20px;overflow:hidden;background:url('../assets/workshops/studio-light.webp') center/cover}
+.dk-panel-photo img{width:100%;height:100%;object-fit:contain;object-position:center bottom}
+.dk-panel-head>div:nth-child(2),.dk-panel-head>div:first-child{flex:1 1 260px}
+.dk-panel-head small{color:#0E7F7B;font-weight:700;font-size:12.5px;text-transform:uppercase;letter-spacing:.05em}
+.dk-panel-head h2{margin:2px 0;font-size:22px;color:#123B4A}
+.dk-panel-head p{margin:0;color:#58707A;font-weight:600}
+.dk-panel-price{display:grid;justify-items:end;padding:12px 18px;border-radius:16px;background:#EAF5F4}
+.dk-panel-price b{font-size:28px;font-weight:800;color:#0E7F7B;line-height:1.1}
+.dk-panel-price span{font-size:14px;font-weight:600;color:#58707A}
+.dk-step{margin:0;display:flex;align-items:center;gap:10px;font-weight:600;color:#123B4A}
+.dk-step>b{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:#16A6A1;color:#fff;font-size:14px}
+.dk-find{display:grid;gap:12px}
+.dk-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:12px;align-items:end}
+.dk-fields label{display:grid;gap:6px;font-size:13px;font-weight:700;color:#123B4A}
+.dk-fields input{min-height:50px;font-size:16px;border-radius:14px;border:2px solid #b8dedc;padding:0 14px}
+.dk-fields input:focus{border-color:#0E7F7B;outline:none;box-shadow:0 0 0 4px rgba(22,166,161,.15)}
+.dk-find-btn{min-height:50px;padding:0 28px;font-size:16px}
+@media(max-width:900px){.dk-fields{grid-template-columns:1fr}}
+.dk-people{display:grid;gap:10px}
+.dk-person{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;border:1.5px solid #D3E6E6;background:#F7FBFB;color:#123B4A;text-decoration:none}
+.dk-person:hover{border-color:#16A6A1}
+.dk-person.is-on{border-color:#0E7F7B;background:#e6f6f4}
+.dk-avatar{flex:none;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:#16A6A1;color:#fff;font-weight:800}
+.dk-person-text{flex:1;display:grid;min-width:0}
+.dk-person-text small{color:#58707A;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dk-person em{font-style:normal;font-weight:800;color:#0E7F7B;padding:6px 14px;border-radius:99px;background:#fff;border:1.5px solid #16A6A1}
+.dk-person.is-on em{background:#0E7F7B;color:#fff}
+.dk-pay-step{display:grid;gap:12px;padding-top:16px;border-top:1px solid #D3E6E6}
+.dk-pay-buttons{display:flex;flex-wrap:wrap;gap:12px}

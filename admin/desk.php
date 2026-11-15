@@ -89,15 +89,23 @@ if ($tab === 'workshop') {
     }
 }
 $ws = $workshops[Page::query('ws')] ?? null;
-$search = mb_substr(trim(Page::query('q', 100)), 0, 100);
+// The person, as on the website: their email; or their name or phone number.
+$findEmail = strtolower(trim(Page::query('email', 190)));
+$findName = trim(Page::query('name', 100));
+$findPhone = (string) preg_replace('/\D+/', '', Page::query('phone', 30));
+$searched = $findEmail !== '' || $findName !== '' || $findPhone !== '';
 $found = [];
-if ($tab === 'workshop' && mb_strlen($search) >= 2) {
-    $like = '%' . addcslashes($search, '%_\\') . '%';
-    $digits = preg_replace('/\D+/', '', $search);
-    $found = Db::all("SELECT * FROM registrations WHERE status = 'paid' AND (CONCAT_WS(' ', first_name, father_name, grandfather_name) LIKE ? OR ref LIKE ?"
-        . (strlen((string) $digits) >= 4 ? ' OR phone LIKE ?' : '') . ') ORDER BY first_name, father_name LIMIT 10',
-        strlen((string) $digits) >= 4 ? [$like, $like, '%' . substr((string) $digits, -9) . '%'] : [$like, $like]);
+if ($tab === 'workshop' && $searched) {
+    $or = [];
+    $args = [];
+    if ($findEmail !== '') { $or[] = 'LOWER(email) = ?'; $args[] = $findEmail; }
+    if (strlen($findPhone) >= 6) { $or[] = 'phone LIKE ?'; $args[] = '%' . substr($findPhone, -9) . '%'; }
+    if (mb_strlen($findName) >= 2) { $or[] = "CONCAT_WS(' ', first_name, father_name, grandfather_name) LIKE ?"; $args[] = '%' . addcslashes($findName, '%_\\') . '%'; }
+    if ($or) {
+        $found = Db::all("SELECT * FROM registrations WHERE status = 'paid' AND (" . implode(' OR ', $or) . ') ORDER BY (LOWER(email) = ?) DESC, first_name, father_name LIMIT 10', array_merge($args, [$findEmail]));
+    }
 }
+$keep = array_filter(['email' => $findEmail, 'name' => $findName, 'phone' => Page::query('phone', 30)], static fn ($v): bool => $v !== '');
 $person = null;
 if ($tab === 'workshop' && (int) Page::query('rid') > 0) {
     $person = Registrations::find((int) Page::query('rid'));
@@ -227,67 +235,97 @@ Page::top('Workshop & Register', 'desk');
 </div>
 
 <?php else: ?>
-<section class="card stack">
-  <?= Page::panelHeading('iSmile workshops', 'Press Register (cash) on the workshop the person wants. The payment to collect is shown on each workshop.', 'workshops') ?>
-  <?php if (!$workshops): ?><?= Page::emptyState('No iSmile workshops', 'No iSmile workshop is active right now.', 'workshops') ?><?php endif; ?>
-  <div class="desk-workshops">
-  <?php foreach ($workshops as $id => ['w' => $w, 'quote' => $quote, 'seats' => $seats, 'blocked' => $blocked]): $on = $ws && $ws['w']['id'] === $id; ?>
-    <article class="desk-ws<?= $blocked !== '' ? ' is-blocked' : '' ?><?= $on ? ' is-on' : '' ?>">
+<?php
+// Workshop cards in the website's design (workshops page), with the cash payment on each.
+$words = static fn (mixed $v): string => is_array($v) ? (string) (($v['en'] ?? '') ?: (array_values(array_filter($v))[0] ?? '')) : (string) $v;
+$clock = static function (?string $t): string { if (!$t) return ''; $s = strtotime('2000-01-01 ' . $t); return $s ? strtolower(date('g:i a', $s)) : $t; };
+$photo = static function (array $w): string {
+    $path = (string) ($w['photo'] ?? '');
+    return preg_match('~^assets/(?:workshops|uploads/workshops)/[a-zA-Z0-9_./-]+\.(?:webp|png|jpe?g)$~i', $path) && !str_contains($path, '..') ? '../' . $path : '';
+};
+$usd = static fn (array $q): string => $q['usdMinor'] ? '$' . rtrim(rtrim(number_format($q['usdMinor'] / 100, 2), '0'), '.') : '';
+$icon = static fn (string $d): string => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . $d . '</svg>';
+?>
+<div class="dk-grid">
+<?php if (!$workshops): ?><?= Page::emptyState('No iSmile workshops', 'No paid iSmile workshop is on sale right now.', 'workshops') ?><?php endif; ?>
+<?php foreach ($workshops as $id => ['w' => $w, 'quote' => $quote, 'seats' => $seats, 'blocked' => $blocked]):
+    $img = $photo($w);
+    $on = $ws && $ws['w']['id'] === $id;
+    $full = $blocked === 'Sold out.';
+    $date = $w['scheduledDate'] ? date('j F Y', strtotime((string) $w['scheduledDate'])) : '';
+    $time = implode('–', array_filter([$clock($w['startTime'] ?? null), $clock($w['endTime'] ?? null)])); ?>
+  <article class="dk-card<?= ($w['photoStyle'] ?? '') === 'cutout' ? ' is-cutout' : '' ?><?= $on ? ' is-on' : '' ?><?= $full ? ' is-full' : '' ?><?= $blocked !== '' && !$full ? ' is-blocked' : '' ?>" data-workshop-id="<?= $e($id) ?>">
+    <div class="dk-media<?= $img === '' ? ' no-photo' : '' ?>"><span class="dk-badge">Organized by iSmile</span><?php if ($img !== ''): ?><img src="<?= $e($img) ?>" alt="<?= $e($words($w['speaker'] ?? '')) ?>" loading="lazy"><?php endif; ?></div>
+    <div class="dk-body">
       <h3><?= $e(Workshops::name($w)) ?></h3>
-      <?php if ($trainer($w) !== ''): ?><p class="desk-trainer"><?= $e($trainer($w)) ?></p><?php endif; ?>
-      <p class="muted small"><?= $e(implode(' · ', array_filter([$when($w), $quote ? $seats . ' seat' . ($seats === 1 ? '' : 's') . ' left' : '']))) ?></p>
-      <div class="desk-pay"><span>Payment</span><b><?= $quote ? $e($money($quote)) : '–' ?></b><?php if ($quote && $quote['usdMinor']): ?><small>or $<?= $e(rtrim(rtrim(number_format($quote['usdMinor'] / 100, 2), '0'), '.')) ?></small><?php endif; ?></div>
-      <?php if ($blocked !== ''): ?>
-        <p class="desk-blocked"><?= $e($blocked) ?></p>
-      <?php else: ?>
-        <a class="btn green desk-big" href="<?= $e($deskUrl('workshop', array_filter(['ws' => $id, 'rid' => $person ? (int) $person['id'] : null]))) ?>#step2">Register (cash)</a>
-      <?php endif; ?>
-    </article>
-  <?php endforeach; ?>
-  </div>
-  <p class="muted small">Company workshops are not sold here: the person calls the company.</p>
-</section>
-
-<?php if ($ws && $ws['blocked'] === ''): $quote = $ws['quote']; $wid = $ws['w']['id']; ?>
-<section class="card stack desk-find" id="step2">
-  <?= Page::panelHeading('Register for: ' . Workshops::name($ws['w']), 'Find the person. They must already have a summit ticket. Search by name, phone or reference.', 'search') ?>
-  <form method="get" action="desk.php#step2" class="desk-search" role="search">
-    <input type="hidden" name="tab" value="workshop"><input type="hidden" name="ws" value="<?= $e($wid) ?>">
-    <input type="search" name="q" value="<?= $e($search) ?>" placeholder="Name, phone or reference…" aria-label="Find the person" autocomplete="off" minlength="2" required>
-    <button class="btn">Search</button>
-  </form>
-  <?php if ($search !== '' && !$found): ?>
-    <p class="desk-empty">Nobody with a paid summit ticket matches “<?= $e($search) ?>”. Check the spelling, or <a href="<?= $e($deskUrl('register')) ?>"><b>register them first</b></a> in the Register tab.</p>
-  <?php elseif ($found): ?>
-  <div class="table-wrap"><table><thead><tr><th>Name</th><th>Reference</th><th>Phone</th><th>Ticket</th><th></th></tr></thead><tbody>
-    <?php foreach ($found as $row): ?><tr<?= $person && (int) $person['id'] === (int) $row['id'] ? ' class="is-on"' : '' ?>>
-      <td><b><?= $e(Registrations::fullName($row)) ?></b></td><td><code><?= $e($row['ref']) ?></code></td><td dir="ltr"><?= $e($masked((string) $row['phone'])) ?></td>
-      <td><?= $e(Registrations::ticketName((string) $row['ticket_type'])) ?></td>
-      <td><a class="btn small green" href="<?= $e($deskUrl('workshop', ['ws' => $wid, 'q' => $search, 'rid' => (int) $row['id']])) ?>#step3">Choose</a></td>
-    </tr><?php endforeach; ?>
-  </tbody></table></div>
-  <?php endif; ?>
-</section>
-
-<?php if ($person): ?>
-<section class="card stack desk-confirm" id="step3">
-  <?= Page::panelHeading('Take the payment', Registrations::fullName($person) . ' (' . $person['ref'] . ', ' . $masked((string) $person['phone']) . '). Psoola emails the workshop ticket to ' . $person['email'] . '.', 'workshops') ?>
-  <div class="desk-pay desk-pay-big"><span><?= $e(Workshops::name($ws['w'])) ?></span><b><?= $e($money($quote)) ?></b><?php if ($quote['usdMinor']): ?><small>or $<?= $e(rtrim(rtrim(number_format($quote['usdMinor'] / 100, 2), '0'), '.')) ?></small><?php endif; ?></div>
-  <?php if ($has): ?>
-    <p class="desk-blocked">Already registered for this workshop.</p>
-  <?php else: ?>
-  <form method="post" action="<?= $e($deskUrl('workshop', ['ws' => $wid, 'q' => $search, 'rid' => (int) $person['id']])) ?>#step3" class="stack">
-    <?= Page::csrfField() ?><?= Page::onceField() ?>
-    <input type="hidden" name="do" value="workshop_cash_sale"><input type="hidden" name="rid" value="<?= (int) $person['id'] ?>"><input type="hidden" name="workshop" value="<?= $e($wid) ?>">
-      <label class="inline desk-received"><input type="checkbox" name="cash_received" value="1" required> I have received the cash for this workshop.</label>
-      <div class="form-actions">
-        <button class="btn green desk-big" name="cash_currency" value="IQD">Received <?= $e(number_format($quote['iqd'])) ?> IQD · Register</button>
-        <?php if ($quote['usdMinor']): ?><button class="btn green desk-big" name="cash_currency" value="USD">Received $<?= $e(rtrim(rtrim(number_format($quote['usdMinor'] / 100, 2), '0'), '.')) ?> · Register</button><?php endif; ?>
+      <?php if ($words($w['speaker'] ?? '') !== ''): ?><p class="dk-trainer"><?= $e($words($w['speaker'])) ?></p><?php endif; ?>
+      <?php if ($date . $time !== ''): ?><p class="dk-schedule"><?= $e($date) ?><?= $date !== '' && $time !== '' ? '<br>' : '' ?><?= $e($time) ?></p><?php endif; ?>
+      <div class="dk-chips">
+        <?php if ($words($w['duration'] ?? '') !== ''): ?><span class="dk-chip"><?= $icon('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>') ?><?= $e($words($w['duration'])) ?></span><?php endif; ?>
+        <?php if ($words($w['level'] ?? '') !== ''): ?><span class="dk-chip"><?= $icon('<path d="M6 20v-4M12 20V10M18 20V4"/>') ?><?= $e($words($w['level'])) ?></span><?php endif; ?>
       </div>
+      <div class="dk-pay"><span>Payment (cash)</span><b><?= $quote ? $e(number_format($quote['iqd'])) . ' IQD' : '–' ?></b><?php if ($quote && $usd($quote) !== ''): ?><small>or <?= $e($usd($quote)) ?></small><?php endif; ?></div>
+      <div class="dk-foot">
+        <div class="dk-seats"><span class="dk-seats-ic"><?= $icon('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>') ?></span><div><b><?= $full ? 'Fully booked' : ($blocked !== '' ? 'Not available' : 'Available') ?></b><?php if ($quote && $blocked === ''): ?><small><?= $seats ?> seat<?= $seats === 1 ? '' : 's' ?> left</small><?php elseif ($full): ?><small>No seats left</small><?php endif; ?></div></div>
+        <?php if ($blocked === ''): ?><a class="dk-cta" href="<?= $e($deskUrl('workshop', ['ws' => $id] + ($person ? ['rid' => (int) $person['id']] : []))) ?>#register"><?= $icon('<rect x="2.5" y="6" width="19" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.6"/>') ?>Register (cash)<?= $icon('<path d="M5 12h14M13 6l6 6-6 6"/>') ?></a><?php endif; ?>
+      </div>
+      <?php if ($blocked !== '' && !$full): ?><p class="desk-blocked"><?= $e($blocked) ?></p><?php endif; ?>
+    </div>
+  </article>
+<?php endforeach; ?>
+</div>
+
+<?php if ($ws && $ws['blocked'] === ''): $quote = $ws['quote']; $wid = $ws['w']['id']; $img = $photo($ws['w']); ?>
+<section class="dk-panel" id="register">
+  <header class="dk-panel-head">
+    <?php if ($img !== ''): ?><span class="dk-panel-photo"><img src="<?= $e($img) ?>" alt=""></span><?php endif; ?>
+    <div><small>Register for this workshop · paid in cash</small><h2><?= $e(Workshops::name($ws['w'])) ?></h2><p><?= $e($words($ws['w']['speaker'] ?? '')) ?></p></div>
+    <div class="dk-panel-price"><small>Collect</small><b><?= $e(number_format($quote['iqd'])) ?> IQD</b><?php if ($usd($quote) !== ''): ?><span>or <?= $e($usd($quote)) ?></span><?php endif; ?></div>
+  </header>
+  <form method="get" action="desk.php#register" class="dk-find">
+    <input type="hidden" name="tab" value="workshop"><input type="hidden" name="ws" value="<?= $e($wid) ?>">
+    <p class="dk-step"><b>1</b> Find their summit registration: their email (like on the website), or their name or phone number.</p>
+    <div class="dk-fields">
+      <label>Email<input type="email" name="email" dir="ltr" value="<?= $e($findEmail) ?>" placeholder="name@example.com" autocomplete="off"></label>
+      <label>Name<input name="name" value="<?= $e($findName) ?>" placeholder="First and last name" autocomplete="off"></label>
+      <label>Phone number<input type="tel" name="phone" dir="ltr" value="<?= $e(Page::query('phone', 30)) ?>" placeholder="0750 123 4567" autocomplete="off"></label>
+      <button class="dk-cta dk-find-btn">Find</button>
+    </div>
   </form>
+  <?php if ($searched && !$found): ?>
+    <p class="desk-empty">Nobody with a paid summit ticket matches. Check the email, or <a href="<?= $e($deskUrl('register')) ?>"><b>register them first</b></a> in the Register tab.</p>
+  <?php elseif ($found): ?>
+  <div class="dk-people">
+    <?php foreach ($found as $row): $chosen = $person && (int) $person['id'] === (int) $row['id']; ?>
+    <a class="dk-person<?= $chosen ? ' is-on' : '' ?>" href="<?= $e($deskUrl('workshop', ['ws' => $wid] + $keep + ['rid' => (int) $row['id']])) ?>#pay">
+      <span class="dk-avatar"><?= $e(mb_strtoupper(mb_substr((string) $row['first_name'], 0, 1) . mb_substr((string) $row['father_name'], 0, 1))) ?></span>
+      <span class="dk-person-text"><b><?= $e(Registrations::fullName($row)) ?></b><small dir="ltr"><?= $e((string) $row['email']) ?> · <?= $e($masked((string) $row['phone'])) ?> · <?= $e($row['ref']) ?></small></span>
+      <em><?= $chosen ? 'Chosen' : 'Choose' ?></em>
+    </a>
+    <?php endforeach; ?>
+  </div>
+  <?php endif; ?>
+
+  <?php if ($person): ?>
+  <div class="dk-pay-step" id="pay">
+    <p class="dk-step"><b>2</b> Take the cash from <strong><?= $e(Registrations::fullName($person)) ?></strong>. Psoola emails the workshop ticket to <span dir="ltr"><?= $e((string) $person['email']) ?></span>.</p>
+    <?php if ($has): ?>
+      <p class="desk-blocked">Already registered for this workshop.</p>
+    <?php else: ?>
+    <form method="post" action="<?= $e($deskUrl('workshop', ['ws' => $wid] + $keep + ['rid' => (int) $person['id']])) ?>#pay" class="stack">
+      <?= Page::csrfField() ?><?= Page::onceField() ?>
+      <input type="hidden" name="do" value="workshop_cash_sale"><input type="hidden" name="rid" value="<?= (int) $person['id'] ?>"><input type="hidden" name="workshop" value="<?= $e($wid) ?>">
+      <label class="desk-received"><input type="checkbox" name="cash_received" value="1" required> I have received the cash for this workshop.</label>
+      <div class="dk-pay-buttons">
+        <button class="dk-cta dk-big" name="cash_currency" value="IQD">Received <?= $e(number_format($quote['iqd'])) ?> IQD · Register</button>
+        <?php if ($usd($quote) !== ''): ?><button class="dk-cta dk-big" name="cash_currency" value="USD">Received <?= $e($usd($quote)) ?> · Register</button><?php endif; ?>
+      </div>
+    </form>
+    <?php endif; ?>
+  </div>
   <?php endif; ?>
 </section>
 <?php endif; ?>
-<?php endif; ?>
+<p class="muted small">Company workshops are not sold here: the person calls the company.</p>
 <?php endif;
 Page::bottom();

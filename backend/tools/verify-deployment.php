@@ -252,8 +252,8 @@ $check('Volunteer sees only Workshop & Register with the cash form', substr_coun
 $html = $render('desk', 'tab=workshop', 'volunteer');
 // Free workshops are not sold at the desk.
 $deskWorkshops = array_values(array_filter(\Ismile\Workshops::all(), static fn (array $w): bool => $w['organizer'] === 'ismile' && (int) $w['price'] > 0));
-$check('Volunteer Workshop tab lists every active iSmile workshop with its payment', str_contains($html, 'iSmile workshops')
-    && substr_count($html, 'class="desk-ws') === count($deskWorkshops) && substr_count($html, '<span>Payment</span>') === count($deskWorkshops)
+$check('Volunteer Workshop tab shows every paid iSmile workshop as a website-style card with its cash payment', str_contains($html, 'Organized by iSmile')
+    && substr_count($html, 'class="dk-card') === count($deskWorkshops) && substr_count($html, '<span>Payment (cash)</span>') === count($deskWorkshops)
     && array_reduce($deskWorkshops, static fn (bool $all, array $w): bool => $all && str_contains($html, \Ismile\Admin\Page::e(\Ismile\Workshops::name($w))), true)
     && !str_contains($html, 'Register (free)'));
 $html = $render('desk', '');
