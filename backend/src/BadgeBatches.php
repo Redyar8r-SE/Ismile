@@ -13,7 +13,7 @@ namespace Ismile;
  */
 final class BadgeBatches
 {
-    public const MAX_GUESTS = 400;
+    public const MAX_GUESTS = 600;
 
     /**
      * Saves the ticked guests as a new batch. Nothing is saved unless PSOOLA

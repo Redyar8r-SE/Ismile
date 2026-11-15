@@ -20,6 +20,9 @@ try {
         $batchId = max(0, (int) $_GET['batch']);
         $back = 'tickets.php?batch=' . $batchId;
         $batch = BadgeBatches::find($batchId) ?? throw new UserError('Badge batch not found. It may have been deleted.');
+        // Up to 600 two-sided badges in one PDF: more time and memory than a normal page.
+        @set_time_limit(120);
+        @ini_set('memory_limit', '768M');
         $sheet = isset(Badges::SHEETS[$_GET['sheet'] ?? '']) ? (string) $_GET['sheet'] : 'a4';
         [$pdf, $name] = [BadgeBatches::pdf($user, $batchId, $sheet), 'ismile-badges-batch-' . (int) $batch['batch_number'] . '-' . $sheet];
     } else {
