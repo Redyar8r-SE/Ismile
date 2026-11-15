@@ -23,6 +23,12 @@ if (!$ownerId) throw new RuntimeException('Enabled Owner required.');
 Db::transaction(static function () use ($definition, $ownerId): void {
     $existing = Db::one('SELECT * FROM workshops WHERE id=? FOR UPDATE', [$definition['id']]);
     if ($existing) {
+        // 15 Nov: the plain photo became a transparent cut-out (same file name).
+        if ($existing['photo_style'] === 'photo' && $definition['photo_style'] === 'cutout' && $existing['photo'] === $definition['photo']) {
+            Db::update('workshops', ['photo_style' => 'cutout', 'updated_at' => App::now()], 'id=?', [$definition['id']]);
+            Audit::log($ownerId, 'workshop.edit', 'workshop', null, ['id' => $definition['id'], 'photo_style' => 'cutout']);
+            $existing['photo_style'] = 'cutout';
+        }
         foreach ($definition as $field => $value) {
             $actual = in_array($field, ['start_time', 'end_time'], true) ? substr((string) $existing[$field], 0, 5) : (string) $existing[$field];
             if ($actual !== (string) $value) throw new RuntimeException('Existing workshop differs: ' . $field);
