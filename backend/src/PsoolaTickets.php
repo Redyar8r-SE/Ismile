@@ -9,6 +9,7 @@ final class PsoolaTickets
 {
     public static function canView(array $user, array $registration): bool
     {
+        if (($user['role'] ?? '') === 'badges') return true;
         return Auth::can($user,'registrations') && (Auth::canBookWorkshops($user) || Office::canChange($user,$registration));
     }
 

@@ -11,7 +11,7 @@ header('Cache-Control: no-store, private, max-age=0');
 header('Pragma: no-cache');
 header('Referrer-Policy: no-referrer');
 header('X-Robots-Tag: noindex, nofollow');
-$user = Page::guard('registrations');
+$user = Page::guard('badges');
 header('Referrer-Policy: no-referrer');
 header('Cache-Control: no-store, private, max-age=0');
 header('Content-Type: application/json; charset=utf-8');

@@ -13,7 +13,7 @@ use Ismile\UserError;
 // The two-sided badge PDF (10 × 11.5 cm pages).
 //   GET badge.php?id=REGISTRATION   one guest, for yourself: not saved as a batch
 //   GET badge.php?batch=ID&sheet=a4 every guest of a saved badge batch, on print sheets (a4, a3, sra3, single)
-$user = Page::guard('registrations');
+$user = Page::guard('badges');
 $back = 'tickets.php';
 try {
     if (isset($_GET['batch'])) {

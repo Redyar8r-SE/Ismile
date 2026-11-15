@@ -209,6 +209,7 @@ final class Page
             'checkin' => 'checkin.php',
             'content' => self::contentUrl(),
             'map_viewer' => 'map.php',
+            'badges'     => 'tickets.php',
             default   => 'index.php',
         };
     }

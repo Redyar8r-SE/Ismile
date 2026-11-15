@@ -22,7 +22,7 @@ $check = static function (string $name, bool $ok) use (&$passed): void {
 $rejects = static function (callable $work): bool {
     try { $work(); return false; } catch (UserError) { return true; }
 };
-foreach (Auth::ROLES as $role) {
+foreach (array_diff(Auth::ROLES, ['badges']) as $role) {
     $normal = ['role' => $role];
     $registrar = $normal + ['registration_manage_access' => 1];
     $check("$role keeps its default free-ticket restriction", Auth::canIssueComplimentary($normal) === ($role === 'owner'));

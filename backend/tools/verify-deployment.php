@@ -193,7 +193,7 @@ if (getenv('REGISTRATION_EDITOR_EMAIL')) {
     $check('selected live account has the Register action in its guest list', str_contains($html, 'href="registration.php?new=1"') && !str_contains($html, 'class="admin-shell view-only"'));
 }
 $check('Association sent totals match the active guest ledger', (int)$associationTotals['amount'] === (int)Db::value("SELECT COALESCE(SUM(total_paid),0) FROM association_batch_items WHERE active=1 AND payment_channel<>'Cash'") && (int)$associationTotals['guests'] === (int)Db::value('SELECT COUNT(*) FROM association_batch_items WHERE active=1'));
-foreach (Auth::ROLES as $role) {
+foreach (array_diff(Auth::ROLES, ['badges']) as $role) {
     $html = $render('map', '', $role);
     $manage = $role === 'owner';
     $check($role . ' has correct Map access', str_contains($html, 'id="operationsMap"')

@@ -7,7 +7,7 @@ use Ismile\Auth;
 use Ismile\Association;
 use Ismile\Admin\Page;
 
-foreach (Auth::ROLES as $role) {
+foreach (array_diff(Auth::ROLES, ['badges']) as $role) {
     $normal = ['role'=>$role];
     $manager = $normal + ['association_manage_access'=>1];
     if (Association::canManage($normal) !== in_array($role,['owner','finance'],true)) throw new RuntimeException('Default Association access changed: '.$role);

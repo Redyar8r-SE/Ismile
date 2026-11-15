@@ -16,7 +16,7 @@ namespace Ismile;
 
 final class Auth
 {
-    public const ROLES = ['owner', 'registration', 'finance', 'content', 'checkin', 'viewer', 'sponsors', 'map_viewer'];
+    public const ROLES = ['owner', 'registration', 'finance', 'content', 'checkin', 'viewer', 'sponsors', 'map_viewer', 'badges'];
     public const ROLE_NAMES = [
         'owner'        => 'Owner (everything)',
         'registration' => 'Registration (paid cash registration and paid workshops for any attendee; edits only people they added)',
@@ -26,11 +26,12 @@ final class Auth
         'viewer'       => 'Viewer (sees every event page, changes nothing)',
         'sponsors'     => 'Viewer + Booths (sees event pages; sponsor map booking needs individual access)',
         'map_viewer'   => 'Map viewer (sees only Map; cannot book or change anything)',
+        'badges'       => 'Tickets & Certificates only (makes badges and certificates; sees no other page)',
     ];
     // Registration takes cash and makes real PSOOLA tickets, so it needs the phone code too.
     // The Viewer sees people's details and the money, so it does as well.
     // Sponsors sees company contacts and records sponsor payments, like Finance.
-    public const NEEDS_TWO_FACTOR = ['owner', 'finance', 'registration', 'viewer', 'sponsors', 'map_viewer'];
+    public const NEEDS_TWO_FACTOR = ['owner', 'finance', 'registration', 'viewer', 'sponsors', 'map_viewer', 'badges'];
     // What a Viewer may still send: signing out and setting up their own phone code.
     private const VIEWER_MAY_POST = ['login.php', 'logout.php', 'two-factor.php'];
     // Viewer + Sponsors may also save on these pages: sponsor bookings, map places and booths.
@@ -185,6 +186,12 @@ final class Auth
         if ($user['role'] === 'owner') {
             return true;
         }
+        // Tickets & Certificates only: no guest list, map or any other page, whatever else is ticked.
+        if ($user['role'] === 'badges') {
+            return in_array($area, ['certificates', 'badges'], true);
+        }
+        // Badge PDFs and PSOOLA QR previews: guest-list roles, or badge access.
+        if ($area === 'badges') return self::can($user, 'registrations') || self::canManageBadges($user);
         if (in_array($area, ['registrations', 'edit'], true) && (int) ($user['registration_manage_access'] ?? 0) === 1) return true;
         if ($area === 'sponsors' && self::canManageMap($user)) return true;
         if ($area === 'association' && self::canManageAssociation($user)) return true;
@@ -201,7 +208,7 @@ final class Auth
             'association'   => ['finance', 'viewer', 'sponsors'],
             'workshops'     => ['viewer', 'sponsors'],   // the Owner books workshops
             'sponsors'      => ['finance', 'viewer', 'sponsors'],
-            'map'           => self::ROLES,
+            'map'           => array_values(array_diff(self::ROLES, ['badges'])),
             'checkin'       => ['checkin', 'viewer', 'sponsors'],
             'export'        => ['registration', 'finance', 'viewer', 'sponsors'],
             'certificates'  => ['finance', 'viewer', 'sponsors'],
@@ -241,7 +248,7 @@ final class Auth
     /** Account-specific grant: make, download and delete badge batches and certificates. */
     public static function canManageBadges(array $user): bool
     {
-        return $user['role'] === 'owner' || (int) ($user['badge_certificate_access'] ?? 0) === 1;
+        return in_array($user['role'], ['owner', 'badges'], true) || (int) ($user['badge_certificate_access'] ?? 0) === 1;
     }
 
     /** Registration staff book paid workshops for any attendee; other roles need an individual grant. */
@@ -254,7 +261,7 @@ final class Auth
     public static function viewerMayPost(array $user, string $script): bool
     {
         $page = basename($script);
-        if ($page === 'psoola-ticket.php') return Auth::can($user,'edit') || self::canBookWorkshops($user);
+        if ($page === 'psoola-ticket.php') return Auth::can($user,'edit') || self::canBookWorkshops($user) || $user['role'] === 'badges';
         if (in_array($page, ['registration.php','workshops.php'], true) && self::canBookWorkshops($user)) return true;
         if (in_array($page, ['registration.php', 'registrations.php'], true) && (int) ($user['registration_manage_access'] ?? 0) === 1) return true;
         if (in_array($page, ['tickets.php', 'certificates.php'], true) && self::canManageBadges($user)) return true;

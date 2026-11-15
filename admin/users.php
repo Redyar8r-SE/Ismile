@@ -103,6 +103,7 @@ $roleGuide = [
     'viewer' => ['view', 'Viewer', 'Sees every event page (people, payments, sponsors, check-in) but cannot change anything.'],
     'sponsors' => ['sponsors', 'Viewer + Booths', 'Sees event pages and can book exhibition booths. Sponsor map bookings require individual access from the Owner.'],
     'map_viewer' => ['map', 'Map viewer', 'Sees only Map and booking details. Cannot add, edit, cancel or delete bookings.'],
+    'badges' => ['certificates', 'Tickets & Certificates only', 'Sees only Tickets & Certificates: makes, downloads and deletes badge batches, downloads and emails certificates. No other page.'],
 ];
 Page::top('Users', 'users', '<a class="btn" href="#add-person">' . Page::navIcon('users') . '<span>Add a person</span></a>');
 ?>
@@ -123,7 +124,10 @@ Page::top('Users', 'users', '<a class="btn" href="#add-person">' . Page::navIcon
     <?php $protected = Erase::isMainOwnerAccount($row) && (int)$row['id']!==(int)$user['id']; ?>
     <td><?php if ((int)$row['id']===(int)$user['id'] || $protected): ?><span class="team-role"><?= Page::navIcon($roleGuide[$row['role']][0]) ?><?= $e($roleGuide[$row['role']][1]) ?></span><small class="field-hint"><?= $protected ? 'Main Owner: protected.' : (Erase::isMainOwner($user) ? 'Main Owner: only you can delete records.' : 'Your own role stays protected.') ?></small><?php else: ?><form method="post" class="inline-form team-role-form"><?= Page::csrfField() ?><input type="hidden" name="do" value="role"><input type="hidden" name="id" value="<?= (int) $row['id'] ?>">
       <select name="role" aria-label="<?= $e('Role for ' . $row['name']) ?>"><?php foreach (Auth::ROLES as $role): ?><option value="<?= $role ?>"<?= $role === $row['role'] ? ' selected' : '' ?>><?= $e($roleGuide[$role][1]) ?></option><?php endforeach; ?></select><button class="btn small ghost">Set role</button></form><?php endif; ?>
-      <?php if ($row['role'] !== 'owner' && !$protected): $registrationAccess = (int) ($row['registration_manage_access'] ?? 0) === 1; ?>
+      <?php if ($row['role'] === 'badges'): ?>
+      <small class="field-hint">Only Tickets &amp; Certificates. Extra access does not apply to this role.</small>
+      <?php endif; ?>
+      <?php if (!in_array($row['role'], ['owner', 'badges'], true) && !$protected): $registrationAccess = (int) ($row['registration_manage_access'] ?? 0) === 1; ?>
       <small class="field-hint"><?= $registrationAccess ? 'Can register paid and complimentary guests.' : 'Complimentary registration requires individual access.' ?></small>
       <form method="post" class="inline-form"><?= Page::csrfField() ?><input type="hidden" name="do" value="registration_access"><input type="hidden" name="id" value="<?= (int) $row['id'] ?>"><input type="hidden" name="enabled" value="<?= $registrationAccess ? '0' : '1' ?>"><button class="btn small ghost"><?= $registrationAccess ? 'Remove paid & free registration access' : 'Allow paid & free registration' ?></button></form>
       <?php $workshopAccess = Auth::canBookWorkshops($row); ?>

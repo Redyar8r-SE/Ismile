@@ -15,7 +15,8 @@ use Ismile\UserError;
 // Ticked guests become a badge batch (like Association), with one PDF of all
 // their badges; batches can be deleted and their numbers are reused.
 $user = Page::guard('certificates');
-$canBadge = Auth::can($user, 'registrations');
+$canBadge = Auth::can($user, 'registrations') || Auth::canManageBadges($user);
+$guestLink = Auth::can($user, 'registrations');
 Page::action(static function () use ($user, $canBadge): string {
     $action = (string) ($_POST['do'] ?? '');
     if (in_array($action, ['badge_batch', 'badge_batch_delete'], true) && !$canBadge) throw new UserError('Your account cannot make badges.');
@@ -147,7 +148,7 @@ if ($batchId && !$batch): ?>
   <div class="table-wrap"><table><thead><tr><th>#</th><th>Name on badge</th><th>Type</th><th>Reference</th><th>Ticket</th><th>Attendance</th></tr></thead><tbody>
   <?php foreach ($items as $item): ?><tr>
     <td class="bb-pos"><?= (int) $item['position'] ?></td>
-    <td><a class="bb-guest" href="registration.php?id=<?= (int) $item['registration_id'] ?>"><span class="bb-initial"><?= $e(mb_substr((string) $item['printed_name'], 0, 1)) ?></span><b><?= $e($item['printed_name']) ?></b></a><?= $item['status'] === 'cancelled' ? ' <span class="pill red">Cancelled since</span>' : '' ?></td>
+    <td><a class="bb-guest"<?= $guestLink ? ' href="registration.php?id=' . (int) $item['registration_id'] . '"' : '' ?>><span class="bb-initial"><?= $e(mb_substr((string) $item['printed_name'], 0, 1)) ?></span><b><?= $e($item['printed_name']) ?></b></a><?= $item['status'] === 'cancelled' ? ' <span class="pill red">Cancelled since</span>' : '' ?></td>
     <td><span class="pill <?= $typePill((string) $item['ticket_type']) ?>"><?= $e($item['ticket_type']) ?></span></td>
     <td><code><?= $e($item['ref']) ?></code></td><td><code><?= $e((string) $item['ticket_no']) ?></code></td>
     <td><?= $item['attended_days'] ? '<span class="pill green">' . $e($item['attended_days']) . '</span>' : '<span class="pill grey">Not yet</span>' ?></td>
@@ -195,7 +196,7 @@ if ($batchId && !$batch): ?>
   <?php foreach ($rows as $row): $canQr = $row['has_psoola'] && PsoolaTickets::canView($user, $row); $name = Registrations::fullName($row); $kind = Registrations::ticketName($row['ticket_type']); ?>
   <tr<?= $row['last_batch'] ? ' class="tk-in-batch"' : '' ?> data-letter="<?= $letterOf($row) ?>" data-search="<?= $e(mb_strtolower($name . ' ' . $row['ref'] . ' ' . $row['phone'] . ' ' . $row['ticket_no'])) ?>">
     <td><?php if ($row['last_batch']): ?><span class="tk-taken" title="<?= $e('Already in Badge batch #' . (int) $row['last_batch_number']) ?>">✓</span><?php elseif ($canQr && $canBadge): ?><input type="checkbox" data-guest="<?= (int) $row['id'] ?>" aria-label="<?= $e('Select ' . $name) ?>"><?php endif; ?></td>
-    <td><a class="bb-guest" href="registration.php?id=<?= (int) $row['id'] ?>"><span class="bb-initial"><?= $e(mb_strtoupper(mb_substr($name, 0, 1))) ?></span><span><b><?= $e($name) ?></b><small class="tk-ref"><?= $e($row['ref']) ?></small></span></a></td>
+    <td><a class="bb-guest"<?= $guestLink ? ' href="registration.php?id=' . (int) $row['id'] . '"' : '' ?>><span class="bb-initial"><?= $e(mb_strtoupper(mb_substr($name, 0, 1))) ?></span><span><b><?= $e($name) ?></b><small class="tk-ref"><?= $e($row['ref']) ?></small></span></a></td>
     <td><span class="pill <?= $kind === 'Student' ? 'green' : ($kind === 'VIP' ? 'gold' : 'blue') ?>"><?= $e($kind) ?></span></td>
     <td><code><?= $e($row['ticket_no']) ?></code></td>
     <td><?= $row['attended_days'] ? '<span class="pill green">' . $e($row['attended_days']) . '</span>' : '<span class="pill grey">Not yet</span>' ?></td>

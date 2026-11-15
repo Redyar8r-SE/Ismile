@@ -7,7 +7,7 @@ require __DIR__ . '/../src/Admin/Page.php';
 use Ismile\Auth;
 use Ismile\Admin\Page;
 
-foreach (Auth::ROLES as $role) {
+foreach (array_diff(Auth::ROLES, ['badges']) as $role) {
     $user = ['role' => $role];
     if (!Auth::can($user, 'map')) throw new RuntimeException("$role cannot view Map");
     foreach (['map.php', 'sponsors.php'] as $page) {
