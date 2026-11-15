@@ -89,23 +89,48 @@ if ($tab === 'workshop') {
     }
 }
 $ws = $workshops[Page::query('ws')] ?? null;
-// The person, as on the website: their email; or their name or phone number.
-$findEmail = strtolower(trim(Page::query('email', 190)));
-$findName = trim(Page::query('name', 100));
-$findPhone = (string) preg_replace('/\D+/', '', Page::query('phone', 30));
-$searched = $findEmail !== '' || $findName !== '' || $findPhone !== '';
-$found = [];
-if ($tab === 'workshop' && $searched) {
-    $or = [];
+// Finding the person: ONE box for name, phone, email or reference. Forgiving:
+// name words in any order and partly typed, phone in any format, part of an email.
+// Paid summit tickets can be registered; guest and cancelled ones are shown with
+// the reason, so the volunteer knows why.
+$findPeople = static function (string $q): array {
+    $q = trim(preg_replace('/\s+/', ' ', $q));
+    if (mb_strlen($q) < 2) return [];
+    $where = [];
     $args = [];
-    if ($findEmail !== '') { $or[] = 'LOWER(email) = ?'; $args[] = $findEmail; }
-    if (strlen($findPhone) >= 6) { $or[] = 'phone LIKE ?'; $args[] = '%' . substr($findPhone, -9) . '%'; }
-    if (mb_strlen($findName) >= 2) { $or[] = "CONCAT_WS(' ', first_name, father_name, grandfather_name) LIKE ?"; $args[] = '%' . addcslashes($findName, '%_\\') . '%'; }
-    if ($or) {
-        $found = Db::all("SELECT * FROM registrations WHERE status = 'paid' AND (" . implode(' OR ', $or) . ') ORDER BY (LOWER(email) = ?) DESC, first_name, father_name LIMIT 10', array_merge($args, [$findEmail]));
-    }
+    $words = array_slice(array_filter(explode(' ', mb_strtolower($q)), static fn ($w): bool => $w !== ''), 0, 5);
+    $name = [];
+    foreach ($words as $word) { $name[] = "LOWER(CONCAT_WS(' ', first_name, father_name, grandfather_name)) LIKE ?"; $args[] = '%' . addcslashes($word, '%_\\') . '%'; }
+    $where[] = '(' . implode(' AND ', $name) . ')';
+    $where[] = 'LOWER(email) LIKE ?'; $args[] = '%' . addcslashes(mb_strtolower($q), '%_\\') . '%';
+    $where[] = 'ref LIKE ?'; $args[] = '%' . addcslashes(strtoupper($q), '%_\\') . '%';
+    $digits = (string) preg_replace('/\D+/', '', $q);
+    $digits = (string) preg_replace('/^(00964|964|0)/', '', $digits);   // 0750…, +964 750…, 750… are the same number
+    if (strlen($digits) >= 4) { $where[] = 'phone LIKE ?'; $args[] = '%' . $digits . '%'; }
+    return Db::all("SELECT * FROM registrations WHERE status IN ('paid','complimentary','cancelled') AND (" . implode(' OR ', $where) . ")
+        ORDER BY status = 'paid' DESC, LOWER(email) = ? DESC, first_name, father_name LIMIT 12", array_merge($args, [mb_strtolower($q)]));
+};
+$findQ = mb_substr(trim(Page::query('q', 120)), 0, 120);
+$searched = $findQ !== '';
+$found = $tab === 'workshop' && $searched ? $findPeople($findQ) : [];
+$keep = $findQ !== '' ? ['q' => $findQ] : [];
+$whyNot = static fn (array $r): string => match ($r['status']) {
+    'complimentary' => 'Guest (free) summit ticket: the team registers their workshop.',
+    'cancelled' => 'Summit ticket cancelled. Ask the team.',
+    default => '',
+};
+// Live results while typing (the page's own script asks this; same access as the page).
+if ($tab === 'workshop' && Page::query('live') === '1') {
+    $wsId = Page::query('ws');
+    header('Content-Type: application/json; charset=utf-8');
+    header('Cache-Control: no-store');
+    echo json_encode(['q' => $findQ, 'short' => mb_strlen($findQ) < 2, 'people' => array_map(static fn (array $r): array => [
+        'name' => Registrations::fullName($r), 'email' => (string) $r['email'], 'phone' => '•••• ' . substr((string) preg_replace('/\D+/', '', (string) $r['phone']), -4),
+        'ref' => (string) $r['ref'], 'ticket' => Registrations::ticketName((string) $r['ticket_type']), 'why' => $whyNot($r),
+        'url' => $r['status'] === 'paid' ? 'desk.php?' . http_build_query(['tab' => 'workshop', 'ws' => $wsId, 'q' => $findQ, 'rid' => (int) $r['id']]) . '#pay' : null,
+    ], $found)], JSON_UNESCAPED_UNICODE);
+    exit;
 }
-$keep = array_filter(['email' => $findEmail, 'name' => $findName, 'phone' => Page::query('phone', 30)], static fn ($v): bool => $v !== '');
 $person = null;
 if ($tab === 'workshop' && (int) Page::query('rid') > 0) {
     $person = Registrations::find((int) Page::query('rid'));
@@ -286,27 +311,30 @@ $icon = static fn (string $d): string => '<svg viewBox="0 0 24 24" fill="none" s
   </header>
   <form method="get" action="desk.php#register" class="dk-find">
     <input type="hidden" name="tab" value="workshop"><input type="hidden" name="ws" value="<?= $e($wid) ?>">
-    <p class="dk-step"><b>1</b> Find their summit registration: their email (like on the website), or their name or phone number.</p>
-    <div class="dk-fields">
-      <label>Email<input type="email" name="email" dir="ltr" value="<?= $e($findEmail) ?>" placeholder="name@example.com" autocomplete="off"></label>
-      <label>Name<input name="name" value="<?= $e($findName) ?>" placeholder="First and last name" autocomplete="off"></label>
-      <label>Phone number<input type="tel" name="phone" dir="ltr" value="<?= $e(Page::query('phone', 30)) ?>" placeholder="0750 123 4567" autocomplete="off"></label>
+    <p class="dk-step"><b>1</b> Find the person: type their name, phone number, email or reference. Results appear as you type.</p>
+    <div class="dk-search">
+      <span class="dk-search-ic" aria-hidden="true"><?= Page::navIcon('search') ?></span>
+      <input type="search" name="q" value="<?= $e($findQ) ?>" placeholder="e.g. Aram Kamal · 0750 123 4567 · aram@gmail.com" aria-label="Find the person by name, phone, email or reference" autocomplete="off" autofocus data-desk-find="<?= $e($wid) ?>">
       <button class="dk-cta dk-find-btn">Find</button>
     </div>
   </form>
-  <?php if ($searched && !$found): ?>
-    <p class="desk-empty">Nobody with a paid summit ticket matches. Check the email, or <a href="<?= $e($deskUrl('register')) ?>"><b>register them first</b></a> in the Register tab.</p>
+  <div data-desk-results>
+  <?php if ($searched && mb_strlen($findQ) < 2): ?>
+    <p class="dk-hint">Type at least 2 letters or 4 digits.</p>
+  <?php elseif ($searched && !$found): ?>
+    <p class="desk-empty">Nobody found for “<?= $e($findQ) ?>”. Try only the first name, or the last 4 digits of the phone. Not registered yet? <a href="<?= $e($deskUrl('register')) ?>"><b>Register them first</b></a> in the Register tab.</p>
   <?php elseif ($found): ?>
   <div class="dk-people">
-    <?php foreach ($found as $row): $chosen = $person && (int) $person['id'] === (int) $row['id']; ?>
-    <a class="dk-person<?= $chosen ? ' is-on' : '' ?>" href="<?= $e($deskUrl('workshop', ['ws' => $wid] + $keep + ['rid' => (int) $row['id']])) ?>#pay">
+    <?php foreach ($found as $row): $chosen = $person && (int) $person['id'] === (int) $row['id']; $why = $whyNot($row); ?>
+    <<?= $why === '' ? 'a href="' . $e($deskUrl('workshop', ['ws' => $wid] + $keep + ['rid' => (int) $row['id']])) . '#pay"' : 'div' ?> class="dk-person<?= $chosen ? ' is-on' : '' ?><?= $why !== '' ? ' is-off' : '' ?>">
       <span class="dk-avatar"><?= $e(mb_strtoupper(mb_substr((string) $row['first_name'], 0, 1) . mb_substr((string) $row['father_name'], 0, 1))) ?></span>
-      <span class="dk-person-text"><b><?= $e(Registrations::fullName($row)) ?></b><small dir="ltr"><?= $e((string) $row['email']) ?> · <?= $e($masked((string) $row['phone'])) ?> · <?= $e($row['ref']) ?></small></span>
-      <em><?= $chosen ? 'Chosen' : 'Choose' ?></em>
-    </a>
+      <span class="dk-person-text"><b><?= $e(Registrations::fullName($row)) ?></b><small dir="ltr"><?= $e((string) $row['email']) ?> · <?= $e($masked((string) $row['phone'])) ?> · <?= $e($row['ref']) ?> · <?= $e(Registrations::ticketName((string) $row['ticket_type'])) ?></small><?php if ($why !== ''): ?><small class="dk-why"><?= $e($why) ?></small><?php endif; ?></span>
+      <?php if ($why === ''): ?><em><?= $chosen ? 'Chosen' : 'Choose' ?></em><?php endif; ?>
+    </<?= $why === '' ? 'a' : 'div' ?>>
     <?php endforeach; ?>
   </div>
   <?php endif; ?>
+  </div>
 
   <?php if ($person): ?>
   <div class="dk-pay-step" id="pay">

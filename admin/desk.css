@@ -117,3 +117,12 @@
 /* Free iSmile workshops are shown for information; the team registers them. */
 .dk-free-note{margin:0;padding:8px 12px;border-radius:10px;background:#fff6e0;color:#6b4800;font-weight:600;font-size:13px}
 .dk-card.is-free:not(.is-full) .dk-pay b{color:#0E7F7B}
+
+/* One search box for the person, results while typing */
+.dk-search{display:flex;align-items:center;gap:10px;padding:6px 6px 6px 16px;border-radius:18px;border:2px solid #9fd6d3;background:#fff}
+.dk-search:focus-within{border-color:#0E7F7B;box-shadow:0 0 0 4px rgba(22,166,161,.15)}
+.dk-search-ic .nav-icon{width:22px;height:22px;color:#16A6A1}
+.dk-search input{flex:1;min-width:0;min-height:52px;border:0;outline:none;font-size:18px;background:transparent}
+.dk-hint{margin:0;padding:10px 14px;border-radius:10px;background:#EAF5F4;color:#0E7F7B;font-weight:600}
+.dk-person.is-off{opacity:.8;background:#f7f7f7;border-style:dashed;cursor:default}
+.dk-why{color:#a3321f !important;font-weight:700;white-space:normal !important}

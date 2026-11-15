@@ -262,7 +262,7 @@ final class Page
         if ($registrationDetails || $current === 'tickets') echo '<link rel="stylesheet" href="registration-details.css?v=' . $v('registration-details.css') . '"><script src="registration-details.js?v=' . $v('registration-details.js') . '" defer></script>';
         if ($current === 'tickets') echo '<script src="tickets.js?v=' . $v('tickets.js') . '" defer></script>';
         if ($current === 'workshops') echo '<link rel="stylesheet" href="workshops.css?v=' . $v('workshops.css') . '"><script src="workshops.js?v=' . $v('workshops.js') . '" defer></script>';
-        if ($current === 'desk') echo '<link rel="stylesheet" href="desk.css?v=' . $v('desk.css') . '">';
+        if ($current === 'desk') echo '<link rel="stylesheet" href="desk.css?v=' . $v('desk.css') . '"><script src="desk.js?v=' . $v('desk.js') . '" defer></script>';
         echo '</head><body class="' . ($user ? 'admin-shell' . (self::viewOnlyHere() ? ' view-only' : '') : 'database-auth') . ($registrationDetails ? ' registration-detail-page' : '') . '" data-page="' . self::e($current) . '">';
         if ($user) {
             echo '<a class="skip-link" href="#main-content">Skip to content</a>';
