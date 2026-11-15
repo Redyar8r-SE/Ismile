@@ -17,10 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function show(answer) {
     box.replaceChildren();
-    if (answer.short) {
-      if (answer.q) box.append(el("p", "dk-hint", "Type at least 2 letters or 4 digits."));
-      return;
-    }
+    if (answer.short) return;   // empty box
     if (!answer.people.length) {
       const empty = el("p", "desk-empty", `Nobody found for “${answer.q}”. Try only the first name, or the last 4 digits of the phone. Not registered yet? Register them first in the Register tab.`);
       box.append(empty);
@@ -34,7 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
       row.append(el("span", "dk-avatar", initials));
       const text = el("span", "dk-person-text");
       text.append(el("b", "", p.name));
-      const line = el("small", "", `${p.email} · ${p.phone} · ${p.ref} · ${p.ticket}`);
+      const line = el("small", "", `${p.email} · ${p.phone} · ${p.ticket}`);
       line.dir = "ltr";
       text.append(line);
       if (p.why) text.append(el("small", "dk-why", p.why));

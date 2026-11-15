@@ -89,26 +89,34 @@ if ($tab === 'workshop') {
     }
 }
 $ws = $workshops[Page::query('ws')] ?? null;
-// Finding the person: ONE box for name, phone, email or reference. Forgiving:
-// name words in any order and partly typed, phone in any format, part of an email.
-// Paid summit tickets can be registered; guest and cancelled ones are shown with
-// the reason, so the volunteer knows why.
+// Finding the person: ONE box for name, phone or email. Forgiving: one letter is
+// enough (names starting with it); name words in any order and partly typed;
+// phone in any format; part of an email. Paid summit tickets can be registered;
+// guest and cancelled ones are shown with the reason, so the volunteer knows why.
 $findPeople = static function (string $q): array {
     $q = trim(preg_replace('/\s+/', ' ', $q));
-    if (mb_strlen($q) < 2) return [];
+    if ($q === '') return [];
+    $lower = mb_strtolower($q);
     $where = [];
     $args = [];
-    $words = array_slice(array_filter(explode(' ', mb_strtolower($q)), static fn ($w): bool => $w !== ''), 0, 5);
-    $name = [];
-    foreach ($words as $word) { $name[] = "LOWER(CONCAT_WS(' ', first_name, father_name, grandfather_name)) LIKE ?"; $args[] = '%' . addcslashes($word, '%_\\') . '%'; }
-    $where[] = '(' . implode(' AND ', $name) . ')';
-    $where[] = 'LOWER(email) LIKE ?'; $args[] = '%' . addcslashes(mb_strtolower($q), '%_\\') . '%';
-    $where[] = 'ref LIKE ?'; $args[] = '%' . addcslashes(strtoupper($q), '%_\\') . '%';
     $digits = (string) preg_replace('/\D+/', '', $q);
     $digits = (string) preg_replace('/^(00964|964|0)/', '', $digits);   // 0750…, +964 750…, 750… are the same number
-    if (strlen($digits) >= 4) { $where[] = 'phone LIKE ?'; $args[] = '%' . $digits . '%'; }
+    if (mb_strlen($q) === 1) {
+        // One letter: names starting with it (first, second or last name).
+        if (!ctype_digit($q)) {
+            foreach (['first_name', 'father_name', 'grandfather_name'] as $part) { $where[] = "LOWER($part) LIKE ?"; $args[] = addcslashes($lower, '%_\\') . '%'; }
+        }
+    } else {
+        $name = [];
+        foreach (array_slice(explode(' ', $lower), 0, 5) as $word) { $name[] = "LOWER(CONCAT_WS(' ', first_name, father_name, grandfather_name)) LIKE ?"; $args[] = '%' . addcslashes($word, '%_\\') . '%'; }
+        $where[] = '(' . implode(' AND ', $name) . ')';
+        $where[] = 'LOWER(email) LIKE ?'; $args[] = '%' . addcslashes($lower, '%_\\') . '%';
+    }
+    if ($digits !== '') { $where[] = 'phone LIKE ?'; $args[] = '%' . $digits . '%'; }
+    if (!$where) return [];
     return Db::all("SELECT * FROM registrations WHERE status IN ('paid','complimentary','cancelled') AND (" . implode(' OR ', $where) . ")
-        ORDER BY status = 'paid' DESC, LOWER(email) = ? DESC, first_name, father_name LIMIT 12", array_merge($args, [mb_strtolower($q)]));
+        ORDER BY status = 'paid' DESC, LOWER(email) = ? DESC, LOWER(first_name) LIKE ? DESC, first_name, father_name LIMIT 12",
+        array_merge($args, [$lower, addcslashes($lower, '%_\\') . '%']));
 };
 $findQ = mb_substr(trim(Page::query('q', 120)), 0, 120);
 $searched = $findQ !== '';
@@ -124,9 +132,9 @@ if ($tab === 'workshop' && Page::query('live') === '1') {
     $wsId = Page::query('ws');
     header('Content-Type: application/json; charset=utf-8');
     header('Cache-Control: no-store');
-    echo json_encode(['q' => $findQ, 'short' => mb_strlen($findQ) < 2, 'people' => array_map(static fn (array $r): array => [
+    echo json_encode(['q' => $findQ, 'short' => $findQ === '', 'people' => array_map(static fn (array $r): array => [
         'name' => Registrations::fullName($r), 'email' => (string) $r['email'], 'phone' => '•••• ' . substr((string) preg_replace('/\D+/', '', (string) $r['phone']), -4),
-        'ref' => (string) $r['ref'], 'ticket' => Registrations::ticketName((string) $r['ticket_type']), 'why' => $whyNot($r),
+        'ticket' => Registrations::ticketName((string) $r['ticket_type']), 'why' => $whyNot($r),
         'url' => $r['status'] === 'paid' ? 'desk.php?' . http_build_query(['tab' => 'workshop', 'ws' => $wsId, 'q' => $findQ, 'rid' => (int) $r['id']]) . '#pay' : null,
     ], $found)], JSON_UNESCAPED_UNICODE);
     exit;
@@ -311,24 +319,22 @@ $icon = static fn (string $d): string => '<svg viewBox="0 0 24 24" fill="none" s
   </header>
   <form method="get" action="desk.php#register" class="dk-find">
     <input type="hidden" name="tab" value="workshop"><input type="hidden" name="ws" value="<?= $e($wid) ?>">
-    <p class="dk-step"><b>1</b> Find the person: type their name, phone number, email or reference. Results appear as you type.</p>
+    <p class="dk-step"><b>1</b> Find the person: type their name, phone number or email. Results appear as you type.</p>
     <div class="dk-search">
       <span class="dk-search-ic" aria-hidden="true"><?= Page::navIcon('search') ?></span>
-      <input type="search" name="q" value="<?= $e($findQ) ?>" placeholder="e.g. Aram Kamal · 0750 123 4567 · aram@gmail.com" aria-label="Find the person by name, phone, email or reference" autocomplete="off" autofocus data-desk-find="<?= $e($wid) ?>">
+      <input type="search" name="q" value="<?= $e($findQ) ?>" placeholder="e.g. Aram Kamal · 0750 123 4567 · aram@gmail.com" aria-label="Find the person by name, phone or email" autocomplete="off" autofocus data-desk-find="<?= $e($wid) ?>">
       <button class="dk-cta dk-find-btn">Find</button>
     </div>
   </form>
   <div data-desk-results>
-  <?php if ($searched && mb_strlen($findQ) < 2): ?>
-    <p class="dk-hint">Type at least 2 letters or 4 digits.</p>
-  <?php elseif ($searched && !$found): ?>
+  <?php if ($searched && !$found): ?>
     <p class="desk-empty">Nobody found for “<?= $e($findQ) ?>”. Try only the first name, or the last 4 digits of the phone. Not registered yet? <a href="<?= $e($deskUrl('register')) ?>"><b>Register them first</b></a> in the Register tab.</p>
   <?php elseif ($found): ?>
   <div class="dk-people">
     <?php foreach ($found as $row): $chosen = $person && (int) $person['id'] === (int) $row['id']; $why = $whyNot($row); ?>
     <<?= $why === '' ? 'a href="' . $e($deskUrl('workshop', ['ws' => $wid] + $keep + ['rid' => (int) $row['id']])) . '#pay"' : 'div' ?> class="dk-person<?= $chosen ? ' is-on' : '' ?><?= $why !== '' ? ' is-off' : '' ?>">
       <span class="dk-avatar"><?= $e(mb_strtoupper(mb_substr((string) $row['first_name'], 0, 1) . mb_substr((string) $row['father_name'], 0, 1))) ?></span>
-      <span class="dk-person-text"><b><?= $e(Registrations::fullName($row)) ?></b><small dir="ltr"><?= $e((string) $row['email']) ?> · <?= $e($masked((string) $row['phone'])) ?> · <?= $e($row['ref']) ?> · <?= $e(Registrations::ticketName((string) $row['ticket_type'])) ?></small><?php if ($why !== ''): ?><small class="dk-why"><?= $e($why) ?></small><?php endif; ?></span>
+      <span class="dk-person-text"><b><?= $e(Registrations::fullName($row)) ?></b><small dir="ltr"><?= $e((string) $row['email']) ?> · <?= $e($masked((string) $row['phone'])) ?> · <?= $e(Registrations::ticketName((string) $row['ticket_type'])) ?></small><?php if ($why !== ''): ?><small class="dk-why"><?= $e($why) ?></small><?php endif; ?></span>
       <?php if ($why === ''): ?><em><?= $chosen ? 'Chosen' : 'Choose' ?></em><?php endif; ?>
     </<?= $why === '' ? 'a' : 'div' ?>>
     <?php endforeach; ?>
