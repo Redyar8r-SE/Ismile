@@ -23,10 +23,11 @@ if (!$ownerId) throw new RuntimeException('Enabled Owner required.');
 Db::transaction(static function () use ($definition, $ownerId): void {
     $existing = Db::one('SELECT * FROM workshops WHERE id=? FOR UPDATE', [$definition['id']]);
     if ($existing) {
-        // 15 Nov: the plain photo became a transparent cut-out (same file name).
-        if ($existing['photo_style'] === 'photo' && $definition['photo_style'] === 'cutout' && $existing['photo'] === $definition['photo']) {
-            Db::update('workshops', ['photo_style' => 'cutout', 'updated_at' => App::now()], 'id=?', [$definition['id']]);
-            Audit::log($ownerId, 'workshop.edit', 'workshop', null, ['id' => $definition['id'], 'photo_style' => 'cutout']);
+        // 15 Nov: the plain photo became a transparent cut-out under a new file name (old one was cached).
+        if ($existing['photo'] === 'assets/workshops/yassir-alfalahi.webp' && $definition['photo'] === 'assets/workshops/yassir-alfalahi-cutout.webp') {
+            Db::update('workshops', ['photo' => $definition['photo'], 'photo_style' => 'cutout', 'updated_at' => App::now()], 'id=?', [$definition['id']]);
+            Audit::log($ownerId, 'workshop.edit', 'workshop', null, ['id' => $definition['id'], 'photo' => $definition['photo'], 'photo_style' => 'cutout']);
+            $existing['photo'] = $definition['photo'];
             $existing['photo_style'] = 'cutout';
         }
         foreach ($definition as $field => $value) {
