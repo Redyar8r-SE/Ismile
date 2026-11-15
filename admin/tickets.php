@@ -38,12 +38,13 @@ $batch = $batchId ? BadgeBatches::find($batchId) : null;
 
 // Filters: kept in the address, so a filtered list can be reopened.
 $search = mb_substr(trim((string) ($_GET['q'] ?? '')), 0, 100);
-$type = in_array($_GET['type'] ?? '', ['professional', 'student', 'vip'], true) ? $_GET['type'] : '';
+$type = in_array($_GET['type'] ?? '', ['professional', 'student'], true) ? $_GET['type'] : '';
 $made = in_array($_GET['badge'] ?? '', ['none', 'made'], true) ? $_GET['badge'] : '';
 $arrived = in_array($_GET['arrived'] ?? '', ['yes', 'no'], true) ? $_GET['arrived'] : '';
 $qr = ($_GET['qr'] ?? '') === 'missing' ? 'missing' : '';
 $sort = in_array($_GET['sort'] ?? '', ['name_desc', 'newest'], true) ? $_GET['sort'] : 'name';
-$where = "r.status IN ('paid','complimentary') AND t.cancelled_at IS NULL";
+// VIP badges are made by hand, so VIP guests are not listed here.
+$where = "r.status IN ('paid','complimentary') AND t.cancelled_at IS NULL AND r.ticket_type <> 'vip'";
 $params = [];
 if ($search !== '') {
     $like = '%' . addcslashes($search, '%_\\') . '%';
@@ -92,7 +93,7 @@ $totals = $batch ? [] : Db::one("SELECT COUNT(*) AS guests, COALESCE(SUM(r.ticke
     COALESCE(SUM(EXISTS (SELECT 1 FROM badge_batch_items bi WHERE bi.registration_id=r.id)),0) AS made,
     COALESCE(SUM(EXISTS (SELECT 1 FROM ticket_attendance a WHERE a.ticket_id=t.id)),0) AS arrived,
     COALESCE(SUM(EXISTS (SELECT 1 FROM badge_ticket_codes c WHERE c.registration_id=r.id)),0) AS qr_saved
-    FROM registrations r JOIN tickets t ON t.registration_id=r.id WHERE r.status IN ('paid','complimentary') AND t.cancelled_at IS NULL");
+    FROM registrations r JOIN tickets t ON t.registration_id=r.id WHERE r.status IN ('paid','complimentary') AND t.cancelled_at IS NULL AND r.ticket_type <> 'vip'");
 $qrMissing = $batch ? 0 : (int) $totals['guests'] - (int) $totals['qr_saved'];
 // A link to this list with one filter changed (the others kept).
 $listUrl = static function (array $change) use ($search, $type, $made, $qr, $arrived, $sort): string {
@@ -163,7 +164,7 @@ if ($batchId && !$batch): ?>
 <?php else: ?>
 <form id="badge-batch-form" method="post" action="tickets.php" data-badge-batch-form><?= Page::csrfField() ?><input type="hidden" name="do" value="badge_batch"><input type="hidden" name="guests_json" value="" data-badge-guests></form>
 <?= Page::stats([
-    ['Guests with a ticket', number_format((int) $totals['guests']), (int) $totals['professional'] . ' Dentist · ' . (int) $totals['student'] . ' Student · ' . (int) $totals['vip'] . ' VIP', 'users', 'blue'],
+    ['Guests with a ticket', number_format((int) $totals['guests']), (int) $totals['professional'] . ' Dentist · ' . (int) $totals['student'] . ' Student · VIP not listed (made by hand)', 'users', 'blue'],
     ['Badges made', number_format((int) $totals['made']), number_format((int) $totals['guests'] - (int) $totals['made']) . ' not made yet', 'ticket', 'teal'],
     ['Badge batches', number_format(count($history)), 'Saved with Create batch', 'lists', 'violet'],
     ['Arrived', number_format((int) $totals['arrived']), 'Scanned at the door', 'checkin', 'green'],
@@ -182,7 +183,6 @@ if ($batchId && !$batch): ?>
       <?= $chip('All', (int) $totals['guests'], $type === '', $listUrl(['type' => ''])) ?>
       <?= $chip('Dentist', (int) $totals['professional'], $type === 'professional', $listUrl(['type' => 'professional']), 'blue') ?>
       <?= $chip('Student', (int) $totals['student'], $type === 'student', $listUrl(['type' => 'student']), 'green') ?>
-      <?= $chip('VIP', (int) $totals['vip'], $type === 'vip', $listUrl(['type' => 'vip']), 'gold') ?>
     </div>
     <div class="tk-chips" role="group" aria-label="Badge">
       <?= $chip('Not in a batch', (int) $totals['guests'] - (int) $totals['made'], $made === 'none', $listUrl(['badge' => $made === 'none' ? '' : 'none']), 'gold') ?>
