@@ -28,6 +28,8 @@ describe("public translations and complete content editing", () => {
     const speakers = JSON.parse(read("data/speakers.json"));
     for (const speaker of speakers) {
       for (const field of ["name", "role", "topic"]) {
+        // A speaker may have no title yet: then it is empty in every language.
+        if (field === "role" && !speaker.role.en && !speaker.role[code]) continue;
         expect(speaker[field][code], `${speaker.name.en}: ${field}`).toMatch(/[\u0600-\u06ff]/);
         expect(speaker[field][code]).not.toBe(speaker[field].en);
       }
