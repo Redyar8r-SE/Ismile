@@ -248,7 +248,7 @@ $check('Tickets page lists event tickets with the PSOOLA QR window', str_contain
 $html = $render('desk', '', 'volunteer');
 $check('Volunteer sees only Workshop & Register with the cash form', substr_count($html, 'class="nav-link') === 1 && str_contains($html, 'href="desk.php"')
     && !str_contains($html, 'How to use this page') && str_contains($html, 'id="caller-form"') && str_contains($html, 'id="cash-confirm"') && str_contains($html, 'desk.css')
-    && !str_contains($html, 'value="vip"') && !str_contains($html, 'Register with a free ticket') && !str_contains($html, 'action="registrations.php"'));
+    && str_contains($html, 'value="vip"') && !str_contains($html, 'Register with a free ticket') && !str_contains($html, 'action="registrations.php"'));
 $html = $render('desk', 'tab=workshop', 'volunteer');
 $check('Volunteer Workshop tab starts with finding the person', str_contains($html, 'Step 1 · Find the person') && str_contains($html, 'name="q"'));
 $html = $render('desk', '');

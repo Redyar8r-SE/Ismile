@@ -29,8 +29,6 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         Auth::checkCsrf();
         if ($do === 'cash') {
             if (!$canRegister) throw new UserError('Your account cannot register people.', null, 403);
-            // VIP badges and packages are arranged by the team, not at the desk.
-            if (($_POST['ticket'] ?? '') === 'vip') throw new UserError('VIP tickets are not sold here. Ask the team.');
             Page::useOnce();
             $checkout = \Ismile\Checkouts::createForCash($_POST, $user, null, false);   // no student card photo at the desk
             $sale = \Ismile\Payments\Payments::sellForCash($checkout, $user);
@@ -105,13 +103,15 @@ Page::top('Workshop & Register', 'desk');
 <?php if ($tab === 'register'):
     $value = static fn (string $key): string => Page::e(is_string($_POST[$key] ?? null) ? $_POST[$key] : '');
     $selected = static fn (string $key, string $option): string => ($_POST[$key] ?? '') === $option ? ' selected' : '';
-    $student = ($_POST['specialty'] ?? '') === 'student' || ($_POST['ticket'] ?? '') === 'student';
+    $vip = ($_POST['ticket'] ?? '') === 'vip';
+    $student = !$vip && (($_POST['specialty'] ?? '') === 'student' || ($_POST['ticket'] ?? '') === 'student');
     $psoola = \Ismile\Payments\PsoolaPrices::get();
     $site = \Ismile\SiteData::prices();
     $label = static fn (int $amount, string $currency): string => $amount <= 0 ? '–' : ($currency === 'USD' ? '$' . number_format($amount) : number_format($amount) . ' ' . $currency);
     $shown = [
         'professional' => $psoola ? $label($psoola['ticketTypes']['professional'], $psoola['currency']) : $label($site['professional'], $site['currency']),
         'student'      => $psoola ? $label($psoola['ticketTypes']['student'], $psoola['currency']) : $label($site['student'], $site['currency']),
+        'vip'          => $psoola ? $label($psoola['ticketTypes']['vip'], $psoola['currency']) : $label($site['vip'], $site['vipCurrency']),
         'lunch1'       => $psoola ? $label($psoola['lunch']['day1'], $psoola['currency']) : $label($site['lunchDay1'], $site['lunchCurrency']),
         'lunch2'       => $psoola ? $label($psoola['lunch']['day2'], $psoola['currency']) : $label($site['lunchDay2'], $site['lunchCurrency']),
     ];
@@ -142,7 +142,7 @@ Page::top('Workshop & Register', 'desk');
         <option value="">Choose specialty</option>
         <?php foreach (Registrations::SPECIALTY_NAMES as $key => $name): ?><option value="<?= $e($key) ?>"<?= $selected('specialty', $key) ?>><?= $e($name) ?></option><?php endforeach; ?>
       </select></label>
-      <label>Ticket *<select name="ticket" id="caller-ticket"><option value="professional"<?= !$student ? ' selected' : '' ?>>Dentist</option><option value="student"<?= $student ? ' selected' : '' ?>>Student</option></select></label>
+      <label>Ticket *<select name="ticket" id="caller-ticket"><option value="professional"<?= !$student && !$vip ? ' selected' : '' ?>>Dentist</option><option value="student"<?= $student ? ' selected' : '' ?>>Student</option><option value="vip"<?= $vip ? ' selected' : '' ?>>VIP</option></select></label>
     </div>
     <div class="row3" id="caller-student-fields">
       <label>University *<input name="university" id="caller-university" maxlength="160" value="<?= $value('university') ?>"<?= $student ? ' required' : '' ?>></label>
@@ -151,6 +151,8 @@ Page::top('Workshop & Register', 'desk');
   </fieldset>
   <fieldset class="form-section">
     <legend>3. Lunch <span class="legend-note">· optional</span></legend>
+    <label id="caller-vip-lunch"<?= !$vip ? ' hidden' : '' ?>>VIP included lunch<select name="vip_lunch_day"<?= !$vip ? ' disabled' : '' ?>><option value="1"<?= ($_POST['vip_lunch_day'] ?? '1') === '1' ? ' selected' : '' ?>>Day 1 · 19 November</option><option value="2"<?= ($_POST['vip_lunch_day'] ?? '') === '2' ? ' selected' : '' ?>>Day 2 · 20 November</option></select></label>
+    <?php if (\Ismile\VipPackages::enabled()): ?><label id="caller-vip-workshop"<?= !$vip ? ' hidden' : '' ?>>VIP included workshop<select name="vip_workshop"<?= !$vip ? ' disabled' : '' ?> required><option value="">Choose one included workshop</option><?php foreach (\Ismile\VipPackages::WORKSHOPS as $workshopId): $vipWorkshop = Workshops::find($workshopId); if (!$vipWorkshop) continue; ?><option value="<?= $e($workshopId) ?>"<?= $selected('vip_workshop', $workshopId) ?>><?= $e(Workshops::name($vipWorkshop)) ?></option><?php endforeach; ?></select></label><?php endif; ?>
     <div class="lunch-cards">
       <?php foreach ([1 => 'Thursday 19 Nov', 2 => 'Friday 20 Nov'] as $day => $date): ?>
       <label class="lunch-card"><input type="checkbox" name="lunch_day<?= $day ?>" value="1"<?= ($_POST['lunch_day' . $day] ?? '') === '1' ? ' checked' : '' ?>>
@@ -184,7 +186,7 @@ Page::top('Workshop & Register', 'desk');
 <aside class="cash-panel" aria-label="Prices and total">
   <section class="card cash-prices">
     <div class="cash-prices-head"><h2>Prices</h2></div>
-    <?php foreach ([['professional', 'Dentist', 'Professionals', 'teal'], ['student', 'Student', 'Every stage, 1st to 5th', 'blue']] as [$key, $name, $sub, $tone]): ?>
+    <?php foreach ([['professional', 'Dentist', 'Professionals', 'teal'], ['student', 'Student', 'Every stage, 1st to 5th', 'blue'], ['vip', 'VIP', 'One lunch included', 'gold']] as [$key, $name, $sub, $tone]): ?>
     <button type="button" class="cash-package tone-<?= $tone ?>" data-pick-ticket="<?= $key ?>" aria-pressed="false">
       <span class="cash-package-text"><b><?= $e($name) ?> <em>Selected</em></b><small><?= $e($sub) ?></small></span>
       <strong><?= $e($shown[$key]) ?></strong>
