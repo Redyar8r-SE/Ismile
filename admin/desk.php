@@ -45,9 +45,21 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             Page::useOnce();
             $person = Registrations::find((int) ($_POST['rid'] ?? 0));
             if (!$person || $person['status'] !== 'paid') throw new UserError('This person has no paid summit ticket. Register them first in the Register tab.');
-            $message = WorkshopCashSale::register($person, $user, $_POST);
+            // The amount is PSOOLA's current price for the chosen currency; the volunteer confirms receiving it.
+            $in = ['workshop' => (string) ($_POST['workshop'] ?? ''), 'cash_received' => (string) ($_POST['cash_received'] ?? ''), 'cash_currency' => 'IQD'];
+            $sold = Workshops::find($in['workshop']);
+            if (!$sold || $sold['organizer'] !== 'ismile') throw new UserError('Choose an iSmile workshop.');
+            $quote = WorkshopCashSale::quote($sold, WorkshopCatalog::one($sold['id'], true));
+            if ($quote['iqd'] === 0) {
+                throw new UserError('Free workshops are not registered here. Ask the team.');
+            } elseif (($_POST['cash_currency'] ?? 'IQD') === 'USD' && $quote['usdMinor']) {
+                $in = ['cash_currency' => 'USD', 'cash_amount' => number_format($quote['usdMinor'] / 100, 2, '.', '')] + $in;
+            } else {
+                $in['cash_amount'] = (string) $quote['iqd'];
+            }
+            $message = WorkshopCashSale::register($person, $user, $in);
             Page::flash('ok', 'Done! ' . Registrations::fullName($person) . ': ' . $message);
-            Page::redirect($deskUrl('workshop'));
+            Page::redirect($deskUrl('workshop', ['ws' => $in['workshop']]));
         }
         throw new UserError('Choose what to do.');
     } catch (UserError $error) {
@@ -58,7 +70,25 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     }
 }
 
-// ---------- Workshop tab: find the person, then the workshop ----------
+// ---------- Workshop tab: every iSmile workshop, then the person ----------
+// All active iSmile workshops, each with PSOOLA's current price and seats.
+// Company workshops are booked by phone with the company, so they are not here.
+$workshops = [];
+if ($tab === 'workshop') {
+    foreach (Workshops::all() as $w) {
+        if ($w['organizer'] !== 'ismile') continue;
+        $linked = !empty($w['providerEventId']) && $w['currency'] === 'IQD';
+        $catalog = $linked ? WorkshopCatalog::one($w['id']) : null;
+        $quote = null;
+        if ($linked) { try { $quote = WorkshopCashSale::quote($w, $catalog); } catch (UserError) {} }
+        // No free workshops at the desk: volunteers only take cash.
+        if (($quote && $quote['iqd'] === 0) || (!$quote && (int) $w['price'] === 0)) continue;
+        $seats = (int) ($catalog['seatsLeft'] ?? 0);
+        $workshops[$w['id']] = ['w' => $w, 'quote' => $quote, 'seats' => $seats,
+            'blocked' => !$linked ? 'Not on sale through Psoola. Ask the team.' : (!$quote ? 'Price not available from Psoola right now. Try again in a minute.' : ($seats < 1 ? 'Sold out.' : ''))];
+    }
+}
+$ws = $workshops[Page::query('ws')] ?? null;
 $search = mb_substr(trim(Page::query('q', 100)), 0, 100);
 $found = [];
 if ($tab === 'workshop' && mb_strlen($search) >= 2) {
@@ -73,18 +103,12 @@ if ($tab === 'workshop' && (int) Page::query('rid') > 0) {
     $person = Registrations::find((int) Page::query('rid'));
     if ($person && $person['status'] !== 'paid') $person = null;
 }
-// Only iSmile workshops sold through PSOOLA; company workshops are booked by phone with the company.
-$workshops = [];
-if ($tab === 'workshop' && $person) {
-    foreach (Workshops::all() as $w) {
-        if ($w['organizer'] !== 'ismile' || empty($w['providerEventId']) || $w['currency'] !== 'IQD') continue;
-        $quote = null;
-        $catalog = WorkshopCatalog::one($w['id']);
-        try { $quote = WorkshopCashSale::quote($w, $catalog); } catch (UserError) {}
-        $has = (bool) Db::value('SELECT id FROM workshop_bookings WHERE registration_id = ? AND workshop_id = ? AND removed_at IS NULL', [$person['id'], $w['id']]);
-        $workshops[] = ['w' => $w, 'quote' => $quote, 'seats' => (int) ($catalog['seatsLeft'] ?? 0), 'has' => $has];
-    }
-}
+$has = $ws && $person && (bool) Db::value('SELECT id FROM workshop_bookings WHERE registration_id = ? AND workshop_id = ? AND removed_at IS NULL', [$person['id'], $ws['w']['id']]);
+$money = static fn (array $quote): string => number_format($quote['iqd']) . ' IQD';
+$trainer = static function (array $w): string {
+    $speaker = $w['speaker'] ?? null;
+    return is_array($speaker) ? (string) ($speaker['en'] ?? '') : (string) $speaker;
+};
 $masked = static fn (string $phone): string => '•••• ' . substr(preg_replace('/\D+/', '', $phone), -4);
 $when = static function (array $w): string {
     $parts = array_filter([$w['scheduledDate'] ? date('D j M', strtotime((string) $w['scheduledDate'])) : '', trim(($w['startTime'] ?? '') . ($w['endTime'] ? '–' . $w['endTime'] : ''))]);
@@ -203,10 +227,32 @@ Page::top('Workshop & Register', 'desk');
 </div>
 
 <?php else: ?>
-<section class="card stack desk-find">
-  <?= Page::panelHeading('Step 1 · Find the person', 'They must already have a summit ticket. Search by name, phone or reference.', 'search') ?>
-  <form method="get" action="desk.php" class="desk-search" role="search">
-    <input type="hidden" name="tab" value="workshop">
+<section class="card stack">
+  <?= Page::panelHeading('iSmile workshops', 'Press Register (cash) on the workshop the person wants. The payment to collect is shown on each workshop.', 'workshops') ?>
+  <?php if (!$workshops): ?><?= Page::emptyState('No iSmile workshops', 'No iSmile workshop is active right now.', 'workshops') ?><?php endif; ?>
+  <div class="desk-workshops">
+  <?php foreach ($workshops as $id => ['w' => $w, 'quote' => $quote, 'seats' => $seats, 'blocked' => $blocked]): $on = $ws && $ws['w']['id'] === $id; ?>
+    <article class="desk-ws<?= $blocked !== '' ? ' is-blocked' : '' ?><?= $on ? ' is-on' : '' ?>">
+      <h3><?= $e(Workshops::name($w)) ?></h3>
+      <?php if ($trainer($w) !== ''): ?><p class="desk-trainer"><?= $e($trainer($w)) ?></p><?php endif; ?>
+      <p class="muted small"><?= $e(implode(' · ', array_filter([$when($w), $quote ? $seats . ' seat' . ($seats === 1 ? '' : 's') . ' left' : '']))) ?></p>
+      <div class="desk-pay"><span>Payment</span><b><?= $quote ? $e($money($quote)) : '–' ?></b><?php if ($quote && $quote['usdMinor']): ?><small>or $<?= $e(rtrim(rtrim(number_format($quote['usdMinor'] / 100, 2), '0'), '.')) ?></small><?php endif; ?></div>
+      <?php if ($blocked !== ''): ?>
+        <p class="desk-blocked"><?= $e($blocked) ?></p>
+      <?php else: ?>
+        <a class="btn green desk-big" href="<?= $e($deskUrl('workshop', array_filter(['ws' => $id, 'rid' => $person ? (int) $person['id'] : null]))) ?>#step2">Register (cash)</a>
+      <?php endif; ?>
+    </article>
+  <?php endforeach; ?>
+  </div>
+  <p class="muted small">Company workshops are not sold here: the person calls the company.</p>
+</section>
+
+<?php if ($ws && $ws['blocked'] === ''): $quote = $ws['quote']; $wid = $ws['w']['id']; ?>
+<section class="card stack desk-find" id="step2">
+  <?= Page::panelHeading('Register for: ' . Workshops::name($ws['w']), 'Find the person. They must already have a summit ticket. Search by name, phone or reference.', 'search') ?>
+  <form method="get" action="desk.php#step2" class="desk-search" role="search">
+    <input type="hidden" name="tab" value="workshop"><input type="hidden" name="ws" value="<?= $e($wid) ?>">
     <input type="search" name="q" value="<?= $e($search) ?>" placeholder="Name, phone or reference…" aria-label="Find the person" autocomplete="off" minlength="2" required>
     <button class="btn">Search</button>
   </form>
@@ -217,44 +263,31 @@ Page::top('Workshop & Register', 'desk');
     <?php foreach ($found as $row): ?><tr<?= $person && (int) $person['id'] === (int) $row['id'] ? ' class="is-on"' : '' ?>>
       <td><b><?= $e(Registrations::fullName($row)) ?></b></td><td><code><?= $e($row['ref']) ?></code></td><td dir="ltr"><?= $e($masked((string) $row['phone'])) ?></td>
       <td><?= $e(Registrations::ticketName((string) $row['ticket_type'])) ?></td>
-      <td><a class="btn small green" href="<?= $e($deskUrl('workshop', ['q' => $search, 'rid' => (int) $row['id']])) ?>#step2">Choose</a></td>
+      <td><a class="btn small green" href="<?= $e($deskUrl('workshop', ['ws' => $wid, 'q' => $search, 'rid' => (int) $row['id']])) ?>#step3">Choose</a></td>
     </tr><?php endforeach; ?>
   </tbody></table></div>
   <?php endif; ?>
 </section>
 
 <?php if ($person): ?>
-<section class="card stack desk-workshop" id="step2">
-  <?= Page::panelHeading('Step 2 · Choose the workshop and take the cash', 'For ' . Registrations::fullName($person) . ' (' . $person['ref'] . ', ' . $masked((string) $person['phone']) . '). Psoola emails the workshop ticket to ' . $person['email'] . '.', 'workshops') ?>
-  <?php if (!$workshops): ?>
-    <?= Page::emptyState('No workshops to sell', 'No iSmile workshop is on sale through Psoola right now.', 'workshops') ?>
+<section class="card stack desk-confirm" id="step3">
+  <?= Page::panelHeading('Take the payment', Registrations::fullName($person) . ' (' . $person['ref'] . ', ' . $masked((string) $person['phone']) . '). Psoola emails the workshop ticket to ' . $person['email'] . '.', 'workshops') ?>
+  <div class="desk-pay desk-pay-big"><span><?= $e(Workshops::name($ws['w'])) ?></span><b><?= $e($money($quote)) ?></b><?php if ($quote['usdMinor']): ?><small>or $<?= $e(rtrim(rtrim(number_format($quote['usdMinor'] / 100, 2), '0'), '.')) ?></small><?php endif; ?></div>
+  <?php if ($has): ?>
+    <p class="desk-blocked">Already registered for this workshop.</p>
+  <?php else: ?>
+  <form method="post" action="<?= $e($deskUrl('workshop', ['ws' => $wid, 'q' => $search, 'rid' => (int) $person['id']])) ?>#step3" class="stack">
+    <?= Page::csrfField() ?><?= Page::onceField() ?>
+    <input type="hidden" name="do" value="workshop_cash_sale"><input type="hidden" name="rid" value="<?= (int) $person['id'] ?>"><input type="hidden" name="workshop" value="<?= $e($wid) ?>">
+      <label class="inline desk-received"><input type="checkbox" name="cash_received" value="1" required> I have received the cash for this workshop.</label>
+      <div class="form-actions">
+        <button class="btn green desk-big" name="cash_currency" value="IQD">Received <?= $e(number_format($quote['iqd'])) ?> IQD · Register</button>
+        <?php if ($quote['usdMinor']): ?><button class="btn green desk-big" name="cash_currency" value="USD">Received $<?= $e(rtrim(rtrim(number_format($quote['usdMinor'] / 100, 2), '0'), '.')) ?> · Register</button><?php endif; ?>
+      </div>
+  </form>
   <?php endif; ?>
-  <div class="desk-workshops">
-  <?php foreach ($workshops as ['w' => $w, 'quote' => $quote, 'seats' => $seats, 'has' => $has]):
-      $free = $quote && $quote['iqd'] === 0;
-      $blocked = $has ? 'Already registered for this workshop.' : (!$quote ? 'Price not available from Psoola right now. Try again in a minute.' : ($seats < 1 ? 'Sold out.' : '')); ?>
-    <form method="post" action="<?= $e($deskUrl('workshop', ['q' => $search, 'rid' => (int) $person['id']])) ?>" class="desk-ws<?= $blocked !== '' ? ' is-blocked' : '' ?>">
-      <?= Page::csrfField() ?><?= Page::onceField() ?>
-      <input type="hidden" name="do" value="workshop_cash_sale"><input type="hidden" name="rid" value="<?= (int) $person['id'] ?>"><input type="hidden" name="workshop" value="<?= $e($w['id']) ?>">
-      <h3><?= $e(Workshops::name($w)) ?></h3>
-      <p class="muted small"><?= $e(implode(' · ', array_filter([$when($w), $quote ? $seats . ' seat' . ($seats === 1 ? '' : 's') . ' left' : '']))) ?></p>
-      <p class="desk-price"><?= $quote ? ($free ? 'Free · 0 IQD' : $e(number_format($quote['iqd'])) . ' IQD') : '–' ?></p>
-      <?php if ($blocked !== ''): ?>
-        <p class="desk-blocked"><?= $e($blocked) ?></p>
-      <?php elseif ($free): ?>
-        <input type="hidden" name="free_registration" value="1"><input type="hidden" name="cash_amount" value="0"><input type="hidden" name="cash_currency" value="IQD">
-        <p class="muted small">No cash for this workshop.</p>
-        <button class="btn green desk-big">Register &amp; send ticket</button>
-      <?php else: ?>
-        <input type="hidden" name="cash_currency" value="IQD"><input type="hidden" name="cash_amount" value="<?= (int) $quote['iqd'] ?>">
-        <label class="inline desk-received"><input type="checkbox" name="cash_received" value="1" required> I have received <b><?= $e(number_format($quote['iqd'])) ?> IQD</b> in cash.</label>
-        <button class="btn green desk-big">Register &amp; send ticket</button>
-      <?php endif; ?>
-    </form>
-  <?php endforeach; ?>
-  </div>
-  <p class="muted small">Company workshops are not sold here: the person calls the company. VIP workshops are arranged by the team.</p>
 </section>
+<?php endif; ?>
 <?php endif; ?>
 <?php endif;
 Page::bottom();

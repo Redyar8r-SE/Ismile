@@ -25,7 +25,11 @@ final class WorkshopCashSale
     public static function register(array $person,array $user,array $in): string
     {
         if(!Auth::canDeskWorkshop($user))throw new UserError('Your account cannot register workshop attendees.',null,403);
-        if(($in['free_registration']??'')==='1')return self::registerFree($person,$user,$in);
+        if(($in['free_registration']??'')==='1'){
+            // Volunteers only take cash: free workshops are registered by the team.
+            if(($user['role']??'')==='volunteer')throw new UserError('Free workshops are not registered here. Ask the team.',null,403);
+            return self::registerFree($person,$user,$in);
+        }
         if(($in['cash_received']??'')!=='1')throw new UserError('Confirm that you have received the cash before issuing a paid ticket.');
         $currency=(string)($in['cash_currency']??'IQD');$minor=self::amount((string)($in['cash_amount']??''),$currency);
         $workshop=Workshops::find((string)($in['workshop']??''));

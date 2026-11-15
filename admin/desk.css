@@ -24,3 +24,15 @@
 .desk-blocked{padding:8px 10px;border-radius:8px;background:#fff1ef;color:#a3321f;font-weight:600;font-size:13px}
 
 @media(max-width:600px){.desk-search{flex-direction:column}}
+
+/* Workshop tab: the payment on every workshop, the chosen workshop highlighted */
+.desk-trainer{margin:0;font-weight:600;color:#36585a}
+.desk-pay{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 10px;padding:10px 12px;border-radius:10px;background:#effaf5}
+.desk-pay span{width:100%;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#5b7477}
+.desk-pay b{font-size:24px;font-weight:800;color:#0f7a62}
+.desk-pay small{font-size:14px;font-weight:600;color:#36585a}
+.desk-pay-big b{font-size:32px}
+.desk-pay-big span{text-transform:none;letter-spacing:0;font-size:15px;color:#12302f}
+.desk-ws.is-on{border-color:#0f7a62;box-shadow:0 0 0 3px rgba(15,122,98,.18)}
+.desk-ws .btn{text-align:center;justify-content:center}
+.desk-ws.is-blocked .desk-pay b{color:#8a9aa3}
