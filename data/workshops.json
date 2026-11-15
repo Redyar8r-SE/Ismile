@@ -685,5 +685,63 @@
     "totalSeats": 25,
     "seatsLeft": 25,
     "availabilityVerified": false
+  },
+  {
+    "id": "implant-drilling-protocol",
+    "icon": "implant",
+    "title": {
+      "en": "Drilling Protocol for Placing Implants",
+      "ar": "بروتوكول الحفر لوضع زرعات الأسنان",
+      "ku": "پرۆتۆکۆڵی دریلکردن بۆ دانانی ئیمپڵانت"
+    },
+    "speaker": {
+      "en": "Dr. Yassir Alfalahi",
+      "ar": "د. ياسر الفلاحي",
+      "ku": "د. یاسر ئەلفەلاحی"
+    },
+    "credentials": null,
+    "company": {
+      "en": "Vanest",
+      "ar": "فانيست",
+      "ku": "ڤانێست"
+    },
+    "format": {
+      "en": "Workshop",
+      "ar": "ورشة عمل",
+      "ku": "وۆرکشۆپ"
+    },
+    "duration": {
+      "en": "2 hours",
+      "ar": "ساعتان",
+      "ku": "2 کاتژمێر"
+    },
+    "level": {
+      "en": "Suitable for all experience levels",
+      "ar": "مناسب لجميع مستويات الخبرة",
+      "ku": "گونجاوە بۆ هەموو ئاستەکانی ئەزموون"
+    },
+    "overview": {
+      "en": "Drilling protocol for placing implants with the OSSTEM 122 Taper Kit.",
+      "ar": "بروتوكول الحفر لوضع زرعات الأسنان باستخدام طقم OSSTEM 122 Taper Kit.",
+      "ku": "پرۆتۆکۆڵی دریلکردن بۆ دانانی ئیمپڵانت بە کیتی OSSTEM 122 Taper Kit."
+    },
+    "photo": "assets/workshops/yassir-alfalahi.webp",
+    "photoStyle": "photo",
+    "presenters": [],
+    "organizer": "company",
+    "companyPhone": "07713666464",
+    "companyPhones": [
+      "07713666464",
+      "07514203598"
+    ],
+    "scheduledDate": "2026-11-20",
+    "startTime": "09:00",
+    "endTime": "11:00",
+    "price": 0,
+    "currency": "IQD",
+    "displayPrice": null,
+    "totalSeats": 25,
+    "seatsLeft": 25,
+    "availabilityVerified": true
   }
 ]
