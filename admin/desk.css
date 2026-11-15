@@ -126,3 +126,6 @@
 .dk-hint{margin:0;padding:10px 14px;border-radius:10px;background:#EAF5F4;color:#0E7F7B;font-weight:600}
 .dk-person.is-off{opacity:.8;background:#f7f7f7;border-style:dashed;cursor:default}
 .dk-why{color:#a3321f !important;font-weight:700;white-space:normal !important}
+/* Every match is listed; the list scrolls inside its box. */
+.dk-count{margin:0;font-size:13px;font-weight:800;color:#0E7F7B;text-transform:uppercase;letter-spacing:.05em}
+.dk-people{max-height:min(520px,60vh);overflow-y:auto;padding-right:4px;overscroll-behavior:contain}

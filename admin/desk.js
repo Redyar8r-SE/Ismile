@@ -23,6 +23,8 @@ document.addEventListener("DOMContentLoaded", () => {
       box.append(empty);
       return;
     }
+    const count = answer.count ?? answer.people.length;
+    box.append(el("p", "dk-count", `${count} ${count === 1 ? "person" : "people"} found`));
     const list = el("div", "dk-people");
     for (const p of answer.people) {
       const row = el(p.url ? "a" : "div", "dk-person" + (p.url ? "" : " is-off"));

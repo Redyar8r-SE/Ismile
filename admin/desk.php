@@ -115,7 +115,7 @@ $findPeople = static function (string $q): array {
     if ($digits !== '') { $where[] = 'phone LIKE ?'; $args[] = '%' . $digits . '%'; }
     if (!$where) return [];
     return Db::all("SELECT * FROM registrations WHERE status IN ('paid','complimentary','cancelled') AND (" . implode(' OR ', $where) . ")
-        ORDER BY status = 'paid' DESC, LOWER(email) = ? DESC, LOWER(first_name) LIKE ? DESC, first_name, father_name LIMIT 12",
+        ORDER BY status = 'cancelled', LOWER(email) = ? DESC, LOWER(first_name) LIKE ? DESC, first_name, father_name, grandfather_name LIMIT 1000",   // everyone who matches, A–Z
         array_merge($args, [$lower, addcslashes($lower, '%_\\') . '%']));
 };
 $findQ = mb_substr(trim(Page::query('q', 120)), 0, 120);
@@ -131,7 +131,7 @@ if ($tab === 'workshop' && Page::query('live') === '1') {
     $wsId = Page::query('ws');
     header('Content-Type: application/json; charset=utf-8');
     header('Cache-Control: no-store');
-    echo json_encode(['q' => $findQ, 'short' => $findQ === '', 'people' => array_map(static fn (array $r): array => [
+    echo json_encode(['q' => $findQ, 'short' => $findQ === '', 'count' => count($found), 'people' => array_map(static fn (array $r): array => [
         'name' => Registrations::fullName($r), 'email' => (string) $r['email'], 'phone' => '•••• ' . substr((string) preg_replace('/\D+/', '', (string) $r['phone']), -4),
         'ticket' => Registrations::ticketName((string) $r['ticket_type']) . ($r['status'] === 'complimentary' ? ' · Guest ticket' : ''), 'why' => $whyNot($r),
         'url' => $whyNot($r) === '' ? 'desk.php?' . http_build_query(['tab' => 'workshop', 'ws' => $wsId, 'q' => $findQ, 'rid' => (int) $r['id']]) . '#pay' : null,
@@ -329,6 +329,7 @@ $icon = static fn (string $d): string => '<svg viewBox="0 0 24 24" fill="none" s
   <?php if ($searched && !$found): ?>
     <p class="desk-empty">Nobody found for “<?= $e($findQ) ?>”. Try only the first name, or the last 4 digits of the phone. Not registered yet? <a href="<?= $e($deskUrl('register')) ?>"><b>Register them first</b></a> in the Register tab.</p>
   <?php elseif ($found): ?>
+  <p class="dk-count"><?= count($found) ?> <?= count($found) === 1 ? 'person' : 'people' ?> found</p>
   <div class="dk-people">
     <?php foreach ($found as $row): $chosen = $person && (int) $person['id'] === (int) $row['id']; $why = $whyNot($row); ?>
     <<?= $why === '' ? 'a href="' . $e($deskUrl('workshop', ['ws' => $wid] + $keep + ['rid' => (int) $row['id']])) . '#pay"' : 'div' ?> class="dk-person<?= $chosen ? ' is-on' : '' ?><?= $why !== '' ? ' is-off' : '' ?>">
