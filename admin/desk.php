@@ -81,11 +81,12 @@ if ($tab === 'workshop') {
         $catalog = $linked ? WorkshopCatalog::one($w['id']) : null;
         $quote = null;
         if ($linked) { try { $quote = WorkshopCashSale::quote($w, $catalog); } catch (UserError) {} }
-        // No free workshops at the desk: volunteers only take cash.
-        if (($quote && $quote['iqd'] === 0) || (!$quote && (int) $w['price'] === 0)) continue;
+        // Every iSmile workshop is shown (full ones too). Free ones are not sold here:
+        // volunteers only take cash, so they have no Register button.
+        $free = ($quote && $quote['iqd'] === 0) || (!$quote && (int) $w['price'] === 0);
         $seats = (int) ($catalog['seatsLeft'] ?? 0);
-        $workshops[$w['id']] = ['w' => $w, 'quote' => $quote, 'seats' => $seats,
-            'blocked' => !$linked ? 'Not on sale through Psoola. Ask the team.' : (!$quote ? 'Price not available from Psoola right now. Try again in a minute.' : ($seats < 1 ? 'Sold out.' : ''))];
+        $workshops[$w['id']] = ['w' => $w, 'quote' => $quote, 'seats' => $seats, 'free' => $free,
+            'blocked' => !$linked ? 'Not on sale through Psoola. Ask the team.' : (!$quote ? 'Price not available from Psoola right now. Try again in a minute.' : ($seats < 1 ? 'Sold out.' : ($free ? 'Free' : '')))];
     }
 }
 $ws = $workshops[Page::query('ws')] ?? null;
@@ -247,14 +248,15 @@ $usd = static fn (array $q): string => $q['usdMinor'] ? '$' . rtrim(rtrim(number
 $icon = static fn (string $d): string => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . $d . '</svg>';
 ?>
 <div class="dk-grid">
-<?php if (!$workshops): ?><?= Page::emptyState('No iSmile workshops', 'No paid iSmile workshop is on sale right now.', 'workshops') ?><?php endif; ?>
-<?php foreach ($workshops as $id => ['w' => $w, 'quote' => $quote, 'seats' => $seats, 'blocked' => $blocked]):
+<?php if (!$workshops): ?><?= Page::emptyState('No iSmile workshops', 'No iSmile workshop is active right now.', 'workshops') ?><?php endif; ?>
+<?php foreach ($workshops as $id => ['w' => $w, 'quote' => $quote, 'seats' => $seats, 'blocked' => $blocked, 'free' => $isFree]):
     $img = $photo($w);
     $on = $ws && $ws['w']['id'] === $id;
     $full = $blocked === 'Sold out.';
+    $freeOpen = $blocked === 'Free';   // a free workshop with seats: shown, not sold here
     $date = $w['scheduledDate'] ? date('j F Y', strtotime((string) $w['scheduledDate'])) : '';
     $time = implode('–', array_filter([$clock($w['startTime'] ?? null), $clock($w['endTime'] ?? null)])); ?>
-  <article class="dk-card<?= ($w['photoStyle'] ?? '') === 'cutout' ? ' is-cutout' : '' ?><?= $on ? ' is-on' : '' ?><?= $full ? ' is-full' : '' ?><?= $blocked !== '' && !$full ? ' is-blocked' : '' ?>" data-workshop-id="<?= $e($id) ?>">
+  <article class="dk-card<?= ($w['photoStyle'] ?? '') === 'cutout' ? ' is-cutout' : '' ?><?= $on ? ' is-on' : '' ?><?= $full ? ' is-full' : '' ?><?= $blocked !== '' && !$full && !$freeOpen ? ' is-blocked' : '' ?><?= $isFree ? ' is-free' : '' ?>" data-workshop-id="<?= $e($id) ?>">
     <div class="dk-media<?= $img === '' ? ' no-photo' : '' ?>"><span class="dk-badge">Organized by iSmile</span><?php if ($img !== ''): ?><img src="<?= $e($img) ?>" alt="<?= $e($words($w['speaker'] ?? '')) ?>" loading="lazy"><?php endif; ?></div>
     <div class="dk-body">
       <h3><?= $e(Workshops::name($w)) ?></h3>
@@ -264,12 +266,12 @@ $icon = static fn (string $d): string => '<svg viewBox="0 0 24 24" fill="none" s
         <?php if ($words($w['duration'] ?? '') !== ''): ?><span class="dk-chip"><?= $icon('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>') ?><?= $e($words($w['duration'])) ?></span><?php endif; ?>
         <?php if ($words($w['level'] ?? '') !== ''): ?><span class="dk-chip"><?= $icon('<path d="M6 20v-4M12 20V10M18 20V4"/>') ?><?= $e($words($w['level'])) ?></span><?php endif; ?>
       </div>
-      <div class="dk-pay"><span>Payment (cash)</span><b><?= $quote ? $e(number_format($quote['iqd'])) . ' IQD' : '–' ?></b><?php if ($quote && $usd($quote) !== ''): ?><small>or <?= $e($usd($quote)) ?></small><?php endif; ?></div>
+      <div class="dk-pay"><span><?= $isFree ? 'Payment' : 'Payment (cash)' ?></span><b><?= $isFree ? 'Free' : ($quote ? $e(number_format($quote['iqd'])) . ' IQD' : '–') ?></b><?php if ($quote && $usd($quote) !== ''): ?><small>or <?= $e($usd($quote)) ?></small><?php endif; ?></div>
       <div class="dk-foot">
-        <div class="dk-seats"><span class="dk-seats-ic"><?= $icon('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>') ?></span><div><b><?= $full ? 'Fully booked' : ($blocked !== '' ? 'Not available' : 'Available') ?></b><?php if ($quote && $blocked === ''): ?><small><?= $seats ?> seat<?= $seats === 1 ? '' : 's' ?> left</small><?php elseif ($full): ?><small>No seats left</small><?php endif; ?></div></div>
+        <div class="dk-seats"><span class="dk-seats-ic"><?= $icon('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>') ?></span><div><b><?= $full ? 'Fully booked' : ($blocked !== '' && !$freeOpen ? 'Not available' : 'Available') ?></b><?php if ($quote && ($blocked === '' || $freeOpen)): ?><small><?= $seats ?> seat<?= $seats === 1 ? '' : 's' ?> left</small><?php elseif ($full): ?><small>No seats left</small><?php endif; ?></div></div>
         <?php if ($blocked === ''): ?><a class="dk-cta" href="<?= $e($deskUrl('workshop', ['ws' => $id] + ($person ? ['rid' => (int) $person['id']] : []))) ?>#register"><?= $icon('<rect x="2.5" y="6" width="19" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.6"/>') ?>Register (cash)<?= $icon('<path d="M5 12h14M13 6l6 6-6 6"/>') ?></a><?php endif; ?>
       </div>
-      <?php if ($blocked !== '' && !$full): ?><p class="desk-blocked"><?= $e($blocked) ?></p><?php endif; ?>
+      <?php if ($isFree): ?><p class="dk-free-note">Free workshop: the team registers it, not the desk.</p><?php elseif ($blocked !== '' && !$full): ?><p class="desk-blocked"><?= $e($blocked) ?></p><?php endif; ?>
     </div>
   </article>
 <?php endforeach; ?>

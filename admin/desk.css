@@ -114,3 +114,6 @@
 .dk-person.is-on em{background:#0E7F7B;color:#fff}
 .dk-pay-step{display:grid;gap:12px;padding-top:16px;border-top:1px solid #D3E6E6}
 .dk-pay-buttons{display:flex;flex-wrap:wrap;gap:12px}
+/* Free iSmile workshops are shown for information; the team registers them. */
+.dk-free-note{margin:0;padding:8px 12px;border-radius:10px;background:#fff6e0;color:#6b4800;font-weight:600;font-size:13px}
+.dk-card.is-free:not(.is-full) .dk-pay b{color:#0E7F7B}
