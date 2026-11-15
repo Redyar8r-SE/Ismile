@@ -129,3 +129,8 @@
 /* Every match is listed; the list scrolls inside its box. */
 .dk-count{margin:0;font-size:13px;font-weight:800;color:#0E7F7B;text-transform:uppercase;letter-spacing:.05em}
 .dk-people{max-height:min(520px,60vh);overflow-y:auto;padding-right:4px;overscroll-behavior:contain}
+/* The name list scrolls inside a frame with a clear scrollbar. */
+.dk-people{max-height:min(440px,55vh);padding:8px;border:1.5px solid #D3E6E6;border-radius:16px;background:#fff;scrollbar-width:auto;scrollbar-color:#16A6A1 #EAF5F4;box-shadow:inset 0 -18px 16px -16px rgba(18,59,74,.25)}
+.dk-people::-webkit-scrollbar{width:12px}
+.dk-people::-webkit-scrollbar-track{background:#EAF5F4;border-radius:12px}
+.dk-people::-webkit-scrollbar-thumb{background:#16A6A1;border-radius:12px;border:3px solid #EAF5F4}
