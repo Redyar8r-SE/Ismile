@@ -271,7 +271,7 @@ final class Page
             echo '<nav class="sidebar-nav" aria-label="Database pages">';
             $groups = [
                 'Workspace' => ['index'],
-                'Event operations' => ['desk', 'registrations', 'lists', 'association', 'payments', 'psoola-orders', 'workshops', 'sponsors', 'booths', 'map', 'checkin', 'tickets'],
+                'Event operations' => ['registrations', 'lists', 'association', 'payments', 'psoola-orders', 'workshops', 'sponsors', 'booths', 'map', 'checkin', 'tickets', 'desk'],
                 'Database' => ['communications', 'settings', 'users', 'backups'],
             ];
             foreach ($groups as $group => $files) {
