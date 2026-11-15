@@ -430,5 +430,185 @@
       "ku": "چاندنی ددانی یەک پارچە – دووبارە بیر بکەرەوە"
     },
     "photo": "assets/speakers/hersh-hasan-sherwani.webp"
+  },
+  {
+    "name": {
+      "en": "Dr. Ameer Alshabeeb",
+      "ar": "د. أمير الشبيب",
+      "ku": "د. ئەمیر ئەلشەبیب"
+    },
+    "role": {
+      "en": "Oral and Maxillofacial Surgery Resident",
+      "ar": "طبيب مقيم في جراحة الفم والوجه والفكين",
+      "ku": "ڕێزیدێنت لە نەشتەرگەریی دەم و ڕوو و چەناگە"
+    },
+    "topic": {
+      "en": "Intraoral Scan vs. Photogrammetry in the Full-Arch Immediate Loading Workflow",
+      "ar": "الماسح الضوئي داخل الفم مقابل التصوير الفوتوغرامتري في سير عمل التحميل الفوري للقوس الكامل",
+      "ku": "سکانی ناو دەم بەرامبەر فۆتۆگرامێتری لە ڕێکاری بارکردنی دەستبەجێی تەواوی کەوانەی ددان"
+    },
+    "photo": "assets/speakers/ameer-alshabeeb.webp"
+  },
+  {
+    "name": {
+      "en": "Assist. Prof. Dr. Suha Aloosi",
+      "ar": "الأستاذ المساعد د. سهى الآلوسي",
+      "ku": "پرۆفیسۆری یاریدەدەر د. سوها ئالووسی"
+    },
+    "role": {
+      "en": "Consultant · Assistant Professor",
+      "ar": "استشارية · أستاذ مساعد",
+      "ku": "ڕاوێژکار · پرۆفیسۆری یاریدەدەر"
+    },
+    "topic": {
+      "en": "When It Is Unavoidable: Sinus Lift – Tips and Tricks",
+      "ar": "عندما لا مفرّ منه: رفع الجيب الفكي – نصائح وأسرار",
+      "ku": "کاتێک ناچار دەبیت: بەرزکردنەوەی سینوس – ئامۆژگاری و نهێنییەکان"
+    },
+    "photo": "assets/speakers/suha-aloosi.webp"
+  },
+  {
+    "name": {
+      "en": "Dr. Mohammed Taib Fatih",
+      "ar": "د. محمد طيب فاتح",
+      "ku": "د. محەممەد تەیب فاتیح"
+    },
+    "role": {
+      "en": "Periodontist",
+      "ar": "أخصائي أمراض اللثة",
+      "ku": "پسپۆڕی نەخۆشییەکانی پووک"
+    },
+    "topic": {
+      "en": "Connective Tissue Graft: From Harvesting to Modification",
+      "ar": "طُعم النسيج الضام: من الحصاد إلى التعديل",
+      "ku": "چاندنی شانەی پەیوەندکار: لە وەرگرتنەوە تا گۆڕانکاری"
+    },
+    "photo": "assets/speakers/mohammed-taib-fatih.webp"
+  },
+  {
+    "name": {
+      "en": "Dr. Saman W. Boskani",
+      "ar": "د. سامان و. بوسكاني",
+      "ku": "د. سامان و. بۆسکانی"
+    },
+    "role": {
+      "en": "Maxillofacial Surgeon · HDD, FICMS, AAAM, GOCADI",
+      "ar": "جرّاح الوجه والفكين · HDD، FICMS، AAAM، GOCADI",
+      "ku": "نەشتەرگەری ڕوو و چەناگە · HDD، FICMS، AAAM، GOCADI"
+    },
+    "topic": {
+      "en": "From Oral Lesion to Cervical Lymphatics: A Dental Perspective on Neck Dissection",
+      "ar": "من آفة الفم إلى الأوعية اللمفاوية العنقية: منظور طب الأسنان في تشريح العنق الجراحي",
+      "ku": "لە برینی دەمەوە بۆ لیمفاوییەکانی مل: ڕوانگەی پزیشکیی ددان بۆ نەشتەرگەریی مل"
+    },
+    "photo": "assets/speakers/saman-boskani.webp"
+  },
+  {
+    "name": {
+      "en": "Dr. Saeed Tutmayi",
+      "ar": "د. سعيد توتمايي",
+      "ku": "د. سەعید توتمەیی"
+    },
+    "role": {
+      "en": "",
+      "ar": "",
+      "ku": ""
+    },
+    "topic": {
+      "en": "Sinus Floor Elevation: A Paradigm Shift from Principles and Planning to Minimally Invasive Practice",
+      "ar": "رفع أرضية الجيب الفكي: تحوّل جذري من المبادئ والتخطيط إلى الممارسة طفيفة التدخل",
+      "ku": "بەرزکردنەوەی بنکەی سینوس: گۆڕانێکی بنەڕەتی لە بنەما و پلاندانانەوە بۆ کاری کەم دەستتێوەردان"
+    },
+    "photo": "assets/speakers/saeed-tutmayi.webp"
+  },
+  {
+    "name": {
+      "en": "Dr. Gasha Othman",
+      "ar": "د. گەشە عثمان",
+      "ku": "د. گەشە عوسمان"
+    },
+    "role": {
+      "en": "BDS, MSc Prosthodontics",
+      "ar": "BDS، MSc في التعويضات السنية",
+      "ku": "BDS، MSc لە جێگرەوەکانی ددان"
+    },
+    "topic": {
+      "en": "Integrating Digital Jaw Motion Recording into Restorative Dentistry",
+      "ar": "دمج التسجيل الرقمي لحركة الفك في طب الأسنان الترميمي",
+      "ku": "بەکارهێنانی تۆمارکردنی دیجیتاڵیی جووڵەی شەویلاک لە چاککردنەوەی ددان"
+    },
+    "photo": "assets/speakers/gasha-othman.webp"
+  },
+  {
+    "name": {
+      "en": "Assist. Prof. Dr. Anwar Ahmad Amin",
+      "ar": "الأستاذ المساعد د. أنور أحمد أمين",
+      "ku": "پرۆفیسۆری یاریدەدەر د. ئەنوەر ئەحمەد ئەمین"
+    },
+    "role": {
+      "en": "Assistant Professor",
+      "ar": "أستاذ مساعد",
+      "ku": "پرۆفیسۆری یاریدەدەر"
+    },
+    "topic": {
+      "en": "Beyond the First Attempt: The Challenges of Orthodontic Retreatment",
+      "ar": "ما بعد المحاولة الأولى: تحديات إعادة علاج تقويم الأسنان",
+      "ku": "دوای هەوڵی یەکەم: ئاستەنگەکانی دووبارە ڕاستکردنەوەی ددان"
+    },
+    "photo": "assets/speakers/anwar-ahmad-amin.webp"
+  },
+  {
+    "name": {
+      "en": "Dr. Jegr Koyi",
+      "ar": "د. جگر كويي",
+      "ku": "د. جگەر کۆیی"
+    },
+    "role": {
+      "en": "Endodontist",
+      "ar": "أخصائي علاج جذور الأسنان",
+      "ku": "پسپۆڕی چارەسەری ڕەگی ددان"
+    },
+    "topic": {
+      "en": "10 Common Mistakes During RCT",
+      "ar": "10 أخطاء شائعة أثناء علاج قناة الجذر (RCT)",
+      "ku": "10 هەڵەی باو لە کاتی چارەسەری ڕەگی ددان (RCT)"
+    },
+    "photo": "assets/speakers/jegr-koyi.webp"
+  },
+  {
+    "name": {
+      "en": "Dr. Zhir Muharam",
+      "ar": "د. ژير محرم",
+      "ku": "د. ژیر موحەڕەم"
+    },
+    "role": {
+      "en": "B.D.S., M.Sc. in Prosthodontics",
+      "ar": "B.D.S.، M.Sc. في التعويضات السنية",
+      "ku": "B.D.S.، M.Sc. لە جێگرەوەکانی ددان"
+    },
+    "topic": {
+      "en": "How to Fail in Implant Prosthodontics: The Chain of Mistakes",
+      "ar": "كيف تفشل في تعويضات الزرعات السنية: سلسلة الأخطاء",
+      "ku": "چۆن لە جێگرەوەی سەر چاندنی ددان شکست دەهێنیت: زنجیرەی هەڵەکان"
+    },
+    "photo": "assets/speakers/zhir-muharam.webp"
+  },
+  {
+    "name": {
+      "en": "Dr. Ubaydah Falah Algailany",
+      "ar": "د. عبيدة فلاح الكيلاني",
+      "ku": "د. عوبەیدە فەلاح ئەلگەیلانی"
+    },
+    "role": {
+      "en": "Endodontist",
+      "ar": "أخصائي علاج جذور الأسنان",
+      "ku": "پسپۆڕی چارەسەری ڕەگی ددان"
+    },
+    "topic": {
+      "en": "Beyond the Naked Eye: Developing an AI Model to Detect Visible Defects in NiTi Endodontic Files",
+      "ar": "ما وراء العين المجردة: تطوير نموذج ذكاء اصطناعي لكشف العيوب المرئية في مبارد علاج الجذور NiTi",
+      "ku": "لە دەرەوەی چاوی ڕووت: پەرەپێدانی مۆدێلێکی زیرەکیی دەستکرد بۆ دۆزینەوەی کەموکوڕییە دیارەکان لە فایلەکانی NiTi ی چارەسەری ڕەگ"
+    },
+    "photo": "assets/speakers/ubaydah-algailany.webp"
   }
 ]
