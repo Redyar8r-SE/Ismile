@@ -555,6 +555,11 @@ if ($database) {
     $noQr = $badgeOf('ord_badge_short', $qrFor('BDG2', 'valid', null));
     $codes = \Ismile\PsoolaTickets::codesFor($owner, [Registrations::find($noQr)]);
     $check('without a qrCode the badge keeps the short ticket code', $codes[$noQr] === ['BDG2']);
+    $used = $badgeOf('ord_badge_used', $qrFor('BDG3', 'used'));
+    $codes = \Ismile\PsoolaTickets::codesFor($owner, [Registrations::find($used)]);
+    $check('an already scanned (used) ticket still gets its badge QR', $codes[$used] === ['PSOOLA:T:QBDG3']);
+    $cancelledGuest = $badgeOf('ord_badge_cancel', $qrFor('BDG4', 'cancelled'));
+    $check('a cancelled ticket gets no badge QR', $throws(fn () => \Ismile\PsoolaTickets::codesFor($owner, [Registrations::find($cancelledGuest)]), UserError::class, 'no active ticket code'));
     $check('the badge QR of a PSOOLA gate value is drawn', str_starts_with(\Ismile\Badges::pdf(Registrations::find($withQr), ['PSOOLA:T:0K2M8Q4ZJ5X7C1V9B3N6L8P2D']), '%PDF'));
 
     // A checkout sale (order.paid webhook): QRs come from GET /checkout-sessions/{id}.

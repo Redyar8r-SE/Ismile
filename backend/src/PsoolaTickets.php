@@ -278,7 +278,8 @@ final class PsoolaTickets
             $code = is_array($ticket) ? ($ticket['code'] ?? null) : null;
             if (!is_string($code) || trim($code) === '' || strlen($code) > 512 || isset($seen[$code])) throw new UserError('PSOOLA returned invalid ticket codes. Ask the Owner to review this order.');
             $seen[$code] = true;
-            if (!in_array($ticket['status'] ?? null, ['valid', 'transferred'], true)) continue;
+            // A scanned (used) ticket keeps the same QR, so its badge still gets it.
+            if (!in_array($ticket['status'] ?? null, ['valid', 'transferred', 'used'], true)) continue;
             // Encoded exactly as PSOOLA gives it: no trimming or other change.
             $qr = $ticket['qrCode'] ?? null;
             $codes[] = is_string($qr) && $qr !== '' && strlen($qr) <= 512 ? $qr : $code;
