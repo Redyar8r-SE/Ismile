@@ -146,7 +146,8 @@ final class Workshops
     {
         self::requireOwner($user);
         $fields = self::fields($in);
-        if (self::find($id) === null) {
+        $before = self::find($id);
+        if ($before === null) {
             throw new UserError('Workshop not found.');
         }
         $stored = self::storePhoto($photo, $id);
@@ -155,14 +156,12 @@ final class Workshops
         } elseif (($in['remove_photo'] ?? '') === '1') {
             $fields['photo'] = null;
         }
-        $oldSeats = 0;
         try {
-            $old = Db::transaction(static function () use ($id, $fields, &$oldSeats): ?string {
-                $row = Db::one('SELECT photo, price, currency, total_seats FROM workshops WHERE id = ? FOR UPDATE', [$id]);
+            $old = Db::transaction(static function () use ($id, $fields): ?string {
+                $row = Db::one('SELECT photo, price, currency FROM workshops WHERE id = ? FOR UPDATE', [$id]);
                 if ($row === null) {
                     throw new UserError('Workshop not found.');
                 }
-                $oldSeats = (int) $row['total_seats'];
                 $booked = self::booked($id);
                 if ($fields['total_seats'] < $booked) {
                     throw new UserError("$booked people are already booked, so the seats cannot be fewer than $booked.");
@@ -189,57 +188,187 @@ final class Workshops
         }
         Audit::log((int) $user['id'], 'workshop.edit', 'workshop', null, ['id' => $id] + self::auditFields($fields));
         try {
-            self::syncProviderSeats($id, (int) $fields['total_seats'], $oldSeats, (int) $user['id']);
+            self::syncProvider($id, $before, (int) $user['id']);
         } finally {
             self::syncWebsite();
         }
     }
 
     /**
-     * iSmile workshops sold through PSOOLA show PSOOLA's seats left on the
-     * website, so the seat number must also be the PSOOLA ticket quantity.
-     * Every save checks it (this also repairs an older change). If PSOOLA
-     * refuses a new number, our number goes back so the two never differ.
+     * iSmile workshops sold through PSOOLA: the website shows PSOOLA's seats,
+     * date and time, and PSOOLA sends the emails, so every save also changes
+     * PSOOLA: seats (ticket quantity), price, title, date and time, and the
+     * parts of PSOOLA's description and ticket text that changed (title,
+     * trainer, overview, date, time, "Limited to N attendees").
+     * Each save compares with PSOOLA, so it also repairs older changes.
+     * If PSOOLA refuses new seats, our seats go back so the two never differ.
      */
-    private static function syncProviderSeats(string $id, int $seats, int $oldSeats, int $userId): void
+    private static function syncProvider(string $id, array $before, int $userId): void
     {
         $w = self::find($id);
         if ($w === null || $w['organizer'] !== 'ismile' || empty($w['providerEventId']) || empty($w['providerTicketTypeId'])) {
             return;
         }
-        $event = 'manage/events/' . rawurlencode((string) $w['providerEventId']);
-        $ticketId = (string) $w['providerTicketTypeId'];
-        $quantity = static function () use ($event, $ticketId): int {
-            $answer = (new Payments\PsoolaGateway())->partnerRequest('GET', $event);
-            foreach (($answer['json']['ticketTypes'] ?? []) as $ticket) {
-                if (($ticket['_id'] ?? $ticket['id'] ?? null) === $ticketId && is_numeric($ticket['quantity'] ?? null)) {
-                    return (int) $ticket['quantity'];
+        $gateway = new Payments\PsoolaGateway();
+        $base = 'manage/events/' . rawurlencode((string) $w['providerEventId']);
+        $ticketPath = '/ticket-types/' . rawurlencode((string) $w['providerTicketTypeId']);
+        $call = static function (string $method, string $path = '', ?array $body = null) use ($gateway, $base): array {
+            $answer = $gateway->partnerRequest($method, $base . $path, $body, $method === 'GET' ? [] : ['Idempotency-Key: ismile-ws-' . bin2hex(random_bytes(12))]);
+            if (!in_array($answer['status'], [200, 201], true)) {
+                throw new \RuntimeException($method . ' ' . ($path ?: 'event') . ': HTTP ' . $answer['status'] . ' ' . ($answer['json']['error']['message'] ?? ''));
+            }
+            return $answer['json'] ?? [];
+        };
+        $find = static function (array $managed, string $list, ?string $wanted): ?array {
+            foreach (($managed[$list] ?? []) as $item) {
+                if ($wanted !== null && ($item['_id'] ?? $item['id'] ?? null) === $wanted) {
+                    return $item;
                 }
             }
-            throw new \RuntimeException('PSOOLA ticket lookup HTTP ' . $answer['status']);
+            return null;
         };
+        $zone = new \DateTimeZone('Asia/Baghdad');
+        $ms = static fn (?string $date, ?string $time): ?int => $date && $time ? (new \DateTimeImmutable($date . ' ' . $time, $zone))->getTimestamp() * 1000 : null;
+        $at = static fn (int $ms): \DateTimeImmutable => (new \DateTimeImmutable('@' . intdiv($ms, 1000)))->setTimezone($zone);
+        $timeText = static function (int $start, int $end) use ($at): string {
+            $a = $at($start);
+            $b = $at($end);
+            return $a->format('A') === $b->format('A') ? $a->format('g:i') . '–' . $b->format('g:i A') : $a->format('g:i A') . '–' . $b->format('g:i A');
+        };
+        $seats = (int) $w['totalSeats'];
+        $oldSeats = (int) ($before['totalSeats'] ?? $seats);
+        $problems = [];
+        $changed = false;
         try {
-            if ($quantity() !== $seats) {
-                $answer = (new Payments\PsoolaGateway())->partnerRequest('PATCH', $event . '/ticket-types/' . rawurlencode($ticketId),
-                    ['ticket' => ['quantity' => $seats]], ['Idempotency-Key: ismile-seats-' . bin2hex(random_bytes(12))]);
-                if (!in_array($answer['status'], [200, 201], true)) {
-                    throw new \RuntimeException('HTTP ' . $answer['status'] . ' ' . ($answer['json']['error']['message'] ?? ''));
+            $managed = $call('GET');
+            $event = $managed['event'] ?? [];
+            $show = $find($managed, 'shows', $w['providerShowId'] ?? null);
+            $ticket = $find($managed, 'ticketTypes', (string) $w['providerTicketTypeId']);
+            if ($ticket === null) {
+                throw new \RuntimeException('PSOOLA ticket not found.');
+            }
+            // 1. Seats first: they decide "Fully booked".
+            if ((int) ($ticket['quantity'] ?? -1) !== $seats) {
+                $changed = true;
+                try {
+                    $call('PATCH', $ticketPath, ['ticket' => ['quantity' => $seats]]);
+                    if ((int) ($find($call('GET'), 'ticketTypes', (string) $w['providerTicketTypeId'])['quantity'] ?? -1) !== $seats) {
+                        throw new \RuntimeException('PSOOLA still shows a different seat number.');
+                    }
+                } catch (\Throwable $error) {
+                    App::log('error', 'PSOOLA workshop seats not changed', ['workshop' => $id, 'seats' => $seats, 'error' => $error->getMessage()]);
+                    if ($seats !== $oldSeats) {
+                        Db::update('workshops', ['total_seats' => $oldSeats, 'updated_at' => App::now()], 'id = ?', [$id]);
+                        $problems[] = "the seats ($seats), so the seats stay at $oldSeats";
+                    } else {
+                        $problems[] = "the seats ($seats)";
+                    }
+                    $seats = (int) ($ticket['quantity'] ?? $oldSeats);
                 }
-                if ($quantity() !== $seats) {
-                    throw new \RuntimeException('PSOOLA still shows a different seat number.');
+            }
+            // Text pairs: what PSOOLA says now -> what it should say.
+            $pairs = [];
+            $newTitle = (string) ($w['title']['en'] ?? '');
+            if ($newTitle !== '') {
+                $pairs[] = [(string) ($event['title'] ?? ''), $newTitle];
+                $pairs[] = [(string) ($before['title']['en'] ?? ''), $newTitle];
+            }
+            foreach (['speaker', 'credentials', 'overview'] as $field) {
+                $pairs[] = [(string) ($before[$field]['en'] ?? ''), (string) ($w[$field]['en'] ?? '')];
+            }
+            $start = $ms($w['scheduledDate'], $w['startTime']);
+            $end = $ms($w['scheduledDate'], $w['endTime']);
+            $timesOk = $start !== null && $end !== null && $end > $start;
+            if ($show !== null && $timesOk && is_numeric($show['dateTime'] ?? null) && is_numeric($show['endTime'] ?? null)) {
+                $pairs[] = [$at((int) $show['dateTime'])->format('j F Y'), $at($start)->format('j F Y')];
+                $pairs[] = [$timeText((int) $show['dateTime'], (int) $show['endTime']), $timeText($start, $end)];
+            }
+            $swap = static function (string $text) use ($pairs, $seats): string {
+                foreach ($pairs as [$from, $to]) {
+                    if ($from !== '' && $to !== '' && $from !== $to) {
+                        $text = str_replace($from, $to, $text);
+                    }
                 }
-                Audit::log($userId, 'workshop.psoola_seats', 'workshop', null, ['id' => $id, 'seats' => $seats]);
+                return (string) preg_replace('/Limited to \d+ attendees/', "Limited to $seats attendees", $text);
+            };
+            // 2. Date and time of the session.
+            if ($show !== null && $timesOk && ((int) ($show['dateTime'] ?? 0) !== $start || (int) ($show['endTime'] ?? 0) !== $end)) {
+                $changed = true;
+                try {
+                    $call('PATCH', '/shows/' . rawurlencode((string) $w['providerShowId']), ['dateTime' => $start, 'endTime' => $end]);
+                } catch (\Throwable $error) {
+                    $problems[] = 'the date and time';
+                    App::log('error', 'PSOOLA workshop time not changed', ['workshop' => $id, 'error' => $error->getMessage()]);
+                }
+            }
+            // 3. Event title, dates and description.
+            $patch = [];
+            if ($newTitle !== '' && ($event['title'] ?? '') !== $newTitle) {
+                $patch['title'] = $newTitle;
+                $patch['titleI18n'] = array_merge((array) ($event['titleI18n'] ?? []), ['en' => $newTitle]);
+            }
+            if ($timesOk && isset($event['startDate']) && ((int) $event['startDate'] !== $start || (int) ($event['endDate'] ?? 0) !== $end)) {
+                $patch['startDate'] = $start;
+                $patch['endDate'] = $end;
+            }
+            if (is_string($event['description'] ?? null) && $swap($event['description']) !== $event['description']) {
+                $patch['description'] = $swap($event['description']);
+            }
+            if ($patch) {
+                $changed = true;
+                try {
+                    $call('PATCH', '', ['event' => $patch]);
+                } catch (\Throwable $error) {
+                    $problems[] = 'the title and description';
+                    App::log('error', 'PSOOLA workshop event not changed', ['workshop' => $id, 'fields' => array_keys($patch), 'error' => $error->getMessage()]);
+                }
+            }
+            // 4. Ticket price and ticket text.
+            $patch = [];
+            if ($w['currency'] === 'IQD' && is_numeric($ticket['price'] ?? null) && (int) $ticket['price'] !== (int) $w['price']) {
+                $patch['price'] = (int) $w['price'];
+            }
+            if (is_string($ticket['description'] ?? null) && $swap($ticket['description']) !== $ticket['description']) {
+                $patch['description'] = $swap($ticket['description']);
+            }
+            if ($patch) {
+                $changed = true;
+                try {
+                    $call('PATCH', $ticketPath, ['ticket' => $patch]);
+                } catch (\Throwable $error) {
+                    $problems[] = isset($patch['price']) ? 'the price and ticket text' : 'the ticket text';
+                    App::log('error', 'PSOOLA workshop ticket not changed', ['workshop' => $id, 'fields' => array_keys($patch), 'error' => $error->getMessage()]);
+                }
             }
         } catch (\Throwable $error) {
-            App::log('error', 'PSOOLA workshop seats not changed', ['workshop' => $id, 'seats' => $seats, 'error' => $error->getMessage()]);
-            if ($seats === $oldSeats) {
-                return;   // nothing new was asked; the other changes stay saved
+            // PSOOLA could not be read: nothing was sent there.
+            App::log('error', 'PSOOLA workshop not reachable', ['workshop' => $id, 'error' => $error->getMessage()]);
+            if ($seats !== $oldSeats) {
+                Db::update('workshops', ['total_seats' => $oldSeats, 'updated_at' => App::now()], 'id = ?', [$id]);
+                $problems[] = "the seats ($seats), so the seats stay at $oldSeats";
+            } elseif (self::providerFieldsChanged($before, $w)) {
+                $problems[] = 'the new details';
             }
-            Db::update('workshops', ['total_seats' => $oldSeats, 'updated_at' => App::now()], 'id = ?', [$id]);
-            throw new UserError("PSOOLA did not accept $seats seats, so the seats stay at $oldSeats. Your other changes are saved. Try again in a minute.");
         } finally {
             @unlink(App::storage('tmp/workshop-catalog-' . $id . '.json'));
         }
+        if ($changed && !$problems) {
+            Audit::log($userId, 'workshop.psoola_sync', 'workshop', null, ['id' => $id, 'seats' => $seats]);
+        }
+        if ($problems) {
+            throw new UserError('Saved here, but PSOOLA did not accept ' . implode(', ', $problems) . '. Press Save again in a minute.');
+        }
+    }
+
+    /** Did a field that PSOOLA shows change in this save? */
+    private static function providerFieldsChanged(array $before, array $after): bool
+    {
+        foreach (['title', 'speaker', 'credentials', 'overview', 'scheduledDate', 'startTime', 'endTime', 'price', 'totalSeats'] as $key) {
+            if (($before[$key] ?? null) != ($after[$key] ?? null)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -385,7 +514,7 @@ final class Workshops
         });
         Audit::log((int) $user['id'], 'workshop.seats', 'workshop', null, ['id' => $id, 'from' => $from, 'to' => $seats]);
         try {
-            self::syncProviderSeats($id, $seats, $from, (int) $user['id']);
+            self::syncProvider($id, ['totalSeats' => $from] + (self::find($id) ?? []), (int) $user['id']);
         } finally {
             self::syncWebsite();
         }
