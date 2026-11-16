@@ -307,7 +307,6 @@ final class Page
             'registrations' => 'Look after every guest, from their first call to their event ticket.',
             'lists' => 'Find the right people and prepare clear lists for your team.',
             'association' => 'Prepare guest handovers, record money sent and download each saved batch.',
-            'association-guests' => 'Guests the Slemani Association registers. PSOOLA emails their QR ticket at once, and the association pays iSmile later.',
             'payments' => 'Review payments, follow up on issues and keep every amount accounted for.',
             'psoola-orders' => 'Every sale Psoola recorded for iSmile, card and cash, read live from Psoola and matched to your registrations.',
             'workshops' => 'Manage your programme. Take care of every attendee.',
