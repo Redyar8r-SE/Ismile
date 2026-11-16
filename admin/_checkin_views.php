@@ -39,6 +39,11 @@ $select=static function(string $key,string $label,array $choices) use($filters):
     foreach($choices as $value=>$text) $html.='<option value="'.Page::e($value).'"'.($filters[$key]===(string)$value?' selected':'').'>'.Page::e($text).'</option>';
     return $html.'</select></label>';
 };
+$segments=static function(string $key,string $label,array $choices) use($filters): string {
+    $html='<fieldset class="filter-seg"><legend>'.Page::e($label).'</legend><div>';
+    foreach($choices as $value=>$text) $html.='<label><input type="radio" name="'.Page::e($key).'" value="'.Page::e((string)$value).'"'.($filters[$key]===(string)$value?' checked':'').'><span>'.Page::e($text).'</span></label>';
+    return $html.'</div></fieldset>';
+};
 $distinct=static function(string $key,string $label) use($filters,$options,$select): string {
     $values=$options[$key]; if($filters[$key]!=='' && !in_array($filters[$key],$values,true)) $values[]=$filters[$key];
     return $select($key,$label,[''=>'All '.strtolower($label)]+array_combine($values,$values));
@@ -69,13 +74,16 @@ $attendedRate=$guestCount>0?(int)round($attendedCount*100/$guestCount):0;
 </section>
 </div>
 <form method="get" class="card registration-filter-card" data-instant-search data-search-regions="guest-totals guest-directory"><input type="hidden" name="tab" value="<?= $e($tab) ?>"><?php if($day): ?><input type="hidden" name="day" value="<?= $day ?>"><?php endif; ?>
-  <div class="registration-filter-main"><label class="filter-field filter-search"><span>Name, reference or ticket number</span><input type="search" name="q" value="<?= $e($filters['q']) ?>" placeholder="Find a guest…"></label>
-    <?= $select('attendance','Event attendance',$choices) ?>
-    <?= $select('type','Ticket category',[''=>'All categories']+\Ismile\Registrations::TICKET_NAMES) ?>
-    <?= $select('lunch','Lunch booked',[''=>'Any lunch booking','day1'=>'Day 1','day2'=>'Day 2','both'=>'Both days','any'=>'At least one day','none'=>'No lunch booked']) ?>
+  <div class="registration-search-row">
+    <label class="filter-search registration-search"><?= Page::navIcon('search') ?><span class="sr-only">Name, reference or ticket number</span><input type="search" name="q" value="<?= $e($filters['q']) ?>" placeholder="Search name, reference or ticket number"></label>
     <?= $select('sort','Sort by',['name'=>'Guest name','latest'=>'Latest arrival first','earliest'=>'Earliest arrival first']) ?>
   </div>
-  <div class="registration-filter-footer"><details class="registration-advanced-filters"<?= $advanced?' open':'' ?>><summary>More filters: ID, guest details<?= $isAttended?' and arrival times':'' ?></summary><div class="registration-filter-grid">
+  <div class="registration-quick">
+    <?= $segments('attendance',$isAttended?'Attended on':'Attendance',$isAttended?['attended'=>'Either day','day1'=>'Day 1','day2'=>'Day 2','both'=>'Both days']:[''=>'All','attended'=>'Attended','none'=>'Not yet','day1'=>'Day 1','day2'=>'Day 2','both'=>'Both']) ?>
+    <?= $segments('type','Ticket',[''=>'All']+\Ismile\Registrations::TICKET_NAMES) ?>
+    <?= $segments('lunch','Lunch booked',[''=>'Any','day1'=>'Day 1','day2'=>'Day 2','both'=>'Both','none'=>'None']) ?>
+  </div>
+  <div class="registration-filter-footer"><details class="registration-advanced-filters"<?= $advanced?' open':'' ?>><summary><?= Page::navIcon('settings') ?><span>More filters: ID, guest details<?= $isAttended?' and arrival times':'' ?></span></summary><div class="registration-filter-grid">
     <?= $select('id','Student ID',[''=>'Any ID status','present'=>'ID on file','missing'=>'No ID on file','removed'=>'ID removed']) ?>
     <?= $select('specialty','Specialty',[''=>'All specialties']+Registrations::SPECIALTY_NAMES) ?>
     <?= $select('status','Registration status',[''=>'Paid and complimentary','paid'=>'Paid','complimentary'=>'Complimentary']) ?>
