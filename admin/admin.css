@@ -1601,3 +1601,11 @@ body:has([data-guest-tickets]) .page-actions .btn{background:transparent;border:
 .account-table{margin-top:14px}
 @media(max-width:900px){.account-overview{grid-template-columns:1fr}.account-added{grid-template-columns:1fr}}
 @media(max-width:600px){.account-facts{grid-template-columns:1fr}}
+.hide-pages{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin:16px 0}
+.hide-page{display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:#fff;cursor:pointer}
+.hide-page input{width:18px;height:18px;flex:none;accent-color:var(--red-d)}
+.hide-page span{display:flex;flex-direction:column}
+.hide-page small{font-size:11.5px;color:var(--muted)}
+.hide-page:has(input:checked){background:var(--red-l);border-color:#f5c6bc}
+.hide-page.is-home{opacity:.6;cursor:default}
+.added-by-tag.hidden-tag{background:var(--red-l);color:var(--red-d)}

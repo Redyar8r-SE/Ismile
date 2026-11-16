@@ -8,6 +8,7 @@ declare(strict_types=1);
 use Ismile\Admin\Page;
 use Ismile\Auth;
 use Ismile\Db;
+use Ismile\Erase;
 
 if (!isset($user, $roleGuide) || ($user['role'] ?? '') !== 'owner') { http_response_code(403); exit; }
 
@@ -38,7 +39,7 @@ $labels = [
     'user.workshop_booking_grant' => 'Workshop booking access given', 'user.workshop_booking_revoke' => 'Workshop booking access removed',
     'user.badge_certificate_grant' => 'Badges and certificates access given', 'user.badge_certificate_revoke' => 'Badges and certificates access removed',
     'user.association_manage_grant' => 'Association access given', 'user.association_manage_revoke' => 'Association access removed',
-    'user.password' => 'Password changed', 'user.reset_2fa' => 'Phone code reset', 'user.disable' => 'Account disabled', 'user.enable' => 'Account enabled',
+    'user.hidden_pages' => 'Hidden pages changed', 'user.password' => 'Password changed', 'user.reset_2fa' => 'Phone code reset', 'user.disable' => 'Account disabled', 'user.enable' => 'Account enabled',
 ];
 $label = static fn (string $action): string => $labels[$action] ?? ucfirst(str_replace(['_', '.'], [' ', ': '], $action));
 $id = (int) $account['id'];
@@ -75,7 +76,7 @@ foreach (Page::MENU as $file => [$pageLabel, $area]) {
   </div>
   <dl class="account-facts">
     <div><dt>Role</dt><dd><b><?= $e($role[1]) ?></b><small><?= $e($role[2]) ?></small></dd></div>
-    <div><dt>Extra access</dt><dd><?php if ($grants): foreach (array_keys($grants) as $grant): ?><span class="added-by-tag association"><?= $e($grant) ?></span> <?php endforeach; else: ?><span class="muted">None</span><?php endif; ?></dd></div>
+    <div><dt>Extra access</dt><dd><?php if ($grants): foreach (array_keys($grants) as $grant): ?><span class="added-by-tag association"><?= $e($grant) ?></span> <?php endforeach; else: ?><span class="muted">None</span><?php endif; ?><?php foreach (Auth::hiddenPages($account) as $hiddenArea): ?><span class="added-by-tag hidden-tag">Hidden: <?= $e(Auth::HIDEABLE_PAGES[$hiddenArea]) ?></span> <?php endforeach; ?></dd></div>
     <div><dt>Account made</dt><dd><?= $e(date('j M Y, H:i', strtotime((string) $account['created_at']))) ?></dd></div>
     <div><dt>Last sign-in</dt><dd><?= $account['last_login_at'] ? $e(date('j M Y, H:i', strtotime((string) $account['last_login_at']))) : '<span class="muted">Never signed in</span>' ?></dd></div>
   </dl>
@@ -88,6 +89,24 @@ foreach (Page::MENU as $file => [$pageLabel, $area]) {
     <?php if (!$pages): ?><span class="muted">No pages.</span><?php endif; ?>
   </div>
 </section>
+
+<?php if ($account['role'] !== 'owner' && !Erase::isMainOwnerAccount($account)):
+    $hidden = Auth::hiddenPages($account);
+    $roleOnly = $account; $roleOnly['hidden_pages'] = '';
+    $home = ['checkin' => 'checkin', 'map_viewer' => 'map', 'badges' => 'certificates', 'volunteer' => 'desk'][$account['role']] ?? ''; ?>
+<section class="card">
+  <div class="panel-heading"><span class="panel-icon"><?= Page::navIcon('settings') ?></span><div><h2>Hide pages from this account</h2><p>Tick a page to hide it. A hidden page leaves the menu and cannot be opened, whatever the role allows.</p></div></div>
+  <form method="post" action="users.php" class="hide-pages-form">
+    <?= Page::csrfField() ?><input type="hidden" name="do" value="hidden_pages"><input type="hidden" name="id" value="<?= $id ?>"><input type="hidden" name="back" value="account">
+    <div class="hide-pages">
+      <?php foreach (Auth::HIDEABLE_PAGES as $area => $pageName): if (!Auth::can($roleOnly, $area) && !in_array($area, $hidden, true)) continue; $isHome = $area === $home; ?>
+      <label class="hide-page<?= $isHome ? ' is-home' : '' ?>"><input type="checkbox" name="hide[]" value="<?= $e($area) ?>"<?= in_array($area, $hidden, true) ? ' checked' : '' ?><?= $isHome ? ' disabled' : '' ?>><span><b><?= $e($pageName) ?></b><small><?= $isHome ? 'Start page of this role' : (in_array($area, $hidden, true) ? 'Hidden' : 'Shown') ?></small></span></label>
+      <?php endforeach; ?>
+    </div>
+    <div class="form-actions"><button class="btn">Save hidden pages</button></div>
+  </form>
+</section>
+<?php endif; ?>
 
 <section class="card">
   <div class="panel-heading"><span class="panel-icon"><?= Page::navIcon('registrations') ?></span><div><h2>What this account has done</h2><p><?= number_format($total) ?> recorded actions in the activity log<?= $recent ? ', the latest on ' . $e(date('j M Y, H:i', strtotime((string) $recent[0]['created_at']))) : '' ?>.</p></div></div>

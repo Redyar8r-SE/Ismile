@@ -185,10 +185,32 @@ final class Auth
     }
 
     /** True when this role may use this area. The Owner may use everything. */
+    /**
+     * Pages the Owner may hide for one account (Users › What this account can
+     * do): area => menu name. Each area is one page (Payments also hides
+     * Psoola orders; Sponsors also hides Booths).
+     */
+    public const HIDEABLE_PAGES = [
+        'map' => 'Map', 'desk' => 'Workshop & Register', 'payments' => 'Payments and Psoola orders', 'sponsors' => 'Sponsors and Booths',
+        'association' => 'Association', 'checkin' => 'Registration (check-in)', 'certificates' => 'Tickets & Certificates',
+        'communications' => 'Communication center', 'workshops' => 'Workshops', 'association-guests' => 'Association guests',
+    ];
+
+    /** The pages the Owner hid for this account. */
+    public static function hiddenPages(array $user): array
+    {
+        $hidden = array_filter(array_map('trim', explode(',', (string) ($user['hidden_pages'] ?? ''))));
+        return array_values(array_intersect($hidden, array_keys(self::HIDEABLE_PAGES)));
+    }
+
     public static function can(array $user, string $area): bool
     {
         if ($user['role'] === 'owner') {
             return true;
+        }
+        // A page the Owner hid for this account is closed, whatever else allows it.
+        if (in_array($area, self::hiddenPages($user), true)) {
+            return false;
         }
         // Association guests: everyone with the guest list, and anyone the Owner allowed on the Users page (any role).
         if ($area === 'association-guests') {
@@ -255,6 +277,7 @@ final class Auth
     /** Everything on Association guests: the Owner, Registration staff, or an individual grant (Users page). */
     public static function canManageAssociationGuests(array $user): bool
     {
+        if (($user['role'] ?? '') !== 'owner' && in_array('association-guests', self::hiddenPages($user), true)) return false;
         return ($user['role'] ?? '') === 'owner'
             || (int) ($user['association_guest_access'] ?? 0) === 1
             || (($user['role'] ?? '') !== 'volunteer' && self::can($user, 'edit'));
@@ -281,18 +304,21 @@ final class Auth
     /** Registration staff book paid workshops for any attendee; other roles need an individual grant. */
     public static function canBookWorkshops(array $user): bool
     {
+        if ($user['role'] !== 'owner' && in_array('workshops', self::hiddenPages($user), true)) return false;
         return in_array($user['role'], ['owner', 'registration'], true) || (int) ($user['workshop_booking_access'] ?? 0) === 1;
     }
 
     /** Workshop & Register, Register tab: sell a summit ticket for cash. */
     public static function canDeskRegister(array $user): bool
     {
+        if (in_array('desk', self::hiddenPages($user), true)) return false;
         return $user['role'] === 'volunteer' || ($user['role'] !== 'badges' && self::can($user, 'edit'));
     }
 
     /** Workshop & Register, Workshop tab: sell a workshop for cash to a registered guest. */
     public static function canDeskWorkshop(array $user): bool
     {
+        if (in_array('desk', self::hiddenPages($user), true)) return false;
         return $user['role'] === 'volunteer' || self::canBookWorkshops($user);
     }
 

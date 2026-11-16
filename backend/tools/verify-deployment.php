@@ -250,7 +250,8 @@ $check('Viewer sees Association guests in view-only mode without the Add tab', s
 // PSOOLA gate scans count as attendance only on these two days (Attendance::currentDay).
 $check('Event days are Thursday 19 and Friday 20 November 2026, so PSOOLA gate scans count as attendance', \Ismile\Settings::get('event_day1') === '2026-11-19' && \Ismile\Settings::get('event_day2') === '2026-11-20' && \Ismile\Attendance::currentDay('2026-11-19') === 1 && \Ismile\Attendance::currentDay('2026-11-20') === 2);
 $check('Association guests database parts exist (guest table and the access column)', (int) Db::value("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'association_guests'") === 1
-    && (int) Db::value("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'admin_users' AND column_name = 'association_guest_access'") === 1);
+    && (int) Db::value("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'admin_users' AND column_name = 'association_guest_access'") === 1
+    && (int) Db::value("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'admin_users' AND column_name = 'hidden_pages'") === 1);
 $someAccount = (int) Db::value("SELECT id FROM admin_users WHERE email NOT LIKE '%@deleted.invalid' ORDER BY id DESC LIMIT 1");
 $html = $render('users', 'account=' . $someAccount);
 $check('Users: "What this account can do" page shows role, pages and activity (Owner only)', str_contains($html, 'Pages this account can open') && str_contains($html, 'What this account has done') && str_contains($render('users', 'account=' . $someAccount, 'viewer'), '<h2>Not allowed</h2>'));

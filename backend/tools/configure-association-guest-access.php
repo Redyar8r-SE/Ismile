@@ -19,6 +19,9 @@ use Ismile\Auth;
 use Ismile\Db;
 
 const ACCOUNT_SHA256 = ['249b7812f9b8aef9c6ef1f31d3f34c8f852a0a90b6a94578737d8f28d3fd8d70'];
+// The Owner also asked to hide these pages for the same account (once; after
+// that the Owner sets them on Users › What this account can do).
+const HIDE_PAGES = ['map', 'desk'];
 
 $found = 0;
 foreach (Db::all("SELECT id, email FROM admin_users WHERE disabled_at IS NULL AND email NOT LIKE '%@deleted.invalid'") as $row) {
@@ -34,16 +37,30 @@ foreach (Db::all("SELECT id, email FROM admin_users WHERE disabled_at IS NULL AN
         if ($user['role'] === 'owner') {
             return "The account is an Owner and already has everything.\n";
         }
-        if ((int) $user['association_guest_access'] === 1) {
-            return "Association guests access is already on for the chosen account.\n";
-        }
-        // The Owner's own choice on the Users page is never overruled.
-        if (Db::value("SELECT COUNT(*) FROM audit_log WHERE action IN ('user.association_guest_grant','user.association_guest_revoke') AND target_type = 'admin_user' AND target_id = ?", [$user['id']])) {
-            return "The Owner already set this account's Association guests access on the Users page: left as it is.\n";
-        }
         $ownerId = (int) Db::value("SELECT id FROM admin_users WHERE role = 'owner' AND disabled_at IS NULL ORDER BY id LIMIT 1");
         if (!$ownerId) {
             throw new RuntimeException('An enabled Owner is required.');
+        }
+        $said = '';
+        // Hidden pages: set once; the Owner's own choice on Users is never overruled.
+        if (!Db::value("SELECT COUNT(*) FROM audit_log WHERE action = 'user.hidden_pages' AND target_type = 'admin_user' AND target_id = ?", [$user['id']])) {
+            $hide = array_values(array_unique(array_merge(Auth::hiddenPages($user), HIDE_PAGES)));
+            Db::update('admin_users', ['hidden_pages' => implode(',', $hide)], 'id = ?', [$user['id']]);
+            Audit::log($ownerId, 'user.hidden_pages', 'admin_user', (int) $user['id'], ['hidden' => $hide, 'by' => 'deploy']);
+            $user = Db::one('SELECT * FROM admin_users WHERE id = ?', [$user['id']]);
+            foreach (HIDE_PAGES as $area) {
+                if (Auth::can($user, $area)) {
+                    throw new RuntimeException('Hidden pages verification failed; no changes saved.');
+                }
+            }
+            $said = 'Pages hidden as asked. ';
+        }
+        if ((int) $user['association_guest_access'] === 1) {
+            return $said . "Association guests access is already on for the chosen account.\n";
+        }
+        // The Owner's own choice on the Users page is never overruled.
+        if (Db::value("SELECT COUNT(*) FROM audit_log WHERE action IN ('user.association_guest_grant','user.association_guest_revoke') AND target_type = 'admin_user' AND target_id = ?", [$user['id']])) {
+            return $said . "The Owner already set this account's Association guests access on the Users page: left as it is.\n";
         }
         Db::update('admin_users', ['association_guest_access' => 1], 'id = ?', [$user['id']]);
         Audit::log($ownerId, 'user.association_guest_grant', 'admin_user', (int) $user['id'], ['by' => 'deploy']);

@@ -60,6 +60,16 @@ Page::action(static function () use ($user): string {
             Db::update('admin_users', ['association_guest_access' => $enabled], 'id=?', [$target['id']]);
             Audit::log((int) $user['id'], $enabled ? 'user.association_guest_grant' : 'user.association_guest_revoke', 'admin_user', (int) $target['id']);
             return $enabled ? 'Association guests access granted: they can see the guests, add by association and download the PDF.' : 'Association guests access removed.';
+        case 'hidden_pages':
+            if ($target['role'] === 'owner') throw new UserError('An Owner always sees every page.');
+            $home = ['checkin' => 'checkin', 'map_viewer' => 'map', 'badges' => 'certificates', 'volunteer' => 'desk'][$target['role']] ?? '';
+            $chosen = array_values(array_intersect(array_keys(Auth::HIDEABLE_PAGES), array_map('strval', (array) ($_POST['hide'] ?? []))));
+            if ($home !== '' && in_array($home, $chosen, true)) {
+                throw new UserError(Auth::HIDEABLE_PAGES[$home] . ' is this role\'s start page, so it cannot be hidden.');
+            }
+            Db::update('admin_users', ['hidden_pages' => implode(',', $chosen)], 'id = ?', [$target['id']]);
+            Audit::log((int) $user['id'], 'user.hidden_pages', 'admin_user', (int) $target['id'], ['hidden' => $chosen]);
+            return $chosen ? 'Saved. Hidden for ' . $target['name'] . ': ' . implode(', ', array_map(static fn (string $area): string => Auth::HIDEABLE_PAGES[$area], $chosen)) . '.' : 'Saved. ' . $target['name'] . ' sees every page the role allows.';
         case 'registration_access':
             $enabled = ($_POST['enabled'] ?? '') === '1' ? 1 : 0;
             Db::update('admin_users', ['registration_manage_access' => $enabled], 'id=?', [$target['id']]);
@@ -99,7 +109,7 @@ Page::action(static function () use ($user): string {
             return "Phone code reset for {$target['email']}. They set it up again at their next sign-in.";
     }
     throw new UserError('Unknown action.');
-}, 'users.php');
+}, 'users.php' . (($_POST['back'] ?? '') === 'account' ? '?account=' . (int) ($_POST['id'] ?? 0) : ''));
 
 // Deleted accounts stay only as names in the history, not in this list.
 $users = Db::all("SELECT * FROM admin_users WHERE email NOT LIKE '%@deleted.invalid' ORDER BY disabled_at IS NOT NULL, role, name");
