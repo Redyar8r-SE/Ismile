@@ -41,6 +41,9 @@ final class Page
 
     public static array $user = [];
 
+    /** True while the "Not allowed" page is shown. */
+    private static bool $refused = false;
+
     /** Small inline icons keep the navigation independent of external fonts. */
     public static function navIcon(string $name): string
     {
@@ -160,6 +163,7 @@ final class Page
         if (!$allowed) {
             http_response_code(403);
             self::$user = $user;
+            self::$refused = true;   // no "View only" banner on a page the account cannot open at all
             self::top('Not allowed', '');
             echo '<div class="card"><h2>Not allowed</h2><p>Your role (' . self::e($user['role']) . ') cannot open this page.</p><p><a class="btn" href="' . self::home($user) . '">Go to your start page</a></p></div>';
             self::bottom();
@@ -336,6 +340,7 @@ final class Page
     /** A Viewer on a page whose forms would change data (their buttons are hidden by admin.js). */
     private static function viewOnlyHere(): bool
     {
+        if (self::$refused) return false;
         return self::$user && !Auth::viewerMayPost(self::$user, (string) ($_SERVER['SCRIPT_NAME'] ?? ''));
     }
 
