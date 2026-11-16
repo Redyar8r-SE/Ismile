@@ -13,7 +13,7 @@ $render=static function(string $query='',string $role='owner'):string{
 };
 $html=$render('id=crown-vs-veneer');
 $check('approved page loads its isolated assets and master-detail layout',str_contains($html,'workshops.css')&&str_contains($html,'workshops.js')&&str_contains($html,'ws-columns')&&str_contains($html,'ws-attendees'));
-$check('paid and complimentary summaries remain separate',str_contains($html,'Confirmed bookings')&&str_contains($html,'Guest tickets excluded')&&str_contains($html,'Complimentary · 0 IQD'));
+$check('paid and complimentary summaries remain separate',str_contains($html,'Confirmed bookings')&&str_contains($html,'Guest tickets excluded')&&str_contains($html,'Complimentary, 0 IQD'));
 $check('default interface exposes no numerical seat availability',!str_contains($html,'Seats available now')&&!str_contains($html,'seats left')&&!str_contains($html,'available now')&&!str_contains($html,'<progress'));
 $check('owner keeps workshop creation editing capacity and visibility',str_contains($html,'value="ws_create"')&&str_contains($html,'value="ws_update"')&&str_contains($html,'name="total_seats"')&&str_contains($html,'data-settings-capacity')&&str_contains($html,'name="website_status"'));
 $check('owner retains all language photo company and schedule fields',str_contains($html,'name="title_ar"')&&str_contains($html,'name="title_ku"')&&str_contains($html,'name="photo"')&&str_contains($html,'name="company_phone"')&&str_contains($html,'name="scheduled_date"'));

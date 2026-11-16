@@ -254,7 +254,7 @@ final class Page
     {
         $user = self::$user;
         echo '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">';
-        echo '<meta name="robots" content="noindex"><title>' . self::e($title) . ' · iSmile Database</title><link rel="icon" href="../assets/favicon-32.png?v=1" type="image/png" sizes="32x32">';
+        echo '<meta name="robots" content="noindex"><title>' . self::e($title) . ' – iSmile Database</title><link rel="icon" href="../assets/favicon-32.png?v=1" type="image/png" sizes="32x32">';
         // The version follows the files' date, so a change is never hidden by the browser's cache.
         $v = static fn (string $file): int => (int) @filemtime(App::siteFile('admin/' . $file)) ?: 1;
         echo '<link rel="stylesheet" href="admin.css?v=' . $v('admin.css') . '"><script src="admin.js?v=' . $v('admin.js') . '" defer></script>';
@@ -482,7 +482,7 @@ final class Page
                 . '<div class="form-actions compact"><button class="btn small green">' . self::navIcon('check') . '<span>Mark paid</span></button></div></form>';
         }
         if ($paid && $isOwner) {
-            $html .= '<div class="row-secondary-actions">' . $open . '<input type="hidden" name="payment_status" value="unpaid"><button class="btn small ghost"' . self::confirm('gold', 'undo', 'Undo this workshop payment?', 'Only for a mistake: the booking goes back to not paid.', [...$facts, ['cash', Workshops::money((int) $booking['amount_paid'], $currency) . ($booking['paid_how'] ? ' · ' . $booking['paid_how'] : '')]], ['note' => 'Workshop money is not refunded.', 'yes' => 'Yes, undo payment', 'no' => 'No, keep it paid']) . '>Undo (mistake)</button></form></div>';
+            $html .= '<div class="row-secondary-actions">' . $open . '<input type="hidden" name="payment_status" value="unpaid"><button class="btn small ghost"' . self::confirm('gold', 'undo', 'Undo this workshop payment?', 'Only for a mistake: the booking goes back to not paid.', [...$facts, ['cash', Workshops::money((int) $booking['amount_paid'], $currency) . ($booking['paid_how'] ? ', ' . $booking['paid_how'] : '')]], ['note' => 'Workshop money is not refunded.', 'yes' => 'Yes, undo payment', 'no' => 'No, keep it paid']) . '>Undo (mistake)</button></form></div>';
         }
         if (!$paid || $isOwner) {
             $html .= '<div class="row-danger-actions">' . $open . '<input type="hidden" name="remove" value="1"><button class="btn small red"' . self::confirm('gold', 'user-x', 'Remove this workshop booking?', 'The seat becomes free on the website.', [...$facts, ...($paid ? [['ban', 'The money is NOT refunded']] : [])], ['yes' => 'Yes, remove', 'no' => 'No, keep the booking']) . '>Remove</button></form></div>';

@@ -84,7 +84,8 @@ if($selected){
     $activity=Db::all("SELECT a.action,a.created_at,u.name FROM audit_log a LEFT JOIN admin_users u ON u.id=a.user_id WHERE a.action LIKE 'workshop.%' AND COALESCE(JSON_UNQUOTE(JSON_EXTRACT(CASE WHEN JSON_VALID(a.details) THEN a.details ELSE '{}' END,'$.workshop')),JSON_UNQUOTE(JSON_EXTRACT(CASE WHEN JSON_VALID(a.details) THEN a.details ELSE '{}' END,'$.id')))=? ORDER BY a.id DESC LIMIT 20",[$open]);
 }
 $filteredPeople=array_values(array_filter($people,static fn($p)=>(!$ticketFilter||$p['payment_status']===$ticketFilter)&&($attendeeQuery===''||mb_stripos(Registrations::fullName($p).' '.$p['ref'].' '.$p['phone'],$attendeeQuery)!==false)));
-$page=max(1,(int)Page::query('page'));$pages=max(1,(int)ceil(count($filteredPeople)/10));$page=min($page,$pages);$shownPeople=array_slice($filteredPeople,($page-1)*10,10);
+// Every attendee is listed (the list scrolls); no hidden second page.
+$page=1;$pages=1;$shownPeople=$filteredPeople;
 $found=[];$person=$canBook&&$personId?Registrations::find($personId):null;
 if($person && !in_array($person['status'],$mode==='cash'?['paid']:['paid','complimentary'],true))$person=null;
 $attendeeMatches=$canBook?\Ismile\Admin\WorkshopAttendeeSearch::find($q,$mode==='cash'):['people'=>[],'total'=>0,'offset'=>0];
