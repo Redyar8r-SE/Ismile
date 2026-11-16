@@ -118,6 +118,10 @@ $roleGuide = [
     'badges' => ['certificates', 'Tickets & Certificates only', 'Sees only Tickets & Certificates: makes, downloads and deletes badge batches, downloads and emails certificates, downloads the attendance report. No other page.'],
     'volunteer' => ['desk', 'Volunteer', 'Sees only Workshop & Register: sells summit tickets and workshops for cash. Psoola emails every ticket. No other page.'],
 ];
+// One account: what it can open and change, and everything it has done.
+if (Page::query('account') !== '') {
+    require __DIR__ . '/_account_activity.php';
+}
 Page::top('Users', 'users', '<a class="btn" href="#add-person">' . Page::navIcon('users') . '<span>Add a person</span></a>');
 ?>
 <?= Page::stats([
@@ -133,7 +137,7 @@ Page::top('Users', 'users', '<a class="btn" href="#add-person">' . Page::navIcon
   <thead><tr><th scope="col">Team member</th><th scope="col">Access & role</th><th scope="col">Sign-in security</th><th scope="col">Last sign-in</th><th scope="col" class="table-action-heading">Account actions</th></tr></thead><tbody>
   <?php foreach ($users as $row): ?>
   <tr class="<?= $row['disabled_at'] ? 'row-grey' : '' ?>">
-    <td><div class="team-member"><span class="team-avatar" aria-hidden="true"><?= $e(mb_strtoupper(mb_substr($row['name'],0,1))) ?></span><div><b><?= $e($row['name']) ?></b><small dir="ltr"><?= $e($row['email']) ?></small><span class="pill <?= $row['disabled_at'] ? 'grey':'green' ?>"><?= $row['disabled_at'] ? 'Disabled' : 'Active' ?></span><?php if ((int)$row['id']===(int)$user['id']): ?><span class="team-you">You</span><?php endif; ?></div></div></td>
+    <td><div class="team-member"><span class="team-avatar" aria-hidden="true"><?= $e(mb_strtoupper(mb_substr($row['name'],0,1))) ?></span><div><b><?= $e($row['name']) ?></b><small dir="ltr"><?= $e($row['email']) ?></small><a class="account-activity-link" href="users.php?account=<?= (int) $row['id'] ?>">What this account can do</a><span class="pill <?= $row['disabled_at'] ? 'grey':'green' ?>"><?= $row['disabled_at'] ? 'Disabled' : 'Active' ?></span><?php if ((int)$row['id']===(int)$user['id']): ?><span class="team-you">You</span><?php endif; ?></div></div></td>
     <?php $protected = Erase::isMainOwnerAccount($row) && (int)$row['id']!==(int)$user['id']; ?>
     <td><?php if ((int)$row['id']===(int)$user['id'] || $protected): ?><span class="team-role"><?= Page::navIcon($roleGuide[$row['role']][0]) ?><?= $e($roleGuide[$row['role']][1]) ?></span><small class="field-hint"><?= $protected ? 'Main Owner: protected.' : (Erase::isMainOwner($user) ? 'Main Owner: only you can delete records.' : 'Your own role stays protected.') ?></small><?php else: ?><form method="post" class="inline-form team-role-form"><?= Page::csrfField() ?><input type="hidden" name="do" value="role"><input type="hidden" name="id" value="<?= (int) $row['id'] ?>">
       <select name="role" aria-label="<?= $e('Role for ' . $row['name']) ?>"><?php foreach (Auth::ROLES as $role): ?><option value="<?= $role ?>"<?= $role === $row['role'] ? ' selected' : '' ?>><?= $e($roleGuide[$role][1]) ?></option><?php endforeach; ?></select><button class="btn small ghost">Set role</button></form><?php endif; ?>
