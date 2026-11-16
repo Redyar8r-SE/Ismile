@@ -1501,3 +1501,29 @@ body:has([data-guest-tickets]) .page-actions .btn{background:transparent;border:
 .registration-filter-footer>.registration-advanced-filters{flex:1 1 320px;min-width:0}
 .registration-filter-footer>.registration-advanced-filters[open]{flex-basis:100%}
 .registration-filter-card .registration-filter-footer .registration-filter-actions{margin-top:0;margin-left:auto}
+/* Registration: one attendance panel (progress + Day 1, Day 2, both days, not arrived) instead of four boxes. */
+.attendance-overview{display:grid;grid-template-columns:minmax(260px,1fr) minmax(0,1.7fr);gap:28px;align-items:center;margin-bottom:24px;padding:24px 26px}
+.attendance-label{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--teal-d)}
+.attendance-label .nav-icon{width:18px;height:18px;padding:3px;border-radius:7px;background:var(--teal-l)}
+.attendance-figure{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px;margin:12px 0 14px}
+.attendance-figure strong{font-size:44px;line-height:1;letter-spacing:-1.5px;color:var(--ink);font-variant-numeric:tabular-nums}
+.attendance-figure span{font-size:14px;color:var(--muted)}
+.attendance-bar{height:10px;border-radius:999px;background:#e7eff5;overflow:hidden}
+.attendance-bar span{display:block;height:100%;min-width:0;border-radius:inherit;background:linear-gradient(90deg,var(--teal),var(--teal-d));transition:width .4s}
+.attendance-main small{display:block;margin-top:9px;font-size:12px;color:var(--muted)}
+.attendance-main small b{color:var(--teal-d)}
+.attendance-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.attendance-tile{display:flex;flex-direction:column;gap:4px;min-width:0;padding:14px 16px;border-radius:14px;background:var(--tile-bg);color:var(--tile-ink)}
+.attendance-tile span{font-size:12px;font-weight:700}
+.attendance-tile strong{font-size:28px;line-height:1.1;font-variant-numeric:tabular-nums;color:var(--ink)}
+.attendance-tile small{font-size:11.5px;opacity:.85}
+.attendance-tile.day1{--tile-bg:var(--gold-l);--tile-ink:var(--gold-d)}
+.attendance-tile.day2{--tile-bg:var(--violet-l);--tile-ink:var(--violet-d)}
+.attendance-tile.both{--tile-bg:var(--green-l);--tile-ink:var(--green-d)}
+.attendance-tile.waiting{--tile-bg:#eef2f6;--tile-ink:#5d7486}
+.registration-filter-footer{padding-top:16px;border-top:1px solid #e5edf3}
+.registration-filter-footer>.registration-advanced-filters{margin-top:0;padding-top:0;border-top:0}
+.registration-filter-card+.instant-search-status{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+@media(max-width:1100px){.attendance-overview{grid-template-columns:1fr;gap:20px}}
+@media(max-width:600px){.attendance-overview{padding:18px}.attendance-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.attendance-figure strong{font-size:36px}}
+@media(prefers-reduced-motion:reduce){.attendance-bar span{transition:none}}

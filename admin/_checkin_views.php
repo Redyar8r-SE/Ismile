@@ -48,13 +48,25 @@ foreach(['id','specialty','status','city','university','lang','ambassador','arri
 $canContact=Auth::can($user,'registrations');
 ?>
 <div data-live-region="guest-totals">
-<?php $dayDate=static fn(int $d): string => ($at=strtotime(\Ismile\Settings::get('event_day'.$d)))?date('D j M',$at):''; ?>
-<?= Page::stats([
-    ['Registered guests',number_format((int)$summary['guests']),'Paid and complimentary tickets','users','blue'],
-    ['Attended',number_format((int)$summary['attended']),number_format((int)$summary['waiting']).' not arrived yet','check','teal'],
-    ['Day 1 arrivals',number_format((int)$summary['day1']),$dayDate(1),'calendar','gold'],
-    ['Day 2 arrivals',number_format((int)$summary['day2']),$dayDate(2).($dayDate(2)!==''?', ':'').number_format((int)$summary['both_days']).' came both days','calendar','violet'],
-]) ?>
+<?php
+$dayDate=static fn(int $d): string => ($at=strtotime(\Ismile\Settings::get('event_day'.$d)))?date('D j M',$at):'';
+$guestCount=(int)$summary['guests']; $attendedCount=(int)$summary['attended'];
+$attendedRate=$guestCount>0?(int)round($attendedCount*100/$guestCount):0;
+?>
+<section class="card attendance-overview" aria-label="Attendance overview">
+  <div class="attendance-main">
+    <span class="attendance-label"><?= Page::navIcon('check') ?>Attendance</span>
+    <div class="attendance-figure"><strong><?= number_format($attendedCount) ?></strong><span>of <?= number_format($guestCount) ?> registered guests attended</span></div>
+    <div class="attendance-bar" role="progressbar" aria-label="Guests who attended" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<?= $attendedRate ?>"><span style="width:<?= $attendedRate ?>%"></span></div>
+    <small><b><?= $attendedRate ?>%</b> attended on Day 1 or Day 2</small>
+  </div>
+  <div class="attendance-tiles">
+    <div class="attendance-tile day1"><span>Day 1</span><strong><?= number_format((int)$summary['day1']) ?></strong><small><?= $e($dayDate(1)) ?></small></div>
+    <div class="attendance-tile day2"><span>Day 2</span><strong><?= number_format((int)$summary['day2']) ?></strong><small><?= $e($dayDate(2)) ?></small></div>
+    <div class="attendance-tile both"><span>Both days</span><strong><?= number_format((int)$summary['both_days']) ?></strong><small>Day 1 and Day 2</small></div>
+    <div class="attendance-tile waiting"><span>Not arrived yet</span><strong><?= number_format((int)$summary['waiting']) ?></strong><small>No scan on either day</small></div>
+  </div>
+</section>
 </div>
 <form method="get" class="card registration-filter-card" data-instant-search data-search-regions="guest-totals guest-directory"><input type="hidden" name="tab" value="<?= $e($tab) ?>"><?php if($day): ?><input type="hidden" name="day" value="<?= $day ?>"><?php endif; ?>
   <div class="registration-filter-main"><label class="filter-field filter-search"><span>Name, reference or ticket number</span><input type="search" name="q" value="<?= $e($filters['q']) ?>" placeholder="Find a guest…"></label>
