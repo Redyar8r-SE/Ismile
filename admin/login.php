@@ -75,7 +75,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         }
 
         $user = Auth::checkPassword((string) ($_POST['email'] ?? ''), (string) ($_POST['password'] ?? ''));
-        if ((int) $user['totp_enabled'] === 1) {
+        // Volunteers sign in with email and password only, even if a phone code was set up before.
+        if ((int) $user['totp_enabled'] === 1 && $user['role'] !== 'volunteer') {
             $_SESSION['pending_uid'] = (int) $user['id'];
             $_SESSION['pending_at'] = time();
             $askCode = true;

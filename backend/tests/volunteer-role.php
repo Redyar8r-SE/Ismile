@@ -27,7 +27,7 @@ foreach (['dashboard', 'registrations', 'edit', 'payments', 'association', 'work
 $check('volunteer can sell summit tickets and workshops', Auth::can($volunteer, 'desk') && Auth::canDeskRegister($volunteer) && Auth::canDeskWorkshop($volunteer));
 $check('volunteer can send the desk forms', Auth::viewerMayPost($volunteer, '/admin/desk.php'));
 $check('volunteer starts on Workshop & Register', Page::home($volunteer) === 'desk.php');
-$check('volunteer needs the phone code', Auth::needsTwoFactor(['role' => 'volunteer']));
+$check('volunteer signs in without a phone code', !Auth::needsTwoFactor(['role' => 'volunteer']) && !Auth::needsTwoFactor($volunteer));
 $check('volunteer is in the role list with a name', in_array('volunteer', Auth::ROLES, true) && isset(Auth::ROLE_NAMES['volunteer']));
 $check('volunteer cannot give free tickets or manage badges', !Auth::canIssueComplimentary(['role' => 'volunteer']) && !Auth::canManageBadges(['role' => 'volunteer']));
 

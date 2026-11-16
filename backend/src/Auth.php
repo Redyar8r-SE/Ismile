@@ -32,8 +32,8 @@ final class Auth
     // Registration takes cash and makes real PSOOLA tickets, so it needs the phone code too.
     // The Viewer sees people's details and the money, so it does as well.
     // Sponsors sees company contacts and records sponsor payments, like Finance.
-    // A Volunteer takes cash and makes real PSOOLA tickets, like Registration.
-    public const NEEDS_TWO_FACTOR = ['owner', 'finance', 'registration', 'viewer', 'sponsors', 'map_viewer', 'badges', 'volunteer'];
+    // Volunteers sign in with email and password only (owner decision, 16 Nov).
+    public const NEEDS_TWO_FACTOR = ['owner', 'finance', 'registration', 'viewer', 'sponsors', 'map_viewer', 'badges'];
     // What a Viewer may still send: signing out and setting up their own phone code.
     private const VIEWER_MAY_POST = ['login.php', 'logout.php', 'two-factor.php'];
     // Viewer + Sponsors may also save on these pages: sponsor bookings, map places and booths.
@@ -178,6 +178,8 @@ final class Auth
 
     public static function needsTwoFactor(array $user): bool
     {
+        // A Volunteer sees only Workshop & Register and needs no phone code, whatever else is ticked.
+        if (($user['role'] ?? '') === 'volunteer') return false;
         return in_array($user['role'], self::NEEDS_TWO_FACTOR, true)
             || (int) ($user['registration_manage_access'] ?? 0) === 1 || self::canBookWorkshops($user) || self::canManageBadges($user);
     }
