@@ -155,12 +155,14 @@ final class Workshops
         } elseif (($in['remove_photo'] ?? '') === '1') {
             $fields['photo'] = null;
         }
+        $oldSeats = 0;
         try {
-            $old = Db::transaction(static function () use ($id, $fields): ?string {
-                $row = Db::one('SELECT photo, price, currency FROM workshops WHERE id = ? FOR UPDATE', [$id]);
+            $old = Db::transaction(static function () use ($id, $fields, &$oldSeats): ?string {
+                $row = Db::one('SELECT photo, price, currency, total_seats FROM workshops WHERE id = ? FOR UPDATE', [$id]);
                 if ($row === null) {
                     throw new UserError('Workshop not found.');
                 }
+                $oldSeats = (int) $row['total_seats'];
                 $booked = self::booked($id);
                 if ($fields['total_seats'] < $booked) {
                     throw new UserError("$booked people are already booked, so the seats cannot be fewer than $booked.");
@@ -186,7 +188,58 @@ final class Workshops
             self::deletePhotoFile($old);
         }
         Audit::log((int) $user['id'], 'workshop.edit', 'workshop', null, ['id' => $id] + self::auditFields($fields));
-        self::syncWebsite();
+        try {
+            self::syncProviderSeats($id, (int) $fields['total_seats'], $oldSeats, (int) $user['id']);
+        } finally {
+            self::syncWebsite();
+        }
+    }
+
+    /**
+     * iSmile workshops sold through PSOOLA show PSOOLA's seats left on the
+     * website, so the seat number must also be the PSOOLA ticket quantity.
+     * Every save checks it (this also repairs an older change). If PSOOLA
+     * refuses a new number, our number goes back so the two never differ.
+     */
+    private static function syncProviderSeats(string $id, int $seats, int $oldSeats, int $userId): void
+    {
+        $w = self::find($id);
+        if ($w === null || $w['organizer'] !== 'ismile' || empty($w['providerEventId']) || empty($w['providerTicketTypeId'])) {
+            return;
+        }
+        $event = 'manage/events/' . rawurlencode((string) $w['providerEventId']);
+        $ticketId = (string) $w['providerTicketTypeId'];
+        $quantity = static function () use ($event, $ticketId): int {
+            $answer = (new Payments\PsoolaGateway())->partnerRequest('GET', $event);
+            foreach (($answer['json']['ticketTypes'] ?? []) as $ticket) {
+                if (($ticket['_id'] ?? $ticket['id'] ?? null) === $ticketId && is_numeric($ticket['quantity'] ?? null)) {
+                    return (int) $ticket['quantity'];
+                }
+            }
+            throw new \RuntimeException('PSOOLA ticket lookup HTTP ' . $answer['status']);
+        };
+        try {
+            if ($quantity() !== $seats) {
+                $answer = (new Payments\PsoolaGateway())->partnerRequest('PATCH', $event . '/ticket-types/' . rawurlencode($ticketId),
+                    ['ticket' => ['quantity' => $seats]], ['Idempotency-Key: ismile-seats-' . bin2hex(random_bytes(12))]);
+                if (!in_array($answer['status'], [200, 201], true)) {
+                    throw new \RuntimeException('HTTP ' . $answer['status'] . ' ' . ($answer['json']['error']['message'] ?? ''));
+                }
+                if ($quantity() !== $seats) {
+                    throw new \RuntimeException('PSOOLA still shows a different seat number.');
+                }
+                Audit::log($userId, 'workshop.psoola_seats', 'workshop', null, ['id' => $id, 'seats' => $seats]);
+            }
+        } catch (\Throwable $error) {
+            App::log('error', 'PSOOLA workshop seats not changed', ['workshop' => $id, 'seats' => $seats, 'error' => $error->getMessage()]);
+            if ($seats === $oldSeats) {
+                return;   // nothing new was asked; the other changes stay saved
+            }
+            Db::update('workshops', ['total_seats' => $oldSeats, 'updated_at' => App::now()], 'id = ?', [$id]);
+            throw new UserError("PSOOLA did not accept $seats seats, so the seats stay at $oldSeats. Your other changes are saved. Try again in a minute.");
+        } finally {
+            @unlink(App::storage('tmp/workshop-catalog-' . $id . '.json'));
+        }
     }
 
     /**
@@ -331,7 +384,11 @@ final class Workshops
             return [(int) $from, $seats];
         });
         Audit::log((int) $user['id'], 'workshop.seats', 'workshop', null, ['id' => $id, 'from' => $from, 'to' => $seats]);
-        self::syncWebsite();
+        try {
+            self::syncProviderSeats($id, $seats, $from, (int) $user['id']);
+        } finally {
+            self::syncWebsite();
+        }
         return $seats;
     }
 
