@@ -515,6 +515,13 @@ if ($database) {
     $check('PSOOLA emails the Volunteer\'s sale: iSmile queues no ticket email', Tickets::issuedByPsoola(Tickets::forRegistration((int) $deskReg['id']))
         && (int) Db::value("SELECT COUNT(*) FROM emails WHERE kind = 'ticket' AND registration_id = ?", [$deskReg['id']]) === 0);
 
+    // Workshop & Register asks gender and age, as the website does; they are saved.
+    $withAge = Checkouts::createForCash(['first_name' => 'Lana', 'father_name' => 'Aziz', 'grandfather_name' => 'Karim', 'phone' => '+9647' . random_int(100000000, 999999999),
+        'email' => 'desk-age-' . bin2hex(random_bytes(3)) . '@example.invalid', 'specialty' => 'gp', 'ticket' => 'professional', 'gender' => 'female', 'age' => '31'], $volunteer);
+    $check('the desk saves gender and age', $withAge['gender'] === 'female' && (int) $withAge['age'] === 31);
+    $check('an age outside 16 to 120 is refused', $throws(fn () => Checkouts::createForCash(['first_name' => 'Lana', 'father_name' => 'Aziz', 'grandfather_name' => 'Karim',
+        'phone' => '+9647' . random_int(100000000, 999999999), 'email' => 'desk-age2-' . bin2hex(random_bytes(3)) . '@example.invalid', 'specialty' => 'gp', 'ticket' => 'professional', 'gender' => 'male', 'age' => '12'], $volunteer), UserError::class, 'between 16 and 120'));
+
     // A student ticket at the desk needs no card photo; elsewhere the photo stays required.
     $studentIn = ['first_name' => 'Rozh', 'father_name' => 'Omar', 'grandfather_name' => 'Ali', 'phone' => '+9647' . random_int(100000000, 999999999),
         'email' => 'desk-student-' . bin2hex(random_bytes(3)) . '@example.invalid', 'specialty' => 'student', 'ticket' => 'student', 'university' => 'University of Sulaimani', 'stage' => '3'];

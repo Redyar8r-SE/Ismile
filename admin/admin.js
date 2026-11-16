@@ -76,7 +76,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     const ids = selectionIds();
     const total = ids.reduce((sum, id) => sum + Number(selected[id] || 0), 0);
-    if (summary) summary.textContent = ids.length ? `${ids.length.toLocaleString()} guests selected · ${total.toLocaleString("en-US")} IQD` : "No guests selected";
+    if (summary) summary.textContent = ids.length ? `${ids.length.toLocaleString()} guests selected (${total.toLocaleString("en-US")} IQD)` : "No guests selected";
     hidden.value = JSON.stringify(ids.map(Number));
     const review = form.querySelector("[data-association-review]");
     if (review) review.disabled = !ids.length;
@@ -762,7 +762,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const unit = document.createElement("small");
     unit.textContent = prices.currency;
     total.replaceChildren(`${sum.toLocaleString("en-US")} `, unit);
-    if (pay) pay.textContent = `Paid by cash · ${money(sum)}`;
+    if (pay) { const amount = document.createElement("span"); amount.className = "cash-pay-amount"; amount.textContent = money(sum); pay.replaceChildren("Paid by cash ", amount); }
   }
   document.querySelectorAll("[data-pick-ticket]").forEach((card) => card.addEventListener("click", () => {
     if (card.disabled) return;
@@ -788,7 +788,7 @@ document.addEventListener("DOMContentLoaded", () => {
       idPhoto.setCustomValidity(tooBig ? "The photo must be 8 MB at most." : "");
       fileLine.textContent = !file ? fileLine.dataset.empty
         : tooBig ? `${file.name} is ${megabytes}: too large. Choose a photo of 8 MB at most.`
-        : `✓ ${file.name} · ${megabytes}. Click to choose another photo.`;
+        : `✓ ${file.name} (${megabytes}). Click to choose another photo.`;
       if (file && !tooBig && file.type.startsWith("image/")) {
         previewUrl = URL.createObjectURL(file);
         image.src = previewUrl;
@@ -817,7 +817,7 @@ document.addEventListener("DOMContentLoaded", () => {
       event.preventDefault();
       if (!form.reportValidity()) return;
       const vipDay = ticket.value === "vip" ? Number(value("vip_lunch_day") || 0) : 0;
-      const days = { 1: "Day 1 · Thursday 19 Nov", 2: "Day 2 · Friday 20 Nov" };
+      const days = { 1: "Day 1, Thursday 19 Nov", 2: "Day 2, Friday 20 Nov" };
       const lunch = [1, 2].filter((day) => form.querySelector(`[name="lunch_day${day}"]`).checked)
         .map((day) => days[day] + (day === vipDay ? " (with VIP)" : ""));
       field("name").textContent = [value("first_name"), value("father_name"), value("grandfather_name")].filter(Boolean).join(" ");

@@ -29,6 +29,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         Auth::checkCsrf();
         if ($do === 'cash') {
             if (!$canRegister) throw new UserError('Your account cannot register people.', null, 403);
+            // Gender and age are asked here, as on the website.
+            if (!in_array($_POST['gender'] ?? '', Registrations::GENDERS, true)) throw new UserError('Choose the gender.');
+            if (trim((string) ($_POST['age'] ?? '')) === '') throw new UserError('Enter the age.');
             Page::useOnce();
             $checkout = \Ismile\Checkouts::createForCash($_POST, $user, null, false);   // no student card photo at the desk
             $sale = \Ismile\Payments\Payments::sellForCash($checkout, $user);
@@ -89,34 +92,37 @@ if ($tab === 'workshop') {
     }
 }
 $ws = $workshops[Page::query('ws')] ?? null;
-// Finding the person: ONE box for name, phone or email. Forgiving: one letter is
-// enough (names starting with it); name words in any order and partly typed;
-// phone in any format; part of an email. Paid summit tickets can be registered;
-// guest and cancelled ones are shown with the reason, so the volunteer knows why.
+// Finding the person: ONE box for name, WhatsApp number or email.
+// A name is found letter by letter, by position: the 1st word is the start of the
+// FIRST name ("r", "re", "redyar"), after a space the 2nd word is the start of the
+// SECOND name ("redyar n"), and a 3rd word the start of the last name.
+// Digits find the phone (any format); text with "@" finds the email.
+// Paid and guest summit tickets can be chosen; cancelled ones show the reason.
 $findPeople = static function (string $q): array {
     $q = trim(preg_replace('/\s+/', ' ', $q));
     if ($q === '') return [];
     $lower = mb_strtolower($q);
-    $where = [];
-    $args = [];
-    $digits = (string) preg_replace('/\D+/', '', $q);
-    $digits = (string) preg_replace('/^(00964|964|0)/', '', $digits);   // 0750…, +964 750…, 750… are the same number
-    if (mb_strlen($q) === 1) {
-        // One letter: names starting with it (first, second or last name).
-        if (!ctype_digit($q)) {
-            foreach (['first_name', 'father_name', 'grandfather_name'] as $part) { $where[] = "LOWER($part) LIKE ?"; $args[] = addcslashes($lower, '%_\\') . '%'; }
-        }
+    $like = static fn (string $text): string => addcslashes($text, '%_\\');
+    if (str_contains($q, '@') || str_contains($q, '.')) {   // an email, even partly typed
+        $where = 'LOWER(email) LIKE ?';
+        $args = ['%' . $like($lower) . '%'];
+    } elseif (preg_match('/^[\d\s+()\-]+$/', $q)) {
+        $digits = (string) preg_replace('/^(00964|964|0)/', '', (string) preg_replace('/\D+/', '', $q));   // 0750…, +964 750…, 750… are the same number
+        if ($digits === '') return [];
+        $where = 'phone LIKE ?';
+        $args = ['%' . $digits . '%'];
     } else {
-        $name = [];
-        foreach (array_slice(explode(' ', $lower), 0, 5) as $word) { $name[] = "LOWER(CONCAT_WS(' ', first_name, father_name, grandfather_name)) LIKE ?"; $args[] = '%' . addcslashes($word, '%_\\') . '%'; }
-        $where[] = '(' . implode(' AND ', $name) . ')';
-        $where[] = 'LOWER(email) LIKE ?'; $args[] = '%' . addcslashes($lower, '%_\\') . '%';
+        $parts = ['first_name', 'father_name', 'grandfather_name'];
+        $conditions = [];
+        $args = [];
+        foreach (array_slice(explode(' ', $lower), 0, 3) as $i => $word) {
+            $conditions[] = 'LOWER(' . $parts[$i] . ') LIKE ?';
+            $args[] = $like($word) . '%';
+        }
+        $where = implode(' AND ', $conditions);
     }
-    if ($digits !== '') { $where[] = 'phone LIKE ?'; $args[] = '%' . $digits . '%'; }
-    if (!$where) return [];
-    return Db::all("SELECT * FROM registrations WHERE status IN ('paid','complimentary','cancelled') AND (" . implode(' OR ', $where) . ")
-        ORDER BY status = 'cancelled', LOWER(email) = ? DESC, LOWER(first_name) LIKE ? DESC, first_name, father_name, grandfather_name LIMIT 1000",   // everyone who matches, A–Z
-        array_merge($args, [$lower, addcslashes($lower, '%_\\') . '%']));
+    return Db::all("SELECT * FROM registrations WHERE status IN ('paid','complimentary','cancelled') AND ($where)
+        ORDER BY status = 'cancelled', first_name, father_name, grandfather_name LIMIT 1000", $args);   // everyone who matches, A to Z
 };
 $findQ = mb_substr(trim(Page::query('q', 120)), 0, 120);
 $searched = $findQ !== '';
@@ -132,8 +138,8 @@ if ($tab === 'workshop' && Page::query('live') === '1') {
     header('Content-Type: application/json; charset=utf-8');
     header('Cache-Control: no-store');
     echo json_encode(['q' => $findQ, 'short' => $findQ === '', 'count' => count($found), 'people' => array_map(static fn (array $r): array => [
-        'name' => Registrations::fullName($r), 'email' => (string) $r['email'], 'phone' => '•••• ' . substr((string) preg_replace('/\D+/', '', (string) $r['phone']), -4),
-        'ticket' => Registrations::ticketName((string) $r['ticket_type']) . ($r['status'] === 'complimentary' ? ' · Guest ticket' : ''), 'why' => $whyNot($r),
+        'name' => Registrations::fullName($r), 'email' => (string) $r['email'], 'phone' => 'ends in ' . substr((string) preg_replace('/\D+/', '', (string) $r['phone']), -4),
+        'ticket' => Registrations::ticketName((string) $r['ticket_type']), 'guest' => $r['status'] === 'complimentary', 'why' => $whyNot($r),
         'url' => $whyNot($r) === '' ? 'desk.php?' . http_build_query(['tab' => 'workshop', 'ws' => $wsId, 'q' => $findQ, 'rid' => (int) $r['id']]) . '#pay' : null,
     ], $found)], JSON_UNESCAPED_UNICODE);
     exit;
@@ -149,10 +155,10 @@ $trainer = static function (array $w): string {
     $speaker = $w['speaker'] ?? null;
     return is_array($speaker) ? (string) ($speaker['en'] ?? '') : (string) $speaker;
 };
-$masked = static fn (string $phone): string => '•••• ' . substr(preg_replace('/\D+/', '', $phone), -4);
+$masked = static fn (string $phone): string => 'ends in ' . substr(preg_replace('/\D+/', '', $phone), -4);
 $when = static function (array $w): string {
     $parts = array_filter([$w['scheduledDate'] ? date('D j M', strtotime((string) $w['scheduledDate'])) : '', trim(($w['startTime'] ?? '') . ($w['endTime'] ? '–' . $w['endTime'] : ''))]);
-    return implode(' · ', $parts);
+    return implode(', ', $parts);
 };
 
 Page::top('Workshop & Register', 'desk');
@@ -196,26 +202,28 @@ Page::top('Workshop & Register', 'desk');
   <?= Page::csrfField() ?><?= Page::onceField() ?>
   <fieldset class="form-section">
     <legend>1. Person's details</legend>
-    <div class="row3"><label>First name *<input name="first_name" maxlength="60" value="<?= $value('first_name') ?>" autocomplete="off" required></label><label>Second name *<input name="father_name" maxlength="60" value="<?= $value('father_name') ?>" autocomplete="off" required></label><label>Last name *<input name="grandfather_name" maxlength="60" value="<?= $value('grandfather_name') ?>" autocomplete="off" required></label></div>
-    <div class="row3"><label>Phone *<input type="tel" name="phone" dir="ltr" autocomplete="off" value="<?= $value('phone') ?>" required placeholder="0750 123 4567"></label><label>Email * <small>(the ticket goes here)</small><input type="email" name="email" dir="ltr" autocomplete="off" maxlength="190" value="<?= $value('email') ?>" required></label><label>City<?= \Ismile\Cities::select($_POST['city'] ?? '') ?></label></div>
+    <div class="row3"><label>First name<input name="first_name" maxlength="60" value="<?= $value('first_name') ?>" autocomplete="off" required></label><label>Second name<input name="father_name" maxlength="60" value="<?= $value('father_name') ?>" autocomplete="off" required></label><label>Last name<input name="grandfather_name" maxlength="60" value="<?= $value('grandfather_name') ?>" autocomplete="off" required></label></div>
+    <div class="row3"><label>WhatsApp phone number<input type="tel" name="phone" dir="ltr" autocomplete="off" value="<?= $value('phone') ?>" required placeholder="0750 123 4567"></label><label>Email <small class="dk-note">The ticket goes here</small><input type="email" name="email" dir="ltr" autocomplete="off" maxlength="190" value="<?= $value('email') ?>" required></label><label>City<?= \Ismile\Cities::select($_POST['city'] ?? '') ?></label></div>
+    <div class="row3"><label>Gender<select name="gender" required><option value="">Choose gender</option><?php foreach (["female" => "Female", "male" => "Male", "other" => "Other", "prefer-not" => "Prefer not to say"] as $gKey => $gName): ?><option value="<?= $gKey ?>"<?= $selected("gender", $gKey) ?>><?= $gName ?></option><?php endforeach; ?></select></label>
+      <label>Age<span class="dk-age" data-age><button type="button" class="dk-age-btn" data-age-step="-1" aria-label="Younger">−</button><input type="number" name="age" inputmode="numeric" min="16" max="120" step="1" value="<?= $value("age") ?>" placeholder="28" required aria-label="Age"><button type="button" class="dk-age-btn" data-age-step="1" aria-label="Older">+</button></span></label></div>
   </fieldset>
   <fieldset class="form-section">
     <legend>2. Specialty &amp; ticket</legend>
     <div class="row3">
-      <label>Specialty *<select name="specialty" id="caller-specialty" required>
+      <label>Specialty<select name="specialty" id="caller-specialty" required>
         <option value="">Choose specialty</option>
         <?php foreach (Registrations::SPECIALTY_NAMES as $key => $name): ?><option value="<?= $e($key) ?>"<?= $selected('specialty', $key) ?>><?= $e($name) ?></option><?php endforeach; ?>
       </select></label>
-      <label>Ticket *<select name="ticket" id="caller-ticket"><option value="professional"<?= !$student && !$vip ? ' selected' : '' ?>>Dentist</option><option value="student"<?= $student ? ' selected' : '' ?>>Student</option><option value="vip"<?= $vip ? ' selected' : '' ?>>VIP</option></select></label>
+      <label>Ticket<select name="ticket" id="caller-ticket"><option value="professional"<?= !$student && !$vip ? ' selected' : '' ?>>Dentist</option><option value="student"<?= $student ? ' selected' : '' ?>>Student</option><option value="vip"<?= $vip ? ' selected' : '' ?>>VIP</option></select></label>
     </div>
     <div class="row3" id="caller-student-fields">
-      <label>University *<input name="university" id="caller-university" maxlength="160" value="<?= $value('university') ?>"<?= $student ? ' required' : '' ?>></label>
-      <label>Stage *<select name="stage" id="caller-stage"<?= $student ? ' required' : '' ?>><option value="">Choose the stage</option><?php foreach (range(\Ismile\Checkouts::FIRST_STUDENT_STAGE, \Ismile\Checkouts::LAST_STUDENT_STAGE) as $stage): ?><option value="<?= $stage ?>"<?= $selected('stage', (string) $stage) ?>><?= $e(Registrations::stageName($stage)) ?></option><?php endforeach; ?></select></label>
+      <label>University<input name="university" id="caller-university" maxlength="160" value="<?= $value('university') ?>"<?= $student ? ' required' : '' ?>></label>
+      <label>Stage<select name="stage" id="caller-stage"<?= $student ? ' required' : '' ?>><option value="">Choose the stage</option><?php foreach (range(\Ismile\Checkouts::FIRST_STUDENT_STAGE, \Ismile\Checkouts::LAST_STUDENT_STAGE) as $stage): ?><option value="<?= $stage ?>"<?= $selected('stage', (string) $stage) ?>><?= $e(Registrations::stageName($stage)) ?></option><?php endforeach; ?></select></label>
     </div>
   </fieldset>
   <fieldset class="form-section">
-    <legend>3. Lunch <span class="legend-note">· optional</span></legend>
-    <label id="caller-vip-lunch"<?= !$vip ? ' hidden' : '' ?>>VIP included lunch<select name="vip_lunch_day"<?= !$vip ? ' disabled' : '' ?>><option value="1"<?= ($_POST['vip_lunch_day'] ?? '1') === '1' ? ' selected' : '' ?>>Day 1 · 19 November</option><option value="2"<?= ($_POST['vip_lunch_day'] ?? '') === '2' ? ' selected' : '' ?>>Day 2 · 20 November</option></select></label>
+    <legend>3. Lunch <span class="dk-optional">Optional</span></legend>
+    <label id="caller-vip-lunch"<?= !$vip ? ' hidden' : '' ?>>VIP included lunch<select name="vip_lunch_day"<?= !$vip ? ' disabled' : '' ?>><option value="1"<?= ($_POST['vip_lunch_day'] ?? '1') === '1' ? ' selected' : '' ?>>Day 1, 19 November</option><option value="2"<?= ($_POST['vip_lunch_day'] ?? '') === '2' ? ' selected' : '' ?>>Day 2, 20 November</option></select></label>
     <?php if (\Ismile\VipPackages::enabled()): ?><label id="caller-vip-workshop"<?= !$vip ? ' hidden' : '' ?>>VIP included workshop<select name="vip_workshop"<?= !$vip ? ' disabled' : '' ?> required><option value="">Choose one included workshop</option><?php foreach (\Ismile\VipPackages::WORKSHOPS as $workshopId): $vipWorkshop = Workshops::find($workshopId); if (!$vipWorkshop) continue; ?><option value="<?= $e($workshopId) ?>"<?= $selected('vip_workshop', $workshopId) ?>><?= $e(Workshops::name($vipWorkshop)) ?></option><?php endforeach; ?></select></label><?php endif; ?>
     <div class="lunch-cards">
       <?php foreach ([1 => 'Thursday 19 Nov', 2 => 'Friday 20 Nov'] as $day => $date): ?>
@@ -312,16 +320,16 @@ $icon = static fn (string $d): string => '<svg viewBox="0 0 24 24" fill="none" s
 <section class="dk-panel" id="register">
   <header class="dk-panel-head">
     <?php if ($img !== ''): ?><span class="dk-panel-photo"><img src="<?= $e($img) ?>" alt=""></span><?php endif; ?>
-    <div><small>Register for this workshop · <?= $wsFree ? 'free, no cash' : 'paid in cash' ?></small><h2><?= $e(Workshops::name($ws['w'])) ?></h2><p><?= $e($words($ws['w']['speaker'] ?? '')) ?></p></div>
+    <div><small>Register for this workshop <span class="dk-tag"><?= $wsFree ? 'Free, no cash' : 'Paid in cash' ?></span></small><h2><?= $e(Workshops::name($ws['w'])) ?></h2><p><?= $e($words($ws['w']['speaker'] ?? '')) ?></p></div>
     <?php if ($wsFree): ?><div class="dk-panel-price"><small>Payment</small><b>Free</b><span>No cash</span></div>
     <?php else: ?><div class="dk-panel-price"><small>Collect</small><b><?= $e(number_format($quote['iqd'])) ?> IQD</b><?php if ($usd($quote) !== ''): ?><span>or <?= $e($usd($quote)) ?></span><?php endif; ?></div><?php endif; ?>
   </header>
   <form method="get" action="desk.php#register" class="dk-find">
     <input type="hidden" name="tab" value="workshop"><input type="hidden" name="ws" value="<?= $e($wid) ?>">
-    <p class="dk-step"><b>1</b> Find the person: type their name, phone number or email. Results appear as you type.</p>
+    <p class="dk-step"><b>1</b> Find the person: type the first name letter by letter, then a space and the second name. Or type their WhatsApp number or email.</p>
     <div class="dk-search">
       <span class="dk-search-ic" aria-hidden="true"><?= Page::navIcon('search') ?></span>
-      <input type="search" name="q" value="<?= $e($findQ) ?>" placeholder="e.g. Aram Kamal · 0750 123 4567 · aram@gmail.com" aria-label="Find the person by name, phone or email" autocomplete="off" autofocus data-desk-find="<?= $e($wid) ?>">
+      <input type="search" name="q" value="<?= $e($findQ) ?>" placeholder="Name, WhatsApp number or email" aria-label="Find the person by name, phone or email" autocomplete="off" autofocus data-desk-find="<?= $e($wid) ?>">
       <button class="dk-cta dk-find-btn">Find</button>
     </div>
   </form>
@@ -334,7 +342,7 @@ $icon = static fn (string $d): string => '<svg viewBox="0 0 24 24" fill="none" s
     <?php foreach ($found as $row): $chosen = $person && (int) $person['id'] === (int) $row['id']; $why = $whyNot($row); ?>
     <<?= $why === '' ? 'a href="' . $e($deskUrl('workshop', ['ws' => $wid] + $keep + ['rid' => (int) $row['id']])) . '#pay"' : 'div' ?> class="dk-person<?= $chosen ? ' is-on' : '' ?><?= $why !== '' ? ' is-off' : '' ?>">
       <span class="dk-avatar"><?= $e(mb_strtoupper(mb_substr((string) $row['first_name'], 0, 1) . mb_substr((string) $row['father_name'], 0, 1))) ?></span>
-      <span class="dk-person-text"><b><?= $e(Registrations::fullName($row)) ?></b><small dir="ltr"><?= $e((string) $row['email']) ?> · <?= $e($masked((string) $row['phone'])) ?> · <?= $e(Registrations::ticketName((string) $row['ticket_type']) . ($row['status'] === 'complimentary' ? ' · Guest ticket' : '')) ?></small><?php if ($why !== ''): ?><small class="dk-why"><?= $e($why) ?></small><?php endif; ?></span>
+      <span class="dk-person-text"><b><?= $e(Registrations::fullName($row)) ?></b><span class="dk-chips-line"><span class="dk-mini" dir="ltr"><?= $e((string) $row['email']) ?></span><span class="dk-mini is-phone">WhatsApp <?= $e($masked((string) $row['phone'])) ?></span><span class="dk-mini is-ticket"><?= $e(Registrations::ticketName((string) $row['ticket_type'])) ?></span><?php if ($row['status'] === 'complimentary'): ?><span class="dk-mini is-guest">Guest ticket</span><?php endif; ?></span><?php if ($why !== ''): ?><small class="dk-why"><?= $e($why) ?></small><?php endif; ?></span>
       <?php if ($why === ''): ?><em><?= $chosen ? 'Chosen' : 'Choose' ?></em><?php endif; ?>
     </<?= $why === '' ? 'a' : 'div' ?>>
     <?php endforeach; ?>
@@ -352,12 +360,12 @@ $icon = static fn (string $d): string => '<svg viewBox="0 0 24 24" fill="none" s
       <?= Page::csrfField() ?><?= Page::onceField() ?>
       <input type="hidden" name="do" value="workshop_cash_sale"><input type="hidden" name="rid" value="<?= (int) $person['id'] ?>"><input type="hidden" name="workshop" value="<?= $e($wid) ?>">
       <?php if ($wsFree): ?>
-      <div class="dk-pay-buttons"><button class="dk-cta dk-big">Register for free · Send ticket</button></div>
+      <div class="dk-pay-buttons"><button class="dk-cta dk-big">Register for free <span class="dk-go">Send ticket</span></button></div>
       <?php else: ?>
       <label class="desk-received"><input type="checkbox" name="cash_received" value="1" required> I have received the cash for this workshop.</label>
       <div class="dk-pay-buttons">
-        <button class="dk-cta dk-big" name="cash_currency" value="IQD">Received <?= $e(number_format($quote['iqd'])) ?> IQD · Register</button>
-        <?php if ($usd($quote) !== ''): ?><button class="dk-cta dk-big" name="cash_currency" value="USD">Received <?= $e($usd($quote)) ?> · Register</button><?php endif; ?>
+        <button class="dk-cta dk-big" name="cash_currency" value="IQD">Received <b><?= $e(number_format($quote['iqd'])) ?> IQD</b> <span class="dk-go">Register</span></button>
+        <?php if ($usd($quote) !== ''): ?><button class="dk-cta dk-big" name="cash_currency" value="USD">Received <b><?= $e($usd($quote)) ?></b> <span class="dk-go">Register</span></button><?php endif; ?>
       </div>
       <?php endif; ?>
     </form>

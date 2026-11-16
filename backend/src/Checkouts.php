@@ -272,10 +272,17 @@ final class Checkouts
         $lunch1 = ($in['lunch_day1'] ?? '') === '1';
         $lunch2 = ($in['lunch_day2'] ?? '') === '1';
         $vipDay = self::vipLunchDay($ticket, $in, $lunch1, $lunch2);
+        // Gender and age when the form asks for them (Workshop & Register), checked like the website.
+        $gender = Validate::oneOf($in['gender'] ?? null, Registrations::GENDERS) ?? 'prefer-not';
+        $age = null;
+        if (trim((string) ($in['age'] ?? '')) !== '') {
+            $age = filter_var($in['age'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 16, 'max_range' => 120]]);
+            if ($age === false) throw new UserError('Enter an age between 16 and 120.');
+        }
         return [
             'first_name' => $first, 'father_name' => $father, 'grandfather_name' => $grandfather,
             'phone' => $phone, 'email' => $email, 'city' => Validate::text($in['city'] ?? '', 80) ?: '-',
-            'gender' => 'prefer-not', 'age' => null, 'specialty' => $specialty, 'lang' => 'en',
+            'gender' => $gender, 'age' => $age, 'specialty' => $specialty, 'lang' => 'en',
             'ticket_type' => $ticket, 'lunch_day1' => $lunch1 ? 1 : 0, 'lunch_day2' => $lunch2 ? 1 : 0, 'vip_lunch_day' => $vipDay,
             'pay_method' => 'visa', 'university' => $university, 'study_stage' => $stage, 'ambassador_code' => $ambassador, 'id_photo_id' => null,
         ];
