@@ -1555,3 +1555,14 @@ body:has([data-guest-tickets]) .page-actions .btn{background:transparent;border:
 .registration-quick .filter-seg input:focus-visible+span{outline:2px solid var(--teal);outline-offset:2px}
 @media(prefers-reduced-motion:reduce){.registration-quick .filter-seg span{transition:none}}
 .registration-filter-card .registration-search-row>.filter-field select{min-height:48px;border-radius:12px}
+/* Registration list header (count chip, icon buttons) and the "No arrivals yet" state. */
+.registration-directory .panel-heading h2{display:flex;align-items:center;gap:8px}
+.registration-directory .icon-btn{display:inline-flex;align-items:center;gap:7px}
+.registration-directory .icon-btn .nav-icon{width:17px;height:17px}
+.arrivals-empty{padding:36px 16px}
+.arrivals-empty .empty-icon{background:var(--teal-l);color:var(--teal-d)}
+.arrivals-empty p{max-width:430px}
+.arrivals-empty-days{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:6px}
+.arrivals-empty-days span{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;background:#f2f6fa;border:1px solid var(--line);font-size:12.5px;color:var(--muted)}
+.arrivals-empty-days b{color:var(--teal-d)}
+.registration-directory .empty-state .btn{margin-top:4px}
