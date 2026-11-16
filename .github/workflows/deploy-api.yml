@@ -157,3 +157,21 @@ jobs:
             curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' -H 'X-Forwarded-Proto: https' \
               http://127.0.0.1:8081/api/config.php | grep -q '"ok":true'
             echo "api.ismile.krd update OK"
+
+      # The account the Owner chose keeps its role and also gets the Association
+      # guests page (tools/configure-association-guest-access.php; named only by
+      # a hash of its email). Its own step, so the result shows without the log:
+      # a failure here means that account does not exist yet; the deploy is fine.
+      - name: Association guests access for the chosen account
+        continue-on-error: true
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ env.DEPLOY_HOST }}
+          username: ${{ env.DEPLOY_USER }}
+          password: ${{ env.DEPLOY_PASSWORD }}
+          port: ${{ env.DEPLOY_SSH_PORT }}
+          timeout: 60s
+          command_timeout: 2m
+          script: |
+            set -euo pipefail
+            runuser -u www-data -- php /opt/ismile-test/backend/tools/configure-association-guest-access.php
