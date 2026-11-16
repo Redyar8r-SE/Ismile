@@ -326,7 +326,7 @@ $icon = static fn (string $d): string => '<svg viewBox="0 0 24 24" fill="none" s
   </header>
   <form method="get" action="desk.php#register" class="dk-find">
     <input type="hidden" name="tab" value="workshop"><input type="hidden" name="ws" value="<?= $e($wid) ?>">
-    <p class="dk-step"><b>1</b> Find the person: type the first name letter by letter, then a space and the second name. Or type their WhatsApp number or email.</p>
+    <p class="dk-step">Find the person: type the first name letter by letter, then a space and the second name. Or type their WhatsApp number or email.</p>
     <div class="dk-search">
       <span class="dk-search-ic" aria-hidden="true"><?= Page::navIcon('search') ?></span>
       <input type="search" name="q" value="<?= $e($findQ) ?>" placeholder="Name, WhatsApp number or email" aria-label="Find the person by name, phone or email" autocomplete="off" autofocus data-desk-find="<?= $e($wid) ?>">
@@ -352,7 +352,7 @@ $icon = static fn (string $d): string => '<svg viewBox="0 0 24 24" fill="none" s
 
   <?php if ($person): ?>
   <div class="dk-pay-step" id="pay">
-    <p class="dk-step"><b>2</b> <?= $wsFree ? 'Register' : 'Take the cash from' ?> <strong><?= $e(Registrations::fullName($person)) ?></strong><?= $wsFree ? ' for free (no cash)' : '' ?>. Psoola emails the workshop ticket to <span dir="ltr"><?= $e((string) $person['email']) ?></span>.</p>
+    <p class="dk-step"><?= $wsFree ? 'Register' : 'Take the cash from' ?> <strong><?= $e(Registrations::fullName($person)) ?></strong><?= $wsFree ? ' for free (no cash)' : '' ?>. Psoola emails the workshop ticket to <span dir="ltr"><?= $e((string) $person['email']) ?></span>.</p>
     <?php if ($has): ?>
       <p class="desk-blocked">Already registered for this workshop.</p>
     <?php else: ?>
