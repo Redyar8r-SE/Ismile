@@ -247,6 +247,8 @@ $check('Add by association asks for gender and age, and no student ID photo or a
 $check('Add by association uses the cash form with the association button and confirm window', str_contains($html, 'id="caller-form"') && str_contains($html, 'data-pay-label="Add by association"') && str_contains($html, 'id="cash-confirm"') && str_contains($html, 'Yes, add and send QR') && str_contains($html, 'value="vip"') && !str_contains($html, 'Register with a free ticket'));
 $html = $render('association-guests', '', 'viewer');
 $check('Viewer sees Association guests in view-only mode without the Add tab', str_contains($html, 'class="admin-shell view-only"') && !str_contains($html, 'tab=add') && !str_contains($html, '<h2>Not allowed</h2>'));
+// PSOOLA gate scans count as attendance only on these two days (Attendance::currentDay).
+$check('Event days are Thursday 19 and Friday 20 November 2026, so PSOOLA gate scans count as attendance', \Ismile\Settings::get('event_day1') === '2026-11-19' && \Ismile\Settings::get('event_day2') === '2026-11-20' && \Ismile\Attendance::currentDay('2026-11-19') === 1 && \Ismile\Attendance::currentDay('2026-11-20') === 2);
 $check('Volunteer cannot open Association guests', str_contains($render('association-guests', '', 'volunteer'), '<h2>Not allowed</h2>'));
 $check('Users page offers "Allow Association guests (everything)" for team accounts', !Db::value("SELECT id FROM admin_users WHERE role <> 'owner' AND disabled_at IS NULL LIMIT 1") || str_contains($render('users'), 'value="association_guest_access"'));
 $check('Association guest list PDF renders with the full list details', str_starts_with(PdfReport::make(\Ismile\AssociationGuests::NAME . ' guests', \Ismile\AssociationGuests::reportRows(), true), '%PDF-'));
