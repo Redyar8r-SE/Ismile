@@ -75,12 +75,14 @@ $check('search finds a guest by name, reference and phone', count(AssociationGue
     && count(AssociationGuests::all(substr((string) $registration['phone'], -7))) >= 1);
 $check('search with special characters is safe', AssociationGuests::all("%' OR 1=1 --") === []);
 
-// ---- the name list PDF ----
-$rows = AssociationGuests::nameListRows();
+// ---- the guest list PDF: the same full details as the Lists PDFs ----
+$rows = AssociationGuests::reportRows();
+$listRows = Lists::reportRows('registered', \Ismile\Admin\PaymentBreakdown::attach(Lists::filter('registered', Lists::rows('registered'), Lists::filters(['sale' => 'association']))), false);
 $names = array_column(array_slice($rows, 2), 1);
-$check('the name list has number, full name and ticket, A to Z', $rows[1] === ['#', 'Full name', 'Ticket'] && in_array('Hemin Ali Omar', $names, true) && $names === (static function (array $n): array { usort($n, 'strcasecmp'); return $n; })($names));
-$check('the name list title has no dot separator', !str_contains((string) $rows[0][0], '·') && str_starts_with((string) $rows[0][0], 'Slemani Association, '));
-$check('the name list PDF renders', str_starts_with(PdfReport::make('Slemani Association guests', $rows), '%PDF-'));
+$check('the guest list PDF has the same columns as the Lists PDFs', $rows[1] === $listRows[0] && in_array('Full name', $rows[1], true) && in_array('Phone', $rows[1], true) && in_array('Lunch days', $rows[1], true) && in_array('Reference', $rows[1], true) && in_array('Ticket no.', $rows[1], true));
+$check('the guest list PDF has only the registered association guests, A to Z', count($rows) - 2 === $totals['guests'] && in_array('Hemin Ali Omar', $names, true) && !in_array('Plain Ali Omar', $names, true));
+$check('the guest list title has no dot separator', !str_contains((string) $rows[0][0], '·') && str_starts_with((string) $rows[0][0], 'Slemani Association, '));
+$check('the guest list PDF renders', str_starts_with(PdfReport::make('Slemani Association guests', $rows, true), '%PDF-'));
 
 // ---- Lists: its own Sale type, not counted as cash ----
 $check('Lists see the guest as Slemani Association, not Cash', Lists::saleType($registration) === 'association' && Lists::SALE_TYPES['association'] === 'Slemani Association');

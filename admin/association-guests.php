@@ -2,7 +2,7 @@
 // Association guests: people the Slemani Association registers for the
 // summit. The form is the Register (cash) form: PSOOLA records a cash sale,
 // issues the ticket and emails the QR at once. The association pays iSmile
-// later. Tabs: the guest list (with the name list PDF) and "Add by association".
+// later. Tabs: the guest list (with the full guest list PDF) and "Add by association".
 
 declare(strict_types=1);
 
@@ -22,14 +22,15 @@ $canAdd = AssociationGuests::canAdd($user) && Auth::viewerMayPost($user, '/admin
 $canPdf = Auth::can($user, 'export');
 $tab = (Page::query('tab') === 'add' && $canAdd) ? 'add' : 'guests';
 
-// ---------- Name list PDF ----------
-if (Page::query('pdf') === 'names') {
+// ---------- Guest list PDF (the full details, like the Lists PDFs) ----------
+if (Page::query('pdf') === 'list') {
     if (!$canPdf) {
         Page::redirect('association-guests.php');
     }
-    $rows = AssociationGuests::nameListRows();
-    Audit::log((int) $user['id'], 'export', null, null, ['what' => 'association-guests-names', 'rows' => count($rows) - 2]);
-    $pdf = PdfReport::make(AssociationGuests::NAME . ' guests', $rows);
+    $rows = AssociationGuests::reportRows();
+    Audit::log((int) $user['id'], 'export', null, null, ['what' => 'association-guests', 'rows' => count($rows) - 2]);
+    // The amounts are shown: they are what the association owes iSmile.
+    $pdf = PdfReport::make(AssociationGuests::NAME . ' guests', $rows, true);
     header('Content-Type: application/pdf');
     header('Content-Disposition: attachment; filename="ismile-slemani-association-guests-' . date('Y-m-d-Hi') . '.pdf"');
     header('Cache-Control: no-store');
@@ -101,7 +102,7 @@ if ($tab === 'guests') {
     <div><h2><?= $e(AssociationGuests::NAME) ?></h2><p class="muted small"><?= number_format($totals['guests']) ?> <?= $totals['guests'] === 1 ? 'guest' : 'guests' ?><?= $totals['waiting'] ? ' and ' . $totals['waiting'] . ' waiting for PSOOLA' : '' ?></p></div>
   </div>
   <div class="association-guest-owes"><span>Owes iSmile</span><strong><?= $e($owed) ?></strong></div>
-  <?php if ($canPdf): ?><a class="btn gold" href="association-guests.php?pdf=names"><?= Page::navIcon('download') ?><span>Download name list (PDF)</span></a><?php endif; ?>
+  <?php if ($canPdf): ?><a class="btn gold" href="association-guests.php?pdf=list"><?= Page::navIcon('download') ?><span>Download guest list (PDF)</span></a><?php endif; ?>
 </section>
 
 <form class="filters card filter-panel" method="get">

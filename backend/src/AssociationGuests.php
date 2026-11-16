@@ -175,16 +175,18 @@ final class AssociationGuests
         return implode(' + ', $parts);
     }
 
-    /** Rows for the name list PDF: number, full name, ticket (registered guests only, A to Z). */
-    public static function nameListRows(): array
+    /**
+     * Rows for the guest list PDF: the same full details as the Lists PDFs
+     * (full name, total, phone, ticket, lunch, ticket no., reference, payment
+     * date, status and the ticket and lunch breakdown), for every registered
+     * association guest, A to Z.
+     */
+    public static function reportRows(): array
     {
-        $guests = array_values(array_filter(self::all(), static fn (array $g): bool => self::state($g) === 'registered'));
-        usort($guests, static fn (array $a, array $b): int => strcasecmp(Registrations::fullName($a), Registrations::fullName($b)));
-        $rows = [[self::NAME . ', ' . count($guests) . (count($guests) === 1 ? ' guest' : ' guests')], ['#', 'Full name', 'Ticket']];
-        foreach ($guests as $index => $guest) {
-            $rows[] = [(string) ($index + 1), Registrations::fullName($guest), Registrations::ticketName($guest['ticket_type'])];
-        }
-        return $rows;
+        $people = Admin\Lists::filter('registered', Admin\Lists::rows('registered'), Admin\Lists::filters(['sale' => 'association']));
+        $people = Admin\PaymentBreakdown::attach($people);
+        $title = self::NAME . ', ' . count($people) . (count($people) === 1 ? ' guest' : ' guests') . ', all pay later';
+        return array_merge([[$title]], Admin\Lists::reportRows('registered', $people, false));
     }
 
     /**
