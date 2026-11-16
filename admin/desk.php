@@ -155,6 +155,11 @@ $trainer = static function (array $w): string {
     $speaker = $w['speaker'] ?? null;
     return is_array($speaker) ? (string) ($speaker['en'] ?? '') : (string) $speaker;
 };
+$localPhone = static function (string $phone): string {
+    $digits = (string) preg_replace('/\D+/', '', $phone);
+    if (str_starts_with($digits, '964') && strlen($digits) === 13) $digits = '0' . substr($digits, 3);
+    return strlen($digits) === 11 ? substr($digits, 0, 4) . ' ' . substr($digits, 4, 3) . ' ' . substr($digits, 7) : $phone;
+};
 $masked = static fn (string $phone): string => 'ends in ' . substr(preg_replace('/\D+/', '', $phone), -4);
 $when = static function (array $w): string {
     $parts = array_filter([$w['scheduledDate'] ? date('D j M', strtotime((string) $w['scheduledDate'])) : '', trim(($w['startTime'] ?? '') . ($w['endTime'] ? '–' . $w['endTime'] : ''))]);
@@ -241,7 +246,7 @@ Page::top('Workshop & Register', 'desk');
   <p class="cash-confirm-sub">Check the details with the person before you sell. This cannot be undone.</p>
   <dl class="cash-confirm-details">
     <div><dt>Person</dt><dd data-confirm-field="name"></dd></div>
-    <div><dt>Phone</dt><dd data-confirm-field="phone" dir="ltr"></dd></div>
+    <div><dt>WhatsApp number</dt><dd data-confirm-field="phone" dir="ltr"></dd></div>
     <div><dt>Ticket email</dt><dd data-confirm-field="email" dir="ltr"></dd></div>
     <div><dt>Ticket</dt><dd data-confirm-field="ticket"></dd></div>
     <div><dt>Lunch</dt><dd data-confirm-field="lunch"></dd></div>
@@ -318,6 +323,7 @@ $icon = static fn (string $d): string => '<svg viewBox="0 0 24 24" fill="none" s
 
 <?php if ($ws && $ws['blocked'] === ''): $quote = $ws['quote']; $wid = $ws['w']['id']; $img = $photo($ws['w']); $wsFree = $quote['iqd'] === 0; ?>
 <section class="dk-panel" id="register">
+  <a class="dk-close" href="<?= $e($deskUrl('workshop')) ?>" aria-label="Close" title="Close">&times;</a>
   <header class="dk-panel-head">
     <?php if ($img !== ''): ?><span class="dk-panel-photo"><img src="<?= $e($img) ?>" alt=""></span><?php endif; ?>
     <div><small>Register for this workshop <span class="dk-tag"><?= $wsFree ? 'Free, no cash' : 'Paid in cash' ?></span></small><h2><?= $e(Workshops::name($ws['w'])) ?></h2><p><?= $e($words($ws['w']['speaker'] ?? '')) ?></p></div>
@@ -356,16 +362,16 @@ $icon = static fn (string $d): string => '<svg viewBox="0 0 24 24" fill="none" s
     <?php if ($has): ?>
       <p class="desk-blocked">Already registered for this workshop.</p>
     <?php else: ?>
-    <form method="post" action="<?= $e($deskUrl('workshop', ['ws' => $wid] + $keep + ['rid' => (int) $person['id']])) ?>#pay" class="stack">
+    <form method="post" action="<?= $e($deskUrl('workshop', ['ws' => $wid] + $keep + ['rid' => (int) $person['id']])) ?>#pay" class="stack" data-ws-confirm data-name="<?= $e(Registrations::fullName($person)) ?>" data-email="<?= $e((string) $person['email']) ?>" data-phone="<?= $e($localPhone((string) $person['phone'])) ?>" data-workshop="<?= $e(Workshops::name($ws['w'])) ?>">
       <?= Page::csrfField() ?><?= Page::onceField() ?>
       <input type="hidden" name="do" value="workshop_cash_sale"><input type="hidden" name="rid" value="<?= (int) $person['id'] ?>"><input type="hidden" name="workshop" value="<?= $e($wid) ?>">
       <?php if ($wsFree): ?>
-      <div class="dk-pay-buttons"><button class="dk-cta dk-big">Register for free <span class="dk-go">Send ticket</span></button></div>
+      <div class="dk-pay-buttons"><button class="dk-cta dk-big" data-amount="Free, no cash">Register for free <span class="dk-go">Send ticket</span></button></div>
       <?php else: ?>
       <label class="desk-received"><input type="checkbox" name="cash_received" value="1" required> I have received the cash for this workshop.</label>
       <div class="dk-pay-buttons">
-        <button class="dk-cta dk-big" name="cash_currency" value="IQD">Received <b><?= $e(number_format($quote['iqd'])) ?> IQD</b> <span class="dk-go">Register</span></button>
-        <?php if ($usd($quote) !== ''): ?><button class="dk-cta dk-big" name="cash_currency" value="USD">Received <b><?= $e($usd($quote)) ?></b> <span class="dk-go">Register</span></button><?php endif; ?>
+        <button class="dk-cta dk-big" name="cash_currency" value="IQD" data-amount="<?= $e(number_format($quote['iqd'])) ?> IQD in cash">Received <b><?= $e(number_format($quote['iqd'])) ?> IQD</b> <span class="dk-go">Register</span></button>
+        <?php if ($usd($quote) !== ''): ?><button class="dk-cta dk-big" name="cash_currency" value="USD" data-amount="<?= $e($usd($quote)) ?> in cash">Received <b><?= $e($usd($quote)) ?></b> <span class="dk-go">Register</span></button><?php endif; ?>
       </div>
       <?php endif; ?>
     </form>
@@ -374,6 +380,22 @@ $icon = static fn (string $d): string => '<svg viewBox="0 0 24 24" fill="none" s
   <?php endif; ?>
 </section>
 <?php endif; ?>
+<dialog class="cash-confirm dk-confirm" id="ws-confirm" aria-labelledby="ws-confirm-title">
+  <h2 id="ws-confirm-title">Are you sure?</h2>
+  <p class="cash-confirm-sub">Check these details with the person before you register.</p>
+  <dl class="cash-confirm-details">
+    <div><dt>Name</dt><dd data-ws-field="name"></dd></div>
+    <div><dt>Email</dt><dd data-ws-field="email" dir="ltr"></dd></div>
+    <div><dt>WhatsApp number</dt><dd data-ws-field="phone" dir="ltr"></dd></div>
+    <div><dt>Workshop</dt><dd data-ws-field="workshop"></dd></div>
+  </dl>
+  <div class="cash-confirm-amount"><span>Payment</span><b data-ws-field="amount"></b></div>
+  <p class="cash-confirm-info">Psoola emails the workshop ticket to the email above.</p>
+  <div class="cash-confirm-actions">
+    <button type="button" class="btn ghost" data-ws-back>No, go back</button>
+    <button type="button" class="btn cash-pay" data-ws-yes>Yes, register</button>
+  </div>
+</dialog>
 <p class="muted small">Company workshops are not sold here: the person calls the company.</p>
 <?php endif;
 Page::bottom();

@@ -77,3 +77,35 @@ document.addEventListener("click", (event) => {
   const now = Number(input.value || input.placeholder || 28);
   input.value = String(Math.min(120, Math.max(16, now + Number(button.dataset.ageStep))));
 });
+
+// Workshop: "Are you sure?" with the name, email, WhatsApp number, workshop and
+// payment, before anything is sent. "Yes, register" sends the form.
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.querySelector("form[data-ws-confirm]");
+  const box = document.getElementById("ws-confirm");
+  if (!form || !box || typeof box.showModal !== "function") return;
+  const field = (name) => box.querySelector(`[data-ws-field="${name}"]`);
+  let confirmed = false;
+  let submitter = null;
+  form.addEventListener("submit", (event) => {
+    if (confirmed) return;
+    event.preventDefault();
+    if (!form.reportValidity()) return;   // for example "I have received the cash" not ticked
+    submitter = event.submitter || form.querySelector("button");
+    field("name").textContent = form.dataset.name;
+    field("email").textContent = form.dataset.email;
+    field("phone").textContent = form.dataset.phone;
+    field("workshop").textContent = form.dataset.workshop;
+    field("amount").textContent = submitter?.dataset.amount || "";
+    box.showModal();
+  });
+  box.querySelector("[data-ws-back]").addEventListener("click", () => box.close());
+  box.addEventListener("click", (event) => { if (event.target === box) box.close(); });   // a click outside goes back
+  box.querySelector("[data-ws-yes]").addEventListener("click", (event) => {
+    event.currentTarget.disabled = true;
+    confirmed = true;
+    box.close();
+    if (typeof form.requestSubmit === "function") form.requestSubmit(submitter);
+    else form.submit();
+  });
+});
