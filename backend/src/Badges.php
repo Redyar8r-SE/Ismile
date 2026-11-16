@@ -207,6 +207,22 @@ final class Badges
         return ['interdisplayblack', 'interdisplaymedium'];
     }
 
+    /**
+     * The badge name font as TrueType bytes, for the Certificates preview: the
+     * licensed Helvetica Now Display Black when installed (private storage),
+     * otherwise Inter Display Black, rebuilt from TCPDF's compressed copy.
+     */
+    public static function nameFontBytes(): ?string
+    {
+        $dir = self::privateFontDir();
+        if (self::hasLicensedFont() && $dir !== null && is_file("$dir/src/HelveticaNowDisplay-Black.ttf")) {
+            return (string) file_get_contents("$dir/src/HelveticaNowDisplay-Black.ttf");
+        }
+        $packed = @file_get_contents(self::asset('fonts/interdisplayblack.z'));
+        $bytes = $packed === false ? false : @gzuncompress($packed);
+        return $bytes === false ? null : $bytes;
+    }
+
     /** storage/fonts: private, never in the repository or the web folder. */
     private static function privateFontDir(): ?string
     {

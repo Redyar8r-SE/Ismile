@@ -1431,4 +1431,6 @@ body:has([data-guest-tickets]) .page-actions .btn{background:transparent;border:
 .certificate-design-preview{display:flex;align-items:center;padding:16px!important}
 .certificate-design-frame{position:relative;width:100%;container-type:inline-size;border-radius:10px;overflow:hidden;box-shadow:0 6px 24px rgba(0,40,80,.12)}
 .certificate-design-frame img{display:block;width:100%;height:auto}
-.certificate-design-frame strong{position:absolute;left:7.74%;top:45.14%;transform:translateY(-50%);color:#004E88;font-weight:900;font-size:3.9cqw;letter-spacing:-.01em;white-space:nowrap}
+/* The badge name font (served privately by certificate-font.php) at 31 pt of the 297 mm page: 31 pt = 10.94 mm = 3.682% of the width. */
+@font-face{font-family:"iSmile Badge Name";src:url("certificate-font.php") format("truetype");font-weight:900;font-display:swap}
+.certificate-design-frame strong{position:absolute;left:7.74%;top:45.14%;transform:translateY(-50%);color:#004E88;font-family:"iSmile Badge Name","Inter Display",Inter,system-ui,sans-serif;font-weight:900;font-size:3.682cqw;letter-spacing:0;white-space:nowrap}

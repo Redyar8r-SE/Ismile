@@ -116,7 +116,7 @@ final class Certificates
         // Kurdish or Arabic letters need DejaVu, as on the badge.
         $rtl = (bool) preg_match('/[^\x{0000}-\x{024F}]/u', $name);
         [$face, $style] = $rtl ? ['dejavusans', 'B'] : [$font, ''];
-        $size = 32.0;
+        $size = 31.0;   // the owner's size for the guest name
         $pdf->SetFont($face, $style, $size);
         while ($size > 14 && $pdf->GetStringWidth($name) > 249) $pdf->SetFont($face, $style, $size -= 0.5);
         $pdf->SetTextColor(0, 78, 136);
