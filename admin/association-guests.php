@@ -50,7 +50,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         if (($_POST['do'] ?? '') !== 'add') {
             throw new UserError('Press Add by association.');
         }
-        ['checkout' => $checkout, 'sale' => $sale] = AssociationGuests::add($_POST, $user, $_FILES['student_id'] ?? null);
+        ['checkout' => $checkout, 'sale' => $sale] = AssociationGuests::add($_POST, $user);
         $price = number_format($sale['amount']) . ' ' . $sale['currency'];
         if ($sale['status'] === 'paid' && $sale['registration_id']) {
             Page::flash('ok', 'Added ' . Registrations::fullName($checkout) . ' (' . $checkout['ref'] . ') for the ' . AssociationGuests::NAME . '. PSOOLA is emailing the ticket with the QR to ' . $checkout['email'] . '. The association owes ' . $price . ' for this guest.');
@@ -135,7 +135,7 @@ if ($tab === 'guests') {
 <section class="card directory-panel"><div class="toolbar list-head">
   <div><h2>Guest list <span class="result-count"><?= count($guests) ?></span></h2><p class="muted small"><?= $filtered ? 'Showing the guests that match your search and filters.' : 'Every guest added by the ' . $e(AssociationGuests::NAME) . '.' ?> <?= $e(AssociationGuests::SORTS[$filters['sort']]) ?>.<?= $mail === null ? ' PSOOLA could not be reached for the QR email status just now.' : '' ?></p></div>
 </div>
-<div class="table-wrap">
+<div class="table-wrap association-guest-scroll">
 <table class="association-guest-table">
   <tr><th>Reference</th><th>Name</th><th>Phone</th><th>Ticket</th><th>Lunch</th><th>Price</th><th>QR email</th><th>Added by</th><th>Added</th></tr>
   <?php foreach ($guests as $guest):
@@ -222,18 +222,6 @@ $association = AssociationGuests::NAME;
     <div class="row3" id="caller-student-fields">
       <label>University (required for students)<input name="university" id="caller-university" maxlength="160" value="<?= $value('university') ?>"<?= $student ? ' required' : '' ?>></label>
       <label>Stage<select name="stage" id="caller-stage"<?= $student ? ' required' : '' ?>><option value="">Choose the stage</option><?php foreach (range(\Ismile\Checkouts::FIRST_STUDENT_STAGE, \Ismile\Checkouts::LAST_STUDENT_STAGE) as $stage): ?><option value="<?= $stage ?>"<?= $selected('stage', (string) $stage) ?>><?= $e(Registrations::stageName($stage)) ?></option><?php endforeach; ?></select></label>
-      <label>Ambassador code (optional)<input name="ambassador" maxlength="40" value="<?= $value('ambassador') ?>" placeholder="e.g. AMB-SARA" autocomplete="off"></label>
-      <label class="id-upload" id="caller-id-upload">
-        <input type="file" name="student_id" id="caller-student-id" accept="image/jpeg,image/png,image/webp" data-optional aria-describedby="caller-id-hint">
-        <span class="id-upload-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="11" r="2.2"/><path d="M5.8 16.2c.6-1.6 1.8-2.4 3.2-2.4s2.6.8 3.2 2.4M14.5 10h4M14.5 13.5h3"/></svg></span>
-        <span class="id-upload-text">
-          <b>Student ID photo <em>Optional</em></b>
-          <small id="caller-id-hint">A clear photo of the student card, if the association sent one. JPG, PNG or WebP, 8 MB at most.</small>
-          <span class="id-upload-file" data-empty="No photo chosen. Click here or drop the photo on this box.">No photo chosen. Click here or drop the photo on this box.</span>
-        </span>
-        <span class="id-upload-preview" hidden><img alt="The chosen student ID photo"></span>
-        <span class="btn ghost id-upload-button" aria-hidden="true">Choose photo</span>
-      </label>
     </div>
   </fieldset>
   <fieldset class="form-section">

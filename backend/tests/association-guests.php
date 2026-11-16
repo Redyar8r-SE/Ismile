@@ -60,8 +60,9 @@ $check('adding is in the activity log', (bool) Db::value("SELECT id FROM audit_l
 // ---- a VIP and a Student (no student ID photo needed) ----
 $vip = AssociationGuests::add($form('Bryar', ['ticket' => 'vip', 'lunch_day1' => '1', 'vip_lunch_day' => '1']), $staff);
 $check('a VIP guest can be added', $vip['sale']['status'] === 'paid' && Registrations::find((int) $vip['sale']['registration_id'])['ticket_type'] === 'vip');
-$student = AssociationGuests::add($form('Shno', ['specialty' => 'student', 'ticket' => 'student', 'university' => 'University of Sulaimani', 'stage' => '3']), $staff);
-$check('a student guest can be added without a student ID photo', $student['sale']['status'] === 'paid' && Registrations::find((int) $student['sale']['registration_id'])['ticket_type'] === 'student');
+$student = AssociationGuests::add($form('Shno', ['specialty' => 'student', 'ticket' => 'student', 'university' => 'University of Sulaimani', 'stage' => '3', 'ambassador' => 'AMB-X']), $staff);
+$check('no ambassador code is saved for association students', Registrations::find((int) $student['sale']['registration_id'])['ambassador_code'] === null && Registrations::find((int) $student['sale']['registration_id'])['id_photo_id'] === null);
+$check('a student guest can be added without a student ID photo or ambassador code', $student['sale']['status'] === 'paid' && Registrations::find((int) $student['sale']['registration_id'])['ticket_type'] === 'student');
 
 // ---- the list, the boxes and what the association owes ----
 $guests = AssociationGuests::all();

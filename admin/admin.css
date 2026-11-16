@@ -1451,3 +1451,6 @@ body:has([data-guest-tickets]) .page-actions .btn{background:transparent;border:
 .association-guest-banner{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;background:var(--blue-l);color:var(--blue-d);font-size:14px;font-weight:600}
 .association-guest-banner .added-by-tag{margin-top:0;background:#fff}
 .association-guest-table td.num,.association-guest-table td:last-child{white-space:nowrap}
+/* Many association guests: the list scrolls inside its box, headings stay visible. */
+.table-wrap.association-guest-scroll{max-height:min(70vh,720px);overflow:auto}
+.association-guest-scroll .association-guest-table th{position:sticky;top:0;z-index:1;background:#f2f6fa}

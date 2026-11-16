@@ -25,11 +25,12 @@ final class AssociationGuests
     /**
      * Registers one association guest: the cash form, tagged with the
      * association before PSOOLA is asked, so a sale that PSOOLA confirms a few
-     * minutes later is tagged too. The student ID photo is optional here.
+     * minutes later is tagged too. Students need their university and stage
+     * only: no student ID photo and no ambassador code here.
      *
      * @return array{checkout: array, sale: array}
      */
-    public static function add(array $in, array $user, ?array $photo = null): array
+    public static function add(array $in, array $user): array
     {
         if (!self::canAdd($user)) {
             throw new UserError('Your account cannot add association guests.');
@@ -40,7 +41,8 @@ final class AssociationGuests
         if (trim((string) ($in['age'] ?? '')) === '') {
             throw new UserError('Enter the age.');
         }
-        $checkout = Checkouts::createForCash($in, $user, $photo, false);
+        unset($in['ambassador']);
+        $checkout = Checkouts::createForCash($in, $user, null, false);
         Db::insert('association_guests', [
             'ref' => $checkout['ref'], 'association' => self::NAME,
             'added_by' => (int) $user['id'], 'created_at' => App::now(),
