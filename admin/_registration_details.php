@@ -45,11 +45,13 @@ if (Auth::can($user,'workshops')) foreach (Workshops::all() as $workshop) {
         'verified'=>(bool)($availability['availabilityVerified'] ?? false), 'blocked'=>$already || $waiting];
 }
 $isComp = $registration['status'] === 'complimentary';
+// Added by the Slemani Association: sold as a PSOOLA cash sale, the association pays iSmile later.
+$associationName = \Ismile\AssociationGuests::tags([(string) $registration['ref']])[(string) $registration['ref']] ?? null;
 $statusLabel = match ($registration['status']) {
-    'complimentary'=>'Complimentary', 'paid'=>$registration['pay_method'] === 'cash' ? 'Paid by cash' : (in_array($registration['pay_method'],['visa','mastercard','fib','fastpay'],true) ? 'Paid online' : 'Paid'),
+    'complimentary'=>'Complimentary', 'paid'=>$associationName !== null ? $associationName . ', pays later' : ($registration['pay_method'] === 'cash' ? 'Paid by cash' : (in_array($registration['pay_method'],['visa','mastercard','fib','fastpay'],true) ? 'Paid online' : 'Paid')),
     'cancelled'=>'Cancelled', default=>'Awaiting payment',
 };
-$statusTone = $isComp ? 'violet' : ($registration['status'] === 'paid' ? ($registration['pay_method'] === 'cash' ? 'gold' : 'green') : ($registration['status'] === 'cancelled' ? 'red' : 'gold'));
+$statusTone = $isComp ? 'violet' : ($registration['status'] === 'paid' ? ($associationName !== null ? 'neutral' : ($registration['pay_method'] === 'cash' ? 'gold' : 'green')) : ($registration['status'] === 'cancelled' ? 'red' : 'gold'));
 $total = $isComp ? 0 : ($paidPayment && $paidPayment['amount_confirmed'] !== null ? (int)$paidPayment['amount_confirmed'] : null);
 $currency = $paidPayment['currency'] ?? 'IQD';
 $fullName = Registrations::fullName($registration);
@@ -109,7 +111,7 @@ if ($inCheckin) echo \Ismile\Admin\CheckinWorkspace::navigation('guests',$user,$
             $field('VIP workshop ticket',match($vipPackage['state']){'issued'=>'Issued by PSOOLA','pending'=>'Waiting for ticket issuance','review'=>'Saved request needs review',default=>ucfirst($vipPackage['state'])},'ticket');
         }
         $field('Language',$registration['lang'],'content'); $field('Form sent',Page::when($registration['created_at']),'calendar');
-        $field('Added by',$registration['created_by'] === null ? 'Website' : ($addedBy ?? 'A removed account'),'user');
+        $field('Added by',$registration['created_by'] === null ? 'Website' : ($addedBy ?? 'A removed account') . ($associationName !== null ? ', for the ' . $associationName : ''),'user');
         $field('No-refund terms',$registration['terms_accepted_at'] ? 'Accepted '.Page::when($registration['terms_accepted_at']) : 'Registered by the office','check');
         if ($ticket) { $field('Ticket number',$ticket['ticket_no'],'ticket'); $field('Ticket version / source',$ticket['version'].' / '.$ticket['source'],'ticket'); }
         if ($sponsoredOrder) { $field('PSOOLA order',$sponsoredOrder['provider_order_id'],'psoola-orders'); $field('Provider order total',Page::money((int)$sponsoredOrder['provider_amount'],$sponsoredOrder['provider_currency']),'cash'); }

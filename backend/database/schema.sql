@@ -1222,3 +1222,19 @@ CREATE TABLE IF NOT EXISTS vip_package_choices (
  CONSTRAINT fk_vip_package_booking FOREIGN KEY (booking_id) REFERENCES workshop_bookings(id) ON DELETE SET NULL,
  CONSTRAINT ck_vip_package_workshop CHECK (workshop_id IN ('simplified-direct-veneers','crown-vs-veneer'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Association guests: people the Slemani Association registers. Each one is
+-- sold as a PSOOLA cash sale (PSOOLA emails the QR at once) and the
+-- association pays iSmile later. Linked by the reference (ISM26-XXXXXX),
+-- which the form and the registration share, so cleaning up old forms never
+-- loses the link.
+CREATE TABLE IF NOT EXISTS association_guests (
+  id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  ref         CHAR(12)     NOT NULL,
+  association VARCHAR(80)  NOT NULL DEFAULT 'Slemani Association',
+  added_by    INT UNSIGNED NOT NULL,
+  created_at  DATETIME     NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_association_guest_ref (ref),
+  CONSTRAINT fk_association_guest_adder FOREIGN KEY (added_by) REFERENCES admin_users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

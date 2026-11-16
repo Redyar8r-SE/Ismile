@@ -115,6 +115,7 @@ final class Erase
                 'checkouts'         => $checkouts,
                 'emails'            => Db::all('SELECT * FROM emails WHERE registration_id = ?' . ($checkoutIds ? ' OR checkout_id IN (' . self::marks($checkoutIds) . ')' : '') . ' FOR UPDATE', [$id, ...$checkoutIds]),
                 'student_id_photos' => self::rowsIn('student_id_photos', 'id', $photoIds),
+                'association_guests' => Db::all('SELECT * FROM association_guests WHERE ref = ? FOR UPDATE', [$registration['ref']]),
             ];
             self::keep('registration', $registration['ref'], Registrations::fullName($registration), $snapshot, $user);
 
@@ -133,6 +134,7 @@ final class Erase
             if ($checkoutIds) {
                 Db::run('DELETE FROM checkouts WHERE id IN (' . self::marks($checkoutIds) . ')', $checkoutIds);
             }
+            Db::run('DELETE FROM association_guests WHERE ref = ?', [$registration['ref']]);
             Db::run('DELETE FROM registrations WHERE id = ?', [$id]);
             if ($photoIds) {
                 Db::run('DELETE FROM student_id_photos WHERE id IN (' . self::marks($photoIds) . ')', $photoIds);

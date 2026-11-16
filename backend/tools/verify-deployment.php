@@ -10,7 +10,7 @@ use Ismile\Auth;
 use Ismile\Db;
 use Ismile\Admin\PdfReport;
 
-$pages = ['index','desk','checkin','registrations','association','certificates','tickets','sponsors','booths','map','lists','communications','payments','psoola-orders','registration','workshops','settings','users','backups','content'];
+$pages = ['index','desk','checkin','registrations','association','association-guests','certificates','tickets','sponsors','booths','map','lists','communications','payments','psoola-orders','registration','workshops','settings','users','backups','content'];
 if (($argv[1] ?? '') === '--render') {
     $page = $argv[2] ?? '';
     if (!in_array($page, $pages, true)) throw new RuntimeException('Unknown verification page.');
@@ -239,8 +239,16 @@ $html = $render('registration', 'new=1');
 $check('Register (cash) shows packages, lunch cards and the total to collect', str_contains($html, 'Packages &amp; prices') && str_contains($html, 'id="cash-total"') && str_contains($html, 'class="lunch-card"') && str_contains($html, 'Paid by cash'));
 $check('Paid by cash first asks "Did you receive the cash?"', str_contains($html, 'id="cash-confirm"') && str_contains($html, 'Did you receive the cash?') && str_contains($html, 'Yes, sell the ticket'));
 $check('Every "Are you sure?" uses the iSmile window (free ticket shown as an example)', str_contains($html, 'data-confirm-box=') && str_contains($html, 'Give a free ticket?') && str_contains((string) @file_get_contents(is_file(App::siteFile('admin/admin.js')) ? App::siteFile('admin/admin.js') : dirname(__DIR__, 2) . '/admin/admin.js'), 'confirm-box'));
+$html = $render('association-guests');
+$check('Association guests: menu item, guest list, name list PDF and Add by association tab', str_contains($html, 'href="association-guests.php"') && str_contains($html, 'Slemani Association') && str_contains($html, 'Download name list (PDF)') && str_contains($html, 'href="association-guests.php?tab=add"') && str_contains($html, 'association-guest-tabs'));
+$html = $render('association-guests', 'tab=add');
+$check('Add by association uses the cash form with the association button and confirm window', str_contains($html, 'id="caller-form"') && str_contains($html, 'data-pay-label="Add by association"') && str_contains($html, 'id="cash-confirm"') && str_contains($html, 'Yes, add and send QR') && str_contains($html, 'value="vip"') && !str_contains($html, 'Register with a free ticket'));
+$html = $render('association-guests', '', 'viewer');
+$check('Viewer sees Association guests in view-only mode without the Add tab', str_contains($html, 'class="admin-shell view-only"') && !str_contains($html, 'tab=add') && !str_contains($html, '<h2>Not allowed</h2>'));
+$check('Volunteer cannot open Association guests', str_contains($render('association-guests', '', 'volunteer'), '<h2>Not allowed</h2>'));
+$check('Association guest name list PDF renders', str_starts_with(PdfReport::make(\Ismile\AssociationGuests::NAME . ' guests', \Ismile\AssociationGuests::nameListRows()), '%PDF-'));
 $html = $render('lists', 'list=registered');
-$check('Registered list offers the Sale type filter (cash, card, free)', str_contains($html, '<legend>Sale type</legend>') && str_contains($html, 'name="sale" value="cash"') && str_contains($html, 'Card (online)'));
+$check('Registered list offers the Sale type filter (cash, card, free, association)', str_contains($html, '<legend>Sale type</legend>') && str_contains($html, 'name="sale" value="cash"') && str_contains($html, 'Card (online)') && str_contains($html, 'name="sale" value="association"'));
 $html = $render('certificates');
 $check('certificate delivery remains manual', str_contains($html, 'Check-in never sends certificate emails.') && str_contains($html, 'Download attendance report (PDF)'));
 $html = $render('tickets');

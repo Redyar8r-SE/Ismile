@@ -1434,3 +1434,20 @@ body:has([data-guest-tickets]) .page-actions .btn{background:transparent;border:
 /* The badge name font (served privately by certificate-font.php) at 31 pt of the 297 mm page: 31 pt = 10.94 mm = 3.682% of the width. */
 @font-face{font-family:"iSmile Badge Name";src:url("certificate-font.php") format("truetype");font-weight:900;font-display:swap}
 .certificate-design-frame strong{position:absolute;left:7.74%;top:45.14%;transform:translateY(-50%);color:#004E88;font-family:"iSmile Badge Name","Inter Display",Inter,system-ui,sans-serif;font-weight:900;font-size:3.682cqw;letter-spacing:0;white-space:nowrap}
+
+/* Association guests: the Slemani Association card, its tag and the two tabs. */
+.checkin-tabs.association-guest-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}
+.added-by-tag.association{background:var(--blue-l);color:var(--blue-d)}
+.association-guest-card{display:flex;flex-wrap:wrap;align-items:center;gap:16px 24px;margin-bottom:24px}
+.association-guest-org{display:flex;align-items:center;gap:14px;flex:1 1 260px;min-width:0}
+.association-guest-org h2{margin:0;font-size:19px}
+.association-guest-org p{margin:2px 0 0}
+.association-guest-logo{display:grid;place-items:center;flex:none;width:48px;height:48px;border-radius:13px;background:linear-gradient(135deg,var(--teal),var(--teal-d));color:#fff;font-weight:700;font-size:15px;letter-spacing:.5px}
+.association-guest-owes{display:flex;flex-direction:column;gap:2px;padding:10px 18px;border-radius:12px;background:var(--red-l);color:var(--red-d)}
+.association-guest-owes span{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px}
+.association-guest-owes strong{font-size:22px;font-variant-numeric:tabular-nums;line-height:1.2}
+.association-guest-card .btn{display:inline-flex;align-items:center;gap:8px}
+.association-guest-card .btn .nav-icon{width:18px;height:18px}
+.association-guest-banner{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;background:var(--blue-l);color:var(--blue-d);font-size:14px;font-weight:600}
+.association-guest-banner .added-by-tag{margin-top:0;background:#fff}
+.association-guest-table td.num,.association-guest-table td:last-child{white-space:nowrap}

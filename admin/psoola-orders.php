@@ -43,6 +43,7 @@ if (!PsoolaCheckIns::active()) {
 
 // Our registrations for these sales, by reference.
 $refs = array_values(array_unique(array_filter(array_map(static fn (array $o) => is_string($o['partnerReference'] ?? null) ? $o['partnerReference'] : '', $orders))));
+$associationTags = \Ismile\AssociationGuests::tags($refs);
 $ours = [];
 foreach (array_chunk($refs, 500) as $chunk) {
     foreach (Db::all('SELECT id, ref, status, first_name, father_name, grandfather_name FROM registrations WHERE ref IN (' . implode(',', array_fill(0, count($chunk), '?')) . ')', $chunk) as $row) {
@@ -120,7 +121,7 @@ echo Page::stats([
       <td data-label="Buyer"><b><?= $e((string) ($order['buyer']['name'] ?? '')) ?></b><small dir="ltr"><?= $e((string) ($order['buyer']['email'] ?? '')) ?></small><small dir="ltr"><?= $e((string) ($order['buyer']['phone'] ?? '')) ?></small></td>
       <td data-label="Bought"><?= $e($itemsText($order)) ?></td>
       <td data-label="Total"><b><?= number_format((int) ($order['order']['totalAmount'] ?? 0)) ?></b> <?= $e((string) ($order['order']['currency'] ?? 'IQD')) ?></td>
-      <td data-label="Sale"><?= match($kind){'complimentary'=>'<span class="pill violet">Complimentary</span>','review'=>'<span class="pill gold">Needs review</span>','cash'=>'<span class="psoola-channel cash">Cash</span>',default=>'<span class="psoola-channel">Paid on Psoola</span>'} ?></td>
+      <td data-label="Sale"><?= match($kind){'complimentary'=>'<span class="pill violet">Complimentary</span>','review'=>'<span class="pill gold">Needs review</span>','cash'=>'<span class="psoola-channel cash">Cash</span>'.(isset($associationTags[$order['partnerReference'] ?? '']) ? '<br><span class="added-by-tag association">'.$e($associationTags[$order['partnerReference']]).'</span>' : ''),default=>'<span class="psoola-channel">Paid on Psoola</span>'} ?></td>
       <td data-label="Complimentary reason / staff"><?php if(in_array($kind,['complimentary','review'],true)): ?><?= $e((string)($order['complimentaryReason']??$guestOrder['complimentary_reason']??'')) ?><small><?= $e($guestOrder['staff_name']??'PSOOLA') ?></small><?php else: ?>—<?php endif; ?></td>
       <td data-label="Ticket email"><?php if ($mail === ''): ?><span class="muted">—</span><?php else: ?><span class="psoola-mail<?= in_array($mail, ['bounced', 'complained', 'failed', 'delayed'], true) ? ' bad' : '' ?>"><?= $e(ucfirst($mail)) ?></span><?php endif; ?></td>
       <td data-label="At the door"><?= $tickets ? $used . ' of ' . count($tickets) . ' used' : '—' ?></td>

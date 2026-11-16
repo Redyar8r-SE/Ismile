@@ -290,7 +290,7 @@ final class Auth
         $page = basename($script);
         if ($page === 'psoola-ticket.php') return Auth::can($user,'edit') || self::canBookWorkshops($user) || $user['role'] === 'badges';
         if (in_array($page, ['registration.php','workshops.php'], true) && self::canBookWorkshops($user)) return true;
-        if (in_array($page, ['registration.php', 'registrations.php'], true) && (int) ($user['registration_manage_access'] ?? 0) === 1) return true;
+        if (in_array($page, ['registration.php', 'registrations.php', 'association-guests.php'], true) && (int) ($user['registration_manage_access'] ?? 0) === 1) return true;
         if (in_array($page, ['tickets.php', 'certificates.php'], true) && self::canManageBadges($user)) return true;
         if ($page === 'association.php') return self::canManageAssociation($user);
         if (in_array($page, ['map.php', 'sponsors.php'], true)) return self::canManageMap($user);

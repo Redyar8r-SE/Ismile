@@ -28,6 +28,7 @@ $rows = Db::all(
      FROM " . RegistrationQuery::from() . " WHERE $where ORDER BY r.id DESC LIMIT $perPage OFFSET $offset",
     $params
 );
+$associationTags = \Ismile\AssociationGuests::tags(array_column($rows, 'ref'));
 $cities = \Ismile\Cities::values();
 // Everyone who has added a registration (or may), for the "Added by" filter.
 $adders = array_column(Db::all("SELECT id, name FROM admin_users WHERE role IN ('owner','registration') OR id IN (SELECT DISTINCT created_by FROM registrations WHERE created_by IS NOT NULL) ORDER BY name"), 'name', 'id');
@@ -95,7 +96,7 @@ $select = static function (string $name, array $options, string $current): strin
     <td><?= $row['lunch_day1'] ? 'D1 ' : '' ?><?= $row['lunch_day2'] ? 'D2' : '' ?><?= !$row['lunch_day1'] && !$row['lunch_day2'] ? '–' : '' ?></td>
     <td><?= Page::pill($row['status']) ?><?= $row['failed_emails'] ? ' ' . Page::pill('failed') . '<small> email</small>' : '' ?></td>
     <td><?= $row['ticket_no'] ? '<code>' . $e($row['ticket_no']) . '</code>' . ($row['checked_in_at'] ? ' ' . Page::pill('arrived') : '') : '–' ?></td>
-    <td><?php if ($row['created_by'] === null): ?><span class="muted">Website</span><?php else: ?><b><?= $e($row['added_by_name'] ?? 'Removed account') ?></b><?php if ($row['pay_method'] === 'cash'): ?><br><span class="added-by-tag cash">Cash</span><?php elseif ($row['status'] === 'complimentary'): ?><br><span class="added-by-tag">Free ticket</span><?php endif; ?><?php endif; ?></td>
+    <td><?php if ($row['created_by'] === null): ?><span class="muted">Website</span><?php else: ?><b><?= $e($row['added_by_name'] ?? 'Removed account') ?></b><?php if (isset($associationTags[$row['ref']])): ?><br><span class="added-by-tag association"><?= $e($associationTags[$row['ref']]) ?></span><?php elseif ($row['pay_method'] === 'cash'): ?><br><span class="added-by-tag cash">Cash</span><?php elseif ($row['status'] === 'complimentary'): ?><br><span class="added-by-tag">Free ticket</span><?php endif; ?><?php endif; ?></td>
     <td><?= Page::when($row['created_at']) ?></td>
   </tr>
   <?php endforeach; ?>

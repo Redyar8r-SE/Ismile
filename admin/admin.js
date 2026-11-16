@@ -699,7 +699,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const stage = document.getElementById("caller-stage");
     if (stage) stage.required = studentTicket;
     const photo = document.getElementById("caller-student-id");
-    if (photo) photo.required = studentTicket;
+    if (photo) photo.required = studentTicket && !photo.hasAttribute("data-optional");
     const vipFields = document.getElementById("caller-vip-lunch");
     const vipDay = form.querySelector('[name="vip_lunch_day"]');
     const vipWorkshop = document.getElementById("caller-vip-workshop");
@@ -765,7 +765,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const unit = document.createElement("small");
     unit.textContent = prices.currency;
     total.replaceChildren(`${sum.toLocaleString("en-US")} `, unit);
-    if (pay) { const amount = document.createElement("span"); amount.className = "cash-pay-amount"; amount.textContent = money(sum); pay.replaceChildren("Paid by cash ", amount); }
+    if (pay) { const amount = document.createElement("span"); amount.className = "cash-pay-amount"; amount.textContent = money(sum); pay.replaceChildren(`${form.dataset.payLabel || "Paid by cash"} `, amount); }
   }
   document.querySelectorAll("[data-pick-ticket]").forEach((card) => card.addEventListener("click", () => {
     if (card.disabled) return;
@@ -834,11 +834,13 @@ document.addEventListener("DOMContentLoaded", () => {
         unit.textContent = prices.currency;
         amount.replaceChildren(`${saleTotal.toLocaleString("en-US")} `, unit);
         amount.classList.remove("is-waiting");
-        field("received").textContent = `I have received ${money(saleTotal)} in cash from this guest.`;
+        field("received").textContent = form.dataset.receivedText
+          ? form.dataset.receivedText.replace("{amount}", money(saleTotal))
+          : `I have received ${money(saleTotal)} in cash from this guest.`;
       } else {
         amount.textContent = "Shown after the sale";
         amount.classList.add("is-waiting");
-        field("received").textContent = "I have received the cash from this guest.";
+        field("received").textContent = form.dataset.receivedPlain || "I have received the cash from this guest.";
       }
       received.checked = false;
       yes.disabled = true;
