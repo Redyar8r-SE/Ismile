@@ -109,3 +109,17 @@ document.addEventListener("DOMContentLoaded", () => {
     else form.submit();
   });
 });
+
+// Register tab: the "Are you sure?" window also shows the gender and age.
+document.addEventListener("DOMContentLoaded", () => {
+  const pay = document.getElementById("caller-pay");
+  const out = document.querySelector('[data-desk-field="gender-age"]');
+  if (!pay || !out) return;
+  pay.addEventListener("click", () => {
+    const form = pay.form;
+    const gender = form.querySelector('[name="gender"]');
+    const age = form.querySelector('[name="age"]')?.value || "";
+    const genderText = gender && gender.selectedIndex > 0 ? gender.options[gender.selectedIndex].text : "";
+    out.textContent = [genderText, age ? `${age} years old` : ""].filter(Boolean).join(", ");
+  });
+});

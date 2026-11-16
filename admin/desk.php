@@ -242,12 +242,13 @@ Page::top('Workshop & Register', 'desk');
   <div class="form-actions"><button class="btn cash-pay desk-big" name="do" value="cash" id="caller-pay">Paid by cash</button></div>
 </form>
 <dialog class="cash-confirm" id="cash-confirm" aria-labelledby="cash-confirm-title">
-  <h2 id="cash-confirm-title">Did you receive the cash?</h2>
-  <p class="cash-confirm-sub">Check the details with the person before you sell. This cannot be undone.</p>
+  <h2 id="cash-confirm-title">Are you sure?</h2>
+  <p class="cash-confirm-sub">Check these details with the person and take the cash before you sell. This cannot be undone.</p>
   <dl class="cash-confirm-details">
-    <div><dt>Person</dt><dd data-confirm-field="name"></dd></div>
+    <div><dt>Name</dt><dd data-confirm-field="name"></dd></div>
     <div><dt>WhatsApp number</dt><dd data-confirm-field="phone" dir="ltr"></dd></div>
-    <div><dt>Ticket email</dt><dd data-confirm-field="email" dir="ltr"></dd></div>
+    <div><dt>Email</dt><dd data-confirm-field="email" dir="ltr"></dd></div>
+    <div><dt>Gender and age</dt><dd data-desk-field="gender-age"></dd></div>
     <div><dt>Ticket</dt><dd data-confirm-field="ticket"></dd></div>
     <div><dt>Lunch</dt><dd data-confirm-field="lunch"></dd></div>
   </dl>
