@@ -197,22 +197,22 @@ $association = AssociationGuests::NAME;
   data-received-text="<?= $e('I checked the details. The ' . $association . ' will pay iSmile {amount} later.') ?>"
   data-received-plain="<?= $e('I checked the details. The ' . $association . ' will pay iSmile later.') ?>">
   <?= Page::csrfField() ?><?= Page::onceField() ?>
-  <p class="muted">For a guest the <b><?= $e($association) ?></b> registers: enter their details and press <b>Add by association</b>. PSOOLA issues the ticket at once and emails the QR. The association pays iSmile later. Fields marked * are required.</p>
+  <p class="muted">For a guest the <b><?= $e($association) ?></b> registers: enter their details and press <b>Add by association</b>. PSOOLA issues the ticket at once and emails the QR. The association pays iSmile later.</p>
   <div class="association-guest-banner"><span class="added-by-tag association"><?= $e($association) ?></span><span>This guest is saved as added by the <?= $e($association) ?>, pays later.</span></div>
   <fieldset class="form-section">
     <legend>1. Guest's details</legend>
-    <div class="row3"><label>First name *<input name="first_name" maxlength="60" value="<?= $value('first_name') ?>" autocomplete="off" required></label><label>Second name *<input name="father_name" maxlength="60" value="<?= $value('father_name') ?>" required></label><label>Last name *<input name="grandfather_name" maxlength="60" value="<?= $value('grandfather_name') ?>" required></label></div>
-    <div class="row3"><label>Gender *<select name="gender" required><option value="">Choose gender</option><?php foreach (['female' => 'Female', 'male' => 'Male', 'other' => 'Other', 'prefer-not' => 'Prefer not to say'] as $genderKey => $genderName): ?><option value="<?= $genderKey ?>"<?= $selected('gender', $genderKey) ?>><?= $genderName ?></option><?php endforeach; ?></select></label><label>Age *<input type="number" name="age" inputmode="numeric" min="16" max="120" step="1" value="<?= $value('age') ?>" placeholder="28" required></label></div>
-    <div class="row3"><label>Phone *<input type="tel" name="phone" dir="ltr" autocomplete="off" value="<?= $value('phone') ?>" required placeholder="0750 123 4567"></label><label>Email *<input type="email" name="email" dir="ltr" autocomplete="off" maxlength="190" value="<?= $value('email') ?>" required></label><label>City<?= \Ismile\Cities::select($_POST['city'] ?? '') ?></label></div>
+    <div class="row3"><label>First name<input name="first_name" maxlength="60" value="<?= $value('first_name') ?>" autocomplete="off" required></label><label>Second name<input name="father_name" maxlength="60" value="<?= $value('father_name') ?>" required></label><label>Last name<input name="grandfather_name" maxlength="60" value="<?= $value('grandfather_name') ?>" required></label></div>
+    <div class="row3"><label>Gender<select name="gender" required><option value="">Choose gender</option><?php foreach (['female' => 'Female', 'male' => 'Male', 'other' => 'Other', 'prefer-not' => 'Prefer not to say'] as $genderKey => $genderName): ?><option value="<?= $genderKey ?>"<?= $selected('gender', $genderKey) ?>><?= $genderName ?></option><?php endforeach; ?></select></label><label>Age<input type="number" name="age" inputmode="numeric" min="16" max="120" step="1" value="<?= $value('age') ?>" placeholder="28" required></label></div>
+    <div class="row3"><label>Phone<input type="tel" name="phone" dir="ltr" autocomplete="off" value="<?= $value('phone') ?>" required placeholder="0750 123 4567"></label><label>Email<input type="email" name="email" dir="ltr" autocomplete="off" maxlength="190" value="<?= $value('email') ?>" required></label><label>City<?= \Ismile\Cities::select($_POST['city'] ?? '') ?></label></div>
   </fieldset>
   <fieldset class="form-section">
     <legend>2. Specialty &amp; ticket</legend>
     <div class="row3">
-      <label>Specialty *<select name="specialty" id="caller-specialty" required>
+      <label>Specialty<select name="specialty" id="caller-specialty" required>
         <option value="">Choose specialty</option>
         <?php foreach (Registrations::SPECIALTY_NAMES as $key => $name): ?><option value="<?= $e($key) ?>"<?= $selected('specialty', $key) ?>><?= $e($name) ?></option><?php endforeach; ?>
       </select></label>
-      <label>Ticket *<select name="ticket" id="caller-ticket"><option value="professional"<?= !$student && !$vip ? ' selected' : '' ?>>Dentist</option><option value="student"<?= $student ? ' selected' : '' ?>>Student</option><option value="vip"<?= $vip ? ' selected' : '' ?>>VIP</option></select></label>
+      <label>Ticket<select name="ticket" id="caller-ticket"><option value="professional"<?= !$student && !$vip ? ' selected' : '' ?>>Dentist</option><option value="student"<?= $student ? ' selected' : '' ?>>Student</option><option value="vip"<?= $vip ? ' selected' : '' ?>>VIP</option></select></label>
     </div>
     <p class="muted small" id="caller-ticket-note">Same prices as everyone. Dental students in any stage (1st to 5th) receive a student ticket.</p>
     <div class="row3" id="caller-student-fields">
