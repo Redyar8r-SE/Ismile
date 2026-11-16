@@ -278,7 +278,7 @@ foreach (['index','registrations','lists','payments','psoola-orders','workshops'
 foreach (['users','settings','backups','content'] as $page) {
     $check('Viewer + Sponsors cannot open ' . $page, str_contains($render($page, '', 'sponsors'), '<h2>Not allowed</h2>'));
 }
-$firstIsmile = array_values(array_filter(IsmileWorkshops::all(), static fn (array $w): bool => ($w['organizer'] ?? '') === 'ismile'))[0] ?? null;
+$firstIsmile = array_values(array_filter(\Ismile\Workshops::all(), static fn (array $w): bool => ($w['organizer'] ?? '') === 'ismile'))[0] ?? null;
 $check('Workshop attendee list PDF renders with the workshop photo', $firstIsmile === null || str_starts_with(PdfReport::workshopAttendees($firstIsmile, []), '%PDF-'));
 $check('PDF report generator works', str_starts_with(PdfReport::bundle(['Deployment check'=>[['Status'],['Verified']]]), '%PDF-'));
 echo "Deployment verification complete: $passed read-only checks passed. No guests admitted or certificate emails sent.\n";
