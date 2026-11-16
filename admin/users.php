@@ -136,8 +136,10 @@ Page::top('Users', 'users', '<a class="btn" href="#add-person">' . Page::navIcon
       <?php endif; ?>
       <?php if ($row['role'] === 'badges'): ?>
       <?php $associationAccess = (int) ($row['association_manage_access'] ?? 0) === 1; ?>
-      <small class="field-hint"><?= $associationAccess ? 'Tickets &amp; Certificates and Association.' : 'Only Tickets &amp; Certificates.' ?></small>
+      <small class="field-hint"><?= 'Tickets &amp; Certificates' . ($associationAccess ? ', Association' : '') . ((int) ($row['workshop_booking_access'] ?? 0) === 1 ? ', Workshops' : '') . '.' ?></small>
       <?php if (!$protected): ?><form method="post" class="inline-form"><?= Page::csrfField() ?><input type="hidden" name="do" value="association_access"><input type="hidden" name="id" value="<?= (int) $row['id'] ?>"><input type="hidden" name="enabled" value="<?= $associationAccess ? '0' : '1' ?>"><button class="btn small ghost"><?= $associationAccess ? 'Remove Association access' : 'Allow Association (everything)' ?></button></form><?php endif; ?>
+      <?php $badgeWorkshops = (int) ($row['workshop_booking_access'] ?? 0) === 1; ?>
+      <?php if (!$protected): ?><form method="post" class="inline-form"><?= Page::csrfField() ?><input type="hidden" name="do" value="workshop_access"><input type="hidden" name="id" value="<?= (int) $row['id'] ?>"><input type="hidden" name="enabled" value="<?= $badgeWorkshops ? '0' : '1' ?>"><button class="btn small ghost"><?= $badgeWorkshops ? 'Remove Workshops access' : 'Allow Workshops (register and manage attendees)' ?></button></form><?php endif; ?>
       <?php endif; ?>
       <?php if (!in_array($row['role'], ['owner', 'badges', 'volunteer'], true) && !$protected): $registrationAccess = (int) ($row['registration_manage_access'] ?? 0) === 1; ?>
       <small class="field-hint"><?= $registrationAccess ? 'Can register paid and complimentary guests.' : 'Complimentary registration requires individual access.' ?></small>

@@ -191,10 +191,11 @@ final class Auth
             return true;
         }
         // Tickets & Certificates only: no guest list, map or any other page, whatever else is ticked.
-        // The Owner may also give this role Association (Users page); nothing else.
+        // The Owner may also give this role Association and Workshops (Users page); nothing else.
         if ($user['role'] === 'badges') {
             return in_array($area, ['certificates', 'badges', 'attendance'], true)
-                || ($area === 'association' && (int) ($user['association_manage_access'] ?? 0) === 1);
+                || ($area === 'association' && (int) ($user['association_manage_access'] ?? 0) === 1)
+                || ($area === 'workshops' && (int) ($user['workshop_booking_access'] ?? 0) === 1);
         }
         // Volunteer: only Workshop & Register, whatever else is ticked.
         if ($user['role'] === 'volunteer') {

@@ -8,7 +8,7 @@ require __DIR__ . '/../src/Admin/Page.php';
 use Ismile\Auth;
 use Ismile\Admin\Page;
 
-$badges = ['role' => 'badges', 'registration_manage_access' => 1, 'workshop_booking_access' => 1, 'map_booking_access' => 1];
+$badges = ['role' => 'badges', 'registration_manage_access' => 1, 'map_booking_access' => 1, 'badge_certificate_access' => 1];
 foreach (Page::MENU as $page => [, $area]) {
     $can = $area === 'owner' ? false : Auth::can($badges, $area);
     if ($can !== ($page === 'tickets')) throw new RuntimeException('Tickets & Certificates only can open ' . $page);
@@ -29,6 +29,14 @@ foreach (Page::MENU as $page => [, $area]) {
 }
 if (!Auth::viewerMayPost($withAssociation, '/admin/association.php') || !Auth::canManageAssociation($withAssociation)) throw new RuntimeException('With Association, the role cannot save Association handovers');
 if (Auth::viewerMayPost($badges, '/admin/association.php')) throw new RuntimeException('Without the tick, the role can save Association handovers');
+// With Association and Workshops ticked: those plus Tickets & Certificates, nothing else.
+$withWorkshops = ['role' => 'badges', 'map_booking_access' => 1, 'association_manage_access' => 1, 'workshop_booking_access' => 1];
+foreach (Page::MENU as $page => [, $area]) {
+    $can = $area === 'owner' ? false : Auth::can($withWorkshops, $area);
+    if ($can !== in_array($page, ['tickets', 'association', 'workshops'], true)) throw new RuntimeException('With Workshops, Tickets & Certificates only can open ' . $page);
+}
+if (!Auth::viewerMayPost($withWorkshops, '/admin/workshops.php') || !Auth::canBookWorkshops($withWorkshops)) throw new RuntimeException('With Workshops, the role cannot register workshop attendees');
+if (Auth::canIssueComplimentary($withWorkshops)) throw new RuntimeException('With Workshops, the role can give free tickets');
 foreach (['dashboard', 'registrations', 'edit', 'payments', 'workshops', 'sponsors', 'map', 'checkin', 'export', 'photos', 'content', 'communications'] as $area) {
     if (Auth::can($withAssociation, $area)) throw new RuntimeException("With Association, the role can use $area");
 }
