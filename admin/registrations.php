@@ -83,7 +83,7 @@ $select = static function (string $name, array $options, string $current): strin
   <?php endif; ?>
 </div>
 
-<div class="table-wrap">
+<div class="table-wrap registration-directory-scroll">
 <table>
   <tr><th>Reference</th><th>Name</th><th>Phone</th><th>Ticket</th><th>Lunch</th><th>Status</th><th>Ticket no.</th><th>Added by</th><th>Registered</th></tr>
   <?php foreach ($rows as $row): ?>

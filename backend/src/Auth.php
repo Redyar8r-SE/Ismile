@@ -181,7 +181,7 @@ final class Auth
         // A Volunteer sees only Workshop & Register and needs no phone code, whatever else is ticked.
         if (($user['role'] ?? '') === 'volunteer') return false;
         return in_array($user['role'], self::NEEDS_TWO_FACTOR, true)
-            || (int) ($user['registration_manage_access'] ?? 0) === 1 || self::canBookWorkshops($user) || self::canManageBadges($user);
+            || (int) ($user['registration_manage_access'] ?? 0) === 1 || (int) ($user['association_guest_access'] ?? 0) === 1 || self::canBookWorkshops($user) || self::canManageBadges($user);
     }
 
     /** True when this role may use this area. The Owner may use everything. */
@@ -189,6 +189,10 @@ final class Auth
     {
         if ($user['role'] === 'owner') {
             return true;
+        }
+        // Association guests: everyone with the guest list, and anyone the Owner allowed on the Users page (any role).
+        if ($area === 'association-guests') {
+            return self::canManageAssociationGuests($user) || self::can($user, 'registrations');
         }
         // Tickets & Certificates only: no guest list, map or any other page, whatever else is ticked.
         // The Owner may also give this role Association and Workshops (Users page); nothing else.
@@ -248,6 +252,14 @@ final class Auth
     }
 
     /** Account-specific Association access leaves every other role permission intact. */
+    /** Everything on Association guests: the Owner, Registration staff, or an individual grant (Users page). */
+    public static function canManageAssociationGuests(array $user): bool
+    {
+        return ($user['role'] ?? '') === 'owner'
+            || (int) ($user['association_guest_access'] ?? 0) === 1
+            || (($user['role'] ?? '') !== 'volunteer' && self::can($user, 'edit'));
+    }
+
     public static function canManageAssociation(array $user): bool
     {
         return in_array($user['role'] ?? '', ['owner', 'finance'], true)
@@ -291,6 +303,7 @@ final class Auth
         if ($page === 'psoola-ticket.php') return Auth::can($user,'edit') || self::canBookWorkshops($user) || $user['role'] === 'badges';
         if (in_array($page, ['registration.php','workshops.php'], true) && self::canBookWorkshops($user)) return true;
         if (in_array($page, ['registration.php', 'registrations.php', 'association-guests.php'], true) && (int) ($user['registration_manage_access'] ?? 0) === 1) return true;
+        if ($page === 'association-guests.php' && (int) ($user['association_guest_access'] ?? 0) === 1) return true;
         if (in_array($page, ['tickets.php', 'certificates.php'], true) && self::canManageBadges($user)) return true;
         if ($page === 'association.php') return self::canManageAssociation($user);
         if (in_array($page, ['map.php', 'sponsors.php'], true)) return self::canManageMap($user);

@@ -17,9 +17,10 @@ use Ismile\Registrations;
 use Ismile\SiteData;
 use Ismile\UserError;
 
-$user = Page::guard('registrations');
+$user = Page::guard('association-guests');
 $canAdd = AssociationGuests::canAdd($user) && Auth::viewerMayPost($user, '/admin/association-guests.php');
-$canPdf = Auth::can($user, 'export');
+$canPdf = Auth::can($user, 'export') || Auth::canManageAssociationGuests($user);
+$canOpenGuest = Auth::can($user, 'registrations');
 $tab = (Page::query('tab') === 'add' && $canAdd) ? 'add' : 'guests';
 
 // ---------- Guest list PDF (the full details, like the Lists PDFs) ----------
@@ -136,7 +137,7 @@ if ($tab === 'guests') {
   <tr><th>Reference</th><th>Name</th><th>Phone</th><th>Ticket</th><th>Lunch</th><th>Price</th><th>QR email</th><th>Added by</th><th>Added</th></tr>
   <?php foreach ($guests as $guest):
       $state = AssociationGuests::state($guest);
-      $link = $guest['registration_id'] !== null ? 'registration.php?id=' . (int) $guest['registration_id'] : null;
+      $link = $guest['registration_id'] !== null && $canOpenGuest ? 'registration.php?id=' . (int) $guest['registration_id'] : null;
       $status = $mail[$guest['ref']] ?? null; ?>
   <tr>
     <td><?php if ($link): ?><a href="<?= $e($link) ?>"><code><?= $e($guest['ref']) ?></code></a><?php else: ?><code><?= $e($guest['ref']) ?></code><?php endif; ?></td>

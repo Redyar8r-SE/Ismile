@@ -1453,3 +1453,7 @@ body:has([data-guest-tickets]) .page-actions .btn{background:transparent;border:
 /* Many association guests: the list scrolls inside its box, headings stay visible. */
 .table-wrap.association-guest-scroll{max-height:min(70vh,720px);overflow:auto}
 .association-guest-scroll .association-guest-table th{position:sticky;top:0;z-index:1;background:#f2f6fa}
+/* Lists: a long list scrolls inside its box on screen, headings stay at the top; printing shows everything. */
+@media screen{.list-results .table-wrap{max-height:min(70vh,720px);overflow:auto}.list-results table.name-list th{position:sticky;top:0;z-index:1;background:#f2f6fa}}
+/* Registrations guest directory: scrolls inside its box on screen, headings stay at the top. */
+@media screen{.table-wrap.registration-directory-scroll{max-height:min(70vh,720px);overflow:auto}.registration-directory-scroll th{position:sticky;top:0;z-index:1;background:#f2f6fa}}

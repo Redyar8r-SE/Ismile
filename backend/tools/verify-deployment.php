@@ -248,6 +248,7 @@ $check('Add by association uses the cash form with the association button and co
 $html = $render('association-guests', '', 'viewer');
 $check('Viewer sees Association guests in view-only mode without the Add tab', str_contains($html, 'class="admin-shell view-only"') && !str_contains($html, 'tab=add') && !str_contains($html, '<h2>Not allowed</h2>'));
 $check('Volunteer cannot open Association guests', str_contains($render('association-guests', '', 'volunteer'), '<h2>Not allowed</h2>'));
+$check('Users page offers "Allow Association guests (everything)" for team accounts', !Db::value("SELECT id FROM admin_users WHERE role <> 'owner' AND disabled_at IS NULL LIMIT 1") || str_contains($render('users'), 'value="association_guest_access"'));
 $check('Association guest list PDF renders with the full list details', str_starts_with(PdfReport::make(\Ismile\AssociationGuests::NAME . ' guests', \Ismile\AssociationGuests::reportRows(), true), '%PDF-'));
 $html = $render('lists', 'list=registered');
 $check('Registered list offers the Sale type filter (cash, card, free, association)', str_contains($html, '<legend>Sale type</legend>') && str_contains($html, 'name="sale" value="cash"') && str_contains($html, 'Card (online)') && str_contains($html, 'name="sale" value="association"'));

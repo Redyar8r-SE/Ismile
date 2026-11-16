@@ -16,10 +16,10 @@ final class AssociationGuests
 {
     public const NAME = 'Slemani Association';
 
-    /** The same people who may register someone for cash may add an association guest. */
+    /** Registration staff (as for cash), or anyone the Owner allowed on the Users page. */
     public static function canAdd(array $user): bool
     {
-        return Auth::can($user, 'edit');
+        return Auth::canManageAssociationGuests($user);
     }
 
     /**

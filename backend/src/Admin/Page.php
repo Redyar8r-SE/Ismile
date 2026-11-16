@@ -24,7 +24,7 @@ final class Page
         'registrations' => ['Registrations', 'registrations'],
         'lists'         => ['Lists', 'registrations'],
         'association'   => ['Association', 'association'],
-        'association-guests' => ['Association guests', 'registrations'],
+        'association-guests' => ['Association guests', 'association-guests'],
         'payments'      => ['Payments', 'payments'],
         'psoola-orders' => ['Psoola orders', 'payments'],
         'workshops'     => ['Workshops', 'workshops'],

@@ -43,7 +43,20 @@ $before = AssociationGuests::totals();
 $check('registration staff may add association guests', AssociationGuests::canAdd($staff));
 $check('a viewer may not add association guests', !AssociationGuests::canAdd($viewer) && $rejects(static fn () => AssociationGuests::add($form('Viewer'), $viewer)));
 $check('a volunteer may not add association guests', !AssociationGuests::canAdd($volunteer));
-$check('a volunteer cannot open the page (registrations area)', !Auth::can($volunteer, 'registrations'));
+$check('a volunteer cannot open the page', !Auth::can($volunteer, 'association-guests') && !Auth::can($volunteer, 'registrations'));
+$check('a viewer sees the page but cannot add or post', Auth::can($viewer, 'association-guests') && !Auth::viewerMayPost($viewer, '/admin/association-guests.php'));
+$badges = Db::one('SELECT * FROM admin_users WHERE id = ?', [Auth::createUser("assoc-badge-$tag@test.invalid", 'Badges', 'badges', bin2hex(random_bytes(12)))]);
+$check('Tickets & Certificates only cannot open the page without the grant', !Auth::can($badges, 'association-guests'));
+// ---- the Owner's "Allow Association guests (everything)" grant, for any role ----
+foreach (['volunteer' => $volunteer, 'viewer' => $viewer, 'badges' => $badges] as $role => $account) {
+    Db::update('admin_users', ['association_guest_access' => 1], 'id = ?', [$account['id']]);
+    $granted = Db::one('SELECT * FROM admin_users WHERE id = ?', [$account['id']]);
+    $check("with the grant, a $role opens the page, adds guests and posts the form", Auth::can($granted, 'association-guests') && AssociationGuests::canAdd($granted) && Auth::viewerMayPost($granted, '/admin/association-guests.php'));
+    $check("the grant gives a $role nothing else", Auth::can($granted, 'edit') === Auth::can($account, 'edit') && Auth::can($granted, 'registrations') === Auth::can($account, 'registrations') && Auth::can($granted, 'payments') === Auth::can($account, 'payments') && !Auth::viewerMayPost($granted, '/admin/registration.php') === !Auth::viewerMayPost($account, '/admin/registration.php'));
+}
+$check('the grant asks for the phone code (not for a Volunteer)', Auth::needsTwoFactor(Db::one('SELECT * FROM admin_users WHERE id = ?', [$viewer['id']])) && !Auth::needsTwoFactor(Db::one('SELECT * FROM admin_users WHERE id = ?', [$volunteer['id']])));
+foreach ([$volunteer, $viewer, $badges] as $account) Db::update('admin_users', ['association_guest_access' => 0], 'id = ?', [$account['id']]);
+$check('removing the grant takes the page away again', !Auth::can(Db::one('SELECT * FROM admin_users WHERE id = ?', [$volunteer['id']]), 'association-guests') && !AssociationGuests::canAdd(Db::one('SELECT * FROM admin_users WHERE id = ?', [$viewer['id']])));
 
 // ---- a Dentist: registered at once, tagged, priced ----
 // (The test gateway cannot price IQD tickets with USD lunch together; on the
@@ -133,5 +146,10 @@ $check('a deleted guest is gone from the list', !in_array($vip['checkout']['ref'
 // ---- email status never calls PSOOLA on the test gateway ----
 $check('email status is not asked from PSOOLA on the test site', AssociationGuests::emailStatuses([$ref]) === []);
 $check('owed text formats every currency', AssociationGuests::owedText([]) === '0 IQD' && AssociationGuests::owedText(['IQD' => 1030000]) === '1,030,000 IQD');
+
+// ---- a granted volunteer really adds a guest (last, so the name checks above stay exact) ----
+Db::update('admin_users', ['association_guest_access' => 1], 'id = ?', [$volunteer['id']]);
+$byVolunteer = AssociationGuests::add($form('Volgranted'), Db::one('SELECT * FROM admin_users WHERE id = ?', [$volunteer['id']]));
+$check('a granted volunteer really adds a guest', $byVolunteer['sale']['status'] === 'paid' && AssociationGuests::isGuest($byVolunteer['checkout']['ref']));
 
 echo "$passed association guest checks passed.\n";

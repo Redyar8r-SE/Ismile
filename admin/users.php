@@ -54,6 +54,12 @@ Page::action(static function () use ($user): string {
             Db::update('admin_users', ['association_manage_access' => $enabled], 'id=?', [$target['id']]);
             Audit::log((int) $user['id'], $enabled ? 'user.association_manage_grant' : 'user.association_manage_revoke', 'admin_user', (int) $target['id']);
             return $enabled ? 'Association access granted: they can do everything on the Association page.' : 'Association access removed.';
+        case 'association_guest_access':
+            if ($target['role'] === 'owner') throw new UserError('The Owner already has everything.');
+            $enabled = ($_POST['enabled'] ?? '') === '1' ? 1 : 0;
+            Db::update('admin_users', ['association_guest_access' => $enabled], 'id=?', [$target['id']]);
+            Audit::log((int) $user['id'], $enabled ? 'user.association_guest_grant' : 'user.association_guest_revoke', 'admin_user', (int) $target['id']);
+            return $enabled ? 'Association guests access granted: they can see the guests, add by association and download the PDF.' : 'Association guests access removed.';
         case 'registration_access':
             $enabled = ($_POST['enabled'] ?? '') === '1' ? 1 : 0;
             Db::update('admin_users', ['registration_manage_access' => $enabled], 'id=?', [$target['id']]);
@@ -132,7 +138,10 @@ Page::top('Users', 'users', '<a class="btn" href="#add-person">' . Page::navIcon
     <td><?php if ((int)$row['id']===(int)$user['id'] || $protected): ?><span class="team-role"><?= Page::navIcon($roleGuide[$row['role']][0]) ?><?= $e($roleGuide[$row['role']][1]) ?></span><small class="field-hint"><?= $protected ? 'Main Owner: protected.' : (Erase::isMainOwner($user) ? 'Main Owner: only you can delete records.' : 'Your own role stays protected.') ?></small><?php else: ?><form method="post" class="inline-form team-role-form"><?= Page::csrfField() ?><input type="hidden" name="do" value="role"><input type="hidden" name="id" value="<?= (int) $row['id'] ?>">
       <select name="role" aria-label="<?= $e('Role for ' . $row['name']) ?>"><?php foreach (Auth::ROLES as $role): ?><option value="<?= $role ?>"<?= $role === $row['role'] ? ' selected' : '' ?>><?= $e($roleGuide[$role][1]) ?></option><?php endforeach; ?></select><button class="btn small ghost">Set role</button></form><?php endif; ?>
       <?php if ($row['role'] === 'volunteer'): ?>
-      <small class="field-hint">Only Workshop &amp; Register. Extra access does not apply to this role.</small>
+      <small class="field-hint">Only Workshop &amp; Register<?= (int) ($row['association_guest_access'] ?? 0) === 1 ? ' and Association guests' : '' ?>. Other extra access does not apply to this role.</small>
+      <?php endif; ?>
+      <?php if ($row['role'] !== 'owner' && !$protected): $associationGuestAccess = (int) ($row['association_guest_access'] ?? 0) === 1; ?>
+      <form method="post" class="inline-form"><?= Page::csrfField() ?><input type="hidden" name="do" value="association_guest_access"><input type="hidden" name="id" value="<?= (int) $row['id'] ?>"><input type="hidden" name="enabled" value="<?= $associationGuestAccess ? '0' : '1' ?>"><button class="btn small ghost"><?= $associationGuestAccess ? 'Remove Association guests access' : 'Allow Association guests (everything)' ?></button></form>
       <?php endif; ?>
       <?php if ($row['role'] === 'badges'): ?>
       <?php $associationAccess = (int) ($row['association_manage_access'] ?? 0) === 1; ?>
