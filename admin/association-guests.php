@@ -100,38 +100,56 @@ if ($tab === 'guests') {
     };
     ?>
 <div data-live-region="association-guest-totals">
-<?= Page::stats([
-    ['Association guests', number_format($totals['guests']), 'All pay later', 'users', 'teal'],
-    ['Dentists', number_format($totals['professional']), 'Dentist tickets', 'registrations', 'blue'],
-    ['Students', number_format($totals['student']), 'Student tickets', 'workshops', 'violet'],
-    ['VIP guests', number_format($totals['vip']), 'VIP tickets', 'ticket', 'gold'],
-]) ?>
-<section class="card association-guest-card">
-  <div class="association-guest-org">
-    <span class="association-guest-logo" aria-hidden="true">SA</span>
-    <div><h2><?= $e(AssociationGuests::NAME) ?></h2><p class="muted small"><?= number_format($totals['guests']) ?> <?= $totals['guests'] === 1 ? 'guest' : 'guests' ?><?= $totals['waiting'] ? ' and ' . $totals['waiting'] . ' waiting for PSOOLA' : '' ?></p></div>
+<section class="card attendance-overview association-overview" aria-label="<?= $e(AssociationGuests::NAME) ?>">
+  <div class="association-overview-main">
+    <div class="association-guest-org">
+      <span class="association-guest-logo" aria-hidden="true">SA</span>
+      <div><span class="attendance-label">Association</span><h2><?= $e(AssociationGuests::NAME) ?></h2></div>
+    </div>
+    <div class="association-overview-figures">
+      <div class="attendance-figure"><strong><?= number_format($totals['guests']) ?></strong><span><?= $totals['guests'] === 1 ? 'guest' : 'guests' ?>, all pay later</span></div>
+      <div class="association-guest-owes"><span>Owes iSmile</span><strong><?= $e($owed) ?></strong></div>
+    </div>
+    <?php if ($canPdf): ?><a class="btn gold association-pdf" href="association-guests.php?pdf=list"><?= Page::navIcon('download') ?><span>Download guest list (PDF)</span></a><?php endif; ?>
   </div>
-  <div class="association-guest-owes"><span>Owes iSmile</span><strong><?= $e($owed) ?></strong></div>
-  <?php if ($canPdf): ?><a class="btn gold" href="association-guests.php?pdf=list"><?= Page::navIcon('download') ?><span>Download guest list (PDF)</span></a><?php endif; ?>
+  <div class="attendance-tiles">
+    <div class="attendance-tile blue"><span>Dentists</span><strong><?= number_format($totals['professional']) ?></strong><small>Dentist tickets</small></div>
+    <div class="attendance-tile day2"><span>Students</span><strong><?= number_format($totals['student']) ?></strong><small>Student tickets</small></div>
+    <div class="attendance-tile day1"><span>VIP</span><strong><?= number_format($totals['vip']) ?></strong><small>VIP tickets</small></div>
+    <div class="attendance-tile waiting"><span>Waiting for PSOOLA</span><strong><?= number_format($totals['waiting']) ?></strong><small>Sale not confirmed yet</small></div>
+  </div>
 </section>
 </div>
 
-<form class="filters card filter-panel" method="get" action="association-guests.php" data-instant-search data-search-regions="association-guest-directory">
-  <div class="panel-heading"><span class="panel-icon"><?= Page::navIcon('search') ?></span><div><h2>Find a guest</h2></div></div>
-  <label class="filter-field filter-search"><span>Name, phone, email or reference</span><input type="search" name="q" value="<?= $e($filters['q']) ?>" placeholder="Start typing a name…" autofocus></label>
-  <?= $select('ticket', 'Ticket type', ['' => 'Any ticket'] + Registrations::TICKET_NAMES, $filters['ticket']) ?>
-  <?= $select('lunch', 'Lunch', ['' => 'Any lunch', 'day1' => 'Lunch day 1', 'day2' => 'Lunch day 2', 'both' => 'Both days', 'none' => 'No lunch'], $filters['lunch']) ?>
-  <?= $select('email', 'QR email', ['' => 'Any QR email'] + AssociationGuests::EMAIL_FILTERS, $filters['email']) ?>
-  <?= $select('state', 'Registration', ['' => 'Everyone', 'registered' => 'Registered', 'waiting' => 'Waiting for PSOOLA', 'cancelled' => 'Cancelled'], $filters['state']) ?>
-  <?= $select('by', 'Added by', ['' => 'Anyone'] + $adders, $filters['by']) ?>
-  <?= $select('sort', 'Order', AssociationGuests::SORTS, $filters['sort']) ?>
-  <div class="form-actions filter-actions"><a class="btn ghost" href="association-guests.php">Clear filters</a><button class="btn">Search</button></div>
+<?php
+$segments = static function (string $name, string $label, array $choices, string $current): string {
+    $html = '<fieldset class="filter-seg"><legend>' . Page::e($label) . '</legend><div>';
+    foreach ($choices as $value => $text) {
+        $html .= '<label><input type="radio" name="' . Page::e($name) . '" value="' . Page::e((string) $value) . '"' . ((string) $value === $current ? ' checked' : '') . '><span>' . Page::e($text) . '</span></label>';
+    }
+    return $html . '</div></fieldset>';
+};
+$moreOpen = $filters['state'] !== '' || $filters['by'] !== '';
+?>
+<form class="card registration-filter-card association-filter-card" method="get" action="association-guests.php" data-instant-search data-search-regions="association-guest-directory">
+  <div class="registration-search-row">
+    <label class="filter-search registration-search"><?= Page::navIcon('search') ?><span class="sr-only">Name, phone, email or reference</span><input type="search" name="q" value="<?= $e($filters['q']) ?>" placeholder="Search name, phone, email or reference" autofocus></label>
+    <?= $select('sort', 'Order', AssociationGuests::SORTS, $filters['sort']) ?>
+  </div>
+  <div class="registration-quick">
+    <?= $segments('ticket', 'Ticket', ['' => 'All'] + Registrations::TICKET_NAMES, $filters['ticket']) ?>
+    <?= $segments('lunch', 'Lunch booked', ['' => 'Any', 'day1' => 'Day 1', 'day2' => 'Day 2', 'both' => 'Both', 'none' => 'None'], $filters['lunch']) ?>
+    <?= $segments('email', 'QR email', ['' => 'Any', 'delivered' => 'Delivered', 'pending' => 'Not yet', 'problem' => 'Problem'], $filters['email']) ?>
+  </div>
+  <div class="registration-filter-footer"><details class="registration-advanced-filters"<?= $moreOpen ? ' open' : '' ?>><summary><?= Page::navIcon('settings') ?><span>More filters: registration and added by</span></summary><div class="registration-filter-grid">
+    <?= $select('state', 'Registration', ['' => 'Everyone', 'registered' => 'Registered', 'waiting' => 'Waiting for PSOOLA', 'cancelled' => 'Cancelled'], $filters['state']) ?>
+    <?= $select('by', 'Added by', ['' => 'Anyone'] + $adders, $filters['by']) ?>
+  </div></details>
+  <div class="registration-filter-actions"><div><a class="btn ghost" href="association-guests.php">Clear filters</a><button class="btn">Search</button></div></div></div>
 </form>
 
 <div data-live-region="association-guest-directory">
-<section class="card directory-panel"><div class="toolbar list-head">
-  <div><h2>Guest list <span class="result-count"><?= count($guests) ?></span></h2><p class="muted small"><?= $filtered ? 'Showing the guests that match your search and filters.' : 'Every guest added by the ' . $e(AssociationGuests::NAME) . '.' ?> <?= $e(AssociationGuests::SORTS[$filters['sort']]) ?>.<?= $mail === null ? ' PSOOLA could not be reached for the QR email status just now.' : '' ?></p></div>
-</div>
+<section class="card directory-panel association-directory"><div class="panel-top"><div class="panel-heading"><span class="panel-icon"><?= Page::navIcon('association-guests') ?></span><div><h2>Guest list <span class="result-count"><?= count($guests) ?></span></h2><p><?= $filtered ? 'Guests that match your search and filters.' : 'Every guest added by the ' . $e(AssociationGuests::NAME) . '.' ?> <?= $e(AssociationGuests::SORTS[$filters['sort']]) ?>.<?= $mail === null ? ' PSOOLA could not be reached for the QR email status just now.' : '' ?></p></div></div></div>
 <div class="table-wrap association-guest-scroll">
 <table class="association-guest-table">
   <tr><th>Reference</th><th>Name</th><th>Phone</th><th>Ticket</th><th>Lunch</th><th>Price</th><th>QR email</th><th>Added by</th><th>Added</th></tr>
@@ -155,7 +173,7 @@ if ($tab === 'guests') {
     <td><?= Page::when($guest['added_at']) ?></td>
   </tr>
   <?php endforeach; ?>
-  <?php if (!$guests): ?><tr><td colspan="9" class="muted"><?= Page::emptyState($filtered ? 'No association guest matches' : 'No association guests yet', $filtered ? 'Try other letters, or clear the filters.' : ($canAdd ? 'Press Add by association to register the first guest. PSOOLA emails the QR at once.' : 'Guests the association registers appear here.'), 'association-guests') ?></td></tr><?php endif; ?>
+  <?php if (!$guests): ?><tr class="empty-row"><td colspan="9"><?php if ($filtered): ?><div class="empty-state"><span class="empty-icon"><?= Page::navIcon('search') ?></span><strong>No association guest matches</strong><p>Nobody matches this search and these filters. Try other letters or clear the filters.</p><a class="btn ghost small" href="association-guests.php">Clear filters</a></div><?php else: ?><div class="empty-state arrivals-empty"><span class="empty-icon"><?= Page::navIcon('association-guests') ?></span><strong>No association guests yet</strong><p><?= $canAdd ? 'Add the first guest the ' . $e(AssociationGuests::NAME) . ' registers. PSOOLA emails their QR ticket at once, and the price is added to what the association owes.' : 'Guests the association registers appear here.' ?></p><?php if ($canAdd): ?><a class="btn small" href="association-guests.php?tab=add">+ Add by association</a><?php endif; ?></div><?php endif; ?></td></tr><?php endif; ?>
 </table>
 </div>
 </section>

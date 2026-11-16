@@ -1566,3 +1566,17 @@ body:has([data-guest-tickets]) .page-actions .btn{background:transparent;border:
 .arrivals-empty-days span{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;background:#f2f6fa;border:1px solid var(--line);font-size:12.5px;color:var(--muted)}
 .arrivals-empty-days b{color:var(--teal-d)}
 .registration-directory .empty-state .btn{margin-top:4px}
+/* Association guests: one Slemani Association panel (count, what it owes, PDF) with ticket tiles. */
+.attendance-tile.blue{--tile-bg:var(--blue-l);--tile-ink:var(--blue-d)}
+.association-overview-main{display:flex;flex-direction:column;gap:16px;min-width:0}
+.association-overview .association-guest-org h2{margin:2px 0 0;font-size:20px}
+.association-overview-figures{display:flex;flex-wrap:wrap;align-items:center;gap:14px 22px}
+.association-overview-figures .attendance-figure{margin:0}
+.association-overview .association-guest-owes{padding:10px 16px}
+.association-overview .association-pdf{align-self:flex-start;display:inline-flex;align-items:center;gap:8px}
+.association-overview .association-pdf .nav-icon{width:17px;height:17px}
+.association-directory .panel-heading h2{display:flex;align-items:center;gap:8px}
+.association-filter-card{margin-bottom:24px}
+.association-overview .association-guest-org{flex:none}
+.association-guest-table td{vertical-align:middle}
+.association-guest-table td:nth-child(7),.association-guest-table td:nth-child(8){white-space:nowrap}
