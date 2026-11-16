@@ -79,36 +79,50 @@ document.addEventListener("click", (event) => {
 });
 
 // Workshop: "Are you sure?" with the name, email, WhatsApp number, workshop and
-// payment, before anything is sent. "Yes, register" sends the form.
-document.addEventListener("DOMContentLoaded", () => {
-  const form = document.querySelector("form[data-ws-confirm]");
-  const box = document.getElementById("ws-confirm");
-  if (!form || !box || typeof box.showModal !== "function") return;
-  const field = (name) => box.querySelector(`[data-ws-field="${name}"]`);
-  let confirmed = false;
-  let submitter = null;
-  form.addEventListener("submit", (event) => {
-    if (confirmed) return;
+// payment, before anything is sent. "Yes, register" sends the form. Everything is
+// looked up when it is used, so a quiet page refresh can never leave a dead button.
+(() => {
+  let pending = null;   // { form, submitter } waiting for "Yes, register"
+  const box = () => document.getElementById("ws-confirm");
+  document.addEventListener("submit", (event) => {
+    const form = event.target.closest?.("form[data-ws-confirm]");
+    if (!form) return;
+    if (form.dataset.confirmed === "1") { delete form.dataset.confirmed; return; }
     event.preventDefault();
+    const dialog = box();
+    if (!dialog || typeof dialog.showModal !== "function") {   // very old browser: send as before
+      form.dataset.confirmed = "1";
+      if (typeof form.requestSubmit === "function") form.requestSubmit(event.submitter); else form.submit();
+      return;
+    }
     if (!form.reportValidity()) return;   // for example "I have received the cash" not ticked
-    submitter = event.submitter || form.querySelector("button");
-    field("name").textContent = form.dataset.name;
-    field("email").textContent = form.dataset.email;
-    field("phone").textContent = form.dataset.phone;
-    field("workshop").textContent = form.dataset.workshop;
-    field("amount").textContent = submitter?.dataset.amount || "";
-    box.showModal();
-  });
-  box.querySelector("[data-ws-back]").addEventListener("click", () => box.close());
-  box.addEventListener("click", (event) => { if (event.target === box) box.close(); });   // a click outside goes back
-  box.querySelector("[data-ws-yes]").addEventListener("click", (event) => {
-    event.currentTarget.disabled = true;
-    confirmed = true;
-    box.close();
+    const submitter = event.submitter || form.querySelector("button");
+    const put = (name, text) => { const el = dialog.querySelector(`[data-ws-field="${name}"]`); if (el) el.textContent = text || ""; };
+    put("name", form.dataset.name);
+    put("email", form.dataset.email);
+    put("phone", form.dataset.phone);
+    put("workshop", form.dataset.workshop);
+    put("amount", submitter?.dataset.amount);
+    const yes = dialog.querySelector("[data-ws-yes]");
+    if (yes) yes.disabled = false;
+    pending = { form, submitter };
+    dialog.showModal();
+  }, true);
+  document.addEventListener("click", (event) => {
+    const dialog = box();
+    if (!dialog) return;
+    if (event.target.closest("[data-ws-back]") || event.target === dialog) { dialog.close(); pending = null; return; }
+    const yes = event.target.closest("[data-ws-yes]");
+    if (!yes || !pending) return;
+    yes.disabled = true;
+    const { form, submitter } = pending;
+    pending = null;
+    dialog.close();
+    form.dataset.confirmed = "1";
     if (typeof form.requestSubmit === "function") form.requestSubmit(submitter);
     else form.submit();
   });
-});
+})();
 
 // Register tab: the "Are you sure?" window also shows the gender and age.
 document.addEventListener("DOMContentLoaded", () => {

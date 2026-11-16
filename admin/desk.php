@@ -379,8 +379,6 @@ $icon = static fn (string $d): string => '<svg viewBox="0 0 24 24" fill="none" s
     <?php endif; ?>
   </div>
   <?php endif; ?>
-</section>
-<?php endif; ?>
 <dialog class="cash-confirm dk-confirm" id="ws-confirm" aria-labelledby="ws-confirm-title">
   <h2 id="ws-confirm-title">Are you sure?</h2>
   <p class="cash-confirm-sub">Check these details with the person before you register.</p>
@@ -397,6 +395,8 @@ $icon = static fn (string $d): string => '<svg viewBox="0 0 24 24" fill="none" s
     <button type="button" class="btn cash-pay" data-ws-yes>Yes, register</button>
   </div>
 </dialog>
+</section>
+<?php endif; ?>
 <p class="muted small">Company workshops are not sold here: the person calls the company.</p>
 <?php endif;
 Page::bottom();

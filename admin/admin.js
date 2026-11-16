@@ -247,6 +247,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const typing = el => el.matches?.("input:not([type=hidden]):not([type=submit]):not([type=button]), textarea, select, [contenteditable]");
   // A part may be swapped only when nothing in it is in use.
   const inUse = region => {
+    // An open window (for example "Are you sure?") is never swapped, nor a part holding one.
+    if (region.matches?.("dialog[open]")) return true;
     const focused = document.activeElement;
     if (focused && region.contains(focused) && typing(focused)) return true;
     const selection = window.getSelection();
