@@ -2,7 +2,7 @@
 // Association guests: people the Slemani Association registers for the
 // summit. The form is the Register (cash) form: PSOOLA records a cash sale,
 // issues the ticket and emails the QR at once. The association pays iSmile
-// later. Tabs: the guest list (with the full guest list PDF) and "Add by association".
+// later. The guest list (with the full guest list PDF); ?tab=add is the "Add by association" form.
 
 declare(strict_types=1);
 
@@ -70,15 +70,11 @@ $e = [Page::class, 'e'];
 $actions = '';
 if ($canAdd && $tab !== 'add') {
     $actions .= '<a class="btn" href="association-guests.php?tab=add">+ Add by association</a>';
+} elseif ($tab === 'add') {
+    $actions .= '<a class="btn ghost" href="association-guests.php">&larr; Association guests</a>';
 }
 Page::top('Association guests', 'association-guests', $actions);
 ?>
-<nav class="checkin-tabs association-guest-tabs no-print" aria-label="Association guests">
-  <a class="checkin-tab<?= $tab === 'guests' ? ' on' : '' ?>" href="association-guests.php"<?= $tab === 'guests' ? ' aria-current="page"' : '' ?>><?= Page::navIcon('users') ?><span>Guests</span></a>
-  <?php if ($canAdd): ?>
-  <a class="checkin-tab<?= $tab === 'add' ? ' on' : '' ?>" href="association-guests.php?tab=add"<?= $tab === 'add' ? ' aria-current="page"' : '' ?>><?= Page::navIcon('plus') ?><span>Add by association</span></a>
-  <?php endif; ?>
-</nav>
 <?php
 
 if ($tab === 'guests') {
@@ -120,7 +116,7 @@ if ($tab === 'guests') {
 </div>
 
 <form class="filters card filter-panel" method="get" action="association-guests.php" data-instant-search data-search-regions="association-guest-directory">
-  <?= Page::panelHeading('Find a guest', 'Results update as you type. Type the first letters of the name (R shows every first name that starts with R), or a phone, email or reference.', 'search') ?>
+  <div class="panel-heading"><span class="panel-icon"><?= Page::navIcon('search') ?></span><div><h2>Find a guest</h2></div></div>
   <label class="filter-field filter-search"><span>Name, phone, email or reference</span><input type="search" name="q" value="<?= $e($filters['q']) ?>" placeholder="Start typing a name…" autofocus></label>
   <?= $select('ticket', 'Ticket type', ['' => 'Any ticket'] + Registrations::TICKET_NAMES, $filters['ticket']) ?>
   <?= $select('lunch', 'Lunch', ['' => 'Any lunch', 'day1' => 'Lunch day 1', 'day2' => 'Lunch day 2', 'both' => 'Both days', 'none' => 'No lunch'], $filters['lunch']) ?>
