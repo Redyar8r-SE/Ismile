@@ -1457,3 +1457,22 @@ body:has([data-guest-tickets]) .page-actions .btn{background:transparent;border:
 @media screen{.list-results .table-wrap{max-height:min(70vh,720px);overflow:auto}.list-results table.name-list th{position:sticky;top:0;z-index:1;background:#f2f6fa}}
 /* Registrations guest directory: scrolls inside its box on screen, headings stay at the top. */
 @media screen{.table-wrap.registration-directory-scroll{max-height:min(70vh,720px);overflow:auto}.registration-directory-scroll th{position:sticky;top:0;z-index:1;background:#f2f6fa}}
+/* Registration: Attended tab. One compact line per guest: an arrival chip per day, how they came in, lunch chips. */
+.attended-table th .th-date{display:block;margin-top:3px;font-size:10px;font-weight:600;letter-spacing:.02em;text-transform:none;color:#8aa0b1}
+.attended-table td{vertical-align:middle;padding-top:12px;padding-bottom:12px}
+.attended-table .guest-cell small{margin-top:2px}
+.attended-table .ticket-line{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.attended-table .ticket-line b{font-size:12.5px;color:var(--ink)}
+.attended-table .ticket-line code{font-size:10.5px}
+.attended-table .pill{margin-top:6px}
+.arrival-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 12px 5px 8px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap;line-height:1.2}
+.arrival-chip.is-in{background:var(--green-l);color:var(--green-d);box-shadow:inset 0 0 0 1px #c3e6d1}
+.arrival-chip.is-in b{font-size:15px;font-variant-numeric:tabular-nums;letter-spacing:.2px}
+.arrival-chip .arrival-seconds{font-size:11px;font-weight:600;opacity:.65;font-variant-numeric:tabular-nums}
+.arrival-chip .nav-icon{width:15px;height:15px;stroke-width:2.4}
+.arrival-chip.is-out{padding:5px 12px;background:#eef2f6;color:#7f93a3;font-weight:600}
+.arrival-by{display:block;margin-top:6px;font-size:11px;color:#6b8698}
+.lunch-chips{display:flex;flex-wrap:wrap;gap:6px}
+.lunch-chip{padding:3px 10px;border-radius:999px;background:var(--gold-l);color:var(--gold-d);font-size:11px;font-weight:700;white-space:nowrap}
+.no-lunch{font-size:11px;color:#8aa0b1}
+@media(max-width:760px){.registration-directory .table-wrap.registration-directory-scroll{max-height:none;overflow:visible}}
