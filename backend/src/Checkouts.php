@@ -249,7 +249,10 @@ final class Checkouts
         if ($specialty === null) {
             throw new UserError('Choose the caller\'s specialty.');
         }
-        if ($specialty === 'student' && $ticket !== 'vip') {
+        if ($specialty === 'student' && $ticket === 'vip') {
+            throw new UserError('VIP is not for dental students. Choose another specialty, or a Student ticket.');
+        }
+        if ($specialty === 'student') {
             $ticket = 'student';   // same rule as the website form
         }
         $university = null;

@@ -681,13 +681,14 @@ document.addEventListener("DOMContentLoaded", () => {
       else if (specialty.value !== "student" && ticket.value === "student") ticket.value = "professional";
     } else if (ticket.value === "student") {
       specialty.value = "student";
-    } else if (ticket.value === "professional" && specialty.value === "student") {
+    } else if ((ticket.value === "professional" || ticket.value === "vip") && specialty.value === "student") {
       specialty.value = "";
     }
-    const dentistTicket = ticket.value === "professional";
+    // Dental student is only for a Student ticket: not for Dentist, not for VIP.
+    const noStudent = ticket.value === "professional" || ticket.value === "vip";
     if (studentOption) {
-      studentOption.hidden = dentistTicket;
-      studentOption.disabled = dentistTicket;
+      studentOption.hidden = noStudent;
+      studentOption.disabled = noStudent;
     }
     const studentTicket = ticket.value === "student";
     fields.hidden = !studentTicket;

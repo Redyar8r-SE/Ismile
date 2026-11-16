@@ -77,8 +77,10 @@ foreach ([1,2] as $included) {
 }
 $studentVip=Checkouts::createFromForm(['specialty'=>'student']+$base,null);
 $check('a dental student may choose VIP without a student-ID field', $studentVip['ticket_type']==='vip' && $studentVip['id_photo_id']===null);
-$office=Checkouts::officeRow(['specialty'=>'student']+$base);
-$check('phone registration preserves a student guest choosing VIP', $office['ticket_type']==='vip' && $office['vip_lunch_day']===1);
+$officeRefused=false;try{Checkouts::officeRow(['specialty'=>'student']+$base);}catch(UserError $e){$officeRefused=str_contains($e->key,'VIP is not for dental students');}
+$check('staff registration refuses VIP for a dental student (owner rule)', $officeRefused);
+$office=Checkouts::officeRow(['specialty'=>'gp']+$base);
+$check('staff registration keeps VIP with its included lunch for other specialties', $office['ticket_type']==='vip' && $office['vip_lunch_day']===1);
 
 $standard=Checkouts::createFromForm(['ticket'=>'professional','vip_lunch_day'=>'2']+$base,null);
 $quote=SiteData::quoteFor($standard);
