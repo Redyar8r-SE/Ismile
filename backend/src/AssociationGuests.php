@@ -248,14 +248,28 @@ final class AssociationGuests
      * Rows for the guest list PDF: the same full details as the Lists PDFs
      * (full name, total, phone, ticket, lunch, ticket no., reference, payment
      * date, status and the ticket and lunch breakdown), for every registered
-     * association guest, A to Z.
+     * association guest, A to Z. For the association: no Ambassador column,
+     * and "Sponsoring association" (the association's name) in place of
+     * "Sponsoring company".
      */
     public static function reportRows(): array
     {
         $people = Admin\Lists::filter('registered', Admin\Lists::rows('registered'), Admin\Lists::filters(['sale' => 'association']));
         $people = Admin\PaymentBreakdown::attach($people);
         $title = self::NAME . ', ' . count($people) . (count($people) === 1 ? ' guest' : ' guests') . ', all pay later';
-        return array_merge([[$title]], Admin\Lists::reportRows('registered', $people, false));
+        $rows = Admin\Lists::reportRows('registered', $people, false);
+        $headers = $rows[0];
+        $drop = array_keys($headers, 'Ambassador', true);
+        $sponsor = array_search('Sponsoring company', $headers, true);
+        $tags = self::tags(array_map(static fn (array $p): string => (string) $p['ref'], $people));
+        foreach ($rows as $index => $row) {
+            if ($sponsor !== false) {
+                $row[$sponsor] = $index === 0 ? 'Sponsoring association' : ($tags[(string) $people[$index - 1]['ref']] ?? self::NAME);
+            }
+            foreach ($drop as $column) unset($row[$column]);
+            $rows[$index] = array_values($row);
+        }
+        return array_merge([[$title]], $rows);
     }
 
     /**

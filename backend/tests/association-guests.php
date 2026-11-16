@@ -93,7 +93,10 @@ $check('the gender and age are saved', Registrations::find((int) $registration['
 $rows = AssociationGuests::reportRows();
 $listRows = Lists::reportRows('registered', \Ismile\Admin\PaymentBreakdown::attach(Lists::filter('registered', Lists::rows('registered'), Lists::filters(['sale' => 'association']))), false);
 $names = array_column(array_slice($rows, 2), 1);
-$check('the guest list PDF has the same columns as the Lists PDFs', $rows[1] === $listRows[0] && in_array('Full name', $rows[1], true) && in_array('Phone', $rows[1], true) && in_array('Lunch days', $rows[1], true) && in_array('Reference', $rows[1], true) && in_array('Ticket no.', $rows[1], true));
+$expected = array_values(array_filter(array_map(static fn (string $h): string => $h === 'Sponsoring company' ? 'Sponsoring association' : $h, $listRows[0]), static fn (string $h): bool => $h !== 'Ambassador'));
+$check('the guest list PDF has the Lists PDF columns, without Ambassador, with Sponsoring association', $rows[1] === $expected && in_array('Full name', $rows[1], true) && in_array('Phone', $rows[1], true) && in_array('Lunch days', $rows[1], true) && in_array('Reference', $rows[1], true) && in_array('Ticket no.', $rows[1], true) && !in_array('Ambassador', $rows[1], true) && !in_array('Sponsoring company', $rows[1], true));
+$sponsorColumn = array_search('Sponsoring association', $rows[1], true);
+$check('every guest row says Slemani Association as the sponsoring association, and rows keep their width', array_reduce(array_slice($rows, 2), static fn (bool $all, array $r): bool => $all && $r[$sponsorColumn] === 'Slemani Association' && count($r) === count($rows[1]), true));
 $check('the guest list PDF has only the registered association guests, A to Z', count($rows) - 2 === $totals['guests'] && in_array('Hemin Ali Omar', $names, true) && !in_array('Plain Ali Omar', $names, true));
 $check('the guest list title has no dot separator', !str_contains((string) $rows[0][0], '·') && str_starts_with((string) $rows[0][0], 'Slemani Association, '));
 $check('the guest list PDF renders', str_starts_with(PdfReport::make('Slemani Association guests', $rows, true), '%PDF-'));
