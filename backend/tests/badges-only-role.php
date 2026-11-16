@@ -8,7 +8,7 @@ require __DIR__ . '/../src/Admin/Page.php';
 use Ismile\Auth;
 use Ismile\Admin\Page;
 
-$badges = ['role' => 'badges', 'registration_manage_access' => 1, 'workshop_booking_access' => 1, 'map_booking_access' => 1, 'association_manage_access' => 1];
+$badges = ['role' => 'badges', 'registration_manage_access' => 1, 'workshop_booking_access' => 1, 'map_booking_access' => 1];
 foreach (Page::MENU as $page => [, $area]) {
     $can = $area === 'owner' ? false : Auth::can($badges, $area);
     if ($can !== ($page === 'tickets')) throw new RuntimeException('Tickets & Certificates only can open ' . $page);
@@ -20,6 +20,17 @@ if (!Auth::can($badges, 'certificates') || !Auth::can($badges, 'badges') || !Aut
 if (!Auth::canManageBadges($badges)) throw new RuntimeException('Tickets & Certificates only cannot make badges');
 foreach (['tickets.php', 'certificates.php', 'psoola-ticket.php'] as $page) {
     if (!Auth::viewerMayPost($badges, '/admin/' . $page)) throw new RuntimeException("Tickets & Certificates only cannot save on $page");
+}
+// With the Owner's Association tick: Tickets & Certificates plus Association (everything there), nothing else.
+$withAssociation = $badges + ['association_manage_access' => 1];
+foreach (Page::MENU as $page => [, $area]) {
+    $can = $area === 'owner' ? false : Auth::can($withAssociation, $area);
+    if ($can !== in_array($page, ['tickets', 'association'], true)) throw new RuntimeException('With Association, Tickets & Certificates only can open ' . $page);
+}
+if (!Auth::viewerMayPost($withAssociation, '/admin/association.php') || !Auth::canManageAssociation($withAssociation)) throw new RuntimeException('With Association, the role cannot save Association handovers');
+if (Auth::viewerMayPost($badges, '/admin/association.php')) throw new RuntimeException('Without the tick, the role can save Association handovers');
+foreach (['dashboard', 'registrations', 'edit', 'payments', 'workshops', 'sponsors', 'map', 'checkin', 'export', 'photos', 'content', 'communications'] as $area) {
+    if (Auth::can($withAssociation, $area)) throw new RuntimeException("With Association, the role can use $area");
 }
 if (Page::home($badges) !== 'tickets.php') throw new RuntimeException('Tickets & Certificates only does not start on Tickets');
 if (!Auth::needsTwoFactor($badges)) throw new RuntimeException('Tickets & Certificates only needs the phone code');

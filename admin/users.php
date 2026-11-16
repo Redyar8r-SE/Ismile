@@ -48,6 +48,12 @@ Page::action(static function () use ($user): string {
             Db::update('admin_users', ['badge_certificate_access' => $enabled], 'id=?', [$target['id']]);
             Audit::log((int) $user['id'], $enabled ? 'user.badge_certificate_grant' : 'user.badge_certificate_revoke', 'admin_user', (int) $target['id']);
             return $enabled ? 'Badges and certificates access granted.' : 'Badges and certificates access removed.';
+        case 'association_access':   // Tickets & Certificates only: the Owner adds or removes Association
+            if ($target['role'] !== 'badges') throw new UserError('Association access here is only for the Tickets & Certificates only role.');
+            $enabled = ($_POST['enabled'] ?? '') === '1' ? 1 : 0;
+            Db::update('admin_users', ['association_manage_access' => $enabled], 'id=?', [$target['id']]);
+            Audit::log((int) $user['id'], $enabled ? 'user.association_manage_grant' : 'user.association_manage_revoke', 'admin_user', (int) $target['id']);
+            return $enabled ? 'Association access granted: they can do everything on the Association page.' : 'Association access removed.';
         case 'registration_access':
             $enabled = ($_POST['enabled'] ?? '') === '1' ? 1 : 0;
             Db::update('admin_users', ['registration_manage_access' => $enabled], 'id=?', [$target['id']]);
@@ -129,7 +135,9 @@ Page::top('Users', 'users', '<a class="btn" href="#add-person">' . Page::navIcon
       <small class="field-hint">Only Workshop &amp; Register. Extra access does not apply to this role.</small>
       <?php endif; ?>
       <?php if ($row['role'] === 'badges'): ?>
-      <small class="field-hint">Only Tickets &amp; Certificates. Extra access does not apply to this role.</small>
+      <?php $associationAccess = (int) ($row['association_manage_access'] ?? 0) === 1; ?>
+      <small class="field-hint"><?= $associationAccess ? 'Tickets &amp; Certificates and Association.' : 'Only Tickets &amp; Certificates.' ?></small>
+      <?php if (!$protected): ?><form method="post" class="inline-form"><?= Page::csrfField() ?><input type="hidden" name="do" value="association_access"><input type="hidden" name="id" value="<?= (int) $row['id'] ?>"><input type="hidden" name="enabled" value="<?= $associationAccess ? '0' : '1' ?>"><button class="btn small ghost"><?= $associationAccess ? 'Remove Association access' : 'Allow Association (everything)' ?></button></form><?php endif; ?>
       <?php endif; ?>
       <?php if (!in_array($row['role'], ['owner', 'badges', 'volunteer'], true) && !$protected): $registrationAccess = (int) ($row['registration_manage_access'] ?? 0) === 1; ?>
       <small class="field-hint"><?= $registrationAccess ? 'Can register paid and complimentary guests.' : 'Complimentary registration requires individual access.' ?></small>
