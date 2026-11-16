@@ -36,7 +36,7 @@ $staff = Db::one('SELECT * FROM admin_users WHERE id = ?', [Auth::createUser("as
 $viewer = Db::one('SELECT * FROM admin_users WHERE id = ?', [Auth::createUser("assoc-view-$tag@test.invalid", 'Viewer', 'viewer', bin2hex(random_bytes(12)))]);
 $volunteer = Db::one('SELECT * FROM admin_users WHERE id = ?', [Auth::createUser("assoc-vol-$tag@test.invalid", 'Volunteer', 'volunteer', bin2hex(random_bytes(12)))]);
 $form = static fn (string $first, array $more = []): array => $more + ['first_name' => $first, 'father_name' => 'Ali', 'grandfather_name' => 'Omar',
-    'phone' => '0750' . random_int(1000000, 9999999), 'email' => strtolower($first) . "-$tag@example.invalid", 'city' => 'Sulaimani', 'specialty' => 'gp', 'ticket' => 'professional'];
+    'phone' => '0750' . random_int(1000000, 9999999), 'email' => strtolower($first) . "-$tag@example.invalid", 'city' => 'Sulaimani', 'specialty' => 'gp', 'ticket' => 'professional', 'gender' => 'male', 'age' => '34'];
 $before = AssociationGuests::totals();
 
 // ---- who may add ----
@@ -71,9 +71,23 @@ $totals = AssociationGuests::totals();
 $sum = (int) Db::value("SELECT COALESCE(SUM(amount_confirmed),0) FROM payments WHERE status = 'paid' AND registration_id IN (?, ?, ?)", [$registration['id'], $vip['sale']['registration_id'], $student['sale']['registration_id']]);
 $check('the boxes count each ticket type', $totals['guests'] === $before['guests'] + 3 && $totals['professional'] === $before['professional'] + 1 && $totals['vip'] === $before['vip'] + 1 && $totals['student'] === $before['student'] + 1);
 $check('the association owes the PSOOLA-confirmed prices', ($totals['owed']['IQD'] ?? 0) + ($totals['owed']['USD'] ?? 0) === ($before['owed']['IQD'] ?? 0) + ($before['owed']['USD'] ?? 0) + $sum && $sum > 0);
-$check('search finds a guest by name, reference and phone', count(AssociationGuests::all('Hemin')) >= 1 && count(AssociationGuests::all($ref)) === 1
-    && count(AssociationGuests::all(substr((string) $registration['phone'], -7))) >= 1);
-$check('search with special characters is safe', AssociationGuests::all("%' OR 1=1 --") === []);
+// ---- the search and filters ----
+$f = static fn (array $in): array => AssociationGuests::filters($in);
+$found = static fn (array $in): array => array_column(AssociationGuests::filter(AssociationGuests::all(), $f($in)), 'first_name');
+$check('typing one letter finds every first name that starts with it', $found(['q' => 'H']) === ['Hemin'] && $found(['q' => 'h']) === ['Hemin'] && in_array('Shno', $found(['q' => 'S']), true) && !in_array('Hemin', $found(['q' => 'S']), true));
+$check('one letter never matches inside other names, emails or references', $found(['q' => 'A']) === [] && $found(['q' => 'O']) === []);
+$check('more letters narrow the first name', $found(['q' => 'He']) === ['Hemin'] && $found(['q' => 'Hx']) === []);
+$check('the full name is matched from its start', $found(['q' => 'hemin ali o']) === ['Hemin'] && $found(['q' => 'Hemin  Ali']) === ['Hemin'] && $found(['q' => 'Ali']) === []);
+$check('search finds a phone, a reference and an email', $found(['q' => substr((string) $registration['phone'], -7)]) === ['Hemin'] && $found(['q' => $ref]) === ['Hemin'] && $found(['q' => strtolower(substr($ref, -6))]) === ['Hemin'] && $found(['q' => "hemin-$tag@"]) === ['Hemin']);
+$check('search with special characters is safe', $found(['q' => "%' OR 1=1 --"]) === []);
+$check('filters: ticket type', $found(['ticket' => 'vip']) === ['Bryar'] && $found(['ticket' => 'student']) === ['Shno']);
+$check('filters: lunch', $found(['lunch' => 'day1']) === ['Bryar'] && !in_array('Bryar', $found(['lunch' => 'none']), true));
+$check('filters: added by', count($found(['by' => (string) $staff['id']])) === 3 && $found(['by' => '999999']) === []);
+$check('filters: registration status and QR email', count($found(['state' => 'registered'])) === 3 && $found(['state' => 'cancelled']) === [] && count($found(['email' => 'pending'])) === 3 && $found(['email' => 'delivered']) === []);
+$check('order: name A to Z, Z to A, newest and oldest', $found(['sort' => 'name']) === ['Bryar', 'Hemin', 'Shno'] && $found(['sort' => 'name_desc']) === ['Shno', 'Hemin', 'Bryar'] && $found([]) === ['Shno', 'Bryar', 'Hemin'] && $found(['sort' => 'oldest']) === ['Hemin', 'Bryar', 'Shno']);
+$check('unknown filter values are ignored', $f(['ticket' => 'x', 'sort' => 'evil', 'by' => '1 OR 1'])['ticket'] === '' && $f(['sort' => 'evil'])['sort'] === 'newest' && $f(['by' => '1 OR 1'])['by'] === '');
+$check('gender and age are required', $rejects(static fn () => AssociationGuests::add(array_diff_key($form('Nogender'), ['gender' => 1]), $staff)) && $rejects(static fn () => AssociationGuests::add(['age' => ''] + $form('Noage'), $staff)));
+$check('the gender and age are saved', Registrations::find((int) $registration['id'])['gender'] === 'male' && (int) Registrations::find((int) $registration['id'])['age'] === 34);
 
 // ---- the guest list PDF: the same full details as the Lists PDFs ----
 $rows = AssociationGuests::reportRows();

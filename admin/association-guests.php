@@ -82,20 +82,33 @@ Page::top('Association guests', 'association-guests', $actions);
 <?php
 
 if ($tab === 'guests') {
-    $q = Page::query('q', 120);
+    $filters = AssociationGuests::filters($_GET);
     $everyone = AssociationGuests::all();
     $totals = AssociationGuests::totals($everyone);
-    $guests = array_values(array_filter($q === '' ? $everyone : AssociationGuests::all($q), static fn (array $g): bool => AssociationGuests::state($g) !== 'none'));
-    $mail = AssociationGuests::emailStatuses(array_values(array_map(static fn (array $g): string => (string) $g['ref'], array_filter($guests, static fn (array $g): bool => AssociationGuests::state($g) === 'registered'))));
+    $registeredRefs = array_values(array_map(static fn (array $g): string => (string) $g['ref'], array_filter($everyone, static fn (array $g): bool => AssociationGuests::state($g) === 'registered')));
+    $mail = AssociationGuests::emailStatuses($registeredRefs);
+    $guests = AssociationGuests::filter($everyone, $filters, $mail ?? []);
     $mailNames = ['queued' => 'Queued', 'sent' => 'Sent', 'delivered' => 'Delivered', 'delayed' => 'Delayed', 'bounced' => 'Bounced', 'complained' => 'Complained', 'failed' => 'Failed'];
     $owed = AssociationGuests::owedText($totals['owed']);
-    echo Page::stats([
-        ['Association guests', number_format($totals['guests']), 'All pay later', 'users', 'teal'],
-        ['Dentists', number_format($totals['professional']), 'Dentist tickets', 'registrations', 'blue'],
-        ['Students', number_format($totals['student']), 'Student tickets', 'workshops', 'violet'],
-        ['VIP guests', number_format($totals['vip']), 'VIP tickets', 'ticket', 'gold'],
-    ]);
+    $adders = [];
+    foreach ($everyone as $guest) $adders[(string) $guest['added_by']] = (string) ($guest['added_by_name'] ?? 'Removed account');
+    asort($adders);
+    $filtered = array_filter(array_diff_key($filters, ['sort' => true]), static fn (string $v): bool => $v !== '') !== [];
+    $select = static function (string $name, string $label, array $options, string $current): string {
+        $html = '<label class="filter-field"><span>' . Page::e($label) . '</span><select name="' . $name . '">';
+        foreach ($options as $value => $text) {
+            $html .= '<option value="' . Page::e((string) $value) . '"' . ((string) $value === $current ? ' selected' : '') . '>' . Page::e($text) . '</option>';
+        }
+        return $html . '</select></label>';
+    };
     ?>
+<div data-live-region="association-guest-totals">
+<?= Page::stats([
+    ['Association guests', number_format($totals['guests']), 'All pay later', 'users', 'teal'],
+    ['Dentists', number_format($totals['professional']), 'Dentist tickets', 'registrations', 'blue'],
+    ['Students', number_format($totals['student']), 'Student tickets', 'workshops', 'violet'],
+    ['VIP guests', number_format($totals['vip']), 'VIP tickets', 'ticket', 'gold'],
+]) ?>
 <section class="card association-guest-card">
   <div class="association-guest-org">
     <span class="association-guest-logo" aria-hidden="true">SA</span>
@@ -104,15 +117,23 @@ if ($tab === 'guests') {
   <div class="association-guest-owes"><span>Owes iSmile</span><strong><?= $e($owed) ?></strong></div>
   <?php if ($canPdf): ?><a class="btn gold" href="association-guests.php?pdf=list"><?= Page::navIcon('download') ?><span>Download guest list (PDF)</span></a><?php endif; ?>
 </section>
+</div>
 
-<form class="filters card filter-panel" method="get">
-  <?= Page::panelHeading('Find a guest', 'Search the association guests by name, phone, email or reference.', 'search') ?>
-  <label class="filter-field filter-search"><span>Name, phone, email or reference</span><input type="search" name="q" value="<?= $e($q) ?>" placeholder="Search association guests…"></label>
-  <div class="form-actions filter-actions"><a class="btn ghost" href="association-guests.php">Clear</a><button class="btn">Search</button></div>
+<form class="filters card filter-panel" method="get" action="association-guests.php" data-instant-search data-search-regions="association-guest-directory">
+  <?= Page::panelHeading('Find a guest', 'Results update as you type. Type the first letters of the name (R shows every first name that starts with R), or a phone, email or reference.', 'search') ?>
+  <label class="filter-field filter-search"><span>Name, phone, email or reference</span><input type="search" name="q" value="<?= $e($filters['q']) ?>" placeholder="Start typing a name…" autofocus></label>
+  <?= $select('ticket', 'Ticket type', ['' => 'Any ticket'] + Registrations::TICKET_NAMES, $filters['ticket']) ?>
+  <?= $select('lunch', 'Lunch', ['' => 'Any lunch', 'day1' => 'Lunch day 1', 'day2' => 'Lunch day 2', 'both' => 'Both days', 'none' => 'No lunch'], $filters['lunch']) ?>
+  <?= $select('email', 'QR email', ['' => 'Any QR email'] + AssociationGuests::EMAIL_FILTERS, $filters['email']) ?>
+  <?= $select('state', 'Registration', ['' => 'Everyone', 'registered' => 'Registered', 'waiting' => 'Waiting for PSOOLA', 'cancelled' => 'Cancelled'], $filters['state']) ?>
+  <?= $select('by', 'Added by', ['' => 'Anyone'] + $adders, $filters['by']) ?>
+  <?= $select('sort', 'Order', AssociationGuests::SORTS, $filters['sort']) ?>
+  <div class="form-actions filter-actions"><a class="btn ghost" href="association-guests.php">Clear filters</a><button class="btn">Search</button></div>
 </form>
 
+<div data-live-region="association-guest-directory">
 <section class="card directory-panel"><div class="toolbar list-head">
-  <div><h2>Guest list <span class="result-count"><?= count($guests) ?></span></h2><p class="muted small">Every guest added by the <?= $e(AssociationGuests::NAME) ?>, newest first.<?= $mail === null ? ' PSOOLA could not be reached for the QR email status just now.' : '' ?></p></div>
+  <div><h2>Guest list <span class="result-count"><?= count($guests) ?></span></h2><p class="muted small"><?= $filtered ? 'Showing the guests that match your search and filters.' : 'Every guest added by the ' . $e(AssociationGuests::NAME) . '.' ?> <?= $e(AssociationGuests::SORTS[$filters['sort']]) ?>.<?= $mail === null ? ' PSOOLA could not be reached for the QR email status just now.' : '' ?></p></div>
 </div>
 <div class="table-wrap">
 <table class="association-guest-table">
@@ -137,10 +158,11 @@ if ($tab === 'guests') {
     <td><?= Page::when($guest['added_at']) ?></td>
   </tr>
   <?php endforeach; ?>
-  <?php if (!$guests): ?><tr><td colspan="9" class="muted"><?= Page::emptyState($q !== '' ? 'No association guest matches' : 'No association guests yet', $q !== '' ? 'Try another name, phone or reference.' : ($canAdd ? 'Press Add by association to register the first guest. PSOOLA emails the QR at once.' : 'Guests the association registers appear here.'), 'association-guests') ?></td></tr><?php endif; ?>
+  <?php if (!$guests): ?><tr><td colspan="9" class="muted"><?= Page::emptyState($filtered ? 'No association guest matches' : 'No association guests yet', $filtered ? 'Try other letters, or clear the filters.' : ($canAdd ? 'Press Add by association to register the first guest. PSOOLA emails the QR at once.' : 'Guests the association registers appear here.'), 'association-guests') ?></td></tr><?php endif; ?>
 </table>
 </div>
 </section>
+</div>
 <?php
     Page::bottom();
     exit;
@@ -184,6 +206,7 @@ $association = AssociationGuests::NAME;
   <fieldset class="form-section">
     <legend>1. Guest's details</legend>
     <div class="row3"><label>First name *<input name="first_name" maxlength="60" value="<?= $value('first_name') ?>" autocomplete="off" required></label><label>Second name *<input name="father_name" maxlength="60" value="<?= $value('father_name') ?>" required></label><label>Last name *<input name="grandfather_name" maxlength="60" value="<?= $value('grandfather_name') ?>" required></label></div>
+    <div class="row3"><label>Gender *<select name="gender" required><option value="">Choose gender</option><?php foreach (['female' => 'Female', 'male' => 'Male', 'other' => 'Other', 'prefer-not' => 'Prefer not to say'] as $genderKey => $genderName): ?><option value="<?= $genderKey ?>"<?= $selected('gender', $genderKey) ?>><?= $genderName ?></option><?php endforeach; ?></select></label><label>Age *<input type="number" name="age" inputmode="numeric" min="16" max="120" step="1" value="<?= $value('age') ?>" placeholder="28" required></label></div>
     <div class="row3"><label>Phone *<input type="tel" name="phone" dir="ltr" autocomplete="off" value="<?= $value('phone') ?>" required placeholder="0750 123 4567"></label><label>Email *<input type="email" name="email" dir="ltr" autocomplete="off" maxlength="190" value="<?= $value('email') ?>" required></label><label>City<?= \Ismile\Cities::select($_POST['city'] ?? '') ?></label></div>
   </fieldset>
   <fieldset class="form-section">

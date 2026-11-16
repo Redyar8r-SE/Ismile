@@ -34,6 +34,12 @@ final class AssociationGuests
         if (!self::canAdd($user)) {
             throw new UserError('Your account cannot add association guests.');
         }
+        if (!in_array($in['gender'] ?? '', Registrations::GENDERS, true)) {
+            throw new UserError('Choose the gender.');
+        }
+        if (trim((string) ($in['age'] ?? '')) === '') {
+            throw new UserError('Enter the age.');
+        }
         $checkout = Checkouts::createForCash($in, $user, $photo, false);
         Db::insert('association_guests', [
             'ref' => $checkout['ref'], 'association' => self::NAME,
@@ -89,21 +95,10 @@ final class AssociationGuests
      * confirmed yet has no registration (registration_id NULL); a guest the
      * main Owner deleted for good is gone from this list too.
      */
-    public static function all(string $search = ''): array
+    public static function all(): array
     {
-        $where = '';
-        $params = [];
-        $search = trim($search);
-        if ($search !== '') {
-            $like = '%' . str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $search) . '%';
-            $digits = ltrim((string) preg_replace('/\D+/', '', $search), '0');
-            $where = " WHERE (CONCAT_WS(' ', COALESCE(r.first_name, c.first_name), COALESCE(r.father_name, c.father_name), COALESCE(r.grandfather_name, c.grandfather_name)) LIKE ?
-                OR COALESCE(r.email, c.email) LIKE ? OR ag.ref LIKE ?" . ($digits !== '' && strlen($digits) >= 3 ? ' OR COALESCE(r.phone, c.phone) LIKE ?' : '') . ')';
-            array_push($params, $like, $like, $like);
-            if ($digits !== '' && strlen($digits) >= 3) $params[] = '%' . $digits . '%';
-        }
         return Db::all(
-            "SELECT ag.id AS guest_id, ag.ref, ag.association, ag.created_at AS added_at, ab.name AS added_by_name,
+            "SELECT ag.id AS guest_id, ag.ref, ag.association, ag.added_by, ag.created_at AS added_at, ab.name AS added_by_name,
                     r.id AS registration_id, r.status, c.id AS checkout_id,
                     (SELECT p.status FROM payments p WHERE p.checkout_id = c.id ORDER BY p.id DESC LIMIT 1) AS payment_status,
                     COALESCE(r.first_name, c.first_name) AS first_name, COALESCE(r.father_name, c.father_name) AS father_name,
@@ -117,10 +112,84 @@ final class AssociationGuests
                LEFT JOIN registrations r ON r.ref = ag.ref
                LEFT JOIN checkouts c ON c.ref = ag.ref
                LEFT JOIN admin_users ab ON ab.id = ag.added_by
-               $where
-              ORDER BY ag.id DESC",
-            $params
+              ORDER BY ag.id DESC"
         );
+    }
+
+    public const SORTS = ['newest' => 'Newest first', 'oldest' => 'Oldest first', 'name' => 'Name A to Z', 'name_desc' => 'Name Z to A'];
+    public const EMAIL_FILTERS = ['delivered' => 'Delivered', 'pending' => 'Not delivered yet', 'problem' => 'Problem (failed or bounced)'];
+
+    /** The page's search and filters, checked (unknown values are ignored). */
+    public static function filters(array $in): array
+    {
+        $pick = static fn (string $key, array $allowed): string => is_string($in[$key] ?? null) && in_array($in[$key], $allowed, true) ? $in[$key] : '';
+        return [
+            'q' => is_string($in['q'] ?? null) ? mb_substr(trim($in['q']), 0, 120) : '',
+            'ticket' => $pick('ticket', ['professional', 'student', 'vip']),
+            'lunch' => $pick('lunch', ['day1', 'day2', 'both', 'none']),
+            'state' => $pick('state', ['registered', 'waiting', 'cancelled']),
+            'email' => $pick('email', array_keys(self::EMAIL_FILTERS)),
+            'by' => is_string($in['by'] ?? null) && ctype_digit($in['by']) ? $in['by'] : '',
+            'sort' => $pick('sort', array_keys(self::SORTS)) ?: 'newest',
+        ];
+    }
+
+    /**
+     * The search: the name from its start ("R" finds every first name that
+     * starts with R, "Rawa H" finds Rawa Hiwa ...), or a phone number (3+
+     * digits), or a reference, or an email (4+ characters, or with @).
+     */
+    public static function matches(array $guest, string $search): bool
+    {
+        $lower = static fn (string $text): string => trim((string) preg_replace('/\s+/u', ' ', mb_strtolower($text)));
+        $q = $lower($search);
+        if ($q === '') return true;
+        if (str_starts_with($lower(Registrations::fullName($guest)), $q)) return true;
+        $digits = ltrim((string) preg_replace('/\D+/', '', $q), '0');
+        if (preg_match('/^[\d\s+()\-]+$/', $q) && strlen($digits) >= 3) {
+            return str_contains((string) preg_replace('/\D+/', '', (string) $guest['phone']), $digits);
+        }
+        $long = mb_strlen($q) >= 4 || str_contains($q, '@');
+        return $long && (str_contains($lower((string) $guest['ref']), $q) || str_contains($lower((string) $guest['email']), $q));
+    }
+
+    /**
+     * The guests that match the search and filters, in the chosen order.
+     * $mail is PSOOLA's email status by reference (for the QR email filter).
+     */
+    public static function filter(array $guests, array $f, ?array $mail = null): array
+    {
+        $out = [];
+        foreach ($guests as $guest) {
+            $state = self::state($guest);
+            if ($state === 'none') continue;
+            if ($f['q'] !== '' && !self::matches($guest, $f['q'])) continue;
+            if ($f['ticket'] !== '' && $guest['ticket_type'] !== $f['ticket']) continue;
+            if ($f['lunch'] !== '') {
+                [$one, $two] = [(int) $guest['lunch_day1'], (int) $guest['lunch_day2']];
+                if (!match ($f['lunch']) { 'day1' => $one === 1, 'day2' => $two === 1, 'both' => $one + $two === 2, default => $one + $two === 0 }) continue;
+            }
+            if ($f['state'] !== '' && $state !== $f['state'] && !($f['state'] === 'waiting' && $state === 'review')) continue;
+            if ($f['by'] !== '' && (string) ($guest['added_by'] ?? '') !== $f['by']) continue;
+            if ($f['email'] !== '') {
+                $status = (string) ($mail[$guest['ref']] ?? '');
+                $ok = $state === 'registered' && match ($f['email']) {
+                    'delivered' => $status === 'delivered',
+                    'problem' => in_array($status, ['bounced', 'complained', 'failed', 'delayed'], true),
+                    default => !in_array($status, ['delivered', 'bounced', 'complained', 'failed', 'delayed'], true),
+                };
+                if (!$ok) continue;
+            }
+            $out[] = $guest;
+        }
+        $name = static fn (array $g): string => mb_strtolower(Registrations::fullName($g));
+        usort($out, match ($f['sort']) {
+            'oldest' => static fn (array $a, array $b): int => (int) $a['guest_id'] <=> (int) $b['guest_id'],
+            'name' => static fn (array $a, array $b): int => [$name($a), (int) $a['guest_id']] <=> [$name($b), (int) $b['guest_id']],
+            'name_desc' => static fn (array $a, array $b): int => [$name($b), (int) $b['guest_id']] <=> [$name($a), (int) $a['guest_id']],
+            default => static fn (array $a, array $b): int => (int) $b['guest_id'] <=> (int) $a['guest_id'],
+        });
+        return $out;
     }
 
     /**
