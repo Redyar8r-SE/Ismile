@@ -9,6 +9,8 @@
 //           runs on another server (content_source_url), then sends the
 //           emails that are due (tickets go out within a minute), and
 //           saves new guests' PSOOLA QR codes for their badges
+//           Until the end of the summit it then keeps copying PSOOLA's
+//           gate scans about every 10 seconds for the rest of the minute
 // five    : asks the payment company about payments still waiting (lost
 //           webhooks), copies PSOOLA's gate scans into the attendance,
 //           deletes forms that were not paid in time, raises alerts
@@ -40,6 +42,7 @@ if (PHP_SAPI !== 'cli') {
 }
 require __DIR__ . '/../bootstrap.php';
 
+$started = time();
 $job = $argv[1] ?? '';
 if (!in_array($job, ['minute', 'five', 'nightly'], true)) {
     fwrite(STDERR, "Usage: php cron/run.php minute|five|nightly\n");
@@ -178,3 +181,23 @@ if (array_filter($report, static fn ($value) => $value !== 0 && $value !== [])) 
     App::log('info', "cron $job", $report);
 }
 echo json_encode($report) . "\n";
+
+// Gate scans within seconds. The minute job's own work is done and its lock
+// is free, so emails are never held up; this part has its own lock and ends
+// before the next minute starts.
+if ($job === 'minute' && PsoolaCheckIns::fastCopy()) {
+    $gate = fopen(App::storage('tmp/cron-gate.lock'), 'c');
+    if ($gate !== false && flock($gate, LOCK_EX | LOCK_NB)) {
+        try {
+            $watched = PsoolaCheckIns::watch($started + 52);
+            if ($watched['added'] > 0) {
+                App::log('info', 'cron gate', $watched);
+            }
+        } catch (\Throwable $error) {
+            App::log('warning', 'Gate scans could not be copied this minute', ['error' => mb_substr($error->getMessage(), 0, 200)]);
+        } finally {
+            flock($gate, LOCK_UN);
+            fclose($gate);
+        }
+    }
+}

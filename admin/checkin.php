@@ -1,6 +1,7 @@
 <?php
 // Registration workspace: Attended, Guest list and Report. PSOOLA scans the
-// tickets at the door; its check-ins are copied in every 5 minutes (and with
+// tickets at the door; its check-ins are copied in about every 10 seconds
+// until the end of the summit, every 5 minutes after (and with
 // "Refresh from Psoola"). Guests with a free iSmile ticket, which PSOOLA's
 // gate cannot read, are marked attended here by staff who checked them.
 
@@ -28,7 +29,7 @@ Page::action(static function () use ($user): string {
             $counts = PsoolaCheckIns::sync();
         } catch (\Ismile\Payments\GatewayNotReady $error) {
             App::log('error', 'Psoola check-ins could not be copied', ['error' => $error->getMessage()]);
-            throw new UserError('Psoola could not be reached. Try again in a minute; the timed job also copies the scans every 5 minutes.');
+            throw new UserError('Psoola could not be reached. Try again in a minute; the timed job also keeps copying the scans by itself.');
         }
         $count = static fn (int $n, string $one, string $many): string => $n . ' ' . ($n === 1 ? $one : $many);
         return 'Psoola check-ins copied: ' . $count($counts['seen'], 'scan', 'scans') . ' read, ' . $count($counts['added'], 'new arrival', 'new arrivals') . ' recorded'

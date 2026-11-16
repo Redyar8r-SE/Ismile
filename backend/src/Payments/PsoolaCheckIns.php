@@ -22,6 +22,9 @@ final class PsoolaCheckIns
     /** Pages read in one run at most (100 scans each). */
     private const MAX_PAGES = 100;
 
+    /** Pages PSOOLA returned in the last sync(): each one is a read from PSOOLA's 60-per-minute allowance. */
+    public static int $pagesRead = 0;
+
     /** True when this site sells through PSOOLA, so PSOOLA's gate is the check-in. */
     public static function active(): bool
     {
@@ -43,10 +46,54 @@ final class PsoolaCheckIns
             $page = $gateway->listCheckIns($cursor);
             array_push($scans, ...$page['checkIns']);
             $cursor = $page['next'];
-        } while ($cursor !== null && ++$pages < self::MAX_PAGES);
+        } while (++$pages < self::MAX_PAGES && $cursor !== null);
+        self::$pagesRead = $pages;
         $counts = self::record($scans);
         Settings::set('psoola_checkins_synced_at', App::now());
         return $counts;
+    }
+
+    /**
+     * True until the end of the second event day: the gate scans are then
+     * copied every few seconds (watch), not only by the 5-minute job.
+     */
+    public static function fastCopy(?string $today = null): bool
+    {
+        $lastDay = Settings::get('event_day2');
+        return self::active() && $lastDay !== '' && ($today ?? date('Y-m-d')) <= $lastDay;
+    }
+
+    /** Seconds to wait before the next fast copy: 10, or longer as the scan list grows. */
+    public static function pause(int $pagesRead): int
+    {
+        return max(10, (int) ceil($pagesRead * 2.5));
+    }
+
+    /**
+     * Copies the gate scans again and again until $until (a Unix time), so
+     * an arrival shows on the Registration page within seconds. PSOOLA
+     * allows 60 reads a minute for everything this site does: the pause
+     * keeps this at about 24 a minute at most (10 s between copies while
+     * the list fits in 4 pages, longer after), leaving the rest for sales.
+     * Stops at the first failure; the next minute starts again.
+     *
+     * @return array{copies: int, added: int}
+     */
+    public static function watch(int $until, ?callable $sleep = null): array
+    {
+        $sleep ??= static function (int $seconds): void { sleep($seconds); };
+        $done = ['copies' => 0, 'added' => 0];
+        while (time() < $until) {
+            $counts = self::sync();
+            $done['copies']++;
+            $done['added'] += $counts['added'];
+            $pause = self::pause(self::$pagesRead);
+            if (time() + $pause >= $until) {
+                break;
+            }
+            $sleep($pause);
+        }
+        return $done;
     }
 
     /**
