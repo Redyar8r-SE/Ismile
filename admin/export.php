@@ -124,6 +124,47 @@ switch ($what) {
         if ($workshop === null) {
             Page::redirect('workshops.php');
         }
+        if (($_GET['sheet'] ?? '') === 'attendees') {
+            // The attendee list PDF: full name, ticket type, phone, email and what each paid for this workshop.
+            $localPhone = static function (string $phone): string {
+                $digits = preg_replace('/\D/', '', $phone) ?? '';
+                if (str_starts_with($digits, '964') && strlen($digits) === 13) {
+                    $local = '0' . substr($digits, 3);
+                    return substr($local, 0, 4) . ' ' . substr($local, 4, 3) . ' ' . substr($local, 7);
+                }
+                return $phone;
+            };
+            $people = [];
+            foreach (Db::all('SELECT wb.payment_status, wb.amount_paid, wb.paid_how, r.first_name, r.father_name, r.grandfather_name, r.phone, r.email, r.ticket_type, r.status AS reg_status, cr.currency AS cash_currency, cr.amount_minor AS cash_minor
+                FROM workshop_bookings wb JOIN registrations r ON r.id = wb.registration_id LEFT JOIN workshop_cash_receipts cr ON cr.booking_id = wb.id
+                WHERE wb.workshop_id = ? AND wb.removed_at IS NULL ORDER BY r.first_name, r.father_name, r.grandfather_name', [$workshop['id']]) as $row) {
+                $paid = $row['payment_status'] === 'paid' ? (int) ($row['amount_paid'] ?? 0) : 0;
+                $state = $row['payment_status'] === 'unpaid' ? 'unpaid' : ($paid > 0 ? 'paid' : 'free');
+                $how = match (true) {
+                    $state === 'unpaid' => 'Not paid yet',
+                    $state === 'free' => 'Free',
+                    $row['cash_currency'] === 'USD' => rtrim(rtrim(number_format((int) $row['cash_minor'] / 100, 2, '.', ','), '0'), '.') . ' USD in cash',
+                    default => ['cash' => 'Cash', 'psoola' => 'PSOOLA online', 'transfer' => 'Bank transfer', 'free' => 'Free'][$row['paid_how'] ?? ''] ?? 'Paid',
+                };
+                $people[] = [
+                    'name' => Registrations::fullName($row),
+                    'ticket' => Registrations::TICKET_NAMES[$row['ticket_type']] ?? ucfirst((string) $row['ticket_type']),
+                    'guest' => $row['reg_status'] === 'complimentary',
+                    'phone' => $localPhone((string) $row['phone']),
+                    'email' => (string) $row['email'],
+                    'paid' => $paid,
+                    'how' => $how,
+                    'state' => $state,
+                ];
+            }
+            Audit::log((int) $user['id'], 'export', null, null, ['what' => 'workshop-attendees', 'workshop' => $workshop['id'], 'rows' => count($people)]);
+            $pdf = PdfReport::workshopAttendees($workshop, $people);
+            header('Content-Type: application/pdf');
+            header('Content-Disposition: attachment; filename="ismile-workshop-' . $workshop['id'] . '-attendees-' . date('Y-m-d-Hi') . '.pdf"');
+            header('Cache-Control: no-store');
+            echo $pdf;
+            exit;
+        }
         $rows[] = [SiteData::workshopName($workshop) . ' – sign-in sheet'];
         $rows[] = ['#', 'Name', 'Phone', 'Workshop paid?', 'Amount paid', 'Signature'];
         $number = 0;
