@@ -12,19 +12,19 @@ use Ismile\Registrations;
 if (!isset($user,$tab)) { http_response_code(403); exit; }
 $e=[Page::class,'e'];
 Page::top('Registration – '.CheckinWorkspace::TABS[$tab][0],'checkin');
-echo CheckinWorkspace::navigation($tab,$user,$day);
+$summary=CheckinWorkspace::summary();
+echo CheckinWorkspace::navigation($tab,$user,$day,['attended'=>(int)$summary['attended'],'guests'=>(int)$summary['guests']]);
 if (\Ismile\Payments\PsoolaCheckIns::active()) {
     $synced=\Ismile\Settings::get('psoola_checkins_synced_at');
-    echo '<section class="card psoola-gate"><div><b>Psoola scans the tickets at the door</b><p>Their scans are copied here every 5 minutes'.($synced!==''?', last copied '.Page::e(Page::when($synced)):'').'. Free tickets (iSmile QR) are marked attended in the Guest list.</p></div>'
+    echo '<section class="card psoola-gate"><span class="psoola-gate-icon" aria-hidden="true">'.Page::navIcon('checkin').'</span><div class="psoola-gate-text"><b>Psoola scans the tickets at the door</b><p><span class="psoola-live" aria-hidden="true"></span>Scans are copied here every 5 minutes'.($synced!==''?'. Last copied '.Page::e(Page::when($synced)):'').'. Free tickets (iSmile QR) are marked attended in the Guest list.</p></div>'
         .'<form method="post" action="'.Page::e(CheckinWorkspace::url($tab,$day)).'">'.Page::csrfField().'<button class="btn green" name="do" value="psoola_sync">'.Page::navIcon('check').'<span>Refresh from Psoola</span></button></form></section>';
 } else {
-    echo '<section class="card psoola-gate"><div><b>Psoola scans the tickets at the door</b><p>This site does not sell through Psoola, so no scans are copied. Free tickets are marked attended in the Guest list.</p></div></section>';
+    echo '<section class="card psoola-gate"><span class="psoola-gate-icon" aria-hidden="true">'.Page::navIcon('checkin').'</span><div class="psoola-gate-text"><b>Psoola scans the tickets at the door</b><p>This site does not sell through Psoola, so no scans are copied. Free tickets are marked attended in the Guest list.</p></div></section>';
 }
 if ($tab==='report') {
     echo '<div data-live-report data-source="checkin-report.php'.($day?'?day='.$day:'').'">'.RegistrationReport::render(RegistrationReport::snapshot(),$user,$day).'</div>';
     Page::bottom(); exit;
 }
-$summary=CheckinWorkspace::summary();
 $isAttended=$tab==='attended';
 $filters=CheckinWorkspace::filters($_GET,$isAttended);
 [$where,$params]=CheckinWorkspace::where($filters['q'],$filters['attendance'],$filters);
@@ -48,11 +48,12 @@ foreach(['id','specialty','status','city','university','lang','ambassador','arri
 $canContact=Auth::can($user,'registrations');
 ?>
 <div data-live-region="guest-totals">
+<?php $dayDate=static fn(int $d): string => ($at=strtotime(\Ismile\Settings::get('event_day'.$d)))?date('D j M',$at):''; ?>
 <?= Page::stats([
-    ['Registered guests',number_format((int)$summary['guests']),'All active paid and complimentary tickets','users','blue'],
-    ['Attended',number_format((int)$summary['attended']),'Unique guests who attended either day','check','teal'],
-    ['Awaiting arrival',number_format((int)$summary['waiting']),'Guests who have not checked in','clock','gold'],
-    ['Both days',number_format((int)$summary['both_days']),'Guests who attended Day 1 and Day 2','calendar','violet'],
+    ['Registered guests',number_format((int)$summary['guests']),'Paid and complimentary tickets','users','blue'],
+    ['Attended',number_format((int)$summary['attended']),number_format((int)$summary['waiting']).' not arrived yet','check','teal'],
+    ['Day 1 arrivals',number_format((int)$summary['day1']),$dayDate(1),'calendar','gold'],
+    ['Day 2 arrivals',number_format((int)$summary['day2']),$dayDate(2).($dayDate(2)!==''?', ':'').number_format((int)$summary['both_days']).' came both days','calendar','violet'],
 ]) ?>
 </div>
 <form method="get" class="card registration-filter-card" data-instant-search data-search-regions="guest-totals guest-directory"><input type="hidden" name="tab" value="<?= $e($tab) ?>"><?php if($day): ?><input type="hidden" name="day" value="<?= $day ?>"><?php endif; ?>
@@ -60,8 +61,9 @@ $canContact=Auth::can($user,'registrations');
     <?= $select('attendance','Event attendance',$choices) ?>
     <?= $select('type','Ticket category',[''=>'All categories']+\Ismile\Registrations::TICKET_NAMES) ?>
     <?= $select('lunch','Lunch booked',[''=>'Any lunch booking','day1'=>'Day 1','day2'=>'Day 2','both'=>'Both days','any'=>'At least one day','none'=>'No lunch booked']) ?>
+    <?= $select('sort','Sort by',['name'=>'Guest name','latest'=>'Latest arrival first','earliest'=>'Earliest arrival first']) ?>
   </div>
-  <details class="registration-advanced-filters"<?= $advanced?' open':'' ?>><summary>More filters: ID, guest details<?= $isAttended?' and arrival times':'' ?></summary><div class="registration-filter-grid">
+  <div class="registration-filter-footer"><details class="registration-advanced-filters"<?= $advanced?' open':'' ?>><summary>More filters: ID, guest details<?= $isAttended?' and arrival times':'' ?></summary><div class="registration-filter-grid">
     <?= $select('id','Student ID',[''=>'Any ID status','present'=>'ID on file','missing'=>'No ID on file','removed'=>'ID removed']) ?>
     <?= $select('specialty','Specialty',[''=>'All specialties']+Registrations::SPECIALTY_NAMES) ?>
     <?= $select('status','Registration status',[''=>'Paid and complimentary','paid'=>'Paid','complimentary'=>'Complimentary']) ?>
@@ -72,7 +74,7 @@ $canContact=Auth::can($user,'registrations');
     <label class="filter-field"><span>Arrived until</span><input type="time" name="to_time" value="<?= $e($filters['to_time']) ?>"></label>
     <?= $select('staff','Checked in by',[''=>'Any staff member']+array_column($options['staff'],'name','id')) ?>
   </div><p class="small muted">Arrival filters match one recorded check-in<?= $isAttended?' on the selected event day(s)':'' ?>. All times use Iraq time.</p></details>
-  <div class="registration-filter-actions"><?= $select('sort','Sort by',['name'=>'Guest name','latest'=>'Latest arrival first','earliest'=>'Earliest arrival first']) ?><div><a class="btn ghost" href="<?= $e(CheckinWorkspace::url($tab,$day)) ?>">Clear filters</a><button class="btn">Apply filters</button></div></div>
+  <div class="registration-filter-actions"><div><a class="btn ghost" href="<?= $e(CheckinWorkspace::url($tab,$day)) ?>">Clear filters</a><button class="btn">Apply filters</button></div></div></div>
 </form>
 <section class="card registration-directory" data-live-region="guest-directory"><div class="panel-top"><?= Page::panelHeading($isAttended?'Attended guests':'Guest list',number_format($total).' matching guests. '.($isAttended?'Arrival time on each day and how the guest came in.':'Ticket categories, student IDs, lunch bookings and event attendance.'),'users') ?><div class="panel-actions">
 <?php if(Auth::can($user,'export')): ?><a class="btn ghost" href="export.php?<?= $e(CheckinWorkspace::queryString($filters,['what'=>'registrations','workspace'=>'checkin','format'=>'pdf'])) ?>">Download PDF</a><a class="btn ghost" href="export.php?<?= $e(CheckinWorkspace::queryString($filters,['what'=>'registrations','workspace'=>'checkin'])) ?>">Excel</a><?php endif; ?>

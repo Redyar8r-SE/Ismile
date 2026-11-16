@@ -23,11 +23,12 @@ final class CheckinWorkspace
         return isset(self::TABS[$tab]) ? $tab : 'attended';
     }
 
-    public static function navigation(string $active, array $user, ?int $day = null): string
+    /** The three Registration tabs; $counts (tab => number) shows a count on a tab. */
+    public static function navigation(string $active, array $user, ?int $day = null, array $counts = []): string
     {
-        $html = '<nav class="checkin-tabs no-print" aria-label="Registration sections">';
+        $html = '<nav class="checkin-tabs registration-tabs no-print" aria-label="Registration sections">';
         foreach (self::TABS as $key => [$label, $icon, $area]) {
-            $content = Page::navIcon($icon) . '<span>' . Page::e($label) . '</span>';
+            $content = Page::navIcon($icon) . '<span>' . Page::e($label) . '</span>' . (isset($counts[$key]) ? '<span class="registration-tab-count">' . number_format((int) $counts[$key]) . '</span>' : '');
             if (!Auth::can($user, $area)) {
                 $html .= '<span class="checkin-tab restricted" aria-disabled="true" title="Your role cannot use this section">' . $content . '</span>';
                 continue;

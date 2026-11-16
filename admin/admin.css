@@ -1476,3 +1476,28 @@ body:has([data-guest-tickets]) .page-actions .btn{background:transparent;border:
 .lunch-chip{padding:3px 10px;border-radius:999px;background:var(--gold-l);color:var(--gold-d);font-size:11px;font-weight:700;white-space:nowrap}
 .no-lunch{font-size:11px;color:#8aa0b1}
 @media(max-width:760px){.registration-directory .table-wrap.registration-directory-scroll{max-height:none;overflow:visible}}
+/* Registration workspace: three equal tabs with counts, a PSOOLA status bar and one filter row. */
+.checkin-tabs.registration-tabs{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:6px;border-radius:16px;box-shadow:0 6px 18px -14px #0b2a4566}
+.registration-tabs .checkin-tab{min-height:50px;font-size:13.5px;color:#4f6b80;border-radius:11px;transition:background .15s,color .15s}
+.registration-tabs .checkin-tab:hover{background:#eef6f8;color:var(--teal-d)}
+.registration-tabs .checkin-tab.on{background:linear-gradient(110deg,#148ba8,#087499);color:#fff;box-shadow:0 6px 16px -8px #087499}
+.registration-tabs .checkin-tab.on .nav-icon{color:#fff}
+.registration-tab-count{min-width:24px;padding:2px 8px;border-radius:999px;background:#e8f1f6;color:#3f6479;font-size:11.5px;font-weight:700;font-variant-numeric:tabular-nums;text-align:center}
+.registration-tabs .checkin-tab.on .registration-tab-count{background:#ffffff2e;color:#fff}
+.psoola-gate{flex-wrap:nowrap;gap:16px;padding:16px 20px;border-left:0;background:#fff;box-shadow:inset 4px 0 0 var(--teal)}
+.psoola-gate-icon{display:grid;place-items:center;flex:none;width:44px;height:44px;border-radius:12px;background:var(--teal-l);color:var(--teal-d)}
+.psoola-gate-icon .nav-icon{width:22px;height:22px}
+.psoola-gate-text{flex:1;min-width:0}
+.psoola-gate-text b{font-size:15px}
+.psoola-gate-text p{margin:3px 0 0;font-size:13px}
+.psoola-live{display:inline-block;width:8px;height:8px;margin-right:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px #2e9e5b29;vertical-align:1px}
+.psoola-gate form{flex:none}
+.registration-filter-card .registration-filter-main{grid-template-columns:minmax(220px,1.6fr) repeat(4,minmax(130px,1fr))}
+.registration-filter-card .registration-filter-actions{justify-content:flex-end;margin-top:16px}
+@media(max-width:1180px){.registration-filter-card .registration-filter-main{grid-template-columns:repeat(3,minmax(0,1fr))}.registration-filter-card .registration-filter-main .filter-search{grid-column:1/-1}}
+@media(max-width:760px){.checkin-tabs.registration-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}.registration-tabs .checkin-tab{flex-direction:column;gap:4px;font-size:11.5px;padding:8px 4px}.psoola-gate{flex-wrap:wrap}.psoola-gate form,.psoola-gate form .btn{width:100%;justify-content:center}.registration-filter-card .registration-filter-main{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.registration-tabs .checkin-tab{transition:none}}
+.registration-filter-footer{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 20px;margin-top:16px}
+.registration-filter-footer>.registration-advanced-filters{flex:1 1 320px;min-width:0}
+.registration-filter-footer>.registration-advanced-filters[open]{flex-basis:100%}
+.registration-filter-card .registration-filter-footer .registration-filter-actions{margin-top:0;margin-left:auto}
