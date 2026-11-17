@@ -57,10 +57,17 @@ if ($lock === false || !flock($lock, LOCK_EX | LOCK_NB)) {
 $report = [];
 try {
     if ($job === 'minute') {
+        // A VIP $100 sale that was cut off: VIP goes back to $200 at once.
+        try {
+            $vipPrice = \Ismile\OwnerVipPrice::repair();
+            if ($vipPrice !== 'ok') $report['vip_price'] = $vipPrice;
+        } catch (\Throwable $error) {
+            App::log('error', 'VIP price check failed', ['error' => $error->getMessage()]);
+        }
         // First the website's prices, switch and texts (when it runs elsewhere),
         // so payments and emails use what the website shows right now.
         $followed = SiteData::followWebsite();
-        $report = Outbox::process(MailerFactory::make());
+        $report = Outbox::process(MailerFactory::make()) + $report;
         $report['vip_workshops'] = \Ismile\VipPackages::process();
         if ($followed) {
             $report['website_content'] = $followed;

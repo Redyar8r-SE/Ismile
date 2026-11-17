@@ -676,18 +676,20 @@ document.addEventListener("DOMContentLoaded", () => {
   // Ticket and specialty follow each other: a Student ticket means a dental
   // student, and a Dentist ticket cannot be a dental student. VIP takes any.
   const studentOption = specialty.querySelector('[value="student"]');
+  // "VIP $100" (main Owner only) is a VIP ticket at another price.
+  const isVip = (value) => value === "vip" || value === "vip100";
   const sync = (event) => {
     const from = event && event.target;
     if (from === specialty) {
-      if (specialty.value === "student" && ticket.value !== "vip") ticket.value = "student";
+      if (specialty.value === "student" && !isVip(ticket.value)) ticket.value = "student";
       else if (specialty.value !== "student" && ticket.value === "student") ticket.value = "professional";
     } else if (ticket.value === "student") {
       specialty.value = "student";
-    } else if ((ticket.value === "professional" || ticket.value === "vip") && specialty.value === "student") {
+    } else if ((ticket.value === "professional" || isVip(ticket.value)) && specialty.value === "student") {
       specialty.value = "";
     }
     // Dental student is only for a Student ticket: not for Dentist, not for VIP.
-    const noStudent = ticket.value === "professional" || ticket.value === "vip";
+    const noStudent = ticket.value === "professional" || isVip(ticket.value);
     if (studentOption) {
       studentOption.hidden = noStudent;
       studentOption.disabled = noStudent;
@@ -708,7 +710,7 @@ document.addEventListener("DOMContentLoaded", () => {
       vipWorkshop.querySelector("select").disabled = ticket.value !== "vip";
     }
     if (vipFields && vipDay) {
-      const vip = ticket.value === "vip";
+      const vip = isVip(ticket.value);
       vipFields.hidden = !vip;
       vipDay.disabled = !vip;
       vipDay.required = vip;
@@ -728,11 +730,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const lines = document.getElementById("cash-lines");
   const total = document.getElementById("cash-total");
   const money = (amount) => `${amount.toLocaleString("en-US")} ${prices.currency}`;
-  const ticketNames = { professional: "Dentist ticket", student: "Student ticket", vip: "VIP ticket" };
+  const ticketNames = { professional: "Dentist ticket", student: "Student ticket", vip: "VIP ticket", vip100: "VIP $100 ticket" };
   let saleTotal = null;
   function showTotal() {
     const type = ticket.value;
-    const vipDay = type === "vip" ? Number(form.querySelector('[name="vip_lunch_day"]')?.value || 0) : 0;
+    const vipDay = isVip(type) ? Number(form.querySelector('[name="vip_lunch_day"]')?.value || 0) : 0;
     document.querySelectorAll("[data-pick-ticket]").forEach((card) => {
       const on = card.dataset.pickTicket === type;
       card.classList.toggle("is-on", on);
@@ -819,7 +821,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (confirmed) return;
       event.preventDefault();
       if (!form.reportValidity()) return;
-      const vipDay = ticket.value === "vip" ? Number(value("vip_lunch_day") || 0) : 0;
+      const vipDay = isVip(ticket.value) ? Number(value("vip_lunch_day") || 0) : 0;
       const days = { 1: "Day 1, Thursday 19 Nov", 2: "Day 2, Friday 20 Nov" };
       const lunch = [1, 2].filter((day) => form.querySelector(`[name="lunch_day${day}"]`).checked)
         .map((day) => days[day] + (day === vipDay ? " (with VIP)" : ""));

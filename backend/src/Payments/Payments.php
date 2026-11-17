@@ -189,8 +189,13 @@ final class Payments
      *
      * @return array{status: string, registration_id: ?int, amount: int, currency: string}
      */
-    public static function sellForCash(array $checkout, array $user): array
+    public static function sellForCash(array $checkout, array $user, ?array $ownerPrice = null): array
     {
+        // $ownerPrice: VIP $100 (OwnerVipPrice, main Owner only): the total PSOOLA
+        // must charge while the VIP price is lowered for this one sale.
+        if ($ownerPrice !== null && (!\Ismile\OwnerVipPrice::allowed($user) || $checkout['ticket_type'] !== 'vip')) {
+            throw new UserError('Only the main Owner can sell VIP for $100.');
+        }
         // The Settings switch is the emergency stop for cash sales too.
         if (!Settings::bool('registration_open') || !SiteData::pricesReadyFor($checkout)) {
             throw new UserError('Registration is closed in Settings (or the prices are not set), so nothing can be sold.');
@@ -205,23 +210,23 @@ final class Payments
         if (!$priceFromGateway && $quote['amount'] === null) {
             throw new UserError('The test site cannot price this ticket (it mixes IQD and USD).');
         }
-        $paymentId = Db::transaction(static function () use ($checkout, $gatewayName, $priceFromGateway, $quote): int {
+        $paymentId = Db::transaction(static function () use ($checkout, $gatewayName, $priceFromGateway, $quote, $ownerPrice): int {
             \Ismile\VipCapacity::lockFor($checkout);
             $form = Db::one('SELECT * FROM checkouts WHERE id = ? FOR UPDATE', [$checkout['id']]);
             if ($form === null || $form['status'] === 'paid' || $form['registration_id'] !== null) {
                 throw new UserError('This person is already registered.');
             }
             \Ismile\VipCapacity::requireAvailable($form);
-            \Ismile\VipPackages::assertCheckout($form);
+            if ($ownerPrice === null) \Ismile\VipPackages::assertCheckout($form);
             if (Registrations::isFull(true, (int) $checkout['id'])) {
                 throw new UserError('Registration is full: no places are left.');
             }
             if (Registrations::lunchFullFor($form, true)) {
                 throw new UserError('The lunch day you chose is full. Untick it and try again.');
             }
-            $expected = $priceFromGateway
+            $expected = $ownerPrice ?? ($priceFromGateway
                 ? (PsoolaPrices::estimate($form) ?? ['amount' => 1, 'currency' => 'IQD'])
-                : ['amount' => $quote['amount'], 'currency' => $quote['currency']];
+                : ['amount' => $quote['amount'], 'currency' => $quote['currency']]);
             $now = App::now();
             return Db::insert('payments', [
                 'checkout_id'     => $checkout['id'],
@@ -262,6 +267,12 @@ final class Payments
             }
         }
 
+        // VIP $100: PSOOLA must charge exactly the lowered price, or Finance reviews it.
+        if ($ownerPrice !== null && (($sale['amount'] ?? null) !== $ownerPrice['amount'] || ($sale['currency'] ?? null) !== $ownerPrice['currency'])) {
+            Db::update('payments', ['provider_payment_id' => $sale['id'], 'status' => 'mismatch', 'amount_confirmed' => $sale['amount'] ?? null, 'last_error' => 'VIP $100 sale: PSOOLA charged a different amount. Finance review required.', 'updated_at' => App::now()], 'id = ?', [$paymentId]);
+            Outbox::alert('VIP $100 cash payment #' . $paymentId . ' was charged ' . ($sale['amount'] ?? '?') . ' ' . ($sale['currency'] ?? '') . ' by PSOOLA instead of ' . $ownerPrice['amount'] . ' ' . $ownerPrice['currency'] . '. Review with PSOOLA.');
+            throw new UserError('PSOOLA charged a different amount than VIP $100 (' . number_format((int) ($sale['amount'] ?? 0)) . ' ' . ($sale['currency'] ?? '') . '). The payment is saved for review: do not collect or try again.');
+        }
         // Recovery must pass the same package-price check as the first response.
         try { \Ismile\VipPackages::assertPrice($checkout,$sale); }
         catch (\Throwable $error) {

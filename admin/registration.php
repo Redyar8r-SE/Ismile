@@ -45,6 +45,20 @@ if (isset($_GET['new'])) {
         try {
             \Ismile\Auth::checkCsrf();
             Page::useOnce();
+            if (($_POST['do'] ?? '') === 'cash' && ($_POST['ticket'] ?? '') === 'vip100') {
+                // VIP $100: only the main Owner (OwnerVipPrice checks it again).
+                $sold = \Ismile\OwnerVipPrice::sell($_POST, $user, $_FILES['student_id'] ?? null);
+                $checkout = $sold['checkout'];
+                $sale = $sold['sale'];
+                $price = number_format($sale['amount']) . ' ' . $sale['currency'];
+                $back = $sold['restored'] ? ' VIP is back to $200 for everyone.' : ' WARNING: VIP could not be put back to $200 yet. The server tries again every minute; check the VIP price in PSOOLA.';
+                if ($sale['status'] === 'paid' && $sale['registration_id']) {
+                    Page::flash($sold['restored'] ? 'ok' : 'error', 'Sold VIP $100 for cash: ' . $price . '. Collect this amount. ' . Registrations::fullName($checkout) . ' is registered (' . $checkout['ref'] . ') and Psoola is emailing the ticket with the QR to ' . $checkout['email'] . '.' . $back);
+                    Page::redirect('registration.php?id=' . $sale['registration_id'] . $workspaceQuery);
+                }
+                Page::flash($sold['restored'] ? 'ok' : 'error', 'Psoola made the VIP $100 cash sale (' . $price . '). Collect this amount. The registration of ' . $checkout['ref'] . ' finishes within 5 minutes, when Psoola confirms it again.' . $back);
+                Page::redirect('registrations.php');
+            }
             if (($_POST['do'] ?? '') === 'cash') {
                 $checkout = \Ismile\Checkouts::createForCash($_POST, $user, $_FILES['student_id'] ?? null);
                 $sale = \Ismile\Payments\Payments::sellForCash($checkout, $user);
@@ -72,7 +86,10 @@ if (isset($_GET['new'])) {
     $e = [Page::class, 'e'];
     $value = static fn (string $key): string => Page::e(is_string($_POST[$key] ?? null) ? $_POST[$key] : '');
     $selected = static fn (string $key, string $option, string $default = ''): string => ($_POST[$key] ?? $default) === $option ? ' selected' : '';
-    $vip = ($_POST['ticket'] ?? '') === 'vip';
+    // VIP $100 is shown only to the main Owner.
+    $ownerVip = \Ismile\OwnerVipPrice::allowed($user);
+    $vip100 = $ownerVip && ($_POST['ticket'] ?? '') === 'vip100';
+    $vip = $vip100 || ($_POST['ticket'] ?? '') === 'vip';
     $student = !$vip && (($_POST['specialty'] ?? '') === 'student' || ($_POST['ticket'] ?? '') === 'student');
     // Prices for the "Packages & prices" panel and the running total. PSOOLA's
     // IQD prices when it answers (cached five minutes); the total is a preview,
@@ -94,7 +111,8 @@ if (isset($_GET['new'])) {
         'currency' => $psoola['currency'],
         'professional' => $psoola['ticketTypes']['professional'], 'student' => $psoola['ticketTypes']['student'], 'vip' => $psoola['ticketTypes']['vip'],
         'lunch1' => $psoola['lunch']['day1'], 'lunch2' => $psoola['lunch']['day2'],
-    ]) : '';
+    ] + ($ownerVip ? ['vip100' => \Ismile\OwnerVipPrice::previewAmount($psoola)] : [])) : '';
+    $shown['vip100'] = ($ownerVip && $psoola && \Ismile\OwnerVipPrice::previewAmount($psoola)) ? $label(\Ismile\OwnerVipPrice::previewAmount($psoola), $psoola['currency']) : '$100';
     Page::top($inCheckin ? 'Check-in · Register' : 'Register (cash)', $inCheckin ? 'checkin' : 'registrations', '<a class="btn ghost" href="' . Page::e($listUrl) . '">&larr; ' . ($inCheckin ? 'Guest list' : 'All registrations') . '</a>');
     if ($inCheckin) echo CheckinWorkspace::navigation('register', $user, $workspaceDay);
     ?>
@@ -115,7 +133,7 @@ if (isset($_GET['new'])) {
             <option value="">Choose specialty</option>
             <?php foreach (Registrations::SPECIALTY_NAMES as $key => $label): ?><option value="<?= $e($key) ?>"<?= $selected('specialty', $key) ?>><?= $e($label) ?></option><?php endforeach; ?>
           </select></label>
-          <label>Ticket *<select name="ticket" id="caller-ticket"><option value="professional"<?= !$student && !$vip ? ' selected' : '' ?>>Dentist</option><option value="student"<?= $student ? ' selected' : '' ?>>Student</option><option value="vip"<?= $vip ? ' selected' : '' ?>>VIP</option></select></label>
+          <label>Ticket *<select name="ticket" id="caller-ticket"><option value="professional"<?= !$student && !$vip ? ' selected' : '' ?>>Dentist</option><option value="student"<?= $student ? ' selected' : '' ?>>Student</option><option value="vip"<?= $vip && !$vip100 ? ' selected' : '' ?>>VIP</option><?php if ($ownerVip): ?><option value="vip100"<?= $vip100 ? ' selected' : '' ?>>VIP $100 (only you)</option><?php endif; ?></select></label>
         </div>
         <p class="muted small" id="caller-ticket-note">Dental students in any stage (1st to 5th) receive a student ticket. For student tickets, record the university and stage after checking the ID.</p>
         <div class="row3" id="caller-student-fields">
@@ -190,7 +208,7 @@ if (isset($_GET['new'])) {
             ['professional', 'Dentist', 'Professionals', 'teal', '<path d="M11 2v2M5 2v2M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1"/><path d="M8 15a6 6 0 0 0 12 0v-3"/><circle cx="20" cy="10" r="2"/>'],
             ['student', 'Student', 'Every stage, 1st to 5th', 'blue', '<path d="M21.42 10.92a1 1 0 0 0-.02-1.84L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.83l8.57 3.91a2 2 0 0 0 1.66 0z"/><path d="M22 10v6M6 12.5V16a6 3 0 0 0 12 0v-3.5"/>'],
             ['vip', 'VIP', $vipUsd . '1 lunch free', 'gold', '<path d="M11.56 3.27a.5.5 0 0 1 .88 0l2.95 5.61a1 1 0 0 0 1.52.29l4.28-3.67a.5.5 0 0 1 .8.52l-2.83 10.25a1 1 0 0 1-.96.73H5.81a1 1 0 0 1-.96-.73L2.01 6.02a.5.5 0 0 1 .8-.52l4.28 3.67a1 1 0 0 0 1.52-.29z"/><path d="M5 21h14"/>'],
-        ] as [$key, $name, $sub, $tone, $icon]): ?>
+        ] + ($ownerVip ? [3 => ['vip100', 'VIP $100', 'Only you, 1 lunch free', 'gold', '<path d="M11.56 3.27a.5.5 0 0 1 .88 0l2.95 5.61a1 1 0 0 0 1.52.29l4.28-3.67a.5.5 0 0 1 .8.52l-2.83 10.25a1 1 0 0 1-.96.73H5.81a1 1 0 0 1-.96-.73L2.01 6.02a.5.5 0 0 1 .8-.52l4.28 3.67a1 1 0 0 0 1.52-.29z"/><path d="M5 21h14"/>']] : []) as [$key, $name, $sub, $tone, $icon]): ?>
         <button type="button" class="cash-package tone-<?= $tone ?>" data-pick-ticket="<?= $key ?>" aria-pressed="false">
           <span class="cash-package-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><?= $icon ?></svg></span>
           <span class="cash-package-text"><b><?= $e($name) ?> <em>Selected</em></b><small><?= $e($sub) ?></small></span>
