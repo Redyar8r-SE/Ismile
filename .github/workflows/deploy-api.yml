@@ -208,3 +208,19 @@ jobs:
           script: |
             set -euo pipefail
             runuser -u www-data -- php /opt/ismile-test/backend/tools/publish-exocad-workshop.php
+
+      # Company workshops (register by phone), each added once from its file in
+      # backend/assets; the Owner's later edits or a delete are kept.
+      - name: Company workshops on the website
+        continue-on-error: true
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ env.DEPLOY_HOST }}
+          username: ${{ env.DEPLOY_USER }}
+          password: ${{ env.DEPLOY_PASSWORD }}
+          port: ${{ env.DEPLOY_SSH_PORT }}
+          timeout: 60s
+          command_timeout: 2m
+          script: |
+            set -euo pipefail
+            runuser -u www-data -- php /opt/ismile-test/backend/tools/publish-company-workshop.php photogrammetry-workshop-2026.json
