@@ -1670,3 +1670,8 @@ body:has([data-guest-tickets]) .page-actions .btn{background:transparent;border:
 .speaker-send span{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px;border-radius:10px;background:#eef6f8;color:var(--teal-d);font-size:12px;font-weight:700}
 .speaker-send span:last-child{background:#e7f6ec;color:#1d6b3c}
 .speaker-send svg{width:15px;height:15px}
+
+/* Users › What this account can do: what a download contained, as small tags */
+.account-export{display:flex;flex-wrap:wrap;gap:5px;max-width:560px}
+.account-export span{display:inline-block;padding:3px 8px;border-radius:7px;background:#eef4f8;color:#2b475d;font-size:12px;line-height:1.4}
+.account-export span:first-child{background:var(--teal-l);color:var(--teal-d);font-weight:700}

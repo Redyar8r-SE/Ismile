@@ -330,6 +330,8 @@ final class Auth
     public static function viewerMayPost(array $user, string $script): bool
     {
         $page = basename($script);
+        // Speaker tickets: only Owners add speakers (others only look).
+        if ($page === 'speaker-tickets.php') return ($user['role'] ?? '') === 'owner';
         if ($page === 'psoola-ticket.php') return Auth::can($user,'edit') || self::canBookWorkshops($user) || $user['role'] === 'badges';
         if (in_array($page, ['registration.php','workshops.php'], true) && self::canBookWorkshops($user)) return true;
         if (in_array($page, ['registration.php', 'registrations.php', 'association-guests.php'], true) && (int) ($user['registration_manage_access'] ?? 0) === 1) return true;

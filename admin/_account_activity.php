@@ -42,6 +42,50 @@ $labels = [
     'user.hidden_pages' => 'Hidden pages changed', 'user.password' => 'Password changed', 'user.reset_2fa' => 'Phone code reset', 'user.disable' => 'Account disabled', 'user.enable' => 'Account enabled',
 ];
 $label = static fn (string $action): string => $labels[$action] ?? ucfirst(str_replace(['_', '.'], [' ', ': '], $action));
+// A download: which list or report, PDF or Excel, the order, the filters and how many rows (from what was saved when it was downloaded).
+$exportText = static function (array $details): array {
+    $query = is_array($details['filters'] ?? null) ? $details['filters'] : [];
+    $what = (string) ($details['what'] ?? '');
+    $list = $what === 'list' ? \Ismile\Admin\Lists::pick((string) ($query['list'] ?? '')) : null;
+    $name = match ($what) {
+        'list' => 'List: ' . \Ismile\Admin\Lists::ALL[$list][0],
+        'all' => 'All reports in one PDF',
+        'attendance' => 'Attendance report',
+        'registrations' => ($query['workspace'] ?? '') === 'checkin' ? 'Registration page guest list' : 'Registrations',
+        'payments' => 'Payments',
+        'sponsors' => 'Sponsors',
+        'workshop' => 'Workshop list' . (is_string($query['id'] ?? null) ? ': ' . $query['id'] : ''),
+        'workshop-attendees' => 'Workshop attendee PDF' . (is_string($details['workshop'] ?? null) ? ': ' . $details['workshop'] : ''),
+        'association' => 'Association batch' . (isset($query['id']) ? ' #' . (int) $query['id'] : ''),
+        'association-guests' => 'Association guests list',
+        'speaker-tickets' => 'Speaker list',
+        default => $what !== '' ? ucfirst(str_replace('-', ' ', $what)) : 'A list',
+    };
+    $parts = [$name];
+    $format = (string) ($details['format'] ?? $query['format'] ?? '');
+    $parts[] = in_array($what, ['all', 'workshop-attendees', 'association-guests', 'speaker-tickets'], true) || $format === 'pdf' ? 'PDF' : 'Excel';
+    $sorts = ['newest' => 'Newest first', 'oldest' => 'Oldest first', 'name' => 'Name A to Z', 'name_desc' => 'Name Z to A', 'latest' => 'Latest arrivals first', 'earliest' => 'Earliest arrivals first'];
+    if (is_string($query['sort'] ?? null) && $query['sort'] !== '') {
+        $parts[] = 'Order: ' . ($sorts[$query['sort']] ?? ucfirst(str_replace('_', ' ', $query['sort'])));
+    } elseif ($what === 'list') {
+        $parts[] = 'Order: the usual order of this list';
+    }
+    if ($list !== null) {
+        $chosen = array_column(\Ismile\Admin\Lists::describe($list, \Ismile\Admin\Lists::filters($query)), 'label');
+    } else {
+        $chosen = [];
+        foreach ($query as $key => $value) {
+            if (in_array($key, ['what', 'format', 'sort', 'list', 'id', 'workspace', 'page'], true) || !is_string($value) || trim($value) === '') continue;
+            $names = ['q' => 'Search', 'type' => 'Ticket', 'lang' => 'Language', 'arrival_date' => 'Arrival date', 'from_time' => 'From', 'to_time' => 'To', 'staff' => 'Checked in by'];
+            $chosen[] = ($names[$key] ?? ucfirst(str_replace('_', ' ', (string) $key))) . ': ' . $value;
+        }
+    }
+    $parts[] = $chosen ? 'Filters: ' . implode(', ', $chosen) : 'No filters';
+    if (isset($details['rows'])) {
+        $parts[] = number_format(max(0, (int) $details['rows'])) . ' rows';
+    }
+    return $parts;
+};
 $id = (int) $account['id'];
 $total = (int) Db::value('SELECT COUNT(*) FROM audit_log WHERE user_id = ?', [$id]);
 $byAction = Db::all('SELECT action, COUNT(*) AS n, MAX(created_at) AS last_at FROM audit_log WHERE user_id = ? GROUP BY action ORDER BY n DESC, action LIMIT 40', [$id]);
@@ -127,8 +171,9 @@ foreach (Page::MENU as $file => [$pageLabel, $area]) {
     <?php foreach ($recent as $row):
         $details = json_decode((string) $row['details'], true);
         $ref = is_array($details) ? ($details['ref'] ?? null) : null;
-        $target = $row['target_type'] === 'registration' && $row['target_id'] ? '<a href="registration.php?id=' . (int) $row['target_id'] . '">Guest #' . (int) $row['target_id'] . '</a>'
-            : ($ref ? '<code>' . $e((string) $ref) . '</code>' : ($row['target_type'] ? $e(str_replace('_', ' ', (string) $row['target_type'])) . ($row['target_id'] ? ' #' . (int) $row['target_id'] : '') : '–')); ?>
+        $target = $row['action'] === 'export' && is_array($details) ? '<span class="account-export">' . implode('', array_map(static fn (string $part): string => '<span>' . Page::e($part) . '</span>', $exportText($details))) . '</span>'
+            : ($row['target_type'] === 'registration' && $row['target_id'] ? '<a href="registration.php?id=' . (int) $row['target_id'] . '">Guest #' . (int) $row['target_id'] . '</a>'
+            : ($ref ? '<code>' . $e((string) $ref) . '</code>' : ($row['target_type'] ? $e(str_replace('_', ' ', (string) $row['target_type'])) . ($row['target_id'] ? ' #' . (int) $row['target_id'] : '') : '–'))); ?>
     <tr><td><?= $e(date('j M, H:i:s', strtotime((string) $row['created_at']))) ?></td><td><?= $e($label((string) $row['action'])) ?></td><td><?= $target ?></td><td dir="ltr"><span class="muted"><?= $e((string) ($row['ip'] ?? '')) ?></span></td></tr>
     <?php endforeach; ?>
   </tbody></table></div>
