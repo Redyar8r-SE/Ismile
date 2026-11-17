@@ -804,5 +804,56 @@
     "totalSeats": 25,
     "seatsLeft": 25,
     "availabilityVerified": true
+  },
+  {
+    "id": "exocad-digital-implant-design",
+    "icon": "implant",
+    "title": {
+      "en": "Your First Digital Implant Design in exocad",
+      "ar": "أول تصميم رقمي لزراعة الأسنان في exocad",
+      "ku": "یەکەم دیزاینی دیجیتاڵی ئیمپڵانتەکەت لە exocad"
+    },
+    "speaker": {
+      "en": "Dt. Bijan Iranduost",
+      "ar": "بيجن إيراندوست",
+      "ku": "بیژەن ئێراندۆست"
+    },
+    "credentials": null,
+    "company": null,
+    "format": {
+      "en": "Hands-on workshop",
+      "ar": "ورشة تطبيقية",
+      "ku": "وۆرکشۆپی کرداری"
+    },
+    "duration": {
+      "en": "2 hours",
+      "ar": "ساعتان",
+      "ku": "2 کاتژمێر"
+    },
+    "level": {
+      "en": "Suitable for all experience levels",
+      "ar": "مناسب لجميع مستويات الخبرة",
+      "ku": "گونجاوە بۆ هەموو ئاستەکانی ئەزموون"
+    },
+    "overview": {
+      "en": "Design your first implant case in exocad, step by step.\nVenue: Grand Millennium Hotel, Sulaimani.",
+      "ar": "صمّم أول حالة زراعة أسنان لك في exocad، خطوة بخطوة.\nالمكان: فندق غراند ميلينيوم، السليمانية.",
+      "ku": "یەکەم کەیسی ئیمپڵانتەکەت لە exocad دیزاین بکە، هەنگاو بە هەنگاو.\nشوێن: هۆتێلی گراند میلینیۆم، سلێمانی."
+    },
+    "photo": "assets/workshops/bijan-iranduost-cutout-20261117.webp",
+    "photoStyle": "cutout",
+    "presenters": [],
+    "organizer": "ismile",
+    "companyPhone": null,
+    "companyPhones": [],
+    "scheduledDate": "2026-11-19",
+    "startTime": "13:00",
+    "endTime": "15:00",
+    "price": 0,
+    "currency": "IQD",
+    "displayPrice": null,
+    "totalSeats": 30,
+    "seatsLeft": 30,
+    "availabilityVerified": false
   }
 ]
