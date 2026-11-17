@@ -191,3 +191,20 @@ jobs:
           script: |
             set -euo pipefail
             runuser -u www-data -- php /opt/ismile-test/backend/tools/publish-jdental-zygoma-workshop.php
+
+      # The free iSmile exocad workshop (19 Nov, register online through PSOOLA):
+      # creates its hidden PSOOLA event and free ticket once, then switches it on.
+      # Progress is saved, so a failed run resumes on the next deploy.
+      - name: exocad workshop in PSOOLA and on the website
+        continue-on-error: true
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ env.DEPLOY_HOST }}
+          username: ${{ env.DEPLOY_USER }}
+          password: ${{ env.DEPLOY_PASSWORD }}
+          port: ${{ env.DEPLOY_SSH_PORT }}
+          timeout: 60s
+          command_timeout: 5m
+          script: |
+            set -euo pipefail
+            runuser -u www-data -- php /opt/ismile-test/backend/tools/publish-exocad-workshop.php
