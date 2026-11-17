@@ -1,7 +1,8 @@
 <?php
 // "VIP $100": only the main Owner can sell a VIP ticket for $100 on
 // Register (cash). PSOOLA has no price per order, so for each sale the server:
-//   1. sets the PSOOLA VIP price to $100 (dollar and dinar price together),
+//   1. sets the PSOOLA VIP price to $100 (the dollar price only: PSOOLA
+//      refuses both prices in one change, and works out 171,100 IQD itself),
 //   2. makes the normal cash sale (PSOOLA emails and WhatsApps the QR),
 //   3. sets VIP back to the price it had ($200), even when the sale fails.
 // Only one such sale runs at a time. A note in storage/tmp remembers the
@@ -84,9 +85,11 @@ final class OwnerVipPrice
             self::remember($normal);
             $restored = true;
             try {
-                self::set($gateway, ['price' => $lowered, 'usdPrice' => self::USD]);
+                // PSOOLA takes either the dollar or the dinar price, never both (live check
+                // 17 Nov 2026): $100 gives 171,100 IQD at its own VIP rate.
+                self::set($gateway, ['usdPrice' => self::USD]);
                 $now = self::read($gateway);
-                if ($now['price'] !== $lowered) {
+                if ($now['price'] !== $lowered || (float) $now['usdPrice'] !== (float) self::USD) {
                     throw new UserError('PSOOLA did not take the $' . self::USD . ' VIP price, so nothing was sold.');
                 }
                 $sale = Payments::sellForCash($checkout, $user, ['amount' => $expected, 'currency' => (string) ($now['currency'] ?? 'IQD')]);
@@ -144,7 +147,8 @@ final class OwnerVipPrice
     /** Puts the normal VIP price back and checks it; the note stays until it is back. */
     private static function restore(PsoolaGateway $gateway, array $normal): void
     {
-        $body = ['price' => (int) $normal['price']] + ($normal['usdPrice'] !== null ? ['usdPrice' => $normal['usdPrice']] : []);
+        // Either the dollar price (VIP is set in dollars) or the dinar price, never both.
+        $body = $normal['usdPrice'] !== null ? ['usdPrice' => $normal['usdPrice']] : ['price' => (int) $normal['price']];
         $problem = null;
         for ($try = 0; $try < 3; $try++) {
             try {

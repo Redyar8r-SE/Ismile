@@ -62,10 +62,14 @@ if ($method === 'GET' && $path === '/api/partner/v1/events/evt_ismile/ticket-typ
 }
 if ($method === 'PATCH' && $path === '/api/partner/v1/events/evt_ismile/ticket-types/tt_vip') {
     $s['patches'][] = $body;
-    $restoring = ($body['price'] ?? null) === $s['normal'];
+    // As the real PSOOLA (live check 17 Nov 2026): either price or usdPrice, never both;
+    // a dollar price sets the dinar price at PSOOLA's VIP rate (1,711 IQD per dollar).
+    if (array_key_exists('price', $body) && array_key_exists('usdPrice', $body)) { $save(); $reply(422, ['error' => ['code' => 'INVALID_REQUEST', 'message' => 'Send either price (whole IQD) or usdPrice, not both.']]); return; }
+    $newPrice = array_key_exists('usdPrice', $body) ? (int) round($body['usdPrice'] * 1711) : ($body['price'] ?? null);
+    $restoring = $newPrice === $s['normal'];
     if ($s['mode'] === 'refuse-lower' && !$restoring || $s['mode'] === 'refuse-restore' && $restoring) { $save(); $reply(400, ['error' => ['code' => 'INVALID_REQUEST', 'message' => 'refused']]); return; }
     if (!($s['mode'] === 'ignore' && !$restoring)) {
-        foreach (['price', 'usdPrice'] as $k) if (array_key_exists($k, $body)) $s['vip'][$k] = $body[$k];
+        $s['vip'] = array_key_exists('usdPrice', $body) ? ['price' => $newPrice, 'usdPrice' => $body['usdPrice']] : ['price' => $newPrice, 'usdPrice' => null];
     }
     $save();
     $reply(200, ['ticketType' => ['id' => 'tt_vip'] + $s['vip']]);
@@ -171,7 +175,7 @@ $check('PSOOLA sold the ticket while VIP was $100 (171,100 IQD)', ($order['vipPr
 $check('the amount is $100 VIP + the extra lunch day only', $sale['amount'] === 171100 + 68440 && $sale['currency'] === 'IQD'
     && (int) Db::value("SELECT amount_confirmed FROM payments WHERE registration_id = ? AND status = 'paid'", [$person['id']]) === 239540);
 $check('VIP is back to $200 (342,200 IQD) right after the sale', $sold['restored'] && $vipNow() === ['price' => 342200, 'usdPrice' => 200]);
-$check('two price changes only: $100, then back to $200', $state()['patches'] === [['price' => 171100, 'usdPrice' => 100], ['price' => 342200, 'usdPrice' => 200]]);
+$check('two price changes only: $100, then back to $200', $state()['patches'] === [['usdPrice' => 100], ['usdPrice' => 200]]);
 $check('nothing is left waiting to be put back', !is_file(App::storage('tmp/owner-vip-price.json')));
 $check('the sale is in the activity log', (bool) Db::value("SELECT id FROM audit_log WHERE action = 'vip.owner_price_sale' AND user_id = ? AND details LIKE ?", [$main['id'], '%' . $sold['checkout']['ref'] . '%']));
 $check('VIP $100 has no included workshop chosen', !Db::value("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'vip_package_choices'")
