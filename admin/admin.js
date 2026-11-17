@@ -706,8 +706,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const vipDay = form.querySelector('[name="vip_lunch_day"]');
     const vipWorkshop = document.getElementById("caller-vip-workshop");
     if (vipWorkshop) {
-      vipWorkshop.hidden = ticket.value !== "vip";
-      vipWorkshop.querySelector("select").disabled = ticket.value !== "vip";
+      vipWorkshop.hidden = !isVip(ticket.value);
+      vipWorkshop.querySelector("select").disabled = !isVip(ticket.value);
     }
     if (vipFields && vipDay) {
       const vip = isVip(ticket.value);

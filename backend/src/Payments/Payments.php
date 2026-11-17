@@ -217,7 +217,14 @@ final class Payments
                 throw new UserError('This person is already registered.');
             }
             \Ismile\VipCapacity::requireAvailable($form);
-            if ($ownerPrice === null) \Ismile\VipPackages::assertCheckout($form);
+            if ($ownerPrice === null) {
+                \Ismile\VipPackages::assertCheckout($form);
+            } elseif (\Ismile\VipPackages::enabled()) {
+                // VIP $100: the same included workshop as VIP $200 (its $200 price check is replaced by $ownerPrice).
+                $choice = \Ismile\VipPackages::forCheckout((int) $form['id']);
+                if (!$choice) throw new UserError('vip_workshop_required', null, 409);
+                \Ismile\VipPackages::requireWorkshop($choice['workshop_id'], (int) $form['id']);
+            }
             if (Registrations::isFull(true, (int) $checkout['id'])) {
                 throw new UserError('Registration is full: no places are left.');
             }
@@ -245,7 +252,7 @@ final class Payments
         $sourcePrices = SiteData::prices();
         try {
             $sale = $gateway->createCashSale($payment, $checkout);
-            \Ismile\VipPackages::assertPrice($checkout, $sale);
+            if ($ownerPrice === null) \Ismile\VipPackages::assertPrice($checkout, $sale);
         } catch (PsoolaRefused $refused) {
             Db::update('payments', ['status' => 'failed', 'last_error' => mb_substr($refused->detail, 0, 500), 'updated_at' => App::now()], 'id = ?', [$paymentId]);
             throw new UserError($refused->getMessage());
@@ -274,7 +281,7 @@ final class Payments
             throw new UserError('PSOOLA charged a different amount than VIP $100 (' . number_format((int) ($sale['amount'] ?? 0)) . ' ' . ($sale['currency'] ?? '') . '). The payment is saved for review: do not collect or try again.');
         }
         // Recovery must pass the same package-price check as the first response.
-        try { \Ismile\VipPackages::assertPrice($checkout,$sale); }
+        try { if ($ownerPrice === null) \Ismile\VipPackages::assertPrice($checkout,$sale); }
         catch (\Throwable $error) {
             Db::update('payments',['provider_payment_id'=>$sale['id'],'status'=>'mismatch','amount_confirmed'=>$sale['amount']??null,'last_error'=>'VIP cash sale price differs from the verified $200 package. Finance review required.','updated_at'=>App::now()],'id=?',[$paymentId]);
             Outbox::alert('VIP cash payment #'.$paymentId.' has a different provider price. Review with PSOOLA before issuing the package.');

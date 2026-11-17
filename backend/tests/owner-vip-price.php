@@ -52,6 +52,10 @@ if ($method === 'GET' && $path === '/api/partner/v1/events/evt_ismile') {
     $reply(200, ['event' => ['id' => 'evt_ismile', 'currency' => 'IQD', 'shows' => [['id' => 'show_ismile', 'ticketTypes' => $types]]]]);
     return;
 }
+if ($method === 'GET' && preg_match('#^/api/partner/v1/events/([^/]+)$#', $path, $m) && isset($s['workshopEvents'][$m[1]])) {
+    $reply(200, ['event' => $s['workshopEvents'][$m[1]]]);
+    return;
+}
 if ($method === 'GET' && $path === '/api/partner/v1/events/evt_ismile/ticket-types') {
     $reply(200, ['ticketTypes' => array_map(static fn ($t) => array_diff_key($t, ['addOns' => 1]), $types)]);
     return;
@@ -107,7 +111,7 @@ if (($config['env'] ?? '') === 'live' || !str_starts_with((string) ($config['db'
 }
 $config['payments'] = ['gateway' => 'psoola', 'psoola' => [
     'api_base' => "http://127.0.0.1:$port/", 'api_key' => 'psk_test_ownervip', 'webhook_secret' => 'whsec_test',
-    'event_id' => 'evt_ismile', 'show_id' => 'show_ismile', 'complimentary_enabled' => false,
+    'event_id' => 'evt_ismile', 'show_id' => 'show_ismile', 'complimentary_enabled' => true,
     'ticket_types' => ['professional' => 'tt_pro', 'student' => 'tt_student', 'vip' => 'tt_vip'],
     'add_ons' => ['lunchDay1' => 'ao_lunch1', 'lunchDay2' => 'ao_lunch2'],
 ]];
@@ -221,6 +225,34 @@ $setState(['mode' => 'ok']);
 $check('the minute job puts VIP back to $200', OwnerVipPrice::repair() === 'restored' && $vipNow() === ['price' => 342200, 'usdPrice' => 200]
     && !is_file(App::storage('tmp/owner-vip-price.json')));
 $check('the next minute has nothing to do', OwnerVipPrice::repair() === 'ok');
+
+// ---- VIP package on: VIP $100 has the same included workshop as VIP $200 ----
+$events = [];
+foreach (json_decode((string) file_get_contents(__DIR__ . '/../assets/real-workshops-2026.json'), true) as $row) {
+    if (!in_array($row['id'], \Ismile\VipPackages::WORKSHOPS, true)) continue;
+    Db::update('workshops', ['provider_event_id' => $row['provider_event_id'], 'provider_show_id' => $row['provider_show_id'], 'provider_ticket_type_id' => $row['provider_ticket_type_id'],
+        'scheduled_date' => $row['scheduled_date'], 'start_time' => $row['start_time'], 'end_time' => $row['end_time'], 'status' => 'active'], 'id = ?', [$row['id']]);
+    $events[$row['provider_event_id']] = ['id' => $row['provider_event_id'], 'currency' => 'IQD', 'shows' => [['id' => $row['provider_show_id'],
+        'dateTime' => strtotime($row['scheduled_date'] . ' ' . $row['start_time'] . ' Asia/Baghdad') * 1000, 'endTime' => strtotime($row['scheduled_date'] . ' ' . $row['end_time'] . ' Asia/Baghdad') * 1000,
+        'ticketTypes' => [['id' => $row['provider_ticket_type_id'], 'price' => (int) $row['price'], 'available' => 25]]]]];
+}
+$setState(['workshopEvents' => $events]);
+foreach (\Ismile\VipPackages::WORKSHOPS as $id) @unlink(App::storage('tmp/workshop-catalog-' . $id . '.json'));
+@unlink(App::storage('tmp/psoola-prices.json'));
+Settings::set('vip_package_enabled', '1');
+Settings::set('vip_package_sales_open', '1');
+$check('the $200 VIP package is open (test setup)', \Ismile\VipPackages::ready());
+$before = $patches();
+$check('VIP $100 asks for the included workshop, like VIP $200, before any price change',
+    $refused(static fn () => OwnerVipPrice::sell($form(), $main), 'vip_workshop_required') && $patches() === $before);
+$withWorkshop = OwnerVipPrice::sell($form(['vip_workshop' => 'crown-vs-veneer']), $main);
+$choice = Db::one('SELECT * FROM vip_package_choices WHERE checkout_id = ?', [$withWorkshop['checkout']['id']]);
+$check('VIP $100 with the package is sold at $100', $withWorkshop['sale']['status'] === 'paid' && $withWorkshop['sale']['amount'] === 171100 && $withWorkshop['restored']);
+$check('its included workshop is saved for the registration, as for VIP $200', $choice && $choice['workshop_id'] === 'crown-vs-veneer'
+    && (int) $choice['registration_id'] === (int) $withWorkshop['sale']['registration_id'] && in_array($choice['state'], ['pending', 'review', 'issued'], true));
+$check('VIP is back to $200 after the package sale', $vipNow() === ['price' => 342200, 'usdPrice' => 200]);
+$check('the $200 VIP package still works for staff', Payments::sellForCash(Checkouts::createForCash($form(['ticket' => 'vip', 'vip_workshop' => 'simplified-direct-veneers']), $staff), $staff)['amount'] === 342200);
+Settings::set('vip_package_enabled', '0');
 
 // ---- the form preview ----
 $check('the form shows VIP $100 as 171,100 IQD', OwnerVipPrice::previewAmount(['ticketTypes' => ['vip' => 342200], 'vipUsd' => 200.0]) === 171100
