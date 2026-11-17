@@ -46,6 +46,10 @@ if (isset($_GET['new'])) {
         try {
             \Ismile\Auth::checkCsrf();
             Page::useOnce();
+            // Gender and age are asked for every person, as on the website.
+            if (in_array($_POST['do'] ?? '', ['cash', 'free'], true)) {
+                Registrations::genderAge($_POST);
+            }
             if (($_POST['do'] ?? '') === 'cash' && ($_POST['ticket'] ?? '') === 'vip100') {
                 // VIP $100: only the main Owner (OwnerVipPrice checks it again).
                 $sold = \Ismile\OwnerVipPrice::sell($_POST, $user, $_FILES['student_id'] ?? null);
@@ -126,6 +130,7 @@ if (isset($_GET['new'])) {
         <legend>1. Person's details</legend>
         <div class="row3"><label>First name *<input name="first_name" maxlength="60" value="<?= $value('first_name') ?>" autocomplete="given-name" required></label><label>Second name *<input name="father_name" maxlength="60" value="<?= $value('father_name') ?>" required></label><label>Last name *<input name="grandfather_name" maxlength="60" value="<?= $value('grandfather_name') ?>" required></label></div>
         <div class="row3"><label>Phone *<input type="tel" name="phone" dir="ltr" autocomplete="tel" value="<?= $value('phone') ?>" required placeholder="0750 123 4567"></label><label>Email *<input type="email" name="email" dir="ltr" autocomplete="email" maxlength="190" value="<?= $value('email') ?>" required></label><label>City<?= \Ismile\Cities::select($_POST['city'] ?? '') ?></label></div>
+        <div class="row3"><?= Registrations::genderAgeFields(is_string($_POST['gender'] ?? null) ? $_POST['gender'] : null, is_string($_POST['age'] ?? null) ? $_POST['age'] : null) ?></div>
       </fieldset>
       <fieldset class="form-section">
         <legend>2. Specialty &amp; ticket</legend>

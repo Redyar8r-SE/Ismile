@@ -43,10 +43,14 @@ final class Office
             throw new UserError('That phone number is not valid (0750 123 4567 or +964 750 123 4567).');
         }
         $city = Validate::text($in['city'] ?? $registration['city'], 80) ?: $registration['city'];
+        // Gender and age: a form without them (or no gender chosen) keeps what is saved.
+        $genderAge = Registrations::genderAge($in, false);
+        $gender = $genderAge['gender'] ?? $registration['gender'];
+        $age = array_key_exists('age', $in) ? $genderAge['age'] : ($registration['age'] !== null ? (int) $registration['age'] : null);
 
         $changes = [];
-        foreach (['first_name' => $first, 'father_name' => $father, 'grandfather_name' => $grandfather, 'email' => $email, 'phone' => $phone, 'city' => $city] as $column => $value) {
-            if ((string) $registration[$column] !== $value) {
+        foreach (['first_name' => $first, 'father_name' => $father, 'grandfather_name' => $grandfather, 'email' => $email, 'phone' => $phone, 'city' => $city, 'gender' => $gender, 'age' => $age] as $column => $value) {
+            if ((string) $registration[$column] !== (string) $value) {
                 $changes[$column] = ['from' => $registration[$column], 'to' => $value];
             }
         }
@@ -55,7 +59,7 @@ final class Office
         }
         Db::update('registrations', [
             'first_name' => $first, 'father_name' => $father, 'grandfather_name' => $grandfather,
-            'email' => $email, 'phone' => $phone, 'city' => $city, 'updated_at' => App::now(),
+            'email' => $email, 'phone' => $phone, 'city' => $city, 'gender' => $gender, 'age' => $age, 'updated_at' => App::now(),
         ], 'id = ?', [$registration['id']]);
         Audit::log((int) $user['id'], 'registration.edit', 'registration', (int) $registration['id'], $changes);
 

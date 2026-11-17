@@ -34,7 +34,46 @@ final class Registrations
     }
 
     public const GENDERS = ['female', 'male', 'other', 'prefer-not'];
+    public const GENDER_NAMES = ['female' => 'Female', 'male' => 'Male', 'other' => 'Other', 'prefer-not' => 'Prefer not to say'];
     public const PAY_METHODS = ['visa', 'mastercard', 'fib', 'fastpay'];
+
+    /**
+     * Gender and age from a database form, checked like the website (age 16 to 120).
+     * $required: both must be given (new people); otherwise an empty age stays empty.
+     * @return array{gender: ?string, age: ?int}
+     */
+    public static function genderAge(array $in, bool $required = true): array
+    {
+        $gender = Validate::oneOf($in['gender'] ?? null, self::GENDERS);
+        if ($gender === null && $required) {
+            throw new UserError('Choose the gender.');
+        }
+        $typed = trim((string) (is_scalar($in['age'] ?? null) ? $in['age'] : ''));
+        if ($typed === '') {
+            if ($required) {
+                throw new UserError('Enter the age.');
+            }
+            return ['gender' => $gender, 'age' => null];
+        }
+        $age = filter_var($typed, FILTER_VALIDATE_INT, ['options' => ['min_range' => 16, 'max_range' => 120]]);
+        if ($age === false) {
+            throw new UserError('Enter an age between 16 and 120.');
+        }
+        return ['gender' => $gender, 'age' => $age];
+    }
+
+    /** The Gender and Age fields of a database form ($gender/$age: the values to show). */
+    public static function genderAgeFields(?string $gender, int|string|null $age, bool $required = true): string
+    {
+        $options = '<option value="">Choose gender</option>';
+        foreach (self::GENDER_NAMES as $key => $name) {
+            $options .= '<option value="' . $key . '"' . ($gender === $key ? ' selected' : '') . '>' . $name . '</option>';
+        }
+        $must = $required ? ' required' : '';
+        return '<label>Gender<select name="gender"' . $must . '>' . $options . '</select></label>'
+            . '<label>Age<input type="number" name="age" inputmode="numeric" min="16" max="120" step="1" placeholder="28" value="'
+            . htmlspecialchars((string) ($age ?? ''), ENT_QUOTES) . '"' . $must . '></label>';
+    }
 
     public static function find(int $id): ?array
     {
