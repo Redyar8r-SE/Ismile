@@ -218,7 +218,12 @@ final class Payments
             }
             \Ismile\VipCapacity::requireAvailable($form);
             if ($ownerPrice === null) {
-                \Ismile\VipPackages::assertCheckout($form);
+                // A cash VIP may leave the included workshop empty; it still needs the open, verified $200 package.
+                if (!\Ismile\VipPackages::enabled() || $form['ticket_type'] !== 'vip' || \Ismile\VipPackages::forCheckout((int) $form['id'])) {
+                    \Ismile\VipPackages::assertCheckout($form);
+                } elseif (!\Ismile\VipPackages::ready()) {
+                    throw new UserError('vip_package_not_ready', null, 409);
+                }
             } elseif (\Ismile\VipPackages::enabled() && ($choice = \Ismile\VipPackages::forCheckout((int) $form['id']))) {
                 // VIP $100: the same included workshop as VIP $200 when one was chosen (optional);
                 // its $200 price check is replaced by $ownerPrice.

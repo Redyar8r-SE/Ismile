@@ -242,7 +242,13 @@ foreach (\Ismile\VipPackages::WORKSHOPS as $id) @unlink(App::storage('tmp/worksh
 Settings::set('vip_package_enabled', '1');
 Settings::set('vip_package_sales_open', '1');
 $check('the $200 VIP package is open (test setup)', \Ismile\VipPackages::ready());
-$check('VIP $200 still needs its included workshop', $refused(static fn () => Checkouts::createForCash($form(['ticket' => 'vip']), $staff), 'vip_workshop_required'));
+$plain200 = Payments::sellForCash(Checkouts::createForCash($form(['ticket' => 'vip']), $staff), $staff);
+$check('a VIP $200 cash sale without a workshop is sold at 342,200 IQD (the workshop is optional)', $plain200['status'] === 'paid' && $plain200['amount'] === 342200
+    && !Db::value('SELECT v.id FROM vip_package_choices v JOIN checkouts c ON c.id = v.checkout_id WHERE c.registration_id = ?', [$plain200['registration_id']]));
+$check('a workshop that is not included is refused for VIP $200', $refused(static fn () => Checkouts::createForCash($form(['ticket' => 'vip', 'vip_workshop' => 'pediatric-dentistry']), $staff), 'vip_workshop_required'));
+Settings::set('vip_package_sales_open', '0');
+$check('a VIP $200 cash sale without a workshop still needs the VIP package open', $refused(static fn () => Payments::sellForCash(Checkouts::createForCash($form(['ticket' => 'vip']), $staff), $staff), 'vip_package_not_ready'));
+Settings::set('vip_package_sales_open', '1');
 $before = $patches();
 $check('a workshop that is not included is refused for VIP $100 before any price change',
     $refused(static fn () => OwnerVipPrice::sell($form(['vip_workshop' => 'pediatric-dentistry']), $main), 'vip_workshop_required') && $patches() === $before);
