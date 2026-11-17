@@ -288,22 +288,91 @@ final class PdfReport
         $pdf->AddPage('L', $format);
         $meta = [($subtitle ?? 'iSmile 2026'), number_format(count($rows)) . (count($rows) === 1 ? ' record' : ' records')];
         self::titleBlock($pdf, $title, implode('  ·  ', $meta));
-        $pdf->SetFont('dejavusans', '', $size);
         $widths = self::widths($stats, $size, $padding, $usable);
-        $html = '<table cellpadding="' . $padding . '"><thead><tr style="background-color:#004e89;color:#ffffff">';
-        foreach ($keys as $key) $html .= '<th width="' . $widths[$key] . '%" style="border-right:0.2mm solid #ffffff"><b>' . Security::e($headers[$key]) . '</b></th>';
-        $html .= '</tr></thead><tbody>';
-        foreach ($rows as $index => $row) {
-            $html .= '<tr nobr="true" style="background-color:' . ($index % 2 ? '#f4f7f8' : '#ffffff') . '">';
-            foreach ($keys as $key) $html .= '<td width="' . $widths[$key] . '%" style="border-bottom:0.2mm solid #c9d3d8;color:#0f2a3d">' . nl2br(Security::e($row[$key] ?? '')) . '</td>';
-            $html .= '</tr>';
-        }
-        if (!$rows) $html .= '<tr><td colspan="' . count($keys) . '" style="color:#60717d"><i>No records.</i></td></tr>';
-        $pdf->writeHTML($html . '</tbody></table>');
+        self::table($pdf, $format, $headers, $rows, $widths, $size, $padding * 25.4 / 72);
         $pdf->SetFont('dejavusans', '', 7.5);
         $pdf->SetTextColor(...self::MUTED);
         $pdf->Ln(3);
         $pdf->Cell(0, 5, 'End of report · ' . number_format(count($rows)) . (count($rows) === 1 ? ' record' : ' records'), 0, 1, 'R');
+    }
+
+    /**
+     * The ruled report table, drawn cell by cell: a navy heading that repeats at
+     * the top of every page, striped rows that never split across two pages, a
+     * thin rule under each row. Built as HTML this took about 19 seconds for
+     * 1,000 people and grew much worse after that; drawn directly it stays fast
+     * however long the list is.
+     *
+     * @param array<int|string, string> $headers column key => heading
+     * @param array<int|string, string> $widths  column key => width in percent of the page
+     */
+    private static function table(\TCPDF $pdf, string $format, array $headers, array $rows, array $widths, float $size, float $pad): void
+    {
+        $left = (float) $pdf->getMargins()['left'];
+        $mm = [];
+        foreach ($widths as $key => $percent) $mm[$key] = (float) $percent / 100 * ($pdf->getPageWidth() - 28);
+        $full = array_sum($mm);
+        $autoBreak = $pdf->getAutoPageBreak();
+        $padding = $pdf->getCellPaddings();
+        $breakMargin = $pdf->getBreakMargin();
+        $pdf->SetAutoPageBreak(false, $breakMargin);
+        $pdf->setCellPaddings($pad, $pad, $pad, $pad);
+        $bottom = static fn (): float => $pdf->getPageHeight() - $breakMargin;
+        $text = static fn (array $row): array => array_map(static fn ($key): string => str_replace("\r", '', (string) ($row[$key] ?? '')), array_combine(array_keys($mm), array_keys($mm)));
+        $height = static function (array $cells, string $style) use ($pdf, $mm, $size): float {
+            $pdf->SetFont('dejavusans', $style, $size);
+            $height = 0.0;
+            foreach ($mm as $key => $width) $height = max($height, $pdf->getStringHeight($width, $cells[$key]));
+            return $height;
+        };
+        $draw = static function (array $cells, float $height, string $style, array $fill, array $ink, bool $heading) use ($pdf, $mm, $size, $left, $full): void {
+            $pdf->SetFont('dejavusans', $style, $size);
+            $pdf->SetFillColor(...$fill);
+            $pdf->SetTextColor(...$ink);
+            $y = $pdf->GetY();
+            $x = $left;
+            foreach ($mm as $key => $width) {
+                $pdf->MultiCell($width, $height, $cells[$key], 0, 'L', true, 0, $x, $y, true, 0, false, true, $height, 'T');
+                $x += $width;
+            }
+            $pdf->SetLineWidth(0.2);
+            if ($heading) {   // thin white lines between the headings
+                $pdf->SetDrawColor(255, 255, 255);
+                $x = $left;
+                foreach (array_slice($mm, 0, -1) as $width) {
+                    $x += $width;
+                    $pdf->Line($x, $y, $x, $y + $height);
+                }
+            } else {
+                $pdf->SetDrawColor(...self::RULE);
+                $pdf->Line($left, $y + $height, $left + $full, $y + $height);
+            }
+            $pdf->SetY($y + $height);
+        };
+        $headCells = $text($headers);
+        $headHeight = $height($headCells, 'B');
+        $heading = static fn () => $draw($headCells, $headHeight, 'B', self::NAVY, [255, 255, 255], true);
+        $first = $rows ? $height($text(reset($rows)), '') : 0.0;
+        if ($pdf->GetY() + $headHeight + $first > $bottom()) $pdf->AddPage('L', $format);   // no heading alone at the foot of a page
+        $heading();
+        foreach (array_values($rows) as $index => $row) {
+            $cells = $text($row);
+            // A row taller than a whole page is cut to fit one page.
+            $rowHeight = min($height($cells, ''), $bottom() - $pdf->getMargins()['top'] - $headHeight);
+            if ($pdf->GetY() + $rowHeight > $bottom()) {
+                $pdf->AddPage('L', $format);
+                $heading();
+            }
+            $draw($cells, $rowHeight, '', $index % 2 ? [244, 247, 248] : [255, 255, 255], self::INK, false);
+        }
+        if (!$rows) {
+            $pdf->SetFont('dejavusans', 'I', $size);
+            $pdf->SetTextColor(...self::MUTED);
+            $pdf->Cell($full, $headHeight, 'No records.', 0, 1, 'L');
+        }
+        $pdf->setCellPaddings($padding['L'], $padding['T'], $padding['R'], $padding['B']);
+        $pdf->SetAutoPageBreak($autoBreak, $breakMargin);
+        $pdf->SetX($left);
     }
 
     /** A TCPDF with the iSmile letterhead and the confidential footer on every page. */
