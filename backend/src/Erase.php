@@ -103,13 +103,25 @@ final class Erase
             $checkouts = Db::all('SELECT * FROM checkouts WHERE registration_id = ? OR ref = ? FOR UPDATE', [$id, $registration['ref']]);
             $checkoutIds = array_map('intval', array_column($checkouts, 'id'));
             $photoIds = array_values(array_unique(array_filter(array_map('intval', [$registration['id_photo_id'], ...array_column($checkouts, 'id_photo_id')]))));
+            $bookings = Db::all('SELECT * FROM workshop_bookings WHERE registration_id = ? FOR UPDATE', [$id]);
+            $bookingIds = array_map('intval', array_column($bookings, 'id'));
+            $byPersonOrBooking = static fn (string $table): array => Db::all("SELECT * FROM $table WHERE registration_id = ?"
+                . ($bookingIds ? ' OR booking_id IN (' . self::marks($bookingIds) . ')' : '') . ' FOR UPDATE', [$id, ...$bookingIds]);
             $snapshot = [
                 'registrations'     => [$registration],
                 'sponsored_ticket_orders' => Db::all('SELECT * FROM sponsored_ticket_orders WHERE registration_id=? FOR UPDATE',[$id]),
                 'tickets'           => $tickets,
                 'ticket_attendance' => self::rowsIn('ticket_attendance', 'ticket_id', $ticketIds),
                 'certificates'      => Db::all('SELECT * FROM certificates WHERE registration_id = ? FOR UPDATE', [$id]),
-                'workshop_bookings' => Db::all('SELECT * FROM workshop_bookings WHERE registration_id = ? FOR UPDATE', [$id]),
+                'workshop_bookings' => $bookings,
+                // Rows in other lists that point at this person: printed badge
+                // batches, association batches and workshop orders, receipts and requests.
+                'badge_batch_items' => Db::all('SELECT * FROM badge_batch_items WHERE registration_id = ? FOR UPDATE', [$id]),
+                'association_batch_items' => Db::all('SELECT * FROM association_batch_items WHERE registration_id = ? FOR UPDATE', [$id]),
+                'workshop_ticket_orders' => $byPersonOrBooking('workshop_ticket_orders'),
+                'workshop_checkouts' => $byPersonOrBooking('workshop_checkouts'),
+                'workshop_cash_receipts' => self::rowsIn('workshop_cash_receipts', 'booking_id', $bookingIds),
+                'workshop_cash_requests' => Db::all('SELECT * FROM workshop_cash_requests WHERE registration_id = ? FOR UPDATE', [$id]),
                 'guest_workshop_orders' => Db::all('SELECT * FROM guest_workshop_orders WHERE registration_id = ? FOR UPDATE', [$id]),
                 'payments'          => Db::all('SELECT * FROM payments WHERE registration_id = ?' . ($checkoutIds ? ' OR checkout_id IN (' . self::marks($checkoutIds) . ')' : '') . ' FOR UPDATE', [$id, ...$checkoutIds]),
                 'checkouts'         => $checkouts,
@@ -125,6 +137,18 @@ final class Erase
                 Db::run('DELETE FROM ticket_attendance WHERE ticket_id IN (' . self::marks($ticketIds) . ')', $ticketIds);
             }
             Db::run('DELETE FROM certificates WHERE registration_id = ?', [$id]);
+            Db::run('DELETE FROM badge_batch_items WHERE registration_id = ?', [$id]);
+            Db::run('DELETE FROM association_batch_items WHERE registration_id = ?', [$id]);
+            foreach (['workshop_ticket_orders', 'workshop_checkouts'] as $table) {
+                $rowIds = array_map('intval', array_column($snapshot[$table], 'id'));
+                if ($rowIds) {
+                    Db::run("DELETE FROM $table WHERE id IN (" . self::marks($rowIds) . ')', $rowIds);
+                }
+            }
+            if ($bookingIds) {
+                Db::run('DELETE FROM workshop_cash_receipts WHERE booking_id IN (' . self::marks($bookingIds) . ')', $bookingIds);
+            }
+            Db::run('DELETE FROM workshop_cash_requests WHERE registration_id = ?', [$id]);
             Db::run('DELETE FROM workshop_bookings WHERE registration_id = ?', [$id]);
             Db::run('DELETE FROM emails WHERE registration_id = ?', [$id]);
             Db::run('DELETE FROM tickets WHERE registration_id = ?', [$id]);

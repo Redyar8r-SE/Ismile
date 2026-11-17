@@ -10,6 +10,7 @@ require __DIR__ . '/_boot.php';
 
 use Ismile\Admin\Page;
 use Ismile\Admin\CheckinWorkspace;
+use Ismile\App;
 use Ismile\Auth;
 use Ismile\Db;
 use Ismile\Erase;
@@ -260,6 +261,11 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && ($_POST['do'] ?? '') ===
         Page::redirect($listUrl);
     } catch (UserError $error) {
         Page::flash('error', $error->key);
+        Page::redirect($back . '#deleteRecord');
+    } catch (\Throwable $error) {
+        // Never a blank error page: the delete is one transaction, so nothing was removed.
+        App::log('error', 'Delete registration failed', ['id' => $id, 'error' => $error->getMessage(), 'at' => $error->getFile() . ':' . $error->getLine()]);
+        Page::flash('error', 'Nothing was deleted: the server could not remove this person (the error is in the server log).');
         Page::redirect($back . '#deleteRecord');
     }
 }

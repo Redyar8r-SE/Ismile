@@ -85,6 +85,49 @@ $check('a full copy is kept', $copy && (int) $copy['deleted_by'] === (int) $main
 $check('the deletion is in the audit log', (bool) Db::value("SELECT COUNT(*) FROM audit_log WHERE action = 'registration.delete' AND target_id = ?", [$paid['id']]));
 $check('a deleted registration cannot be deleted twice', $rejects(static fn () => Erase::registration((int) $paid['id'], $paid['ref'], $main)));
 
+// A free (complimentary) guest who is also in a printed badge batch, an
+// association batch and a workshop with its order, checkout, cash receipt and
+// cash request: these lists point at the person, and the delete used to stop
+// on them with a blank error page (17 Nov 2026).
+$linked = Office::createComplimentary($main, ['first_name' => 'Aras', 'father_name' => 'Jalal', 'grandfather_name' => 'Noori',
+    'email' => "linked-$tag@test.invalid", 'phone' => '07501112244', 'city' => 'Sulaimani', 'gender' => 'male',
+    'specialty' => 'gp', 'ticket' => 'professional', 'comp_reason' => 'Delete test fixture']);
+$lid = (int) $linked['id'];
+$now = App::now();
+$badgeBatch = Db::insert('badge_batches', ['batch_number' => 900 + random_int(1, 99), 'guest_count' => 2, 'created_by' => $main['id'], 'created_by_name' => 'Main', 'created_at' => $now]);
+Db::insert('badge_batch_items', ['batch_id' => $badgeBatch, 'registration_id' => $lid, 'position' => 1, 'ref' => $linked['ref'], 'printed_name' => 'Aras Jalal', 'ticket_type' => 'professional']);
+Db::insert('badge_batch_items', ['batch_id' => $badgeBatch, 'registration_id' => (int) $keep['id'], 'position' => 2, 'ref' => $keep['ref'], 'printed_name' => 'Nadia Ali', 'ticket_type' => 'professional']);
+$assocBatch = Db::insert('association_batches', ['request_token' => bin2hex(random_bytes(32)), 'guest_count' => 1, 'total_amount' => 0, 'created_by' => $main['id'], 'created_by_name' => 'Main', 'sent_at' => $now]);
+Db::insert('association_batch_items', ['batch_id' => $assocBatch, 'registration_id' => $lid, 'ref' => $linked['ref'], 'full_name' => 'Aras Jalal Noori', 'phone' => '07501112244',
+    'ticket_type' => 'professional', 'ticket_no' => 'T-1', 'lunch' => '', 'total_paid' => 0, 'ticket_amount' => 0, 'payment_channel' => 'cash', 'payment_date' => '2026-11-17']);
+$workshop = 'erase-ws-' . $tag;
+Db::insert('workshops', ['id' => $workshop, 'status' => 'hidden', 'total_seats' => 10, 'created_at' => $now, 'updated_at' => $now]);
+$booking = Db::insert('workshop_bookings', ['registration_id' => $lid, 'workshop_id' => $workshop, 'created_at' => $now, 'updated_at' => $now]);
+Db::insert('workshop_ticket_orders', ['booking_id' => $booking, 'registration_id' => $lid, 'workshop_id' => $workshop, 'idempotency_key' => "k-$tag",
+    'partner_reference' => "p-$tag", 'request_json' => '{}', 'created_at' => $now, 'updated_at' => $now]);
+Db::insert('workshop_checkouts', ['registration_id' => $lid, 'workshop_id' => $workshop, 'booking_id' => $booking, 'public_token' => bin2hex(random_bytes(32)),
+    'idempotency_key' => "wk-$tag", 'partner_reference' => "wp-$tag", 'request_json' => '{}', 'created_at' => $now, 'updated_at' => $now]);
+Db::insert('workshop_cash_receipts', ['booking_id' => $booking, 'amount_minor' => 1000, 'currency' => 'IQD', 'amount_iqd' => 1000, 'recorded_by' => $main['id'], 'created_at' => $now]);
+Db::insert('workshop_cash_requests', ['registration_id' => $lid, 'workshop_id' => $workshop, 'amount' => 1000, 'currency' => 'IQD', 'created_at' => $now]);
+$people = (int) Db::value('SELECT COUNT(*) FROM registrations');
+
+Erase::registration($lid, $linked['ref'], $main);
+$check('a guest in badge, association and workshop lists can be deleted', Registrations::find($lid) === null);
+$left = static fn (string $sql, array $args): int => (int) Db::value($sql, $args);
+$check('their rows in those lists are gone', !$left('SELECT COUNT(*) FROM badge_batch_items WHERE registration_id = ?', [$lid])
+    && !$left('SELECT COUNT(*) FROM association_batch_items WHERE registration_id = ?', [$lid])
+    && !$left('SELECT COUNT(*) FROM workshop_bookings WHERE id = ?', [$booking])
+    && !$left('SELECT COUNT(*) FROM workshop_ticket_orders WHERE booking_id = ?', [$booking])
+    && !$left('SELECT COUNT(*) FROM workshop_checkouts WHERE booking_id = ?', [$booking])
+    && !$left('SELECT COUNT(*) FROM workshop_cash_receipts WHERE booking_id = ?', [$booking])
+    && !$left('SELECT COUNT(*) FROM workshop_cash_requests WHERE registration_id = ?', [$lid]));
+$check('the other guest in the same badge batch stays', (bool) $left('SELECT COUNT(*) FROM badge_batch_items WHERE batch_id = ? AND registration_id = ?', [$badgeBatch, $keep['id']])
+    && (int) Db::value('SELECT COUNT(*) FROM registrations') === $people - 1);
+$linkedCopy = json_decode((string) Db::value("SELECT data FROM deleted_records WHERE kind = 'registration' AND ref = ?", [$linked['ref']]), true);
+$check('the copy keeps those list rows too', count($linkedCopy['badge_batch_items']) === 1 && count($linkedCopy['association_batch_items']) === 1
+    && count($linkedCopy['workshop_bookings']) === 1 && count($linkedCopy['workshop_ticket_orders']) === 1 && count($linkedCopy['workshop_checkouts']) === 1
+    && count($linkedCopy['workshop_cash_receipts']) === 1 && count($linkedCopy['workshop_cash_requests']) === 1);
+
 // A sponsor booking with a call, and an exhibition booth booking.
 $sponsor = Sponsors::createFromForm(['kind' => 'sponsor', 'company' => 'Delete Test Dental', 'contact' => 'Karwan Ali', 'phone' => '07501234568', 'email' => "sponsor-$tag@example.invalid"]);
 Sponsors::logCall((int) $sponsor['id'], ['outcome' => 'no_answer', 'note' => 'fixture'], $main);
