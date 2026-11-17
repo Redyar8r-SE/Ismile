@@ -707,7 +707,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const vipWorkshop = document.getElementById("caller-vip-workshop");
     if (vipWorkshop) {
       vipWorkshop.hidden = !isVip(ticket.value);
-      vipWorkshop.querySelector("select").disabled = !isVip(ticket.value);
+      const workshopChoice = vipWorkshop.querySelector("select");
+      workshopChoice.disabled = !isVip(ticket.value);
+      // Required for VIP $200; optional for VIP $100 (main Owner only).
+      const optionalWorkshop = ticket.value === "vip100";
+      workshopChoice.required = !optionalWorkshop;
+      const noWorkshop = workshopChoice.querySelector('option[value=""]');
+      if (noWorkshop && noWorkshop.dataset.requiredText) noWorkshop.textContent = optionalWorkshop ? noWorkshop.dataset.optionalText : noWorkshop.dataset.requiredText;
     }
     if (vipFields && vipDay) {
       const vip = isVip(ticket.value);

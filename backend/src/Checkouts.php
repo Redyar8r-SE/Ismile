@@ -186,7 +186,8 @@ final class Checkouts
     public static function createForCash(array $in, array $user, ?array $photo = null, bool $photoRequired = true, bool $ownerVipPrice = false): array
     {
         // VIP $100 (OwnerVipPrice, main Owner only) is the same VIP as $200: the
-        // same lunch and the same included workshop, checked while VIP is still $200.
+        // same lunch and the same included workshop (optional for $100),
+        // checked while VIP is still $200.
         if ($ownerVipPrice && !OwnerVipPrice::allowed($user)) {
             throw new UserError('Only the main Owner can sell VIP for $100.');
         }
@@ -195,8 +196,10 @@ final class Checkouts
             throw new UserError('The ticket prices are not set yet, so nothing can be sold.');
         }
         $row['id_photo_id'] = self::officePhoto($row, $photo, $photoRequired);
+        // VIP $100: the included workshop is optional (left empty = no workshop).
+        $noWorkshop = $ownerVipPrice && trim((string) ($in['vip_workshop'] ?? '')) === '';
         try {
-            $checkout = self::insert($row + ['source' => 'office', 'created_by' => (int) $user['id'], 'created_ip' => 'office'], max(1, Settings::int('pay_link_days')) * 86400, VipPackages::choiceFromInput($in, $row));
+            $checkout = self::insert($row + ['source' => 'office', 'created_by' => (int) $user['id'], 'created_ip' => 'office'], max(1, Settings::int('pay_link_days')) * 86400, $noWorkshop ? null : VipPackages::choiceFromInput($in, $row));
         } catch (\Throwable $error) {
             IdPhotos::delete($row['id_photo_id']);
             throw $error;

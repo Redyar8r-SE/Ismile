@@ -219,10 +219,9 @@ final class Payments
             \Ismile\VipCapacity::requireAvailable($form);
             if ($ownerPrice === null) {
                 \Ismile\VipPackages::assertCheckout($form);
-            } elseif (\Ismile\VipPackages::enabled()) {
-                // VIP $100: the same included workshop as VIP $200 (its $200 price check is replaced by $ownerPrice).
-                $choice = \Ismile\VipPackages::forCheckout((int) $form['id']);
-                if (!$choice) throw new UserError('vip_workshop_required', null, 409);
+            } elseif (\Ismile\VipPackages::enabled() && ($choice = \Ismile\VipPackages::forCheckout((int) $form['id']))) {
+                // VIP $100: the same included workshop as VIP $200 when one was chosen (optional);
+                // its $200 price check is replaced by $ownerPrice.
                 \Ismile\VipPackages::requireWorkshop($choice['workshop_id'], (int) $form['id']);
             }
             if (Registrations::isFull(true, (int) $checkout['id'])) {
