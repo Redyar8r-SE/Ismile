@@ -1592,7 +1592,8 @@ body:has([data-guest-tickets]) .page-actions .btn{background:transparent;border:
 .association-stat.grey{--tile-bg:#eef2f6;--tile-ink:#5d7486}
 @media(max-width:1200px){.association-stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:600px){.association-summary{padding:18px}.association-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.association-stat.teal,.association-stat.red{grid-column:1/-1}.association-stat strong{font-size:24px}}
-.association-directory .association-pdf{display:inline-flex;align-items:center;gap:8px}
+.association-directory .association-pdf{display:inline-flex;align-items:center;gap:8px;background:var(--blue-l);color:var(--blue-d);border-color:#bcd6f5;box-shadow:none}
+.association-directory .association-pdf:hover{background:#cfe2fa;color:var(--blue-d)}
 .association-directory .association-pdf .nav-icon{width:17px;height:17px}
 .association-directory .panel-heading h2{display:flex;align-items:center;gap:8px}
 .association-filter-card{margin-bottom:24px}
