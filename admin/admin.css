@@ -1628,3 +1628,45 @@ body:has([data-guest-tickets]) .page-actions .btn{background:transparent;border:
 .hide-page:has(input:checked){background:var(--red-l);border-color:#f5c6bc}
 .hide-page.is-home{opacity:.6;cursor:default}
 .added-by-tag.hidden-tag{background:var(--red-l);color:var(--red-d)}
+
+/* Speaker tickets: the Add speaker form with a live speaker pass beside it */
+.speaker-pass{border-radius:20px;overflow:hidden;background:#fff;border:1px solid #d6e7ee;box-shadow:0 18px 40px -24px rgba(8,60,90,.45)}
+.speaker-pass-top{display:flex;align-items:center;gap:12px;padding:20px 20px 22px;background:linear-gradient(135deg,#0b3d5e 0%,#0a6f8f 55%,#1bb3c4 100%);color:#fff}
+.speaker-pass-top>div{display:grid;gap:2px;flex:1;min-width:0}
+.speaker-pass-top small{font-size:10px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;opacity:.8}
+.speaker-pass-top b{font-size:22px;letter-spacing:-.4px}
+.speaker-pass-mic{display:grid;place-items:center;width:46px;height:46px;border-radius:14px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28)}
+.speaker-pass-mic svg{width:24px;height:24px}
+.speaker-pass-free{display:inline-flex;align-items:center;gap:5px;padding:6px 11px;border-radius:999px;background:#e5f7ec;color:#1d6b3c;font-size:12px;font-weight:800}
+.speaker-pass-free svg{width:13px;height:13px}
+.speaker-pass-body{display:grid;gap:8px;padding:20px}
+.speaker-pass-label{font-size:10px;font-weight:700;letter-spacing:1.3px;text-transform:uppercase;color:#7b8b98;margin-top:4px}
+.speaker-pass-body>strong{font-size:22px;line-height:1.3;color:#14324a;overflow-wrap:anywhere}
+.speaker-pass-body>strong.is-empty,.speaker-pass-body>p.is-empty{color:#a3b0bb}
+.speaker-pass-body>p{margin:0;font-size:13px;color:#5d6f7d}
+.speaker-pass-ticket{display:inline-flex;align-items:center;gap:7px;justify-self:start;margin:4px 0 6px;padding:7px 12px;border-radius:10px;background:var(--teal-l);color:var(--teal-d);font-size:13px;font-weight:700}
+.speaker-pass-ticket.student{background:var(--violet-l);color:var(--violet-d)}
+.speaker-pass-ticket svg{width:16px;height:16px}
+.speaker-pass-lunch{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.speaker-lunch-day{display:grid;grid-template-columns:auto 1fr;column-gap:8px;align-items:center;padding:10px 11px;border-radius:12px;border:1.5px dashed #cfd9e1;color:#97a5b0;background:#f7f9fb}
+.speaker-lunch-day svg{grid-row:span 2;width:18px;height:18px}
+.speaker-lunch-day b{font-size:13px}
+.speaker-lunch-day small{font-size:11px}
+.speaker-lunch-day.on{border:1.5px solid #f0c36a;background:#fff6e2;color:#8a5a00}
+.speaker-pass-total{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 20px 20px;background:#f3fbf6}
+.speaker-pass-total::before{content:"";position:absolute;top:0;left:14px;right:14px;border-top:2px dashed #cfe3d6}
+.speaker-pass-total>div{display:grid}
+.speaker-pass-total span{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#4c7a5e}
+.speaker-pass-total strong{font-size:40px;line-height:1.1;color:#1d6b3c;font-variant-numeric:tabular-nums}
+.speaker-pass-total strong small{font-size:15px}
+.speaker-pass-total p{margin:0;text-align:right;font-size:12px;line-height:1.5;color:#4c7a5e}
+.speaker-steps h3{margin:0 0 12px;font-size:15px;color:#14324a}
+.speaker-steps ol{list-style:none;margin:0;padding:0;display:grid;gap:12px;counter-reset:speaker-step}
+.speaker-steps li{counter-increment:speaker-step;display:grid;grid-template-columns:28px 1fr;column-gap:10px}
+.speaker-steps li::before{content:counter(speaker-step);grid-row:span 2;display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--violet-l);color:var(--violet-d);font-weight:800;font-size:13px}
+.speaker-steps li b{font-size:13px;color:#1f3a50}
+.speaker-steps li small{font-size:12px;color:#6c7d8a}
+.speaker-send{display:flex;gap:8px;margin-top:14px}
+.speaker-send span{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px;border-radius:10px;background:#eef6f8;color:var(--teal-d);font-size:12px;font-weight:700}
+.speaker-send span:last-child{background:#e7f6ec;color:#1d6b3c}
+.speaker-send svg{width:15px;height:15px}

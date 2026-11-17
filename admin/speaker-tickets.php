@@ -175,7 +175,10 @@ $selected = static fn (string $key, string $option): string => ($_POST[$key] ?? 
 // The same request key after an error, so a speaker PSOOLA already saved is never sent twice.
 $attempt = is_string($_POST['attempt'] ?? null) && preg_match('/^[a-f0-9]{32}$/D', $_POST['attempt']) ? $_POST['attempt'] : bin2hex(random_bytes(16));
 $lunch = static fn (int $day): bool => $posted ? ($_POST['lunch_day' . $day] ?? '') === '1' : true;
+$lunchDays = [1 => ['Thursday 19 Nov', 'Thu 19 Nov'], 2 => ['Friday 20 Nov', 'Fri 20 Nov']];
 ?>
+<div class="cash-layout speaker-layout">
+<div class="cash-main">
 <form method="post" action="speaker-tickets.php?tab=add" class="card stack caller-form" id="speaker-form">
   <?= Page::csrfField() ?><input type="hidden" name="attempt" value="<?= $e($attempt) ?>">
   <p class="muted">For a speaker: enter their details and press <b>Add speaker</b>. PSOOLA issues a <b>free ticket</b> (0 IQD) at once, with free lunch on the days you tick, and sends the QR by email and WhatsApp.</p>
@@ -190,7 +193,7 @@ $lunch = static fn (int $day): bool => $posted ? ($_POST['lunch_day' . $day] ?? 
   <fieldset class="form-section">
     <legend>2. Free lunch</legend>
     <div class="lunch-cards">
-      <?php foreach ([1 => 'Thursday 19 Nov', 2 => 'Friday 20 Nov'] as $day => $date): ?>
+      <?php foreach (array_map(static fn (array $d): string => $d[0], $lunchDays) as $day => $date): ?>
       <label class="lunch-card"><input type="checkbox" name="lunch_day<?= $day ?>" value="1"<?= $lunch($day) ? ' checked' : '' ?>>
         <span class="lunch-card-text"><b>Lunch day <?= $day ?></b><small><?= $e($date) ?></small></span>
         <span class="lunch-card-price"><b>Free</b><small>sent to PSOOLA</small></span>
@@ -201,5 +204,41 @@ $lunch = static fn (int $day): bool => $posted ? ($_POST['lunch_day' . $day] ?? 
   <label class="cash-confirm-check"><input type="checkbox" name="consent" value="1"<?= ($_POST['consent'] ?? '') === '1' ? ' checked' : '' ?> required><span>The speaker agreed to get the ticket by email and WhatsApp.</span></label>
   <div class="form-actions"><a class="btn ghost" href="speaker-tickets.php">Cancel</a><button class="btn violet" name="do" value="add"<?= Page::confirm('violet', 'gift', 'Add this speaker?', 'PSOOLA issues a free ticket now and sends the QR by email and WhatsApp. This cannot be undone here.', [['ticket', 'Free ticket, 0 IQD'], ['check', 'Free lunch on the ticked days']], ['yes' => 'Yes, add and send QR', 'no' => 'No, go back']) ?>>Add speaker</button></div>
 </form>
+</div>
+<aside class="cash-panel speaker-panel" aria-label="Speaker pass preview">
+  <section class="speaker-pass" aria-live="polite">
+    <header class="speaker-pass-top">
+      <span class="speaker-pass-mic" aria-hidden="true"><?= Page::navIcon('speaker-tickets') ?></span>
+      <div><small>iSmile 2026 Summit</small><b>Speaker pass</b></div>
+      <span class="speaker-pass-free"><?= Page::navIcon('check') ?>Free</span>
+    </header>
+    <div class="speaker-pass-body">
+      <span class="speaker-pass-label">Prepared for</span>
+      <strong data-speaker-name>Speaker name</strong>
+      <p data-speaker-specialty>Choose a specialty</p>
+      <span class="speaker-pass-ticket" data-speaker-ticket><?= Page::navIcon('ticket') ?><span>Dentist ticket</span></span>
+      <span class="speaker-pass-label">Free lunch</span>
+      <div class="speaker-pass-lunch">
+        <?php foreach ($lunchDays as $day => [, $short]): ?>
+        <span class="speaker-lunch-day<?= $lunch($day) ? ' on' : '' ?>" data-speaker-lunch="<?= $day ?>"><?= Page::navIcon('lunch') ?><b>Day <?= $day ?></b><small><?= $e($short) ?></small></span>
+        <?php endforeach; ?>
+      </div>
+    </div>
+    <footer class="speaker-pass-total">
+      <div><span>Total</span><strong>0 <small>IQD</small></strong></div>
+      <p>Ticket and lunch are free.<br>Nothing to collect.</p>
+    </footer>
+  </section>
+  <section class="card speaker-steps">
+    <h3>When you press Add speaker</h3>
+    <ol>
+      <li><b>PSOOLA issues the free ticket</b><small>0 IQD, a Dentist or Student ticket</small></li>
+      <li><b>Free lunch is added</b><small>On the days you ticked, on the same ticket</small></li>
+      <li><b>The QR is sent</b><small>To the speaker's email and WhatsApp</small></li>
+    </ol>
+    <div class="speaker-send"><span><?= Page::navIcon('mail') ?>Email</span><span><?= Page::navIcon('phone') ?>WhatsApp</span></div>
+  </section>
+</aside>
+</div>
 <?php
 Page::bottom();

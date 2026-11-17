@@ -1159,3 +1159,29 @@ document.addEventListener("DOMContentLoaded", () => {
   lock(document);
   new MutationObserver(() => lock(document)).observe(document.querySelector("main") || document.body, { childList: true, subtree: true });
 });
+
+// Speaker tickets: the speaker pass beside the Add speaker form follows what is typed.
+(() => {
+  const form = document.getElementById("speaker-form");
+  if (!form) return;
+  const pick = (selector) => document.querySelector(selector);
+  const name = pick("[data-speaker-name]"), specialty = pick("[data-speaker-specialty]"), ticket = pick("[data-speaker-ticket]");
+  const update = () => {
+    const full = ["first_name", "father_name", "grandfather_name"].map((key) => (form.elements[key]?.value || "").trim()).filter(Boolean).join(" ");
+    name.textContent = full || "Speaker name";
+    name.classList.toggle("is-empty", !full);
+    const select = form.elements.specialty;
+    const chosen = select && select.value ? select.options[select.selectedIndex].text : "";
+    specialty.textContent = chosen || "Choose a specialty";
+    specialty.classList.toggle("is-empty", !chosen);
+    const student = select && select.value === "student";
+    ticket.classList.toggle("student", student);
+    ticket.querySelector("span").textContent = student ? "Student ticket" : "Dentist ticket";
+    document.querySelectorAll("[data-speaker-lunch]").forEach((day) => {
+      day.classList.toggle("on", !!form.elements["lunch_day" + day.dataset.speakerLunch]?.checked);
+    });
+  };
+  form.addEventListener("input", update);
+  form.addEventListener("change", update);
+  update();
+})();
