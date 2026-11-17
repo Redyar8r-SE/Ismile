@@ -43,7 +43,7 @@ final class BadgeBatches
                 'created_by_name' => (string) $user['name'], 'created_at' => App::now(), 'downloads' => 0]);
             foreach ($guests as $position => $guest) {
                 Db::insert('badge_batch_items', ['batch_id' => $id, 'registration_id' => (int) $guest['id'], 'position' => $position + 1, 'ref' => $guest['ref'],
-                    'printed_name' => Badges::displayName($guest), 'ticket_type' => Registrations::badgeName($guest)]);
+                    'printed_name' => Badges::displayName($guest), 'ticket_type' => Registrations::ticketName($guest['ticket_type'])]);
             }
             Audit::log((int) $user['id'], 'badge.batch', 'badge_batch', $id, ['batch_number' => $number, 'guests' => count($guests)]);
             return $id;

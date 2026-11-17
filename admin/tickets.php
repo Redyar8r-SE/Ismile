@@ -74,7 +74,7 @@ $order = match ($sort) {
     'newest' => 'r.paid_at DESC, r.id DESC',
     default => 'r.first_name, r.father_name, r.grandfather_name, r.id',
 };
-$rows = $batch ? [] : Db::all("SELECT r.id, r.ref, r.phone, r.first_name, r.father_name, r.grandfather_name, r.ticket_type, r.comp_reason, r.status, r.created_by, t.ticket_no,
+$rows = $batch ? [] : Db::all("SELECT r.id, r.ref, r.phone, r.first_name, r.father_name, r.grandfather_name, r.ticket_type, r.status, r.created_by, t.ticket_no,
     (EXISTS (SELECT 1 FROM sponsored_ticket_orders s WHERE s.registration_id=r.id AND s.status='issued' AND s.provider_order_id IS NOT NULL)
      OR EXISTS (SELECT 1 FROM payments p WHERE p.registration_id=r.id AND p.gateway='psoola' AND p.status='paid' AND p.provider_payment_id IS NOT NULL)) AS has_psoola,
     EXISTS (SELECT 1 FROM badge_ticket_codes c WHERE c.registration_id=r.id) AS has_code,
@@ -124,7 +124,7 @@ if ($batchId && !$batch): ?>
     $items = BadgeBatches::items($batchId);
     $kinds = array_count_values(array_column($items, 'ticket_type'));
     $arrivedCount = count(array_filter($items, static fn (array $i): bool => (bool) $i['attended_days']));
-    $typePill = static fn (string $type): string => match ($type) { 'Student' => 'green', 'VIP' => 'gold', 'Speaker' => 'violet', default => 'blue' };
+    $typePill = static fn (string $type): string => match ($type) { 'Student' => 'green', 'VIP' => 'gold', default => 'blue' };
 ?>
 <section class="card bb-hero">
   <div class="bb-number" aria-hidden="true"><small>Batch</small><b>#<?= (int) $batch['batch_number'] ?></b></div>
@@ -133,7 +133,7 @@ if ($batchId && !$batch): ?>
     <p class="muted">Made <?= $e(date('j M Y, H:i', strtotime((string) $batch['created_at']))) ?> (Iraq) by <b><?= $e($batch['created_by_name']) ?></b></p>
     <div class="bb-chips">
       <span class="bb-chip"><?= Page::navIcon('users') ?><b><?= count($items) ?></b> guest<?= count($items) === 1 ? '' : 's' ?></span>
-      <?php foreach (['Dentist', 'Student', 'VIP', 'Speaker'] as $kind): if (!empty($kinds[$kind])): ?><span class="pill <?= $typePill($kind) ?>"><?= (int) $kinds[$kind] ?> <?= $kind ?></span><?php endif; endforeach; ?>
+      <?php foreach (['Dentist', 'Student', 'VIP'] as $kind): if (!empty($kinds[$kind])): ?><span class="pill <?= $typePill($kind) ?>"><?= (int) $kinds[$kind] ?> <?= $kind ?></span><?php endif; endforeach; ?>
       <span class="bb-chip"><?= Page::navIcon('download') ?><?= (int) $batch['downloads'] ?> download<?= (int) $batch['downloads'] === 1 ? '' : 's' ?><?= $batch['last_downloaded_at'] ? ' · last ' . $e(date('j M, H:i', strtotime((string) $batch['last_downloaded_at']))) : '' ?></span>
       <span class="bb-chip"><?= Page::navIcon('checkin') ?><?= $arrivedCount ?> arrived</span>
     </div>
@@ -249,11 +249,11 @@ if ($batchId && !$batch): ?>
   <p class="tk-count"><b data-ticket-count><?= count($rows) ?></b> guest(s) shown<?php if ($search !== '' || $type !== '' || $made !== '' || $qr !== '' || $arrived !== '' || $sort !== 'name'): ?> · <a href="tickets.php">Clear all filters</a><?php endif; ?></p>
   <p class="rd-link-result" role="status" data-rd-link-result></p>
   <div class="table-wrap ticket-scroll"><table><thead><tr><th><?php if ($canBadge): ?><input type="checkbox" data-ticket-all aria-label="Select every guest shown"><?php endif; ?></th><th>Guest</th><th>Type</th><th>Ticket</th><th>Attendance</th><th>Badge</th><th>Actions</th></tr></thead><tbody>
-  <?php foreach ($rows as $row): $canQr = $row['has_psoola'] && PsoolaTickets::canView($user, $row); $name = Registrations::fullName($row); $kind = Registrations::badgeName($row); ?>
+  <?php foreach ($rows as $row): $canQr = $row['has_psoola'] && PsoolaTickets::canView($user, $row); $name = Registrations::fullName($row); $kind = Registrations::ticketName($row['ticket_type']); ?>
   <tr<?= $row['last_batch'] ? ' class="tk-in-batch"' : '' ?> data-letter="<?= $letterOf($row) ?>" data-search="<?= $e(mb_strtolower($name . ' ' . $row['ref'] . ' ' . $row['phone'] . ' ' . $row['ticket_no'])) ?>">
     <td><?php if ($row['last_batch']): ?><span class="tk-taken" title="<?= $e('Already in Badge batch #' . (int) $row['last_batch_number']) ?>">✓</span><?php elseif ($canQr && $canBadge && $row['has_code']): ?><input type="checkbox" data-guest="<?= (int) $row['id'] ?>" aria-label="<?= $e('Select ' . $name) ?>"><?php endif; ?></td>
     <td><a class="bb-guest"<?= $guestLink ? ' href="registration.php?id=' . (int) $row['id'] . '"' : '' ?>><span class="bb-initial"><?= $e(mb_strtoupper(mb_substr($name, 0, 1))) ?></span><span><b><?= $e($name) ?></b><small class="tk-ref"><?= $e($row['ref']) ?></small></span></a></td>
-    <td><span class="pill <?= $kind === 'Student' ? 'green' : ($kind === 'VIP' ? 'gold' : ($kind === 'Speaker' ? 'violet' : 'blue')) ?>"><?= $e($kind) ?></span></td>
+    <td><span class="pill <?= $kind === 'Student' ? 'green' : ($kind === 'VIP' ? 'gold' : 'blue') ?>"><?= $e($kind) ?></span></td>
     <td><code><?= $e($row['ticket_no']) ?></code><?php if (!$row['has_code']): ?><br><span class="pill red" title="<?= $e($row['has_psoola'] ? 'PSOOLA has not sent the QR code for this guest yet.' : 'This guest has no PSOOLA order, so PSOOLA has no QR code for them.') ?>">QR missing</span><?php endif; ?></td>
     <td><?= $row['attended_days'] ? '<span class="pill green">' . $e($row['attended_days']) . '</span>' : '<span class="pill grey">Not yet</span>' ?></td>
     <td><?php if ($row['last_batch']): ?><a class="pill teal" href="<?= $e($batchUrl((int) $row['last_batch'])) ?>">In batch #<?= (int) $row['last_batch_number'] ?></a><?php else: ?><span class="pill gold">Not made</span><?php endif; ?></td>

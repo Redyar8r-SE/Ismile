@@ -10,7 +10,7 @@ use Ismile\Auth;
 use Ismile\Db;
 use Ismile\Admin\PdfReport;
 
-$pages = ['index','desk','checkin','registrations','association','association-guests','speakers','certificates','tickets','sponsors','booths','map','lists','communications','payments','psoola-orders','registration','workshops','settings','users','backups','content'];
+$pages = ['index','desk','checkin','registrations','association','association-guests','certificates','tickets','sponsors','booths','map','lists','communications','payments','psoola-orders','registration','workshops','settings','users','backups','content'];
 if (($argv[1] ?? '') === '--render') {
     $page = $argv[2] ?? '';
     if (!in_array($page, $pages, true)) throw new RuntimeException('Unknown verification page.');
@@ -256,13 +256,6 @@ $someAccount = (int) Db::value("SELECT id FROM admin_users WHERE email NOT LIKE 
 $html = $render('users', 'account=' . $someAccount);
 $check('Users: "What this account can do" page shows role, pages and activity (Owner only)', str_contains($html, 'Pages this account can open') && str_contains($html, 'What this account has done') && str_contains($render('users', 'account=' . $someAccount, 'viewer'), '<h2>Not allowed</h2>'));
 $check('Volunteer cannot open Association guests', str_contains($render('association-guests', '', 'volunteer'), '<h2>Not allowed</h2>'));
-$html = $render('speakers');
-$check('Speakers page (Owner): speaker list from the website, Register buttons, email and WhatsApp columns', str_contains($html, 'href="speakers.php"') && str_contains($html, '<h2>Speakers</h2>')
-    && str_contains($html, 'Speaker list') && str_contains($html, '<th>WhatsApp</th>') && (!\Ismile\SpeakerGuests::website() || str_contains($html, 'speakers.php?speaker=') || \Ismile\SpeakerGuests::all()));
-$check('Speakers page is Owner only (registration and viewer refused)', str_contains($render('speakers', '', 'registration'), '<h2>Not allowed</h2>') && str_contains($render('speakers', '', 'viewer'), '<h2>Not allowed</h2>'));
-$check('Speakers database table exists and the website speaker list is copied every minute', (int) Db::value("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'speaker_guests'") === 1
-    && in_array('speakers', \Ismile\SiteData::FOLLOWED, true));
-$check('Speaker badges say Speaker', \Ismile\Registrations::badgeName(['ticket_type' => 'professional', 'comp_reason' => \Ismile\SpeakerGuests::REASON]) === 'Speaker');
 $check('Users page offers "Allow Association guests (everything)" for team accounts', !Db::value("SELECT id FROM admin_users WHERE role <> 'owner' AND disabled_at IS NULL LIMIT 1") || str_contains($render('users'), 'value="association_guest_access"'));
 $check('Association guest list PDF renders with the full list details', str_starts_with(PdfReport::make(\Ismile\AssociationGuests::NAME . ' guests', \Ismile\AssociationGuests::reportRows(), true), '%PDF-'));
 $html = $render('lists', 'list=registered');

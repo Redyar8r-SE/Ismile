@@ -33,12 +33,6 @@ final class Registrations
         return self::TICKET_NAMES[(string) $type] ?? ucfirst((string) $type);
     }
 
-    /** What the name badge and the Tickets list call the guest: "Speaker" for speakers, else the ticket. */
-    public static function badgeName(array $registration): string
-    {
-        return SpeakerGuests::isSpeaker($registration) ? 'Speaker' : self::ticketName($registration['ticket_type'] ?? null);
-    }
-
     public const GENDERS = ['female', 'male', 'other', 'prefer-not'];
     public const PAY_METHODS = ['visa', 'mastercard', 'fib', 'fastpay'];
 
