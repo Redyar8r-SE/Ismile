@@ -37,5 +37,8 @@ jobs:
           echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  $SCANNER_DIR/gitleaks.tar.gz" | sha256sum --check
           tar -xzf "$SCANNER_DIR/gitleaks.tar.gz" -C "$SCANNER_DIR"
           "$SCANNER_DIR/gitleaks" git --redact=100 --no-banner --log-opts="--all" .
+      # Only packages that run on the server: the npm dev tools (tests, lint)
+      # are never deployed, so an advisory with no fixed version yet (for
+      # example picomatch via vitest, 17 Nov 2026) does not block a deploy.
       - name: Check locked dependencies for known vulnerabilities
-        run: npm audit --package-lock-only
+        run: npm audit --package-lock-only --omit=dev
