@@ -743,5 +743,66 @@
     "totalSeats": 25,
     "seatsLeft": 25,
     "availabilityVerified": true
+  },
+  {
+    "id": "pterygoid-zygoma-placement",
+    "icon": "implant",
+    "title": {
+      "en": "Jd Pterygoid & Zygoma Placement",
+      "ar": "زراعة Jd Pterygoid و Zygoma",
+      "ku": "دانانی Jd Pterygoid و Zygoma"
+    },
+    "speaker": {
+      "en": "Dr. Muhamed Hamawandy",
+      "ar": "د. محمد هماوندي",
+      "ku": "د. موحەمەد هەمەوەندی"
+    },
+    "credentials": {
+      "en": "B.D.S., M.Sc. in Oral Surgery",
+      "ar": "بكالوريوس طب وجراحة الأسنان، ماجستير في جراحة الفم",
+      "ku": "بەکالۆریۆس لە پزیشکی و نەشتەرگەری ددان، ماستەر لە نەشتەرگەری دەم"
+    },
+    "company": {
+      "en": "J Dental Care",
+      "ar": "جي دنتال كير",
+      "ku": "جەی دێنتاڵ کێر"
+    },
+    "format": {
+      "en": "Workshop",
+      "ar": "ورشة عمل",
+      "ku": "وۆرکشۆپ"
+    },
+    "duration": {
+      "en": "2 hours",
+      "ar": "ساعتان",
+      "ku": "2 کاتژمێر"
+    },
+    "level": {
+      "en": "Suitable for all experience levels",
+      "ar": "مناسب لجميع مستويات الخبرة",
+      "ku": "گونجاوە بۆ هەموو ئاستەکانی ئەزموون"
+    },
+    "overview": {
+      "en": "A new concept for the atrophied maxilla: Jd pterygoid and zygoma implant placement.\nVenue: Grand Millennium Hotel, Sulaimani.",
+      "ar": "مفهوم جديد للفك العلوي الضامر: زراعة غرسات Jd في العظم الجناحي والوجني.\nالمكان: فندق غراند ميلينيوم، السليمانية.",
+      "ku": "چەمکێکی نوێ بۆ شەویلگەی سەرەوەی لاوازبوو: دانانی ئیمپڵانتی Jd لە ئێسکی پتێرگۆید و زیگۆما.\nشوێن: هۆتێلی گراند میلینیۆم، سلێمانی."
+    },
+    "photo": "assets/workshops/muhamed-hamawandy-cutout-20261117.webp",
+    "photoStyle": "cutout",
+    "presenters": [],
+    "organizer": "company",
+    "companyPhone": "07700031502",
+    "companyPhones": [
+      "07700031502"
+    ],
+    "scheduledDate": "2026-11-19",
+    "startTime": "13:00",
+    "endTime": "15:00",
+    "price": 0,
+    "currency": "IQD",
+    "displayPrice": null,
+    "totalSeats": 25,
+    "seatsLeft": 25,
+    "availabilityVerified": true
   }
 ]

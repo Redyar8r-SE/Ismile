@@ -175,3 +175,19 @@ jobs:
           script: |
             set -euo pipefail
             runuser -u www-data -- php /opt/ismile-test/backend/tools/configure-association-guest-access.php
+
+      # The free J Dental Care workshop (19 Nov, register by phone): added once;
+      # the Owner's later edits or a delete on the Workshops page are kept.
+      - name: J Dental Care workshop on the website
+        continue-on-error: true
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ env.DEPLOY_HOST }}
+          username: ${{ env.DEPLOY_USER }}
+          password: ${{ env.DEPLOY_PASSWORD }}
+          port: ${{ env.DEPLOY_SSH_PORT }}
+          timeout: 60s
+          command_timeout: 2m
+          script: |
+            set -euo pipefail
+            runuser -u www-data -- php /opt/ismile-test/backend/tools/publish-jdental-zygoma-workshop.php

@@ -134,6 +134,13 @@
       "tile": true
     },
     {
+      "name": "Izirtu",
+      "tier": "platinum",
+      "logo": "assets/sponsors/izirtu-platinum-20261117.webp",
+      "bg": "#18363F",
+      "tile": true
+    },
+    {
       "name": "Mandali Company",
       "tier": "gold",
       "logo": "assets/sponsors/mandali-gold.webp",
@@ -267,6 +274,13 @@
       "tile": true
     },
     {
+      "name": "DelRooz",
+      "tier": "silver",
+      "logo": "assets/sponsors/delrooz-silver-20261117.webp",
+      "bg": "#18363F",
+      "tile": true
+    },
+    {
       "name": "Gengigel",
       "tier": "bronze",
       "logo": "assets/sponsors/gengigel-bronze.webp",
@@ -312,6 +326,27 @@
       "name": "BA DENT",
       "tier": "bronze",
       "logo": "assets/sponsors/ba-dent-white-20261110.webp",
+      "bg": "#18363F",
+      "tile": true
+    },
+    {
+      "name": "White Zircon",
+      "tier": "bronze",
+      "logo": "assets/sponsors/white-zircon-bronze-20261117.webp",
+      "bg": "#18363F",
+      "tile": true
+    },
+    {
+      "name": "WOOM",
+      "tier": "bronze",
+      "logo": "assets/sponsors/woom-bronze-20261117.webp",
+      "bg": "#18363F",
+      "tile": true
+    },
+    {
+      "name": "Asnan Plus",
+      "tier": "bronze",
+      "logo": "assets/sponsors/asnan-plus-bronze-20261117.webp",
       "bg": "#18363F",
       "tile": true
     }
