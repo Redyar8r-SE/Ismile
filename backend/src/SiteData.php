@@ -126,10 +126,11 @@ final class SiteData
 
     /**
      * The content files the backend only READS: prices and the open/closed
-     * switch (tickets), and what the ticket email shows (program, map, footer).
+     * switch (tickets), what the ticket email shows (program, map, footer) and
+     * the speaker list the Speakers page registers from (speakers).
      * workshops.json and sponsors.json are never copied: the backend writes them.
      */
-    public const FOLLOWED = ['tickets', 'program', 'map', 'footer'];
+    public const FOLLOWED = ['tickets', 'program', 'map', 'footer', 'speakers'];
 
     /**
      * When the website runs on another server (config.php content_source_url,

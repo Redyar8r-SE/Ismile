@@ -551,6 +551,16 @@ document.addEventListener("DOMContentLoaded", () => {
     if (data.text) head.append(make("p", "confirm-text", data.text));
     const body = make("div", "confirm-body");
     const facts = data.form === "caller" && form ? callerFacts(form) : (data.facts || []);
+    if (data.form === "speaker" && form) {
+      const value = name => form.elements.namedItem(name)?.value.trim() || "";
+      const ticked = name => !!form.elements.namedItem(name)?.checked;
+      const days = [ticked("lunch_day1") ? "Day 1" : "", ticked("lunch_day2") ? "Day 2" : ""].filter(Boolean);
+      facts.push(["user", value("ticket_name") || value("speaker_name")]);
+      facts.push(["info", "QR email: " + value("email")]);
+      facts.push(["info", ticked("whatsapp") ? "QR on WhatsApp: " + value("phone") : "WhatsApp: not sent (number " + value("phone") + ")"]);
+      facts.push(["ticket", days.length ? "Free lunch: " + days.join(" and ") : "No lunch"]);
+      facts.push(["ticket", "Ticket price: 0 IQD (free)"]);
+    }
     if (data.form === "sponsored" && form) {
       const value = name => form.elements.namedItem(name)?.value.trim() || "";
       facts.push(["user", [value("first_name"),value("father_name"),value("grandfather_name")].join(" ")]);

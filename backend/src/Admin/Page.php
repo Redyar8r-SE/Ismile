@@ -25,6 +25,7 @@ final class Page
         'lists'         => ['Lists', 'registrations'],
         'association'   => ['Association', 'association'],
         'association-guests' => ['Association guests', 'association-guests'],
+        'speakers'      => ['Speakers', 'owner'],
         'payments'      => ['Payments', 'payments'],
         'psoola-orders' => ['Psoola orders', 'payments'],
         'workshops'     => ['Workshops', 'workshops'],
@@ -53,6 +54,7 @@ final class Page
             'lists' => '<path d="M9 5h12M9 12h12M9 19h12M3 5h1M3 12h1M3 19h1"/>',
             'association' => '<path d="m3 8 9-5 9 5H3Zm2 3v7m7-7v7m7-7v7M3 21h18"/>',
             'association-guests' => '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 6.5a3 3 0 0 1 0 5.6M18.5 14.4c1.6.9 2.5 2.7 2.5 5.6"/>',
+            'speakers' => '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/>',
             'payments' => '<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18M7 15h4"/>',
             'workshops' => '<path d="M12 5v16M3 4c4-1 7 0 9 2 2-2 5-3 9-2v15c-4-1-7 0-9 2-2-2-5-3-9-2Z"/>',
             'sponsors' => '<path d="M4 21V8l8-5 8 5v13M2 21h20M9 21v-5h6v5M8 9h1m6 0h1m-8 4h1m6 0h1"/>',
@@ -277,7 +279,7 @@ final class Page
             echo '<nav class="sidebar-nav" aria-label="Database pages">';
             $groups = [
                 'Workspace' => ['index'],
-                'Event operations' => ['registrations', 'lists', 'association', 'association-guests', 'payments', 'psoola-orders', 'workshops', 'sponsors', 'booths', 'map', 'checkin', 'tickets', 'desk'],
+                'Event operations' => ['registrations', 'lists', 'association', 'association-guests', 'speakers', 'payments', 'psoola-orders', 'workshops', 'sponsors', 'booths', 'map', 'checkin', 'tickets', 'desk'],
                 'Database' => ['communications', 'settings', 'users', 'backups'],
             ];
             foreach ($groups as $group => $files) {
@@ -325,7 +327,7 @@ final class Page
             'backups' => 'Keep a copy of your event records. Check your latest successful backup and download it securely.',
             default => $user ? '' : 'Welcome to your iSmile workspace. Sign in to continue.',
         };
-        $section = $current === 'index' ? 'Overview' : (in_array($current, ['registrations', 'lists', 'association', 'association-guests', 'payments', 'psoola-orders', 'workshops', 'sponsors', 'booths', 'map', 'checkin'], true) ? 'Event operations' : 'Database');
+        $section = $current === 'index' ? 'Overview' : (in_array($current, ['registrations', 'lists', 'association', 'association-guests', 'speakers', 'payments', 'psoola-orders', 'workshops', 'sponsors', 'booths', 'map', 'checkin'], true) ? 'Event operations' : 'Database');
         echo '<main class="page" id="main-content" tabindex="-1"><div class="page-heading"><div class="page-heading-copy">' . ($user ? '<div class="page-title-row"><span class="page-symbol">' . self::navIcon($current !== '' ? $current : 'security') . '</span><div><span class="page-kicker">' . $section . '</span><h1>' . self::e($title) . '</h1></div></div>' : '<h1>' . self::e($title) . '</h1>') . ($description !== '' ? '<p>' . self::e($description) . '</p>' : '') . '</div>' . ($actions !== '' ? '<div class="page-actions no-print">' . $actions . '</div>' : '') . '</div>';
         Auth::startSession();
         foreach ($_SESSION['flash'] ?? [] as [$kind, $message]) {

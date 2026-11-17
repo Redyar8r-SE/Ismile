@@ -1628,3 +1628,50 @@ body:has([data-guest-tickets]) .page-actions .btn{background:transparent;border:
 .hide-page:has(input:checked){background:var(--red-l);border-color:#f5c6bc}
 .hide-page.is-home{opacity:.6;cursor:default}
 .added-by-tag.hidden-tag{background:var(--red-l);color:var(--red-d)}
+/* Speakers (Owner): free speaker tickets, QR by email and WhatsApp. */
+.association-stat.green{--tile-bg:var(--green-l);--tile-ink:var(--green-d)}
+.speaker-logo .nav-icon{width:24px;height:24px}
+.speaker-stats{grid-template-columns:repeat(6,minmax(0,1fr))}
+@media(max-width:1200px){.speaker-stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:600px){.speaker-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.speaker-stats .association-stat.teal{grid-column:auto}}
+.speaker-lunch{display:flex;flex-wrap:nowrap;gap:6px}
+.speaker-lunch .pill{background:var(--blue-l);color:var(--blue-d)}
+.speaker-avatar{display:grid;place-items:center;flex:none;width:38px;height:38px;border-radius:12px;background:var(--violet-l);color:var(--violet-d);font-size:14px;font-weight:700}
+.speaker-avatar.big{width:54px;height:54px;border-radius:15px;font-size:20px}
+.speaker-avatar .nav-icon{width:24px;height:24px}
+.speaker-filter-card{margin-bottom:24px}
+.speaker-filter-card .speaker-seg{margin:0;padding:0;border:0;flex:0 1 420px;min-width:0}
+.speaker-filter-card .speaker-seg legend{display:block;margin:0 0 7px;padding:0;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:1.1px;text-transform:uppercase}
+.speaker-filter-card .speaker-seg div{display:flex;gap:2px;padding:3px;border:1px solid var(--line);border-radius:11px;background:#fff}
+.speaker-filter-card .speaker-seg label{position:relative;flex:1;cursor:pointer;min-width:0}
+.speaker-filter-card .speaker-seg input{position:absolute;inset:0;width:100%;height:100%;min-height:0;margin:0;opacity:0;cursor:pointer}
+.speaker-filter-card .speaker-seg span{display:block;padding:10px 6px;border-radius:8px;text-align:center;font-size:12.5px;font-weight:500;color:var(--ink);white-space:nowrap}
+.speaker-filter-card .speaker-seg label:hover span{background:#eef6fa}
+.speaker-filter-card .speaker-seg input:checked+span{background:var(--teal-d);color:#fff;font-weight:700}
+.speaker-filter-card .speaker-seg input:focus-visible+span{outline:2px solid var(--teal);outline-offset:2px}
+.speaker-directory .panel-heading h2{display:flex;align-items:center;gap:8px}
+.speaker-table td{vertical-align:middle}
+.speaker-table .guest-cell{min-width:240px}
+.speaker-table .guest-cell small{display:block;margin-top:3px;color:var(--muted);font-size:12px;line-height:1.4}
+.speaker-table .speaker-contact{font-size:11.5px}
+.speaker-table code{font-size:11px}
+.speaker-table .speaker-error{display:block;margin-top:4px;color:var(--red-d);font-size:11px}
+.speaker-action{white-space:nowrap;text-align:right}
+.speaker-action form{margin:0}
+.speaker-form-card{margin-bottom:24px;border-top:4px solid var(--violet)}
+.speaker-form-head{display:flex;align-items:center;gap:14px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid #e5edf3}
+.speaker-form-head h2{margin:2px 0 0;font-size:20px}
+.speaker-form-head p{margin:4px 0 0;font-size:13px}
+.speaker-form{display:grid;gap:16px;max-width:860px}
+.speaker-form>label,.speaker-form-row>label{display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:600;color:var(--ink)}
+.speaker-form small{font-weight:400;color:var(--muted);font-size:12px}
+.speaker-form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.speaker-choices{display:flex;flex-wrap:wrap;gap:12px;margin:0;padding:0;border:0}
+.speaker-choices legend{width:100%;margin:0 0 8px;padding:0;font-size:13px;font-weight:600;color:var(--ink)}
+.speaker-choice{display:flex;align-items:center;gap:12px;flex:1 1 220px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#fff;cursor:pointer}
+.speaker-choice.wide{flex-basis:100%}
+.speaker-form>label.speaker-choice{flex-direction:row;align-items:center;gap:12px;font-weight:400;text-align:left}
+.speaker-choice:has(input:checked){border-color:var(--teal);background:var(--teal-l)}
+.speaker-choice span{display:flex;flex-direction:column;gap:2px}
+.speaker-choice b{font-size:13.5px;color:var(--ink)}
+@media(max-width:700px){.speaker-form-row{grid-template-columns:1fr}.speaker-filter-card .speaker-seg{flex-basis:100%}.speaker-filter-card .speaker-seg span{white-space:normal;padding:8px 4px}.speaker-action{text-align:left}}
