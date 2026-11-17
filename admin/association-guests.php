@@ -86,7 +86,6 @@ if ($tab === 'guests') {
     $mail = AssociationGuests::emailStatuses($registeredRefs);
     $guests = AssociationGuests::filter($everyone, $filters, $mail ?? []);
     $mailNames = ['queued' => 'Queued', 'sent' => 'Sent', 'delivered' => 'Delivered', 'delayed' => 'Delayed', 'bounced' => 'Bounced', 'complained' => 'Complained', 'failed' => 'Failed'];
-    $owed = AssociationGuests::owedText($totals['owed']);
     $adders = [];
     foreach ($everyone as $guest) $adders[(string) $guest['added_by']] = (string) ($guest['added_by_name'] ?? 'Removed account');
     asort($adders);
@@ -100,23 +99,19 @@ if ($tab === 'guests') {
     };
     ?>
 <div data-live-region="association-guest-totals">
-<section class="card attendance-overview association-overview" aria-label="<?= $e(AssociationGuests::NAME) ?>">
-  <div class="association-overview-main">
-    <div class="association-guest-org">
-      <span class="association-guest-logo" aria-hidden="true">SA</span>
-      <div><span class="attendance-label">Association</span><h2><?= $e(AssociationGuests::NAME) ?></h2></div>
-    </div>
-    <div class="association-overview-figures">
-      <div class="attendance-figure"><strong><?= number_format($totals['guests']) ?></strong><span><?= $totals['guests'] === 1 ? 'guest' : 'guests' ?>, all pay later</span></div>
-      <div class="association-guest-owes"><span>Owes iSmile</span><strong><?= $e($owed) ?></strong></div>
-    </div>
-    <?php if ($canPdf): ?><a class="btn gold association-pdf" href="association-guests.php?pdf=list"><?= Page::navIcon('download') ?><span>Download guest list (PDF)</span></a><?php endif; ?>
+<section class="card association-summary" aria-label="<?= $e(AssociationGuests::NAME) ?>">
+  <div class="association-summary-head">
+    <span class="association-guest-logo" aria-hidden="true">SA</span>
+    <div><span class="attendance-label">Association</span><h2><?= $e(AssociationGuests::NAME) ?></h2></div>
+    <span class="association-paylater"><?= Page::navIcon('clock') ?>All guests pay later</span>
   </div>
-  <div class="attendance-tiles">
-    <div class="attendance-tile blue"><span>Dentists</span><strong><?= number_format($totals['professional']) ?></strong><small>Dentist tickets</small></div>
-    <div class="attendance-tile day2"><span>Students</span><strong><?= number_format($totals['student']) ?></strong><small>Student tickets</small></div>
-    <div class="attendance-tile day1"><span>VIP</span><strong><?= number_format($totals['vip']) ?></strong><small>VIP tickets</small></div>
-    <div class="attendance-tile waiting"><span>Waiting for PSOOLA</span><strong><?= number_format($totals['waiting']) ?></strong><small>Sale not confirmed yet</small></div>
+  <div class="association-stats">
+    <div class="association-stat teal"><span>Guests</span><strong><?= number_format($totals['guests']) ?></strong><small>Added by the association</small></div>
+    <div class="association-stat red"><span>Owes iSmile</span><strong class="association-money"><?php foreach ($totals['owed'] ?: ['IQD' => 0] as $currency => $amount): ?><b><?= number_format($amount) ?><i><?= $e($currency) ?></i></b><?php endforeach; ?></strong><small>Paid later by the association</small></div>
+    <div class="association-stat blue"><span>Dentists</span><strong><?= number_format($totals['professional']) ?></strong><small>Dentist tickets</small></div>
+    <div class="association-stat violet"><span>Students</span><strong><?= number_format($totals['student']) ?></strong><small>Student tickets</small></div>
+    <div class="association-stat gold"><span>VIP</span><strong><?= number_format($totals['vip']) ?></strong><small>VIP tickets</small></div>
+    <div class="association-stat grey"><span>Waiting for PSOOLA</span><strong><?= number_format($totals['waiting']) ?></strong><small>Sale not confirmed yet</small></div>
   </div>
 </section>
 </div>
@@ -149,7 +144,7 @@ $moreOpen = $filters['state'] !== '' || $filters['by'] !== '';
 </form>
 
 <div data-live-region="association-guest-directory">
-<section class="card directory-panel association-directory"><div class="panel-top"><div class="panel-heading"><span class="panel-icon"><?= Page::navIcon('association-guests') ?></span><div><h2>Guest list <span class="result-count"><?= count($guests) ?></span></h2><p><?= $filtered ? 'Guests that match your search and filters.' : 'Every guest added by the ' . $e(AssociationGuests::NAME) . '.' ?> <?= $e(AssociationGuests::SORTS[$filters['sort']]) ?>.<?= $mail === null ? ' PSOOLA could not be reached for the QR email status just now.' : '' ?></p></div></div></div>
+<section class="card directory-panel association-directory"><div class="panel-top"><div class="panel-heading"><span class="panel-icon"><?= Page::navIcon('association-guests') ?></span><div><h2>Guest list <span class="result-count"><?= count($guests) ?></span></h2><p><?= $filtered ? 'Guests that match your search and filters.' : 'Every guest added by the ' . $e(AssociationGuests::NAME) . '.' ?> <?= $e(AssociationGuests::SORTS[$filters['sort']]) ?>.<?= $mail === null ? ' PSOOLA could not be reached for the QR email status just now.' : '' ?></p></div></div><?php if ($canPdf): ?><div class="panel-actions"><a class="btn gold association-pdf" href="association-guests.php?pdf=list"><?= Page::navIcon('download') ?><span>Download guest list (PDF)</span></a></div><?php endif; ?></div>
 <div class="table-wrap association-guest-scroll">
 <table class="association-guest-table">
   <tr><th>Reference</th><th>Name</th><th>Phone</th><th>Ticket</th><th>Lunch</th><th>Price</th><th>QR email</th><th>Added by</th><th>Added</th></tr>

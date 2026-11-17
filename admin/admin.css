@@ -1568,16 +1568,34 @@ body:has([data-guest-tickets]) .page-actions .btn{background:transparent;border:
 .registration-directory .empty-state .btn{margin-top:4px}
 /* Association guests: one Slemani Association panel (count, what it owes, PDF) with ticket tiles. */
 .attendance-tile.blue{--tile-bg:var(--blue-l);--tile-ink:var(--blue-d)}
-.association-overview-main{display:flex;flex-direction:column;gap:16px;min-width:0}
-.association-overview .association-guest-org h2{margin:2px 0 0;font-size:20px}
-.association-overview-figures{display:flex;flex-wrap:wrap;align-items:center;gap:14px 22px}
-.association-overview-figures .attendance-figure{margin:0}
-.association-overview .association-guest-owes{padding:10px 16px}
-.association-overview .association-pdf{align-self:flex-start;display:inline-flex;align-items:center;gap:8px}
-.association-overview .association-pdf .nav-icon{width:17px;height:17px}
+.association-summary{margin-bottom:24px;padding:22px 24px}
+.association-summary-head{display:flex;flex-wrap:wrap;align-items:center;gap:12px 14px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid #e5edf3}
+.association-summary-head h2{margin:2px 0 0;font-size:20px;line-height:1.2}
+.association-summary-head>div{flex:1 1 200px;min-width:0}
+.association-paylater{display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border-radius:999px;background:var(--teal-l);color:var(--teal-d);font-size:12.5px;font-weight:700}
+.association-paylater .nav-icon{width:16px;height:16px}
+.association-stats{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr) repeat(4,minmax(0,1fr));gap:12px}
+.association-stat{display:flex;flex-direction:column;gap:4px;min-width:0;padding:14px 16px;border-radius:14px;background:var(--tile-bg);color:var(--tile-ink);border-top:3px solid var(--tile-ink)}
+.association-stat span{font-size:12px;font-weight:700;letter-spacing:.02em}
+.association-stat strong{font-size:28px;line-height:1.15;font-variant-numeric:tabular-nums;color:var(--ink)}
+.association-stat small{font-size:11.5px;opacity:.85}
+.association-stat.teal{--tile-bg:var(--teal-l);--tile-ink:var(--teal-d)}
+.association-stat.red{--tile-bg:var(--red-l);--tile-ink:var(--red-d)}
+.association-stat.red strong{color:var(--red-d)}
+.association-money{display:flex;flex-direction:column}
+.association-money b{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 5px;font-weight:inherit}
+.association-money i{font-style:normal;font-size:13px;font-weight:700;letter-spacing:.04em}
+.association-money b+b{font-size:20px}
+.association-stat.blue{--tile-bg:var(--blue-l);--tile-ink:var(--blue-d)}
+.association-stat.violet{--tile-bg:var(--violet-l);--tile-ink:var(--violet-d)}
+.association-stat.gold{--tile-bg:var(--gold-l);--tile-ink:var(--gold-d)}
+.association-stat.grey{--tile-bg:#eef2f6;--tile-ink:#5d7486}
+@media(max-width:1200px){.association-stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:600px){.association-summary{padding:18px}.association-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.association-stat.teal,.association-stat.red{grid-column:1/-1}.association-stat strong{font-size:24px}}
+.association-directory .association-pdf{display:inline-flex;align-items:center;gap:8px}
+.association-directory .association-pdf .nav-icon{width:17px;height:17px}
 .association-directory .panel-heading h2{display:flex;align-items:center;gap:8px}
 .association-filter-card{margin-bottom:24px}
-.association-overview .association-guest-org{flex:none}
 .association-guest-table td{vertical-align:middle}
 .association-guest-table td:nth-child(7),.association-guest-table td:nth-child(8){white-space:nowrap}
 /* Users › one account: who, role, access, pages, activity. */
