@@ -173,6 +173,7 @@ if (isset($_GET['new'])) {
         </div>
         <p class="lunch-vip-note small"><span aria-hidden="true">♛</span> VIP tickets include one lunch day free. That day shows “Included with VIP” instead of a price.</p>
       </fieldset>
+      <label class="cash-confirm-check whatsapp-consent"><input type="checkbox" name="whatsapp_consent" value="1"<?= ($_POST['whatsapp_consent'] ?? '') === '1' ? ' checked' : '' ?> required><span>The guest agreed to get the ticket QR code by <b>email and WhatsApp</b>.</span></label>
       <div class="form-actions"><a class="btn ghost" href="<?= $e($listUrl) ?>">Cancel</a><button class="btn cash-pay" name="do" value="cash" id="caller-pay">Paid by cash</button></div>
       <p class="muted small">The person is registered as paid by cash, and the money appears in Payments and Psoola orders.</p>
     </form>

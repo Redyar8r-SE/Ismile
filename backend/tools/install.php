@@ -84,6 +84,12 @@ foreach ($migrations as $file) {
         if ($name === '2026-11-02-association-batch-numbers.sql') {
             $methodAlreadyPresent = (bool) Db::value("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'association_batches' AND column_name = 'batch_number'");
         }
+        if ($name === '2026-11-18-whatsapp-consent.sql') {
+            $methodAlreadyPresent = (bool) Db::value("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'registrations' AND column_name = 'whatsapp_consent_at'");
+        }
+        if ($name === '2026-11-18-speaker-lunch.sql') {
+            $methodAlreadyPresent = (bool) Db::value("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'speaker_tickets' AND column_name = 'lunch_day1'");
+        }
         if ($name === '2026-11-12-badge-batch-numbers.sql') {
             $methodAlreadyPresent = (bool) Db::value("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'badge_batches' AND column_name = 'batch_number'");
         }

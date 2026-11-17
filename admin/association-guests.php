@@ -248,6 +248,7 @@ $association = AssociationGuests::NAME;
     </div>
     <p class="lunch-vip-note small"><span aria-hidden="true">♛</span> VIP tickets include one lunch day free. That day shows “Included with VIP” instead of a price.</p>
   </fieldset>
+  <label class="cash-confirm-check whatsapp-consent"><input type="checkbox" name="whatsapp_consent" value="1"<?= ($_POST['whatsapp_consent'] ?? '') === '1' ? ' checked' : '' ?> required><span>The guest agreed to get the ticket QR code by <b>email and WhatsApp</b>.</span></label>
   <div class="form-actions"><a class="btn ghost" href="association-guests.php">Cancel</a><button class="btn cash-pay" name="do" value="add" id="caller-pay">Add by association</button></div>
   <p class="muted small">The guest is registered and tagged <?= $e($association) ?>. PSOOLA records it as a cash sale, and the price is added to what the association owes iSmile.</p>
 </form>

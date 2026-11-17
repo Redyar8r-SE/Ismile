@@ -68,10 +68,15 @@ $check('the guest is registered at once by the cash sale', $added['sale']['statu
 $check('the guest is tagged Slemani Association', AssociationGuests::isGuest($ref) && (AssociationGuests::tags([$ref, 'ISM26-NOPE00'])[$ref] ?? '') === 'Slemani Association' && count(AssociationGuests::tags([$ref, 'ISM26-NOPE00'])) === 1);
 $check('the tag records who added the guest', (int) Db::value('SELECT added_by FROM association_guests WHERE ref = ?', [$ref]) === (int) $staff['id']);
 $check('the PSOOLA side is a normal cash sale (QR emailed at once)', $registration['pay_method'] === 'cash' && Db::value("SELECT method FROM payments WHERE registration_id = ? AND status = 'paid'", [$registration['id']]) === 'cash');
+$check('no WhatsApp tick: only email (no agreement saved)', $registration['whatsapp_consent_at'] === null);
 $check('adding is in the activity log', (bool) Db::value("SELECT id FROM audit_log WHERE action = 'association_guest.add' AND details LIKE ?", ['%' . $ref . '%']));
 
 // ---- a VIP and a Student (no student ID photo needed) ----
-$vip = AssociationGuests::add($form('Bryar', ['ticket' => 'vip', 'lunch_day1' => '1', 'vip_lunch_day' => '1']), $staff);
+$vip = AssociationGuests::add($form('Bryar', ['ticket' => 'vip', 'lunch_day1' => '1', 'vip_lunch_day' => '1', 'whatsapp_consent' => '1']), $staff);
+$vipPerson = Registrations::find((int) $vip['sale']['registration_id']);
+$check('the WhatsApp tick is saved on the sale and stays with the registered guest', $vipPerson['whatsapp_consent_at'] !== null
+    && Db::value('SELECT whatsapp_consent_at FROM checkouts WHERE ref = ?', [$vip['checkout']['ref']]) !== null
+    && (\Ismile\Payments\PsoolaGateway::whatsappConsent($vipPerson)['acknowledged'] ?? false) === true);
 $check('a VIP guest can be added', $vip['sale']['status'] === 'paid' && Registrations::find((int) $vip['sale']['registration_id'])['ticket_type'] === 'vip');
 $student = AssociationGuests::add($form('Shno', ['specialty' => 'student', 'ticket' => 'student', 'university' => 'University of Sulaimani', 'stage' => '3', 'ambassador' => 'AMB-X']), $staff);
 $check('no ambassador code is saved for association students', Registrations::find((int) $student['sale']['registration_id'])['ambassador_code'] === null && Registrations::find((int) $student['sale']['registration_id'])['id_photo_id'] === null);

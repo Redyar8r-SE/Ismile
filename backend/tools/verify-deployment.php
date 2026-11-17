@@ -125,6 +125,7 @@ foreach ($pages as $page) {
 }
 $html = $render('association');
 $dashboard = $render('index');
+$check('Dashboard: the workshop seat list scrolls inside its box', !str_contains($dashboard, 'class="availability-row"') || str_contains($dashboard, 'class="availability-scroll"'));
 $check('dashboard shows separate ticket, workshop and combined income; remaining revenue is only on Association', str_contains($dashboard,'<span>Ticket income</span>') && str_contains($dashboard,'<span>Workshop income</span>') && str_contains($dashboard,'<span>Total income</span>') && !str_contains($dashboard,'Ticket revenue remaining') && str_contains($html,'Ticket revenue remaining'));
 $income = \Ismile\Admin\DashboardIncome::totals();
 foreach ($income['total'] as $currency => $amount) {
@@ -262,9 +263,11 @@ $html = $render('speaker-tickets');
 $check('Speaker tickets: menu item, speaker list, speaker list PDF and Add speaker button', str_contains($html, 'href="speaker-tickets.php"') && str_contains($html, 'Speaker list') && str_contains($html, 'Download speaker list (PDF)') && str_contains($html, 'href="speaker-tickets.php?tab=add"'));
 $html = $render('speaker-tickets', 'tab=add');
 $check('Add speaker: free ticket form with gender, age, free lunch days and the WhatsApp agreement', str_contains($html, 'id="speaker-form"') && str_contains($html, 'name="gender"') && str_contains($html, 'name="age"') && str_contains($html, 'name="lunch_day1"') && str_contains($html, 'name="lunch_day2"') && str_contains($html, 'name="consent"') && str_contains($html, 'Yes, add and send QR') && !str_contains($html, 'name="student_id"'));
+$check('Add speaker: the lunch days start unticked (the Owner ticks them)', !preg_match('/name="lunch_day[12]" value="1" checked/', $html));
 $check('Viewer sees Speaker tickets without the Add speaker button', !str_contains($render('speaker-tickets', '', 'viewer'), 'tab=add') && !str_contains($render('speaker-tickets', '', 'viewer'), '<h2>Not allowed</h2>'));
 $check('Volunteer cannot open Speaker tickets', str_contains($render('speaker-tickets', '', 'volunteer'), '<h2>Not allowed</h2>'));
-$check('Speaker tickets table exists and the speaker list PDF renders', (int) Db::value("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'speaker_tickets'") === 1
+$check('Speaker tickets table exists with the free lunch columns, and the speaker list PDF renders', (int) Db::value("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'speaker_tickets'") === 1
+    && (int) Db::value("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'speaker_tickets' AND column_name IN ('lunch_day1', 'lunch_day2', 'lunch_error')") === 3
     && str_starts_with(PdfReport::make('Speaker tickets', \Ismile\SpeakerTickets::reportRows()), '%PDF-'));
 $html = $render('lists', 'list=registered');
 $check('Registered list offers the Sale type filter (cash, card, free, association)', str_contains($html, '<legend>Sale type</legend>') && str_contains($html, 'name="sale" value="cash"') && str_contains($html, 'Card (online)') && str_contains($html, 'name="sale" value="association"'));

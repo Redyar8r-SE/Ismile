@@ -1,7 +1,8 @@
 <?php
 // Speaker tickets: speakers registered one by one with a free PSOOLA guest
-// ticket (0 IQD) and free lunch on the days ticked. PSOOLA sends the QR by
-// email and WhatsApp. Only Owners add speakers; ?tab=add is the form.
+// ticket (0 IQD); the lunch days ticked are then added to that ticket, free.
+// PSOOLA sends the QR by email and WhatsApp. Only Owners add speakers; ?tab=add
+// is the form.
 
 declare(strict_types=1);
 
@@ -37,7 +38,19 @@ if (Page::query('pdf') === 'list') {
     exit;
 }
 
-// ---------- Add a speaker, or retry one PSOOLA has not confirmed ----------
+// "Free lunch day 1 and day 2 added." or why it was not, for the flash message.
+$lunchNote = static function (string $key): array {
+    $row = \Ismile\Db::one('SELECT st.lunch_day1 AS want1, st.lunch_day2 AS want2, st.lunch_error, r.lunch_day1, r.lunch_day2 FROM speaker_tickets st
+        JOIN sponsored_ticket_orders o ON o.attempt_key = st.attempt_key LEFT JOIN registrations r ON r.id = o.registration_id WHERE st.attempt_key = ?', [$key]);
+    if (!$row || ((int) $row['want1'] + (int) $row['want2']) === 0) return [true, ''];
+    $done = array_values(array_filter([1, 2], static fn (int $d): bool => (int) $row['lunch_day' . $d] === 1));
+    if ($row['lunch_error'] === null && count($done) === (int) $row['want1'] + (int) $row['want2']) {
+        return [true, ' Free lunch added: day ' . implode(' and day ', $done) . '.'];
+    }
+    return [false, ' The free lunch was not added yet: ' . rtrim((string) ($row['lunch_error'] ?? 'PSOOLA did not confirm it.'), '.') . '. Use Add lunch again in the speaker list.'];
+};
+
+// ---------- Add a speaker, retry one PSOOLA has not confirmed, or add the lunch again ----------
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     $do = (string) ($_POST['do'] ?? '');
     $tab = $do === 'add' ? 'add' : 'speakers';
@@ -52,7 +65,20 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 throw new UserError('That speaker was not found. Reload the page.');
             }
             $order = GuestOrders::retry($user, $key);
-            Page::flash('ok', $order['status'] === 'issued' ? 'PSOOLA issued the free speaker ticket (' . $order['partner_reference'] . ') and is sending the QR by email and WhatsApp.' : 'Sent again. PSOOLA has not confirmed it yet.');
+            if ($order['status'] !== 'issued') {
+                Page::flash('ok', 'Sent again. PSOOLA has not confirmed it yet.');
+                Page::redirect('speaker-tickets.php');
+            }
+            SpeakerTickets::lunchAfterTicket($key, $user, (int) $order['id']);
+            [$fine, $note] = $lunchNote($key);
+            Page::flash($fine ? 'ok' : 'error', 'PSOOLA issued the free speaker ticket (' . $order['partner_reference'] . ') and is sending the QR by email and WhatsApp.' . $note);
+            Page::redirect('speaker-tickets.php');
+        }
+        if ($do === 'lunch') {
+            $key = is_string($_POST['attempt'] ?? null) ? $_POST['attempt'] : '';
+            $result = SpeakerTickets::addLunch($key, $user);
+            if ($result['error'] !== null) throw new UserError($result['error']);
+            Page::flash('ok', $result['added'] ? 'PSOOLA added the free lunch: day ' . implode(' and day ', $result['added']) . '.' : 'The free lunch is already on this ticket.');
             Page::redirect('speaker-tickets.php');
         }
         if ($do !== 'add') {
@@ -60,15 +86,16 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         }
         $order = SpeakerTickets::add($_POST, $user);
         $name = trim(implode(' ', array_map(static fn (string $k): string => trim((string) ($_POST[$k] ?? '')), ['first_name', 'father_name', 'grandfather_name'])));
-        Page::flash('ok', 'Added ' . $name . ' as a speaker (' . $order['partner_reference'] . '). PSOOLA issued the free ticket and is sending the QR by email and WhatsApp.');
+        [$fine, $note] = $order['status'] === 'issued' ? $lunchNote((string) $_POST['attempt']) : [true, ''];
+        Page::flash($fine ? 'ok' : 'error', 'Added ' . $name . ' as a speaker (' . $order['partner_reference'] . '). PSOOLA issued the free ticket and is sending the QR by email and WhatsApp.' . $note);
         Page::redirect('speaker-tickets.php');
     } catch (UserError $error) {
         Page::flash('error', $error->key);
-        if ($do === 'retry') Page::redirect('speaker-tickets.php');
+        if ($do !== 'add') Page::redirect('speaker-tickets.php');
     } catch (\Throwable $error) {
         \Ismile\App::log('error', 'Speaker ticket failed', ['error' => $error->getMessage(), 'at' => $error->getFile() . ':' . $error->getLine()]);
-        Page::flash('error', 'Something went wrong, so the speaker was not added. (The error is in the server log.)');
-        if ($do === 'retry') Page::redirect('speaker-tickets.php');
+        Page::flash('error', $do === 'lunch' ? 'Something went wrong, so the lunch was not added. (The error is in the server log.)' : 'Something went wrong, so the speaker was not added. (The error is in the server log.)');
+        if ($do !== 'add') Page::redirect('speaker-tickets.php');
     }
 }
 
@@ -152,7 +179,13 @@ if ($tab === 'speakers') {
     </div></div></td>
     <td dir="ltr"><?= $e((string) $speaker['phone']) ?></td>
     <td><?= $e(Registrations::ticketName($speaker['ticket_type'])) ?> <span class="pill green">Free</span></td>
-    <td><?= $e(SpeakerTickets::lunchText($speaker)) ?></td>
+    <td><?php $missing = SpeakerTickets::lunchMissing($speaker); ?>
+      <?= $e(SpeakerTickets::lunchText($speaker)) ?>
+      <?php if ($state === 'waiting' && ((int) $speaker['want_day1'] + (int) $speaker['want_day2']) > 0): ?><small class="muted">Ticked: <?= $e(implode(' and ', array_map(static fn (int $d): string => 'Day ' . $d, array_values(array_filter([1, 2], static fn (int $d): bool => (int) $speaker['want_day' . $d] === 1))))) ?>, added after the ticket</small><?php endif; ?>
+      <?php if ($missing): ?><small><span class="pill gold">Not added: <?= $e(implode(' and ', array_map(static fn (int $d): string => 'Day ' . $d, $missing))) ?></span></small>
+      <?php if ($speaker['lunch_error']): ?><small class="muted"><?= $e((string) $speaker['lunch_error']) ?></small><?php endif; ?>
+      <?php if ($canAdd): ?><form method="post" class="inline-form"><?= Page::csrfField() ?><input type="hidden" name="do" value="lunch"><input type="hidden" name="attempt" value="<?= $e($speaker['attempt_key']) ?>"><button class="btn small">Add lunch again</button></form><?php endif; ?><?php endif; ?>
+    </td>
     <td><?= $state === 'registered' ? $send($speaker['email_status']) : '<span class="muted">–</span>' ?></td>
     <td><?= $state === 'registered' ? $send($speaker['whatsapp_status']) : '<span class="muted">–</span>' ?></td>
     <td><b><?= $e($speaker['added_by_name'] ?? 'Removed account') ?></b></td>
@@ -174,7 +207,8 @@ $value = static fn (string $key): string => Page::e(is_string($_POST[$key] ?? nu
 $selected = static fn (string $key, string $option): string => ($_POST[$key] ?? '') === $option ? ' selected' : '';
 // The same request key after an error, so a speaker PSOOLA already saved is never sent twice.
 $attempt = is_string($_POST['attempt'] ?? null) && preg_match('/^[a-f0-9]{32}$/D', $_POST['attempt']) ? $_POST['attempt'] : bin2hex(random_bytes(16));
-$lunch = static fn (int $day): bool => $posted ? ($_POST['lunch_day' . $day] ?? '') === '1' : true;
+// Lunch days start unticked: the Owner ticks them for each speaker.
+$lunch = static fn (int $day): bool => $posted && ($_POST['lunch_day' . $day] ?? '') === '1';
 $lunchDays = [1 => ['Thursday 19 Nov', 'Thu 19 Nov'], 2 => ['Friday 20 Nov', 'Fri 20 Nov']];
 ?>
 <div class="cash-layout speaker-layout">
@@ -233,7 +267,7 @@ $lunchDays = [1 => ['Thursday 19 Nov', 'Thu 19 Nov'], 2 => ['Friday 20 Nov', 'Fr
     <h3>When you press Add speaker</h3>
     <ol>
       <li><b>PSOOLA issues the free ticket</b><small>0 IQD, a Dentist or Student ticket</small></li>
-      <li><b>Free lunch is added</b><small>On the days you ticked, on the same ticket</small></li>
+      <li><b>Free lunch is added</b><small>Right after the ticket, on the days you ticked</small></li>
       <li><b>The QR is sent</b><small>To the speaker's email and WhatsApp</small></li>
     </ol>
     <div class="speaker-send"><span><?= Page::navIcon('mail') ?>Email</span><span><?= Page::navIcon('phone') ?>WhatsApp</span></div>

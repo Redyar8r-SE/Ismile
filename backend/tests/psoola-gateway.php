@@ -394,6 +394,23 @@ $check('cash sales switched off at PSOOLA are explained', $throws(fn () => $gate
 $respond(201, ['id' => 'ord_cash', 'order' => ['totalAmount' => 0, 'currency' => 'IQD']]);
 $check('a cash sale without a valid total is refused', $throws(fn () => $gateway->createCashSale($payment, $registration), GatewayNotReady::class, 'total'));
 
+// ---- the QR by WhatsApp too: the person agreed on the team's form ----
+$check('without the agreement no WhatsApp agreement is sent to PSOOLA', !isset($json['buyer']['whatsappConsent']));
+$agreed = $registration + ['whatsapp_consent_at' => '2026-11-18 10:00:00'];
+$respond(...$cashOrder(95020));
+$gateway->createCashSale($payment, $agreed);
+$sent = $lastRequest();
+$consent = json_decode($sent['body'], true)['buyer']['whatsappConsent'] ?? null;
+$check('a person who agreed: PSOOLA is asked to send the QR on WhatsApp as well as email', is_array($consent) && $consent['acknowledged'] === true
+    && $consent['receivedAt'] === strtotime('2026-11-18 10:00:00') * 1000 && $consent['categories'] === ['utility'] && $consent['source'] === 'other'
+    && ($sent['headers']['idempotency-key'] ?? '') === 'ismile-cash-77');
+$check('a retried sale sends exactly the same WhatsApp agreement', $gateway->orderBody($agreed) === $gateway->orderBody($agreed));
+$respond(400, ['error' => ['code' => 'INVALID_REQUEST', 'message' => 'unsupported fields: buyer.whatsappConsent'], 'requestId' => 'req_wa']);
+$throws(fn () => $gateway->createCashSale($payment, $agreed), \Ismile\Payments\PsoolaRefused::class);
+$sent = $lastRequest();
+$check('if PSOOLA refuses only the WhatsApp agreement, the sale is sent again with email only, under its own key', !isset(json_decode($sent['body'], true)['buyer']['whatsappConsent'])
+    && ($sent['headers']['idempotency-key'] ?? '') === 'ismile-cash-77-email');
+
 // ---------------- finding a sale whose answer was lost ----------------
 $respond(200, ['id' => 'ord_cash', 'status' => 'paid', 'partnerReference' => 'ISM26-ABC123', 'ticketsUrl' => 'https://psoola.test/tickets/secret-link', 'order' => ['totalAmount' => 95020, 'currency' => 'IQD']]);
 $found = $gateway->findByReference('ISM26-ABC123');

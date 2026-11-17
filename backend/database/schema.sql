@@ -132,6 +132,7 @@ CREATE TABLE IF NOT EXISTS checkouts (
   ambassador_code    VARCHAR(40)       NULL,
   id_photo_id        INT UNSIGNED      NULL,                   -- the student ID photo (student_id_photos)
   terms_accepted_at  DATETIME          NULL,                   -- ticked "tickets are non-refundable" (website form)
+  whatsapp_consent_at DATETIME         NULL,                   -- agreed to get the ticket QR by WhatsApp too (team forms)
   view_nonce         CHAR(32)          NOT NULL,               -- with the secret: their payment page link
   registration_id    INT UNSIGNED      NULL,                   -- set when paid
   created_by         INT UNSIGNED      NULL,                   -- the staff member, for a phone registration
@@ -186,6 +187,7 @@ CREATE TABLE IF NOT EXISTS registrations (
   id_photo_id        INT UNSIGNED      NULL,                   -- the student ID photo; NULL after it is deleted (90 days after the summit)
   id_photo_deleted_at DATETIME         NULL,
   terms_accepted_at  DATETIME          NULL,                   -- when they accepted "tickets are non-refundable" (proof)
+  whatsapp_consent_at DATETIME         NULL,                   -- agreed to get the ticket QR by WhatsApp too (team forms)
   -- where it stands
   status             ENUM('paid','complimentary','cancelled') NOT NULL,
   possible_duplicate TINYINT(1)        NOT NULL DEFAULT 0,     -- same phone or email as another registration
@@ -1243,12 +1245,16 @@ CREATE TABLE IF NOT EXISTS association_guests (
 
 -- Speaker tickets: speakers an Owner registers on Event operations › Speaker
 -- tickets. Each is a free (complimentary) PSOOLA guest ticket, with free lunch
--- when chosen; PSOOLA sends the QR by email and WhatsApp. This only remembers
--- which guest-ticket requests (sponsored_ticket_orders.attempt_key) are speakers.
+-- when chosen; PSOOLA sends the QR by email and WhatsApp. This remembers which
+-- guest-ticket requests (sponsored_ticket_orders.attempt_key) are speakers, the
+-- lunch days ticked, and why PSOOLA did not add a free lunch yet (lunch_error).
 CREATE TABLE IF NOT EXISTS speaker_tickets (
   id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
   attempt_key CHAR(32)     NOT NULL,
   added_by    INT UNSIGNED NOT NULL,
+  lunch_day1  TINYINT(1)   NOT NULL DEFAULT 0,
+  lunch_day2  TINYINT(1)   NOT NULL DEFAULT 0,
+  lunch_error VARCHAR(255) NULL,
   created_at  DATETIME     NOT NULL,
   PRIMARY KEY (id),
   UNIQUE KEY uq_speaker_ticket_attempt (attempt_key),

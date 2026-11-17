@@ -678,6 +678,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const studentOption = specialty.querySelector('[value="student"]');
   // "VIP $100" (main Owner only) is a VIP ticket at another price.
   const isVip = (value) => value === "vip" || value === "vip100";
+  // Lunch is ticked by hand only: changing the ticket (Dentist, Student, VIP)
+  // or the VIP included day clears the lunch days, then only the day included
+  // with VIP is ticked. The first run keeps what was posted (after an error).
+  let lastTicket = null;
+  let lastVipDay = "";
   const sync = (event) => {
     const from = event && event.target;
     if (from === specialty) {
@@ -710,6 +715,12 @@ document.addEventListener("DOMContentLoaded", () => {
       // The included workshop is optional for VIP $200 and VIP $100.
       vipWorkshop.querySelector("select").disabled = !isVip(ticket.value);
     }
+    const vipDayNow = isVip(ticket.value) && vipDay ? vipDay.value : "";
+    if (lastTicket !== null && (ticket.value !== lastTicket || vipDayNow !== lastVipDay)) {
+      form.querySelectorAll('[name="lunch_day1"], [name="lunch_day2"]').forEach((input) => { input.checked = false; });
+    }
+    lastTicket = ticket.value;
+    lastVipDay = vipDayNow;
     if (vipFields && vipDay) {
       const vip = isVip(ticket.value);
       vipFields.hidden = !vip;

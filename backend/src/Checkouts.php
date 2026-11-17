@@ -192,6 +192,10 @@ final class Checkouts
             throw new UserError('Only the main Owner can sell VIP for $100.');
         }
         $row = ['pay_method' => 'cash'] + self::officeRow($in);
+        // Ticked on the form: PSOOLA then sends the QR by WhatsApp as well as email.
+        if (($in['whatsapp_consent'] ?? '') === '1') {
+            $row['whatsapp_consent_at'] = App::now();
+        }
         if (!SiteData::pricesReadyFor($row)) {
             throw new UserError('The ticket prices are not set yet, so nothing can be sold.');
         }
@@ -380,7 +384,7 @@ final class Checkouts
     {
         $duplicateOf = Db::value("SELECT id FROM registrations WHERE (email = ? OR phone = ?) AND status <> 'cancelled' LIMIT 1", [$checkout['email'], $checkout['phone']]);
         $fields = ['ref', 'first_name', 'father_name', 'grandfather_name', 'phone', 'email', 'city', 'gender', 'age', 'specialty', 'lang',
-            'ticket_type', 'lunch_day1', 'lunch_day2', 'vip_lunch_day', 'pay_method', 'university', 'study_stage', 'ambassador_code', 'id_photo_id', 'view_nonce', 'created_by', 'created_ip', 'created_at', 'terms_accepted_at'];
+            'ticket_type', 'lunch_day1', 'lunch_day2', 'vip_lunch_day', 'pay_method', 'university', 'study_stage', 'ambassador_code', 'id_photo_id', 'view_nonce', 'created_by', 'created_ip', 'created_at', 'terms_accepted_at', 'whatsapp_consent_at'];
         $row = array_intersect_key($checkout, array_flip($fields));
         $id = Db::insert('registrations', $row + [
             'status' => 'paid', 'possible_duplicate' => $duplicateOf ? 1 : 0, 'paid_at' => $paidAt, 'updated_at' => $paidAt,

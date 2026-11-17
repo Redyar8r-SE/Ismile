@@ -1,6 +1,7 @@
 <?php
-// Speaker tickets: only Owners add speakers; each is a free PSOOLA guest
-// ticket (0 IQD) with free lunch add-ons on the ticked days, QR by email and WhatsApp.
+// Speaker tickets: only Owners add speakers; each is a free PSOOLA guest ticket
+// (0 IQD), then the ticked lunch days are added to that ticket for free with
+// PSOOLA's add-on request (complimentary: true). QR by email and WhatsApp.
 // Needs the local PSOOLA simulator: node backend/tests/sponsored-provider.mjs
 // ISMILE_CONFIG=/test/config.php php backend/tests/speaker-tickets.php
 declare(strict_types=1);
@@ -62,25 +63,67 @@ $in = $form();
 $order = SpeakerTickets::add($in, $owner);
 $check('PSOOLA issued the free speaker ticket', $order['status'] === 'issued' && (int) $order['provider_amount'] === 0 && (int) $order['is_complimentary'] === 1);
 $request = json_decode((string) $order['request_json'], true);
-$check('the free lunch for both days was sent to PSOOLA on the same ticket', ($request['items'][0]['addOnIds'] ?? null) === ['lunch1-test', 'lunch2-test'] && $request['items'][0]['ticketTypeId'] === 'professional-test');
+$check('the ticket is ordered alone, without lunch', !isset($request['items'][0]['addOnIds']) && $request['items'][0]['ticketTypeId'] === 'professional-test');
+$session = array_values(array_filter($fixture()['sessions'], static fn (array $x): bool => $x['id'] === $order['provider_order_id']))[0];
+$check('then both lunch days were added to that ticket, free', $fixture()['addOnPosts'] === 2 && array_column($session['tickets'][0]['addOnItems'], 'addOnId') === ['lunch1-test', 'lunch2-test'] && $session['order']['addOnChangesTotal'] === 0);
 $check('the request is a complimentary order with the speaker reason and no price', $request['issuanceType'] === 'complimentary' && $request['complimentaryReason'] === SpeakerTickets::REASON && !isset($request['totalAmount']));
 $check('the speaker agreed to WhatsApp, so PSOOLA sends the QR on WhatsApp too', !empty($request['buyer']['whatsappConsent']['acknowledged']));
+$check('PSOOLA gets the speaker email and WhatsApp number for the QR', $request['buyer']['email'] === $in['email'] && $request['buyer']['phone'] === '+964' . substr($in['phone'], 1));
+$check('the QR email and WhatsApp status from PSOOLA are on the speaker', $order['email_status'] === 'queued' && Db::value('SELECT whatsapp_status FROM sponsored_ticket_orders WHERE id = ?', [$order['id']]) === 'pending');
 $person = Db::one('SELECT * FROM registrations WHERE id = ?', [$order['registration_id']]);
 $check('the speaker is registered with a free Dentist ticket', $person && $person['status'] === 'complimentary' && $person['ticket_type'] === 'professional' && $person['comp_reason'] === SpeakerTickets::REASON);
 $check('the free lunch is on the registration (Day 1 and Day 2)', (int) $person['lunch_day1'] === 1 && (int) $person['lunch_day2'] === 1);
 $check('gender, age, city and specialty are saved', $person['gender'] === 'female' && (int) $person['age'] === 41 && $person['city'] === 'Erbil' && $person['specialty'] === 'omfs');
 $check('the phone is saved in international form', $person['phone'] === '+964' . substr($in['phone'], 1));
-$check('the addition is in the history', (bool) Db::value("SELECT COUNT(*) FROM audit_log WHERE action = 'speaker_ticket.add' AND target_id = ?", [$order['id']]));
+$check('the addition and the free lunch are in the history', (bool) Db::value("SELECT COUNT(*) FROM audit_log WHERE action = 'speaker_ticket.add' AND target_id = ?", [$order['id']])
+    && (bool) Db::value("SELECT COUNT(*) FROM audit_log WHERE action = 'speaker_ticket.lunch' AND target_id = ?", [$order['id']]));
 $posts = $fixture()['posts'];
 $again = SpeakerTickets::add($in, $owner);
-$check('pressing Add speaker twice never makes a second ticket', (int) $again['id'] === (int) $order['id'] && $fixture()['posts'] === $posts && $speakers() === 1);
+$check('pressing Add speaker twice never makes a second ticket or a second lunch', (int) $again['id'] === (int) $order['id'] && $fixture()['posts'] === $posts && $speakers() === 1 && $fixture()['addOnPosts'] === 2);
+$check('Add lunch again on a speaker who has it sends nothing', SpeakerTickets::addLunch($in['attempt'], $owner)['added'] === [] && $fixture()['addOnPosts'] === 2);
+$check('only an Owner can add the lunch', $rejects(static fn () => SpeakerTickets::addLunch($in['attempt'], $staff), 'Only an Owner'));
+
+// ---- only day 2 ticked ----
+$dayTwo = SpeakerTickets::add($form(['first_name' => 'Lana', 'lunch_day1' => '', 'lunch_day2' => '1']), $owner);
+$dayTwoPerson = Db::one('SELECT * FROM registrations WHERE id = ?', [$dayTwo['registration_id']]);
+$check('only day 2 ticked: only day 2 is added', (int) $dayTwoPerson['lunch_day1'] === 0 && (int) $dayTwoPerson['lunch_day2'] === 1 && $fixture()['addOnPosts'] === 3);
+
+// ---- PSOOLA refuses the free lunch: the ticket stands, the lunch waits for Add lunch again ----
+file_get_contents('http://127.0.0.1:8862/fixture/lunch?mode=refuse');
+$refusedLunch = $form(['first_name' => 'Dara']);
+$refusedOrder = SpeakerTickets::add($refusedLunch, $owner);
+$row = static fn (string $key): array => array_values(array_filter(SpeakerTickets::all(), static fn (array $s): bool => $s['attempt_key'] === $key))[0];
+$dara = $row($refusedLunch['attempt']);
+$check('PSOOLA refusing the lunch still leaves the free ticket issued', $refusedOrder['status'] === 'issued' && SpeakerTickets::state($dara) === 'registered');
+$check('the refused lunch is not counted and shows why', (int) $dara['lunch_day1'] === 0 && (int) $dara['lunch_day2'] === 0 && SpeakerTickets::lunchMissing($dara) === [1, 2]
+    && str_contains((string) $dara['lunch_error'], 'not enabled'));
+file_get_contents('http://127.0.0.1:8862/fixture/lunch?mode=free');
+$result = SpeakerTickets::addLunch($refusedLunch['attempt'], $owner);
+$dara = $row($refusedLunch['attempt']);
+$check('Add lunch again adds it once PSOOLA allows it', $result['added'] === [1, 2] && $result['error'] === null && (int) $dara['lunch_day1'] === 1 && $dara['lunch_error'] === null && SpeakerTickets::lunchMissing($dara) === []);
+
+// ---- PSOOLA adds the lunch but not free, or answers but adds nothing ----
+file_get_contents('http://127.0.0.1:8862/fixture/lunch?mode=charge');
+$charged = $form(['first_name' => 'Shno', 'lunch_day2' => '']);
+SpeakerTickets::add($charged, $owner);
+$shno = $row($charged['attempt']);
+$check('a lunch PSOOLA prices is on the ticket but flagged to check with PSOOLA', (int) $shno['lunch_day1'] === 1 && str_contains((string) $shno['lunch_error'], 'did not show it as free'));
+file_get_contents('http://127.0.0.1:8862/fixture/lunch?mode=silent');
+$silent = $form(['first_name' => 'Rezan', 'lunch_day2' => '']);
+SpeakerTickets::add($silent, $owner);
+$rezan = $row($silent['attempt']);
+$check('a lunch PSOOLA does not show on the ticket is not counted', (int) $rezan['lunch_day1'] === 0 && SpeakerTickets::lunchMissing($rezan) === [1] && str_contains((string) $rezan['lunch_error'], 'did not show lunch day 1'));
+file_get_contents('http://127.0.0.1:8862/fixture/lunch?mode=free');
+foreach ([$dayTwo, $refusedOrder] as $extra) Erase::registration((int) $extra['registration_id'], (string) Db::value('SELECT ref FROM registrations WHERE id = ?', [$extra['registration_id']]), Db::one('SELECT * FROM admin_users WHERE email = ?', [Erase::MAIN_OWNER]) ?? $account(Erase::MAIN_OWNER, 'owner'));
+foreach ([$charged, $silent] as $extra) Erase::registration((int) $row($extra['attempt'])['registration_id'], (string) $row($extra['attempt'])['ref'], Db::one('SELECT * FROM admin_users WHERE email = ?', [Erase::MAIN_OWNER]));
 
 // ---- a dental student speaker without lunch ----
 $student = SpeakerTickets::add($form(['specialty' => 'student', 'first_name' => 'Rawa', 'lunch_day1' => '0', 'lunch_day2' => '0', 'gender' => 'male', 'age' => '22']), $owner);
 $studentRequest = json_decode((string) $student['request_json'], true);
 $studentPerson = Db::one('SELECT * FROM registrations WHERE id = ?', [$student['registration_id']]);
+$posts = $fixture()['addOnPosts'];
 $check('a student speaker gets a free Student ticket with no lunch', $studentRequest['items'][0]['ticketTypeId'] === 'student-test' && !isset($studentRequest['items'][0]['addOnIds'])
-    && $studentPerson['ticket_type'] === 'student' && (int) $studentPerson['lunch_day1'] === 0 && (int) $studentPerson['lunch_day2'] === 0);
+    && $studentPerson['ticket_type'] === 'student' && (int) $studentPerson['lunch_day1'] === 0 && (int) $studentPerson['lunch_day2'] === 0 && $fixture()['addOnPosts'] === $posts);
 
 // ---- the list, totals and PDF ----
 file_get_contents('http://127.0.0.1:8862/fixture/delivery?id=' . rawurlencode((string) $order['provider_order_id']));

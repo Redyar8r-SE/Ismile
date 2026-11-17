@@ -239,6 +239,7 @@ Page::top('Workshop & Register', 'desk');
       <?php endforeach; ?>
     </div>
   </fieldset>
+  <label class="cash-confirm-check whatsapp-consent"><input type="checkbox" name="whatsapp_consent" value="1"<?= ($_POST['whatsapp_consent'] ?? '') === '1' ? ' checked' : '' ?> required><span>The person agreed to get the ticket QR code by <b>email and WhatsApp</b>.</span></label>
   <div class="form-actions"><button class="btn cash-pay desk-big" name="do" value="cash" id="caller-pay">Paid by cash</button></div>
 </form>
 <dialog class="cash-confirm" id="cash-confirm" aria-labelledby="cash-confirm-title">

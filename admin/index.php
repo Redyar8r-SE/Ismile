@@ -176,7 +176,9 @@ Page::top('Dashboard', 'index');
     </section>
     <?php if (\Ismile\Auth::can($user,'workshops')): ?><section class="card workshop-preview"><?= Page::panelHeading('Workshop availability', 'Keep an eye on the seats.', 'workshops') ?>
       <?php if (!$workshopCards): ?><?= Page::emptyState('Workshops coming soon', 'Active workshops will appear here.', 'workshops') ?><?php endif; ?>
+      <?php if ($workshopCards): ?><div class="availability-scroll" tabindex="0" aria-label="Workshop seats, scroll for more"><?php endif; ?>
       <?php foreach ($workshopCards as [$workshop,$used,$capacity]): ?><a class="availability-row" href="workshops.php?id=<?= rawurlencode($workshop['id']) ?>#people"><span><b><?= $e(SiteData::workshopName($workshop)) ?></b><small><?= max(0,$capacity-$used) ?> seats left</small></span><span class="pill <?= $used >= $capacity ? 'red' : 'green' ?>"><?= $used ?> / <?= $capacity ?></span></a><?php endforeach; ?>
+      <?php if ($workshopCards): ?></div><?php endif; ?>
     </section><?php endif; ?>
   </aside>
 </div>

@@ -96,6 +96,13 @@ final class PsoolaGateway implements Gateway, CashSales
         $body = $this->orderBody($checkout);
         // One key per attempt, never shared with a checkout session (that would be a 409).
         $answer = $this->request('POST', 'api/partner/v1/orders', $body, ['Idempotency-Key: ismile-cash-' . (int) $payment['id']]);
+        if ($answer['status'] === 400 && isset($body['buyer']['whatsappConsent']) && stripos((string) ($answer['json']['error']['message'] ?? ''), 'whatsapp') !== false) {
+            // PSOOLA refused only the WhatsApp agreement (nothing was sold): sell
+            // with email delivery, under its own key, so the sale is never lost.
+            App::log('warning', 'Psoola refused the WhatsApp agreement on a cash sale; sold with email only', ['ref' => $checkout['ref'] ?? null, 'error' => self::describeError($answer)]);
+            unset($body['buyer']['whatsappConsent']);
+            $answer = $this->request('POST', 'api/partner/v1/orders', $body, ['Idempotency-Key: ismile-cash-' . (int) $payment['id'] . '-email']);
+        }
         if ($answer['status'] >= 500) {
             // A server error says nothing about whether the sale was made: the caller looks it up.
             throw new GatewayNotReady('Psoola cash sale unanswered: ' . self::describeError($answer));
@@ -188,18 +195,39 @@ final class PsoolaGateway implements Gateway, CashSales
         if ($eventId === '' || $showId === '') {
             throw new GatewayNotReady('Psoola is not configured yet (payments.psoola.event_id / show_id in config.php).');
         }
+        $buyer = [
+            'email' => (string) $form['email'],
+            'phone' => (string) $form['phone'],   // already E.164 (Validate::phone)
+            'name'  => Registrations::fullName($form),
+        ];
+        $consent = self::whatsappConsent($form);
+        if ($consent !== null) {
+            $buyer['whatsappConsent'] = $consent;
+        }
         return [
             'eventId'          => $eventId,
             'showId'           => $showId,
             'items'            => self::items($form, (array) App::config('payments.psoola.ticket_types', []), (array) App::config('payments.psoola.add_ons', [])),
-            'buyer'            => [
-                'email' => (string) $form['email'],
-                'phone' => (string) $form['phone'],   // already E.164 (Validate::phone)
-                'name'  => Registrations::fullName($form),
-            ],
+            'buyer'            => $buyer,
             'locale'           => self::locale((string) ($form['lang'] ?? 'en')),
             'partnerReference' => (string) $form['ref'],
         ];
+    }
+
+    /**
+     * PSOOLA's WhatsApp agreement for a buyer who agreed (whatsapp_consent_at,
+     * ticked on the team's form), so PSOOLA sends the QR by WhatsApp as well
+     * as email. The same time every attempt, so a retried order is identical.
+     */
+    public static function whatsappConsent(array $person): ?array
+    {
+        $at = (string) ($person['whatsapp_consent_at'] ?? '');
+        $time = $at !== '' ? strtotime($at) : false;
+        if ($time === false) {
+            return null;
+        }
+        return ['acknowledged' => true, 'receivedAt' => $time * 1000, 'source' => 'other',
+            'reference' => 'ismile-whatsapp-consent-' . (string) ($person['ref'] ?? ''), 'categories' => ['utility']];
     }
 
     /** The event as PSOOLA's partner API lists it (ticket types, add-ons, IQD prices). */

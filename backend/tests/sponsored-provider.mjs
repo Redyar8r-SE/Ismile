@@ -2,8 +2,8 @@
 import http from 'node:http';
 import fs from 'node:fs';
 const sessions=new Map(),keys=new Map(),bodies=new Map(),calls=new Map(),buyers=new Map(),listOrders=new Map();
-let listPageSize=100;
-const runId=Date.now().toString(36);let posts=0,creations=0,reads=0,catalogueReads=0,unsafePosts=0,checkoutPosts=0,permission=true;
+let listPageSize=100,ticketNo=0;
+const runId=Date.now().toString(36);let posts=0,creations=0,reads=0,catalogueReads=0,unsafePosts=0,checkoutPosts=0,permission=true,addOnPosts=0,lunchMode='free';const addOnKeys=new Map();
 const events=[{id:'event-test',name:{en:'iSmile Test Event',ar:'?????? ???????',ckb:'????? ???????????'},currency:'IQD',shows:[
  {id:'show-test',name:{en:'General admission',ar:'?????? ?????',ckb:'????????????? ????'},maxPerOrder:100,ticketTypes:[
   {id:'professional-test',name:{en:'Dentist',ckb:'??????? ?????? ????'},price:40000,available:500,addOns:[{id:'lunch1-test',name:{en:'Lunch day 1'},price:7500,available:500},{id:'lunch2-test',name:{en:'Lunch day 2'},price:8500,available:500}]},
@@ -19,7 +19,9 @@ http.createServer(async(req,res)=>{
  const url=new URL(req.url,'http://127.0.0.1:8862');
  const reply=(status,body,headers={})=>{res.writeHead(status,{'Content-Type':'application/json',...headers});res.end(JSON.stringify(body));};
  const error=(status,code,headers={})=>reply(status,{error:{code,message:'Fixture '+code},requestId:'support-'+code},headers);
- if(url.pathname==='/fixture')return reply(200,{posts,creations,reads,catalogueReads,unsafePosts,checkoutPosts,sessions:[...sessions.values()]});
+ if(url.pathname==='/fixture')return reply(200,{posts,creations,reads,catalogueReads,unsafePosts,checkoutPosts,addOnPosts,sessions:[...sessions.values()]});
+ // free: PSOOLA adds a complimentary lunch at 0; refuse: 403; charge: added but priced; silent: 201 but nothing added.
+ if(url.pathname==='/fixture/lunch'){lunchMode=url.searchParams.get('mode')||'free';return reply(200,{ok:true});}
  if(url.pathname==='/fixture/seed-order'&&req.method==='POST'){let raw='';for await(const data of req)raw+=data;const {session,lookupId,listOrder}=JSON.parse(raw);sessions.set(lookupId||session.id,{...session,request:session.request||{partnerReference:session.partnerReference}});if(listOrder)listOrders.set(lookupId||session.id,listOrder);else listOrders.delete(lookupId||session.id);return reply(200,{ok:true});}
  if(url.pathname==='/fixture/list-page-size'){listPageSize=Math.max(1,Math.min(100,Number(url.searchParams.get('size'))||100));return reply(200,{ok:true});}
  if(url.pathname==='/fixture/permission'){permission=url.searchParams.get('enabled')==='1';return reply(200,{ok:true});}
@@ -61,7 +63,9 @@ http.createServer(async(req,res)=>{
   const buyerKey=body.buyer.phone+'|'+event.id;if((buyers.get(buyerKey)||0)+quantity>10)return error(422,'LIMIT_EXCEEDED');
   const session={id:'guest_'+runId+'_'+(++creations),status:'paid',channel:'direct',isComplimentary:true,complimentaryReason:body.complimentaryReason,
    partnerReference:body.partnerReference,eventId:body.eventId,showId:body.showId,checkoutUrl:null,
-   order:{totalAmount:0,discountAmount:discount,currency:'IQD',ticketCount:quantity,items:ordered},
+   order:{totalAmount:0,discountAmount:discount,currency:'IQD',ticketCount:quantity,items:ordered,addOnChangesTotal:0},
+   tickets:ordered.flatMap(line=>Array.from({length:line.quantity},()=>({code:'SIM-'+runId+'-'+creations+'-'+(++ticketNo),qrCode:'SIMQR-'+runId+'-'+ticketNo,status:'valid',
+    ticketTypeId:line.ticketTypeId,ticketTypeName:'Ticket',holderName:body.buyer?.name||'',addOns:[],addOnItems:[]}))),
    emailStatus:email.startsWith('mailfail-')?'failed':'queued',whatsappStatus:body.buyer.whatsappConsent?'pending':null,
    ticketsUrl:'https://psoola.com/t/private-'+runId+'-'+creations,metadata:{ticketsUrl:'https://psoola.com/t/nested-private'},request:body};
   if(email.startsWith('positive-'))session.order.totalAmount=40000;
@@ -81,6 +85,23 @@ http.createServer(async(req,res)=>{
   const rows=[...sessions.entries()].map(([id,s])=>listOrders.get(id)||s).filter(s=>!url.searchParams.get('eventId')||(s.event?.id||s.eventId)===url.searchParams.get('eventId'));
   const start=Number(url.searchParams.get('cursor')||0),size=Math.min(listPageSize,Number(url.searchParams.get('limit')||100));
   return reply(200,{orders:rows.slice(start,start+size),nextCursor:start+size<rows.length?String(start+size):null});
+ }
+ // PSOOLA 18 Nov 2026: add a lunch to a ticket that was already issued ({addOnId, complimentary}).
+ const addOnPath=url.pathname.match(/^\/api\/partner\/v1\/orders\/([^/]+)\/tickets\/([^/]+)\/add-ons$/);
+ if(req.method==='POST'&&addOnPath){
+  addOnPosts++;let raw='';for await(const data of req)raw+=data;let body;try{body=JSON.parse(raw);}catch{return error(400,'INVALID_REQUEST');}
+  const extra=Object.keys(body).filter(k=>!['addOnId','complimentary'].includes(k));
+  if(extra.length||typeof body.addOnId!=='string')return reply(400,{error:{code:'INVALID_REQUEST',message:(extra.length?'unsupported fields: '+extra.join(', ')+'; ':'')+'addOnId is required'}});
+  if(body.complimentary!==undefined&&typeof body.complimentary!=='boolean')return reply(400,{error:{code:'INVALID_REQUEST',message:'complimentary must be true or false'}});
+  const key=req.headers['idempotency-key'];if(key&&addOnKeys.has(key))return reply(200,addOnKeys.get(key));
+  const s=sessions.get(addOnPath[1]);if(!s)return reply(404,{error:{code:'NOT_FOUND',message:'Order not found.'}});
+  const ticket=(s.tickets||[]).find(t=>t.code===decodeURIComponent(addOnPath[2]));if(!ticket)return reply(404,{error:{code:'NOT_FOUND',message:'Ticket not found.'}});
+  const type=events.flatMap(e=>e.shows).flatMap(sh=>sh.ticketTypes).find(t=>t.id===ticket.ticketTypeId);const add=type?.addOns.find(a=>a.id===body.addOnId);
+  if(!add)return reply(422,{error:{code:'ADD_ON_NOT_AVAILABLE',message:'This add-on is not available for this ticket.'}});
+  if(ticket.addOnItems.some(a=>a.addOnId===add.id))return reply(409,{error:{code:'ADD_ON_ALREADY_ADDED',message:'This add-on is already on the ticket.'}});
+  if(lunchMode==='refuse')return reply(403,{error:{code:'FORBIDDEN',message:'Complimentary add-ons are not enabled for this partner.'}});
+  if(lunchMode!=='silent'){ticket.addOnItems.push({addOnId:add.id,name:add.name.en});s.order.addOnChangesTotal+=(body.complimentary===true&&lunchMode!=='charge')?0:add.price;}
+  if(key)addOnKeys.set(key,s);return reply(201,s);
  }
  const id=url.pathname.match(/^\/api\/partner\/v1\/orders\/([^/]+)$/)?.[1];
  if(req.method==='GET'&&id){reads++;return sessions.has(id)?reply(200,sessions.get(id)):error(404,'NOT_FOUND');}
