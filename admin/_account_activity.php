@@ -43,7 +43,7 @@ $labels = [
 ];
 $label = static fn (string $action): string => $labels[$action] ?? ucfirst(str_replace(['_', '.'], [' ', ': '], $action));
 // A download: which list or report, PDF or Excel, the order, the filters and how many rows (from what was saved when it was downloaded).
-$exportText = static function (array $details): array {
+$exportText = static function (array $details, string $at): array {
     $query = is_array($details['filters'] ?? null) ? $details['filters'] : [];
     $what = (string) ($details['what'] ?? '');
     $list = $what === 'list' ? \Ismile\Admin\Lists::pick((string) ($query['list'] ?? '')) : null;
@@ -82,8 +82,13 @@ $exportText = static function (array $details): array {
     }
     $parts[] = $chosen ? 'Filters: ' . implode(', ', $chosen) : 'No filters';
     if (isset($details['rows'])) {
-        $parts[] = number_format(max(0, (int) $details['rows'])) . ' rows';
+        // A Lists download saved its title line in the count too, so one less is the number of people.
+        $people = max(0, (int) $details['rows'] - ($what === 'list' ? 1 : 0));
+        $parts[] = 'In the file: ' . number_format($people) . ($people === 1 ? ' person' : ' people');
     }
+    // Everyone registered at that moment (paid or free ticket by then, and not cancelled before it).
+    $registered = (int) Db::value("SELECT COUNT(*) FROM registrations WHERE paid_at <= ? AND (status IN ('paid','complimentary') OR (status = 'cancelled' AND updated_at > ?))", [$at, $at]);
+    $parts[] = 'Registered at that time: ' . number_format($registered);
     return $parts;
 };
 $id = (int) $account['id'];
@@ -171,7 +176,7 @@ foreach (Page::MENU as $file => [$pageLabel, $area]) {
     <?php foreach ($recent as $row):
         $details = json_decode((string) $row['details'], true);
         $ref = is_array($details) ? ($details['ref'] ?? null) : null;
-        $target = $row['action'] === 'export' && is_array($details) ? '<span class="account-export">' . implode('', array_map(static fn (string $part): string => '<span>' . Page::e($part) . '</span>', $exportText($details))) . '</span>'
+        $target = $row['action'] === 'export' && is_array($details) ? '<span class="account-export">' . implode('', array_map(static fn (string $part): string => '<span>' . Page::e($part) . '</span>', $exportText($details, (string) $row['created_at']))) . '</span>'
             : ($row['target_type'] === 'registration' && $row['target_id'] ? '<a href="registration.php?id=' . (int) $row['target_id'] . '">Guest #' . (int) $row['target_id'] . '</a>'
             : ($ref ? '<code>' . $e((string) $ref) . '</code>' : ($row['target_type'] ? $e(str_replace('_', ' ', (string) $row['target_type'])) . ($row['target_id'] ? ' #' . (int) $row['target_id'] : '') : '–'))); ?>
     <tr><td><?= $e(date('j M, H:i:s', strtotime((string) $row['created_at']))) ?></td><td><?= $e($label((string) $row['action'])) ?></td><td><?= $target ?></td><td dir="ltr"><span class="muted"><?= $e((string) ($row['ip'] ?? '')) ?></span></td></tr>
