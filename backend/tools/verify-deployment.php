@@ -10,7 +10,7 @@ use Ismile\Auth;
 use Ismile\Db;
 use Ismile\Admin\PdfReport;
 
-$pages = ['index','desk','checkin','registrations','association','association-guests','certificates','tickets','sponsors','booths','map','lists','communications','payments','psoola-orders','registration','workshops','settings','users','backups','content'];
+$pages = ['index','desk','checkin','registrations','association','association-guests','speaker-tickets','certificates','tickets','sponsors','booths','map','lists','communications','payments','psoola-orders','registration','workshops','settings','users','backups','content'];
 if (($argv[1] ?? '') === '--render') {
     $page = $argv[2] ?? '';
     if (!in_array($page, $pages, true)) throw new RuntimeException('Unknown verification page.');
@@ -258,6 +258,14 @@ $check('Users: "What this account can do" page shows role, pages and activity (O
 $check('Volunteer cannot open Association guests', str_contains($render('association-guests', '', 'volunteer'), '<h2>Not allowed</h2>'));
 $check('Users page offers "Allow Association guests (everything)" for team accounts', !Db::value("SELECT id FROM admin_users WHERE role <> 'owner' AND disabled_at IS NULL LIMIT 1") || str_contains($render('users'), 'value="association_guest_access"'));
 $check('Association guest list PDF renders with the full list details', str_starts_with(PdfReport::make(\Ismile\AssociationGuests::NAME . ' guests', \Ismile\AssociationGuests::reportRows(), true), '%PDF-'));
+$html = $render('speaker-tickets');
+$check('Speaker tickets: menu item, speaker list, speaker list PDF and Add speaker button', str_contains($html, 'href="speaker-tickets.php"') && str_contains($html, 'Speaker list') && str_contains($html, 'Download speaker list (PDF)') && str_contains($html, 'href="speaker-tickets.php?tab=add"'));
+$html = $render('speaker-tickets', 'tab=add');
+$check('Add speaker: free ticket form with gender, age, free lunch days and the WhatsApp agreement', str_contains($html, 'id="speaker-form"') && str_contains($html, 'name="gender"') && str_contains($html, 'name="age"') && str_contains($html, 'name="lunch_day1"') && str_contains($html, 'name="lunch_day2"') && str_contains($html, 'name="consent"') && str_contains($html, 'Yes, add and send QR') && !str_contains($html, 'name="student_id"'));
+$check('Viewer sees Speaker tickets without the Add speaker button', !str_contains($render('speaker-tickets', '', 'viewer'), 'tab=add') && !str_contains($render('speaker-tickets', '', 'viewer'), '<h2>Not allowed</h2>'));
+$check('Volunteer cannot open Speaker tickets', str_contains($render('speaker-tickets', '', 'volunteer'), '<h2>Not allowed</h2>'));
+$check('Speaker tickets table exists and the speaker list PDF renders', (int) Db::value("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'speaker_tickets'") === 1
+    && str_starts_with(PdfReport::make('Speaker tickets', \Ismile\SpeakerTickets::reportRows()), '%PDF-'));
 $html = $render('lists', 'list=registered');
 $check('Registered list offers the Sale type filter (cash, card, free, association)', str_contains($html, '<legend>Sale type</legend>') && str_contains($html, 'name="sale" value="cash"') && str_contains($html, 'Card (online)') && str_contains($html, 'name="sale" value="association"'));
 $html = $render('certificates');

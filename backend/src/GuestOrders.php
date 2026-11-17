@@ -10,7 +10,8 @@ final class GuestOrders
     public const LOCALES=['en','ar','ckb','kmr'];
 
     /** The staff registration form issues one ticket for this site's configured event. */
-    public static function issueSingle(array $user,array $in): array
+    /** $addOnIds: PSOOLA add-ons on the free ticket (Speaker tickets: the free lunch days). */
+    public static function issueSingle(array $user,array $in,array $addOnIds=[]): array
     {
         self::authorize($user);
         if(($in['delivery_confirmation']??'')!=='email-whatsapp-v1')throw new UserError('Confirm the guest agreed to WhatsApp ticket messages using the Issue guest ticket action.');
@@ -28,7 +29,7 @@ final class GuestOrders
         if(!$event||!$show||!$ticket)throw new UserError('The free ticket for this event needs server configuration. Ask the Owner to check the PSOOLA event and ticket mapping.');
         $request=array_intersect_key($in,array_flip(['attempt','email','phone','city','gender','age','sponsoring_company','complimentary_reason']));
         return self::issue($user,$request+['buyer_name'=>implode(' ',$parts),'specialty'=>$specialty,
-            'event_id'=>$event,'show_id'=>$show,'ticket_type_id'=>$ticket,'quantity'=>1,'locale'=>'en','add_on_ids_json'=>'[]','whatsapp_consent'=>'1']);
+            'event_id'=>$event,'show_id'=>$show,'ticket_type_id'=>$ticket,'quantity'=>1,'locale'=>'en','add_on_ids_json'=>json_encode(array_values($addOnIds)),'whatsapp_consent'=>'1']);
     }
 
     public static function enabled(): bool

@@ -128,6 +128,7 @@ final class Erase
                 'emails'            => Db::all('SELECT * FROM emails WHERE registration_id = ?' . ($checkoutIds ? ' OR checkout_id IN (' . self::marks($checkoutIds) . ')' : '') . ' FOR UPDATE', [$id, ...$checkoutIds]),
                 'student_id_photos' => self::rowsIn('student_id_photos', 'id', $photoIds),
                 'association_guests' => Db::all('SELECT * FROM association_guests WHERE ref = ? FOR UPDATE', [$registration['ref']]),
+                'speaker_tickets' => Db::all('SELECT st.* FROM speaker_tickets st JOIN sponsored_ticket_orders o ON o.attempt_key = st.attempt_key WHERE o.registration_id = ? FOR UPDATE', [$id]),
             ];
             self::keep('registration', $registration['ref'], Registrations::fullName($registration), $snapshot, $user);
 
@@ -159,6 +160,10 @@ final class Erase
                 Db::run('DELETE FROM checkouts WHERE id IN (' . self::marks($checkoutIds) . ')', $checkoutIds);
             }
             Db::run('DELETE FROM association_guests WHERE ref = ?', [$registration['ref']]);
+            $speakerIds = array_map('intval', array_column($snapshot['speaker_tickets'], 'id'));
+            if ($speakerIds) {
+                Db::run('DELETE FROM speaker_tickets WHERE id IN (' . self::marks($speakerIds) . ')', $speakerIds);
+            }
             Db::run('DELETE FROM registrations WHERE id = ?', [$id]);
             if ($photoIds) {
                 Db::run('DELETE FROM student_id_photos WHERE id IN (' . self::marks($photoIds) . ')', $photoIds);

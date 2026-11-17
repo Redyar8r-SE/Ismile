@@ -1240,3 +1240,17 @@ CREATE TABLE IF NOT EXISTS association_guests (
   UNIQUE KEY uq_association_guest_ref (ref),
   CONSTRAINT fk_association_guest_adder FOREIGN KEY (added_by) REFERENCES admin_users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Speaker tickets: speakers an Owner registers on Event operations › Speaker
+-- tickets. Each is a free (complimentary) PSOOLA guest ticket, with free lunch
+-- when chosen; PSOOLA sends the QR by email and WhatsApp. This only remembers
+-- which guest-ticket requests (sponsored_ticket_orders.attempt_key) are speakers.
+CREATE TABLE IF NOT EXISTS speaker_tickets (
+  id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  attempt_key CHAR(32)     NOT NULL,
+  added_by    INT UNSIGNED NOT NULL,
+  created_at  DATETIME     NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_speaker_ticket_attempt (attempt_key),
+  CONSTRAINT fk_speaker_ticket_adder FOREIGN KEY (added_by) REFERENCES admin_users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

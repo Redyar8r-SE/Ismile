@@ -212,6 +212,10 @@ final class Auth
         if (in_array($area, self::hiddenPages($user), true)) {
             return false;
         }
+        // Speaker tickets: everyone with the guest list sees the speakers; only Owners add them.
+        if ($area === 'speaker-tickets') {
+            return self::can($user, 'registrations');
+        }
         // Association guests: everyone with the guest list, and anyone the Owner allowed on the Users page (any role).
         if ($area === 'association-guests') {
             return self::canManageAssociationGuests($user) || self::can($user, 'registrations');
