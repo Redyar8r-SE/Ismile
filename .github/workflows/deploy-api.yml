@@ -1,169 +1,30 @@
-# Deploy PHP backend to api.ismile.krd (ismile LXC).
-# Re-runs the idempotent VPS setup script: pulls this branch, updates files/DB,
-# leaves the live Node site on ismile.krd alone.
-# Secrets: same GitHub DEPLOY_ENV as the Node deploy (SSH into LXC :2260), plus
-#   API_OWNER_EMAIL     the Owner's admin sign-in on api.ismile.krd (made if missing)
-#   API_OWNER_PASSWORD  its password, 12+ characters (change the secret = new password)
-#   API_SITE_PASSWORD   the browser password in front of the site (user "ismile")
-#   API_RESEND_KEY      optional: send the emails for real through Resend
-#   API_BREVO_KEY       optional: send through Brevo instead (wins over Resend)
-#   API_MAIL_FROM       optional: the sender (default onboarding@resend.dev)
-#   API_PSOOLA_CONFIG   optional: PSOOLA's settings as one JSON object (keys,
-#                       event/show/ticket/add-on ids, "active": true to take
-#                       real payments). Written into config.php, never printed.
-# The log is public (public repository): passwords are never printed.
-name: Deploy API (api.ismile.krd)
-
+name: Speaker QR check
 on:
-  push:
-    branches: ["backend"]
   workflow_dispatch:
-    inputs:
-      map_editor_email:
-        description: Existing account to grant exclusive non-owner map booking access
-        required: false
-        type: string
-      association_editor_email:
-        description: Existing account to grant full Association access
-        required: false
-        type: string
-      registration_editor_email:
-        description: Existing account to allow paid and complimentary guest registration
-        required: false
-        type: string
-      workshop_editor_email:
-        description: Existing account to allow guest registration and workshop bookings for all attendees
-        required: false
-        type: string
-
-concurrency:
-  group: ismile-api-deploy
-  cancel-in-progress: false
-
+permissions:
+  contents: read
 jobs:
-  security:
-    uses: ./.github/workflows/security.yml
-  deploy:
-    needs: security
-    name: Update api.ismile.krd
+  operation:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Load DEPLOY_ENV (SSH only)
+      - name: Load saved server connection
+        shell: bash
         env:
           DEPLOY_ENV: ${{ secrets.DEPLOY_ENV }}
         run: |
           set -euo pipefail
-          : "${DEPLOY_ENV:?DEPLOY_ENV secret is required}"
-          printf '%s\n' "$DEPLOY_ENV" >.deploy.env
+          umask 077
+          printf '%s\n' "$DEPLOY_ENV" > "$RUNNER_TEMP/connection.env"
           set -a
-          # shellcheck disable=SC1091
-          source .deploy.env
+          source "$RUNNER_TEMP/connection.env"
           set +a
+          echo "::add-mask::$DEPLOY_PASSWORD"
           for key in DEPLOY_HOST DEPLOY_USER DEPLOY_PASSWORD DEPLOY_SSH_PORT; do
-            if [ -z "${!key:-}" ]; then
-              echo "error: ${key} missing from DEPLOY_ENV" >&2
-              exit 1
-            fi
+            test -n "${!key}"
+            printf '%s=%s\n' "$key" "${!key}" >> "$GITHUB_ENV"
           done
-          echo "::add-mask::${DEPLOY_PASSWORD}"
-          {
-            echo "DEPLOY_HOST<<EOF_DEPLOY_HOST"
-            printf '%s\n' "$DEPLOY_HOST"
-            echo "EOF_DEPLOY_HOST"
-            echo "DEPLOY_USER<<EOF_DEPLOY_USER"
-            printf '%s\n' "$DEPLOY_USER"
-            echo "EOF_DEPLOY_USER"
-            echo "DEPLOY_PASSWORD<<EOF_DEPLOY_PASSWORD"
-            printf '%s\n' "$DEPLOY_PASSWORD"
-            echo "EOF_DEPLOY_PASSWORD"
-            echo "DEPLOY_SSH_PORT<<EOF_DEPLOY_SSH_PORT"
-            printf '%s\n' "$DEPLOY_SSH_PORT"
-            echo "EOF_DEPLOY_SSH_PORT"
-          } >>"$GITHUB_ENV"
-
-      - name: Run setup-test-site.sh on the LXC
-        uses: appleboy/ssh-action@v1.2.0
-        env:
-          OWNER_EMAIL: ${{ secrets.API_OWNER_EMAIL }}
-          OWNER_PASSWORD: ${{ secrets.API_OWNER_PASSWORD }}
-          SITE_PASSWORD: ${{ secrets.API_SITE_PASSWORD }}
-          RESEND_KEY: ${{ secrets.API_RESEND_KEY }}
-          BREVO_KEY: ${{ secrets.API_BREVO_KEY }}
-          MAIL_FROM: ${{ secrets.API_MAIL_FROM }}
-          PSOOLA_CONFIG: ${{ secrets.API_PSOOLA_CONFIG }}
-          QUIET_SECRETS: "1"
-          MAP_EDITOR_EMAIL: ${{ inputs.map_editor_email || '' }}
-          ASSOCIATION_EDITOR_EMAIL: ${{ inputs.association_editor_email || '' }}
-          REGISTRATION_EDITOR_EMAIL: ${{ inputs.registration_editor_email || '' }}
-          WORKSHOP_EDITOR_EMAIL: ${{ inputs.workshop_editor_email || '' }}
-        with:
-          envs: OWNER_EMAIL,OWNER_PASSWORD,SITE_PASSWORD,RESEND_KEY,BREVO_KEY,MAIL_FROM,PSOOLA_CONFIG,QUIET_SECRETS,MAP_EDITOR_EMAIL,ASSOCIATION_EDITOR_EMAIL,REGISTRATION_EDITOR_EMAIL,WORKSHOP_EDITOR_EMAIL
-          host: ${{ env.DEPLOY_HOST }}
-          username: ${{ env.DEPLOY_USER }}
-          password: ${{ env.DEPLOY_PASSWORD }}
-          port: ${{ env.DEPLOY_SSH_PORT }}
-          timeout: 60s
-          command_timeout: 20m
-          script: |
-            set -euo pipefail
-            cd /root
-            # Save the existing database before applying schema migrations.
-            if [ -f /opt/ismile-test/backend/bootstrap.php ] && [ -f /opt/ismile-test/backend/config.php ]; then
-              runuser -u www-data -- php -r 'require $argv[1]; \Ismile\Backup::run(); echo "Pre-deployment database backup saved.\n";' /opt/ismile-test/backend/bootstrap.php
-            fi
-            # Idle unattended-upgrade-shutdown holds dpkg locks forever; stop it.
-            systemctl stop unattended-upgrades 2>/dev/null || true
-            curl -fsSL "https://raw.githubusercontent.com/Redyar8r-SE/Ismile/backend/backend/tools/vps/setup-test-site.sh" \
-              -o /root/ismile-test-setup.sh
-            chmod +x /root/ismile-test-setup.sh
-            DOMAIN=api.ismile.krd BRANCH=backend bash /root/ismile-test-setup.sh
-            if [ -n "${MAP_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-map-manager.php
-            fi
-            if [ -n "${ASSOCIATION_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-association-manager.php
-            fi
-            if [ -n "${REGISTRATION_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-registration-manager.php
-            fi
-            if [ -n "${WORKSHOP_EDITOR_EMAIL:-}" ]; then
-              php /opt/ismile-test/backend/tools/configure-workshop-manager.php
-            fi
-            runuser -u www-data -- php /opt/ismile-test/backend/tools/verify-deployment.php --source /opt/ismile-test/repo
-            runuser -u www-data -- php /opt/ismile-test/backend/tools/verify-association.php
-            # Smoke: PHP admin + config API (basic auth from secrets.env)
-            SP="$(grep '^SITE_PASS=' /opt/ismile-test/secrets.env | cut -d= -f2-)"
-            code="$(curl -s -o /dev/null -w '%{http_code}' -u "ismile:${SP}" -H 'Host: api.ismile.krd' http://127.0.0.1:8081/admin/login.php)"
-            echo "admin_login_http=${code}"
-            test "$code" = "200"
-            # The QR fallback must be accessible through nginx's allow-list.
-            curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' \
-              http://127.0.0.1:8081/admin/vendor/jsQR.js | cmp - /opt/ismile-test/site/admin/vendor/jsQR.js
-            echo "qr_decoder_http=200 (matches deployed file)"
-            for asset in map.js map.css registration-details.js registration-details.css workshops.js workshops.css desk.css desk.js; do
-              curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' \
-                "http://127.0.0.1:8081/admin/${asset}" | cmp - "/opt/ismile-test/site/admin/${asset}"
-            done
-            runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/map-access.php
-            runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/registration-access.php
-            runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/workshop-access.php
-            runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/badges-only-role.php
-            runuser -u www-data -- php /opt/ismile-test/repo/backend/tests/volunteer-role.php
-            echo "map_assets_http=200; all role permissions verified"
-            echo "registration_details_assets_http=200 (match deployed files)"
-            curl -fsS -u "ismile:${SP}" -H 'Host: api.ismile.krd' -H 'X-Forwarded-Proto: https' \
-              http://127.0.0.1:8081/api/config.php | grep -q '"ok":true'
-            echo "api.ismile.krd update OK"
-
-      # The account the Owner chose keeps its role and also gets the Association
-      # guests page (tools/configure-association-guest-access.php; named only by
-      # a hash of its email). Its own step, so the result shows without the log:
-      # a failure here means that account does not exist yet; the deploy is fine.
-      - name: Association guests access for the chosen account
-        continue-on-error: true
+      - name: Check speaker QR delivery (read-only, no personal data printed)
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ env.DEPLOY_HOST }}
@@ -171,56 +32,72 @@ jobs:
           password: ${{ env.DEPLOY_PASSWORD }}
           port: ${{ env.DEPLOY_SSH_PORT }}
           timeout: 60s
-          command_timeout: 2m
+          command_timeout: 8m
           script: |
-            set -euo pipefail
-            runuser -u www-data -- php /opt/ismile-test/backend/tools/configure-association-guest-access.php
-
-      # The free J Dental Care workshop (19 Nov, register by phone): added once;
-      # the Owner's later edits or a delete on the Workshops page are kept.
-      - name: J Dental Care workshop on the website
-        continue-on-error: true
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ env.DEPLOY_HOST }}
-          username: ${{ env.DEPLOY_USER }}
-          password: ${{ env.DEPLOY_PASSWORD }}
-          port: ${{ env.DEPLOY_SSH_PORT }}
-          timeout: 60s
-          command_timeout: 2m
-          script: |
-            set -euo pipefail
-            runuser -u www-data -- php /opt/ismile-test/backend/tools/publish-jdental-zygoma-workshop.php
-
-      # The free iSmile exocad workshop (19 Nov, register online through PSOOLA):
-      # creates its hidden PSOOLA event and free ticket once, then switches it on.
-      # Progress is saved, so a failed run resumes on the next deploy.
-      - name: exocad workshop in PSOOLA and on the website
-        continue-on-error: true
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ env.DEPLOY_HOST }}
-          username: ${{ env.DEPLOY_USER }}
-          password: ${{ env.DEPLOY_PASSWORD }}
-          port: ${{ env.DEPLOY_SSH_PORT }}
-          timeout: 60s
-          command_timeout: 5m
-          script: |
-            set -euo pipefail
-            runuser -u www-data -- php /opt/ismile-test/backend/tools/publish-exocad-workshop.php
-
-      # Company workshops (register by phone), each added once from its file in
-      # backend/assets; the Owner's later edits or a delete are kept.
-      - name: Company workshops on the website
-        continue-on-error: true
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ env.DEPLOY_HOST }}
-          username: ${{ env.DEPLOY_USER }}
-          password: ${{ env.DEPLOY_PASSWORD }}
-          port: ${{ env.DEPLOY_SSH_PORT }}
-          timeout: 60s
-          command_timeout: 2m
-          script: |
-            set -euo pipefail
-            runuser -u www-data -- php /opt/ismile-test/backend/tools/publish-company-workshop.php photogrammetry-workshop-2026.json
+            set -eu
+            cd /opt/ismile-test
+            runuser -u www-data -- php <<'SPEAKERQR'
+            <?php
+            require '/opt/ismile-test/backend/bootstrap.php';
+            use Ismile\Db; use Ismile\App;
+            $gw = new \Ismile\Payments\PsoolaGateway();
+            $mask = static function ($v) {
+              if (!is_string($v)) return $v;
+              if (preg_match('/@|\+?\d{7,}/', $v)) return '[hidden]';
+              return mb_substr($v, 0, 80);
+            };
+            // Values of status-like keys only (no names, emails, phones, QR codes).
+            $walk = static function ($node, string $path = '') use (&$walk, $mask): array {
+              $out = [];
+              if (!is_array($node)) return $out;
+              foreach ($node as $k => $v) {
+                $p = is_int($k) ? $path . '[' . $k . ']' : ($path === '' ? (string) $k : $path . '.' . $k);
+                if (is_array($v)) { $out = array_merge($out, $walk($v, $p)); continue; }
+                if (preg_match('/status|error|reason|consent|deliver|notif|sent|fail|whatsapp|channel|message|acknowledg|categor|source/i', (string) $k) && !preg_match('/qr|code$|email$|phone$|name$/i', (string) $k)) {
+                  $out[$p] = $mask($v);
+                }
+              }
+              return $out;
+            };
+            $keys = static function ($n, $p = '') use (&$keys): array { $o = []; if (!is_array($n)) return $o; foreach ($n as $k => $v) { $q = is_int($k) ? $p . '[]' : ($p === '' ? $k : $p . '.' . $k); $o[] = $q; if (is_array($v)) $o = array_merge($o, $keys($v, $q)); } return array_values(array_unique($o)); };
+            $phoneShape = static fn ($p) => is_string($p) ? (preg_match('/^\+9647\d{9}$/', $p) ? 'iraq-mobile-ok' : (preg_match('/^\+[1-9]\d{7,14}$/', $p) ? 'intl-' . strlen($p) : 'BAD')) : 'none';
+            $emailShape = static fn ($e) => is_string($e) && filter_var($e, FILTER_VALIDATE_EMAIL) ? 'ok@' . substr(strrchr($e, '@'), 1) : 'BAD';
+            $rows = Db::all("SELECT st.id sid, st.created_at, o.id oid, o.status, o.provider_order_id, o.provider_status, o.email_status, o.whatsapp_status, o.last_error, o.request_json, o.registration_id, r.status reg_status, r.whatsapp_consent_at
+              FROM speaker_tickets st JOIN sponsored_ticket_orders o ON o.attempt_key = st.attempt_key LEFT JOIN registrations r ON r.id = o.registration_id ORDER BY st.id");
+            echo 'SQRCOUNT=' . count($rows) . PHP_EOL;
+            $keysShown = false;
+            foreach ($rows as $r) {
+              $req = json_decode((string) $r['request_json'], true) ?: [];
+              $buyer = $req['buyer'] ?? [];
+              $line = ['speaker' => (int) $r['sid'], 'added' => substr((string) $r['created_at'], 0, 16), 'order' => $r['status'], 'reg' => $r['reg_status'],
+                'dbEmail' => $r['email_status'], 'dbWhatsapp' => $r['whatsapp_status'], 'lastError' => $r['last_error'],
+                'sentConsent' => $buyer['whatsappConsent'] ?? false, 'regConsentAt' => $r['whatsapp_consent_at'] !== null,
+                'phone' => $phoneShape($buyer['phone'] ?? null), 'email' => $emailShape($buyer['email'] ?? null), 'locale' => $req['locale'] ?? null,
+                'requestKeys' => array_keys($req), 'buyerKeys' => array_keys($buyer)];
+              if ($r['provider_order_id']) {
+                $a = $gw->partnerRequest('GET', 'orders/' . rawurlencode((string) $r['provider_order_id']));
+                $line['live'] = $a['status'] === 200 ? $walk($a['json'] ?? []) : 'HTTP ' . $a['status'];
+                if ($a['status'] === 200 && !$keysShown) { $keysShown = true; echo 'SQRKEYS=' . json_encode($keys($a['json']), JSON_UNESCAPED_SLASHES) . PHP_EOL; }
+                usleep(400000);
+              }
+              echo 'SQRROW=' . json_encode($line, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . PHP_EOL;
+            }
+            // All guest tickets grouped, speakers and not, to see if the problem is only speakers.
+            echo 'SQRGUESTS=' . json_encode(Db::all("SELECT (st.id IS NOT NULL) speaker, o.status, o.email_status, o.whatsapp_status, COUNT(*) n,
+              SUM(JSON_EXTRACT(o.request_json, '$.buyer.whatsappConsent') IS NOT NULL) with_consent, MIN(o.created_at) first, MAX(o.created_at) last
+              FROM sponsored_ticket_orders o LEFT JOIN speaker_tickets st ON st.attempt_key = o.attempt_key
+              GROUP BY speaker, o.status, o.email_status, o.whatsapp_status")) . PHP_EOL;
+            $other = Db::all("SELECT o.provider_order_id, o.created_at FROM sponsored_ticket_orders o LEFT JOIN speaker_tickets st ON st.attempt_key = o.attempt_key
+              WHERE st.id IS NULL AND o.status = 'issued' ORDER BY o.id DESC LIMIT 3");
+            foreach ($other as $o) {
+              $a = $gw->partnerRequest('GET', 'orders/' . rawurlencode((string) $o['provider_order_id']));
+              echo 'SQRGUESTLIVE=' . substr((string) $o['created_at'], 0, 16) . ' ' . json_encode($a['status'] === 200 ? $walk($a['json'] ?? []) : 'HTTP ' . $a['status'], JSON_UNESCAPED_SLASHES) . PHP_EOL;
+              usleep(400000);
+            }
+            // Server log lines about speakers, guest tickets or WhatsApp (emails and numbers hidden).
+            foreach (glob(App::storage('logs') . '/app-2026-11.log') ?: [] as $f) {
+              foreach (file($f) as $l) {
+                if (preg_match('/speaker|guest|whatsapp|complimentary|consent/i', $l)) echo 'SQRLOG=' . preg_replace(['/[\w.+-]+@[\w-]+\.[\w.]+/', '/\+?\d{9,}/'], ['[email]', '[num]'], mb_substr(trim($l), 0, 300)) . PHP_EOL;
+              }
+            }
+            SPEAKERQR
