@@ -125,7 +125,7 @@ CREATE TABLE IF NOT EXISTS checkouts (
   ticket_type        ENUM('professional','student','vip') NOT NULL,
   lunch_day1         TINYINT(1)        NOT NULL DEFAULT 0,
   lunch_day2         TINYINT(1)        NOT NULL DEFAULT 0,
-  vip_lunch_day      TINYINT UNSIGNED  NULL,                   -- one hosted VIP lunch is included
+  vip_lunch_day      TINYINT UNSIGNED  NULL,                   -- the VIP lunch included (empty: VIP $100, no lunch)
   pay_method         ENUM('visa','mastercard','fib','fastpay','cash') NULL DEFAULT NULL,  -- chosen on the provider's payment page; cash = sold by the office
   university         VARCHAR(160)      NULL,                   -- students
   study_stage        TINYINT UNSIGNED  NULL,                   -- students: their stage (1st to 5th)
@@ -148,7 +148,7 @@ CREATE TABLE IF NOT EXISTS checkouts (
   CONSTRAINT fk_checkout_photo      FOREIGN KEY (id_photo_id) REFERENCES student_id_photos (id) ON DELETE SET NULL,
   CONSTRAINT ck_checkout_lunch CHECK (lunch_day1 IN (0, 1) AND lunch_day2 IN (0, 1)),
   CONSTRAINT ck_checkout_student CHECK (specialty <> 'student' OR ticket_type IN ('student','vip')),
-  CONSTRAINT ck_checkout_vip_lunch CHECK ((ticket_type <> 'vip' AND vip_lunch_day IS NULL) OR (ticket_type = 'vip' AND vip_lunch_day IS NOT NULL AND ((vip_lunch_day = 1 AND lunch_day1 = 1) OR (vip_lunch_day = 2 AND lunch_day2 = 1)))),
+  CONSTRAINT ck_checkout_vip_lunch_v2 CHECK ((ticket_type <> 'vip' AND vip_lunch_day IS NULL) OR (ticket_type = 'vip' AND (vip_lunch_day IS NULL OR (vip_lunch_day = 1 AND lunch_day1 = 1) OR (vip_lunch_day = 2 AND lunch_day2 = 1)))),
   CONSTRAINT ck_checkout_university CHECK (ticket_type <> 'student' OR university IS NOT NULL)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Forms waiting for payment (temporary, not registrations)';
@@ -178,7 +178,7 @@ CREATE TABLE IF NOT EXISTS registrations (
   ticket_type        ENUM('professional','student','vip') NOT NULL,
   lunch_day1         TINYINT(1)        NOT NULL DEFAULT 0,
   lunch_day2         TINYINT(1)        NOT NULL DEFAULT 0,
-  vip_lunch_day      TINYINT UNSIGNED  NULL,                   -- one hosted VIP lunch is included
+  vip_lunch_day      TINYINT UNSIGNED  NULL,                   -- the VIP lunch included (empty: VIP $100, no lunch)
   pay_method         ENUM('visa','mastercard','fib','fastpay','cash') NULL,   -- NULL for a free ticket; cash = sold by the office
   -- students: kept as a record (no approval step)
   university         VARCHAR(160)      NULL,
@@ -211,7 +211,7 @@ CREATE TABLE IF NOT EXISTS registrations (
   CONSTRAINT fk_reg_photo      FOREIGN KEY (id_photo_id) REFERENCES student_id_photos (id) ON DELETE SET NULL,
   CONSTRAINT ck_reg_lunch CHECK (lunch_day1 IN (0, 1) AND lunch_day2 IN (0, 1)),
   CONSTRAINT ck_reg_student CHECK (specialty <> 'student' OR ticket_type IN ('student','vip')),
-  CONSTRAINT ck_reg_vip_lunch CHECK ((ticket_type <> 'vip' AND vip_lunch_day IS NULL) OR (ticket_type = 'vip' AND vip_lunch_day IS NOT NULL AND ((vip_lunch_day = 1 AND lunch_day1 = 1) OR (vip_lunch_day = 2 AND lunch_day2 = 1)))),
+  CONSTRAINT ck_reg_vip_lunch_v2 CHECK ((ticket_type <> 'vip' AND vip_lunch_day IS NULL) OR (ticket_type = 'vip' AND (vip_lunch_day IS NULL OR (vip_lunch_day = 1 AND lunch_day1 = 1) OR (vip_lunch_day = 2 AND lunch_day2 = 1)))),
   CONSTRAINT ck_reg_university CHECK (ticket_type <> 'student' OR status <> 'paid' OR university IS NOT NULL),
   CONSTRAINT ck_reg_age CHECK (age IS NULL OR age BETWEEN 16 AND 120),
   CONSTRAINT ck_reg_free CHECK (status <> 'complimentary' OR comp_reason IS NOT NULL)

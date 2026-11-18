@@ -82,8 +82,10 @@ final class SiteData
         if ($ticket <= 0) {
             return false;
         }
-        if ($type === 'vip' && (!in_array((int) ($registration['vip_lunch_day'] ?? 0), [1, 2], true)
-            || (int) $registration['lunch_day' . (int) $registration['vip_lunch_day']] !== 1)) {
+        // VIP $100 has no included lunch (vip_lunch_day empty); any other VIP day must be ticked.
+        $vipDay = $registration['vip_lunch_day'] ?? null;
+        if ($type === 'vip' && $vipDay !== null && (!in_array((int) $vipDay, [1, 2], true)
+            || (int) $registration['lunch_day' . (int) $vipDay] !== 1)) {
             return false;
         }
         foreach ([1, 2] as $day) {

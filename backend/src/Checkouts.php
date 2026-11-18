@@ -185,13 +185,13 @@ final class Checkouts
      */
     public static function createForCash(array $in, array $user, ?array $photo = null, bool $photoRequired = true, bool $ownerVipPrice = false): array
     {
-        // VIP $100 (OwnerVipPrice, main Owner only) is the same VIP as $200: the
-        // same lunch and the same included workshop (optional for $100),
-        // checked while VIP is still $200.
+        // VIP $100 (OwnerVipPrice, main Owner only): the same VIP as $200 and the
+        // same included workshop (optional), but NO included lunch (owner,
+        // 18 Nov 2026). A lunch day ticked is an extra lunch, paid like any other.
         if ($ownerVipPrice && !OwnerVipPrice::allowed($user)) {
             throw new UserError('Only the main Owner can sell VIP for $100.');
         }
-        $row = ['pay_method' => 'cash'] + self::officeRow($in);
+        $row = ['pay_method' => 'cash'] + self::officeRow($in, $ownerVipPrice);
         // Ticked on the form: PSOOLA then sends the QR by WhatsApp as well as email.
         if (($in['whatsapp_consent'] ?? '') === '1') {
             $row['whatsapp_consent_at'] = App::now();
@@ -239,7 +239,8 @@ final class Checkouts
     }
 
     /** The details the office types in for a caller, checked. */
-    public static function officeRow(array $in): array
+    /** $noIncludedLunch: VIP $100, which comes without the VIP lunch. */
+    public static function officeRow(array $in, bool $noIncludedLunch = false): array
     {
         $first = Validate::text($in['first_name'] ?? '', 60);
         $father = Validate::text($in['father_name'] ?? '', 60);
@@ -287,7 +288,7 @@ final class Checkouts
         }
         $lunch1 = ($in['lunch_day1'] ?? '') === '1';
         $lunch2 = ($in['lunch_day2'] ?? '') === '1';
-        $vipDay = self::vipLunchDay($ticket, $in, $lunch1, $lunch2);
+        $vipDay = $noIncludedLunch ? null : self::vipLunchDay($ticket, $in, $lunch1, $lunch2);
         // Gender and age when the form asks for them (Workshop & Register), checked like the website.
         $gender = Validate::oneOf($in['gender'] ?? null, Registrations::GENDERS) ?? 'prefer-not';
         $age = null;

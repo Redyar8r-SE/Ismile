@@ -3,7 +3,8 @@
 // Register (cash). PSOOLA has no price per order, so for each sale the server:
 //   1. sets the PSOOLA VIP price to $100 (the dollar price only: PSOOLA
 //      refuses both prices in one change, and works out 171,100 IQD itself),
-//   2. makes the normal cash sale (PSOOLA emails and WhatsApps the QR),
+//   2. makes the normal cash sale (PSOOLA emails and WhatsApps the QR).
+//      VIP $100 has no included lunch: a ticked lunch day is a paid extra.
 //   3. sets VIP back to the price it had ($200), even when the sale fails.
 // Only one such sale runs at a time. A note in storage/tmp remembers the
 // normal price while it is lowered; the minute job (cron/run.php) puts it

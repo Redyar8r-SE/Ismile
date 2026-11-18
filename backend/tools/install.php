@@ -105,6 +105,13 @@ foreach ($migrations as $file) {
                 if (Db::value("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name=? AND column_name='vip_lunch_day'", [$table[1]])) continue;
                 $run([$maria ? str_replace('DROP CHECK ', 'DROP CONSTRAINT ', $statement) : $statement]);
             }
+        } elseif ($name === '2026-11-18-vip-without-lunch.sql') {
+            foreach ($statements($file) as $statement) {
+                // Resume a half-done upgrade: skip a table that already has the new rule.
+                if (!preg_match('/ADD CONSTRAINT (\w+)/', $statement, $rule)) throw new RuntimeException('Unexpected VIP lunch upgrade statement.');
+                if (Db::value("SELECT COUNT(*) FROM information_schema.table_constraints WHERE constraint_schema = DATABASE() AND constraint_name = ?", [$rule[1]])) continue;
+                $run([$statement]);
+            }
         } elseif ($name === '2026-11-05-sponsored-tickets.sql') {
             $maria = stripos((string)Db::value('SELECT VERSION()'),'MariaDB') !== false;
             foreach ($statements($file) as $statement) {

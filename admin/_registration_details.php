@@ -105,7 +105,7 @@ if ($inCheckin) echo \Ismile\Admin\CheckinWorkspace::navigation('guests',$user,$
       <?php if ($isComp): ?><section class="rd-card"><h2>Complimentary details</h2><dl class="rd-fields"><?php $field('Reason',$registration['comp_reason'],'ticket'); $field('Issued by',$addedBy ?? 'Event administrator','user'); ?></dl></section><?php endif; ?>
       <details class="rd-card rd-information"><summary><span>Registration information</span><span aria-hidden="true">⌄</span></summary><p class="rd-hint">Ticket type, lunch, language and record details</p><dl class="rd-fields">
         <?php $field('Ticket type',Registrations::ticketName($registration['ticket_type']),'ticket'); $field('Lunch',trim(($registration['lunch_day1'] ? 'Day 1 ' : '').($registration['lunch_day2'] ? 'Day 2' : '')) ?: 'None','lunch');
-        if ($registration['ticket_type'] === 'vip') $field('VIP included lunch','Day '.$registration['vip_lunch_day'].' · Arrange home badge delivery.','lunch');
+        if ($registration['ticket_type'] === 'vip') $field('VIP included lunch',$registration['vip_lunch_day'] === null ? 'None (VIP $100 without lunch). Arrange home badge delivery.' : 'Day '.$registration['vip_lunch_day'].' · Arrange home badge delivery.','lunch');
         if ($registration['ticket_type'] === 'vip' && ($vipPackage=\Ismile\VipPackages::forRegistration((int)$registration['id']))) {
             $field('VIP included workshop',$vipPackage['workshop_name'],'workshops');
             $field('VIP workshop ticket',match($vipPackage['state']){'issued'=>'Issued by PSOOLA','pending'=>'Waiting for ticket issuance','review'=>'Saved request needs review',default=>ucfirst($vipPackage['state'])},'ticket');

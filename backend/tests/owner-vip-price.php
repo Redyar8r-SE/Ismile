@@ -148,6 +148,8 @@ $volunteer = $account("volunteer-$tag@test.invalid", 'volunteer');
 $form = static fn (array $more = []): array => $more + ['first_name' => 'Karwan', 'father_name' => 'Ali', 'grandfather_name' => 'Omar',
     'phone' => '0750' . random_int(1000000, 9999999), 'email' => 'vip-' . bin2hex(random_bytes(3)) . '@example.invalid',
     'city' => 'Sulaimani', 'specialty' => 'gp', 'ticket' => 'vip100', 'vip_lunch_day' => '1', 'lunch_day1' => '1'];
+// VIP $100 as the page sends it: no included lunch day (that choice is only for VIP $200), no lunch ticked.
+$form100 = static fn (array $more = []): array => $form($more + ['vip_lunch_day' => '', 'lunch_day1' => '']);
 $vipNow = static fn (): array => $state()['vip'];
 $patches = static fn (): int => count($state()['patches']);
 $orders = static fn (): int => count($state()['orders']);
@@ -156,7 +158,7 @@ $orders = static fn (): int => count($state()['orders']);
 $check('the main Owner may sell VIP $100', OwnerVipPrice::allowed($main));
 foreach (['another Owner' => $otherOwner, 'registration staff' => $staff, 'a Viewer' => $viewer, 'a Volunteer' => $volunteer] as $who => $user) {
     $check("$who may not sell VIP \$100", !OwnerVipPrice::allowed($user)
-        && $refused(static fn () => OwnerVipPrice::sell($form(), $user), 'Only the main Owner'));
+        && $refused(static fn () => OwnerVipPrice::sell($form100(), $user), 'Only the main Owner'));
 }
 $check('a disabled main Owner account may not sell VIP $100', !OwnerVipPrice::allowed(['disabled_at' => '2026-11-17 10:00:00'] + $main));
 $check('the main Owner account with another role may not sell VIP $100', !OwnerVipPrice::allowed(['role' => 'registration'] + $main));
@@ -165,18 +167,28 @@ $plain = Checkouts::createForCash($form(['ticket' => 'vip']), $staff);
 $check('a cash sale at the $100 price is refused for staff', $refused(static fn () => Payments::sellForCash($plain, $staff, ['amount' => 171100, 'currency' => 'IQD']), 'Only the main Owner'));
 $check('nobody else changed the PSOOLA price or sold anything', $patches() === 0 && $orders() === 0 && $vipNow()['price'] === 342200);
 
-// ---- the main Owner sells VIP $100 (lunch day 1 included, day 2 extra) ----
-$sold = OwnerVipPrice::sell($form(['lunch_day2' => '1']), $main);
+// ---- the main Owner sells VIP $100: no lunch included, both days ticked are paid extras ----
+// (vip_lunch_day '1' is sent on purpose: VIP $100 still gets no included lunch.)
+$sold = OwnerVipPrice::sell($form100(['vip_lunch_day' => '1', 'lunch_day1' => '1', 'lunch_day2' => '1']), $main);
 $sale = $sold['sale'];
 $person = $sale['registration_id'] ? Registrations::find($sale['registration_id']) : null;
 $order = $state()['orders']['ord_0'] ?? [];
 $check('the guest is registered at once as a VIP, paid by cash', $sale['status'] === 'paid' && $person && $person['ticket_type'] === 'vip' && $person['pay_method'] === 'cash' && $person['status'] === 'paid');
 $check('PSOOLA sold the ticket while VIP was $100 (171,100 IQD)', ($order['vipPriceAtSale'] ?? null) === 171100);
-$check('the amount is $100 VIP + the extra lunch day only', $sale['amount'] === 171100 + 68440 && $sale['currency'] === 'IQD'
-    && (int) Db::value("SELECT amount_confirmed FROM payments WHERE registration_id = ? AND status = 'paid'", [$person['id']]) === 239540);
+$check('VIP $100 includes no lunch: the amount is $100 VIP + both lunch days, paid', $sale['amount'] === 171100 + 2 * 68440 && $sale['currency'] === 'IQD'
+    && (int) Db::value("SELECT amount_confirmed FROM payments WHERE registration_id = ? AND status = 'paid'", [$person['id']]) === 307980);
+$check('the VIP $100 guest has no included lunch day, and both days are sent to PSOOLA as lunch', $person['vip_lunch_day'] === null
+    && (int) $person['lunch_day1'] === 1 && (int) $person['lunch_day2'] === 1 && count($order['order']['items'][0]['addOnIds'] ?? []) === 2);
 $check('VIP is back to $200 (342,200 IQD) right after the sale', $sold['restored'] && $vipNow() === ['price' => 342200, 'usdPrice' => 200]);
 $check('two price changes only: $100, then back to $200', $state()['patches'] === [['usdPrice' => 100], ['usdPrice' => 200]]);
 $check('nothing is left waiting to be put back', !is_file(App::storage('tmp/owner-vip-price.json')));
+$noLunch = OwnerVipPrice::sell($form100(), $main);
+$noLunchPerson = Registrations::find($noLunch['sale']['registration_id']);
+$check('VIP $100 without lunch is sold at exactly $100 (171,100 IQD), with no lunch at all', $noLunch['sale']['amount'] === 171100 && $noLunch['restored']
+    && $noLunchPerson['vip_lunch_day'] === null && (int) $noLunchPerson['lunch_day1'] === 0 && (int) $noLunchPerson['lunch_day2'] === 0
+    && ($lastOrder = array_values($state()['orders'])[count($state()['orders']) - 1]) && !isset($lastOrder['order']['items'][0]['addOnIds'])
+    && ($lastOrder['vipPriceAtSale'] ?? null) === 171100);
+$check('VIP $200 still needs its included lunch day', $refused(static fn () => Checkouts::createForCash($form(['ticket' => 'vip', 'vip_lunch_day' => '']), $staff), 'err_required'));
 $check('the sale is in the activity log', (bool) Db::value("SELECT id FROM audit_log WHERE action = 'vip.owner_price_sale' AND user_id = ? AND details LIKE ?", [$main['id'], '%' . $sold['checkout']['ref'] . '%']));
 $check('VIP $100 has no included workshop chosen', !Db::value("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'vip_package_choices'")
     || !Db::value('SELECT id FROM vip_package_choices WHERE checkout_id = ?', [$sold['checkout']['id']]));
@@ -189,40 +201,40 @@ $check('a normal VIP sale by staff still costs 342,200 IQD and changes no price'
 // ---- PSOOLA refuses the lower price: nothing is sold ----
 $setState(['mode' => 'refuse-lower']);
 $before = $orders();
-$check('when PSOOLA refuses $100, nothing is sold', $refused(static fn () => OwnerVipPrice::sell($form(), $main), 'refused the VIP price') && $orders() === $before);
+$check('when PSOOLA refuses $100, nothing is sold', $refused(static fn () => OwnerVipPrice::sell($form100(), $main), 'refused the VIP price') && $orders() === $before);
 $check('and VIP stays $200', $vipNow()['price'] === 342200 && !is_file(App::storage('tmp/owner-vip-price.json')));
 
 // ---- PSOOLA answers OK but keeps the old price: nothing is sold ----
 $setState(['mode' => 'ignore']);
-$check('when PSOOLA keeps $200, nothing is sold at $200', $refused(static fn () => OwnerVipPrice::sell($form(), $main), 'did not take') && $orders() === $before && $vipNow()['price'] === 342200);
+$check('when PSOOLA keeps $200, nothing is sold at $200', $refused(static fn () => OwnerVipPrice::sell($form100(), $main), 'did not take') && $orders() === $before && $vipNow()['price'] === 342200);
 
 // ---- PSOOLA charges a different amount: held for review, price put back ----
 $setState(['mode' => 'overcharge']);
-$check('a different PSOOLA amount is refused and saved for review', $refused(static fn () => OwnerVipPrice::sell($form(), $main), 'different amount')
+$check('a different PSOOLA amount is refused and saved for review', $refused(static fn () => OwnerVipPrice::sell($form100(), $main), 'different amount')
     && Db::value("SELECT status FROM payments ORDER BY id DESC LIMIT 1") === 'mismatch');
 $check('and VIP is back to $200', $vipNow()['price'] === 342200 && !is_file(App::storage('tmp/owner-vip-price.json')));
 
 // ---- VIP is not $200 when the sale starts: refused, nothing touched ----
 $setState(['mode' => 'ok', 'vip' => ['price' => 256650, 'usdPrice' => 150], 'normal' => 256650]);
 $before = $patches();
-$check('when VIP is not $200 in PSOOLA, nothing is changed or sold', $refused(static fn () => OwnerVipPrice::sell($form(), $main), 'not $200') && $patches() === $before);
+$check('when VIP is not $200 in PSOOLA, nothing is changed or sold', $refused(static fn () => OwnerVipPrice::sell($form100(), $main), 'not $200') && $patches() === $before);
 $setState(['vip' => ['price' => 342200, 'usdPrice' => 200], 'normal' => 342200]);
 
 // ---- a dental student cannot get VIP ----
-$check('VIP $100 is not for dental students', $refused(static fn () => OwnerVipPrice::sell($form(['specialty' => 'student']), $main), 'not for dental students'));
+$check('VIP $100 is not for dental students', $refused(static fn () => OwnerVipPrice::sell($form100(['specialty' => 'student']), $main), 'not for dental students'));
 
 // ---- one sale at a time ----
 $db = $config['db'];
 $other = new PDO('mysql:host=' . ($db['host'] ?? '127.0.0.1') . ';port=' . ($db['port'] ?? 3306) . ';dbname=' . $db['name'], $db['user'], $db['pass']);
 $other->query("SELECT GET_LOCK('ismile-owner-vip-price', 0)");
 $before = $patches();
-$check('a second VIP $100 sale waits for the first one', $refused(static fn () => OwnerVipPrice::sell($form(), $main), 'Another VIP $100 sale') && $patches() === $before);
+$check('a second VIP $100 sale waits for the first one', $refused(static fn () => OwnerVipPrice::sell($form100(), $main), 'Another VIP $100 sale') && $patches() === $before);
 $check('the minute job leaves a running sale alone', OwnerVipPrice::repair() === 'ok');
 $other->query("SELECT RELEASE_LOCK('ismile-owner-vip-price')");
 
 // ---- the price cannot be put back at once: the minute job puts it back ----
 $setState(['mode' => 'refuse-restore']);
-$stuck = OwnerVipPrice::sell($form(), $main);
+$stuck = OwnerVipPrice::sell($form100(), $main);
 $check('the sale is still made when the put-back fails', $stuck['sale']['status'] === 'paid' && $stuck['restored'] === false);
 $check('the normal price is remembered while VIP is still $100', $vipNow()['price'] === 171100 && is_file(App::storage('tmp/owner-vip-price.json')));
 $setState(['mode' => 'ok']);
@@ -255,11 +267,11 @@ $check('a VIP $200 cash sale without a workshop still needs the VIP package open
 Settings::set('vip_package_sales_open', '1');
 $before = $patches();
 $check('a workshop that is not included is refused for VIP $100 before any price change',
-    $refused(static fn () => OwnerVipPrice::sell($form(['vip_workshop' => 'pediatric-dentistry']), $main), 'vip_workshop_required') && $patches() === $before);
-$without = OwnerVipPrice::sell($form(), $main);
+    $refused(static fn () => OwnerVipPrice::sell($form100(['vip_workshop' => 'pediatric-dentistry']), $main), 'vip_workshop_required') && $patches() === $before);
+$without = OwnerVipPrice::sell($form100(), $main);
 $check('VIP $100 without a workshop is sold at $100 (the workshop is optional)', $without['sale']['status'] === 'paid' && $without['sale']['amount'] === 171100 && $without['restored']
     && !Db::value('SELECT id FROM vip_package_choices WHERE checkout_id = ?', [$without['checkout']['id']]));
-$withWorkshop = OwnerVipPrice::sell($form(['vip_workshop' => 'crown-vs-veneer']), $main);
+$withWorkshop = OwnerVipPrice::sell($form100(['vip_workshop' => 'crown-vs-veneer']), $main);
 $choice = Db::one('SELECT * FROM vip_package_choices WHERE checkout_id = ?', [$withWorkshop['checkout']['id']]);
 $check('VIP $100 with the package is sold at $100', $withWorkshop['sale']['status'] === 'paid' && $withWorkshop['sale']['amount'] === 171100 && $withWorkshop['restored']);
 $check('its included workshop is saved for the registration, as for VIP $200', $choice && $choice['workshop_id'] === 'crown-vs-veneer'

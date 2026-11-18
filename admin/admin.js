@@ -678,6 +678,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const studentOption = specialty.querySelector('[value="student"]');
   // "VIP $100" (main Owner only) is a VIP ticket at another price.
   const isVip = (value) => value === "vip" || value === "vip100";
+  // Only VIP $200 includes a lunch day; VIP $100 comes without lunch (extra days are paid).
+  const hasVipLunch = (value) => value === "vip";
   // Lunch is ticked by hand only: changing the ticket (Dentist, Student, VIP)
   // or the VIP included day clears the lunch days, then only the day included
   // with VIP is ticked. The first run keeps what was posted (after an error).
@@ -715,14 +717,14 @@ document.addEventListener("DOMContentLoaded", () => {
       // The included workshop is optional for VIP $200 and VIP $100.
       vipWorkshop.querySelector("select").disabled = !isVip(ticket.value);
     }
-    const vipDayNow = isVip(ticket.value) && vipDay ? vipDay.value : "";
+    const vipDayNow = hasVipLunch(ticket.value) && vipDay ? vipDay.value : "";
     if (lastTicket !== null && (ticket.value !== lastTicket || vipDayNow !== lastVipDay)) {
       form.querySelectorAll('[name="lunch_day1"], [name="lunch_day2"]').forEach((input) => { input.checked = false; });
     }
     lastTicket = ticket.value;
     lastVipDay = vipDayNow;
     if (vipFields && vipDay) {
-      const vip = isVip(ticket.value);
+      const vip = hasVipLunch(ticket.value);
       vipFields.hidden = !vip;
       vipDay.disabled = !vip;
       vipDay.required = vip;
@@ -746,7 +748,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let saleTotal = null;
   function showTotal() {
     const type = ticket.value;
-    const vipDay = isVip(type) ? Number(form.querySelector('[name="vip_lunch_day"]')?.value || 0) : 0;
+    const vipDay = hasVipLunch(type) ? Number(form.querySelector('[name="vip_lunch_day"]')?.value || 0) : 0;
     document.querySelectorAll("[data-pick-ticket]").forEach((card) => {
       const on = card.dataset.pickTicket === type;
       card.classList.toggle("is-on", on);
@@ -833,7 +835,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (confirmed) return;
       event.preventDefault();
       if (!form.reportValidity()) return;
-      const vipDay = isVip(ticket.value) ? Number(value("vip_lunch_day") || 0) : 0;
+      const vipDay = hasVipLunch(ticket.value) ? Number(value("vip_lunch_day") || 0) : 0;
       const days = { 1: "Day 1, Thursday 19 Nov", 2: "Day 2, Friday 20 Nov" };
       const lunch = [1, 2].filter((day) => form.querySelector(`[name="lunch_day${day}"]`).checked)
         .map((day) => days[day] + (day === vipDay ? " (with VIP)" : ""));
