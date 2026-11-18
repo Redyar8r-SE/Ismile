@@ -53,7 +53,7 @@ jobs:
               foreach ($node as $k => $v) {
                 $p = is_int($k) ? $path . '[' . $k . ']' : ($path === '' ? (string) $k : $path . '.' . $k);
                 if (is_array($v)) { $out = array_merge($out, $walk($v, $p)); continue; }
-                if (preg_match('/status|error|reason|consent|deliver|notif|sent|fail|whatsapp|channel|message|acknowledg|categor|source/i', (string) $k) && !preg_match('/qr|code$|email$|phone$|name$/i', (string) $k)) {
+                if (preg_match('/status|error|reason|consent|deliver|notif|sent|fail|whatsapp|channel|message|acknowledg|categor|source/i', (string) $k) && !preg_match('/qr|(?<!error)code$|email$|phone$|name$/i', (string) $k)) {
                   $out[$p] = $mask($v);
                 }
               }
