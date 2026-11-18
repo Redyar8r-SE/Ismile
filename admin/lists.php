@@ -232,7 +232,7 @@ $pickedLabel = !$pickedAmb ? 'All ambassadors' : (count($pickedAmb) > 1 ? count(
   <div class="table-wrap"><table class="name-list">
     <tr><th>#</th><th>Name</th><?php foreach ($columns as $label): ?><th><?= $e($label) ?></th><?php endforeach; ?></tr>
     <?php foreach ($rows as $i => $row): ?>
-    <tr>
+    <tr<?= \Ismile\SpeakerTickets::isSpeaker($row) ? ' class="speaker-row"' : '' ?>>
       <td><?= $i + 1 ?></td>
       <td><?php if ($row['id']): ?><a href="registration.php?id=<?= (int) $row['id'] ?>"><b><?= $e(Registrations::fullName($row)) ?></b></a><?php else: ?><b><?= $e(Registrations::fullName($row)) ?></b><?php endif; ?> <?= Page::paidBadge($row['status'], $row) ?></td>
       <?php foreach (array_keys($columns) as $key): ?>
@@ -250,7 +250,7 @@ $pickedLabel = !$pickedAmb ? 'All ambassadors' : (count($pickedAmb) > 1 ? count(
     <p class="muted small">Amounts show the recorded currency (IQD = Iraqi dinars). “Not recorded” is not zero. Lunch quantity includes any lunch included with a VIP ticket.</p>
     <div class="table-wrap"><table class="name-list">
       <thead><tr><?php foreach ($paymentHeaders as $heading): ?><th><?= $e($heading) ?></th><?php endforeach; ?></tr></thead>
-      <tbody><?php foreach ($paymentRows as $paymentCells): ?><tr><?php foreach ($paymentCells as $value): ?><td><?= $e((string) $value) ?></td><?php endforeach; ?></tr><?php endforeach; ?>
+      <tbody><?php foreach (array_values($paymentRows) as $p => $paymentCells): ?><tr<?= \Ismile\SpeakerTickets::isSpeaker(array_values($paymentPeople)[$p] ?? []) ? ' class="speaker-row"' : '' ?>><?php foreach ($paymentCells as $value): ?><td><?= $e((string) $value) ?></td><?php endforeach; ?></tr><?php endforeach; ?>
       <?php if (!$paymentRows): ?><tr><td colspan="<?= count($paymentHeaders) ?>" class="muted">Nobody matches this list.</td></tr><?php endif; ?></tbody>
     </table></div>
   </section>

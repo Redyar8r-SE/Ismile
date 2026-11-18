@@ -431,7 +431,7 @@ final class Page
      */
     public static function paidBadge(string $status, ?array $person = null): string
     {
-        $speaker = $status === 'complimentary' && ($person['comp_reason'] ?? null) === \Ismile\SpeakerTickets::REASON;
+        $speaker = $status === 'complimentary' && $person !== null && \Ismile\SpeakerTickets::isSpeaker(['status' => $status] + $person);
         [$class, $label, $icon] = match (true) {
             $speaker                    => ['paid-speaker', 'SPEAKER', 'speaker-tickets'],
             $status === 'paid'          => ['paid-yes', 'PAID', 'check'],

@@ -78,6 +78,14 @@ $check('lists and Registrations show SPEAKER in its own colour, other free ticke
     str_contains($badge, 'paid-speaker') && str_contains($badge, 'SPEAKER') && !str_contains($badge, 'FREE')
     && str_contains($guestBadge, 'paid-free') && str_contains($guestBadge, 'FREE')
     && str_contains(\Ismile\Admin\Page::paidBadge('complimentary'), 'FREE') && str_contains(\Ismile\Admin\Page::paidBadge('paid', $person), 'PAID'));
+$whereIds = static function (array $in): array {
+    [$where, $params] = \Ismile\Admin\RegistrationQuery::where($in);
+    return array_map('intval', array_column(Db::all('SELECT r.id FROM ' . \Ismile\Admin\RegistrationQuery::from() . " WHERE $where", $params), 'id'));
+};
+$check('Lists sale type and the Registrations filter keep speakers apart from other free tickets',
+    \Ismile\Admin\Lists::saleType($person) === 'speaker' && \Ismile\Admin\Lists::saleType(['status' => 'complimentary', 'comp_reason' => 'Guest']) === 'free'
+    && in_array((int) $person['id'], $whereIds(['status' => 'speaker']), true) && !in_array((int) $person['id'], $whereIds(['status' => 'complimentary']), true)
+    && in_array((int) $person['id'], $whereIds([]), true));
 $check('the free lunch is on the registration (Day 1 and Day 2)', (int) $person['lunch_day1'] === 1 && (int) $person['lunch_day2'] === 1);
 $check('gender, city and specialty are saved; no age is kept for a speaker', $person['gender'] === 'female' && $person['age'] === null && $person['city'] === 'Erbil' && $person['specialty'] === 'omfs');
 $check('the phone is saved in international form', $person['phone'] === '+964' . substr($in['phone'], 1));

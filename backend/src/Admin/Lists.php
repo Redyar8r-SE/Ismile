@@ -26,7 +26,7 @@ final class Lists
     ];
 
     /** The "Sale type" filter: how the ticket was sold. */
-    public const SALE_TYPES = ['cash' => 'Cash', 'card' => 'Card (online)', 'free' => 'Free ticket', 'association' => \Ismile\AssociationGuests::NAME];
+    public const SALE_TYPES = ['cash' => 'Cash', 'card' => 'Card (online)', 'free' => 'Free ticket', 'speaker' => 'Speaker', 'association' => \Ismile\AssociationGuests::NAME];
 
     /** Lists of companies (sponsor requests), not of people. */
     public const COMPANY_LISTS = ['sponsors' => 'sponsor', 'exhibition' => 'booth'];
@@ -169,7 +169,7 @@ final class Lists
             'q' => $text('q', 120), 'ticket' => $pick('ticket', ['professional', 'student', 'vip']),
             'lunch' => $pick('lunch', ['day1', 'day2', 'both', 'none']), 'arrived' => $pick('arrived', ['day1', 'day2', 'none']),
             'cert' => $pick('cert', ['yes', 'no']), 'payment' => $pick('payment', ['paid', 'waiting', 'expired']),
-            'source' => $pick('source', ['website', 'office']), 'sale' => $pick('sale', ['cash', 'card', 'free', 'association']), 'wpaid' => $pick('wpaid', ['yes', 'no']),
+            'source' => $pick('source', ['website', 'office']), 'sale' => $pick('sale', array_keys(self::SALE_TYPES)), 'wpaid' => $pick('wpaid', ['yes', 'no']),
             'status' => $text('status', 30), 'package' => $text('package', 80), 'calls' => $pick('calls', ['due', 'overdue']),
             'city' => $text('city', 80), 'specialty' => $pick('specialty', array_keys(\Ismile\Registrations::SPECIALTY_NAMES)),
             'university' => $text('university', 160), 'from' => $date('from'), 'to' => $date('to'),
@@ -208,13 +208,14 @@ final class Lists
     /**
      * How the ticket was sold: cash (office, Psoola cash sale), association
      * (a Psoola cash sale for the Slemani Association, which pays later),
-     * card (paid online through Psoola) or free (Owner).
+     * card (paid online through Psoola), speaker (Speaker tickets) or free (Owner).
      */
     public static function saleType(array $row): string
     {
         if (($row['pay_method'] ?? null) === 'cash') {
             return isset(\Ismile\AssociationGuests::refSet()[(string) ($row['ref'] ?? '')]) ? 'association' : 'cash';
         }
+        if (\Ismile\SpeakerTickets::isSpeaker($row)) return 'speaker';
         return ($row['status'] ?? '') === 'complimentary' ? 'free' : 'card';
     }
 

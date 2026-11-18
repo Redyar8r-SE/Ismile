@@ -61,7 +61,7 @@ $select = static function (string $name, array $options, string $current): strin
   <?= Page::panelHeading('Find the right guest', 'Search your directory or narrow it down with the filters below.', 'search') ?>
   <label class="filter-field filter-search"><span>Name, phone, email or reference</span><input type="search" name="q" value="<?= $e($in['q']) ?>" placeholder="Search your guests…" autofocus></label>
   <?= $select('type', ['' => 'Any ticket'] + \Ismile\Registrations::TICKET_NAMES, $in['type']) ?>
-  <?= $select('status', ['' => 'Registered (paid + free)', 'paid' => 'Paid', 'complimentary' => 'Free ticket', 'cancelled' => 'Cancelled'], $in['status']) ?>
+  <?= $select('status', ['' => 'Registered (paid + free)', 'paid' => 'Paid', 'speaker' => 'Speakers', 'complimentary' => 'Free ticket (not speakers)', 'cancelled' => 'Cancelled'], $in['status']) ?>
   <?= $select('lunch', ['' => 'Any lunch', 'day1' => 'Lunch day 1', 'day2' => 'Lunch day 2', 'none' => 'No lunch'], $in['lunch']) ?>
   <?= $select('city', ['' => 'Any city'] + array_combine($cities, $cities), $in['city']) ?>
   <?= $select('lang', ['' => 'Any language', 'en' => 'English', 'ar' => 'Arabic', 'ku' => 'Kurdish'], $in['lang']) ?>
@@ -87,16 +87,17 @@ $select = static function (string $name, array $options, string $current): strin
 <table>
   <tr><th>Reference</th><th>Name</th><th>Phone</th><th>Ticket</th><th>Lunch</th><th>Status</th><th>Ticket no.</th><th>Added by</th><th>Registered</th></tr>
   <?php foreach ($rows as $row): ?>
-  <tr data-registration-result>
+  <?php $isSpeaker = \Ismile\SpeakerTickets::isSpeaker($row); ?>
+  <tr data-registration-result<?= $isSpeaker ? ' class="speaker-row"' : '' ?>>
     <td><a href="registration.php?id=<?= (int) $row['id'] ?>"><code><?= $e($row['ref']) ?></code></a>
       <?= $row['possible_duplicate'] ? ' <span class="pill violet" title="Same email or phone as another registration">duplicate?</span>' : '' ?></td>
     <td><div class="guest-cell"><span class="guest-avatar" aria-hidden="true"><?= $e(mb_strtoupper(mb_substr($row['first_name'],0,1))) ?></span><div><a href="registration.php?id=<?= (int) $row['id'] ?>"><b><?= $e(Registrations::fullName($row)) ?></b></a><small><?= Page::paidBadge($row['status'], $row) ?></small><?php if (!empty($row['sponsoring_company'])): ?><small>Sponsoring company: <?= $e($row['sponsoring_company']) ?></small><?php endif; ?></div></div></td>
     <td dir="ltr"><?= $e($row['phone']) ?></td>
     <td><?= $e(\Ismile\Registrations::ticketName($row['ticket_type'])) ?><br><small class="muted"><?= $e(Registrations::SPECIALTY_NAMES[$row['specialty']] ?? $row['specialty']) ?></small><?= $row['university'] ? '<br><small class="muted">' . $e($row['university']) . '</small>' : '' ?></td>
     <td><?= $row['lunch_day1'] ? 'D1 ' : '' ?><?= $row['lunch_day2'] ? 'D2' : '' ?><?= !$row['lunch_day1'] && !$row['lunch_day2'] ? '–' : '' ?></td>
-    <td><?= Page::pill($row['status']) ?><?= $row['failed_emails'] ? ' ' . Page::pill('failed') . '<small> email</small>' : '' ?></td>
+    <td><?= $isSpeaker ? '<span class="pill speaker">Speaker</span>' : Page::pill($row['status']) ?><?= $row['failed_emails'] ? ' ' . Page::pill('failed') . '<small> email</small>' : '' ?></td>
     <td><?= $row['ticket_no'] ? '<code>' . $e($row['ticket_no']) . '</code>' . ($row['checked_in_at'] ? ' ' . Page::pill('arrived') : '') : '–' ?></td>
-    <td><?php if ($row['created_by'] === null): ?><span class="muted">Website</span><?php else: ?><b><?= $e($row['added_by_name'] ?? 'Removed account') ?></b><?php if (isset($associationTags[$row['ref']])): ?><br><span class="added-by-tag association"><?= $e($associationTags[$row['ref']]) ?></span><?php elseif ($row['pay_method'] === 'cash'): ?><br><span class="added-by-tag cash">Cash</span><?php elseif ($row['status'] === 'complimentary'): ?><br><span class="added-by-tag">Free ticket</span><?php endif; ?><?php endif; ?></td>
+    <td><?php if ($row['created_by'] === null): ?><span class="muted">Website</span><?php else: ?><b><?= $e($row['added_by_name'] ?? 'Removed account') ?></b><?php if (isset($associationTags[$row['ref']])): ?><br><span class="added-by-tag association"><?= $e($associationTags[$row['ref']]) ?></span><?php elseif ($row['pay_method'] === 'cash'): ?><br><span class="added-by-tag cash">Cash</span><?php elseif ($isSpeaker): ?><br><span class="added-by-tag speaker">Speaker</span><?php elseif ($row['status'] === 'complimentary'): ?><br><span class="added-by-tag">Free ticket</span><?php endif; ?><?php endif; ?></td>
     <td><?= Page::when($row['created_at']) ?></td>
   </tr>
   <?php endforeach; ?>

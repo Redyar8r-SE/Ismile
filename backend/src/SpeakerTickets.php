@@ -18,6 +18,12 @@ final class SpeakerTickets
     public const REASON = 'Speaker at the iSmile summit';
     public const SORTS = ['newest' => 'Newest first', 'oldest' => 'Oldest first', 'name' => 'Name A to Z', 'name_desc' => 'Name Z to A'];
 
+    /** A registration that came from Speaker tickets (its free ticket's reason says so). */
+    public static function isSpeaker(array $person): bool
+    {
+        return ($person['status'] ?? '') === 'complimentary' && ($person['comp_reason'] ?? null) === self::REASON;
+    }
+
     /** Only Owners add speakers. */
     public static function canAdd(array $user): bool
     {

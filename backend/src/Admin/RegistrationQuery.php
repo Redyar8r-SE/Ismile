@@ -44,7 +44,14 @@ final class RegistrationQuery
             $params[] = $in['type'];
         }
         // Everyone here has paid (or has a free ticket); cancelled ones only when asked for.
-        if (in_array($in['status'] ?? '', ['paid', 'complimentary', 'cancelled'], true)) {
+        if (($in['status'] ?? '') === 'speaker') {
+            $where[] = "r.status = 'complimentary' AND r.comp_reason = ?";
+            $params[] = \Ismile\SpeakerTickets::REASON;
+        } elseif (($in['status'] ?? '') === 'complimentary') {
+            // Free tickets other than speakers (speakers have their own choice).
+            $where[] = "r.status = 'complimentary' AND (r.comp_reason IS NULL OR r.comp_reason <> ?)";
+            $params[] = \Ismile\SpeakerTickets::REASON;
+        } elseif (in_array($in['status'] ?? '', ['paid', 'cancelled'], true)) {
             $where[] = 'r.status = ?';
             $params[] = $in['status'];
         } else {
