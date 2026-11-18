@@ -88,7 +88,7 @@ jobs:
               FROM sponsored_ticket_orders o LEFT JOIN speaker_tickets st ON st.attempt_key = o.attempt_key
               GROUP BY speaker, o.status, o.email_status, o.whatsapp_status")) . PHP_EOL;
             $other = Db::all("SELECT o.provider_order_id, o.created_at FROM sponsored_ticket_orders o LEFT JOIN speaker_tickets st ON st.attempt_key = o.attempt_key
-              WHERE st.id IS NULL AND o.status = 'issued' ORDER BY o.id DESC LIMIT 3");
+              WHERE st.id IS NULL AND o.status = 'issued' AND o.created_at >= '2026-11-18 00:00:00' ORDER BY o.id DESC LIMIT 30");
             foreach ($other as $o) {
               $a = $gw->partnerRequest('GET', 'orders/' . rawurlencode((string) $o['provider_order_id']));
               echo 'SQRGUESTLIVE=' . substr((string) $o['created_at'], 0, 16) . ' ' . json_encode($a['status'] === 200 ? $walk($a['json'] ?? []) : 'HTTP ' . $a['status'], JSON_UNESCAPED_SLASHES) . PHP_EOL;
