@@ -196,7 +196,7 @@ $pickedLabel = !$pickedAmb ? 'All ambassadors' : (count($pickedAmb) > 1 ? count(
           <a href="photo.php?id=<?= (int) $row['id'] ?>" target="_blank" rel="noopener"><img src="photo.php?id=<?= (int) $row['id'] ?>&amp;log=0" alt="ID photo" loading="lazy"></a>
         <?php else: ?><div class="no-photo"><?= $row['id_photo_deleted_at'] ? 'Photo deleted after the summit' : 'No photo (registered by the office)' ?></div><?php endif; ?>
         <div class="id-card-text">
-          <a href="registration.php?id=<?= (int) $row['id'] ?>"><b><?= $e(Registrations::fullName($row)) ?></b></a> <?= Page::paidBadge($row['status']) ?><br>
+          <a href="registration.php?id=<?= (int) $row['id'] ?>"><b><?= $e(Registrations::fullName($row)) ?></b></a> <?= Page::paidBadge($row['status'], $row) ?><br>
           <?= $e($row['university'] ?? '') ?><?= Lists::ambassadorCode($row) !== '' ? ' · <span class="amb-code">' . $e(Lists::ambassadorCode($row)) . '</span>' : '' ?><br>
           <small class="muted" dir="ltr"><?= $e($row['phone']) ?> · <?= $e($row['ref']) ?><?= $row['photo_uploaded'] ? ' · sent ' . Page::when($row['photo_uploaded']) : '' ?></small>
         </div>
@@ -234,7 +234,7 @@ $pickedLabel = !$pickedAmb ? 'All ambassadors' : (count($pickedAmb) > 1 ? count(
     <?php foreach ($rows as $i => $row): ?>
     <tr>
       <td><?= $i + 1 ?></td>
-      <td><?php if ($row['id']): ?><a href="registration.php?id=<?= (int) $row['id'] ?>"><b><?= $e(Registrations::fullName($row)) ?></b></a><?php else: ?><b><?= $e(Registrations::fullName($row)) ?></b><?php endif; ?> <?= Page::paidBadge($row['status']) ?></td>
+      <td><?php if ($row['id']): ?><a href="registration.php?id=<?= (int) $row['id'] ?>"><b><?= $e(Registrations::fullName($row)) ?></b></a><?php else: ?><b><?= $e(Registrations::fullName($row)) ?></b><?php endif; ?> <?= Page::paidBadge($row['status'], $row) ?></td>
       <?php foreach (array_keys($columns) as $key): ?>
         <td<?= $key === 'phone' ? ' dir="ltr"' : '' ?>><?= $cell($key, $row) ?></td>
       <?php endforeach; ?>

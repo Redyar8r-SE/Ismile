@@ -427,14 +427,17 @@ final class Page
      * The big "has this person paid?" badge shown next to names. Works for a
      * registration status (paid / complimentary / unpaid / waiting / cancelled)
      * and for a workshop payment status (paid / complimentary / unpaid).
+     * Given the person, a speaker's free ticket shows SPEAKER in its own colour.
      */
-    public static function paidBadge(string $status): string
+    public static function paidBadge(string $status, ?array $person = null): string
     {
-        [$class, $label, $icon] = match ($status) {
-            'paid'          => ['paid-yes', 'PAID', 'check'],
-            'complimentary' => ['paid-free', 'FREE', 'star'],
-            'cancelled'     => ['paid-cancel', 'CANCELLED', 'close'],
-            default         => ['paid-no', 'NOT PAID', 'close'],
+        $speaker = $status === 'complimentary' && ($person['comp_reason'] ?? null) === \Ismile\SpeakerTickets::REASON;
+        [$class, $label, $icon] = match (true) {
+            $speaker                    => ['paid-speaker', 'SPEAKER', 'speaker-tickets'],
+            $status === 'paid'          => ['paid-yes', 'PAID', 'check'],
+            $status === 'complimentary' => ['paid-free', 'FREE', 'star'],
+            $status === 'cancelled'     => ['paid-cancel', 'CANCELLED', 'close'],
+            default                     => ['paid-no', 'NOT PAID', 'close'],
         };
         return '<span class="paid-badge ' . $class . '">' . self::navIcon($icon) . '<span>' . $label . '</span></span>';
     }

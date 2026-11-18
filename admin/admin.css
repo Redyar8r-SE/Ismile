@@ -164,6 +164,7 @@ ol.steps{display:grid;gap:10px;padding-left:20px}
 .paid-badge .nav-icon{width:14px;height:14px;stroke-width:2.2}
 .paid-yes{background:var(--green-d);color:#fff}
 .paid-free{background:var(--violet-d);color:#fff}
+.paid-speaker{background:linear-gradient(135deg,#f76707,#e8590c);color:#fff;box-shadow:0 0 0 1px rgba(232,89,12,.35)}
 .paid-no{background:var(--red-d);color:#fff}
 .paid-wait{background:var(--gold);color:#3a2a06}
 .paid-cancel{background:#6b7c7e;color:#fff}

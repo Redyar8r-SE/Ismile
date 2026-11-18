@@ -72,6 +72,12 @@ $check('PSOOLA gets the speaker email and WhatsApp number for the QR', $request[
 $check('the QR email and WhatsApp status from PSOOLA are on the speaker', $order['email_status'] === 'queued' && Db::value('SELECT whatsapp_status FROM sponsored_ticket_orders WHERE id = ?', [$order['id']]) === 'pending');
 $person = Db::one('SELECT * FROM registrations WHERE id = ?', [$order['registration_id']]);
 $check('the speaker is registered with a free Dentist ticket', $person && $person['status'] === 'complimentary' && $person['ticket_type'] === 'professional' && $person['comp_reason'] === SpeakerTickets::REASON);
+$badge = \Ismile\Admin\Page::paidBadge($person['status'], $person);
+$guestBadge = \Ismile\Admin\Page::paidBadge('complimentary', ['comp_reason' => 'Diamond sponsor staff']);
+$check('lists and Registrations show SPEAKER in its own colour, other free tickets still FREE',
+    str_contains($badge, 'paid-speaker') && str_contains($badge, 'SPEAKER') && !str_contains($badge, 'FREE')
+    && str_contains($guestBadge, 'paid-free') && str_contains($guestBadge, 'FREE')
+    && str_contains(\Ismile\Admin\Page::paidBadge('complimentary'), 'FREE') && str_contains(\Ismile\Admin\Page::paidBadge('paid', $person), 'PAID'));
 $check('the free lunch is on the registration (Day 1 and Day 2)', (int) $person['lunch_day1'] === 1 && (int) $person['lunch_day2'] === 1);
 $check('gender, city and specialty are saved; no age is kept for a speaker', $person['gender'] === 'female' && $person['age'] === null && $person['city'] === 'Erbil' && $person['specialty'] === 'omfs');
 $check('the phone is saved in international form', $person['phone'] === '+964' . substr($in['phone'], 1));
