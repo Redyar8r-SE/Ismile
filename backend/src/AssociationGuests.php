@@ -35,12 +35,7 @@ final class AssociationGuests
         if (!self::canAdd($user)) {
             throw new UserError('Your account cannot add association guests.');
         }
-        if (!in_array($in['gender'] ?? '', Registrations::GENDERS, true)) {
-            throw new UserError('Choose the gender.');
-        }
-        if (trim((string) ($in['age'] ?? '')) === '') {
-            throw new UserError('Enter the age.');
-        }
+        // Gender and age are not asked on the database forms (owner, 19 Nov 2026).
         unset($in['ambassador']);
         $checkout = Checkouts::createForCash($in, $user, null, false);
         Db::insert('association_guests', [

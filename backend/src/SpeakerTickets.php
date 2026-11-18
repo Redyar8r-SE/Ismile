@@ -44,10 +44,7 @@ final class SpeakerTickets
         if (!is_string($key) || !preg_match('/^[a-f0-9]{32}$/D', $key)) {
             throw new UserError('Reload the Speaker tickets form before adding.');
         }
-        // Speakers: the gender is asked, the age is not.
-        if (!in_array($in['gender'] ?? null, Registrations::GENDERS, true)) {
-            throw new UserError('Choose the gender.');
-        }
+        // Gender and age are not asked on the database forms (owner, 19 Nov 2026).
         $in['age'] = '';
         if (($in['consent'] ?? '') !== '1') {
             throw new UserError('Tick that the speaker agreed to get the ticket by WhatsApp.');

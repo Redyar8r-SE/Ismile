@@ -105,7 +105,6 @@ $check('filters: added by', count($found(['by' => (string) $staff['id']])) === 3
 $check('filters: registration status and QR email', count($found(['state' => 'registered'])) === 3 && $found(['state' => 'cancelled']) === [] && count($found(['email' => 'pending'])) === 3 && $found(['email' => 'delivered']) === []);
 $check('order: name A to Z, Z to A, newest and oldest', $found(['sort' => 'name']) === ['Bryar', 'Hemin', 'Shno'] && $found(['sort' => 'name_desc']) === ['Shno', 'Hemin', 'Bryar'] && $found([]) === ['Shno', 'Bryar', 'Hemin'] && $found(['sort' => 'oldest']) === ['Hemin', 'Bryar', 'Shno']);
 $check('unknown filter values are ignored', $f(['ticket' => 'x', 'sort' => 'evil', 'by' => '1 OR 1'])['ticket'] === '' && $f(['sort' => 'evil'])['sort'] === 'newest' && $f(['by' => '1 OR 1'])['by'] === '');
-$check('gender and age are required', $rejects(static fn () => AssociationGuests::add(array_diff_key($form('Nogender'), ['gender' => 1]), $staff)) && $rejects(static fn () => AssociationGuests::add(['age' => ''] + $form('Noage'), $staff)));
 $check('the gender and age are saved', Registrations::find((int) $registration['id'])['gender'] === 'male' && (int) Registrations::find((int) $registration['id'])['age'] === 34);
 
 // ---- the guest list PDF: the same full details as the Lists PDFs ----
@@ -156,5 +155,9 @@ $check('owed text formats every currency', AssociationGuests::owedText([]) === '
 Db::update('admin_users', ['association_guest_access' => 1], 'id = ?', [$volunteer['id']]);
 $byVolunteer = AssociationGuests::add($form('Volgranted'), Db::one('SELECT * FROM admin_users WHERE id = ?', [$volunteer['id']]));
 $check('a granted volunteer really adds a guest', $byVolunteer['sale']['status'] === 'paid' && AssociationGuests::isGuest($byVolunteer['checkout']['ref']));
+
+// Gender and age are not asked on the database forms any more (owner, 19 Nov 2026). Last, so the lists above stay as they are.
+$noGender = AssociationGuests::add(array_diff_key($form('Nogender'), ['gender' => 1, 'age' => 1]), $staff);
+$check('gender and age are not asked: a guest without them is added', (bool) $noGender && Registrations::find((int) ($noGender['sale']['registration_id'] ?? 0)) !== null);
 
 echo "$passed association guest checks passed.\n";

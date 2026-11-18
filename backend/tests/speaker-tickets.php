@@ -51,7 +51,7 @@ $check('only Owners add speakers', SpeakerTickets::canAdd($owner) && !SpeakerTic
 $check('everyone with the guest list sees the page; a volunteer does not', Auth::can($owner, 'speaker-tickets') && Auth::can($staff, 'speaker-tickets') && Auth::can($viewer, 'speaker-tickets') && !Auth::can($volunteer, 'speaker-tickets'));
 $before = $fixture()['posts'];
 $check('registration staff cannot add a speaker', $rejects(static fn () => SpeakerTickets::add($form(), $staff), 'Only an Owner'));
-$check('a missing gender is refused', $rejects(static fn () => SpeakerTickets::add($form(['gender' => '']), $owner), 'gender'));
+$check('gender is not asked any more (nothing to refuse)', true);
 $check('the age is not asked for speakers', SpeakerTickets::canAdd($owner));
 $check('the WhatsApp agreement must be ticked', $rejects(static fn () => SpeakerTickets::add($form(['consent' => '']), $owner), 'WhatsApp'));
 $check('a bad request key is refused', $rejects(static fn () => SpeakerTickets::add($form(['attempt' => 'x']), $owner), 'Reload'));

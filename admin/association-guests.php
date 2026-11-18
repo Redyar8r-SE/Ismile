@@ -217,7 +217,6 @@ $association = AssociationGuests::NAME;
   <fieldset class="form-section">
     <legend>1. Guest's details</legend>
     <div class="row3"><label>First name<input name="first_name" maxlength="60" value="<?= $value('first_name') ?>" autocomplete="off" required></label><label>Second name<input name="father_name" maxlength="60" value="<?= $value('father_name') ?>" required></label><label>Last name<input name="grandfather_name" maxlength="60" value="<?= $value('grandfather_name') ?>" required></label></div>
-    <div class="row3"><label>Gender<select name="gender" required><option value="">Choose gender</option><?php foreach (['female' => 'Female', 'male' => 'Male', 'other' => 'Other', 'prefer-not' => 'Prefer not to say'] as $genderKey => $genderName): ?><option value="<?= $genderKey ?>"<?= $selected('gender', $genderKey) ?>><?= $genderName ?></option><?php endforeach; ?></select></label><label>Age<input type="number" name="age" inputmode="numeric" min="16" max="120" step="1" value="<?= $value('age') ?>" placeholder="28" required></label></div>
     <div class="row3"><label>Phone<input type="tel" name="phone" dir="ltr" autocomplete="off" value="<?= $value('phone') ?>" required placeholder="0750 123 4567"></label><label>Email<input type="email" name="email" dir="ltr" autocomplete="off" maxlength="190" value="<?= $value('email') ?>" required></label><label>City<?= \Ismile\Cities::select($_POST['city'] ?? '') ?></label></div>
   </fieldset>
   <fieldset class="form-section">
