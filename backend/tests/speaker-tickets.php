@@ -185,6 +185,17 @@ $check('a free VIP is not for dental students', $rejects(static fn () => \Ismile
 $check('only the main Owner may give a free VIP', \Ismile\GuestOrders::canGiveVip($mainOwner) && !\Ismile\GuestOrders::canGiveVip($owner) && !\Ismile\GuestOrders::canGiveVip(['role' => 'registration'] + $mainOwner));
 $vipOrder = \Ismile\GuestOrders::issueSingle($mainOwner, $guestForm());
 $vipPerson = Db::one('SELECT * FROM registrations WHERE id = ?', [$vipOrder['registration_id']]);
+// VIP free on Register (cash): the cash form's fields, a local phone number, no lunch.
+$cashForm = static fn (array $more = []): array => $more + ['first_name' => 'Cash', 'father_name' => 'Vip', 'grandfather_name' => 'Guest', 'gender' => 'female', 'age' => '35',
+    'phone' => '0750' . random_int(1000000, 9999999), 'email' => 'cashvip-' . bin2hex(random_bytes(4)) . '@example.invalid', 'city' => 'Erbil', 'specialty' => 'gp', 'ticket' => 'vipfree'];
+$posts = $fixture()['posts'];
+$check('VIP free on Register (cash): another Owner is refused and nothing is sent', $rejects(static fn () => \Ismile\GuestOrders::issueOwnerVip($owner, $cashForm()), 'Only the main Owner') && $fixture()['posts'] === $posts);
+$check('VIP free on Register (cash): a ticked lunch day is refused before PSOOLA', $rejects(static fn () => \Ismile\GuestOrders::issueOwnerVip($mainOwner, $cashForm(['lunch_day1' => '1'])), 'without lunch') && $fixture()['posts'] === $posts);
+$cashVip = \Ismile\GuestOrders::issueOwnerVip($mainOwner, $cashForm());
+$cashVipPerson = Db::one('SELECT * FROM registrations WHERE id = ?', [$cashVip['registration_id']]);
+$check('VIP free on Register (cash): the main Owner gets a free VIP registered with the +964 phone and no lunch', $cashVip['status'] === 'issued' && $cashVipPerson
+    && $cashVipPerson['ticket_type'] === 'vip' && $cashVipPerson['status'] === 'complimentary' && str_starts_with((string) $cashVipPerson['phone'], '+9647')
+    && $cashVipPerson['vip_lunch_day'] === null && (int) $cashVipPerson['lunch_day1'] + (int) $cashVipPerson['lunch_day2'] === 0);
 $orderOf = static fn (string $id): array => array_values(array_filter($fixture()['sessions'], static fn (array $x): bool => $x['id'] === $id))[0] ?? [];
 $vipSession = $orderOf((string) $vipOrder['provider_order_id']);
 $check('the main Owner gives a free VIP: PSOOLA VIP ticket at 0, registered as a free VIP with no lunch', $vipOrder['status'] === 'issued' && $vipPerson

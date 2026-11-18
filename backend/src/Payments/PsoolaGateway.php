@@ -236,6 +236,48 @@ final class PsoolaGateway implements Gateway, CashSales
         return $this->partnerRequest($method, $path, $payload, $headers);
     }
 
+    /**
+     * Several read-only partner GETs at once (at most $parallel in flight),
+     * for pages that look up many orders. Same answer shape as partnerRequest.
+     *
+     * @param array<string, string> $paths key => path
+     * @return array<string, array{status: int, json: ?array}>
+     */
+    public function partnerGetMany(array $paths, int $parallel = 8): array
+    {
+        $this->ready();
+        $out = [];
+        $queue = $paths;
+        $multi = curl_multi_init();
+        $running = [];
+        $start = function (string $key, string $path) use ($multi, &$running): void {
+            $curl = curl_init($this->base . '/api/partner/v1/' . ltrim($path, '/'));
+            curl_setopt_array($curl, [CURLOPT_CUSTOMREQUEST => 'GET', CURLOPT_HTTPHEADER => ['Accept: application/json', 'Authorization: Bearer ' . $this->key],
+                CURLOPT_RETURNTRANSFER => true, CURLOPT_CONNECTTIMEOUT => 10, CURLOPT_TIMEOUT => 25, CURLOPT_FOLLOWLOCATION => false,
+                CURLOPT_SSL_VERIFYPEER => true, CURLOPT_SSL_VERIFYHOST => 2]);
+            curl_multi_add_handle($multi, $curl);
+            $running[(int) spl_object_id($curl)] = [$key, $curl];
+        };
+        while ($queue && count($running) < max(1, $parallel)) { $key = array_key_first($queue); $start((string) $key, $queue[$key]); unset($queue[$key]); }
+        do {
+            curl_multi_exec($multi, $active);
+            while ($done = curl_multi_info_read($multi)) {
+                $curl = $done['handle'];
+                [$key] = $running[(int) spl_object_id($curl)];
+                $body = curl_multi_getcontent($curl);
+                $json = is_string($body) ? json_decode($body, true) : null;
+                $out[$key] = ['status' => (int) curl_getinfo($curl, CURLINFO_RESPONSE_CODE), 'json' => is_array($json) ? $json : null];
+                unset($running[(int) spl_object_id($curl)]);
+                curl_multi_remove_handle($multi, $curl);
+                curl_close($curl);
+                if ($queue) { $next = array_key_first($queue); $start((string) $next, $queue[$next]); unset($queue[$next]); }
+            }
+            if ($running) curl_multi_select($multi, 1.0);
+        } while ($running);
+        curl_multi_close($multi);
+        return $out;
+    }
+
     /** Server-side partner API requests, including sponsored direct orders. */
     public function partnerRequest(string $method, string $path, ?array $payload = null, array $headers = []): array
     {

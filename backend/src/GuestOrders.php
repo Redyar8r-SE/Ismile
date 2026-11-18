@@ -36,6 +36,21 @@ final class GuestOrders
             'event_id'=>$event,'show_id'=>$show,'ticket_type_id'=>$ticket,'quantity'=>1,'locale'=>'en','add_on_ids_json'=>json_encode(array_values($addOnIds)),'whatsapp_consent'=>'1']);
     }
 
+    /**
+     * "VIP free" on Register (cash), main Owner only (owner, 19 Nov 2026): a
+     * real free VIP ticket in PSOOLA (0 IQD, QR by email and WhatsApp), with no
+     * lunch. The cash form is turned into one guest-ticket request; Page::useOnce
+     * already refuses the same form sent twice.
+     */
+    public static function issueOwnerVip(array $user,array $in): array
+    {
+        if(!self::canGiveVip($user))throw new UserError('Only the main Owner can give a free VIP ticket.');
+        if(($in['lunch_day1']??'')==='1'||($in['lunch_day2']??'')==='1')throw new UserError('A free VIP comes without lunch. Untick the lunch days.');
+        $guest=array_intersect_key($in,array_flip(['first_name','father_name','grandfather_name','email','phone','city','gender','age','specialty']));
+        return self::issueSingle($user,$guest+['attempt'=>bin2hex(random_bytes(16)),'complimentary_reason'=>'Free VIP from the main Owner',
+            'delivery_confirmation'=>'email-whatsapp-v1','vip_free'=>'1','sponsoring_company'=>'']);
+    }
+
     /** Free VIP tickets: the main Owner's account only (signed in as Owner). */
     public static function canGiveVip(array $user): bool
     {

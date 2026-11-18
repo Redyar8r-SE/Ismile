@@ -677,7 +677,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // student, and a Dentist ticket cannot be a dental student. VIP takes any.
   const studentOption = specialty.querySelector('[value="student"]');
   // "VIP $100" (main Owner only) is a VIP ticket at another price.
-  const isVip = (value) => value === "vip" || value === "vip100";
+  const isVip = (value) => value === "vip" || value === "vip100" || value === "vipfree";
   // Only VIP $200 includes a lunch day; VIP $100 comes without lunch (extra days are paid).
   const hasVipLunch = (value) => value === "vip";
   // Lunch is ticked by hand only: changing the ticket (Dentist, Student, VIP)
@@ -713,9 +713,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const vipDay = form.querySelector('[name="vip_lunch_day"]');
     const vipWorkshop = document.getElementById("caller-vip-workshop");
     if (vipWorkshop) {
-      vipWorkshop.hidden = !isVip(ticket.value);
-      // The included workshop is optional for VIP $200 and VIP $100.
-      vipWorkshop.querySelector("select").disabled = !isVip(ticket.value);
+      // The included workshop is optional for VIP $200 and VIP $100; VIP free has none.
+      vipWorkshop.hidden = !isVip(ticket.value) || ticket.value === "vipfree";
+      vipWorkshop.querySelector("select").disabled = !isVip(ticket.value) || ticket.value === "vipfree";
     }
     const vipDayNow = hasVipLunch(ticket.value) && vipDay ? vipDay.value : "";
     if (lastTicket !== null && (ticket.value !== lastTicket || vipDayNow !== lastVipDay)) {
@@ -723,6 +723,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     lastTicket = ticket.value;
     lastVipDay = vipDayNow;
+    // VIP free (main Owner) comes without lunch: the lunch days cannot be ticked.
+    form.querySelectorAll('[name="lunch_day1"], [name="lunch_day2"]').forEach((input) => {
+      if (ticket.value === "vipfree") input.checked = false;
+      input.disabled = ticket.value === "vipfree";
+      input.closest(".lunch-card")?.classList.toggle("is-off", ticket.value === "vipfree");
+    });
     if (vipFields && vipDay) {
       const vip = hasVipLunch(ticket.value);
       vipFields.hidden = !vip;
@@ -744,7 +750,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const lines = document.getElementById("cash-lines");
   const total = document.getElementById("cash-total");
   const money = (amount) => `${amount.toLocaleString("en-US")} ${prices.currency}`;
-  const ticketNames = { professional: "Dentist ticket", student: "Student ticket", vip: "VIP ticket", vip100: "VIP $100 ticket" };
+  const ticketNames = { professional: "Dentist ticket", student: "Student ticket", vip: "VIP ticket", vip100: "VIP $100 ticket", vipfree: "Free VIP ticket" };
   let saleTotal = null;
   function showTotal() {
     const type = ticket.value;
@@ -858,6 +864,15 @@ document.addEventListener("DOMContentLoaded", () => {
         amount.classList.add("is-waiting");
         field("received").textContent = form.dataset.receivedPlain || "I have received the cash from this guest.";
       }
+      // VIP free: no money changes hands, so the window asks about the free ticket instead.
+      const free = ticket.value === "vipfree";
+      const title = confirmBox.querySelector("#cash-confirm-title");
+      const amountLabel = confirmBox.querySelector(".cash-confirm-amount > span");
+      title.dataset.cash ??= title.textContent;
+      amountLabel.dataset.cash ??= amountLabel.textContent;
+      title.textContent = free ? "Give this free VIP ticket?" : title.dataset.cash;
+      amountLabel.textContent = free ? "Free, nothing to collect" : amountLabel.dataset.cash;
+      if (free) field("received").textContent = "I give this person a free VIP ticket (0 IQD, no lunch).";
       received.checked = false;
       yes.disabled = true;
       confirmBox.showModal();
