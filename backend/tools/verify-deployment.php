@@ -144,7 +144,7 @@ $explicitGuard=false;
 try { \Ismile\GuestOrders::assertRequest(['issuanceType'=>'cash','complimentaryReason'=>'Test']); }
 catch(\Ismile\UserError){$explicitGuard=true;}
 $check('Guest issuance requires an explicit complimentary request and shows a zero total', $explicitGuard && str_contains($freeForm,'Total: 0 IQD'));
-$check('Approved Guest ticket design shows the ticket card and both delivery channels without a consent checkbox',str_contains($freeForm,'guest-issuance-layout')&&str_contains($freeForm,'guest-pass-header')&&str_contains($freeForm,'Delivery: Email + WhatsApp')&&str_contains($freeForm,'name="delivery_confirmation"')&&!str_contains($freeForm,'type="checkbox"')&&!str_contains($freeForm,'First name *')&&!str_contains($freeForm,'class="flash warn">Issuance needs setup:'));
+$check('Guest ticket design shows the ticket card, both delivery channels and the required email and WhatsApp agreement',str_contains($freeForm,'guest-issuance-layout')&&str_contains($freeForm,'guest-pass-header')&&str_contains($freeForm,'Delivery: Email + WhatsApp')&&str_contains($freeForm,'name="delivery_confirmation"')&&str_contains($freeForm,'name="whatsapp_consent" value="1" required')&&!str_contains($freeForm,'First name *')&&!str_contains($freeForm,'class="flash warn">Issuance needs setup:'));
 if(\Ismile\GuestOrders::enabled())$check('Authorized Guest ticket action is enabled in the deployed form',preg_match('/<button\b(?=[^>]*data-guest-issue)(?![^>]*\bdisabled\b)[^>]*>/',$freeForm)===1);
 $check('Owner sees separate cash and free registration buttons', str_contains($render('registrations'),'href="registration.php?new=free"'));
 $profileId = Db::value('SELECT id FROM registrations ORDER BY id LIMIT 1');
@@ -262,7 +262,10 @@ $check('Association guest list PDF renders with the full list details', str_star
 $html = $render('speaker-tickets');
 $check('Speaker tickets: menu item, speaker list, speaker list PDF and Add speaker button', str_contains($html, 'href="speaker-tickets.php"') && str_contains($html, 'Speaker list') && str_contains($html, 'Download speaker list (PDF)') && str_contains($html, 'href="speaker-tickets.php?tab=add"'));
 $html = $render('speaker-tickets', 'tab=add');
-$check('Add speaker: free ticket form with gender, age, free lunch days and the WhatsApp agreement', str_contains($html, 'id="speaker-form"') && str_contains($html, 'name="gender"') && str_contains($html, 'name="age"') && str_contains($html, 'name="lunch_day1"') && str_contains($html, 'name="lunch_day2"') && str_contains($html, 'name="consent"') && str_contains($html, 'Yes, add and send QR') && !str_contains($html, 'name="student_id"'));
+$check('Add speaker: free ticket form with gender (no age), free lunch days and the WhatsApp agreement', str_contains($html, 'id="speaker-form"') && str_contains($html, 'name="gender"') && !str_contains($html, 'name="age"') && str_contains($html, 'name="lunch_day1"') && str_contains($html, 'name="lunch_day2"') && str_contains($html, 'name="consent"') && str_contains($html, 'Yes, add and send QR') && !str_contains($html, 'name="student_id"'));
+foreach (['desk' => '', 'registration' => 'new=cash', 'association-guests' => 'tab=add'] as $form => $query) {
+    $check("Selling a ticket on $form needs the required email and WhatsApp agreement", str_contains($render($form, $query), 'name="whatsapp_consent" value="1" required'));
+}
 $check('Add speaker: the lunch days start unticked (the Owner ticks them)', !preg_match('/name="lunch_day[12]" value="1" checked/', $html));
 $check('Viewer sees Speaker tickets without the Add speaker button', !str_contains($render('speaker-tickets', '', 'viewer'), 'tab=add') && !str_contains($render('speaker-tickets', '', 'viewer'), '<h2>Not allowed</h2>'));
 $check('Volunteer cannot open Speaker tickets', str_contains($render('speaker-tickets', '', 'volunteer'), '<h2>Not allowed</h2>'));

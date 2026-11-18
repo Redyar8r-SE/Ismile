@@ -12,6 +12,7 @@ try{$cashQuote=WorkshopCashSale::quote($selected,$selected);}catch(\Ismile\UserE
 <?= Page::csrfField() ?><input type="hidden" name="do" value="workshop_cash_sale"><input type="hidden" name="rid" value="<?= (int)$person['id'] ?>"><input type="hidden" name="workshop" value="<?= $e($open) ?>"><input type="hidden" name="free_registration" value="1">
 <h3>Free workshop registration</h3>
 <div class="ws-book-review"><p><span>Workshop registration</span><strong>0 IQD</strong></p><small>No cash payment is required. Register this attendee and PSOOLA sends their workshop ticket.</small></div>
+<?= \Ismile\Registrations::whatsappConsentField() ?>
 <footer class="ws-book-footer"><button type="button" class="btn ghost" data-ws-close>Cancel</button><button class="btn ws-primary"<?= $availabilityLabel!=='Available'?' disabled':'' ?>>Register &amp; issue free ticket</button></footer>
 </form>
 <?php else: ?>
@@ -23,6 +24,7 @@ try{$cashQuote=WorkshopCashSale::quote($selected,$selected);}catch(\Ismile\UserE
 <label>Cash amount received<input name="cash_amount" type="number" inputmode="decimal" min="1" max="1000000000" step="1" required value="<?= (int)$cashQuote['iqd'] ?>"></label>
 <p class="ws-book-notice" role="status">IQD amount for PSOOLA: <strong data-cash-converted><?= number_format($cashQuote['iqd']) ?> IQD</strong><br><span data-cash-match>Must match the current ticket price.</span></p>
 <label class="inline"><input type="checkbox" name="cash_received" value="1" required> I have received this cash payment.</label>
+<?= \Ismile\Registrations::whatsappConsentField() ?>
 <p class="ws-hint">Saves the received currency and amount, records the paid amount in IQD, and sends a paid workshop order to PSOOLA. PSOOLA sends the attendee's ticket.</p>
 <footer class="ws-book-footer"><button type="button" class="btn ghost" data-ws-close>Cancel</button><button class="btn ws-primary"<?= $availabilityLabel!=='Available'?' disabled':'' ?>>Register &amp; issue paid ticket</button></footer>
 </form>

@@ -51,6 +51,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         if (($_POST['do'] ?? '') !== 'add') {
             throw new UserError('Press Add by association.');
         }
+        \Ismile\Registrations::requireWhatsappConsent($_POST);
         ['checkout' => $checkout, 'sale' => $sale] = AssociationGuests::add($_POST, $user);
         $price = number_format($sale['amount']) . ' ' . $sale['currency'];
         if ($sale['status'] === 'paid' && $sale['registration_id']) {

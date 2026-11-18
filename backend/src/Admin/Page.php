@@ -467,6 +467,7 @@ final class Page
             . '<div class="paid-fields"><label>Amount received (exactly the price)<input name="amount_paid" inputmode="numeric" placeholder="exactly the price"></label>'
             . '<label>How<select name="paid_how"><option value="">choose…</option><option value="cash">cash</option><option value="transfer">transfer</option><option value="psoola">Psoola</option></select></label></div>'
             . ($isOwner ? '<label class="inline"><input type="checkbox" name="override" value="1"> over capacity</label>' : '')
+            . \Ismile\Registrations::whatsappConsentField()
             . '<div class="form-actions"><button class="btn green">Book the workshop</button></div></form>';
     }
 

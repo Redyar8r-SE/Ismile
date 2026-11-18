@@ -34,7 +34,7 @@ if($method==='POST') {
     try {
         \Ismile\Auth::checkCsrf();
         // Gender and age are asked for every new guest, as on the website.
-        if($action!=='retry')\Ismile\Registrations::genderAge($_POST);
+        if($action!=='retry'){\Ismile\Registrations::genderAge($_POST);\Ismile\Registrations::requireWhatsappConsent($_POST);}
         $issued=$action==='retry'?GuestOrders::retry($user,is_string($_POST['attempt']??null)?$_POST['attempt']:''):($options?GuestOrders::issue($user,$_POST):GuestOrders::issueSingle($user,$_POST));
         Page::flash('ok',$t('issued'));Page::redirect($rootUrl.'&order='.(int)$issued['id']);
     }catch(UserError $error){
@@ -113,6 +113,7 @@ $dir=in_array($ui,['ar','ckb'],true)?'rtl':'ltr';
   <div class="guest-field-pair"><?= \Ismile\Registrations::genderAgeFields(is_string($values['gender'] ?? null) ? $values['gender'] : null, is_string($values['age'] ?? null) ? $values['age'] : null) ?></div>
   <label class="guest-reason-field">Reason for complimentary ticket<textarea name="complimentary_reason" maxlength="500" required rows="3" placeholder="For example, invited speaker or sponsor guest"><?= $value('complimentary_reason') ?></textarea><small>A brief reason helps your team keep a clear record.</small></label>
   <div class="guest-delivery-notice"><?= Page::navIcon('arrow') ?><div><strong>Delivery: Email + WhatsApp</strong><p>By issuing, you confirm the guest agreed to WhatsApp ticket messages.</p></div></div>
+  <?= \Ismile\Registrations::whatsappConsentField('The guest', ($values['whatsapp_consent'] ?? '') === '1') ?>
   <footer class="guest-details-footer"><span>Guest details stay private.</span><a href="registrations.php">Cancel</a></footer>
  </section>
  <aside class="guest-ticket-sidebar" aria-label="Guest ticket preview">

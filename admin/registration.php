@@ -65,6 +65,7 @@ if (isset($_GET['new'])) {
                 Page::redirect('registrations.php');
             }
             if (($_POST['do'] ?? '') === 'cash') {
+                Registrations::requireWhatsappConsent($_POST);
                 $checkout = \Ismile\Checkouts::createForCash($_POST, $user, $_FILES['student_id'] ?? null);
                 $sale = \Ismile\Payments\Payments::sellForCash($checkout, $user);
                 $price = number_format($sale['amount']) . ' ' . $sale['currency'];
@@ -76,7 +77,9 @@ if (isset($_GET['new'])) {
                 Page::redirect('registrations.php');
             }
             if (($_POST['do'] ?? '') === 'free') {
+                Registrations::requireWhatsappConsent($_POST);
                 $created = Office::createComplimentary($user, $_POST, $_FILES['student_id'] ?? null);
+                Registrations::rememberWhatsappConsent((int) $created['id']);
                 Page::flash('ok', 'Registered ' . $created['ref'] . ' with a free ticket. The ticket is on its way by email.');
                 Page::redirect('registration.php?id=' . $created['id'] . $workspaceQuery);
             }
@@ -290,6 +293,11 @@ Page::action(static function () use ($registration, $user, $canChange): string {
         throw new UserError('You can change only the people you added yourself.');
     }
     $fresh = Registrations::find((int) $registration['id']);
+    if (in_array($do, ['workshop_add', 'guest_workshop'], true)) {
+        Registrations::requireWhatsappConsent($_POST);
+        Registrations::rememberWhatsappConsent((int) $fresh['id']);
+        $fresh = Registrations::find((int) $fresh['id']);
+    }
     return match ($do) {
         'edit'            => Office::editContact($fresh, $user, $_POST),
         'resend_ticket'   => Office::resendTicket($fresh, $user),

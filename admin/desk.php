@@ -32,6 +32,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             // Gender and age are asked here, as on the website.
             if (!in_array($_POST['gender'] ?? '', Registrations::GENDERS, true)) throw new UserError('Choose the gender.');
             if (trim((string) ($_POST['age'] ?? '')) === '') throw new UserError('Enter the age.');
+            Registrations::requireWhatsappConsent($_POST);
             Page::useOnce();
             $checkout = \Ismile\Checkouts::createForCash($_POST, $user, null, false);   // no student card photo at the desk
             $sale = \Ismile\Payments\Payments::sellForCash($checkout, $user);
@@ -60,7 +61,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             } else {
                 $in['cash_amount'] = (string) $quote['iqd'];
             }
-            $message = WorkshopCashSale::register($person, $user, $in);
+            Registrations::requireWhatsappConsent($_POST);
+            Registrations::rememberWhatsappConsent((int) $person['id']);
+            $message = WorkshopCashSale::register(Registrations::find((int) $person['id']), $user, $in);
             Page::flash('ok', 'Done! ' . Registrations::fullName($person) . ': ' . $message);
             Page::redirect($deskUrl('workshop', ['ws' => $in['workshop']]));
         }
@@ -367,6 +370,7 @@ $icon = static fn (string $d): string => '<svg viewBox="0 0 24 24" fill="none" s
     <form method="post" action="<?= $e($deskUrl('workshop', ['ws' => $wid] + $keep + ['rid' => (int) $person['id']])) ?>#pay" class="stack" data-ws-confirm data-name="<?= $e(Registrations::fullName($person)) ?>" data-email="<?= $e((string) $person['email']) ?>" data-phone="<?= $e($localPhone((string) $person['phone'])) ?>" data-workshop="<?= $e(Workshops::name($ws['w'])) ?>">
       <?= Page::csrfField() ?><?= Page::onceField() ?>
       <input type="hidden" name="do" value="workshop_cash_sale"><input type="hidden" name="rid" value="<?= (int) $person['id'] ?>"><input type="hidden" name="workshop" value="<?= $e($wid) ?>">
+      <?= \Ismile\Registrations::whatsappConsentField() ?>
       <?php if ($wsFree): ?>
       <div class="dk-pay-buttons"><button class="dk-cta dk-big" data-amount="Free, no cash">Register for free <span class="dk-go">Send ticket</span></button></div>
       <?php else: ?>

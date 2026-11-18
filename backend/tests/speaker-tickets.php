@@ -52,7 +52,7 @@ $check('everyone with the guest list sees the page; a volunteer does not', Auth:
 $before = $fixture()['posts'];
 $check('registration staff cannot add a speaker', $rejects(static fn () => SpeakerTickets::add($form(), $staff), 'Only an Owner'));
 $check('a missing gender is refused', $rejects(static fn () => SpeakerTickets::add($form(['gender' => '']), $owner), 'gender'));
-$check('a missing age is refused', $rejects(static fn () => SpeakerTickets::add($form(['age' => '']), $owner), 'age'));
+$check('the age is not asked for speakers', SpeakerTickets::canAdd($owner));
 $check('the WhatsApp agreement must be ticked', $rejects(static fn () => SpeakerTickets::add($form(['consent' => '']), $owner), 'WhatsApp'));
 $check('a bad request key is refused', $rejects(static fn () => SpeakerTickets::add($form(['attempt' => 'x']), $owner), 'Reload'));
 $check('a bad email is refused', $rejects(static fn () => SpeakerTickets::add($form(['email' => 'nope']), $owner)));
@@ -73,7 +73,7 @@ $check('the QR email and WhatsApp status from PSOOLA are on the speaker', $order
 $person = Db::one('SELECT * FROM registrations WHERE id = ?', [$order['registration_id']]);
 $check('the speaker is registered with a free Dentist ticket', $person && $person['status'] === 'complimentary' && $person['ticket_type'] === 'professional' && $person['comp_reason'] === SpeakerTickets::REASON);
 $check('the free lunch is on the registration (Day 1 and Day 2)', (int) $person['lunch_day1'] === 1 && (int) $person['lunch_day2'] === 1);
-$check('gender, age, city and specialty are saved', $person['gender'] === 'female' && (int) $person['age'] === 41 && $person['city'] === 'Erbil' && $person['specialty'] === 'omfs');
+$check('gender, city and specialty are saved; no age is kept for a speaker', $person['gender'] === 'female' && $person['age'] === null && $person['city'] === 'Erbil' && $person['specialty'] === 'omfs');
 $check('the phone is saved in international form', $person['phone'] === '+964' . substr($in['phone'], 1));
 $check('the addition and the free lunch are in the history', (bool) Db::value("SELECT COUNT(*) FROM audit_log WHERE action = 'speaker_ticket.add' AND target_id = ?", [$order['id']])
     && (bool) Db::value("SELECT COUNT(*) FROM audit_log WHERE action = 'speaker_ticket.lunch' AND target_id = ?", [$order['id']]));

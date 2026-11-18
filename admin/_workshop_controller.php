@@ -48,6 +48,7 @@ Page::action(static function()use($user,$back):string{
     if(in_array($do,['workshop_add','workshop_cash_sale','guest_workshop','guest_workshop_retry'],true)){
         $registration=Registrations::find((int)($_POST['rid']??0));
         if(!$registration)throw new UserError('Person not found.');
+        if($do!=='guest_workshop_retry'){Registrations::requireWhatsappConsent($_POST);Registrations::rememberWhatsappConsent((int)$registration['id']);$registration=Registrations::find((int)$registration['id']);}
         if($do==='workshop_cash_sale')$message=\Ismile\WorkshopCashSale::register($registration,$user,$_POST);
         elseif($do==='workshop_add')$message=Office::addWorkshop($registration,$user,$_POST);
         else{
@@ -57,7 +58,12 @@ Page::action(static function()use($user,$back):string{
         }
         Page::flash('ok',$message);Page::redirect($back.'#people');
     }
-    if($do==='workshop_issue_ticket')return \Ismile\WorkshopTickets::issue((int)($_POST['booking']??0),$user);
+    if($do==='workshop_issue_ticket'){
+        Registrations::requireWhatsappConsent($_POST);
+        $holder=(int)\Ismile\Db::value('SELECT registration_id FROM workshop_bookings WHERE id=?',[(int)($_POST['booking']??0)]);
+        if($holder)Registrations::rememberWhatsappConsent($holder);
+        return \Ismile\WorkshopTickets::issue((int)($_POST['booking']??0),$user);
+    }
     if($do==='workshop_change')return Office::changeWorkshop((int)($_POST['booking']??0),$user,$_POST);
     $id=(string)($_POST['ws']??'');
     return match($do){

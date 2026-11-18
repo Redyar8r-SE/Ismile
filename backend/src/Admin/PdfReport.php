@@ -318,21 +318,41 @@ final class PdfReport
         $pdf->SetAutoPageBreak(false, $breakMargin);
         $pdf->setCellPaddings($pad, $pad, $pad, $pad);
         $bottom = static fn (): float => $pdf->getPageHeight() - $breakMargin;
-        $text = static fn (array $row): array => array_map(static fn ($key): string => str_replace("\r", '', (string) ($row[$key] ?? '')), array_combine(array_keys($mm), array_keys($mm)));
-        $height = static function (array $cells, string $style) use ($pdf, $mm, $size): float {
-            $pdf->SetFont('dejavusans', $style, $size);
-            $height = 0.0;
-            foreach ($mm as $key => $width) $height = max($height, $pdf->getStringHeight($width, $cells[$key]));
-            return $height;
+        $text = static fn (array $row): array => array_map(static fn ($key): string => str_replace("", '', (string) ($row[$key] ?? '')), array_combine(array_keys($mm), array_keys($mm)));
+        // Most cells hold one short line: that is measured with one width sum and
+        // drawn as a plain cell. Only longer text is wrapped (the slower way).
+        $oneLine = [];
+        $height = static function (array $cells, string $style) use ($pdf, $mm, $pad, &$oneLine): array {
+            $pdf->SetFont('dejavusans', $style, $pdf->getFontSizePt());
+            $line = $oneLine[$style] ??= $pdf->getStringHeight(100, 'Ag');
+            $height = $line;
+            $wraps = [];
+            foreach ($mm as $key => $width) {
+                $cell = $cells[$key];
+                if ($cell === '' || (!str_contains($cell, "
+") && $pdf->GetStringWidth($cell) <= $width - 2 * $pad - 0.01)) continue;
+                $wraps[$key] = true;
+                $height = max($height, $pdf->getStringHeight($width, $cell));
+            }
+            return [$height, $wraps, $line];
         };
-        $draw = static function (array $cells, float $height, string $style, array $fill, array $ink, bool $heading) use ($pdf, $mm, $size, $left, $full): void {
-            $pdf->SetFont('dejavusans', $style, $size);
-            $pdf->SetFillColor(...$fill);
+        $draw = static function (array $cells, array $measure, string $style, ?array $fill, array $ink, bool $heading) use ($pdf, $mm, $left, $full): void {
+            [$height, $wraps, $line] = $measure;
+            $pdf->SetFont('dejavusans', $style, $pdf->getFontSizePt());
             $pdf->SetTextColor(...$ink);
             $y = $pdf->GetY();
+            if ($fill !== null) {   // one stripe per row, not one box per cell
+                $pdf->SetFillColor(...$fill);
+                $pdf->Rect($left, $y, $full, $height, 'F');
+            }
             $x = $left;
             foreach ($mm as $key => $width) {
-                $pdf->MultiCell($width, $height, $cells[$key], 0, 'L', true, 0, $x, $y, true, 0, false, true, $height, 'T');
+                if (isset($wraps[$key])) {
+                    $pdf->MultiCell($width, $height, $cells[$key], 0, 'L', false, 0, $x, $y, true, 0, false, true, $height, 'T');
+                } elseif ($cells[$key] !== '') {
+                    $pdf->SetXY($x, $y);
+                    $pdf->Cell($width, $line, $cells[$key], 0, 0, 'L', false, '', 0, false, 'T', 'T');
+                }
                 $x += $width;
             }
             $pdf->SetLineWidth(0.2);
@@ -349,26 +369,32 @@ final class PdfReport
             }
             $pdf->SetY($y + $height);
         };
+        $pdf->SetFont('dejavusans', '', $size);
         $headCells = $text($headers);
-        $headHeight = $height($headCells, 'B');
-        $heading = static fn () => $draw($headCells, $headHeight, 'B', self::NAVY, [255, 255, 255], true);
-        $first = $rows ? $height($text(reset($rows)), '') : 0.0;
-        if ($pdf->GetY() + $headHeight + $first > $bottom()) $pdf->AddPage('L', $format);   // no heading alone at the foot of a page
+        $head = $height($headCells, 'B');
+        $heading = static function () use ($draw, $headCells, $head, $pdf, $size): void {
+            $draw($headCells, $head, 'B', self::NAVY, [255, 255, 255], true);
+            $pdf->SetFont('dejavusans', '', $size);
+        };
+        $first = $rows ? $height($text(reset($rows)), '')[0] : 0.0;
+        if ($pdf->GetY() + $head[0] + $first > $bottom()) $pdf->AddPage('L', $format);   // no heading alone at the foot of a page
         $heading();
+        $tallest = $bottom() - $pdf->getMargins()['top'] - $head[0];
         foreach (array_values($rows) as $index => $row) {
             $cells = $text($row);
+            $measure = $height($cells, '');
             // A row taller than a whole page is cut to fit one page.
-            $rowHeight = min($height($cells, ''), $bottom() - $pdf->getMargins()['top'] - $headHeight);
-            if ($pdf->GetY() + $rowHeight > $bottom()) {
+            $measure[0] = min($measure[0], $tallest);
+            if ($pdf->GetY() + $measure[0] > $bottom()) {
                 $pdf->AddPage('L', $format);
                 $heading();
             }
-            $draw($cells, $rowHeight, '', $index % 2 ? [244, 247, 248] : [255, 255, 255], self::INK, false);
+            $draw($cells, $measure, '', $index % 2 ? [244, 247, 248] : null, self::INK, false);
         }
         if (!$rows) {
             $pdf->SetFont('dejavusans', 'I', $size);
             $pdf->SetTextColor(...self::MUTED);
-            $pdf->Cell($full, $headHeight, 'No records.', 0, 1, 'L');
+            $pdf->Cell($full, $head[0], 'No records.', 0, 1, 'L');
         }
         $pdf->setCellPaddings($padding['L'], $padding['T'], $padding['R'], $padding['B']);
         $pdf->SetAutoPageBreak($autoBreak, $breakMargin);

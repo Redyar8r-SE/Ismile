@@ -42,6 +42,31 @@ final class Registrations
      * $required: both must be given (new people); otherwise an empty age stays empty.
      * @return array{gender: ?string, age: ?int}
      */
+    /**
+     * Every ticket the team makes (summit, workshop, guest, speaker) needs the
+     * person's agreement to get the ticket QR code by email and WhatsApp.
+     * Without the tick nothing is sold or given.
+     */
+    public static function requireWhatsappConsent(array $in): void
+    {
+        if (($in['whatsapp_consent'] ?? '') !== '1') {
+            throw new UserError('Tick "The person agreed to get the ticket QR code by email and WhatsApp" first. Without it no ticket is made.');
+        }
+    }
+
+    /** Remembers the agreement on the registration (kept from the first time). */
+    public static function rememberWhatsappConsent(int $registrationId): void
+    {
+        Db::run('UPDATE registrations SET whatsapp_consent_at = COALESCE(whatsapp_consent_at, ?) WHERE id = ?', [App::now(), $registrationId]);
+    }
+
+    /** The required tick for every form that sells or gives a ticket. */
+    public static function whatsappConsentField(string $who = 'The person', bool $checked = false): string
+    {
+        return '<label class="cash-confirm-check whatsapp-consent"><input type="checkbox" name="whatsapp_consent" value="1"' . ($checked ? ' checked' : '') . ' required>'
+            . '<span>' . htmlspecialchars($who, ENT_QUOTES) . ' agreed to get the ticket QR code by <b>email and WhatsApp</b>.</span></label>';
+    }
+
     public static function genderAge(array $in, bool $required = true): array
     {
         $gender = Validate::oneOf($in['gender'] ?? null, self::GENDERS);

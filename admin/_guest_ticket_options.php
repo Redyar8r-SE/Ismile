@@ -27,7 +27,7 @@ if(!isset($user)||!\Ismile\Auth::canIssueComplimentary($user)){http_response_cod
   </div>
   <label><?= $e(\Ismile\Cities::label($ui)) ?><?= \Ismile\Cities::select($values['city'] ?? '', $ui) ?></label>
   <label><?= $e($t('reason')) ?><textarea name="complimentary_reason" maxlength="500" rows="3" required><?= $value('complimentary_reason') ?></textarea></label>
-  <label><input type="checkbox" name="whatsapp_consent" value="1"> <?= $e($t('consent')) ?></label><p class="muted small"><?= $e($t('consent_note')) ?></p>
+  <label><input type="checkbox" name="whatsapp_consent" value="1"<?= ($values['whatsapp_consent'] ?? '') === '1' ? ' checked' : '' ?> required> <?= $e($t('consent')) ?></label><p class="muted small"><?= $e($t('consent_note')) ?></p>
  </section>
  <aside class="guest-ticket-sidebar">
   <section class="guest-pass"><header class="guest-pass-header"><h2><?= $e($t('review')) ?></h2><span class="guest-pass-badge"><?= $e($t('complimentary')) ?></span></header>
