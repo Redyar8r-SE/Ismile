@@ -37,6 +37,8 @@ $overview = Db::one("SELECT COALESCE(SUM(status IN ('paid','complimentary')),0) 
 $registrationActions = Auth::can($user,'edit') ? '<a class="btn" href="registration.php?new=1">+ Register (cash)</a>' : '';
 if (Auth::canIssueComplimentary($user)) $registrationActions .= '<a class="btn violet" href="registration.php?new=free">+ Guest ticket</a>';
 if (Auth::canBookWorkshops($user)) $registrationActions .= '<a class="btn" href="workshops.php?group=ismile&amp;booking=1&amp;mode=cash#book">+ Workshop (cash)</a>';
+// Main Owner only: people deleted earlier whose PSOOLA ticket still works.
+if (\Ismile\Erase::isMainOwner($user)) $registrationActions .= '<a class="btn ghost" href="deleted-psoola.php">Deleted people in PSOOLA</a>';
 Page::top('Registrations', 'registrations', $registrationActions);
 $e = [Page::class, 'e'];
 $select = static function (string $name, array $options, string $current): string {

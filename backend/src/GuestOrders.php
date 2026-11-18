@@ -23,13 +23,23 @@ final class GuestOrders
         }
         $specialty=Validate::oneOf($in['specialty']??null,Registrations::SPECIALTIES);
         if(!$specialty)throw new UserError('Choose a specialty.');
-        $type=$specialty==='student'?'student':'professional';
+        // Free VIP (owner, 19 Nov 2026): only the main Owner, signed in as Owner; no lunch is included.
+        $vip=($in['vip_free']??'')==='1';
+        if($vip&&(!self::canGiveVip($user)))throw new UserError('Only the main Owner can give a free VIP ticket.');
+        if($vip&&$specialty==='student')throw new UserError('VIP is not for dental students. Choose another specialty.');
+        $type=$vip?'vip':($specialty==='student'?'student':'professional');
         $event=App::config('payments.psoola.event_id','');$show=App::config('payments.psoola.show_id','');
         $ticket=App::config('payments.psoola.ticket_types.'.$type,'');
         if(!$event||!$show||!$ticket)throw new UserError('The free ticket for this event needs server configuration. Ask the Owner to check the PSOOLA event and ticket mapping.');
         $request=array_intersect_key($in,array_flip(['attempt','email','phone','city','gender','age','sponsoring_company','complimentary_reason']));
         return self::issue($user,$request+['buyer_name'=>implode(' ',$parts),'specialty'=>$specialty,
             'event_id'=>$event,'show_id'=>$show,'ticket_type_id'=>$ticket,'quantity'=>1,'locale'=>'en','add_on_ids_json'=>json_encode(array_values($addOnIds)),'whatsapp_consent'=>'1']);
+    }
+
+    /** Free VIP tickets: the main Owner's account only (signed in as Owner). */
+    public static function canGiveVip(array $user): bool
+    {
+        return ($user['role']??'')==='owner'&&Erase::isMainOwner($user);
     }
 
     public static function enabled(): bool
@@ -257,7 +267,8 @@ final class GuestOrders
         $body=json_decode($saved['request_json'],true,512,JSON_THROW_ON_ERROR);
         if (count($body['items'])!==1) return null;
         $type=array_search($body['items'][0]['ticketTypeId'],(array)App::config('payments.psoola.ticket_types',[]),true);
-        if (!in_array($type,['professional','student'],true)) return null;
+        // VIP: only a free VIP the main Owner gave (no included lunch: vip_lunch_day stays empty).
+        if (!in_array($type,['professional','student','vip'],true)) return null;
         $guest=json_decode($saved['guest_json'],true,512,JSON_THROW_ON_ERROR);
         if (Db::value("SELECT id FROM registrations WHERE email=? AND phone=? AND status<>'cancelled'",[$guest['email'],$guest['phone']])) return null;
         $parts=preg_split('/\s+/u',$guest['buyer_name'],3)?:[];

@@ -91,7 +91,13 @@ final class Erase
     public static function registration(int $id, string $typed, array $user): string
     {
         self::requireMainOwner($user);
-        return Db::transaction(static function () use ($id, $typed, $user): string {
+        // The typed reference is checked first; then the person's tickets are
+        // cancelled in PSOOLA (owner, 19 Nov 2026). If PSOOLA does not cancel
+        // them, nothing is deleted here.
+        $person = Db::one('SELECT ref FROM registrations WHERE id = ?', [$id]) ?? throw new UserError('Registration not found.');
+        self::requireTyped($typed, $person['ref']);
+        $psoola = PsoolaCancel::beforeDelete($id, $user);
+        return Db::transaction(static function () use ($id, $typed, $user, $psoola): string {
             // Locked in the same order as check-in (ticket, then person), and every
             // row copied is locked, so the copy is exactly what gets deleted.
             Db::all('SELECT id FROM tickets WHERE registration_id = ? FOR UPDATE', [$id]);
@@ -169,7 +175,7 @@ final class Erase
                 Db::run('DELETE FROM student_id_photos WHERE id IN (' . self::marks($photoIds) . ')', $photoIds);
             }
             Audit::log((int) $user['id'], 'registration.delete', 'registration', $id, ['ref' => $registration['ref']]);
-            return 'Deleted ' . $registration['ref'] . ' (' . Registrations::fullName($registration) . '). A copy is kept in the database (deleted_records).';
+            return 'Deleted ' . $registration['ref'] . ' (' . Registrations::fullName($registration) . '). A copy is kept in the database (deleted_records).' . $psoola;
         });
     }
 

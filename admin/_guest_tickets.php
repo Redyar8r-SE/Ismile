@@ -109,6 +109,7 @@ $dir=in_array($ui,['ar','ckb'],true)?'rtl':'ltr';
    <label>Specialty<select name="specialty" required><option value="">Select specialty</option><?php foreach(\Ismile\Registrations::SPECIALTY_NAMES as $key=>$label): ?><option value="<?= $e($key) ?>"<?= ($values['specialty']??'')===$key?' selected':'' ?>><?= $e($label) ?></option><?php endforeach; ?></select></label>
    <label>Sponsoring company<input name="sponsoring_company" maxlength="160" placeholder="Company name (optional)" value="<?= $value('sponsoring_company') ?>"></label>
   </div>
+  <?php if(GuestOrders::canGiveVip($user)): ?><label class="inline guest-vip-free"><input type="checkbox" name="vip_free" value="1"<?= ($values['vip_free']??'')==='1'?' checked':'' ?>> <b>VIP ticket, free</b> <small>(only you; no lunch included; not for dental students)</small></label><?php endif; ?>
   <label>City<?= \Ismile\Cities::select($values['city'] ?? '') ?></label>
   <div class="guest-field-pair"><?= \Ismile\Registrations::genderAgeFields(is_string($values['gender'] ?? null) ? $values['gender'] : null, is_string($values['age'] ?? null) ? $values['age'] : null) ?></div>
   <label class="guest-reason-field">Reason for complimentary ticket<textarea name="complimentary_reason" maxlength="500" required rows="3" placeholder="For example, invited speaker or sponsor guest"><?= $value('complimentary_reason') ?></textarea><small>A brief reason helps your team keep a clear record.</small></label>

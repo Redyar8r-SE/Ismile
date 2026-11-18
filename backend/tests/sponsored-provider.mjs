@@ -3,13 +3,14 @@ import http from 'node:http';
 import fs from 'node:fs';
 const sessions=new Map(),keys=new Map(),bodies=new Map(),calls=new Map(),buyers=new Map(),listOrders=new Map();
 let listPageSize=100,ticketNo=0;
-const runId=Date.now().toString(36);let posts=0,creations=0,reads=0,catalogueReads=0,unsafePosts=0,checkoutPosts=0,permission=true,addOnPosts=0,lunchMode='free';const addOnKeys=new Map();
+const runId=Date.now().toString(36);let posts=0,creations=0,reads=0,catalogueReads=0,unsafePosts=0,checkoutPosts=0,permission=true,addOnPosts=0,lunchMode='free',deleteMode='cancel',deletes=0;const addOnKeys=new Map();
 const events=[{id:'event-test',name:{en:'iSmile Test Event',ar:'?????? ???????',ckb:'????? ???????????'},currency:'IQD',shows:[
  {id:'show-test',name:{en:'General admission',ar:'?????? ?????',ckb:'????????????? ????'},maxPerOrder:100,ticketTypes:[
   {id:'professional-test',name:{en:'Dentist',ckb:'??????? ?????? ????'},price:40000,available:500,addOns:[{id:'lunch1-test',name:{en:'Lunch day 1'},price:7500,available:500},{id:'lunch2-test',name:{en:'Lunch day 2'},price:8500,available:500}]},
   {id:'student-test',name:{en:'Student'},price:30000,available:500,addOns:[]},
   {id:'limited-test',name:{en:'Limited stock'},price:12345,available:1,addOns:[]},
-  {id:'closed-test',name:{en:'Closed'},price:10000,available:100,salesOpen:false,addOns:[]}]},
+  {id:'closed-test',name:{en:'Closed'},price:10000,available:100,salesOpen:false,addOns:[]},
+  {id:'vip-test',name:{en:'VIP'},price:342200,available:60,addOns:[]}]},
  {id:'cinema-test',type:'cinema',name:{en:'Unsupported cinema'},ticketTypes:[{id:'cinema-ticket',price:10000,available:10}]}]},
  {id:'other-event',name:{en:'Other General Admission Event'},currency:'IQD',shows:[{id:'other-show',name:{en:'Other show'},ticketTypes:[{id:'other-ticket',name:{en:'Other ticket'},price:17000,available:500,addOns:[]}]}]}];
 for (const row of JSON.parse(fs.readFileSync(new URL('../assets/real-workshops-2026.json', import.meta.url),'utf8'))) {
@@ -22,6 +23,7 @@ http.createServer(async(req,res)=>{
  if(url.pathname==='/fixture')return reply(200,{posts,creations,reads,catalogueReads,unsafePosts,checkoutPosts,addOnPosts,sessions:[...sessions.values()]});
  // free: PSOOLA adds a complimentary lunch at 0; refuse: 403; charge: added but priced; silent: 201 but nothing added.
  if(url.pathname==='/fixture/lunch'){lunchMode=url.searchParams.get('mode')||'free';return reply(200,{ok:true});}
+ if(url.pathname==='/fixture/delete'){deleteMode=url.searchParams.get('mode')||'cancel';return reply(200,{ok:true,deletes});}
  if(url.pathname==='/fixture/seed-order'&&req.method==='POST'){let raw='';for await(const data of req)raw+=data;const {session,lookupId,listOrder}=JSON.parse(raw);sessions.set(lookupId||session.id,{...session,request:session.request||{partnerReference:session.partnerReference}});if(listOrder)listOrders.set(lookupId||session.id,listOrder);else listOrders.delete(lookupId||session.id);return reply(200,{ok:true});}
  if(url.pathname==='/fixture/list-page-size'){listPageSize=Math.max(1,Math.min(100,Number(url.searchParams.get('size'))||100));return reply(200,{ok:true});}
  if(url.pathname==='/fixture/permission'){permission=url.searchParams.get('enabled')==='1';return reply(200,{ok:true});}
@@ -104,6 +106,12 @@ http.createServer(async(req,res)=>{
   if(key)addOnKeys.set(key,s);return reply(201,s);
  }
  const id=url.pathname.match(/^\/api\/partner\/v1\/orders\/([^/]+)$/)?.[1];
+ // DELETE /orders/{id} cancels the order (live PSOOLA, checked 19 Nov 2026): tickets turn cancelled and the seat comes back.
+ if(req.method==='DELETE'&&id){if(!sessions.has(id))return error(404,'NOT_FOUND');const s=sessions.get(id);
+  if(deleteMode==='refuse')return reply(403,{error:{code:'FORBIDDEN',message:'Order cancellation is not enabled for this partner.'}});
+  if(s.status!=='cancelled'&&deleteMode!=='silent'){s.status='cancelled';for(const t of s.tickets||[])t.status='cancelled';
+   for(const line of s.order?.items||[]){const type=events.flatMap(e=>e.shows).flatMap(sh=>sh.ticketTypes).find(t=>t.id===line.ticketTypeId);if(type)type.available+=line.quantity;}}
+  deletes++;return reply(200,{cancelled:s.status==='cancelled',order:s});}
  if(req.method==='GET'&&id){reads++;return sessions.has(id)?reply(200,sessions.get(id)):error(404,'NOT_FOUND');}
  return error(404,'NOT_FOUND');
 }).listen(8862,'127.0.0.1',()=>console.log('Local complimentary PSOOLA simulator ready on 8862.'));

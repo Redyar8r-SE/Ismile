@@ -87,9 +87,9 @@ if ($inCheckin) echo \Ismile\Admin\CheckinWorkspace::navigation('guests',$user,$
           $paidFact = $isComp ? 'Complimentary: 0 IQD' : ($paidPayment ? Page::money((int)($paidPayment['amount_confirmed'] ?? $paidPayment['amount_expected']),$paidPayment['currency']) : $statusLabel);
           $eraseBox = Page::confirm('red','trash','Delete this person for good?','Everything about this person is removed. This cannot be undone from the admin.',
             [['user',$fullName],['hash',$registration['ref']],['ticket',Registrations::ticketName($registration['ticket_type']).($ticket ? ' · '.$ticket['ticket_no'] : '')],['cash',$paidFact]],
-            ['deletes'=>['Ticket & QR','Check-ins','Certificate','Workshop seats','Payment records','Emails','Student ID photo'],
+            ['deletes'=>['Ticket & QR','PSOOLA ticket (cancelled)','Check-ins','Certificate','Workshop seats','Payment records','Emails','Student ID photo'],
              'tip'=>$registration['status'] !== 'cancelled' ? 'Use Cancel registration to stop the ticket and keep the history.' : null,
-             'type'=>$registration['ref'],'field'=>'confirm_ref','note'=>'Only the main Owner can do this. A full copy is kept in deleted_records.',
+             'type'=>$registration['ref'],'field'=>'confirm_ref','note'=>'Only the main Owner can do this. The PSOOLA ticket is cancelled first (its QR stops working and the seat comes back). A full copy is kept in deleted_records.',
              'yes'=>'Yes, delete for good','no'=>'No, keep this person']); ?>
           <form method="post" id="deleteRecord"><?= Page::csrfField() ?><input type="hidden" name="do" value="erase"><input type="hidden" name="confirm_ref" value=""><button class="rd-delete-action"<?= $eraseBox ?>><?= $icon('trash') ?>Delete for good</button></form>
         <?php elseif ($locked = Erase::lockedReason($user)): ?><span class="rd-menu-hint"><?= $e($locked) ?></span><?php endif; ?>

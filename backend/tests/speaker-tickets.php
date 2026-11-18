@@ -175,4 +175,59 @@ Erase::registration((int) $student['registration_id'], (string) $studentPerson['
 $check('a deleted speaker leaves the speaker list', !Db::value('SELECT COUNT(*) FROM speaker_tickets WHERE attempt_key = ?', [$student['attempt_key']])
     && count(SpeakerTickets::filter(SpeakerTickets::all(), SpeakerTickets::filters(['state' => 'registered']))) === 1);
 
+// ---- free VIP (main Owner only) and delete = cancel in PSOOLA first (19 Nov 2026) ----
+$guestForm = static fn (array $more = []): array => $more + ['attempt' => bin2hex(random_bytes(16)), 'first_name' => 'Test', 'father_name' => 'Vip', 'grandfather_name' => 'Guest',
+    'gender' => 'male', 'age' => '40', 'phone' => '+9647508' . random_int(100000, 999999), 'email' => 'vip-' . bin2hex(random_bytes(4)) . '@example.invalid',
+    'city' => 'Erbil', 'specialty' => 'gp', 'complimentary_reason' => 'Owner guest', 'delivery_confirmation' => 'email-whatsapp-v1', 'vip_free' => '1'];
+$posts = $fixture()['posts'];
+$check('another Owner cannot give a free VIP, and nothing is sent', $rejects(static fn () => \Ismile\GuestOrders::issueSingle($owner, $guestForm()), 'Only the main Owner') && $fixture()['posts'] === $posts);
+$check('a free VIP is not for dental students', $rejects(static fn () => \Ismile\GuestOrders::issueSingle($mainOwner, $guestForm(['specialty' => 'student'])), 'not for dental students'));
+$check('only the main Owner may give a free VIP', \Ismile\GuestOrders::canGiveVip($mainOwner) && !\Ismile\GuestOrders::canGiveVip($owner) && !\Ismile\GuestOrders::canGiveVip(['role' => 'registration'] + $mainOwner));
+$vipOrder = \Ismile\GuestOrders::issueSingle($mainOwner, $guestForm());
+$vipPerson = Db::one('SELECT * FROM registrations WHERE id = ?', [$vipOrder['registration_id']]);
+$orderOf = static fn (string $id): array => array_values(array_filter($fixture()['sessions'], static fn (array $x): bool => $x['id'] === $id))[0] ?? [];
+$vipSession = $orderOf((string) $vipOrder['provider_order_id']);
+$check('the main Owner gives a free VIP: PSOOLA VIP ticket at 0, registered as a free VIP with no lunch', $vipOrder['status'] === 'issued' && $vipPerson
+    && $vipPerson['ticket_type'] === 'vip' && $vipPerson['status'] === 'complimentary' && $vipPerson['vip_lunch_day'] === null
+    && (int) $vipPerson['lunch_day1'] === 0 && (int) $vipPerson['lunch_day2'] === 0
+    && ($vipSession['order']['items'][0]['ticketTypeId'] ?? null) === 'vip-test' && ($vipSession['order']['totalAmount'] ?? null) === 0);
+$orderState = static function (string $id) use ($orderOf): array {
+    $x = $orderOf($id);
+    return [$x['status'] ?? null, array_column($x['tickets'] ?? [], 'status')];
+};
+$deleteCount = static fn (): int => (int) json_decode((string) file_get_contents('http://127.0.0.1:8862/fixture/delete?mode=cancel'), true)['deletes'];
+$deletes = $deleteCount();
+$check('a wrong reference cancels nothing in PSOOLA and deletes nothing', $rejects(static fn () => Erase::registration((int) $vipPerson['id'], 'WRONG', $mainOwner), 'Type the reference')
+    && $deleteCount() === $deletes && $orderState($vipOrder['provider_order_id']) === ['paid', ['valid']]);
+$check('another Owner cannot delete or cancel', $rejects(static fn () => Erase::registration((int) $vipPerson['id'], $vipPerson['ref'], $owner), 'Only the main Owner')
+    && $orderState($vipOrder['provider_order_id']) === ['paid', ['valid']]);
+file_get_contents('http://127.0.0.1:8862/fixture/delete?mode=refuse');
+$check('when PSOOLA refuses to cancel, the person is NOT deleted', $rejects(static fn () => Erase::registration((int) $vipPerson['id'], $vipPerson['ref'], $mainOwner), 'did not cancel')
+    && Db::value('SELECT id FROM registrations WHERE id = ?', [$vipPerson['id']]) && $orderState($vipOrder['provider_order_id']) === ['paid', ['valid']]);
+file_get_contents('http://127.0.0.1:8862/fixture/delete?mode=cancel');
+$message = Erase::registration((int) $vipPerson['id'], $vipPerson['ref'], $mainOwner);
+$check('delete for good cancels the PSOOLA ticket first, then deletes the person', str_contains($message, 'PSOOLA: Summit ticket cancelled')
+    && $orderState($vipOrder['provider_order_id']) === ['cancelled', ['cancelled']] && !Db::value('SELECT id FROM registrations WHERE id = ?', [$vipPerson['id']])
+    && (bool) Db::value("SELECT id FROM audit_log WHERE action = 'psoola.order_cancel' AND details LIKE ?", ['%' . $vipOrder['provider_order_id'] . '%']));
+
+// A person deleted before this change: deleted here, still active in PSOOLA.
+$old = \Ismile\GuestOrders::issueSingle($mainOwner, $guestForm(['vip_free' => '']));
+$oldPerson = Db::one('SELECT * FROM registrations WHERE id = ?', [$old['registration_id']]);
+$config = (new ReflectionClass(App::class))->getProperty('config');
+$saved = $config->getValue();
+$changed = $saved; $changed['payments']['gateway'] = 'fake';
+$config->setValue(null, $changed);
+Erase::registration((int) $oldPerson['id'], $oldPerson['ref'], $mainOwner);
+$config->setValue(null, $saved);
+$list = \Ismile\PsoolaCancel::deletedStillActive();
+$listed = array_values(array_filter($list, static fn (array $x): bool => $x['record']['ref'] === $oldPerson['ref']))[0] ?? null;
+$check('the list shows a person deleted earlier whose PSOOLA ticket still works', $listed !== null && $orderState($old['provider_order_id']) === ['paid', ['valid']]
+    && !array_filter($list, static fn (array $x): bool => $x['record']['ref'] === $vipPerson['ref']));
+$check('another Owner cannot cancel from that list', $rejects(static fn () => \Ismile\PsoolaCancel::cancelDeleted((int) $listed['record']['id'], $owner), 'Only the main Owner')
+    && $orderState($old['provider_order_id']) === ['paid', ['valid']]);
+$done = \Ismile\PsoolaCancel::cancelDeleted((int) $listed['record']['id'], $mainOwner);
+$check('the main Owner cancels it in PSOOLA from the list; it leaves the list', str_contains($done, 'cancelled') && $orderState($old['provider_order_id']) === ['cancelled', ['cancelled']]
+    && !array_filter(\Ismile\PsoolaCancel::deletedStillActive(), static fn (array $x): bool => $x['record']['ref'] === $oldPerson['ref']));
+$check('pressing it again changes nothing', str_contains(\Ismile\PsoolaCancel::cancelDeleted((int) $listed['record']['id'], $mainOwner), 'already cancelled'));
+
 echo "$passed speaker ticket checks passed\n";
