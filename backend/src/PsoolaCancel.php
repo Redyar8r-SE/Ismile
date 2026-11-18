@@ -152,19 +152,27 @@ final class PsoolaCancel
         return $done ? ' PSOOLA: ' . implode(', ', $done) . '.' : ' PSOOLA: no ticket was linked to this person.';
     }
 
+    /** The filters on the "Deleted people" page. */
+    public const STATES = ['active' => 'Ticket still works in PSOOLA', 'cancelled' => 'Cancelled in PSOOLA', 'none' => 'No PSOOLA ticket', 'unknown' => 'PSOOLA not checked', 'all' => 'Everyone deleted'];
+
     /**
-     * People deleted earlier whose PSOOLA ticket may still work, newest first.
-     * Reads PSOOLA for each (at most $limit people).
+     * Everyone deleted from the database, newest first, with who deleted them
+     * and their PSOOLA state: active (a ticket still works), cancelled, none
+     * (no PSOOLA ticket, or PSOOLA does not know it) or unknown (PSOOLA did
+     * not answer). Reads PSOOLA once per order (at most $limit people).
      *
-     * @return list<array{record: array, orders: list<array{id: string, what: string, look: ?array, shared: bool, error: ?string}>}>
+     * @return list<array{record: array, state: string, orders: list<array{id: string, what: string, look: ?array, shared: bool, error: ?string}>}>
      */
-    public static function deletedStillActive(int $limit = 60): array
+    public static function deletedPeople(int $limit = 200): array
     {
         $out = [];
-        foreach (Db::all("SELECT id, ref, label, data, deleted_at FROM deleted_records WHERE kind = 'registration' ORDER BY id DESC LIMIT " . max(1, min(200, $limit))) as $record) {
+        $records = Db::all("SELECT d.id, d.ref, d.label, d.data, d.deleted_at, d.deleted_by, u.name AS deleted_by_name, u.email AS deleted_by_email
+                              FROM deleted_records d LEFT JOIN admin_users u ON u.id = d.deleted_by
+                             WHERE d.kind = 'registration' ORDER BY d.id DESC LIMIT " . max(1, min(500, $limit)));
+        foreach ($records as $record) {
             $copy = json_decode((string) $record['data'], true);
-            $orders = is_array($copy) ? self::ordersFromCopy($copy) : [];
-            if (!$orders) continue;
+            $orders = is_array($copy) && self::active() ? self::ordersFromCopy($copy) : [];
+            $person = is_array($copy) ? ($copy['registrations'][0] ?? []) : [];
             $rows = [];
             foreach ($orders as $order) {
                 $shared = self::usedByOther($order['id'], null);
@@ -174,10 +182,23 @@ final class PsoolaCancel
                 }
                 $rows[] = $order + ['look' => $look, 'shared' => $shared, 'error' => $error];
             }
-            $active = array_filter($rows, static fn (array $r): bool => !$r['shared'] && ($r['error'] !== null || ($r['look'] && $r['look']['found'] && !self::isCancelled($r['look']))));
-            if ($active) $out[] = ['record' => array_diff_key($record, ['data' => 1]), 'orders' => $rows];
+            $works = static fn (array $r): bool => !$r['shared'] && $r['look'] && $r['look']['found'] && !self::isCancelled($r['look']);
+            $state = match (true) {
+                (bool) array_filter($rows, $works) => 'active',
+                (bool) array_filter($rows, static fn (array $r): bool => $r['error'] !== null) => 'unknown',
+                (bool) array_filter($rows, static fn (array $r): bool => $r['look'] && self::isCancelled($r['look'])) => 'cancelled',
+                default => 'none',
+            };
+            $out[] = ['record' => array_diff_key($record, ['data' => 1]) + ['ticket_type' => (string) ($person['ticket_type'] ?? ''), 'status' => (string) ($person['status'] ?? '')],
+                'state' => $state, 'orders' => $rows];
         }
         return $out;
+    }
+
+    /** People deleted earlier whose PSOOLA ticket may still work (or PSOOLA did not answer). */
+    public static function deletedStillActive(int $limit = 200): array
+    {
+        return array_values(array_filter(self::deletedPeople($limit), static fn (array $p): bool => in_array($p['state'], ['active', 'unknown'], true)));
     }
 
     /** Cancels in PSOOLA the tickets of one person deleted earlier (deleted_records id). */

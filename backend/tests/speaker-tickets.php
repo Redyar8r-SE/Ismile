@@ -229,5 +229,10 @@ $done = \Ismile\PsoolaCancel::cancelDeleted((int) $listed['record']['id'], $main
 $check('the main Owner cancels it in PSOOLA from the list; it leaves the list', str_contains($done, 'cancelled') && $orderState($old['provider_order_id']) === ['cancelled', ['cancelled']]
     && !array_filter(\Ismile\PsoolaCancel::deletedStillActive(), static fn (array $x): bool => $x['record']['ref'] === $oldPerson['ref']));
 $check('pressing it again changes nothing', str_contains(\Ismile\PsoolaCancel::cancelDeleted((int) $listed['record']['id'], $mainOwner), 'already cancelled'));
+$everyone = \Ismile\PsoolaCancel::deletedPeople();
+$row = static fn (string $ref): ?array => array_values(array_filter($everyone, static fn (array $x): bool => $x['record']['ref'] === $ref))[0] ?? null;
+$check('the Deleted people list shows everyone deleted, who deleted them, and the PSOOLA state', $row($vipPerson['ref']) && $row($vipPerson['ref'])['state'] === 'cancelled'
+    && $row($oldPerson['ref'])['state'] === 'cancelled' && $row($vipPerson['ref'])['record']['deleted_by_name'] === $mainOwner['name']
+    && $row($vipPerson['ref'])['record']['ticket_type'] === 'vip' && count($everyone) >= 3);
 
 echo "$passed speaker ticket checks passed\n";

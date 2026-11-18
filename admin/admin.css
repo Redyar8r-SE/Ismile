@@ -1098,6 +1098,8 @@ body[data-page=backups] .page-symbol{background:#e9f4ee;color:#418165;border-col
 .list-filters .filter-seg label:hover span{background:#eef6fa}
 .list-filters .filter-seg input:checked+span{background:var(--teal-d);color:#fff;font-weight:700}
 .list-filters .filter-seg input:focus-visible+span{outline:2px solid var(--teal);outline-offset:2px}
+.deleted-filters .filter-seg a{text-decoration:none}.deleted-filters .filter-seg a:hover span{background:#eef6fa}.deleted-filters .filter-seg a.on span{background:var(--teal-d);color:#fff;font-weight:700}
+.deleted-filters .deleted-filter-title{display:block;margin:0 0 7px;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:1.1px;text-transform:uppercase}
 .list-filters .filter-more>summary{display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border:1px solid #bfe7ee;border-radius:10px;background:var(--teal-l);color:var(--teal-d);font-size:13px;font-weight:700;cursor:pointer;list-style:none}
 .list-filters .filter-more>summary::-webkit-details-marker{display:none}
 .list-filters .filter-more>summary .nav-icon{width:16px;height:16px}
