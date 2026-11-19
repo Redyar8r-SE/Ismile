@@ -285,8 +285,12 @@ $html = $render('desk', '', 'volunteer');
 $check('Volunteer sees only Workshop & Register with the cash form', substr_count($html, 'class="nav-link') === 1 && str_contains($html, 'href="desk.php"')
     && !str_contains($html, 'How to use this page') && str_contains($html, 'id="caller-form"') && str_contains($html, 'id="cash-confirm"') && str_contains($html, 'desk.css')
     && str_contains($html, 'value="vip"') && !str_contains($html, 'Register with a free ticket') && !str_contains($html, 'action="registrations.php"'));
-$check('Workshop & Register: Guest is only for the five listed volunteers, not for this account', !str_contains($html, 'data-pick-ticket="guest"') && !str_contains($html, 'value="guest"')
-    && count(\Ismile\DeskGuests::GIVER_HASHES) === 5);
+// Guest tickets: only accounts the Owner allowed (desk_guest_access). This render is the first Owner as a volunteer.
+$renderedGuest = (int) Db::value("SELECT desk_guest_access FROM admin_users WHERE role = 'owner' AND disabled_at IS NULL ORDER BY id LIMIT 1") === 1;
+$check('Workshop & Register shows Guest only when the account is allowed', (int) Db::value("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'admin_users' AND column_name = 'desk_guest_access'") === 1
+    && str_contains($html, 'data-pick-ticket="guest"') === $renderedGuest && str_contains($html, 'value="guest"') === $renderedGuest);
+$teamAccount = Db::value("SELECT id FROM admin_users WHERE role <> 'owner' AND disabled_at IS NULL AND email NOT LIKE '%@deleted.invalid' ORDER BY id LIMIT 1");
+$check('Account activity has the Allow/Remove Guest tickets button', !$teamAccount || str_contains($render('users', 'account=' . (int) $teamAccount), 'value="desk_guest_access"'));
 $html = $render('desk', 'tab=workshop', 'volunteer');
 // Every iSmile workshop is shown, full and free ones too.
 $deskWorkshops = array_values(array_filter(\Ismile\Workshops::all(), static fn (array $w): bool => $w['organizer'] === 'ismile'));

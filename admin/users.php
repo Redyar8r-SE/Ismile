@@ -60,6 +60,11 @@ Page::action(static function () use ($user): string {
             Db::update('admin_users', ['association_guest_access' => $enabled], 'id=?', [$target['id']]);
             Audit::log((int) $user['id'], $enabled ? 'user.association_guest_grant' : 'user.association_guest_revoke', 'admin_user', (int) $target['id']);
             return $enabled ? 'Association guests access granted: they can see the guests, add by association and download the PDF.' : 'Association guests access removed.';
+        case 'desk_guest_access':   // Workshop & Register: may give free Guest tickets (no lunch). Owner, 19 Nov 2026.
+            $enabled = ($_POST['enabled'] ?? '') === '1' ? 1 : 0;
+            Db::update('admin_users', ['desk_guest_access' => $enabled], 'id=?', [$target['id']]);
+            Audit::log((int) $user['id'], $enabled ? 'user.desk_guest_grant' : 'user.desk_guest_revoke', 'admin_user', (int) $target['id']);
+            return $enabled ? $target['name'] . ' can now give free Guest tickets (no lunch) on Workshop & Register.' : $target['name'] . ' can no longer give Guest tickets.';
         case 'hidden_pages':
             if ($target['role'] === 'owner') throw new UserError('An Owner always sees every page.');
             $home = ['checkin' => 'checkin', 'map_viewer' => 'map', 'badges' => 'certificates', 'volunteer' => 'desk'][$target['role']] ?? '';

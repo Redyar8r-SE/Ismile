@@ -1779,3 +1779,26 @@ body:has([data-guest-tickets]) .page-actions .btn{background:transparent;border:
 @media (max-width:900px){.po-groups{grid-template-columns:1fr}}
 @media (max-width:600px){.po-alert{flex-wrap:wrap;padding:14px}.po-alert em{width:100%;text-align:center}.po-search{flex-wrap:wrap}.po-search .btn{flex:1}.po-filters{padding:16px 14px}}
 @media print{.po-alert,.po-filters{display:none}}
+/* Account activity: Guest tickets on Workshop & Register, one button (19 Nov 2026) */
+.guest-access{display:flex;align-items:center;gap:18px;margin-bottom:24px;padding:20px 22px;border:1.5px solid #e3defa;border-left:6px solid var(--violet);background:linear-gradient(135deg,#fff,#f6f4ff)}
+.guest-access.is-on{border-color:#bfe6cc;border-left-color:var(--green);background:linear-gradient(135deg,#fff,#effaf3)}
+.guest-access-icon{flex:none;display:grid;place-items:center;width:52px;height:52px;border-radius:14px;background:var(--violet-l);color:var(--violet-d)}
+.guest-access.is-on .guest-access-icon{background:var(--green);color:#fff}
+.guest-access-icon .nav-icon{width:26px;height:26px}
+.guest-access-text{flex:1;min-width:0}
+.guest-access-text h2{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:0 0 4px;font-size:18px}
+.guest-access-text p{margin:0;color:#5b7486;font-size:13px}
+.guest-access-state{display:inline-block;padding:3px 11px;border-radius:999px;font-size:12px;font-weight:800;background:var(--violet-l);color:var(--violet-d)}
+.guest-access.is-on .guest-access-state{background:var(--green-l);color:var(--green-d)}
+.guest-access-note{margin-top:6px!important;color:var(--gold-d)!important;font-weight:600}
+.guest-access-form{flex:none;margin:0}
+.guest-access-btn{min-height:48px;padding:0 24px;font-size:14px;font-weight:800}
+@media (max-width:640px){.guest-access{flex-wrap:wrap}.guest-access-form,.guest-access-btn{width:100%}}
+/* Psoola orders: "Show more" and the loading state (19 Nov 2026) */
+.po-more{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-top:16px;padding:14px 16px;border:1px dashed #cfe0ea;border-radius:12px;background:#f7fbfd;font-size:13px;color:#4f7186}
+.po-more .btn{min-height:44px;padding:0 22px;font-weight:800}
+body.po-busy{cursor:progress}
+body.po-busy .po-filters,body.po-busy .registration-directory,body.po-busy .po-alert{opacity:.5;pointer-events:none;transition:opacity .15s}
+body.po-busy::before{content:"";position:fixed;top:0;left:0;z-index:9999;height:4px;width:40%;background:linear-gradient(90deg,var(--teal),var(--violet));border-radius:0 4px 4px 0;animation:po-bar 1s ease-in-out infinite}
+@keyframes po-bar{0%{left:-40%}100%{left:100%}}
+@media (prefers-reduced-motion:reduce){body.po-busy::before{animation:none;width:100%;left:0}}

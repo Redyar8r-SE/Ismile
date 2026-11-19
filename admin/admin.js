@@ -723,7 +723,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     lastTicket = ticket.value;
     lastVipDay = vipDayNow;
-    // VIP free (main Owner) and Guest (desk, four volunteers only) come without lunch: the lunch days cannot be ticked.
+    // VIP free (main Owner) and Guest (desk, allowed accounts only) come without lunch: the lunch days cannot be ticked.
     const noLunch = ticket.value === "vipfree" || ticket.value === "guest";
     form.querySelectorAll('[name="lunch_day1"], [name="lunch_day2"]').forEach((input) => {
       if (noLunch) input.checked = false;
@@ -1220,4 +1220,19 @@ document.addEventListener("DOMContentLoaded", () => {
   form.addEventListener("input", update);
   form.addEventListener("change", update);
   update();
+})();
+
+// Psoola orders (19 Nov 2026): a filter, search, "Show more" or refresh fades the
+// list and shows a loading bar at once, so a click always feels answered.
+(() => {
+  const filters = document.querySelector(".po-filters");
+  if (!filters) return;
+  const busy = () => document.body.classList.add("po-busy");
+  document.querySelectorAll(".po-chip, .po-alert, [data-po-busy]").forEach((link) => link.addEventListener("click", (event) => {
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
+    busy();
+  }));
+  filters.querySelector(".po-search")?.addEventListener("submit", busy);
+  // Back/forward from the browser cache: show the page normally again.
+  window.addEventListener("pageshow", () => document.body.classList.remove("po-busy"));
 })();

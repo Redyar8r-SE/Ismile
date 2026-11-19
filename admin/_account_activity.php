@@ -35,6 +35,7 @@ $labels = [
     'certificate.email' => 'Emailed a certificate', 'sponsor.status' => 'Changed a sponsor status', 'sponsor.call' => 'Logged a sponsor call',
     'sponsor.paid' => 'Recorded a sponsor payment', 'settings' => 'Changed settings', 'user.add' => 'Added a team account', 'user.role' => 'Changed a role',
     'user.association_guest_grant' => 'Association guests access given', 'user.association_guest_revoke' => 'Association guests access removed',
+    'user.desk_guest_grant' => 'Guest tickets allowed', 'user.desk_guest_revoke' => 'Guest tickets removed',
     'user.registration_manage_grant' => 'Paid and free registration access given', 'user.registration_manage_revoke' => 'Paid and free registration access removed',
     'user.workshop_booking_grant' => 'Workshop booking access given', 'user.workshop_booking_revoke' => 'Workshop booking access removed',
     'user.badge_certificate_grant' => 'Badges and certificates access given', 'user.badge_certificate_revoke' => 'Badges and certificates access removed',
@@ -103,6 +104,7 @@ $added = [
 ];
 $grants = array_filter([
     'Association guests (everything)' => (int) ($account['association_guest_access'] ?? 0) === 1,
+    'Guest tickets (free, no lunch)' => (int) ($account['desk_guest_access'] ?? 0) === 1,
     'Paid and free registration' => (int) ($account['registration_manage_access'] ?? 0) === 1,
     'Workshop booking for everyone' => (int) ($account['workshop_booking_access'] ?? 0) === 1,
     'Badges and certificates' => (int) ($account['badge_certificate_access'] ?? 0) === 1,
@@ -129,6 +131,29 @@ foreach (Page::MENU as $file => [$pageLabel, $area]) {
     <div><dt>Account made</dt><dd><?= $e(date('j M Y, H:i', strtotime((string) $account['created_at']))) ?></dd></div>
     <div><dt>Last sign-in</dt><dd><?= $account['last_login_at'] ? $e(date('j M Y, H:i', strtotime((string) $account['last_login_at']))) : '<span class="muted">Never signed in</span>' ?></dd></div>
   </dl>
+</section>
+
+<?php
+// Guest tickets on Workshop & Register (owner, 19 Nov 2026): one button to allow or remove it.
+$guestOn = (int) ($account['desk_guest_access'] ?? 0) === 1;
+$guestDesk = Auth::canDeskRegister($account);
+$guestLocked = Erase::isMainOwnerAccount($account) && (int) $account['id'] !== (int) $user['id'];
+?>
+<section class="card guest-access<?= $guestOn ? ' is-on' : '' ?>">
+  <span class="guest-access-icon" aria-hidden="true"><?= Page::navIcon('ticket') ?></span>
+  <div class="guest-access-text">
+    <h2>Guest tickets <span class="guest-access-state"><?= $guestOn ? 'Allowed' : 'Not allowed' ?></span></h2>
+    <p><?= $guestOn
+        ? $e($account['name']) . ' sees the <b>Guest</b> card on Workshop &amp; Register and can give a free summit ticket (0 IQD, no lunch, one per email).'
+        : $e($account['name']) . ' does not see the Guest card on Workshop &amp; Register.' ?></p>
+    <?php if (!$guestDesk): ?><p class="guest-access-note">This role cannot open Workshop &amp; Register, so it can use Guest tickets only after you give it a role with that page (for example Volunteer).</p><?php endif; ?>
+  </div>
+  <?php if (!$guestLocked): ?>
+  <form method="post" action="users.php?account=<?= (int) $account['id'] ?>" class="guest-access-form"><?= Page::csrfField() ?>
+    <input type="hidden" name="do" value="desk_guest_access"><input type="hidden" name="id" value="<?= (int) $account['id'] ?>"><input type="hidden" name="back" value="account"><input type="hidden" name="enabled" value="<?= $guestOn ? '0' : '1' ?>">
+    <button class="btn <?= $guestOn ? 'red' : 'green' ?> guest-access-btn"><?= $guestOn ? 'Remove Guest tickets' : 'Allow Guest tickets' ?></button>
+  </form>
+  <?php endif; ?>
 </section>
 
 <section class="card">

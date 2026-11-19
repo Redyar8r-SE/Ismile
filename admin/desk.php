@@ -33,7 +33,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             Registrations::requireWhatsappConsent($_POST);
             Page::useOnce();
             if (($_POST['ticket'] ?? '') === 'guest') {
-                // Guest (owner, 19 Nov 2026): free, no lunch; only the four volunteers in DeskGuests can give it.
+                // Guest (owner, 19 Nov 2026): free, no lunch; only accounts the Owner allowed can give it.
                 $issued = \Ismile\DeskGuests::issue($user, $_POST);
                 if ($issued['status'] === 'issued' && $issued['registration_id']) {
                     Registrations::rememberWhatsappConsent((int) $issued['registration_id']);
@@ -192,7 +192,7 @@ Page::top('Workshop & Register', 'desk');
     $value = static fn (string $key): string => Page::e(is_string($_POST[$key] ?? null) ? $_POST[$key] : '');
     $selected = static fn (string $key, string $option): string => ($_POST[$key] ?? '') === $option ? ' selected' : '';
     $vip = ($_POST['ticket'] ?? '') === 'vip';
-    // Guest: only Nma, Lanu, Rawaz, Danial and Helin see it (DeskGuests); for everyone else it is not in the page at all.
+    // Guest: only accounts the Owner allowed (Users, Account activity) see it; for everyone else it is not in the page at all.
     $canGuest = \Ismile\DeskGuests::canGive($user);
     $guestTicket = $canGuest && ($_POST['ticket'] ?? '') === 'guest';
     $student = !$vip && !$guestTicket && (($_POST['specialty'] ?? '') === 'student' || ($_POST['ticket'] ?? '') === 'student');

@@ -53,7 +53,7 @@ final class GuestOrders
 
     /**
      * "Guest" on Workshop & Register (owner, 19 Nov 2026): a free Dentist or
-     * Student ticket, given only by the four volunteers in DeskGuests. Never a VIP.
+     * Student ticket, given only by accounts the Owner allowed (DeskGuests). Never a VIP.
      */
     private static bool $invited=false;
     public static function issueInvited(array $user,array $in): array

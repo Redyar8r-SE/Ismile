@@ -116,6 +116,16 @@ $check('each sale gets its email, sale type, ticket and door facts',$facts[0]===
 $none=['email'=>'','channel'=>'','ticket'=>'','door'=>''];
 $counts=PsoolaOrderSummary::counts($facts,$none);
 $check('counts: 2 people did not receive the email, 1 delivered, 1 still sending',$counts['email']===[''=>4,'delivered'=>1,'missed'=>2,'waiting'=>1]&&$counts['channel']['direct']===1&&$counts['ticket']['professional']===2);
+// Speed: PSOOLA's list is kept for one minute; a refresh reads it again; links and QRs are never saved.
+@unlink(App::storage('tmp/psoola-orders-list.json'));
+$reads=0;$fetch=function()use(&$reads){$reads++;return [['id'=>'o1','ticketsUrl'=>'https://secret.example/t','tickets'=>[['code'=>'A1','qrCode'=>'QR-SECRET','qrImageUrl'=>'https://secret.example/q.png','checkedIn'=>false]]]];};
+$first=PsoolaOrderSummary::orders($fetch);$second=PsoolaOrderSummary::orders($fetch);$saved=(string)file_get_contents(App::storage('tmp/psoola-orders-list.json'));
+$check('Psoola orders are read once and kept for a minute (filters are instant)',$reads===1&&$second['orders']===$first['orders']&&$first['orders'][0]['id']==='o1');
+$check('the kept copy and the page never hold ticket links or QR codes',!str_contains($saved,'secret.example')&&!str_contains($saved,'QR-SECRET')&&!isset($first['orders'][0]['ticketsUrl'])&&!isset($first['orders'][0]['tickets'][0]['qrCode']));
+$third=PsoolaOrderSummary::orders($fetch,true);
+touch(App::storage('tmp/psoola-orders-list.json'),time()-PsoolaOrderSummary::KEEP_SECONDS-1);PsoolaOrderSummary::orders($fetch);
+$check('Refresh from Psoola reads again, and so does a copy older than a minute',$reads===3);
+@unlink(App::storage('tmp/psoola-orders-list.json'));
 $missedCash=['email'=>'missed']+$none;
 $check('Not received filter shows only bounced and failed; other groups count within it',count(array_filter($facts,fn($f)=>PsoolaOrderSummary::passes($f,$missedCash)))===2
     &&PsoolaOrderSummary::counts($facts,$missedCash)['channel']===[''=>2,'checkout'=>1,'direct'=>1,'complimentary'=>0]

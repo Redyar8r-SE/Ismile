@@ -30,20 +30,32 @@ $link = static function (array $change) use ($chosen, $q): string {
     return 'psoola-orders.php' . ($query ? '?' . http_build_query($query) : '');
 };
 
+// How many rows to draw: 100 first, then "Show more" adds 200 (a long table made the page slow).
+$rows = max(100, min(5000, (int) Page::query('rows')));
 $orders = [];
+$readAt = time();
 $problem = null;
 if (!PsoolaCheckIns::active()) {
     $problem = 'This site does not sell through Psoola, so there are no Psoola orders to show.';
 } else {
     try {
-        $gateway = new PsoolaGateway();
-        $cursor = null;
-        $pages = 0;
-        do {
-            $page = $gateway->listOrders($cursor);
-            array_push($orders, ...$page['orders']);
-            $cursor = $page['next'];
-        } while ($cursor !== null && ++$pages < 30);
+        // PSOOLA's list is kept for one minute (fast filters); "Refresh from Psoola" reads it again.
+        $fetchAll = static function (): array {
+            $gateway = new PsoolaGateway();
+            $all = [];
+            $cursor = null;
+            $pages = 0;
+            do {
+                $page = $gateway->listOrders($cursor);
+                array_push($all, ...$page['orders']);
+                $cursor = $page['next'];
+            } while ($cursor !== null && ++$pages < 30);
+            return $all;
+        };
+        $read = PsoolaOrderSummary::orders($fetchAll, Page::query('fresh') === '1');
+        $orders = $read['orders'];
+        $readAt = $read['at'];
+        if ($read['stale']) PsoolaOrderSummary::refreshLater($fetchAll);   // an older copy is shown now; PSOOLA is read just after
     } catch (\Throwable $error) {
         App::log('error', 'Psoola orders could not be read', ['error' => $error->getMessage()]);
         $problem = 'Psoola could not be reached just now. Refresh the page in a minute.';
@@ -99,7 +111,10 @@ foreach ($searched as $i => $order) if (PsoolaOrderSummary::passes($facts[$i], $
 $missedAll = count(array_filter($orders, static fn (array $order): bool => PsoolaOrderSummary::emailGroup($order) === 'missed'));
 $filtered = $q !== '' || array_filter($chosen) !== [];
 
-Page::top('Psoola orders', 'psoola-orders', '<a class="btn ghost" href="psoola-orders.php">' . Page::navIcon('clock') . '<span>Refresh from Psoola</span></a>');
+$withMore = static fn (string $url, array $more): string => $url . (str_contains($url, '?') ? '&' : '?') . http_build_query($more);
+$age = time() - $readAt;
+$ageText = $age < 10 ? 'just now' : ($age < 60 ? $age . ' seconds ago' : intdiv($age, 60) . ' min ago');
+Page::top('Psoola orders', 'psoola-orders', '<a class="btn ghost" href="' . Page::e($withMore($link([]), ['fresh' => '1'])) . '" data-po-busy>' . Page::navIcon('clock') . '<span>Refresh from Psoola</span></a>');
 if ($problem !== null) {
     echo '<div class="card">' . Page::emptyState('Psoola orders are not available', $problem, 'psoola-orders') . '</div>';
     Page::bottom();
@@ -147,9 +162,9 @@ echo Page::stats([
   </div>
 </section>
 <section class="card registration-directory">
-  <div class="panel-top"><?= Page::panelHeading('Sales recorded by Psoola', number_format(count($shown)) . ' matching sales · newest first. Read live from Psoola; refunds are made by Psoola.', 'psoola-orders') ?></div>
+  <div class="panel-top"><?= Page::panelHeading('Sales recorded by Psoola', number_format(count($shown)) . ' matching sales, newest first. Read from Psoola ' . $ageText . '; refunds are made by Psoola.', 'psoola-orders') ?></div>
   <div class="table-wrap"><table class="psoola-orders"><thead><tr><th>Paid</th><th>Buyer</th><th>Bought</th><th>Total</th><th>Sale</th><th>Complimentary reason / staff</th><th>Ticket email</th><th>At the door</th><th>Our registration</th></tr></thead><tbody>
-  <?php foreach ($shown as $order):
+  <?php foreach (array_slice($shown, 0, $rows) as $order):
       $paid = $millis($order['paidAt'] ?? null);
       $mail = (string) ($order['emailStatus'] ?? '');
       $tickets = array_filter((array) ($order['tickets'] ?? []), 'is_array');
@@ -170,5 +185,8 @@ echo Page::stats([
   <?php endforeach; ?>
   <?php if (!$shown): ?><tr class="empty-row"><td colspan="9"><?= Page::emptyState($orders ? 'No sales match these filters' : 'No sales yet', $orders ? 'Clear a filter or search for another buyer.' : 'Sales paid on Psoola and cash sales appear here.', 'psoola-orders') ?></td></tr><?php endif; ?>
   </tbody></table></div>
+  <?php if (count($shown) > $rows): ?>
+  <div class="po-more" id="more"><span>Showing <b><?= number_format($rows) ?></b> of <b><?= number_format(count($shown)) ?></b> sales</span><a class="btn" href="<?= $e($withMore($link([]), ['rows' => $rows + 200]) . '#more') ?>" data-po-busy>Show <?= number_format(min(200, count($shown) - $rows)) ?> more</a></div>
+  <?php endif; ?>
 </section>
 <?php Page::bottom();

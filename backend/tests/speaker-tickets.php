@@ -246,15 +246,17 @@ $check('the Deleted people list shows everyone deleted, who deleted them, and th
     && $row($oldPerson['ref'])['state'] === 'cancelled' && $row($vipPerson['ref'])['record']['deleted_by_name'] === $mainOwner['name']
     && $row($vipPerson['ref'])['record']['ticket_type'] === 'vip' && count($everyone) >= 3);
 
-// ---- Guest on Workshop & Register: free, no lunch, only four volunteers give it (19 Nov 2026) ----
-$giver = $account("giver-$tag@example.invalid", 'volunteer');            // stands in for Nma, Lanu, Rawaz or Danial
+// ---- Guest on Workshop & Register: free, no lunch, only accounts the Owner allowed (19 Nov 2026) ----
+$giver = $account("giver-$tag@example.invalid", 'volunteer');            // a volunteer the Owner allowed
 $otherVolunteer = $volunteer;                                             // any other volunteer
-(new ReflectionProperty(\Ismile\DeskGuests::class, 'testHashes'))->setValue(null, [hash('sha256', "giver-$tag@example.invalid")]);
+$check('a new account does not have Guest tickets until the Owner allows it', !\Ismile\DeskGuests::canGive($giver) && (int) $giver['desk_guest_access'] === 0);
+Db::update('admin_users', ['desk_guest_access' => 1], 'id = ?', [$giver['id']]);
+$giver = Db::one('SELECT * FROM admin_users WHERE id = ?', [$giver['id']]);
 $deskForm = static fn (array $more = []): array => $more + ['first_name' => 'Desk', 'father_name' => 'Free', 'grandfather_name' => 'Guest',
     'phone' => '0750' . random_int(1000000, 9999999), 'email' => 'deskguest-' . bin2hex(random_bytes(4)) . '@example.invalid', 'city' => 'Erbil', 'specialty' => 'gp', 'ticket' => 'guest', 'whatsapp_consent' => '1'];
-$check('five volunteers give Guest tickets, kept only as hashes', count(\Ismile\DeskGuests::GIVER_HASHES) === 5
-    && !array_filter(\Ismile\DeskGuests::GIVER_HASHES, static fn (string $h): bool => !preg_match('/^[a-f0-9]{64}$/', $h)));
-$check('Guest: only the listed volunteer can give it; other volunteers, Viewers and Owners cannot', \Ismile\DeskGuests::canGive($giver)
+$viewerAllowed = ['desk_guest_access' => 1] + $viewer;
+$check('Guest needs both the switch and Workshop & Register access (a Viewer with the switch still cannot)', !\Ismile\DeskGuests::canGive($viewerAllowed));
+$check('Guest: only the allowed volunteer can give it; other volunteers, Viewers and Owners cannot', \Ismile\DeskGuests::canGive($giver)
     && !\Ismile\DeskGuests::canGive($otherVolunteer) && !\Ismile\DeskGuests::canGive($viewer) && !\Ismile\DeskGuests::canGive($owner) && !\Ismile\DeskGuests::canGive($staff)
     && !\Ismile\DeskGuests::canGive(['disabled_at' => '2026-11-19 10:00:00'] + $giver));
 $posts = $fixture()['posts'];
@@ -279,6 +281,7 @@ $studentGuest = \Ismile\DeskGuests::issue($giver, $deskForm(['specialty' => 'stu
 $check('Guest: a dental student gets a free Student ticket', $studentGuest['status'] === 'issued'
     && Db::value('SELECT ticket_type FROM registrations WHERE id = ?', [$studentGuest['registration_id']]) === 'student');
 $check('Guest: after it, a volunteer still cannot give other guest tickets', $rejects(static fn () => \Ismile\GuestOrders::issueSingle($giver, $guestForm(['vip_free' => ''])), 'cannot issue guest tickets'));
-(new ReflectionProperty(\Ismile\DeskGuests::class, 'testHashes'))->setValue(null, []);
+Db::update('admin_users', ['desk_guest_access' => 0], 'id = ?', [$giver['id']]);
+$check('Guest: after the Owner removes it, the volunteer is refused', !\Ismile\DeskGuests::canGive(Db::one('SELECT * FROM admin_users WHERE id = ?', [$giver['id']])));
 
 echo "$passed speaker ticket checks passed\n";

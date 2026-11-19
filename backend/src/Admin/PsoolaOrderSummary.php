@@ -26,6 +26,77 @@ final class PsoolaOrderSummary
         return $sum;
     }
 
+    // ---- speed (owner, 19 Nov 2026): PSOOLA's list is kept for one minute ----
+    // Reading every order from PSOOLA takes about ten requests one after the
+    // other, so the page kept them for a minute: a filter or a search is then
+    // instant. "Refresh from Psoola" ($fresh) always reads PSOOLA again.
+    // Ticket links and QR codes are removed before the copy is saved.
+    public const KEEP_SECONDS = 60;
+    // An older copy (up to 15 minutes) is shown at once and PSOOLA is read again
+    // just after the page is sent, so even the first visit does not wait.
+    public const STALE_SECONDS = 900;
+
+    private static function file(): string
+    {
+        return \Ismile\App::storage('tmp/psoola-orders-list.json');
+    }
+
+    /** The kept copy and its age in seconds, or null. */
+    private static function saved(): ?array
+    {
+        $file = self::file();
+        if (!is_file($file)) return null;
+        $saved = json_decode((string) @file_get_contents($file), true);
+        return is_array($saved['orders'] ?? null) && is_int($saved['at'] ?? null) ? ['orders' => $saved['orders'], 'at' => $saved['at'], 'age' => time() - (int) filemtime($file)] : null;
+    }
+
+    /**
+     * @param callable(): list<array> $fetch reads every order from PSOOLA
+     * @return array{orders: list<array>, at: int, stale: bool} the orders, when PSOOLA was read, and
+     *         whether the page should call refreshLater() (an older copy was shown)
+     */
+    public static function orders(callable $fetch, bool $fresh = false): array
+    {
+        $saved = $fresh ? null : self::saved();
+        if ($saved && $saved['age'] < self::KEEP_SECONDS) return ['orders' => $saved['orders'], 'at' => $saved['at'], 'stale' => false];
+        if ($saved && $saved['age'] < self::STALE_SECONDS && function_exists('fastcgi_finish_request')) {
+            return ['orders' => $saved['orders'], 'at' => $saved['at'], 'stale' => true];
+        }
+        return self::read($fetch) + ['stale' => false];
+    }
+
+    /** After the page is sent to the browser: read PSOOLA again (one reader at a time). */
+    public static function refreshLater(callable $fetch): void
+    {
+        register_shutdown_function(static function () use ($fetch): void {
+            if (function_exists('fastcgi_finish_request')) fastcgi_finish_request();
+            $lock = @fopen(self::file() . '.lock', 'c');
+            if (!$lock || !flock($lock, LOCK_EX | LOCK_NB)) return;   // another visit is already reading
+            try {
+                $saved = self::saved();
+                if (!$saved || $saved['age'] >= self::KEEP_SECONDS) self::read($fetch);
+            } catch (\Throwable $error) {
+                \Ismile\App::log('error', 'Psoola orders background refresh failed', ['error' => mb_substr($error->getMessage(), 0, 300)]);
+            } finally {
+                flock($lock, LOCK_UN);
+                fclose($lock);
+            }
+        });
+    }
+
+    /** Reads PSOOLA now and keeps the copy (without ticket links or QR codes). */
+    private static function read(callable $fetch): array
+    {
+        $file = self::file();
+        $at = time();
+        $json = \Ismile\Payments\PsoolaGateway::withoutLinks((string) json_encode(['orders' => array_values($fetch()), 'at' => $at], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        if (!is_dir(dirname($file))) @mkdir(dirname($file), 0770, true);
+        $temp = $file . '.' . bin2hex(random_bytes(4)) . '.tmp';   // written whole, then swapped in: never read half-written
+        if (@file_put_contents($temp, $json) !== false && !@rename($temp, $file)) @unlink($temp);
+        $data = json_decode($json, true);
+        return ['orders' => is_array($data['orders'] ?? null) ? $data['orders'] : [], 'at' => $at];
+    }
+
     // ---- the filters on the Psoola orders page (owner, 19 Nov 2026) ----
 
     /** The filter groups and their choices, in page order. */
