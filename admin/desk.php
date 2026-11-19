@@ -192,7 +192,8 @@ Page::top('Workshop & Register', 'desk');
     $value = static fn (string $key): string => Page::e(is_string($_POST[$key] ?? null) ? $_POST[$key] : '');
     $selected = static fn (string $key, string $option): string => ($_POST[$key] ?? '') === $option ? ' selected' : '';
     $vip = ($_POST['ticket'] ?? '') === 'vip';
-    $guestTicket = ($_POST['ticket'] ?? '') === 'guest';
+    // Guest is shown only when one of the invited emails is typed (admin.js); after an error it stays for that email.
+    $guestTicket = ($_POST['ticket'] ?? '') === 'guest' && \Ismile\DeskGuests::invited($_POST['email'] ?? null);
     $student = !$vip && !$guestTicket && (($_POST['specialty'] ?? '') === 'student' || ($_POST['ticket'] ?? '') === 'student');
     $psoola = \Ismile\Payments\PsoolaPrices::get();
     $site = \Ismile\SiteData::prices();
@@ -232,7 +233,7 @@ Page::top('Workshop & Register', 'desk');
         <option value="">Choose specialty</option>
         <?php foreach (Registrations::SPECIALTY_NAMES as $key => $name): ?><option value="<?= $e($key) ?>"<?= $selected('specialty', $key) ?>><?= $e($name) ?></option><?php endforeach; ?>
       </select></label>
-      <label>Ticket<select name="ticket" id="caller-ticket"><option value="professional"<?= !$student && !$vip && !$guestTicket ? ' selected' : '' ?>>Dentist</option><option value="student"<?= $student ? ' selected' : '' ?>>Student</option><option value="vip"<?= $vip ? ' selected' : '' ?>>VIP</option><option value="guest"<?= $guestTicket ? ' selected' : '' ?>>Guest (free, invited only)</option></select></label>
+      <label>Ticket<select name="ticket" id="caller-ticket"><option value="professional"<?= !$student && !$vip && !$guestTicket ? ' selected' : '' ?>>Dentist</option><option value="student"<?= $student ? ' selected' : '' ?>>Student</option><option value="vip"<?= $vip ? ' selected' : '' ?>>VIP</option><option value="guest"<?= $guestTicket ? ' selected' : ' hidden disabled' ?>>Guest (free, invited only)</option></select></label>
     </div>
     <div class="row3" id="caller-student-fields">
       <label>University<input name="university" id="caller-university" maxlength="160" value="<?= $value('university') ?>"<?= $student ? ' required' : '' ?>></label>
@@ -278,7 +279,7 @@ Page::top('Workshop & Register', 'desk');
   <section class="card cash-prices">
     <div class="cash-prices-head"><h2>Prices</h2></div>
     <?php foreach ([['professional', 'Dentist', 'Professionals', 'teal'], ['student', 'Student', 'Every stage, 1st to 5th', 'blue'], ['vip', 'VIP', 'One lunch included', 'gold'], ['guest', 'Guest', 'Invited guests only, no lunch', 'violet']] as [$key, $name, $sub, $tone]): ?>
-    <button type="button" class="cash-package tone-<?= $tone ?>" data-pick-ticket="<?= $key ?>" aria-pressed="false">
+    <button type="button" class="cash-package tone-<?= $tone ?>" data-pick-ticket="<?= $key ?>" aria-pressed="false"<?= $key === 'guest' && !$guestTicket ? ' hidden disabled' : '' ?>>
       <span class="cash-package-text"><b><?= $e($name) ?> <em>Selected</em></b><small><?= $e($sub) ?></small></span>
       <strong><?= $e($shown[$key]) ?></strong>
     </button>

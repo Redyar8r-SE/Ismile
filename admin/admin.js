@@ -690,17 +690,27 @@ document.addEventListener("DOMContentLoaded", () => {
   try { guestHashes = JSON.parse(form.dataset.guestEmails || "[]"); } catch (error) { guestHashes = []; }
   const emailInput = form.querySelector('[name="email"]');
   let guestCheck = 0;
+  // The Guest card and option stay hidden until one of the invited emails is typed;
+  // another email hides them again and moves the ticket back to Dentist.
   async function checkGuestEmail() {
     if (!emailInput || !form.dataset.guestEmails) return;
     const mine = ++guestCheck;
     const text = emailInput.value.trim().toLowerCase();
-    let ok = true;
-    if (ticket.value === "guest" && text !== "" && window.crypto && crypto.subtle) {
+    let invited = false;
+    if (text !== "" && window.crypto && crypto.subtle) {
       const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
-      ok = guestHashes.includes([...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join(""));
+      invited = guestHashes.includes([...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join(""));
     }
     if (mine !== guestCheck) return;
-    emailInput.setCustomValidity(ok ? "" : "This email is not on the invited guests list. The free guest ticket is only for invited guests.");
+    const option = ticket.querySelector('[value="guest"]');
+    const card = document.querySelector('[data-pick-ticket="guest"]');
+    if (option) { option.hidden = !invited; option.disabled = !invited; }
+    if (card) { card.hidden = !invited; card.disabled = !invited; }
+    emailInput.setCustomValidity(ticket.value === "guest" && !invited ? "This email is not on the invited guests list. The free guest ticket is only for invited guests." : "");
+    if (!invited && ticket.value === "guest") {
+      ticket.value = "professional";
+      ticket.dispatchEvent(new Event("change"));
+    }
   }
   emailInput?.addEventListener("input", checkGuestEmail);
   const sync = (event) => {
