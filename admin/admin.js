@@ -685,34 +685,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // with VIP is ticked. The first run keeps what was posted (after an error).
   let lastTicket = null;
   let lastVipDay = "";
-  // Guest (Workshop & Register): only the invited guests' emails, kept as SHA-256 hashes. The server checks it again.
-  let guestHashes = [];
-  try { guestHashes = JSON.parse(form.dataset.guestEmails || "[]"); } catch (error) { guestHashes = []; }
-  const emailInput = form.querySelector('[name="email"]');
-  let guestCheck = 0;
-  // The Guest card and option stay hidden until one of the invited emails is typed;
-  // another email hides them again and moves the ticket back to Dentist.
-  async function checkGuestEmail() {
-    if (!emailInput || !form.dataset.guestEmails) return;
-    const mine = ++guestCheck;
-    const text = emailInput.value.trim().toLowerCase();
-    let invited = false;
-    if (text !== "" && window.crypto && crypto.subtle) {
-      const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
-      invited = guestHashes.includes([...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join(""));
-    }
-    if (mine !== guestCheck) return;
-    const option = ticket.querySelector('[value="guest"]');
-    const card = document.querySelector('[data-pick-ticket="guest"]');
-    if (option) { option.hidden = !invited; option.disabled = !invited; }
-    if (card) { card.hidden = !invited; card.disabled = !invited; }
-    emailInput.setCustomValidity(ticket.value === "guest" && !invited ? "This email is not on the invited guests list. The free guest ticket is only for invited guests." : "");
-    if (!invited && ticket.value === "guest") {
-      ticket.value = "professional";
-      ticket.dispatchEvent(new Event("change"));
-    }
-  }
-  emailInput?.addEventListener("input", checkGuestEmail);
   const sync = (event) => {
     const from = event && event.target;
     if (from === specialty) {
@@ -751,14 +723,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     lastTicket = ticket.value;
     lastVipDay = vipDayNow;
-    // VIP free (main Owner) and Guest (desk, invited guests) come without lunch: the lunch days cannot be ticked.
+    // VIP free (main Owner) and Guest (desk, four volunteers only) come without lunch: the lunch days cannot be ticked.
     const noLunch = ticket.value === "vipfree" || ticket.value === "guest";
     form.querySelectorAll('[name="lunch_day1"], [name="lunch_day2"]').forEach((input) => {
       if (noLunch) input.checked = false;
       input.disabled = noLunch;
       input.closest(".lunch-card")?.classList.toggle("is-off", noLunch);
     });
-    checkGuestEmail();
     if (vipFields && vipDay) {
       const vip = hasVipLunch(ticket.value);
       vipFields.hidden = !vip;

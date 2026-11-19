@@ -53,13 +53,12 @@ final class GuestOrders
 
     /**
      * "Guest" on Workshop & Register (owner, 19 Nov 2026): a free Dentist or
-     * Student ticket for an invited guest's email only (DeskGuests), by anyone
-     * who can register at the desk. Never a VIP.
+     * Student ticket, given only by the four volunteers in DeskGuests. Never a VIP.
      */
     private static bool $invited=false;
     public static function issueInvited(array $user,array $in): array
     {
-        if(!Auth::canDeskRegister($user)||!DeskGuests::invited($in['email']??null)||($in['vip_free']??'')!=='')throw new UserError('The free guest ticket is only for the invited guests.',null,403);
+        if(!DeskGuests::canGive($user)||($in['vip_free']??'')!=='')throw new UserError('Your account cannot give free guest tickets.',null,403);
         self::$invited=true;
         try { return self::issueSingle($user,$in); } finally { self::$invited=false; }
     }

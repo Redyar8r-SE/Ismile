@@ -33,7 +33,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             Registrations::requireWhatsappConsent($_POST);
             Page::useOnce();
             if (($_POST['ticket'] ?? '') === 'guest') {
-                // Guest (owner, 19 Nov 2026): free, no lunch, only for the invited guests' emails.
+                // Guest (owner, 19 Nov 2026): free, no lunch; only the four volunteers in DeskGuests can give it.
                 $issued = \Ismile\DeskGuests::issue($user, $_POST);
                 if ($issued['status'] === 'issued' && $issued['registration_id']) {
                     Registrations::rememberWhatsappConsent((int) $issued['registration_id']);
@@ -192,8 +192,9 @@ Page::top('Workshop & Register', 'desk');
     $value = static fn (string $key): string => Page::e(is_string($_POST[$key] ?? null) ? $_POST[$key] : '');
     $selected = static fn (string $key, string $option): string => ($_POST[$key] ?? '') === $option ? ' selected' : '';
     $vip = ($_POST['ticket'] ?? '') === 'vip';
-    // Guest is shown only when one of the invited emails is typed (admin.js); after an error it stays for that email.
-    $guestTicket = ($_POST['ticket'] ?? '') === 'guest' && \Ismile\DeskGuests::invited($_POST['email'] ?? null);
+    // Guest: only Nma, Lanu, Rawaz and Danial see it (DeskGuests); for everyone else it is not in the page at all.
+    $canGuest = \Ismile\DeskGuests::canGive($user);
+    $guestTicket = $canGuest && ($_POST['ticket'] ?? '') === 'guest';
     $student = !$vip && !$guestTicket && (($_POST['specialty'] ?? '') === 'student' || ($_POST['ticket'] ?? '') === 'student');
     $psoola = \Ismile\Payments\PsoolaPrices::get();
     $site = \Ismile\SiteData::prices();
@@ -219,7 +220,7 @@ Page::top('Workshop & Register', 'desk');
 <?php endif; ?>
 <div class="cash-layout">
 <div class="cash-main">
-<form method="post" action="<?= $e($deskUrl('register')) ?>" class="card stack caller-form" id="caller-form" enctype="multipart/form-data" data-prices="<?= $e((string) $priceData) ?>" data-guest-emails="<?= $e(json_encode(\Ismile\DeskGuests::hashes())) ?>">
+<form method="post" action="<?= $e($deskUrl('register')) ?>" class="card stack caller-form" id="caller-form" enctype="multipart/form-data" data-prices="<?= $e((string) $priceData) ?>">
   <?= Page::csrfField() ?><?= Page::onceField() ?>
   <fieldset class="form-section">
     <legend>1. Person's details</legend>
@@ -233,7 +234,7 @@ Page::top('Workshop & Register', 'desk');
         <option value="">Choose specialty</option>
         <?php foreach (Registrations::SPECIALTY_NAMES as $key => $name): ?><option value="<?= $e($key) ?>"<?= $selected('specialty', $key) ?>><?= $e($name) ?></option><?php endforeach; ?>
       </select></label>
-      <label>Ticket<select name="ticket" id="caller-ticket"><option value="professional"<?= !$student && !$vip && !$guestTicket ? ' selected' : '' ?>>Dentist</option><option value="student"<?= $student ? ' selected' : '' ?>>Student</option><option value="vip"<?= $vip ? ' selected' : '' ?>>VIP</option><option value="guest"<?= $guestTicket ? ' selected' : ' hidden disabled' ?>>Guest (free, invited only)</option></select></label>
+      <label>Ticket<select name="ticket" id="caller-ticket"><option value="professional"<?= !$student && !$vip && !$guestTicket ? ' selected' : '' ?>>Dentist</option><option value="student"<?= $student ? ' selected' : '' ?>>Student</option><option value="vip"<?= $vip ? ' selected' : '' ?>>VIP</option><?php if ($canGuest): ?><option value="guest"<?= $guestTicket ? ' selected' : '' ?>>Guest (free, no lunch)</option><?php endif; ?></select></label>
     </div>
     <div class="row3" id="caller-student-fields">
       <label>University<input name="university" id="caller-university" maxlength="160" value="<?= $value('university') ?>"<?= $student ? ' required' : '' ?>></label>
@@ -278,8 +279,8 @@ Page::top('Workshop & Register', 'desk');
 <aside class="cash-panel" aria-label="Prices and total">
   <section class="card cash-prices">
     <div class="cash-prices-head"><h2>Prices</h2></div>
-    <?php foreach ([['professional', 'Dentist', 'Professionals', 'teal'], ['student', 'Student', 'Every stage, 1st to 5th', 'blue'], ['vip', 'VIP', 'One lunch included', 'gold'], ['guest', 'Guest', 'Invited guests only, no lunch', 'violet']] as [$key, $name, $sub, $tone]): ?>
-    <button type="button" class="cash-package tone-<?= $tone ?>" data-pick-ticket="<?= $key ?>" aria-pressed="false"<?= $key === 'guest' && !$guestTicket ? ' hidden disabled' : '' ?>>
+    <?php foreach ([['professional', 'Dentist', 'Professionals', 'teal'], ['student', 'Student', 'Every stage, 1st to 5th', 'blue'], ['vip', 'VIP', 'One lunch included', 'gold']] + ($canGuest ? [3 => ['guest', 'Guest', 'Free ticket, no lunch', 'violet']] : []) as [$key, $name, $sub, $tone]): ?>
+    <button type="button" class="cash-package tone-<?= $tone ?>" data-pick-ticket="<?= $key ?>" aria-pressed="false">
       <span class="cash-package-text"><b><?= $e($name) ?> <em>Selected</em></b><small><?= $e($sub) ?></small></span>
       <strong><?= $e($shown[$key]) ?></strong>
     </button>
