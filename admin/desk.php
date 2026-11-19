@@ -32,6 +32,18 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             // Gender and age are not asked on the database forms (owner, 19 Nov 2026).
             Registrations::requireWhatsappConsent($_POST);
             Page::useOnce();
+            if (($_POST['ticket'] ?? '') === 'guest') {
+                // Guest (owner, 19 Nov 2026): free, no lunch, only for the invited guests' emails.
+                $issued = \Ismile\DeskGuests::issue($user, $_POST);
+                if ($issued['status'] === 'issued' && $issued['registration_id']) {
+                    Registrations::rememberWhatsappConsent((int) $issued['registration_id']);
+                    $guest = Registrations::find((int) $issued['registration_id']) ?? [];
+                    Page::flash('ok', 'Done! Free guest ticket given (0 IQD, no lunch). ' . ($guest ? Registrations::fullName($guest) . ' is registered (' . $guest['ref'] . ')' : $issued['partner_reference'] . ' is registered') . '. Psoola is sending the QR by email and WhatsApp to ' . ($guest['email'] ?? 'the email given') . '.');
+                    Page::redirect($deskUrl('register', ['done' => (int) $issued['registration_id']]));
+                }
+                Page::flash('error', 'Psoola has not confirmed the guest ticket yet (' . $issued['partner_reference'] . '). Do not give it again: ask the team to check Guest tickets.');
+                Page::redirect($deskUrl('register'));
+            }
             $checkout = \Ismile\Checkouts::createForCash($_POST, $user, null, false);   // no student card photo at the desk
             $sale = \Ismile\Payments\Payments::sellForCash($checkout, $user);
             $price = number_format($sale['amount']) . ' ' . $sale['currency'];
@@ -180,7 +192,8 @@ Page::top('Workshop & Register', 'desk');
     $value = static fn (string $key): string => Page::e(is_string($_POST[$key] ?? null) ? $_POST[$key] : '');
     $selected = static fn (string $key, string $option): string => ($_POST[$key] ?? '') === $option ? ' selected' : '';
     $vip = ($_POST['ticket'] ?? '') === 'vip';
-    $student = !$vip && (($_POST['specialty'] ?? '') === 'student' || ($_POST['ticket'] ?? '') === 'student');
+    $guestTicket = ($_POST['ticket'] ?? '') === 'guest';
+    $student = !$vip && !$guestTicket && (($_POST['specialty'] ?? '') === 'student' || ($_POST['ticket'] ?? '') === 'student');
     $psoola = \Ismile\Payments\PsoolaPrices::get();
     $site = \Ismile\SiteData::prices();
     $label = static fn (int $amount, string $currency): string => $amount <= 0 ? '–' : ($currency === 'USD' ? '$' . number_format($amount) : number_format($amount) . ' ' . $currency);
@@ -192,7 +205,8 @@ Page::top('Workshop & Register', 'desk');
         'lunch2'       => $psoola ? $label($psoola['lunch']['day2'], $psoola['currency']) : $label($site['lunchDay2'], $site['lunchCurrency']),
     ];
     $priceData = $psoola ? json_encode(['currency' => $psoola['currency'], 'professional' => $psoola['ticketTypes']['professional'], 'student' => $psoola['ticketTypes']['student'],
-        'vip' => $psoola['ticketTypes']['vip'], 'lunch1' => $psoola['lunch']['day1'], 'lunch2' => $psoola['lunch']['day2']]) : '';
+        'vip' => $psoola['ticketTypes']['vip'], 'guest' => 0, 'lunch1' => $psoola['lunch']['day1'], 'lunch2' => $psoola['lunch']['day2']]) : '';
+    $shown['guest'] = 'Free';
     $done = (int) Page::query('done') > 0 ? Registrations::find((int) Page::query('done')) : null;
 ?>
 <?php if ($done && $canWorkshop): ?>
@@ -204,7 +218,7 @@ Page::top('Workshop & Register', 'desk');
 <?php endif; ?>
 <div class="cash-layout">
 <div class="cash-main">
-<form method="post" action="<?= $e($deskUrl('register')) ?>" class="card stack caller-form" id="caller-form" enctype="multipart/form-data" data-prices="<?= $e((string) $priceData) ?>">
+<form method="post" action="<?= $e($deskUrl('register')) ?>" class="card stack caller-form" id="caller-form" enctype="multipart/form-data" data-prices="<?= $e((string) $priceData) ?>" data-guest-emails="<?= $e(json_encode(\Ismile\DeskGuests::hashes())) ?>">
   <?= Page::csrfField() ?><?= Page::onceField() ?>
   <fieldset class="form-section">
     <legend>1. Person's details</legend>
@@ -218,7 +232,7 @@ Page::top('Workshop & Register', 'desk');
         <option value="">Choose specialty</option>
         <?php foreach (Registrations::SPECIALTY_NAMES as $key => $name): ?><option value="<?= $e($key) ?>"<?= $selected('specialty', $key) ?>><?= $e($name) ?></option><?php endforeach; ?>
       </select></label>
-      <label>Ticket<select name="ticket" id="caller-ticket"><option value="professional"<?= !$student && !$vip ? ' selected' : '' ?>>Dentist</option><option value="student"<?= $student ? ' selected' : '' ?>>Student</option><option value="vip"<?= $vip ? ' selected' : '' ?>>VIP</option></select></label>
+      <label>Ticket<select name="ticket" id="caller-ticket"><option value="professional"<?= !$student && !$vip && !$guestTicket ? ' selected' : '' ?>>Dentist</option><option value="student"<?= $student ? ' selected' : '' ?>>Student</option><option value="vip"<?= $vip ? ' selected' : '' ?>>VIP</option><option value="guest"<?= $guestTicket ? ' selected' : '' ?>>Guest (free, invited only)</option></select></label>
     </div>
     <div class="row3" id="caller-student-fields">
       <label>University<input name="university" id="caller-university" maxlength="160" value="<?= $value('university') ?>"<?= $student ? ' required' : '' ?>></label>
@@ -263,7 +277,7 @@ Page::top('Workshop & Register', 'desk');
 <aside class="cash-panel" aria-label="Prices and total">
   <section class="card cash-prices">
     <div class="cash-prices-head"><h2>Prices</h2></div>
-    <?php foreach ([['professional', 'Dentist', 'Professionals', 'teal'], ['student', 'Student', 'Every stage, 1st to 5th', 'blue'], ['vip', 'VIP', 'One lunch included', 'gold']] as [$key, $name, $sub, $tone]): ?>
+    <?php foreach ([['professional', 'Dentist', 'Professionals', 'teal'], ['student', 'Student', 'Every stage, 1st to 5th', 'blue'], ['vip', 'VIP', 'One lunch included', 'gold'], ['guest', 'Guest', 'Invited guests only, no lunch', 'violet']] as [$key, $name, $sub, $tone]): ?>
     <button type="button" class="cash-package tone-<?= $tone ?>" data-pick-ticket="<?= $key ?>" aria-pressed="false">
       <span class="cash-package-text"><b><?= $e($name) ?> <em>Selected</em></b><small><?= $e($sub) ?></small></span>
       <strong><?= $e($shown[$key]) ?></strong>

@@ -51,6 +51,19 @@ final class GuestOrders
             'delivery_confirmation'=>'email-whatsapp-v1','vip_free'=>'1','sponsoring_company'=>'']);
     }
 
+    /**
+     * "Guest" on Workshop & Register (owner, 19 Nov 2026): a free Dentist or
+     * Student ticket for an invited guest's email only (DeskGuests), by anyone
+     * who can register at the desk. Never a VIP.
+     */
+    private static bool $invited=false;
+    public static function issueInvited(array $user,array $in): array
+    {
+        if(!Auth::canDeskRegister($user)||!DeskGuests::invited($in['email']??null)||($in['vip_free']??'')!=='')throw new UserError('The free guest ticket is only for the invited guests.',null,403);
+        self::$invited=true;
+        try { return self::issueSingle($user,$in); } finally { self::$invited=false; }
+    }
+
     /** Free VIP tickets: the main Owner's account only (signed in as Owner). */
     public static function canGiveVip(array $user): bool
     {
@@ -348,7 +361,7 @@ final class GuestOrders
             ($user['role']==='owner'?'':' WHERE o.created_by=?').' ORDER BY o.id DESC LIMIT 100',$user['role']==='owner'?[]:[$user['id']]);
     }
     public static function label(array $labels,string $locale): string {return (string)($labels[$locale]??($locale==='ckb'?($labels['ku']??null):null)??$labels['en']??reset($labels)?:'');}
-    private static function authorize(array $user): void {if (!Auth::canIssueComplimentary($user)) throw new UserError('Your account cannot issue guest tickets.',null,403);}
+    private static function authorize(array $user): void {if (!self::$invited&&!Auth::canIssueComplimentary($user)) throw new UserError('Your account cannot issue guest tickets.',null,403);}
     private static function access(array $user,array $saved): void {self::authorize($user);if($user['role']!=='owner'&&(int)$saved['created_by']!==(int)$user['id'])throw new UserError('You cannot access another staff member\'s private guest order.',null,403);}
     private static function delivery(mixed $value): ?string {return is_string($value)?mb_substr($value,0,40):null;}
     private static function requestId(array $answer): ?string {$id=$answer['json']['requestId']??null;return is_string($id)&&preg_match('/^[A-Za-z0-9_.:-]{1,190}$/D',$id)?$id:null;}

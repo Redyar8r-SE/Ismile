@@ -685,6 +685,24 @@ document.addEventListener("DOMContentLoaded", () => {
   // with VIP is ticked. The first run keeps what was posted (after an error).
   let lastTicket = null;
   let lastVipDay = "";
+  // Guest (Workshop & Register): only the invited guests' emails, kept as SHA-256 hashes. The server checks it again.
+  let guestHashes = [];
+  try { guestHashes = JSON.parse(form.dataset.guestEmails || "[]"); } catch (error) { guestHashes = []; }
+  const emailInput = form.querySelector('[name="email"]');
+  let guestCheck = 0;
+  async function checkGuestEmail() {
+    if (!emailInput || !form.dataset.guestEmails) return;
+    const mine = ++guestCheck;
+    const text = emailInput.value.trim().toLowerCase();
+    let ok = true;
+    if (ticket.value === "guest" && text !== "" && window.crypto && crypto.subtle) {
+      const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+      ok = guestHashes.includes([...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join(""));
+    }
+    if (mine !== guestCheck) return;
+    emailInput.setCustomValidity(ok ? "" : "This email is not on the invited guests list. The free guest ticket is only for invited guests.");
+  }
+  emailInput?.addEventListener("input", checkGuestEmail);
   const sync = (event) => {
     const from = event && event.target;
     if (from === specialty) {
@@ -723,12 +741,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     lastTicket = ticket.value;
     lastVipDay = vipDayNow;
-    // VIP free (main Owner) comes without lunch: the lunch days cannot be ticked.
+    // VIP free (main Owner) and Guest (desk, invited guests) come without lunch: the lunch days cannot be ticked.
+    const noLunch = ticket.value === "vipfree" || ticket.value === "guest";
     form.querySelectorAll('[name="lunch_day1"], [name="lunch_day2"]').forEach((input) => {
-      if (ticket.value === "vipfree") input.checked = false;
-      input.disabled = ticket.value === "vipfree";
-      input.closest(".lunch-card")?.classList.toggle("is-off", ticket.value === "vipfree");
+      if (noLunch) input.checked = false;
+      input.disabled = noLunch;
+      input.closest(".lunch-card")?.classList.toggle("is-off", noLunch);
     });
+    checkGuestEmail();
     if (vipFields && vipDay) {
       const vip = hasVipLunch(ticket.value);
       vipFields.hidden = !vip;
@@ -750,7 +770,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const lines = document.getElementById("cash-lines");
   const total = document.getElementById("cash-total");
   const money = (amount) => `${amount.toLocaleString("en-US")} ${prices.currency}`;
-  const ticketNames = { professional: "Dentist ticket", student: "Student ticket", vip: "VIP ticket", vip100: "VIP $100 ticket", vipfree: "Free VIP ticket" };
+  const ticketNames = { professional: "Dentist ticket", student: "Student ticket", vip: "VIP ticket", vip100: "VIP $100 ticket", vipfree: "Free VIP ticket", guest: "Free guest ticket" };
   let saleTotal = null;
   function showTotal() {
     const type = ticket.value;
@@ -777,7 +797,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const left = document.createElement("span");
       const right = document.createElement("b");
       left.textContent = name;
-      right.textContent = amount === null ? "–" : amount === 0 ? "Included" : money(amount);
+      right.textContent = amount === null ? "–" : amount === 0 ? (type === "guest" ? "Free" : "Included") : money(amount);
       row.append(left, right);
       return row;
     }));
@@ -787,6 +807,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const unit = document.createElement("small");
     unit.textContent = prices.currency;
     total.replaceChildren(`${sum.toLocaleString("en-US")} `, unit);
+    if (pay && type === "guest") { pay.replaceChildren("Give free guest ticket"); return; }
     if (pay) { const amount = document.createElement("span"); amount.className = "cash-pay-amount"; amount.textContent = money(sum); pay.replaceChildren(`${form.dataset.payLabel || "Paid by cash"} `, amount); }
   }
   document.querySelectorAll("[data-pick-ticket]").forEach((card) => card.addEventListener("click", () => {
@@ -865,14 +886,20 @@ document.addEventListener("DOMContentLoaded", () => {
         field("received").textContent = form.dataset.receivedPlain || "I have received the cash from this guest.";
       }
       // VIP free: no money changes hands, so the window asks about the free ticket instead.
-      const free = ticket.value === "vipfree";
+      const guest = ticket.value === "guest";
+      const free = ticket.value === "vipfree" || guest;
       const title = confirmBox.querySelector("#cash-confirm-title");
       const amountLabel = confirmBox.querySelector(".cash-confirm-amount > span");
       title.dataset.cash ??= title.textContent;
       amountLabel.dataset.cash ??= amountLabel.textContent;
-      title.textContent = free ? "Give this free VIP ticket?" : title.dataset.cash;
+      title.textContent = guest ? "Give this free guest ticket?" : free ? "Give this free VIP ticket?" : title.dataset.cash;
       amountLabel.textContent = free ? "Free, nothing to collect" : amountLabel.dataset.cash;
-      if (free) field("received").textContent = "I give this person a free VIP ticket (0 IQD, no lunch).";
+      if (free) field("received").textContent = `I give this person a free ${guest ? "guest" : "VIP"} ticket (0 IQD, no lunch).`;
+      // Guest: no cash at all, so the window does not speak about cash or selling.
+      const sub = confirmBox.querySelector(".cash-confirm-sub");
+      if (sub) { sub.dataset.cash ??= sub.textContent; sub.textContent = guest ? "Check these details with the person before you give the free ticket. This cannot be undone." : sub.dataset.cash; }
+      yes.dataset.cash ??= yes.textContent;
+      yes.textContent = guest ? "Yes, give the ticket" : yes.dataset.cash;
       received.checked = false;
       yes.disabled = true;
       confirmBox.showModal();

@@ -246,4 +246,34 @@ $check('the Deleted people list shows everyone deleted, who deleted them, and th
     && $row($oldPerson['ref'])['state'] === 'cancelled' && $row($vipPerson['ref'])['record']['deleted_by_name'] === $mainOwner['name']
     && $row($vipPerson['ref'])['record']['ticket_type'] === 'vip' && count($everyone) >= 3);
 
+// ---- Guest on Workshop & Register: free, no lunch, invited emails only (19 Nov 2026) ----
+$invitedA = 'invited-a-' . $tag . '@example.invalid';
+$invitedB = 'invited-b-' . $tag . '@example.invalid';
+(new ReflectionProperty(\Ismile\DeskGuests::class, 'testHashes'))->setValue(null, [hash('sha256', $invitedA), hash('sha256', $invitedB)]);
+$deskForm = static fn (array $more = []): array => $more + ['first_name' => 'Desk', 'father_name' => 'Invited', 'grandfather_name' => 'Guest',
+    'phone' => '0750' . random_int(1000000, 9999999), 'email' => strtoupper($invitedA), 'city' => 'Erbil', 'specialty' => 'gp', 'ticket' => 'guest', 'whatsapp_consent' => '1'];
+$check('the three invited emails are kept only as hashes', count(\Ismile\DeskGuests::EMAIL_HASHES) === 3
+    && !array_filter(\Ismile\DeskGuests::EMAIL_HASHES, static fn (string $h): bool => !preg_match('/^[a-f0-9]{64}$/', $h)));
+$posts = $fixture()['posts'];
+$check('Guest: an email not on the list is refused and nothing is sent', $rejects(static fn () => \Ismile\DeskGuests::issue($volunteer, $deskForm(['email' => 'someone-' . $tag . '@example.invalid'])), 'not on the list') && $fixture()['posts'] === $posts);
+$check('Guest: a ticked lunch day is refused and nothing is sent', $rejects(static fn () => \Ismile\DeskGuests::issue($volunteer, $deskForm(['lunch_day1' => '1'])), 'without lunch')
+    && $rejects(static fn () => \Ismile\DeskGuests::issue($volunteer, $deskForm(['lunch_day2' => '1'])), 'without lunch') && $fixture()['posts'] === $posts);
+$check('Guest: a Viewer cannot give it', $rejects(static fn () => \Ismile\DeskGuests::issue($viewer, $deskForm()), 'cannot register'));
+$check('Guest: never a VIP through this way', $rejects(static fn () => \Ismile\GuestOrders::issueInvited($volunteer, $deskForm(['vip_free' => '1', 'attempt' => bin2hex(random_bytes(16))])), 'invited guests') && $fixture()['posts'] === $posts);
+$deskGuest = \Ismile\DeskGuests::issue($volunteer, $deskForm());
+$deskPerson = Db::one('SELECT * FROM registrations WHERE id = ?', [$deskGuest['registration_id']]);
+$deskSession = $orderOf((string) $deskGuest['provider_order_id']);
+$check('Guest: a volunteer gives an invited guest a free Dentist ticket with no lunch (PSOOLA complimentary, 0)', $deskGuest['status'] === 'issued' && $deskPerson
+    && $deskPerson['status'] === 'complimentary' && $deskPerson['ticket_type'] === 'professional' && $deskPerson['email'] === $invitedA
+    && (int) $deskPerson['lunch_day1'] + (int) $deskPerson['lunch_day2'] === 0 && $deskPerson['vip_lunch_day'] === null
+    && ($deskSession['isComplimentary'] ?? false) === true && ($deskSession['order']['totalAmount'] ?? null) === 0
+    && ($deskSession['order']['items'][0]['addOnIds'] ?? []) === []);
+$posts = $fixture()['posts'];
+$check('Guest: the same email cannot get a second ticket', $rejects(static fn () => \Ismile\DeskGuests::issue($volunteer, $deskForm()), 'already has a summit ticket') && $fixture()['posts'] === $posts);
+$studentGuest = \Ismile\DeskGuests::issue($volunteer, $deskForm(['email' => $invitedB, 'specialty' => 'student']));
+$check('Guest: a dental student gets a free Student ticket', $studentGuest['status'] === 'issued'
+    && Db::value('SELECT ticket_type FROM registrations WHERE id = ?', [$studentGuest['registration_id']]) === 'student');
+$check('Guest: after it, a volunteer still cannot give other guest tickets', $rejects(static fn () => \Ismile\GuestOrders::issueSingle($volunteer, $guestForm(['vip_free' => ''])), 'cannot issue guest tickets'));
+(new ReflectionProperty(\Ismile\DeskGuests::class, 'testHashes'))->setValue(null, []);
+
 echo "$passed speaker ticket checks passed\n";
