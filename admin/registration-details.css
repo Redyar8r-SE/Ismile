@@ -233,3 +233,24 @@
 .tk-taken{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:6px;background:var(--teal-d);color:#fff;font-size:12px;font-weight:800;cursor:help}
 .tk-in-batch td{background:#f7fbfc}
 .tk-in-batch .bb-initial{background:var(--teal-l);color:var(--teal-d)}
+/* Attendance: summit days and every workshop booked (19 Nov 2026) */
+.rd-att-list{list-style:none;margin:0 0 16px;padding:0;display:grid;gap:10px}
+.rd-att{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 12px;align-items:center;padding:12px 14px;border:1px solid #e3ebf1;border-radius:12px;background:#f9fbfd}
+.rd-att.is-in{background:#f3fbf6;border-color:#cfe9da}
+.rd-att.is-left{background:#fff8f1;border-color:#f3d6bd}
+.rd-att-kind{grid-row:span 2;display:inline-flex;align-items:center;gap:6px;align-self:start;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:800}
+.rd-att-kind .nav-icon{width:13px;height:13px}
+.rd-att-kind.summit{background:#e0f5f8;color:#086c98}
+.rd-att-kind.workshop{background:#e6e2fb;color:#3f33a0}
+.rd-att-what{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;min-width:0}
+.rd-att-what b{font-size:13px;color:#16384d}
+.rd-att-what small{font-size:11px;color:#7d93a3}
+.rd-att-chips{display:flex;flex-wrap:wrap;gap:6px}
+.rd-att-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;font-size:11.5px;font-weight:700;white-space:nowrap}
+.rd-att-chip .nav-icon{width:12px;height:12px}
+.rd-att-chip.arrived{background:#ddf3e5;color:#1d6b3c}
+.rd-att-chip.left{background:#fdebdc;color:#a24a12}
+.rd-att-chip.inside{background:#d9f2ff;color:#0b5c86}
+.rd-att-chip.stay{background:#eef2f6;color:#3f5b6e}
+.rd-att-chip.none{background:#eef2f6;color:#7f93a3;font-weight:600}
+@media(max-width:760px){.rd-att{grid-template-columns:1fr}.rd-att-kind{grid-row:auto;justify-self:start}}

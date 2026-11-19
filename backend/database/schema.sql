@@ -475,6 +475,8 @@ CREATE TABLE IF NOT EXISTS workshop_bookings (
   updated_at        DATETIME      NOT NULL,
   removed_at        DATETIME      NULL,                        -- a removed booking frees the seat
   removed_by        INT UNSIGNED  NULL,
+  checked_in_at     DATETIME      NULL,                        -- first scan at the workshop door (PSOOLA)
+  checked_out_at    DATETIME      NULL,                        -- scanned out (PSOOLA inside = false); cleared when back in
   -- 1 while the booking is active, NULL once removed: lets the database refuse
   -- the same person twice on one workshop, while keeping removed history.
   active            TINYINT(1) AS (IF(removed_at IS NULL, 1, NULL)) STORED,

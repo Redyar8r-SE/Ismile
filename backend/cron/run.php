@@ -195,6 +195,15 @@ echo json_encode($report) . "\n";
 if ($job === 'minute' && PsoolaCheckIns::fastCopy()) {
     $gate = fopen(App::storage('tmp/cron-gate.lock'), 'c');
     if ($gate !== false && flock($gate, LOCK_EX | LOCK_NB)) {
+        // Today's workshop doors: one read per workshop, once a minute (owner, 19 Nov 2026).
+        try {
+            $workshopScans = \Ismile\Payments\PsoolaWorkshopCheckIns::sync();
+            if ($workshopScans['arrived'] + $workshopScans['left'] + $workshopScans['back_in'] > 0) {
+                App::log('info', 'cron workshop gate', $workshopScans);
+            }
+        } catch (\Throwable $error) {
+            App::log('warning', 'Workshop scans could not be copied this minute', ['error' => mb_substr($error->getMessage(), 0, 200)]);
+        }
         try {
             $watched = PsoolaCheckIns::watch($started + 52);
             if ($watched['added'] > 0) {

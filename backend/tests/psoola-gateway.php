@@ -664,6 +664,33 @@ if ($database) {
         && CheckinWorkspace::stayText('2026-11-19 09:00:00', null, false) === '' && CheckinWorkspace::stayText(null, null, true) === ''
         && CheckinWorkspace::filters(['stay' => 'x; DROP'])['stay'] === '');
 
+    // Workshop doors (19 Nov 2026): each iSmile workshop is its own PSOOLA event; scans go onto the booking.
+    $wid = (string) Db::value("SELECT id FROM workshops ORDER BY id LIMIT 1");
+    if ($wid === '') {
+        Db::insert('workshops', ['id' => 'ws-door-test', 'title_en' => 'Door test workshop', 'organizer' => 'ismile', 'total_seats' => 20, 'created_at' => App::now(), 'updated_at' => App::now()]);
+        $wid = 'ws-door-test';
+    }
+    Db::run("UPDATE workshops SET organizer = 'ismile', provider_event_id = 'evt_ws_door', scheduled_date = '2026-11-19' WHERE id = ?", [$wid]);
+    $check('only workshops on that day with a PSOOLA event are read', (\Ismile\Payments\PsoolaWorkshopCheckIns::workshops('2026-11-19')[$wid] ?? null) === 'evt_ws_door'
+        && !isset(\Ismile\Payments\PsoolaWorkshopCheckIns::workshops('2026-11-20')[$wid]));
+    $bookingId = Db::insert('workshop_bookings', ['registration_id' => $used, 'workshop_id' => $wid, 'price_agreed' => 0, 'payment_status' => 'complimentary', 'created_at' => App::now(), 'updated_at' => App::now()]);
+    Db::insert('workshop_ticket_orders', ['booking_id' => $bookingId, 'registration_id' => $used, 'workshop_id' => $wid, 'idempotency_key' => bin2hex(random_bytes(16)), 'partner_reference' => 'WS-DOOR-1',
+        'request_json' => '{}', 'provider_session_id' => 'ws_order_door', 'provider_status' => 'paid', 'created_at' => App::now(), 'updated_at' => App::now()]);
+    $wsScan = static fn (array $more): array => $more + ['ticketCode' => 'WSD1', 'order' => ['id' => 'ws_order_door'], 'firstScannedAt' => $ms('2026-11-19 14:00:05'), 'lastScannedAt' => $ms('2026-11-19 14:00:05'), 'inside' => true];
+    $booking = static fn (): array => Db::one('SELECT checked_in_at, checked_out_at FROM workshop_bookings WHERE id = ?', [$bookingId]);
+    $check('a workshop door scan records the arrival on the booking', \Ismile\Payments\PsoolaWorkshopCheckIns::record($wid, [$wsScan([])])['arrived'] === 1
+        && $booking() === ['checked_in_at' => '2026-11-19 14:00:05', 'checked_out_at' => null]);
+    $check('the same workshop scan copied again changes nothing', \Ismile\Payments\PsoolaWorkshopCheckIns::record($wid, [$wsScan([])]) === ['seen' => 1, 'arrived' => 0, 'left' => 0, 'back_in' => 0, 'unmatched' => 0]);
+    $check('scanned out of the workshop: the time they left is kept', \Ismile\Payments\PsoolaWorkshopCheckIns::record($wid, [$wsScan(['inside' => false, 'lastScannedAt' => $ms('2026-11-19 15:10:00')])])['left'] === 1
+        && $booking()['checked_out_at'] === '2026-11-19 15:10:00');
+    $check('scanned back into the workshop: inside again', \Ismile\Payments\PsoolaWorkshopCheckIns::record($wid, [$wsScan(['inside' => true, 'lastScannedAt' => $ms('2026-11-19 15:30:00')])])['back_in'] === 1
+        && $booking()['checked_out_at'] === null);
+    $check('a workshop scan matches by order reference too; a stranger is not matched', \Ismile\Payments\PsoolaWorkshopCheckIns::record($wid, [$wsScan(['order' => ['partnerReference' => 'WS-DOOR-1']])])['unmatched'] === 0
+        && \Ismile\Payments\PsoolaWorkshopCheckIns::record($wid, [$wsScan(['order' => ['id' => 'someone_else']])])['unmatched'] === 1
+        && \Ismile\Payments\PsoolaWorkshopCheckIns::record('another-workshop', [$wsScan([])])['unmatched'] === 1);
+    Db::run('UPDATE workshop_bookings SET removed_at = ? WHERE id = ?', [App::now(), $bookingId]);
+    $check('a removed workshop booking takes no scans', \Ismile\Payments\PsoolaWorkshopCheckIns::record($wid, [$wsScan(['inside' => false, 'lastScannedAt' => $ms('2026-11-19 16:00:00')])])['unmatched'] === 1);
+
     // A checkout sale (order.paid webhook): QRs come from GET /checkout-sessions/{id}.
     $hookForm = $newForm();
     $respond(...$created(40000, 'IQD', 201, [['ticketTypeId' => 'tt_pro', 'quantity' => 1, 'addOns' => []]], 'ses_qrhook'));

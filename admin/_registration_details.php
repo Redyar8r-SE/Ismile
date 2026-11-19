@@ -20,7 +20,7 @@ if (!isset($registration, $user, $id)) { http_response_code(404); exit; }
 
 $ticket = Tickets::forRegistration($id);
 $activeTicket = $ticket && $ticket['cancelled_at'] === null;
-$attendance = $activeTicket ? Db::all('SELECT event_day, checked_in_at FROM ticket_attendance WHERE ticket_id=? ORDER BY event_day', [$ticket['id']]) : [];
+$attendance = $activeTicket ? Db::all('SELECT event_day, checked_in_at, checked_out_at FROM ticket_attendance WHERE ticket_id=? ORDER BY event_day', [$ticket['id']]) : [];
 $payments = Db::all('SELECT * FROM payments WHERE registration_id=? ORDER BY id DESC', [$id]);
 $paidPayment = null;
 foreach ($payments as $payment) if ($payment['status'] === 'paid') { $paidPayment = $payment; break; }
@@ -142,7 +142,42 @@ if ($inCheckin) echo \Ismile\Admin\CheckinWorkspace::navigation('guests',$user,$
         <?php if ($eligible): ?><div class="rd-available"><h3>AVAILABLE WORKSHOPS</h3><?php foreach ($eligible as $choice): $workshop = $choice['workshop']; ?><div class="rd-workshop-option"><div><strong><?= $e(Workshops::name($workshop)) ?></strong><small><?= $e(($workshop['scheduledDate'] ?? '').' · '.($workshop['speaker']['en'] ?? '')) ?></small></div><span class="rd-badge <?= $choice['blocked'] ? 'neutral' : ($choice['available'] ? 'green' : 'gold') ?>"><?= $choice['blocked'] ? 'Existing request' : ($choice['available'] ? 'Available' : ($choice['verified'] ? 'Fully booked' : 'Unavailable')) ?></span></div><?php endforeach; ?></div><?php endif; ?>
         <?php if ($canWorkshop && $registration['status'] !== 'cancelled'): ?><details class="rd-legacy-booking"><summary>Other booking options</summary><?= Page::workshopAddForm($user,$registration,$back,true) ?></details><?php endif; ?>
       </section><?php endif; ?>
-      <section class="rd-card rd-attendance"><div class="rd-section-title"><h2>Attendance</h2><div class="rd-days"><?php foreach ([1,2] as $day): $arrival = array_values(array_filter($attendance,static fn($a)=>(int)$a['event_day']===$day))[0] ?? null; ?><span class="<?= $arrival ? 'arrived' : '' ?>" title="<?= $e($arrival ? Page::when($arrival['checked_in_at']) : 'Not checked in') ?>"><?= $icon($arrival ? 'check' : 'clock') ?>Day <?= $day ?></span><?php endforeach; ?></div></div><div class="rd-record-links"><button type="button" data-rd-open="rd-history"><?= $icon('clock') ?>Activity history</button><?php if ($attendance && Auth::can($user,'certificates')): ?><a href="certificate-download.php?id=<?= $id ?>"><?= $icon('certificates') ?>Download certificate</a><?php elseif (Auth::can($user,'certificates')): ?><span class="rd-hint">Certificate available after attendance.</span><?php endif; ?></div></section>
+      <section class="rd-card rd-attendance"><div class="rd-section-title"><h2>Attendance</h2><span class="rd-badge neutral">Summit and workshops</span></div>
+        <?php
+        // Summit days and every workshop booked: arrived, left or inside now, time there (owner, 19 Nov 2026).
+        $today = date('Y-m-d');
+        $attRows = [];
+        foreach ([1,2] as $day) {
+            $arrival = array_values(array_filter($attendance,static fn($a)=>(int)$a['event_day']===$day))[0] ?? null;
+            $date = \Ismile\Settings::get('event_day'.$day);
+            $attRows[] = ['kind'=>'Summit','name'=>'Day '.$day,'when'=>$date ? date('D j M', strtotime($date)) : '','in'=>$arrival['checked_in_at'] ?? null,'out'=>$arrival['checked_out_at'] ?? null,'today'=>$date === $today,'scanned'=>true];
+        }
+        foreach ($bookings as $booking) {
+            $workshop = Workshops::find($booking['workshop_id']);
+            $attRows[] = ['kind'=>'Workshop','name'=>$workshop ? Workshops::name($workshop) : $booking['workshop_id'],
+                'when'=>$workshop && ($workshop['scheduledDate'] ?? '') ? date('D j M', strtotime($workshop['scheduledDate'])).(($workshop['startTime'] ?? '') ? ', '.substr((string)$workshop['startTime'],0,5) : '') : '',
+                'in'=>$booking['checked_in_at'] ?? null,'out'=>$booking['checked_out_at'] ?? null,'today'=>$workshop && ($workshop['scheduledDate'] ?? '') === $today,
+                'scanned'=>$workshop && ($workshop['organizer'] ?? '') === 'ismile' && !empty($workshop['providerEventId'])];
+        }
+        ?>
+        <ul class="rd-att-list">
+        <?php foreach ($attRows as $att): $stay = \Ismile\Admin\CheckinWorkspace::stayText($att['in'],$att['out'],$att['today']); ?>
+          <li class="rd-att<?= $att['in'] ? ' is-in' : '' ?><?= $att['out'] ? ' is-left' : '' ?>">
+            <span class="rd-att-kind <?= $att['kind'] === 'Summit' ? 'summit' : 'workshop' ?>"><?= $icon($att['kind'] === 'Summit' ? 'ticket' : 'workshops') ?><?= $e($att['kind']) ?></span>
+            <div class="rd-att-what"><b><?= $e($att['name']) ?></b><?php if ($att['when'] !== ''): ?><small><?= $e($att['when']) ?></small><?php endif; ?></div>
+            <div class="rd-att-chips">
+            <?php if ($att['in']): ?>
+              <span class="rd-att-chip arrived" title="<?= $e(date('j M Y, H:i:s', strtotime($att['in']))) ?>"><?= $icon('check') ?>Arrived <?= date('H:i', strtotime($att['in'])) ?></span>
+              <?php if ($att['out']): ?><span class="rd-att-chip left" title="<?= $e(date('j M Y, H:i:s', strtotime($att['out']))) ?>"><?= $icon('logout') ?>Left <?= date('H:i', strtotime($att['out'])) ?></span>
+              <?php elseif ($att['today']): ?><span class="rd-att-chip inside"><?= $icon('users') ?>Inside now</span><?php endif; ?>
+              <?php if ($stay !== ''): ?><span class="rd-att-chip stay"><?= $icon('clock') ?><?= $e($stay) ?></span><?php endif; ?>
+            <?php elseif (!$att['scanned']): ?><span class="rd-att-chip none">Company workshop, no door scan</span>
+            <?php else: ?><span class="rd-att-chip none"><?= $icon('clock') ?>Not arrived</span><?php endif; ?>
+            </div>
+          </li>
+        <?php endforeach; ?>
+        </ul>
+        <div class="rd-record-links"><button type="button" data-rd-open="rd-history"><?= $icon('clock') ?>Activity history</button><?php if ($attendance && Auth::can($user,'certificates')): ?><a href="certificate-download.php?id=<?= $id ?>"><?= $icon('certificates') ?>Download certificate</a><?php elseif (Auth::can($user,'certificates')): ?><span class="rd-hint">Certificate available after attendance.</span><?php endif; ?></div></section>
     </div>
   </div>
   <?php if ($hasPsoolaTicket): ?><dialog class="rd-dialog rd-provider-dialog" data-rd-psoola-dialog aria-labelledby="rd-psoola-title"><div class="rd-dialog-heading"><div><h2 id="rd-psoola-title">PSOOLA tickets</h2><p>Original ticket details and QR code</p></div><button type="button" class="icon-button" data-rd-close aria-label="Close PSOOLA tickets"><?= $icon('close') ?></button></div><div data-rd-psoola-body></div></dialog><?php endif; ?>

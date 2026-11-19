@@ -226,6 +226,7 @@ $html = $render('checkin', 'tab=report');
 $check('live graph and Latest arrivals available', str_contains($html, 'data-live-report') && str_contains($html, 'report-chart-card') && str_contains($html, 'Latest arrivals'));
 $check('Check-out from the PSOOLA gate is stored and shown (Registration: Checked out tile and filter)', (int) Db::value("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'ticket_attendance' AND column_name = 'checked_out_at'") === 1
     && str_contains($render('checkin', 'tab=attended'), 'name="out" value="left"'));
+$check('Workshop door scans are stored on bookings (arrived and left)', (int) Db::value("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'workshop_bookings' AND column_name IN ('checked_in_at','checked_out_at')") === 2);
 $html = $render('psoola-orders');
 $check('Psoola orders page renders (live list, or a clear note when unavailable)', str_contains($html, 'Psoola orders') && (str_contains($html, 'Sales recorded by Psoola') || str_contains($html, 'Psoola orders are not available')));
 $check('Psoola orders has the filter panel with the "Not received" ticket email filter', str_contains($html, 'Psoola orders are not available')

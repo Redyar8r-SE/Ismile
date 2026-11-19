@@ -163,16 +163,17 @@ final class PsoolaGateway implements Gateway, CashSales
      *
      * @return array{checkIns: list<array>, next: ?string}
      */
-    public function listCheckIns(?string $cursor = null, int $limit = 100): array
+    public function listCheckIns(?string $cursor = null, int $limit = 100, ?string $eventId = null): array
     {
-        return $this->page('check-ins', 'checkIns', $cursor, $limit);
+        // $eventId: another PSOOLA event (an iSmile workshop); the summit when null.
+        return $this->page('check-ins', 'checkIns', $cursor, $limit, $eventId);
     }
 
-    private function page(string $path, string $key, ?string $cursor, int $limit): array
+    private function page(string $path, string $key, ?string $cursor, int $limit, ?string $event = null): array
     {
         $this->ready();
         $query = ['limit' => max(1, min(100, $limit))];
-        $eventId = (string) App::config('payments.psoola.event_id', '');
+        $eventId = $event ?? (string) App::config('payments.psoola.event_id', '');
         if ($eventId !== '') {
             $query['eventId'] = $eventId;
         }

@@ -27,6 +27,13 @@ Page::action(static function () use ($user): string {
         if (!PsoolaCheckIns::active()) throw new UserError('This site does not sell through Psoola, so there is nothing to copy.');
         try {
             $counts = PsoolaCheckIns::sync();
+            // Today's workshop doors too (one read per workshop).
+            try {
+                $workshops = \Ismile\Payments\PsoolaWorkshopCheckIns::sync();
+            } catch (\Throwable $error) {
+                App::log('warning', 'Workshop scans could not be copied', ['error' => mb_substr($error->getMessage(), 0, 200)]);
+                $workshops = null;
+            }
         } catch (\Ismile\Payments\GatewayNotReady $error) {
             App::log('error', 'Psoola check-ins could not be copied', ['error' => $error->getMessage()]);
             throw new UserError('Psoola could not be reached. Try again in a minute; the timed job also keeps copying the scans by itself.');
@@ -35,6 +42,7 @@ Page::action(static function () use ($user): string {
         return 'Psoola check-ins copied: ' . $count($counts['seen'], 'scan', 'scans') . ' read, ' . $count($counts['added'], 'new arrival', 'new arrivals') . ' recorded'
             . ($counts['left'] ? ', ' . $count($counts['left'], 'new check-out', 'new check-outs') : '')
             . ($counts['back_in'] ? ', ' . $count($counts['back_in'], 'guest', 'guests') . ' back inside' : '')
+            . ($workshops === null ? '. Workshop scans could not be read this time' : ($workshops['workshops'] ? '. Workshops today: ' . $count($workshops['arrived'], 'new arrival', 'new arrivals') . ', ' . $count($workshops['left'], 'check-out', 'check-outs') : ''))
             . ($counts['unmatched'] ? ', ' . $count($counts['unmatched'], 'scan', 'scans') . ' not found in our registrations' : '')
             . ($counts['outside_event_days'] ? ', ' . $count($counts['outside_event_days'], 'scan', 'scans') . ' outside the event days' : '') . '.';
     }

@@ -39,6 +39,7 @@ final class Settings
         'prices_seen'           => '',
         // Not on the Settings page: when PSOOLA's gate scans were last copied in.
         'psoola_checkins_synced_at' => '',
+        'psoola_workshop_checkins_synced_at' => '',   // workshop door scans last copied (19 Nov 2026)
     ];
 
     private static ?array $cache = null;
