@@ -202,6 +202,9 @@ final class Office
         if ($workshop['organizer'] === 'company') {
             throw new UserError('Contact the workshop company by phone to register.', null, 403);
         }
+        if (Workshops::ended($workshop)) {
+            throw new UserError(Workshops::ENDED_MESSAGE);
+        }
         $isOwner = $user['role'] === 'owner';
         // Only registered people (they paid) take a workshop seat.
         if (!empty($workshop['providerEventId'])) {

@@ -13,6 +13,7 @@ $schedule=static function(array $w):string{
     return implode(', ',array_filter([$date,implode('–',array_filter([$w['startTime']??'',$w['endTime']??'']))]));
 };
 $availability=static function(array $w)use($liveCatalog):array{
+    if(\Ismile\Workshops::ended($w))return ['Over, registration closed','neutral'];
     if($w['organizer']==='company')return ['Company managed','neutral'];
     $stock=$liveCatalog[$w['id']]??null;
     if(!$stock||!$stock['availabilityVerified'])return ['Availability unavailable','neutral'];

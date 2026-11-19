@@ -156,6 +156,26 @@ final class Registrations
         return (int) Db::value("SELECT COUNT(*) FROM registrations WHERE $column = 1 AND status IN ('paid','complimentary')");
     }
 
+    /** A lunch day closes at this Iraq time on its own date: the summit day is over (owner, 19 Nov 2026). */
+    public const LUNCH_CLOSES_AT = '17:00:00';
+
+    /**
+     * Is this lunch day closed? From 17:00 on that day nobody can add it, by
+     * any route: website, payment link, desk, phone, free ticket or speaker.
+     * People who already have it keep it.
+     */
+    public static function lunchClosed(int $day): bool
+    {
+        $date = Settings::get('event_day' . $day);
+        return preg_match('/^\d{4}-\d{2}-\d{2}$/D', $date) === 1 && App::now() >= $date . ' ' . self::LUNCH_CLOSES_AT;
+    }
+
+    /** The words staff see when they tick a closed lunch day. */
+    public static function lunchClosedMessage(int $day): string
+    {
+        return 'Lunch day ' . $day . ' is closed: that summit day is over. Untick it.';
+    }
+
     public static function lunchFull(int $day): bool
     {
         $capacity = Settings::int('lunch_capacity_day' . $day);
@@ -166,6 +186,9 @@ final class Registrations
     public static function lunchFullFor(array $checkout, bool $holdPending = false): bool
     {
         foreach ([1, 2] as $day) {
+            if ((int) $checkout['lunch_day' . $day] === 1 && self::lunchClosed($day)) {
+                return true;   // that summit day is over: its lunch can no longer be paid for
+            }
             $capacity = Settings::int('lunch_capacity_day' . $day);
             if ((int) $checkout['lunch_day' . $day] !== 1 || $capacity <= 0) {
                 continue;
@@ -237,8 +260,8 @@ final class Registrations
             'prices'   => $prices,
             'vip'      => ['available' => !VipCapacity::full() && (!VipPackages::enabled() || VipPackages::ready())],
             'lunch'    => [
-                'day1' => $prices['lunchDay1'] > 0 && !self::lunchFull(1),
-                'day2' => $prices['lunchDay2'] > 0 && !self::lunchFull(2),
+                'day1' => $prices['lunchDay1'] > 0 && !self::lunchFull(1) && !self::lunchClosed(1),
+                'day2' => $prices['lunchDay2'] > 0 && !self::lunchFull(2) && !self::lunchClosed(2),
             ],
             'gateway'  => (string) App::config('payments.gateway', 'fake'),
         ];

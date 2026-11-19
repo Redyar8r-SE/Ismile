@@ -30,6 +30,7 @@ final class WorkshopCashSale
         $currency=(string)($in['cash_currency']??'IQD');$minor=self::amount((string)($in['cash_amount']??''),$currency);
         $workshop=Workshops::find((string)($in['workshop']??''));
         if(!$workshop||$workshop['organizer']!=='ismile'||!$workshop['providerEventId']||$workshop['currency']!=='IQD')throw new UserError('Select an iSmile workshop configured for paid PSOOLA tickets in IQD.');
+        if(Workshops::ended($workshop))throw new UserError(Workshops::ENDED_MESSAGE);
         $catalog=WorkshopCatalog::one($workshop['id'],true);
         $bookingId=Db::transaction(static function()use($person,$user,$workshop,$catalog,$minor,$currency):int{
             $row=Db::one('SELECT * FROM workshops WHERE id=? FOR UPDATE',[$workshop['id']]);
@@ -64,6 +65,7 @@ final class WorkshopCashSale
         if(($in['cash_amount']??'0')!=='0'||($in['cash_currency']??'IQD')!=='IQD')throw new UserError('No cash is collected for this 0 IQD workshop.');
         $workshop=Workshops::find((string)($in['workshop']??''));
         if(!$workshop||$workshop['organizer']!=='ismile'||$workshop['status']!=='active'||!$workshop['providerEventId']||$workshop['price']!==0)throw new UserError('Choose a free iSmile workshop configured with PSOOLA.');
+        if(Workshops::ended($workshop))throw new UserError(Workshops::ENDED_MESSAGE);
         $quote=self::quote($workshop,WorkshopCatalog::one($workshop['id'],true));
         if($quote['iqd']!==0)throw new UserError('The current PSOOLA workshop price is not 0 IQD. Refresh before registering this attendee.');
         WorkshopCheckout::start($workshop['id'],(string)$person['email'],(int)$person['id'],0);

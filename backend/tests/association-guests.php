@@ -32,6 +32,9 @@ $rejects = static function (callable $work): bool {
 $tag = bin2hex(random_bytes(4));
 Settings::set('registration_open', '1');
 Settings::set('ticket_capacity', '0');
+// Summit days in the future, so both lunch days are still open here (closing rule: day-closing.php).
+Settings::set('event_day1', date('Y-m-d', strtotime('+30 days')));
+Settings::set('event_day2', date('Y-m-d', strtotime('+31 days')));
 $staff = Db::one('SELECT * FROM admin_users WHERE id = ?', [Auth::createUser("assoc-$tag@test.invalid", 'Desk ' . $tag, 'registration', bin2hex(random_bytes(12)))]);
 $viewer = Db::one('SELECT * FROM admin_users WHERE id = ?', [Auth::createUser("assoc-view-$tag@test.invalid", 'Viewer', 'viewer', bin2hex(random_bytes(12)))]);
 $volunteer = Db::one('SELECT * FROM admin_users WHERE id = ?', [Auth::createUser("assoc-vol-$tag@test.invalid", 'Volunteer', 'volunteer', bin2hex(random_bytes(12)))]);

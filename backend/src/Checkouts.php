@@ -288,6 +288,9 @@ final class Checkouts
         }
         $lunch1 = ($in['lunch_day1'] ?? '') === '1';
         $lunch2 = ($in['lunch_day2'] ?? '') === '1';
+        foreach ([1 => $lunch1, 2 => $lunch2] as $day => $ticked) {
+            if ($ticked && Registrations::lunchClosed($day)) throw new UserError(Registrations::lunchClosedMessage($day));
+        }
         $vipDay = $noIncludedLunch ? null : self::vipLunchDay($ticket, $in, $lunch1, $lunch2);
         // Gender and age when the form asks for them (Workshop & Register), checked like the website.
         $gender = Validate::oneOf($in['gender'] ?? null, Registrations::GENDERS) ?? 'prefer-not';

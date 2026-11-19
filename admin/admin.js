@@ -726,9 +726,11 @@ document.addEventListener("DOMContentLoaded", () => {
     // VIP free (main Owner) and Guest (desk, allowed accounts only) come without lunch: the lunch days cannot be ticked.
     const noLunch = ticket.value === "vipfree" || ticket.value === "guest";
     form.querySelectorAll('[name="lunch_day1"], [name="lunch_day2"]').forEach((input) => {
-      if (noLunch) input.checked = false;
-      input.disabled = noLunch;
-      input.closest(".lunch-card")?.classList.toggle("is-off", noLunch);
+      // A closed lunch day (that summit day is over) stays off whatever the ticket.
+      const closed = input.dataset.closed === "1";
+      if (noLunch || closed) input.checked = false;
+      input.disabled = noLunch || closed;
+      input.closest(".lunch-card")?.classList.toggle("is-off", noLunch || closed);
     });
     if (vipFields && vipDay) {
       const vip = hasVipLunch(ticket.value);
@@ -738,7 +740,7 @@ document.addEventListener("DOMContentLoaded", () => {
       form.querySelectorAll('[name="lunch_day1"], [name="lunch_day2"]').forEach((input) => {
         const included = vip && input.name === `lunch_day${vipDay.value}`;
         // Keep included lunch in the POST even though it cannot be unticked.
-        if (included) input.checked = true;
+        if (included && input.dataset.closed !== "1") input.checked = true;
       });
     }
     showTotal();

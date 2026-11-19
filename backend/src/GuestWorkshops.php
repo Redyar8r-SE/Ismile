@@ -39,6 +39,7 @@ final class GuestWorkshops
         if (!is_string($key) || !preg_match('/^[a-f0-9]{32}$/D', $key)) throw new UserError('Reload the workshop form before booking.');
         $workshop = Workshops::find((string) ($in['workshop'] ?? ''));
         if (!$workshop || !self::allowed($workshop)) throw new UserError('Choose an available iSmile workshop. Company workshops are booked with their organizer.');
+        if (Workshops::ended($workshop)) throw new UserError(Workshops::ENDED_MESSAGE);
         if (!in_array($registration['status'], ['paid','complimentary'], true)) throw new UserError('An active paid or complimentary summit registration is required.');
         $payload = ['attempt'=>$key, 'buyer_name'=>Registrations::fullName($registration), 'email'=>$registration['email'],
             'phone'=>$registration['phone'], 'locale'=>$registration['lang'] === 'ku' ? 'ckb' : $registration['lang'],

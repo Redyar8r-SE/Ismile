@@ -50,6 +50,7 @@ final class VipPackages
         if(!in_array($id,self::WORKSHOPS,true))throw new UserError('vip_workshop_required');
         $row=Db::one('SELECT * FROM workshops WHERE id=? FOR UPDATE',[$id]);
         if(!$row||$row['organizer']!=='ismile'||$row['status']!=='active')throw new UserError('vip_workshop_full',null,409);
+        if(Workshops::ended($row))throw new UserError('vip_workshop_full',null,409);   // over (19 Nov 2026 rule)
         $catalog=WorkshopCatalog::one($id,true,$exceptCheckout);
         if(!$catalog||!$catalog['availabilityVerified']||$catalog['seatsLeft']<1||Workshops::booked($id)+self::held($id,$exceptCheckout)>=(int)$row['total_seats'])throw new UserError('vip_workshop_full',null,409);
     }

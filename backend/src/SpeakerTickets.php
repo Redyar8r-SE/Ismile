@@ -186,6 +186,7 @@ final class SpeakerTickets
         $out = [];
         foreach ([1, 2] as $day) {
             if (($in['lunch_day' . $day] ?? '') !== '1') continue;
+            if (Registrations::lunchClosed($day)) throw new UserError(Registrations::lunchClosedMessage($day));
             $id = $config['lunchDay' . $day] ?? null;
             if (!is_string($id) || $id === '') {
                 throw new UserError('Lunch day ' . $day . ' is not set up for PSOOLA on the server, so nothing was sent. Untick it or ask the Owner to check the PSOOLA lunch settings.');

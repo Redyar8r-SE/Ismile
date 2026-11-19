@@ -101,7 +101,7 @@ if ($tab === 'workshop') {
         $free = ($quote && $quote['iqd'] === 0) || (!$quote && (int) $w['price'] === 0);
         $seats = (int) ($catalog['seatsLeft'] ?? 0);
         $workshops[$w['id']] = ['w' => $w, 'quote' => $quote, 'seats' => $seats, 'free' => $free,
-            'blocked' => !$linked ? 'Not on sale through Psoola. Ask the team.' : (!$quote ? 'Price not available from Psoola right now. Try again in a minute.' : ($seats < 1 ? 'Sold out.' : ''))];
+            'blocked' => Workshops::ended($w) ? 'Over: registration is closed.' : (!$linked ? 'Not on sale through Psoola. Ask the team.' : (!$quote ? 'Price not available from Psoola right now. Try again in a minute.' : ($seats < 1 ? 'Sold out.' : '')))];
     }
 }
 $ws = $workshops[Page::query('ws')] ?? null;
@@ -243,12 +243,12 @@ Page::top('Workshop & Register', 'desk');
   </fieldset>
   <fieldset class="form-section">
     <legend>3. Lunch <span class="dk-optional">Optional</span></legend>
-    <label id="caller-vip-lunch"<?= !$vip ? ' hidden' : '' ?>>VIP included lunch<select name="vip_lunch_day"<?= !$vip ? ' disabled' : '' ?>><option value="1"<?= ($_POST['vip_lunch_day'] ?? '1') === '1' ? ' selected' : '' ?>>Day 1, 19 November</option><option value="2"<?= ($_POST['vip_lunch_day'] ?? '') === '2' ? ' selected' : '' ?>>Day 2, 20 November</option></select></label>
+    <label id="caller-vip-lunch"<?= !$vip ? ' hidden' : '' ?>>VIP included lunch<select name="vip_lunch_day"<?= !$vip ? ' disabled' : '' ?>><option value="1"<?= \Ismile\Registrations::lunchClosed(1) ? ' disabled' : (($_POST['vip_lunch_day'] ?? '1') === '1' ? ' selected' : '') ?>>Day 1, 19 November<?= \Ismile\Registrations::lunchClosed(1) ? ' (closed)' : '' ?></option><option value="2"<?= ($_POST['vip_lunch_day'] ?? (\Ismile\Registrations::lunchClosed(1) ? '2' : '')) === '2' ? ' selected' : '' ?>>Day 2, 20 November</option></select></label>
     <?php if (\Ismile\VipPackages::enabled()): ?><label id="caller-vip-workshop"<?= !$vip ? ' hidden' : '' ?>>VIP included workshop<select name="vip_workshop"<?= !$vip ? ' disabled' : '' ?>><option value="">No workshop (optional)</option><?php foreach (\Ismile\VipPackages::WORKSHOPS as $workshopId): $vipWorkshop = Workshops::find($workshopId); if (!$vipWorkshop) continue; ?><option value="<?= $e($workshopId) ?>"<?= $selected('vip_workshop', $workshopId) ?>><?= $e(Workshops::name($vipWorkshop)) ?></option><?php endforeach; ?></select></label><?php endif; ?>
     <div class="lunch-cards">
       <?php foreach ([1 => 'Thursday 19 Nov', 2 => 'Friday 20 Nov'] as $day => $date): ?>
-      <label class="lunch-card"><input type="checkbox" name="lunch_day<?= $day ?>" value="1"<?= ($_POST['lunch_day' . $day] ?? '') === '1' ? ' checked' : '' ?>>
-        <span class="lunch-card-text"><b>Lunch day <?= $day ?></b><small><?= $e($date) ?></small></span>
+      <label class="lunch-card"><input type="checkbox" name="lunch_day<?= $day ?>" value="1"<?= \Ismile\Registrations::lunchClosed($day) ? ' disabled data-closed="1"' : (($_POST['lunch_day' . $day] ?? '') === '1' ? ' checked' : '') ?>>
+        <span class="lunch-card-text"><b>Lunch day <?= $day ?></b><small><?= $e($date) ?><?= \Ismile\Registrations::lunchClosed($day) ? ', closed' : '' ?></small></span>
         <span class="lunch-card-price"><b data-lunch-price="<?= $day ?>"><?= $e($shown['lunch' . $day]) ?></b></span>
       </label>
       <?php endforeach; ?>

@@ -11,6 +11,16 @@ final class WorkshopCatalog
         return array_values(array_map(static fn($w)=>self::one($w['id']),Workshops::all()));
     }
 
+    /**
+     * The website's list (api/workshops.php, also behind ismile.krd). A
+     * workshop that is over shows no seats left, so the website greys it out
+     * and offers no registration (owner, 19 Nov 2026).
+     */
+    public static function forWebsite(): array
+    {
+        return array_map(static fn($w)=>is_array($w)&&Workshops::ended($w)?['seatsLeft'=>0,'pendingPayments'=>0]+$w:$w,self::all());
+    }
+
     public static function one(string $id, bool $fresh = false, int $exceptVipCheckout = 0): ?array
     {
         $w=Workshops::find($id);

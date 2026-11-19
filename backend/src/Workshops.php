@@ -67,6 +67,24 @@ final class Workshops
         return $id !== null ? (string) (Db::value('SELECT currency FROM workshops WHERE id = ?', [$id]) ?? 'IQD') : 'IQD';
     }
 
+    /**
+     * Over: its date and finishing time (Iraq time) have passed. Nobody can
+     * register for it after that, by any route (owner, 19 Nov 2026). Takes a
+     * workshop in the website's shape or a raw database row.
+     */
+    public static function ended(array $workshop): bool
+    {
+        $date = (string) ($workshop['scheduledDate'] ?? $workshop['scheduled_date'] ?? '');
+        $end = substr((string) ($workshop['endTime'] ?? $workshop['end_time'] ?? ''), 0, 5);
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/D', $date) || !preg_match('/^\d{2}:\d{2}$/D', $end)) {
+            return false;
+        }
+        return App::now() >= $date . ' ' . $end . ':00';
+    }
+
+    /** The words staff see for a workshop that is over. */
+    public const ENDED_MESSAGE = 'This workshop is over, so registration for it is closed.';
+
     public static function booked(string $id): int
     {
         return (int) Db::value('SELECT COUNT(*) FROM workshop_bookings WHERE workshop_id = ? AND removed_at IS NULL', [$id]);
@@ -392,6 +410,9 @@ final class Workshops
         // A company's workshop is booked by calling the company, never here.
         if ($workshop['organizer'] === 'company') {
             throw new UserError('wd_err_by_phone', null, 409);
+        }
+        if (self::ended($workshop)) {
+            throw new UserError('wd_err_full', null, 409);   // shown on the website as no seats left
         }
         $registration = Db::one("SELECT * FROM registrations WHERE LOWER(email) = ? AND status='paid' ORDER BY id DESC LIMIT 1", [$email]);
         if ($registration === null) {

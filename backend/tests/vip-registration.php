@@ -32,6 +32,9 @@ $rejects = static function (array $form): bool {
 };
 Settings::set('registration_open', '1');
 Settings::set('ticket_capacity', '0');
+// Summit days in the future, so both lunch days are still open here (closing rule: day-closing.php).
+Settings::set('event_day1', date('Y-m-d', strtotime('+30 days')));
+Settings::set('event_day2', date('Y-m-d', strtotime('+31 days')));
 Settings::set('lunch_capacity_day1', '0');
 Settings::set('lunch_capacity_day2', '0');
 $base = ['first_name'=>'Sara','father_name'=>'Ahmed','grandfather_name'=>'Hassan',

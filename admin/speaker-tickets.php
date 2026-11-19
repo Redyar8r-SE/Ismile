@@ -227,8 +227,8 @@ $lunchDays = [1 => ['Thursday 19 Nov', 'Thu 19 Nov'], 2 => ['Friday 20 Nov', 'Fr
     <legend>2. Free lunch</legend>
     <div class="lunch-cards">
       <?php foreach (array_map(static fn (array $d): string => $d[0], $lunchDays) as $day => $date): ?>
-      <label class="lunch-card"><input type="checkbox" name="lunch_day<?= $day ?>" value="1"<?= $lunch($day) ? ' checked' : '' ?>>
-        <span class="lunch-card-text"><b>Lunch day <?= $day ?></b><small><?= $e($date) ?></small></span>
+      <label class="lunch-card"><input type="checkbox" name="lunch_day<?= $day ?>" value="1"<?= \Ismile\Registrations::lunchClosed($day) ? ' disabled data-closed="1"' : ($lunch($day) ? ' checked' : '') ?>>
+        <span class="lunch-card-text"><b>Lunch day <?= $day ?></b><small><?= $e($date) ?><?= \Ismile\Registrations::lunchClosed($day) ? ', closed' : '' ?></small></span>
         <span class="lunch-card-price"><b>Free</b><small>sent to PSOOLA</small></span>
       </label>
       <?php endforeach; ?>

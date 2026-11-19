@@ -16,6 +16,7 @@ final class WorkshopCheckout
         $workshop = Workshops::find($workshopId);
         if (!$workshop || $workshop['status'] !== 'active') throw new UserError('wd_err_missing',null,404);
         if ($workshop['organizer'] === 'company') throw new UserError('wd_err_by_phone',null,409);
+        if (Workshops::ended($workshop)) throw new UserError('wd_err_full',null,409);   // over: no seats left
         if ($workshop['price'] === 0 && !$workshop['providerEventId']) return self::registerFree($workshop,$email);
         if (!$workshop['providerEventId']) throw new UserError('wd_err_server',null,503);
         $person = $registrationId > 0

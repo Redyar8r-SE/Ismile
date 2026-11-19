@@ -12,6 +12,7 @@ final class WorkshopCash
         $workshop=Workshops::find($workshopId);
         if(!$workshop||$workshop['status']!=='active')throw new UserError('wd_err_missing',null,404);
         if($workshop['organizer']!=='ismile')throw new UserError('wd_err_by_phone',null,409);
+        if(Workshops::ended($workshop))throw new UserError('wd_err_full',null,409);   // over: no seats left
         if($workshop['price']<=0)throw new UserError('wd_err_server',null,409);
         $person=Db::one("SELECT * FROM registrations WHERE LOWER(email)=? AND status='paid' ORDER BY id DESC LIMIT 1",[$email]);
         if(!$person)throw new UserError('wd_err_not_registered','email',404);

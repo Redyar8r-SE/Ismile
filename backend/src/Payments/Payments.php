@@ -233,7 +233,7 @@ final class Payments
                 throw new UserError('Registration is full: no places are left.');
             }
             if (Registrations::lunchFullFor($form, true)) {
-                throw new UserError('The lunch day you chose is full. Untick it and try again.');
+                throw new UserError('The lunch day you chose is full or closed. Untick it and try again.');
             }
             $expected = $ownerPrice ?? ($priceFromGateway
                 ? (PsoolaPrices::estimate($form) ?? ['amount' => 1, 'currency' => 'IQD'])
