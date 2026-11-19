@@ -680,7 +680,7 @@ if ($database) {
     $booking = static fn (): array => Db::one('SELECT checked_in_at, checked_out_at FROM workshop_bookings WHERE id = ?', [$bookingId]);
     $check('a workshop door scan records the arrival on the booking', \Ismile\Payments\PsoolaWorkshopCheckIns::record($wid, [$wsScan([])])['arrived'] === 1
         && $booking() === ['checked_in_at' => '2026-11-19 14:00:05', 'checked_out_at' => null]);
-    $check('the same workshop scan copied again changes nothing', \Ismile\Payments\PsoolaWorkshopCheckIns::record($wid, [$wsScan([])]) === ['seen' => 1, 'arrived' => 0, 'left' => 0, 'back_in' => 0, 'unmatched' => 0]);
+    $check('the same workshop scan copied again changes nothing', \Ismile\Payments\PsoolaWorkshopCheckIns::record($wid, [$wsScan([])]) === ['seen' => 1, 'arrived' => 0, 'left' => 0, 'back_in' => 0, 'unmatched' => 0, 'other_day' => 0]);
     $check('scanned out of the workshop: the time they left is kept', \Ismile\Payments\PsoolaWorkshopCheckIns::record($wid, [$wsScan(['inside' => false, 'lastScannedAt' => $ms('2026-11-19 15:10:00')])])['left'] === 1
         && $booking()['checked_out_at'] === '2026-11-19 15:10:00');
     $check('scanned back into the workshop: inside again', \Ismile\Payments\PsoolaWorkshopCheckIns::record($wid, [$wsScan(['inside' => true, 'lastScannedAt' => $ms('2026-11-19 15:30:00')])])['back_in'] === 1
@@ -688,6 +688,11 @@ if ($database) {
     $check('a workshop scan matches by order reference too; a stranger is not matched', \Ismile\Payments\PsoolaWorkshopCheckIns::record($wid, [$wsScan(['order' => ['partnerReference' => 'WS-DOOR-1']])])['unmatched'] === 0
         && \Ismile\Payments\PsoolaWorkshopCheckIns::record($wid, [$wsScan(['order' => ['id' => 'someone_else']])])['unmatched'] === 1
         && \Ismile\Payments\PsoolaWorkshopCheckIns::record('another-workshop', [$wsScan([])])['unmatched'] === 1);
+    Db::run('UPDATE workshop_bookings SET checked_in_at = NULL, checked_out_at = NULL WHERE id = ?', [$bookingId]);
+    $check('a scan before the workshop day (a test) is not an arrival', \Ismile\Payments\PsoolaWorkshopCheckIns::record($wid, [$wsScan(['firstScannedAt' => $ms('2026-11-18 10:00:00'), 'lastScannedAt' => $ms('2026-11-18 10:00:00')])])['other_day'] === 1
+        && $booking()['checked_in_at'] === null);
+    $check('scanned before, then on the workshop day: the arrival is the scan on the day', \Ismile\Payments\PsoolaWorkshopCheckIns::record($wid, [$wsScan(['firstScannedAt' => $ms('2026-11-18 10:00:00'), 'lastScannedAt' => $ms('2026-11-19 14:20:00')])])['arrived'] === 1
+        && $booking()['checked_in_at'] === '2026-11-19 14:20:00');
     Db::run('UPDATE workshop_bookings SET removed_at = ? WHERE id = ?', [App::now(), $bookingId]);
     $check('a removed workshop booking takes no scans', \Ismile\Payments\PsoolaWorkshopCheckIns::record($wid, [$wsScan(['inside' => false, 'lastScannedAt' => $ms('2026-11-19 16:00:00')])])['unmatched'] === 1);
 

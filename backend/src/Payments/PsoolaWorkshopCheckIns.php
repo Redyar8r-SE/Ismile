@@ -35,12 +35,12 @@ final class PsoolaWorkshopCheckIns
     /**
      * Reads the door scans of today's workshops (or $all) and records them.
      *
-     * @return array{workshops: int, seen: int, arrived: int, left: int, back_in: int, unmatched: int}
+     * @return array{workshops: int, seen: int, arrived: int, left: int, back_in: int, unmatched: int, other_day: int}
      */
     public static function sync(bool $all = false, ?PsoolaGateway $gateway = null): array
     {
         $gateway ??= new PsoolaGateway();
-        $counts = ['workshops' => 0, 'seen' => 0, 'arrived' => 0, 'left' => 0, 'back_in' => 0, 'unmatched' => 0];
+        $counts = ['workshops' => 0, 'seen' => 0, 'arrived' => 0, 'left' => 0, 'back_in' => 0, 'unmatched' => 0, 'other_day' => 0];
         foreach (self::workshops(null, $all) as $workshopId => $eventId) {
             $scans = [];
             $cursor = null;
@@ -61,18 +61,31 @@ final class PsoolaWorkshopCheckIns
      * Records one workshop's PSOOLA scans on the matching bookings.
      *
      * @param list<array> $scans
-     * @return array{seen: int, arrived: int, left: int, back_in: int, unmatched: int}
+     * Only scans on the workshop's own date count (an earlier test scan is
+     * not an arrival): the first scan if it was that day, else the last one.
+     *
+     * @return array{seen: int, arrived: int, left: int, back_in: int, unmatched: int, other_day: int}
      */
     public static function record(string $workshopId, array $scans): array
     {
-        $counts = ['seen' => count($scans), 'arrived' => 0, 'left' => 0, 'back_in' => 0, 'unmatched' => 0];
+        $counts = ['seen' => count($scans), 'arrived' => 0, 'left' => 0, 'back_in' => 0, 'unmatched' => 0, 'other_day' => 0];
         $time = static fn (mixed $ms): ?string => is_int($ms) || is_float($ms) ? date('Y-m-d H:i:s', (int) floor($ms / 1000)) : null;
+        $date = (string) (Db::value('SELECT scheduled_date FROM workshops WHERE id = ?', [$workshopId]) ?? '');
+        $onDay = static fn (?string $at): bool => $at !== null && ($date === '' || str_starts_with($at, $date));
         foreach ($scans as $scan) {
             $bookingId = self::bookingFor($workshopId, $scan);
             $first = $time($scan['firstScannedAt'] ?? null);
             if ($bookingId === null || $first === null) {
                 $counts['unmatched']++;
                 continue;
+            }
+            if (!$onDay($first)) {
+                $later = $time($scan['lastScannedAt'] ?? null);
+                if (!$onDay($later)) {
+                    $counts['other_day']++;
+                    continue;
+                }
+                $first = $later;   // scanned before (a test), then on the workshop day
             }
             // Arrived: the first scan (an earlier one replaces a later one, never the other way).
             if (Db::run('UPDATE workshop_bookings SET checked_in_at = ? WHERE id = ? AND (checked_in_at IS NULL OR checked_in_at > ?)', [$first, $bookingId, $first]) > 0) {
@@ -81,7 +94,7 @@ final class PsoolaWorkshopCheckIns
             }
             $inside = $scan['inside'] ?? null;
             $last = $time($scan['lastScannedAt'] ?? null);
-            if (!is_bool($inside) || $last === null) continue;
+            if (!is_bool($inside) || !$onDay($last)) continue;
             if ($inside === false) {
                 if (Db::run('UPDATE workshop_bookings SET checked_out_at = ? WHERE id = ? AND checked_in_at < ? AND NOT (checked_out_at <=> ?)', [$last, $bookingId, $last, $last]) > 0) $counts['left']++;
             } elseif (Db::run('UPDATE workshop_bookings SET checked_out_at = NULL WHERE id = ? AND checked_out_at IS NOT NULL AND checked_out_at <= ?', [$bookingId, $last]) > 0) {
