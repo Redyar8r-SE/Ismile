@@ -1802,3 +1802,15 @@ body.po-busy .po-filters,body.po-busy .registration-directory,body.po-busy .po-a
 body.po-busy::before{content:"";position:fixed;top:0;left:0;z-index:9999;height:4px;width:40%;background:linear-gradient(90deg,var(--teal),var(--violet));border-radius:0 4px 4px 0;animation:po-bar 1s ease-in-out infinite}
 @keyframes po-bar{0%{left:-40%}100%{left:100%}}
 @media (prefers-reduced-motion:reduce){body.po-busy::before{animation:none;width:100%;left:0}}
+/* Registration: check-out from PSOOLA's gate (19 Nov 2026) */
+.attendance-tiles{grid-template-columns:repeat(5,minmax(0,1fr))}
+.attendance-tile.left{--tile-bg:#fdebdc;--tile-ink:#a24a12;text-decoration:none;box-shadow:inset 0 0 0 1.5px #f6c9a6;transition:box-shadow .15s,transform .15s}
+.attendance-tile.left:hover{box-shadow:inset 0 0 0 2px #e07a2e;transform:translateY(-1px)}
+.attendance-tile.left span{display:inline-flex;align-items:center;gap:6px}
+.attendance-tile.left .nav-icon{width:14px;height:14px}
+.arrival-chip.is-left{margin-top:6px;background:#fdebdc;color:#a24a12;box-shadow:inset 0 0 0 1px #f6c9a6}
+.arrival-chip.is-left b{font-size:14px;font-variant-numeric:tabular-nums}
+.attended-table td .arrival-chip.is-left{display:inline-flex}
+.left-note{color:#a24a12!important;font-weight:700}
+@media(max-width:1300px){.attendance-tiles{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:600px){.attendance-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.attendance-tile.left{grid-column:1/-1}}

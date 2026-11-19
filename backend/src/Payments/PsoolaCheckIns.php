@@ -34,7 +34,7 @@ final class PsoolaCheckIns
     /**
      * Reads every PSOOLA check-in and records the new ones.
      *
-     * @return array{seen: int, added: int, unmatched: int, outside_event_days: int}
+     * @return array{seen: int, added: int, unmatched: int, outside_event_days: int, left: int, back_in: int}
      */
     public static function sync(): array
     {
@@ -100,11 +100,11 @@ final class PsoolaCheckIns
      * Records PSOOLA check-ins (as GET /check-ins lists them).
      *
      * @param list<array> $scans
-     * @return array{seen: int, added: int, unmatched: int, outside_event_days: int}
+     * @return array{seen: int, added: int, unmatched: int, outside_event_days: int, left: int, back_in: int}
      */
     public static function record(array $scans): array
     {
-        $counts = ['seen' => count($scans), 'added' => 0, 'unmatched' => 0, 'outside_event_days' => 0];
+        $counts = ['seen' => count($scans), 'added' => 0, 'unmatched' => 0, 'outside_event_days' => 0, 'left' => 0, 'back_in' => 0];
         foreach ($scans as $scan) {
             $ticketId = self::ticketIdFor($scan);
             if ($ticketId === null) {
@@ -121,8 +121,35 @@ final class PsoolaCheckIns
                     $counts['added']++;
                 }
             }
+            $out = self::checkOut($ticketId, $scan);
+            if ($out === 'left') $counts['left']++;
+            if ($out === 'back_in') $counts['back_in']++;
         }
         return $counts;
+    }
+
+    /**
+     * Check-out (owner, 19 Nov 2026). PSOOLA's gate scans a guest again when
+     * they leave: the scan then says inside = false, and lastScannedAt is when
+     * they left. That time is kept on that day's attendance. Scanned back in
+     * (inside = true), the time is cleared: the guest is inside again.
+     * Returns 'left', 'back_in' or '' (nothing changed).
+     */
+    private static function checkOut(int $ticketId, array $scan): string
+    {
+        $inside = $scan['inside'] ?? null;
+        $ms = $scan['lastScannedAt'] ?? null;
+        if (!is_bool($inside) || (!is_int($ms) && !is_float($ms))) return '';
+        $at = date('Y-m-d H:i:s', (int) floor($ms / 1000));
+        $day = Attendance::currentDay(substr($at, 0, 10));
+        if ($day === null) return '';
+        if ($inside === false) {
+            // Only after that day's arrival, and only when the time is new.
+            $changed = Db::run('UPDATE ticket_attendance SET checked_out_at = ? WHERE ticket_id = ? AND event_day = ? AND checked_in_at < ? AND NOT (checked_out_at <=> ?)', [$at, $ticketId, $day, $at, $at]);
+            return $changed > 0 ? 'left' : '';
+        }
+        $changed = Db::run('UPDATE ticket_attendance SET checked_out_at = NULL WHERE ticket_id = ? AND event_day = ? AND checked_out_at IS NOT NULL AND checked_out_at <= ?', [$ticketId, $day, $at]);
+        return $changed > 0 ? 'back_in' : '';
     }
 
     /**

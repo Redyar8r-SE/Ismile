@@ -33,6 +33,8 @@ Page::action(static function () use ($user): string {
         }
         $count = static fn (int $n, string $one, string $many): string => $n . ' ' . ($n === 1 ? $one : $many);
         return 'Psoola check-ins copied: ' . $count($counts['seen'], 'scan', 'scans') . ' read, ' . $count($counts['added'], 'new arrival', 'new arrivals') . ' recorded'
+            . ($counts['left'] ? ', ' . $count($counts['left'], 'new check-out', 'new check-outs') : '')
+            . ($counts['back_in'] ? ', ' . $count($counts['back_in'], 'guest', 'guests') . ' back inside' : '')
             . ($counts['unmatched'] ? ', ' . $count($counts['unmatched'], 'scan', 'scans') . ' not found in our registrations' : '')
             . ($counts['outside_event_days'] ? ', ' . $count($counts['outside_event_days'], 'scan', 'scans') . ' outside the event days' : '') . '.';
     }

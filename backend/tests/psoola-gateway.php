@@ -16,6 +16,7 @@
 declare(strict_types=1);
 
 use Ismile\App;
+use Ismile\Admin\CheckinWorkspace;
 use Ismile\Checkouts;
 use Ismile\Db;
 use Ismile\EmailTemplates;
@@ -621,12 +622,30 @@ if ($database) {
     $check('scans before the summit are listed, oldest first, event-day scans left out', count($early) === 2 && $early[0]['ticketCode'] === 'ZZZ9' && $early[0]['registration'] === null
         && $early[1]['ticketCode'] === 'BDG1' && (int) $early[1]['registration']['id'] === $withQr && $early[1]['first'] === '2026-11-15 21:10' && $early[1]['last'] === '2026-11-16 00:20');
     $dayOne = ['ticketCode' => 'BDG3', 'order' => ['id' => 'ord_badge_used'], 'firstScannedAt' => $ms('2026-11-19 09:00:00'), 'lastScannedAt' => $ms('2026-11-19 09:00:00')];
-    $check('an event-day scan becomes attendance, matched by PSOOLA order id', \Ismile\Payments\PsoolaCheckIns::record([$dayOne]) === ['seen' => 1, 'added' => 1, 'unmatched' => 0, 'outside_event_days' => 0]
+    $check('an event-day scan becomes attendance, matched by PSOOLA order id', \Ismile\Payments\PsoolaCheckIns::record([$dayOne]) === ['seen' => 1, 'added' => 1, 'unmatched' => 0, 'outside_event_days' => 0, 'left' => 0, 'back_in' => 0]
         && (int) Db::value("SELECT COUNT(*) FROM ticket_attendance a JOIN tickets t ON t.id = a.ticket_id WHERE t.registration_id = ? AND a.event_day = 1 AND a.checkin_method = 'psoola'", [$used]) === 1);
     $check('the same scan copied again changes nothing; strangers and early scans are not attendance',
         \Ismile\Payments\PsoolaCheckIns::record([$dayOne])['added'] === 0
         && \Ismile\Payments\PsoolaCheckIns::record([['order' => ['id' => 'ord_nobody', 'partnerReference' => 'NOPE'], 'firstScannedAt' => $ms('2026-11-19 10:00:00')]])['unmatched'] === 1
         && \Ismile\Payments\PsoolaCheckIns::record([['order' => ['id' => 'ord_badge_qr'], 'firstScannedAt' => $ms('2026-11-15 21:10:00')]])['outside_event_days'] === 1);
+
+    // Check-out (19 Nov 2026): PSOOLA's scan says inside = false when the guest left; scanned back in = true.
+    $leftAt = static fn (): ?string => Db::value('SELECT a.checked_out_at FROM ticket_attendance a JOIN tickets t ON t.id = a.ticket_id WHERE t.registration_id = ? AND a.event_day = 1', [$used]);
+    $left = ['inside' => false, 'lastScannedAt' => $ms('2026-11-19 12:30:15')] + $dayOne;
+    $check('a guest scanned out (inside = false) gets the time they left, arrival unchanged', \Ismile\Payments\PsoolaCheckIns::record([$left])['left'] === 1
+        && $leftAt() === '2026-11-19 12:30:15' && Db::value('SELECT a.checked_in_at FROM ticket_attendance a JOIN tickets t ON t.id = a.ticket_id WHERE t.registration_id = ? AND a.event_day = 1', [$used]) === '2026-11-19 09:00:00');
+    $check('the same check-out copied again changes nothing', \Ismile\Payments\PsoolaCheckIns::record([$left])['left'] === 0 && $leftAt() === '2026-11-19 12:30:15');
+    $outRows = CheckinWorkspace::rows(['attendance' => 'day1', 'out' => 'left', 'q' => Registrations::find($used)['ref']]);
+    $check('Registration shows who checked out (filter Left, time in the row and in the export)', count($outRows) === 1 && $outRows[0]['out1'] === '2026-11-19 12:30:15'
+        && CheckinWorkspace::rows(['attendance' => 'day1', 'out' => 'inside', 'q' => Registrations::find($used)['ref']]) === []
+        && array_slice(CheckinWorkspace::exportRows(['attendance' => 'day1', 'out' => 'left', 'q' => Registrations::find($used)['ref']])[1], -2)[0] === '2026-11-19 12:30:15'
+        && (int) CheckinWorkspace::summary()['left_day1'] >= 1);
+    $back = ['inside' => true, 'lastScannedAt' => $ms('2026-11-19 13:05:00')] + $dayOne;
+    $check('scanned back in (inside = true): the guest is inside again', \Ismile\Payments\PsoolaCheckIns::record([$back])['back_in'] === 1 && $leftAt() === null
+        && count(CheckinWorkspace::rows(['attendance' => 'day1', 'out' => 'inside', 'q' => Registrations::find($used)['ref']])) === 1);
+    $check('a scan without the inside field, or an exit time before the arrival, records no check-out',
+        \Ismile\Payments\PsoolaCheckIns::record([['lastScannedAt' => $ms('2026-11-19 15:00:00')] + $dayOne])['left'] === 0
+        && \Ismile\Payments\PsoolaCheckIns::record([['inside' => false, 'lastScannedAt' => $ms('2026-11-19 08:00:00')] + $dayOne])['left'] === 0 && $leftAt() === null);
 
     // A checkout sale (order.paid webhook): QRs come from GET /checkout-sessions/{id}.
     $hookForm = $newForm();

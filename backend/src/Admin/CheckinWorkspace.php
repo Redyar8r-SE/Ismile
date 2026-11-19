@@ -82,6 +82,15 @@ final class CheckinWorkspace
         };
         if ($scope !== null) $where[] = $scope;
         $filters = self::filters($filters);
+        // Checked out (owner, 19 Nov 2026): on the chosen day, else today's event day, else either day.
+        if ($filters['out'] !== '') {
+            $outDay = ['day1' => 1, 'day2' => 2][$attendance] ?? Attendance::currentDay();
+            $where[] = match ($filters['out']) {
+                'left' => $outDay ? "a$outDay.checked_out_at IS NOT NULL" : '(a1.checked_out_at IS NOT NULL OR a2.checked_out_at IS NOT NULL)',
+                default => $outDay ? "(a$outDay.id IS NOT NULL AND a$outDay.checked_out_at IS NULL)"
+                    : '((a1.id IS NOT NULL AND a1.checked_out_at IS NULL) OR (a2.id IS NOT NULL AND a2.checked_out_at IS NULL))',
+            };
+        }
         foreach (['type'=>'ticket_type','status'=>'status','specialty'=>'specialty','city'=>'city','university'=>'university','lang'=>'lang','ambassador'=>'ambassador_code'] as $key=>$column) {
             if ($filters[$key] !== '') { $where[] = "r.$column = ?"; $params[] = $filters[$key]; }
         }
@@ -108,12 +117,12 @@ final class CheckinWorkspace
     public static function filters(array $input, bool $attended = false): array
     {
         $filters=[];
-        foreach (['q','attendance','type','status','lunch','id','specialty','city','university','lang','ambassador','arrival_date','from_time','to_time','staff','sort'] as $key) {
+        foreach (['q','attendance','type','status','lunch','id','specialty','city','university','lang','ambassador','arrival_date','from_time','to_time','staff','sort','out'] as $key) {
             $filters[$key]=mb_substr(trim(is_string($input[$key]??null) ? $input[$key] : ''),0,$key==='q'?200:160);
         }
         foreach (['attendance'=>['attended','day1','day2','both','none'],'type'=>['student','professional','vip'],'status'=>['paid','complimentary'],
             'lunch'=>['day1','day2','both','any','none'],'id'=>['present','missing','removed'],'specialty'=>array_keys(Registrations::SPECIALTY_NAMES),
-            'lang'=>['en','ar','ku'],'sort'=>['name','latest','earliest']] as $key=>$valid) {
+            'lang'=>['en','ar','ku'],'sort'=>['name','latest','earliest'],'out'=>['left','inside']] as $key=>$valid) {
             if (!in_array($filters[$key],$valid,true)) $filters[$key]='';
         }
         if ($attended && !in_array($filters['attendance'],['attended','day1','day2','both'],true)) $filters['attendance']='attended';
@@ -149,7 +158,7 @@ final class CheckinWorkspace
         $filters=self::filters($filters);
         [$where,$params]=self::where($filters['q'],$filters['attendance'],$filters);
         $paging=$limit!==null?' LIMIT '.max(1,min(100,$limit)).' OFFSET '.max(0,$offset):'';
-        return Db::all('SELECT r.*,t.id AS ticket_id,t.version AS ticket_version,t.source AS ticket_source,t.ticket_no,a1.checked_in_at AS day1,a2.checked_in_at AS day2,a1.checkin_method AS method1,a2.checkin_method AS method2,u1.name AS staff1,u2.name AS staff2,c.certificate_no FROM '.self::from()." WHERE $where ORDER BY ".self::order($filters['sort'],$filters['attendance']).$paging,$params);
+        return Db::all('SELECT r.*,t.id AS ticket_id,t.version AS ticket_version,t.source AS ticket_source,t.ticket_no,a1.checked_in_at AS day1,a2.checked_in_at AS day2,a1.checked_out_at AS out1,a2.checked_out_at AS out2,a1.checkin_method AS method1,a2.checkin_method AS method2,u1.name AS staff1,u2.name AS staff2,c.certificate_no FROM '.self::from()." WHERE $where ORDER BY ".self::order($filters['sort'],$filters['attendance']).$paging,$params);
     }
 
     public static function options(): array
@@ -171,10 +180,10 @@ final class CheckinWorkspace
 
     public static function exportRows(array $filters): array
     {
-        $rows=[['Reference','Name','Ticket','Category','Status','Student ID','University','City','Specialty','Lunch Day 1','Lunch Day 2','Day 1 arrival (Iraq time)','Day 1 checked in by','Day 2 arrival (Iraq time)','Day 2 checked in by','Registered','Paid / ticket issued','Language','Ambassador','Phone','Email','Day 1 check-in method','Day 2 check-in method']];
+        $rows=[['Reference','Name','Ticket','Category','Status','Student ID','University','City','Specialty','Lunch Day 1','Lunch Day 2','Day 1 arrival (Iraq time)','Day 1 checked in by','Day 2 arrival (Iraq time)','Day 2 checked in by','Registered','Paid / ticket issued','Language','Ambassador','Phone','Email','Day 1 check-in method','Day 2 check-in method','Day 1 left (Iraq time)','Day 2 left (Iraq time)']];
         foreach (self::rows($filters) as $row) {
             $rows[]=[$row['ref'],Registrations::fullName($row),$row['ticket_no'],\Ismile\Registrations::ticketName($row['ticket_type']),$row['status'],self::idStatus($row),$row['university']??'',$row['city'],Registrations::SPECIALTY_NAMES[$row['specialty']]??$row['specialty'],
-                $row['lunch_day1']?'Booked':'Not booked',$row['lunch_day2']?'Booked':'Not booked',$row['day1']??'',$row['staff1']??'',$row['day2']??'',$row['staff2']??'',$row['created_at'],$row['paid_at'],$row['lang'],$row['ambassador_code']??'',$row['phone'],$row['email'],Attendance::methodLabel($row['method1']),Attendance::methodLabel($row['method2'])];
+                $row['lunch_day1']?'Booked':'Not booked',$row['lunch_day2']?'Booked':'Not booked',$row['day1']??'',$row['staff1']??'',$row['day2']??'',$row['staff2']??'',$row['created_at'],$row['paid_at'],$row['lang'],$row['ambassador_code']??'',$row['phone'],$row['email'],Attendance::methodLabel($row['method1']),Attendance::methodLabel($row['method2']),$row['out1']??'',$row['out2']??''];
         }
         return $rows;
     }
@@ -187,6 +196,9 @@ final class CheckinWorkspace
             COALESCE(SUM(a1.id IS NOT NULL OR a2.id IS NOT NULL),0) AS attended,
             COALESCE(SUM(a1.id IS NOT NULL AND a2.id IS NOT NULL),0) AS both_days,
             COALESCE(SUM(a1.id IS NULL AND a2.id IS NULL),0) AS waiting,
+            COALESCE(SUM(a1.checked_out_at IS NOT NULL),0) AS left_day1,
+            COALESCE(SUM(a2.checked_out_at IS NOT NULL),0) AS left_day2,
+            COALESCE(SUM(a1.checked_out_at IS NOT NULL OR a2.checked_out_at IS NOT NULL),0) AS left_any,
             COALESCE(SUM(c.id IS NOT NULL AND (a1.id IS NOT NULL OR a2.id IS NOT NULL)),0) AS certificates
             FROM " . self::from() . " WHERE r.status IN ('paid','complimentary') AND t.cancelled_at IS NULL") ?? [];
     }

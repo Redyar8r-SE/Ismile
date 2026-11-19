@@ -368,6 +368,7 @@ CREATE TABLE IF NOT EXISTS ticket_attendance (
   ticket_id INT UNSIGNED NOT NULL,
   event_day TINYINT UNSIGNED NOT NULL,
   checked_in_at DATETIME NOT NULL,
+  checked_out_at DATETIME NULL,                            -- left the venue (PSOOLA gate: inside = false), cleared when back in
   checked_in_by INT UNSIGNED NULL,
   checkin_method ENUM('signed_qr','manual_lookup','psoola') NOT NULL DEFAULT 'signed_qr',   -- psoola = scanned at PSOOLA's gate
   PRIMARY KEY (id),
