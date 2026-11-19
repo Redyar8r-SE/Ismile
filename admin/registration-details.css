@@ -254,3 +254,28 @@
 .rd-att-chip.stay{background:#eef2f6;color:#3f5b6e}
 .rd-att-chip.none{background:#eef2f6;color:#7f93a3;font-weight:600}
 @media(max-width:760px){.rd-att{grid-template-columns:1fr}.rd-att-kind{grid-row:auto;justify-self:start}}
+/* Send QR code (19 Nov 2026) */
+.rd-send-qr-btn{background:#1d6b3c}
+.rd-send-qr{max-width:560px}
+.rd-sq-tickets{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}
+.rd-sq-ticket{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border:1px solid #dfe8ef;border-radius:999px;background:#f7fafc;font-size:12px}
+.rd-sq-ticket .nav-icon{width:14px;height:14px;color:#0c6f6b}
+.rd-sq-ticket em{font-style:normal;font-size:11px;font-weight:800;padding:2px 9px;border-radius:999px}
+.rd-sq-ticket em.valid{background:#ddf3e5;color:#1d6b3c}
+.rd-sq-ticket em.used{background:#fdebdc;color:#a24a12}
+.rd-sq-way{margin:0 0 14px;padding:16px;border-radius:14px;border:1.5px solid #e3ebf1}
+.rd-sq-way.email{background:#f3fbf9;border-color:#bfe6dd}
+.rd-sq-way.whatsapp{background:#f2fbf4;border-color:#bfe7c9}
+.rd-sq-head{display:flex;gap:12px;align-items:flex-start;margin-bottom:12px}
+.rd-sq-head h3{margin:0 0 2px;font-size:15px}
+.rd-sq-head p{margin:0;font-size:12px;color:#5b7486}
+.rd-sq-icon{flex:none;display:grid;place-items:center;width:38px;height:38px;border-radius:11px;background:#0c6f6b;color:#fff}
+.rd-sq-way.whatsapp .rd-sq-icon{background:#1fa855}
+.rd-sq-icon .nav-icon{width:18px;height:18px}
+.rd-sq-form{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap}
+.rd-sq-form label{flex:1;min-width:220px;display:grid;gap:5px;font-size:11px;font-weight:700;color:#5b7486}
+.rd-sq-form input{min-height:44px}
+.rd-sq-form .btn{min-height:44px;padding:0 20px;font-weight:800}
+.rd-sq-last{margin:10px 0 0;font-size:12px;color:#5b7486}
+.rd-sq-wa{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 20px;background:#1fa855;color:#fff;font-weight:800;text-decoration:none}
+.rd-sq-wa:hover{background:#178a45}

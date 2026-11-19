@@ -51,6 +51,25 @@ final class EmailTemplates
             return ['to'=>$registration['email'],'subject'=>'iSmile 2026: your Certificate of Participation ('.$registration['ref'].')','html'=>$html,'text'=>self::toText($html),
                 'attachments'=>[['name'=>'iSmile-2026-'.$rows[0]['certificate_no'].'.pdf','content'=>Certificates::pdf($rows)]]];
         }
+        if ($kind === 'ticket_qr') {
+            // "Send QR code" on the person's page (owner, 19 Nov 2026): the PSOOLA entry QR, sent by iSmile.
+            $registration = Registrations::find((int) $email['registration_id']);
+            $qrs = $registration ? TicketQrSend::qrs((int) $registration['id']) : [];
+            if ($registration === null || !$qrs || !in_array($registration['status'], ['paid', 'complimentary'], true)) return null;
+            $blocks = ['<p>Here is your iSmile 2026 entry ticket. Please show this QR code at the entrance.</p>'];
+            $attachments = [];
+            foreach ($qrs as $qr) {
+                $type = $qr['ticket_type_name'] !== '' ? $qr['ticket_type_name'] : 'Ticket';
+                $blocks[] = self::box($type . ' ticket', [['Name', $qr['holder_name'] !== '' ? $qr['holder_name'] : Registrations::fullName($registration)], ['Ticket code', $qr['code']], ['Reference', $registration['ref']]], '#e4f6f5', '#0c6f6b');
+                $blocks[] = '<p style="margin:6px 0 18px;text-align:center"><img src="' . S::e($qr['qr_image_url']) . '" width="240" height="240" alt="Your QR code" style="width:240px;height:240px;border:8px solid #ffffff;border-radius:8px"><br>'
+                    . '<a href="' . S::e($qr['qr_image_url']) . '" style="color:#0c6f6b;font-size:13px">Open your QR code</a></p>';
+                $png = TicketQrSend::picture($qr['qr_image_url']);
+                if ($png !== null) $attachments[] = ['name' => 'iSmile-2026-QR-' . preg_replace('/[^A-Za-z0-9]+/', '', $qr['code']) . '.png', 'content' => $png];
+            }
+            if ($qrs[0]['status'] === 'used') $blocks[] = '<p style="color:#5b7477;font-size:13px">This ticket was already scanned at the entrance.</p>';
+            $html = self::layout('Dear ' . S::e($registration['first_name']) . ',', $blocks, null, ['{ref}' => $registration['ref']]);
+            return ['to' => $email['to_email'], 'subject' => 'iSmile 2026: your entry QR code (' . $registration['ref'] . ')', 'html' => $html, 'text' => self::toText($html), 'attachments' => $attachments];
+        }
         if ($kind !== 'ticket') {
             throw new \RuntimeException("Unknown email kind '$kind'.");
         }

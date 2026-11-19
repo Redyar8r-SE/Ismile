@@ -6,7 +6,7 @@ namespace Ismile\Admin;
 final class CommunicationQuery
 {
     public const KINDS = [
-        'ticket' => 'Event ticket', 'certificate' => 'Participation certificate', 'pay_now' => 'Phone payment link',
+        'ticket' => 'Event ticket', 'ticket_qr' => 'Ticket QR code (sent again)', 'certificate' => 'Participation certificate', 'pay_now' => 'Phone payment link',
         'sponsor_received' => 'Sponsor request receipt', 'sponsor_notify' => 'Sponsor notification',
         'alert' => 'Team alert',
     ];

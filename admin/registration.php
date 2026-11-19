@@ -313,6 +313,10 @@ Page::action(static function () use ($registration, $user, $canChange): string {
     return match ($do) {
         'edit'            => Office::editContact($fresh, $user, $_POST),
         'resend_ticket'   => Office::resendTicket($fresh, $user),
+        // "Send QR code" (owner, 19 Nov 2026): the PSOOLA entry QR by email, from iSmile.
+        'send_qr_email'   => \Ismile\PsoolaTickets::canView($user, $fresh)
+            ? \Ismile\TicketQrSend::email($fresh, $user, Page::post('to', 190))
+            : throw new UserError('Your account cannot send this ticket.'),
         'cancel'          => Office::cancel($fresh, $user, Page::post('reason')),
         'notes'           => Office::saveNotes($fresh, $user, Page::post('notes', 3000)),
         'workshop_add'    => Office::addWorkshop($fresh, $user, $_POST),

@@ -708,6 +708,28 @@ if ($database) {
         && Db::value('SELECT code FROM psoola_ticket_qrs WHERE registration_id = ?', [$hookReg['id']]) === 'HOOK1');
     $check('the webhook log never holds a QR', !str_contains((string) json_encode(Db::all('SELECT * FROM webhook_log')), 'PSOOLA:T:Q'));
 
+    // "Send QR code" on the person's page (19 Nov 2026): by email from iSmile, or a ready WhatsApp message.
+    $sendOwner = Db::one("SELECT * FROM admin_users WHERE role = 'owner' ORDER BY id LIMIT 1");
+    $qrRows = \Ismile\TicketQrSend::qrs((int) $hookReg['id']);
+    $check('the saved PSOOLA QR is ready to send', count($qrRows) === 1 && $qrRows[0]['code'] === 'HOOK1' && $qrRows[0]['qr_image_url'] !== null);
+    $check('a wrong address is refused and nothing is queued', $throws(fn () => \Ismile\TicketQrSend::email($hookReg, $sendOwner, 'not-an-email'), UserError::class, 'valid email')
+        && !Db::value("SELECT id FROM emails WHERE kind = 'ticket_qr' AND registration_id = ?", [$hookReg['id']]));
+    \Ismile\TicketQrSend::email($hookReg, $sendOwner, ' Fixed.Address@Example.com ');
+    $qrMail = Db::one("SELECT * FROM emails WHERE kind = 'ticket_qr' AND registration_id = ? ORDER BY id DESC LIMIT 1", [$hookReg['id']]);
+    $built = \Ismile\EmailTemplates::build($qrMail);
+    $check('the QR email goes to the corrected address with the QR picture and the ticket code', $qrMail['to_email'] === 'fixed.address@example.com' && $built !== null
+        && $built['to'] === 'fixed.address@example.com' && str_contains($built['subject'], $hookReg['ref']) && str_contains($built['html'], 'HOOK1')
+        && str_contains($built['html'], (string) $qrRows[0]['qr_image_url']) && !str_contains((string) $qrMail['data'], 'PSOOLA:T:Q'));
+    $check('sending the QR is in the history without the QR itself', (bool) Db::value("SELECT id FROM audit_log WHERE action = 'ticket.qr_email' AND target_id = ?", [$hookReg['id']])
+        && !str_contains((string) json_encode(Db::all("SELECT details FROM audit_log WHERE action = 'ticket.qr_email'")), 'PSOOLA:T:Q'));
+    $wa = (string) \Ismile\TicketQrSend::whatsappUrl($hookReg);
+    $check('WhatsApp opens the person\'s number with the message and the QR link', str_starts_with($wa, 'https://wa.me/' . preg_replace('/\D+/', '', $hookReg['phone']) . '?text=')
+        && str_contains(rawurldecode($wa), (string) $qrRows[0]['qr_image_url']) && str_contains(rawurldecode($wa), $hookReg['ref']));
+    $check('only PSOOLA\'s own https address is fetched for the attachment', \Ismile\TicketQrSend::picture('http://127.0.0.1/x.png') === null && \Ismile\TicketQrSend::picture('https://evil.example/x.png') === null);
+    Db::run('DELETE FROM psoola_ticket_qrs WHERE registration_id = ?', [$hookReg['id']]);
+    $check('without a saved QR nothing is sent', $throws(fn () => \Ismile\TicketQrSend::email($hookReg, $sendOwner, 'a@example.com'), UserError::class, 'No PSOOLA QR') && \Ismile\TicketQrSend::whatsappUrl($hookReg) === null
+        && \Ismile\EmailTemplates::build($qrMail) === null);
+
     // The answer to POST /orders is lost: the sale is found by its reference, never made twice.
     $lost = $cashForm();
     $respondTo('POST /api/partner/v1/orders', 500, ['error' => ['code' => 'INTERNAL_ERROR', 'message' => 'Timeout']]);
