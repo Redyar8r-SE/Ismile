@@ -252,7 +252,7 @@ $otherVolunteer = $volunteer;                                             // any
 (new ReflectionProperty(\Ismile\DeskGuests::class, 'testHashes'))->setValue(null, [hash('sha256', "giver-$tag@example.invalid")]);
 $deskForm = static fn (array $more = []): array => $more + ['first_name' => 'Desk', 'father_name' => 'Free', 'grandfather_name' => 'Guest',
     'phone' => '0750' . random_int(1000000, 9999999), 'email' => 'deskguest-' . bin2hex(random_bytes(4)) . '@example.invalid', 'city' => 'Erbil', 'specialty' => 'gp', 'ticket' => 'guest', 'whatsapp_consent' => '1'];
-$check('four volunteers give Guest tickets, kept only as hashes', count(\Ismile\DeskGuests::GIVER_HASHES) === 4
+$check('five volunteers give Guest tickets, kept only as hashes', count(\Ismile\DeskGuests::GIVER_HASHES) === 5
     && !array_filter(\Ismile\DeskGuests::GIVER_HASHES, static fn (string $h): bool => !preg_match('/^[a-f0-9]{64}$/', $h)));
 $check('Guest: only the listed volunteer can give it; other volunteers, Viewers and Owners cannot', \Ismile\DeskGuests::canGive($giver)
     && !\Ismile\DeskGuests::canGive($otherVolunteer) && !\Ismile\DeskGuests::canGive($viewer) && !\Ismile\DeskGuests::canGive($owner) && !\Ismile\DeskGuests::canGive($staff)

@@ -192,7 +192,7 @@ Page::top('Workshop & Register', 'desk');
     $value = static fn (string $key): string => Page::e(is_string($_POST[$key] ?? null) ? $_POST[$key] : '');
     $selected = static fn (string $key, string $option): string => ($_POST[$key] ?? '') === $option ? ' selected' : '';
     $vip = ($_POST['ticket'] ?? '') === 'vip';
-    // Guest: only Nma, Lanu, Rawaz and Danial see it (DeskGuests); for everyone else it is not in the page at all.
+    // Guest: only Nma, Lanu, Rawaz, Danial and Helin see it (DeskGuests); for everyone else it is not in the page at all.
     $canGuest = \Ismile\DeskGuests::canGive($user);
     $guestTicket = $canGuest && ($_POST['ticket'] ?? '') === 'guest';
     $student = !$vip && !$guestTicket && (($_POST['specialty'] ?? '') === 'student' || ($_POST['ticket'] ?? '') === 'student');

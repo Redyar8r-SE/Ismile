@@ -1,7 +1,7 @@
 <?php
 // "Guest" on Workshop & Register (owner, 19 Nov 2026): a free summit ticket
-// (0 IQD, no lunch). Only four volunteer accounts see and use it: Nma, Lanu,
-// Rawaz and Danial. Their sign-in emails are kept here as SHA-256 hashes, not
+// (0 IQD, no lunch). Only five volunteer accounts see and use it: Nma, Lanu,
+// Rawaz, Danial and Helin. Their sign-in emails are kept here as SHA-256 hashes, not
 // as text, because this repository is public. Every other account (other
 // volunteers too) never sees the Guest card and the server refuses it.
 // One guest ticket per email; PSOOLA sends the QR by email and WhatsApp.
@@ -18,6 +18,7 @@ final class DeskGuests
         '22482e42f7d923dd6dbfaca9c699a331fc4fd2eb5a9976397592d0a764a412c3',   // Lanu
         '6a7012d63067f07ccb82b4a2f5512456a5973b0879dc7424c61ca3a3b1778c9b',   // Rawaz
         'a147025e9c50291c9419371e77548ab7273abe67d98f6086f5bd5a4e4a1ede83',   // Danial
+        'f50d4686dd48d455f18d610bba64a86260527c3444ffff1fb86dac552ec8beba',   // Helin
     ];
 
     /** Stand-in hashes for the local tests only (set by reflection). */
