@@ -32,9 +32,34 @@ final class PsoolaOrderSummary
     // instant. "Refresh from Psoola" ($fresh) always reads PSOOLA again.
     // Ticket links and QR codes are removed before the copy is saved.
     public const KEEP_SECONDS = 60;
-    // An older copy (up to 15 minutes) is shown at once and PSOOLA is read again
-    // just after the page is sent, so even the first visit does not wait.
-    public const STALE_SECONDS = 900;
+    // An older copy (up to a day) is shown at once and PSOOLA is read again
+    // just after the page is sent, so no visit waits for PSOOLA. The five-minute
+    // job keeps the copy fresh by itself (warm()), so it is rarely older than that.
+    public const STALE_SECONDS = 86400;
+
+    /** Every PSOOLA order for the summit, page by page. */
+    public static function fetchAll(): array
+    {
+        $gateway = new \Ismile\Payments\PsoolaGateway();
+        $all = [];
+        $cursor = null;
+        $pages = 0;
+        do {
+            $page = $gateway->listOrders($cursor);
+            array_push($all, ...$page['orders']);
+            $cursor = $page['next'];
+        } while ($cursor !== null && ++$pages < 30);
+        return $all;
+    }
+
+    /** The five-minute job: reads PSOOLA's list when the copy is older than a minute. */
+    public static function warm(?callable $fetch = null): bool
+    {
+        $saved = self::saved();
+        if ($saved && $saved['age'] < self::KEEP_SECONDS) return false;
+        self::read($fetch ?? [self::class, 'fetchAll']);
+        return true;
+    }
 
     private static function file(): string
     {

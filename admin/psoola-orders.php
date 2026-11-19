@@ -40,18 +40,7 @@ if (!PsoolaCheckIns::active()) {
 } else {
     try {
         // PSOOLA's list is kept for one minute (fast filters); "Refresh from Psoola" reads it again.
-        $fetchAll = static function (): array {
-            $gateway = new PsoolaGateway();
-            $all = [];
-            $cursor = null;
-            $pages = 0;
-            do {
-                $page = $gateway->listOrders($cursor);
-                array_push($all, ...$page['orders']);
-                $cursor = $page['next'];
-            } while ($cursor !== null && ++$pages < 30);
-            return $all;
-        };
+        $fetchAll = [PsoolaOrderSummary::class, 'fetchAll'];
         $read = PsoolaOrderSummary::orders($fetchAll, Page::query('fresh') === '1');
         $orders = $read['orders'];
         $readAt = $read['at'];

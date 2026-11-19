@@ -125,6 +125,9 @@ $check('the kept copy and the page never hold ticket links or QR codes',!str_con
 $third=PsoolaOrderSummary::orders($fetch,true);
 touch(App::storage('tmp/psoola-orders-list.json'),time()-PsoolaOrderSummary::KEEP_SECONDS-1);PsoolaOrderSummary::orders($fetch);
 $check('Refresh from Psoola reads again, and so does a copy older than a minute',$reads===3);
+$check('the 5-minute job keeps the copy fresh: it reads only when the copy is older than a minute',PsoolaOrderSummary::warm($fetch)===false&&$reads===3
+    &&touch(App::storage('tmp/psoola-orders-list.json'),time()-PsoolaOrderSummary::KEEP_SECONDS-1)&&PsoolaOrderSummary::warm($fetch)===true&&$reads===4);
+$check('an older copy (up to a day) is shown at once on the live server, not waited for',PsoolaOrderSummary::STALE_SECONDS>=86400);
 @unlink(App::storage('tmp/psoola-orders-list.json'));
 $missedCash=['email'=>'missed']+$none;
 $check('Not received filter shows only bounced and failed; other groups count within it',count(array_filter($facts,fn($f)=>PsoolaOrderSummary::passes($f,$missedCash)))===2

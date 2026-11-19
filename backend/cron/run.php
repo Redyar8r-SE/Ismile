@@ -106,6 +106,16 @@ try {
             }
         }
 
+        // Psoola orders opens at once: its saved copy of PSOOLA's order list is
+        // read again here every 5 minutes (owner, 19 Nov 2026: "so slow").
+        if (PsoolaCheckIns::active()) {
+            try {
+                $report['psoola_orders_copy'] = \Ismile\Admin\PsoolaOrderSummary::warm() ? 'read' : 'fresh';
+            } catch (\Throwable $error) {
+                App::log('warning', 'Psoola orders copy could not be refreshed', ['error' => mb_substr($error->getMessage(), 0, 200)]);
+            }
+        }
+
         // Once an hour every guest's saved PSOOLA code is checked again (new
         // guests are done by the minute job). One failure never stops the rest.
         if (PsoolaCheckIns::active() && (int) date('i') < 5) {
