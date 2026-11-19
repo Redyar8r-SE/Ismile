@@ -111,8 +111,10 @@ $dir=in_array($ui,['ar','ckb'],true)?'rtl':'ltr';
   </div>
   <label>City<?= \Ismile\Cities::select($values['city'] ?? '') ?></label>
   <label class="guest-reason-field">Reason for complimentary ticket<textarea name="complimentary_reason" maxlength="500" required rows="3" placeholder="For example, invited speaker or sponsor guest"><?= $value('complimentary_reason') ?></textarea><small>A brief reason helps your team keep a clear record.</small></label>
-  <div class="guest-delivery-notice"><?= Page::navIcon('arrow') ?><div><strong>Delivery: Email + WhatsApp</strong><p>By issuing, you confirm the guest agreed to WhatsApp ticket messages.</p></div></div>
-  <?= \Ismile\Registrations::whatsappConsentField('The guest', ($values['whatsapp_consent'] ?? '') === '1') ?>
+  <div class="guest-consent-card">
+   <div class="guest-consent-head"><span class="guest-consent-icons" aria-hidden="true"><span><?= Page::navIcon('mail') ?></span><span><?= Page::navIcon('phone') ?></span></span><div><strong>The ticket goes by email and WhatsApp</strong><p>PSOOLA sends the QR code to the email address and WhatsApp number above.</p></div></div>
+   <?= \Ismile\Registrations::whatsappConsentField('The guest', ($values['whatsapp_consent'] ?? '') === '1') ?>
+  </div>
   <footer class="guest-details-footer"><span>Guest details stay private.</span><a href="registrations.php">Cancel</a></footer>
  </section>
  <aside class="guest-ticket-sidebar" aria-label="Guest ticket preview">

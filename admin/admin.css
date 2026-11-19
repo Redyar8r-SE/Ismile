@@ -1828,3 +1828,17 @@ body.po-busy::before{content:"";position:fixed;top:0;left:0;z-index:9999;height:
 .po-groups{grid-template-columns:repeat(3,minmax(0,1fr))}
 @media (max-width:1200px){.po-groups{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:900px){.po-groups{grid-template-columns:1fr}}
+/* Guest ticket: one clear email + WhatsApp agreement card (19 Nov 2026) */
+.guest-consent-card{display:grid;gap:12px;padding:16px;border:1.5px solid #e2ddfa;border-radius:14px;background:linear-gradient(135deg,#faf9ff,#f3f0ff)}
+.guest-consent-head{display:flex;align-items:center;gap:14px}
+.guest-consent-head strong{display:block;font-size:14px;font-weight:700;color:var(--gt-ink)}
+.guest-consent-head p{margin:3px 0 0;font-size:12px;line-height:1.5;color:var(--gt-muted)}
+.guest-consent-icons{display:flex;flex:none}
+.guest-consent-icons span{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:var(--gt-purple);color:#fff;border:3px solid #f6f4ff}
+.guest-consent-icons span+span{margin-left:-10px;background:#1fa855}
+.guest-consent-icons .nav-icon{width:17px;height:17px}
+.guest-details-panel label.whatsapp-consent{display:flex;align-items:center;gap:12px;padding:13px 16px;border:2px solid #d9d3f6;border-radius:12px;background:#fff;font-size:13px;font-weight:600;line-height:1.45;cursor:pointer;transition:border-color .15s,background .15s}
+.guest-details-panel label.whatsapp-consent:hover{border-color:var(--gt-purple)}
+.guest-details-panel label.whatsapp-consent:has(input:checked){border-color:var(--gt-purple);background:#f5f2ff}
+.guest-details-panel label.whatsapp-consent input{flex:none;width:22px;height:22px;min-width:22px;padding:0;margin:0;border-radius:6px;accent-color:var(--gt-purple);box-shadow:none;outline-offset:2px}
+.guest-details-panel label.whatsapp-consent span{flex:1;min-width:0}
