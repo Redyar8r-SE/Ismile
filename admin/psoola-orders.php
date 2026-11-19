@@ -18,8 +18,17 @@ use Ismile\Registrations;
 
 $user = Page::guard('payments');
 $e = [Page::class, 'e'];
-$channel = in_array($_GET['channel'] ?? '', ['checkout', 'direct', 'complimentary'], true) ? (string) $_GET['channel'] : '';
+// The filters (owner, 19 Nov 2026): Ticket email (incl. "Not received"), Sale type, Ticket and At the door.
+$chosen = [];
+foreach (PsoolaOrderSummary::FILTERS as $group => $choices) {
+    $chosen[$group] = is_string($_GET[$group] ?? null) && isset($choices[$_GET[$group]]) ? $_GET[$group] : '';
+}
 $q = Page::query('q', 120);
+// A link to this page with one filter changed (the others and the search are kept).
+$link = static function (array $change) use ($chosen, $q): string {
+    $query = array_filter(['q' => $q] + array_replace($chosen, $change), static fn ($v): bool => $v !== '' && $v !== null);
+    return 'psoola-orders.php' . ($query ? '?' . http_build_query($query) : '');
+};
 
 $orders = [];
 $problem = null;
@@ -74,9 +83,8 @@ foreach(Db::all('SELECT o.id,o.partner_reference,o.provider_order_id,o.complimen
 $known=$ours;foreach($guestOrders as $guestOrder)$known[$guestOrder['partner_reference']]=true;
 $sum=PsoolaOrderSummary::totals($orders,$known);
 
-// The filters.
-$shown = array_values(array_filter($orders, static function (array $order) use ($channel, $q): bool {
-    if ($channel !== '' && PsoolaOrderSummary::kind($order) !== ['direct'=>'cash','checkout'=>'online','complimentary'=>'complimentary'][$channel]) return false;
+// The filters: first the search, then each group; the counts keep the other choices.
+$searched = array_values(array_filter($orders, static function (array $order) use ($q): bool {
     if ($q === '') return true;
     $haystack = mb_strtolower(implode(' ', [
         $order['id'] ?? '', $order['partnerReference'] ?? '',
@@ -84,6 +92,12 @@ $shown = array_values(array_filter($orders, static function (array $order) use (
     ]));
     return str_contains($haystack, mb_strtolower($q)) || str_contains(preg_replace('/\D/', '', $haystack), preg_replace('/\D/', '', $q) ?: "\0");
 }));
+$facts = array_map(static fn (array $order): array => PsoolaOrderSummary::facts($order, $ourType), $searched);
+$counts = PsoolaOrderSummary::counts($facts, $chosen);
+$shown = [];
+foreach ($searched as $i => $order) if (PsoolaOrderSummary::passes($facts[$i], $chosen)) $shown[] = $order;
+$missedAll = count(array_filter($orders, static fn (array $order): bool => PsoolaOrderSummary::emailGroup($order) === 'missed'));
+$filtered = $q !== '' || array_filter($chosen) !== [];
 
 Page::top('Psoola orders', 'psoola-orders', '<a class="btn ghost" href="psoola-orders.php">' . Page::navIcon('clock') . '<span>Refresh from Psoola</span></a>');
 if ($problem !== null) {
@@ -99,13 +113,39 @@ echo Page::stats([
     ['Not in our database', number_format($sum['missing']), $sum['missing'] ? 'Sales with no matching registration: check these' : 'Every sale has its registration', 'users', $sum['missing'] ? 'gold' : 'violet'],
 ]);
 ?>
-<form method="get" class="card registration-filter-card">
-  <div class="registration-filter-main">
-    <label class="filter-field filter-search"><span>Name, email, phone or reference</span><input type="search" name="q" value="<?= $e($q) ?>" placeholder="Find a sale…"></label>
-    <label class="filter-field"><span>Sale type</span><select name="channel"><option value="">All orders</option><option value="checkout"<?= $channel === 'checkout' ? ' selected' : '' ?>>Paid on Psoola</option><option value="direct"<?= $channel === 'direct' ? ' selected' : '' ?>>Cash sales</option><option value="complimentary"<?= $channel === 'complimentary' ? ' selected' : '' ?>>Complimentary</option></select></label>
+<?php if ($missedAll > 0): $onMissed = $chosen['email'] === 'missed'; ?>
+<a class="po-alert<?= $onMissed ? ' is-on' : '' ?>" href="<?= $e($link(['email' => $onMissed ? '' : 'missed'])) ?>">
+  <span class="po-alert-icon"><?= Page::navIcon('mail') ?></span>
+  <span class="po-alert-text"><b><?= number_format($missedAll) ?> <?= $missedAll === 1 ? 'person did' : 'people did' ?> not receive the ticket email</b><small>Psoola could not deliver it (bounced or failed). Check the email address, or send them the QR by WhatsApp.</small></span>
+  <em><?= $onMissed ? 'Show everyone' : 'Show them' ?></em>
+</a>
+<?php endif; ?>
+<section class="card po-filters" aria-label="Filter the sales">
+  <form method="get" class="po-search" action="psoola-orders.php">
+    <?php foreach ($chosen as $group => $value): if ($value === '') continue; ?><input type="hidden" name="<?= $e($group) ?>" value="<?= $e($value) ?>"><?php endforeach; ?>
+    <label class="po-search-box"><span class="po-search-ic" aria-hidden="true"><?= Page::navIcon('search') ?></span><input type="search" name="q" value="<?= $e($q) ?>" placeholder="Search a name, email, phone or reference" aria-label="Search the sales"></label>
+    <button class="btn">Search</button>
+    <?php if ($filtered): ?><a class="btn ghost" href="psoola-orders.php">Clear all</a><?php endif; ?>
+  </form>
+  <div class="po-groups">
+  <?php foreach ([
+      'email'   => ['Ticket email', 'mail', ['delivered' => 'green', 'missed' => 'red', 'waiting' => 'gold']],
+      'channel' => ['Sale type', 'cash', ['checkout' => 'teal', 'direct' => 'green', 'complimentary' => 'violet']],
+      'ticket'  => ['Ticket', 'ticket', ['professional' => 'teal', 'student' => 'blue', 'vip' => 'gold']],
+      'door'    => ['At the door', 'checkin', ['used' => 'green', 'unused' => 'blue']],
+  ] as $group => [$label, $icon, $tones]): ?>
+    <div class="po-group">
+      <span class="po-group-label"><?= Page::navIcon($icon) ?><?= $e($label) ?></span>
+      <div class="po-chips">
+        <a class="po-chip tone-all<?= $chosen[$group] === '' ? ' is-on' : '' ?>" href="<?= $e($link([$group => ''])) ?>"<?= $chosen[$group] === '' ? ' aria-current="true"' : '' ?>><span>All</span><b><?= number_format($counts[$group]['']) ?></b></a>
+        <?php foreach (PsoolaOrderSummary::FILTERS[$group] as $value => $name): $on = $chosen[$group] === $value; ?>
+        <a class="po-chip tone-<?= $tones[$value] ?><?= $on ? ' is-on' : '' ?><?= $counts[$group][$value] === 0 && !$on ? ' is-empty' : '' ?>" href="<?= $e($link([$group => $on ? '' : $value])) ?>"<?= $on ? ' aria-current="true"' : '' ?>><?php if ($group === 'email' && $value === 'missed'): ?><i aria-hidden="true">!</i><?php endif; ?><span><?= $e($name) ?></span><b><?= number_format($counts[$group][$value]) ?></b></a>
+        <?php endforeach; ?>
+      </div>
+    </div>
+  <?php endforeach; ?>
   </div>
-  <div class="registration-filter-actions"><span></span><div><a class="btn ghost" href="psoola-orders.php">Clear filters</a><button class="btn">Apply filters</button></div></div>
-</form>
+</section>
 <section class="card registration-directory">
   <div class="panel-top"><?= Page::panelHeading('Sales recorded by Psoola', number_format(count($shown)) . ' matching sales · newest first. Read live from Psoola; refunds are made by Psoola.', 'psoola-orders') ?></div>
   <div class="table-wrap"><table class="psoola-orders"><thead><tr><th>Paid</th><th>Buyer</th><th>Bought</th><th>Total</th><th>Sale</th><th>Complimentary reason / staff</th><th>Ticket email</th><th>At the door</th><th>Our registration</th></tr></thead><tbody>

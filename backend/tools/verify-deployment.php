@@ -226,6 +226,8 @@ $html = $render('checkin', 'tab=report');
 $check('live graph and Latest arrivals available', str_contains($html, 'data-live-report') && str_contains($html, 'report-chart-card') && str_contains($html, 'Latest arrivals'));
 $html = $render('psoola-orders');
 $check('Psoola orders page renders (live list, or a clear note when unavailable)', str_contains($html, 'Psoola orders') && (str_contains($html, 'Sales recorded by Psoola') || str_contains($html, 'Psoola orders are not available')));
+$check('Psoola orders has the filter panel with the "Not received" ticket email filter', str_contains($html, 'Psoola orders are not available')
+    || (str_contains($html, 'class="card po-filters"') && str_contains($html, 'email=missed') && str_contains($html, 'Not received') && str_contains($html, 'At the door')));
 $html = $render('workshops');
 $check('Approved workshop directory and attendee layout is deployed', str_contains($html,'data-workshop-workspace') && str_contains($html,'ws-directory') && str_contains($html,'workshops.css') && str_contains($html,'workshops.js'));
 $check('Workshop guest tickets are counted separately from collections', str_contains($html,'Confirmed bookings') && str_contains($html,'Guest tickets excluded') && str_contains($html,'Complimentary, 0 IQD'));

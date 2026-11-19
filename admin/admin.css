@@ -1740,3 +1740,42 @@ body:has([data-guest-tickets]) .page-actions .btn{background:transparent;border:
   .dp-when,.dp-state,.dp-action{grid-column:2}
   .dp-refresh{margin-left:0}
 }
+/* Psoola orders: filter panel and the "did not receive the ticket email" alert (19 Nov 2026) */
+.po-alert{display:flex;align-items:center;gap:16px;margin:0 0 18px;padding:16px 20px;border:1px solid #f2c0b4;border-radius:16px;background:linear-gradient(135deg,#fff5f2,#fde3dc);color:var(--red-d);text-decoration:none;box-shadow:0 10px 26px -18px var(--red);transition:box-shadow .15s,border-color .15s}
+.po-alert:hover{border-color:var(--red);box-shadow:0 14px 30px -16px var(--red)}
+.po-alert.is-on{border:2px solid var(--red);padding:15px 19px}
+.po-alert-icon{flex:none;display:grid;place-items:center;width:48px;height:48px;border-radius:14px;background:var(--red);color:#fff}
+.po-alert-icon .nav-icon{width:24px;height:24px}
+.po-alert-text{display:grid;gap:3px;flex:1;min-width:0}
+.po-alert-text b{font-size:16px;font-weight:800}
+.po-alert-text small{font-size:12px;color:#a2493a}
+.po-alert em{flex:none;font-style:normal;font-weight:800;font-size:13px;padding:10px 18px;border-radius:999px;background:var(--red);color:#fff}
+.po-filters{display:grid;gap:18px;padding:20px 22px}
+.po-search{display:flex;align-items:center;gap:10px}
+.po-search-box{position:relative;flex:1;min-width:0}
+.po-search-box input{width:100%;min-height:48px;padding:0 14px 0 44px;border-radius:12px;font-size:14px}
+.po-search-ic{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#5f8296;display:flex}
+.po-search-ic .nav-icon{width:18px;height:18px}
+.po-search .btn{min-height:48px;padding:0 22px}
+.po-groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.po-group{display:grid;align-content:start;gap:10px;padding:14px 16px;border:1px solid #e1ebf2;border-radius:14px;background:#f7fbfd}
+.po-group-label{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#46697e}
+.po-group-label .nav-icon{width:16px;height:16px;color:var(--teal-d)}
+.po-chips{display:flex;flex-wrap:wrap;gap:8px}
+.po-chip{--c:var(--teal);--cd:var(--teal-d);--cl:var(--teal-l);display:inline-flex;align-items:center;gap:8px;padding:6px 7px 6px 14px;border:1.5px solid var(--cl);border-radius:999px;background:#fff;color:var(--cd);font-size:13px;font-weight:700;text-decoration:none;transition:border-color .15s,box-shadow .15s,background .15s}
+.po-chip b{min-width:30px;padding:3px 9px;border-radius:999px;background:var(--cl);color:var(--cd);font-size:12px;font-weight:800;text-align:center;font-variant-numeric:tabular-nums}
+.po-chip:hover{border-color:var(--c);box-shadow:0 6px 14px -8px var(--c)}
+.po-chip.is-on{background:var(--c);border-color:var(--c);color:#fff;box-shadow:0 8px 18px -10px var(--c)}
+.po-chip.is-on b{background:rgba(255,255,255,.26);color:#fff}
+.po-chip.is-empty{opacity:.55}
+.po-chip i{display:grid;place-items:center;width:18px;height:18px;margin-left:-4px;border-radius:50%;background:var(--red);color:#fff;font-style:normal;font-size:11px;font-weight:900}
+.po-chip.is-on i{background:#fff;color:var(--red)}
+.po-chip.tone-all{--c:#2f5a70;--cd:#2f5a70;--cl:#e4edf2}
+.po-chip.tone-blue{--c:var(--blue);--cd:var(--blue-d);--cl:var(--blue-l)}
+.po-chip.tone-green{--c:var(--green);--cd:var(--green-d);--cl:var(--green-l)}
+.po-chip.tone-gold{--c:var(--gold);--cd:var(--gold-d);--cl:var(--gold-l)}
+.po-chip.tone-violet{--c:var(--violet);--cd:var(--violet-d);--cl:var(--violet-l)}
+.po-chip.tone-red{--c:var(--red);--cd:var(--red-d);--cl:var(--red-l)}
+@media (max-width:900px){.po-groups{grid-template-columns:1fr}}
+@media (max-width:600px){.po-alert{flex-wrap:wrap;padding:14px}.po-alert em{width:100%;text-align:center}.po-search{flex-wrap:wrap}.po-search .btn{flex:1}.po-filters{padding:16px 14px}}
+@media print{.po-alert,.po-filters{display:none}}

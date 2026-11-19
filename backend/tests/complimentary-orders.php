@@ -99,6 +99,28 @@ $fixture('/delivery?id='.rawurlencode($order['provider_order_id']));GuestOrders:
 $check('verified delivery is separate from issuance',GuestOrders::get($owner,(int)$order['id'])['email_status']==='delivered');
 $summary=PsoolaOrderSummary::totals([$session,['channel'=>'direct','order'=>['totalAmount'=>40000,'ticketCount'=>1]],['channel'=>'checkout','order'=>['totalAmount'=>30000,'ticketCount'=>1]]]);
 $check('complimentary paid/direct adds no sales or cash',$summary['cash']===40000&&$summary['card']===30000&&$summary['complimentary_tickets']===2&&$summary['complimentary_orders']===1&&$summary['discount']===95000);
+// Psoola orders filters (19 Nov 2026): "Not received" = bounced, complained or failed ticket email.
+$check('ticket email groups: delivered, not received, still sending',PsoolaOrderSummary::emailGroup(['emailStatus'=>'delivered'])==='delivered'&&PsoolaOrderSummary::emailGroup(['emailStatus'=>'Bounced'])==='missed'
+    &&PsoolaOrderSummary::emailGroup(['emailStatus'=>'failed'])==='missed'&&PsoolaOrderSummary::emailGroup(['emailStatus'=>'complained'])==='missed'
+    &&PsoolaOrderSummary::emailGroup(['emailStatus'=>'queued'])==='waiting'&&PsoolaOrderSummary::emailGroup(['emailStatus'=>'delayed'])==='waiting'&&PsoolaOrderSummary::emailGroup([])==='waiting');
+$types=['professional-test'=>'professional','student-test'=>'student','vip-test'=>'vip'];
+$sample=[
+    ['channel'=>'checkout','emailStatus'=>'delivered','order'=>['items'=>[['ticketTypeId'=>'professional-test']]],'tickets'=>[['checkedIn'=>true]]],
+    ['channel'=>'checkout','emailStatus'=>'bounced','order'=>['items'=>[['ticketTypeId'=>'student-test']]],'tickets'=>[['checkedIn'=>false]]],
+    ['channel'=>'direct','emailStatus'=>'failed','order'=>['items'=>[['ticketTypeId'=>'professional-test']]],'tickets'=>[[]]],
+    ['channel'=>'direct','isComplimentary'=>true,'emailStatus'=>'queued','order'=>['totalAmount'=>0,'currency'=>'IQD','items'=>[['ticketTypeId'=>'vip-test']]],'tickets'=>[]],
+];
+$facts=array_map(fn($o)=>PsoolaOrderSummary::facts($o,$types),$sample);
+$check('each sale gets its email, sale type, ticket and door facts',$facts[0]===['email'=>'delivered','channel'=>'checkout','ticket'=>['professional'],'door'=>'used']
+    &&$facts[2]['channel']==='direct'&&$facts[3]['channel']==='complimentary'&&$facts[3]['ticket']===['vip']&&$facts[1]['door']==='unused');
+$none=['email'=>'','channel'=>'','ticket'=>'','door'=>''];
+$counts=PsoolaOrderSummary::counts($facts,$none);
+$check('counts: 2 people did not receive the email, 1 delivered, 1 still sending',$counts['email']===[''=>4,'delivered'=>1,'missed'=>2,'waiting'=>1]&&$counts['channel']['direct']===1&&$counts['ticket']['professional']===2);
+$missedCash=['email'=>'missed']+$none;
+$check('Not received filter shows only bounced and failed; other groups count within it',count(array_filter($facts,fn($f)=>PsoolaOrderSummary::passes($f,$missedCash)))===2
+    &&PsoolaOrderSummary::counts($facts,$missedCash)['channel']===[''=>2,'checkout'=>1,'direct'=>1,'complimentary'=>0]
+    &&PsoolaOrderSummary::counts($facts,$missedCash)['email']['delivered']===1
+    &&count(array_filter($facts,fn($f)=>PsoolaOrderSummary::passes($f,['email'=>'missed','channel'=>'direct','ticket'=>'professional','door'=>'unused'])))===1);
 $legacy=$form('legacy');$legacyRef=\Ismile\Checkouts::newReference();$legacyBody=['eventId'=>'event-test','showId'=>'show-test','items'=>[['ticketTypeId'=>'professional-test','quantity'=>1]],'buyer'=>['email'=>$legacy['email'],'phone'=>$legacy['phone']],'partnerReference'=>$legacyRef,'locale'=>'en'];
 Db::insert('sponsored_ticket_orders',['attempt_key'=>$legacy['attempt'],'partner_reference'=>$legacyRef,'created_by'=>$owner['id'],'guest_key'=>hash('sha256',$legacy['email']),'active_guest_key'=>hash('sha256',$legacy['email']),'fingerprint'=>str_repeat('a',64),'guest_json'=>json_encode($legacy),'request_json'=>json_encode($legacyBody),'created_at'=>App::now(),'updated_at'=>App::now()]);
 $before=$fixture();$check('old cash requests cannot be retried as complimentary',$reject(fn()=>GuestOrders::issue($owner,$legacy),'old cash-order')&&$reject(fn()=>GuestOrders::retry($owner,$legacy['attempt']))&&$fixture()['posts']===$before['posts']);
