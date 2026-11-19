@@ -135,6 +135,12 @@ document.addEventListener("DOMContentLoaded", () => {
   document.addEventListener("click", event => {
     profile.querySelectorAll(".rd-menu[open]").forEach(menu => { if (!menu.contains(event.target)) menu.open = false; });
   });
+  // "Open WhatsApp" (Send QR code): note on the person's record that the team opened
+  // WhatsApp; nothing else is sent. WhatsApp itself opens in a new tab as usual.
+  profile.querySelectorAll(".rd-sq-wa").forEach(link => link.addEventListener("click", () => {
+    const form = profile.querySelector("form[data-rd-wa-log]");
+    if (form && navigator.sendBeacon) navigator.sendBeacon(location.href, new FormData(form));
+  }));
   document.addEventListener("keydown", event => {
     if (event.key === "Escape") profile.querySelectorAll(".rd-menu[open]").forEach(menu => { menu.open = false; });
   });

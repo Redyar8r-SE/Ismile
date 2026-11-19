@@ -98,6 +98,7 @@ $counts = PsoolaOrderSummary::counts($facts, $chosen);
 $shown = [];
 foreach ($searched as $i => $order) if (PsoolaOrderSummary::passes($facts[$i], $chosen)) $shown[] = $order;
 $missedAll = count(array_filter($orders, static fn (array $order): bool => PsoolaOrderSummary::emailGroup($order) === 'missed'));
+$noQrAll = count(array_filter($orders, static fn (array $order): bool => PsoolaOrderSummary::reachGroup($order) === 'no'));
 $filtered = $q !== '' || array_filter($chosen) !== [];
 
 $withMore = static fn (string $url, array $more): string => $url . (str_contains($url, '?') ? '&' : '?') . http_build_query($more);
@@ -124,6 +125,13 @@ echo Page::stats([
   <em><?= $onMissed ? 'Show everyone' : 'Show them' ?></em>
 </a>
 <?php endif; ?>
+<?php if ($noQrAll > 0): $onNoQr = $chosen['reach'] === 'no'; ?>
+<a class="po-alert is-strong<?= $onNoQr ? ' is-on' : '' ?>" href="<?= $e($link(['reach' => $onNoQr ? '' : 'no'])) ?>">
+  <span class="po-alert-icon"><?= Page::navIcon('ticket-x') ?></span>
+  <span class="po-alert-text"><b><?= number_format($noQrAll) ?> <?= $noQrAll === 1 ? 'person got' : 'people got' ?> no QR code at all</b><small>The email failed and no WhatsApp reached them. Open each person and press Send QR code.</small></span>
+  <em><?= $onNoQr ? 'Show everyone' : 'Show them' ?></em>
+</a>
+<?php endif; ?>
 <section class="card po-filters" aria-label="Filter the sales">
   <form method="get" class="po-search" action="psoola-orders.php">
     <?php foreach ($chosen as $group => $value): if ($value === '') continue; ?><input type="hidden" name="<?= $e($group) ?>" value="<?= $e($value) ?>"><?php endforeach; ?>
@@ -133,7 +141,9 @@ echo Page::stats([
   </form>
   <div class="po-groups">
   <?php foreach ([
+      'reach'   => ['QR received', 'check', ['yes' => 'green', 'no' => 'red', 'waiting' => 'gold']],
       'email'   => ['Ticket email', 'mail', ['delivered' => 'green', 'missed' => 'red', 'waiting' => 'gold']],
+      'whatsapp' => ['Ticket WhatsApp', 'phone', ['delivered' => 'green', 'missed' => 'red', 'none' => 'blue', 'waiting' => 'gold']],
       'channel' => ['Sale type', 'cash', ['checkout' => 'teal', 'direct' => 'green', 'complimentary' => 'violet']],
       'ticket'  => ['Ticket', 'ticket', ['professional' => 'teal', 'student' => 'blue', 'vip' => 'gold']],
       'door'    => ['At the door', 'checkin', ['used' => 'green', 'unused' => 'blue']],
@@ -152,7 +162,7 @@ echo Page::stats([
 </section>
 <section class="card registration-directory">
   <div class="panel-top"><?= Page::panelHeading('Sales recorded by Psoola', number_format(count($shown)) . ' matching sales, newest first. Read from Psoola ' . $ageText . '; refunds are made by Psoola.', 'psoola-orders') ?></div>
-  <div class="table-wrap"><table class="psoola-orders"><thead><tr><th>Paid</th><th>Buyer</th><th>Bought</th><th>Total</th><th>Sale</th><th>Complimentary reason / staff</th><th>Ticket email</th><th>At the door</th><th>Our registration</th></tr></thead><tbody>
+  <div class="table-wrap"><table class="psoola-orders"><thead><tr><th>Paid</th><th>Buyer</th><th>Bought</th><th>Total</th><th>Sale</th><th>Complimentary reason / staff</th><th>Ticket email</th><th>Ticket WhatsApp</th><th>At the door</th><th>Our registration</th></tr></thead><tbody>
   <?php foreach (array_slice($shown, 0, $rows) as $order):
       $paid = $millis($order['paidAt'] ?? null);
       $mail = (string) ($order['emailStatus'] ?? '');
@@ -168,11 +178,12 @@ echo Page::stats([
       <td data-label="Sale"><?= match($kind){'complimentary'=>'<span class="pill violet">Complimentary</span>','review'=>'<span class="pill gold">Needs review</span>','cash'=>'<span class="psoola-channel cash">Cash</span>'.(isset($associationTags[$order['partnerReference'] ?? '']) ? '<br><span class="added-by-tag association">'.$e($associationTags[$order['partnerReference']]).'</span>' : ''),default=>'<span class="psoola-channel">Paid on Psoola</span>'} ?></td>
       <td data-label="Complimentary reason / staff"><?php if(in_array($kind,['complimentary','review'],true)): ?><?= $e((string)($order['complimentaryReason']??$guestOrder['complimentary_reason']??'')) ?><small><?= $e($guestOrder['staff_name']??'PSOOLA') ?></small><?php else: ?>—<?php endif; ?></td>
       <td data-label="Ticket email"><?php if ($mail === ''): ?><span class="muted">—</span><?php else: ?><span class="psoola-mail<?= in_array($mail, ['bounced', 'complained', 'failed', 'delayed'], true) ? ' bad' : '' ?>"><?= $e(ucfirst($mail)) ?></span><?php endif; ?></td>
+      <?php $wa = PsoolaOrderSummary::whatsappGroup($order); ?><td data-label="Ticket WhatsApp"><span class="psoola-wa <?= $e($wa) ?>"><?= $e(['delivered' => 'Delivered', 'missed' => 'Not received', 'none' => 'Not sent', 'waiting' => 'Sent, not confirmed'][$wa]) ?></span></td>
       <td data-label="At the door"><?= $tickets ? $used . ' of ' . count($tickets) . ' used' : '—' ?></td>
       <td data-label="Our registration"><?php if ($mine): ?><a href="registration.php?id=<?= (int) $mine['id'] ?>"><?= $e(Registrations::fullName($mine)) ?></a><small><code><?= $e($mine['ref']) ?></code> · <?= Page::pill($mine['status']) ?></small><?php elseif($guestOrder): ?><?php if(\Ismile\Auth::canIssueComplimentary($user)): ?><a href="registration.php?new=free&amp;order=<?= (int)$guestOrder['id'] ?>">Guest order</a><?php else: ?><span>Complimentary guest order</span><?php endif; ?><?php else: ?><span class="psoola-missing">Not in our database</span><small><code><?= $e((string) ($order['partnerReference'] ?? 'no reference')) ?></code></small><?php endif; ?></td>
     </tr>
   <?php endforeach; ?>
-  <?php if (!$shown): ?><tr class="empty-row"><td colspan="9"><?= Page::emptyState($orders ? 'No sales match these filters' : 'No sales yet', $orders ? 'Clear a filter or search for another buyer.' : 'Sales paid on Psoola and cash sales appear here.', 'psoola-orders') ?></td></tr><?php endif; ?>
+  <?php if (!$shown): ?><tr class="empty-row"><td colspan="10"><?= Page::emptyState($orders ? 'No sales match these filters' : 'No sales yet', $orders ? 'Clear a filter or search for another buyer.' : 'Sales paid on Psoola and cash sales appear here.', 'psoola-orders') ?></td></tr><?php endif; ?>
   </tbody></table></div>
   <?php if (count($shown) > $rows): ?>
   <div class="po-more" id="more"><span>Showing <b><?= number_format($rows) ?></b> of <b><?= number_format(count($shown)) ?></b> sales</span><a class="btn" href="<?= $e($withMore($link([]), ['rows' => $rows + 200]) . '#more') ?>" data-po-busy>Show <?= number_format(min(200, count($shown) - $rows)) ?> more</a></div>

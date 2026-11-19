@@ -205,6 +205,14 @@ echo json_encode($report) . "\n";
 if ($job === 'minute' && PsoolaCheckIns::fastCopy()) {
     $gate = fopen(App::storage('tmp/cron-gate.lock'), 'c');
     if ($gate !== false && flock($gate, LOCK_EX | LOCK_NB)) {
+        // Who got the ticket email or WhatsApp: PSOOLA's order list read again every
+        // minute while the summit runs (about 10 reads; owner asked for 10 s, but
+        // PSOOLA allows 60 reads a minute for everything, gate scans and sales too).
+        try {
+            \Ismile\Admin\PsoolaOrderSummary::warm();
+        } catch (\Throwable $error) {
+            App::log('warning', 'Psoola orders copy could not be refreshed this minute', ['error' => mb_substr($error->getMessage(), 0, 200)]);
+        }
         // Today's workshop doors: one read per workshop, once a minute (owner, 19 Nov 2026).
         try {
             $workshopScans = \Ismile\Payments\PsoolaWorkshopCheckIns::sync();

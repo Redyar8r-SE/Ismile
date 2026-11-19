@@ -1818,3 +1818,13 @@ body.po-busy::before{content:"";position:fixed;top:0;left:0;z-index:9999;height:
 .stay-time{display:inline-flex;align-items:center;gap:5px;margin-top:6px;padding:3px 10px;border-radius:999px;background:#fff3d6;color:#8a5a0f;font-size:11.5px;font-weight:700;white-space:nowrap}
 .stay-time.is-long{background:#e2f1ff;color:#1b4f91}
 .stay-time .nav-icon{width:13px;height:13px}
+/* Psoola orders: ticket WhatsApp status and "got no QR" alert (19 Nov 2026) */
+.psoola-wa{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.78rem;font-weight:700;white-space:nowrap}
+.psoola-wa.delivered{background:var(--green-l);color:var(--green-d)}
+.psoola-wa.missed{background:var(--red-l);color:var(--red-d)}
+.psoola-wa.waiting{background:var(--gold-l);color:var(--gold-d)}
+.psoola-wa.none{background:#eef2f6;color:#6d8394}
+.po-alert.is-strong{background:linear-gradient(135deg,#ffeceb,#fbd5d0);border-color:#e89a8c}
+.po-groups{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:1200px){.po-groups{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:900px){.po-groups{grid-template-columns:1fr}}

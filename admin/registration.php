@@ -317,6 +317,12 @@ Page::action(static function () use ($registration, $user, $canChange): string {
         'send_qr_email'   => \Ismile\PsoolaTickets::canView($user, $fresh)
             ? \Ismile\TicketQrSend::email($fresh, $user, Page::post('to', 190))
             : throw new UserError('Your account cannot send this ticket.'),
+        // The team opened WhatsApp to send the QR (sending itself happens in WhatsApp).
+        'qr_whatsapp_opened' => (static function () use ($user, $fresh): string {
+            if (!\Ismile\PsoolaTickets::canView($user, $fresh)) throw new UserError('Your account cannot send this ticket.');
+            \Ismile\Audit::log((int) $user['id'], 'ticket.qr_whatsapp_opened', 'registration', (int) $fresh['id']);
+            return '';
+        })(),
         'cancel'          => Office::cancel($fresh, $user, Page::post('reason')),
         'notes'           => Office::saveNotes($fresh, $user, Page::post('notes', 3000)),
         'workshop_add'    => Office::addWorkshop($fresh, $user, $_POST),

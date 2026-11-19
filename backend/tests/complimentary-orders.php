@@ -111,9 +111,19 @@ $sample=[
     ['channel'=>'direct','isComplimentary'=>true,'emailStatus'=>'queued','order'=>['totalAmount'=>0,'currency'=>'IQD','items'=>[['ticketTypeId'=>'vip-test']]],'tickets'=>[]],
 ];
 $facts=array_map(fn($o)=>PsoolaOrderSummary::facts($o,$types),$sample);
-$check('each sale gets its email, sale type, ticket and door facts',$facts[0]===['email'=>'delivered','channel'=>'checkout','ticket'=>['professional'],'door'=>'used']
+$check('each sale gets its email, sale type, ticket and door facts',$facts[0]===['reach'=>'yes','email'=>'delivered','whatsapp'=>'none','channel'=>'checkout','ticket'=>['professional'],'door'=>'used']
     &&$facts[2]['channel']==='direct'&&$facts[3]['channel']==='complimentary'&&$facts[3]['ticket']===['vip']&&$facts[1]['door']==='unused');
-$none=['email'=>'','channel'=>'','ticket'=>'','door'=>''];
+$none=['reach'=>'','email'=>'','whatsapp'=>'','channel'=>'','ticket'=>'','door'=>''];
+// Ticket WhatsApp and "QR received" (19 Nov 2026).
+$check('ticket WhatsApp groups: delivered, not received, not sent, sent but not confirmed',PsoolaOrderSummary::whatsappGroup(['whatsappStatus'=>'delivered'])==='delivered'
+    &&PsoolaOrderSummary::whatsappGroup(['whatsappStatus'=>'read'])==='delivered'&&PsoolaOrderSummary::whatsappGroup(['whatsappStatus'=>'failed'])==='missed'
+    &&PsoolaOrderSummary::whatsappGroup(['whatsappStatus'=>'sent','whatsappErrorCode'=>'whatsapp_delivery_failed'])==='missed'
+    &&PsoolaOrderSummary::whatsappGroup([])==='none'&&PsoolaOrderSummary::whatsappGroup(['whatsappStatus'=>null])==='none'
+    &&PsoolaOrderSummary::whatsappGroup(['whatsappStatus'=>'pending'])==='waiting'&&PsoolaOrderSummary::whatsappGroup(['whatsappStatus'=>'sent'])==='waiting');
+$check('"Got no QR" = email failed and no WhatsApp reached them; one delivered way is enough',PsoolaOrderSummary::reachGroup(['emailStatus'=>'bounced'])==='no'
+    &&PsoolaOrderSummary::reachGroup(['emailStatus'=>'failed','whatsappStatus'=>'failed'])==='no'&&PsoolaOrderSummary::reachGroup(['emailStatus'=>'bounced','whatsappStatus'=>'delivered'])==='yes'
+    &&PsoolaOrderSummary::reachGroup(['emailStatus'=>'delivered'])==='yes'&&PsoolaOrderSummary::reachGroup(['emailStatus'=>'bounced','whatsappStatus'=>'pending'])==='waiting'
+    &&PsoolaOrderSummary::reachGroup(['emailStatus'=>'queued'])==='waiting');
 $counts=PsoolaOrderSummary::counts($facts,$none);
 $check('counts: 2 people did not receive the email, 1 delivered, 1 still sending',$counts['email']===[''=>4,'delivered'=>1,'missed'=>2,'waiting'=>1]&&$counts['channel']['direct']===1&&$counts['ticket']['professional']===2);
 // Speed: PSOOLA's list is kept for one minute; a refresh reads it again; links and QRs are never saved.
@@ -128,6 +138,10 @@ $check('Refresh from Psoola reads again, and so does a copy older than a minute'
 $check('the 5-minute job keeps the copy fresh: it reads only when the copy is older than a minute',PsoolaOrderSummary::warm($fetch)===false&&$reads===3
     &&touch(App::storage('tmp/psoola-orders-list.json'),time()-PsoolaOrderSummary::KEEP_SECONDS-1)&&PsoolaOrderSummary::warm($fetch)===true&&$reads===4);
 $check('an older copy (up to a day) is shown at once on the live server, not waited for',PsoolaOrderSummary::STALE_SECONDS>=86400);
+PsoolaOrderSummary::orders(fn()=>[['id'=>'ord_x','partnerReference'=>'ISM26-DLV1','emailStatus'=>'bounced','whatsappStatus'=>'delivered'],['id'=>'ord_y','partnerReference'=>'ISM26-DLV2','emailStatus'=>'delivered']],true);
+$byRef=PsoolaOrderSummary::deliveryFor('ISM26-DLV1');$byOrder=PsoolaOrderSummary::deliveryFor('',['ord_y']);
+$check('a person page finds their ticket email and WhatsApp from the saved list (by reference or order)',$byRef['email']==='missed'&&$byRef['emailStatus']==='bounced'&&$byRef['whatsapp']==='delivered'
+    &&$byOrder['email']==='delivered'&&$byOrder['whatsapp']==='none'&&PsoolaOrderSummary::deliveryFor('ISM26-NOPE',[''])===null);
 @unlink(App::storage('tmp/psoola-orders-list.json'));
 $missedCash=['email'=>'missed']+$none;
 $check('Not received filter shows only bounced and failed; other groups count within it',count(array_filter($facts,fn($f)=>PsoolaOrderSummary::passes($f,$missedCash)))===2

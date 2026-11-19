@@ -279,3 +279,20 @@
 .rd-sq-last{margin:10px 0 0;font-size:12px;color:#5b7486}
 .rd-sq-wa{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 20px;background:#1fa855;color:#fff;font-weight:800;text-decoration:none}
 .rd-sq-wa:hover{background:#178a45}
+/* QR code delivery on the Event ticket card (19 Nov 2026) */
+.rd-delivery{margin-top:16px;padding:14px 16px;border:1px solid #e3ebf1;border-radius:14px;background:#f9fbfd}
+.rd-delivery h3{display:flex;align-items:center;gap:8px;margin:0 0 10px;font-size:13px;color:#16384d}
+.rd-delivery h3 .nav-icon{width:15px;height:15px;color:#0c6f6b}
+.rd-delivery dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 18px;margin:0}
+.rd-delivery dl>div{display:grid;gap:4px;min-width:0}
+.rd-delivery dt{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:#5b7486}
+.rd-delivery dt .nav-icon{width:13px;height:13px}
+.rd-delivery dd{margin:0;display:grid;gap:3px;justify-items:start}
+.rd-delivery dd small{font-size:11px;color:#7d93a3}
+.rd-dl-chip{display:inline-block;max-width:100%;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;overflow-wrap:anywhere}
+.rd-dl-chip.ok{background:#ddf3e5;color:#1d6b3c}
+.rd-dl-chip.bad{background:#fbe1dc;color:#9a3222}
+.rd-dl-chip.wait{background:#fcefd3;color:#8a5a0f}
+.rd-dl-chip.none{background:#eef2f6;color:#6d8394}
+.rd-delivery .rd-hint{margin:10px 0 0}
+@media(max-width:760px){.rd-delivery dl{grid-template-columns:1fr}}

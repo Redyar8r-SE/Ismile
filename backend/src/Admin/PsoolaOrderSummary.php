@@ -52,6 +52,27 @@ final class PsoolaOrderSummary
         return $all;
     }
 
+    /**
+     * One person's ticket email and WhatsApp as PSOOLA last reported them,
+     * from the saved order list (no extra PSOOLA read), or null when unknown.
+     *
+     * @return array{email: string, emailStatus: string, whatsapp: string, whatsappStatus: string, at: int}|null
+     */
+    public static function deliveryFor(string $reference, array $orderIds = []): ?array
+    {
+        $saved = self::saved();
+        if (!$saved) return null;
+        $orderIds = array_values(array_filter($orderIds, static fn ($id): bool => is_string($id) && $id !== ''));
+        foreach ($saved['orders'] as $order) {
+            if (!is_array($order)) continue;
+            if (($reference !== '' && ($order['partnerReference'] ?? null) === $reference) || in_array($order['id'] ?? null, $orderIds, true)) {
+                return ['email' => self::emailGroup($order), 'emailStatus' => (string) ($order['emailStatus'] ?? ''),
+                    'whatsapp' => self::whatsappGroup($order), 'whatsappStatus' => (string) ($order['whatsappStatus'] ?? ''), 'at' => $saved['at']];
+            }
+        }
+        return null;
+    }
+
     /** The five-minute job: reads PSOOLA's list when the copy is older than a minute. */
     public static function warm(?callable $fetch = null): bool
     {
@@ -126,7 +147,9 @@ final class PsoolaOrderSummary
 
     /** The filter groups and their choices, in page order. */
     public const FILTERS = [
+        'reach'   => ['yes' => 'Got the QR', 'no' => 'Got no QR', 'waiting' => 'Not sure yet'],
         'email'   => ['delivered' => 'Delivered', 'missed' => 'Not received', 'waiting' => 'Still sending'],
+        'whatsapp' => ['delivered' => 'Delivered', 'missed' => 'Not received', 'none' => 'Not sent', 'waiting' => 'Sent, not confirmed'],
         'channel' => ['checkout' => 'Paid on Psoola', 'direct' => 'Cash', 'complimentary' => 'Guest (free)'],
         'ticket'  => ['professional' => 'Dentist', 'student' => 'Student', 'vip' => 'VIP'],
         'door'    => ['used' => 'Came in', 'unused' => 'Not yet'],
@@ -137,6 +160,28 @@ final class PsoolaOrderSummary
      * deliver it: bounced, complained or failed, so the person did not get
      * the ticket email); waiting (queued, delayed or no answer yet).
      */
+    /**
+     * The ticket WhatsApp as one of four: delivered (delivered or read);
+     * missed (PSOOLA could not deliver it); none (not asked: no WhatsApp
+     * agreement, as for website buyers); waiting (pending, queued or sent).
+     */
+    public static function whatsappGroup(array $order): string
+    {
+        $status = strtolower(trim((string) ($order['whatsappStatus'] ?? '')));
+        if ($status === '' || $status === 'null' || $status === 'not_requested' || $status === 'skipped') return 'none';
+        if (in_array($status, ['delivered', 'read'], true)) return 'delivered';
+        return in_array($status, ['failed', 'undelivered', 'rejected', 'error', 'expired'], true) || !empty($order['whatsappErrorCode']) ? 'missed' : 'waiting';
+    }
+
+    /** Did the person get the QR at all: yes (email or WhatsApp delivered), no (neither, and nothing on the way), or waiting. */
+    public static function reachGroup(array $order): string
+    {
+        $email = self::emailGroup($order);
+        $whatsapp = self::whatsappGroup($order);
+        if ($email === 'delivered' || $whatsapp === 'delivered') return 'yes';
+        return $email === 'missed' && in_array($whatsapp, ['missed', 'none'], true) ? 'no' : 'waiting';
+    }
+
     public static function emailGroup(array $order): string
     {
         $status = strtolower(trim((string) ($order['emailStatus'] ?? '')));
@@ -148,7 +193,7 @@ final class PsoolaOrderSummary
      * What each filter sees in one sale. $ourType maps PSOOLA ticket type ids
      * to professional, student or vip.
      *
-     * @return array{email: string, channel: string, ticket: list<string>, door: string}
+     * @return array{reach: string, email: string, whatsapp: string, channel: string, ticket: list<string>, door: string}
      */
     public static function facts(array $order, array $ourType): array
     {
@@ -158,7 +203,7 @@ final class PsoolaOrderSummary
         }
         $used = false;
         foreach ((array) ($order['tickets'] ?? []) as $ticket) if (is_array($ticket) && !empty($ticket['checkedIn'])) $used = true;
-        return ['email' => self::emailGroup($order),
+        return ['reach' => self::reachGroup($order), 'email' => self::emailGroup($order), 'whatsapp' => self::whatsappGroup($order),
             'channel' => ['online' => 'checkout', 'cash' => 'direct', 'complimentary' => 'complimentary'][self::kind($order)] ?? 'review',
             'ticket' => array_values(array_unique($types)), 'door' => $used ? 'used' : 'unused'];
     }
