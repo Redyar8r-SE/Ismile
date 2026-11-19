@@ -1814,3 +1814,7 @@ body.po-busy::before{content:"";position:fixed;top:0;left:0;z-index:9999;height:
 .left-note{color:#a24a12!important;font-weight:700}
 @media(max-width:1300px){.attendance-tiles{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:600px){.attendance-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.attendance-tile.left{grid-column:1/-1}}
+/* Registration: time at the summit (19 Nov 2026) */
+.stay-time{display:inline-flex;align-items:center;gap:5px;margin-top:6px;padding:3px 10px;border-radius:999px;background:#fff3d6;color:#8a5a0f;font-size:11.5px;font-weight:700;white-space:nowrap}
+.stay-time.is-long{background:#e2f1ff;color:#1b4f91}
+.stay-time .nav-icon{width:13px;height:13px}

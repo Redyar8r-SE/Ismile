@@ -91,6 +91,22 @@ final class CheckinWorkspace
                     : '((a1.id IS NOT NULL AND a1.checked_out_at IS NULL) OR (a2.id IS NOT NULL AND a2.checked_out_at IS NULL))',
             };
         }
+        // Time at the summit (owner, 19 Nov 2026): arrival to check-out, or to now while still inside.
+        // On the chosen day, else today's event day, else either day. 1 hour = 3600 seconds.
+        if ($filters['stay'] !== '') {
+            $stayDay = ['day1' => 1, 'day2' => 2][$attendance] ?? Attendance::currentDay();
+            $now = \Ismile\App::now();
+            $long = static fn (int $d): string => "(a$d.id IS NOT NULL AND TIMESTAMPDIFF(SECOND, a$d.checked_in_at, COALESCE(a$d.checked_out_at, ?)) >= 3600)";
+            if ($stayDay) {
+                $where[] = $filters['stay'] === 'long' ? $long($stayDay)
+                    : "(a$stayDay.id IS NOT NULL AND TIMESTAMPDIFF(SECOND, a$stayDay.checked_in_at, COALESCE(a$stayDay.checked_out_at, ?)) < 3600)";
+                $params[] = $now;
+            } else {
+                $either = '(' . $long(1) . ' OR ' . $long(2) . ')';
+                $where[] = $filters['stay'] === 'long' ? $either : "((a1.id IS NOT NULL OR a2.id IS NOT NULL) AND NOT $either)";
+                array_push($params, $now, $now);
+            }
+        }
         foreach (['type'=>'ticket_type','status'=>'status','specialty'=>'specialty','city'=>'city','university'=>'university','lang'=>'lang','ambassador'=>'ambassador_code'] as $key=>$column) {
             if ($filters[$key] !== '') { $where[] = "r.$column = ?"; $params[] = $filters[$key]; }
         }
@@ -117,12 +133,12 @@ final class CheckinWorkspace
     public static function filters(array $input, bool $attended = false): array
     {
         $filters=[];
-        foreach (['q','attendance','type','status','lunch','id','specialty','city','university','lang','ambassador','arrival_date','from_time','to_time','staff','sort','out'] as $key) {
+        foreach (['q','attendance','type','status','lunch','id','specialty','city','university','lang','ambassador','arrival_date','from_time','to_time','staff','sort','out','stay'] as $key) {
             $filters[$key]=mb_substr(trim(is_string($input[$key]??null) ? $input[$key] : ''),0,$key==='q'?200:160);
         }
         foreach (['attendance'=>['attended','day1','day2','both','none'],'type'=>['student','professional','vip'],'status'=>['paid','complimentary'],
             'lunch'=>['day1','day2','both','any','none'],'id'=>['present','missing','removed'],'specialty'=>array_keys(Registrations::SPECIALTY_NAMES),
-            'lang'=>['en','ar','ku'],'sort'=>['name','latest','earliest'],'out'=>['left','inside']] as $key=>$valid) {
+            'lang'=>['en','ar','ku'],'sort'=>['name','latest','earliest'],'out'=>['left','inside'],'stay'=>['short','long']] as $key=>$valid) {
             if (!in_array($filters[$key],$valid,true)) $filters[$key]='';
         }
         if ($attended && !in_array($filters['attendance'],['attended','day1','day2','both'],true)) $filters['attendance']='attended';
@@ -169,6 +185,20 @@ final class CheckinWorkspace
         }
         $options['staff']=Db::all('SELECT DISTINCT u.id,u.name FROM admin_users u JOIN ticket_attendance a ON a.checked_in_by=u.id ORDER BY u.name');
         return $options;
+    }
+
+    /**
+     * Time at the summit on one day, as words: "Stayed 2 h 15 min" after a
+     * check-out, "Here 45 min" while still inside today, '' otherwise.
+     */
+    public static function stayText(?string $arrived, ?string $left, bool $today, ?int $now = null): string
+    {
+        if (!$arrived) return '';
+        $end = $left ? strtotime($left) : ($today ? ($now ?? time()) : null);
+        if ($end === null) return '';
+        $minutes = max(0, intdiv($end - strtotime($arrived), 60));
+        $text = $minutes < 60 ? $minutes . ' min' : intdiv($minutes, 60) . ' h' . ($minutes % 60 ? ' ' . ($minutes % 60) . ' min' : '');
+        return ($left ? 'Stayed ' : 'Here ') . $text;
     }
 
     public static function idStatus(array $row): string

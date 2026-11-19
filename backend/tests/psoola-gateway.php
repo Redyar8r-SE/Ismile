@@ -647,6 +647,23 @@ if ($database) {
         \Ismile\Payments\PsoolaCheckIns::record([['lastScannedAt' => $ms('2026-11-19 15:00:00')] + $dayOne])['left'] === 0
         && \Ismile\Payments\PsoolaCheckIns::record([['inside' => false, 'lastScannedAt' => $ms('2026-11-19 08:00:00')] + $dayOne])['left'] === 0 && $leftAt() === null);
 
+    // Time at the summit (19 Nov 2026): Under 1 hour / 1 hour or more, arrival to check-out.
+    $setLeft = static fn (?string $at) => Db::run('UPDATE ticket_attendance a JOIN tickets t ON t.id = a.ticket_id SET a.checked_out_at = ? WHERE t.registration_id = ? AND a.event_day = 1', [$at, $used]);
+    $stay = static fn (string $which): int => count(CheckinWorkspace::rows(['attendance' => 'day1', 'stay' => $which, 'q' => Registrations::find($used)['ref']]));
+    $setLeft('2026-11-19 12:30:15');
+    $check('a guest who stayed 3 h 30 min is in "1 hour or more", not in "Under 1 hour"', $stay('long') === 1 && $stay('short') === 0);
+    $setLeft('2026-11-19 09:40:00');
+    $check('a guest who stayed 40 min is in "Under 1 hour", not in "1 hour or more"', $stay('short') === 1 && $stay('long') === 0);
+    $setLeft('2026-11-19 10:00:00');
+    $check('exactly 1 hour counts as "1 hour or more"', $stay('long') === 1 && $stay('short') === 0);
+    $setLeft(null);
+    $check('the time is written as words', CheckinWorkspace::stayText('2026-11-19 09:00:00', '2026-11-19 11:15:00', false) === 'Stayed 2 h 15 min'
+        && CheckinWorkspace::stayText('2026-11-19 09:00:00', '2026-11-19 09:45:30', false) === 'Stayed 45 min'
+        && CheckinWorkspace::stayText('2026-11-19 09:00:00', '2026-11-19 11:00:00', false) === 'Stayed 2 h'
+        && CheckinWorkspace::stayText('2026-11-19 09:00:00', null, true, strtotime('2026-11-19 09:30:00')) === 'Here 30 min'
+        && CheckinWorkspace::stayText('2026-11-19 09:00:00', null, false) === '' && CheckinWorkspace::stayText(null, null, true) === ''
+        && CheckinWorkspace::filters(['stay' => 'x; DROP'])['stay'] === '');
+
     // A checkout sale (order.paid webhook): QRs come from GET /checkout-sessions/{id}.
     $hookForm = $newForm();
     $respond(...$created(40000, 'IQD', 201, [['ticketTypeId' => 'tt_pro', 'quantity' => 1, 'addOns' => []]], 'ses_qrhook'));
