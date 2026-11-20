@@ -5,6 +5,7 @@
 // Every visit (owner, 20 Nov 2026): in at 10:00, out at 10:30, back in at
 // 12:00 → the time inside is 30 min, and from 12:00 it counts on from 30 min.
 // The summit ends on Day 2 at 19:45: no check-in or check-out from then on.
+// Both days end at 19:45 for the time inside: 19 Nov, 20 Nov and both days.
 declare(strict_types=1);
 require __DIR__ . '/../bootstrap.php';
 
@@ -60,7 +61,7 @@ $visits = static fn (): array => Attendance::visits($tid)[2] ?? [];
 // ---- The owner's example, as the 10-second copy sees it ----
 PsoolaCheckIns::record([$scan('2026-11-20 10:00:00', '2026-11-20 10:00:00', true)]);
 $check('scanned in at 10:00: visit 1 starts', $visits() === [['entered_at' => '2026-11-20 10:00:00', 'left_at' => null]]);
-$check('at 10:20 the time inside is 20 min 0 s and counting', Attendance::timeInside($visits(), 2, '2026-11-20 10:20:00') === ['seconds' => 1200, 'open' => true, 'closed_at_end' => false, 'unknown' => false]);
+$check('at 10:20 the time inside is 20 min 0 s and counting', Attendance::timeInside($visits(), 2, '2026-11-20 10:20:00') === ['seconds' => 1200, 'open' => true, 'closed_at_end' => false, 'unknown' => false, 'lengths' => [1200]]);
 PsoolaCheckIns::record([$scan('2026-11-20 10:00:00', '2026-11-20 10:30:00', false)]);
 $check('scanned out at 10:30: visit 1 ends', $visits() === [['entered_at' => '2026-11-20 10:00:00', 'left_at' => '2026-11-20 10:30:00']]);
 $check('while outside (11:30) the time stays at 30 min', Attendance::timeInside($visits(), 2, '2026-11-20 11:30:00')['seconds'] === 1800);
@@ -80,7 +81,7 @@ $check('back in at 19:00: visit 3 starts', count($visits()) === 3);
 $check('scanned out at 19:45:00: NOT recorded (the summit is over)', PsoolaCheckIns::record([$scan('2026-11-20 10:00:00', '2026-11-20 19:45:00', false)])['left'] === 0
     && $visits()[2]['left_at'] === null);
 $check('scanned out at 20:30: NOT recorded', PsoolaCheckIns::record([$scan('2026-11-20 10:00:00', '2026-11-20 20:30:00', false)])['left'] === 0 && $visits()[2]['left_at'] === null);
-$check('a visit with no exit scan stops counting at 19:45, even at 23:00', Attendance::timeInside($visits(), 2, '2026-11-20 23:00:00') === ['seconds' => 6320 + 2700, 'open' => false, 'closed_at_end' => true, 'unknown' => false]);
+$check('a visit with no exit scan stops counting at 19:45, even at 23:00', Attendance::timeInside($visits(), 2, '2026-11-20 23:00:00') === ['seconds' => 6320 + 2700, 'open' => false, 'closed_at_end' => true, 'unknown' => false, 'lengths' => [1800, 4520, 2700]]);
 $check('and the next day too', Attendance::timeInside($visits(), 2, '2026-11-21 09:00:00')['seconds'] === 6320 + 2700);
 
 $late = $make('Late');
@@ -92,11 +93,17 @@ $check('a first scan at 19:45:00 is NOT an arrival', PsoolaCheckIns::record([$la
 $check('a first scan at 19:44:59 IS an arrival with its visit', PsoolaCheckIns::record([$lateScan('2026-11-20 19:44:59', true)])['added'] === 1
     && (Attendance::visits((int) $lt['id'])[2][0]['entered_at'] ?? '') === '2026-11-20 19:44:59');
 
-// ---- Day 1: an arrival with no exit scan cannot be counted on Day 2 ----
+// ---- Day 1 also ends at 19:45 (owner, 20 Nov 2026) ----
 $day1 = $make('DayOne');
 $d1 = Tickets::forRegistration((int) $day1['id']);
 PsoolaCheckIns::record([['ticketCode' => 'VIS3', 'order' => ['partnerReference' => $day1['ref']], 'firstScannedAt' => $ms('2026-11-19 09:00:00'), 'lastScannedAt' => $ms('2026-11-19 09:00:00'), 'inside' => true]]);
-$check('Day 1 visit without an exit scan: time unknown, not invented', Attendance::timeInside(Attendance::visits((int) $d1['id'])[1], 1, '2026-11-20 10:00:00') === ['seconds' => 0, 'open' => false, 'closed_at_end' => false, 'unknown' => true]);
+$check('Day 1 ends at 19:45 on 19 Nov', Attendance::dayEndsAt(1) === '2026-11-19 19:45:00');
+$check('Day 1 visit without an exit scan is counted until 19:45 that day: 10 h 45 min', Attendance::timeInside(Attendance::visits((int) $d1['id'])[1], 1, '2026-11-20 10:00:00')
+    === ['seconds' => 38700, 'open' => false, 'closed_at_end' => true, 'unknown' => false, 'lengths' => [38700]]);
+$check('Day 1 visit going on is counted up to now', Attendance::timeInside(Attendance::visits((int) $d1['id'])[1], 1, '2026-11-19 12:00:00')['seconds'] === 10800);
+$check('a Day 1 exit scan after 19:45 counts only up to 19:45', Attendance::timeInside([['entered_at' => '2026-11-19 18:00:00', 'left_at' => '2026-11-19 21:00:00']], 1, '2026-11-20 10:00:00')['seconds'] === 6300);
+$check('19 Nov + 20 Nov = the time for both days', Attendance::timeInside(Attendance::visits((int) $d1['id'])[1], 1, '2026-11-20 23:00:00')['seconds'] + Attendance::timeInside($visits(), 2, '2026-11-20 23:00:00')['seconds'] === 38700 + 9020);
+$check('the time is written exactly', Attendance::durationText(38700) === '10 h 45 min 0 s' && Attendance::durationText(65) === '1 min 5 s' && Attendance::durationText(9) === '9 s');
 
 // ---- An arrival from before visits were kept: the first exit makes visit 1 from it ----
 $old = $make('Before');

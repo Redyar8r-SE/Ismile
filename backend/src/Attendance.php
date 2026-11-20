@@ -25,9 +25,18 @@ final class Attendance
      */
     public static function closesAt(): string
     {
-        $day = Settings::get('event_day2');
+        return self::dayEndsAt(2);
+    }
+
+    /**
+     * When an event day ends (owner, 20 Nov 2026: both days end at 19:45),
+     * as Y-m-d H:i:s, or '' when the date or the time is not set.
+     */
+    public static function dayEndsAt(int $day): string
+    {
+        $date = Settings::get('event_day' . $day);
         $time = substr(Settings::get('event_end_time'), 0, 5);
-        return ($day === '' || !preg_match('/^\d{2}:\d{2}$/', $time)) ? '' : $day . ' ' . $time . ':00';
+        return ($date === '' || !preg_match('/^\d{2}:\d{2}$/', $time)) ? '' : $date . ' ' . $time . ':00';
     }
 
     /** True from the end of the summit on (19:45:00 itself included): no check-in or check-out counts. */
@@ -77,36 +86,43 @@ final class Attendance
     }
 
     /**
-     * Seconds inside on one event day: every ended visit, plus a visit with
-     * no exit scan yet, counted up to now while that day is going on, and
-     * up to the end of the summit (Day 2, 19:45) once it is over.
-     * 'open' = inside now; 'closed_at_end' = a visit was stopped at the end
-     * of the summit; 'unknown' = an earlier day's visit has no exit scan, so
-     * that time cannot be counted.
+     * Seconds inside on one event day (owner, 20 Nov 2026): the sum of the
+     * visits, so the time pauses while the guest is outside. Each day ends at
+     * 19:45: nothing after that counts, and a visit with no exit scan is
+     * counted up to 19:45 once the day is over (up to now while it goes on).
+     * 'open' = inside now; 'closed_at_end' = a visit with no exit scan was
+     * counted up to the end of the day; 'unknown' = no end time is set, so
+     * a visit with no exit scan cannot be counted. 'lengths' = each visit.
      *
      * @param list<array{entered_at: string, left_at: ?string}> $visits
-     * @return array{seconds: int, open: bool, closed_at_end: bool, unknown: bool}
+     * @return array{seconds: int, open: bool, closed_at_end: bool, unknown: bool, lengths: list<?int>}
      */
     public static function timeInside(array $visits, int $day, ?string $now = null): array
     {
         $now ??= App::now();
-        $end = $day === 2 ? self::closesAt() : '';
+        $end = self::dayEndsAt($day);
         $limit = null;
         if ($end !== '' && $now >= $end) {
             $limit = $end;
         } elseif (substr($now, 0, 10) === Settings::get('event_day' . $day)) {
             $limit = $now;
         }
-        $total = ['seconds' => 0, 'open' => false, 'closed_at_end' => false, 'unknown' => false];
+        $total = ['seconds' => 0, 'open' => false, 'closed_at_end' => false, 'unknown' => false, 'lengths' => []];
         foreach ($visits as $visit) {
-            if ($visit['left_at'] !== null) {
-                $total['seconds'] += max(0, strtotime($visit['left_at']) - strtotime($visit['entered_at']));
-            } elseif ($limit !== null) {
-                $total['seconds'] += max(0, strtotime($limit) - strtotime($visit['entered_at']));
+            $out = $visit['left_at'];
+            if ($out === null) {
+                if ($limit === null) {
+                    $total['unknown'] = true;
+                    $total['lengths'][] = null;
+                    continue;
+                }
+                $out = $limit;
                 $total[$limit === $end ? 'closed_at_end' : 'open'] = true;
-            } else {
-                $total['unknown'] = true;
             }
+            if ($end !== '' && $out > $end) $out = $end;   // nothing after the end of the day
+            $length = max(0, strtotime($out) - strtotime($visit['entered_at']));
+            $total['lengths'][] = $length;
+            $total['seconds'] += $length;
         }
         return $total;
     }
