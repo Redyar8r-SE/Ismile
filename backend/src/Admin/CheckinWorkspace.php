@@ -94,20 +94,27 @@ final class CheckinWorkspace
                     : '((a1.id IS NOT NULL AND a1.checked_out_at IS NULL) OR (a2.id IS NOT NULL AND a2.checked_out_at IS NULL))',
             };
         }
-        // Time at the summit (owner, 19 Nov 2026): arrival to check-out, or to now while still inside.
+        // Time at the summit (owner, 19 Nov 2026): the time inside, as on the profile (20 Nov
+        // 2026): the sum of the visits, time outside not counted, each day ending at 19:45.
         // On the chosen day, else today's event day, else either day. 1 hour = 3600 seconds.
         if ($filters['stay'] !== '') {
             $stayDay = ['day1' => 1, 'day2' => 2][$attendance] ?? Attendance::currentDay();
-            $now = \Ismile\App::now();
-            $long = static fn (int $d): string => "(a$d.id IS NOT NULL AND TIMESTAMPDIFF(SECOND, a$d.checked_in_at, COALESCE(a$d.checked_out_at, ?)) >= 3600)";
+            $long = static function (int $d) use (&$params): string {
+                [$sql, $values] = self::insideSql($d);
+                array_push($params, ...$values);
+                return "(a$d.id IS NOT NULL AND $sql >= 3600)";
+            };
             if ($stayDay) {
-                $where[] = $filters['stay'] === 'long' ? $long($stayDay)
-                    : "(a$stayDay.id IS NOT NULL AND TIMESTAMPDIFF(SECOND, a$stayDay.checked_in_at, COALESCE(a$stayDay.checked_out_at, ?)) < 3600)";
-                $params[] = $now;
+                if ($filters['stay'] === 'long') {
+                    $where[] = $long($stayDay);
+                } else {
+                    [$sql, $values] = self::insideSql($stayDay);
+                    array_push($params, ...$values);
+                    $where[] = "(a$stayDay.id IS NOT NULL AND $sql < 3600)";
+                }
             } else {
                 $either = '(' . $long(1) . ' OR ' . $long(2) . ')';
                 $where[] = $filters['stay'] === 'long' ? $either : "((a1.id IS NOT NULL OR a2.id IS NOT NULL) AND NOT $either)";
-                array_push($params, $now, $now);
             }
         }
         foreach (['type'=>'ticket_type','status'=>'status','specialty'=>'specialty','city'=>'city','university'=>'university','lang'=>'lang','ambassador'=>'ambassador_code'] as $key=>$column) {
@@ -131,6 +138,51 @@ final class CheckinWorkspace
             $where[] = 'EXISTS (SELECT 1 FROM ticket_attendance ax WHERE ax.ticket_id=t.id AND '.implode(' AND ',$arrival).')';
         }
         return [implode(' AND ', $where), $params];
+    }
+
+    /**
+     * Seconds inside on one day for the ticket t, in SQL, counted exactly like
+     * Attendance::timeInside(): every visit, a visit with no exit scan up to
+     * now while the day goes on and up to 19:45 once it is over, nothing
+     * after 19:45. A visit that cannot be counted adds nothing.
+     *
+     * @return array{0: string, 1: list<?string>}
+     */
+    public static function insideSql(int $day, ?string $now = null): array
+    {
+        $now ??= \Ismile\App::now();
+        $end = Attendance::dayEndsAt($day);
+        $limit = null;
+        if ($end !== '' && $now >= $end) {
+            $limit = $end;
+        } elseif (substr($now, 0, 10) === \Ismile\Settings::get('event_day' . $day)) {
+            $limit = $now;
+        }
+        $sql = "(SELECT COALESCE(SUM(GREATEST(0, TIMESTAMPDIFF(SECOND, v.entered_at, LEAST(COALESCE(v.left_at, ?), ?)))), 0)"
+            . " FROM attendance_visits v WHERE v.ticket_id = t.id AND v.event_day = $day)";
+        return [$sql, [$limit, $end !== '' ? $end : '9999-12-31 23:59:59']];
+    }
+
+    /**
+     * Adds 'inside1' / 'inside2' to each row: Attendance::timeInside() of that
+     * day's visits, or null when the day has no visits.
+     */
+    public static function withTimeInside(array $rows, ?string $now = null): array
+    {
+        $ids = array_values(array_unique(array_filter(array_map(static fn ($r) => (int) ($r['ticket_id'] ?? 0), $rows))));
+        $visits = [];
+        foreach (array_chunk($ids, 1000) as $chunk) {
+            foreach (Db::all('SELECT ticket_id, event_day, entered_at, left_at FROM attendance_visits WHERE ticket_id IN (' . implode(',', array_fill(0, count($chunk), '?')) . ') ORDER BY entered_at', $chunk) as $v) {
+                $visits[(int) $v['ticket_id']][(int) $v['event_day']][] = ['entered_at' => $v['entered_at'], 'left_at' => $v['left_at']];
+            }
+        }
+        foreach ($rows as $i => $row) {
+            foreach ([1, 2] as $day) {
+                $list = $visits[(int) ($row['ticket_id'] ?? 0)][$day] ?? [];
+                $rows[$i]['inside' . $day] = $list ? Attendance::timeInside($list, $day, $now) : null;
+            }
+        }
+        return $rows;
     }
 
     public static function filters(array $input, bool $attended = false): array
@@ -177,7 +229,7 @@ final class CheckinWorkspace
         $filters=self::filters($filters);
         [$where,$params]=self::where($filters['q'],$filters['attendance'],$filters);
         $paging=$limit!==null?' LIMIT '.max(1,min(5000,$limit)).' OFFSET '.max(0,$offset):'';
-        return Db::all('SELECT r.*,t.id AS ticket_id,t.version AS ticket_version,t.source AS ticket_source,t.ticket_no,a1.checked_in_at AS day1,a2.checked_in_at AS day2,a1.checked_out_at AS out1,a2.checked_out_at AS out2,a1.checkin_method AS method1,a2.checkin_method AS method2,u1.name AS staff1,u2.name AS staff2,c.certificate_no FROM '.self::from()." WHERE $where ORDER BY ".self::order($filters['sort'],$filters['attendance']).$paging,$params);
+        return self::withTimeInside(Db::all('SELECT r.*,t.id AS ticket_id,t.version AS ticket_version,t.source AS ticket_source,t.ticket_no,a1.checked_in_at AS day1,a2.checked_in_at AS day2,a1.checked_out_at AS out1,a2.checked_out_at AS out2,a1.checkin_method AS method1,a2.checkin_method AS method2,u1.name AS staff1,u2.name AS staff2,c.certificate_no FROM '.self::from()." WHERE $where ORDER BY ".self::order($filters['sort'],$filters['attendance']).$paging,$params));
     }
 
     public static function options(): array
@@ -194,6 +246,16 @@ final class CheckinWorkspace
      * Time at the summit on one day, as words: "Stayed 2 h 15 min" after a
      * check-out, "Here 45 min" while still inside today, '' otherwise.
      */
+    /**
+     * The list's time tag from the visits (owner, 20 Nov 2026): "Here 1 h 5 min 3 s"
+     * while inside, "Stayed …" otherwise; '' when nothing can be counted.
+     */
+    public static function insideText(?array $inside): string
+    {
+        if ($inside === null || ($inside['seconds'] === 0 && $inside['unknown'])) return '';
+        return ($inside['open'] ? 'Here ' : 'Stayed ') . Attendance::durationText($inside['seconds']);
+    }
+
     public static function stayText(?string $arrived, ?string $left, bool $today, ?int $now = null): string
     {
         if (!$arrived) return '';

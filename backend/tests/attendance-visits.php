@@ -131,6 +131,25 @@ $check('a workshop scan at 19:45 is not an arrival', PsoolaWorkshopCheckIns::rec
 $check('a workshop exit at 19:45 is not recorded', PsoolaWorkshopCheckIns::record('ws-visits', [$ws('2026-11-20 18:00:00', '2026-11-20 19:45:00', false)])['left'] === 0
     && $bk() === ['checked_in_at' => '2026-11-20 18:00:00', 'checked_out_at' => null]);
 
+// ---- The Registration list uses the same time inside (owner, 20 Nov 2026) ----
+// In 10:00, out 10:30, back in 12:00, out 12:30: 1 h inside, not 2 h 30 min.
+$list = $make('Listy');
+$listScan = static fn (string $last, bool $inside): array => ['ticketCode' => 'VIS5', 'order' => ['partnerReference' => $list['ref']],
+    'firstScannedAt' => $ms('2026-11-20 10:00:00'), 'lastScannedAt' => $ms("2026-11-20 $last"), 'inside' => $inside];
+foreach ([['10:00:00', true], ['10:30:00', false], ['12:00:00', true], ['12:29:59', false]] as [$at, $in]) PsoolaCheckIns::record([$listScan($at, $in)]);
+$stayRows = static fn (string $which, string $attendance = 'day2'): int => count(\Ismile\Admin\CheckinWorkspace::rows(['attendance' => $attendance, 'stay' => $which, 'q' => $list['ref']]));
+$row = \Ismile\Admin\CheckinWorkspace::rows(['attendance' => 'day2', 'q' => $list['ref']])[0];
+$check('the list tag shows the time inside: Stayed 59 min 59 s (not 2 h 29 min)', \Ismile\Admin\CheckinWorkspace::insideText($row['inside2']) === 'Stayed 59 min 59 s');
+$check('59 min 59 s inside is "Under 1 hour", although first in to last out is 2 h 29 min', $stayRows('short') === 1 && $stayRows('long') === 0);
+PsoolaCheckIns::record([$listScan('12:30:00', false)]);
+Db::run("UPDATE attendance_visits v JOIN tickets t ON t.id = v.ticket_id SET v.left_at = '2026-11-20 12:30:00' WHERE t.registration_id = ? AND v.entered_at = '2026-11-20 12:00:00'", [$list['id']]);
+$row = \Ismile\Admin\CheckinWorkspace::rows(['attendance' => 'day2', 'q' => $list['ref']])[0];
+$check('your example: in 10:00, out 10:30, in 12:00, out 12:30 = Stayed 1 h 0 min 0 s', \Ismile\Admin\CheckinWorkspace::insideText($row['inside2']) === 'Stayed 1 h 0 min 0 s');
+$check('exactly 1 hour inside is "1 hour or more"', $stayRows('long') === 1 && $stayRows('short') === 0);
+$check('with no day chosen the filter works on either day', $stayRows('long', 'attended') === 1 && $stayRows('short', 'attended') === 0);
+$check('the database count and the tag agree (same rule)', (int) Db::value('SELECT ' . \Ismile\Admin\CheckinWorkspace::insideSql(2)[0] . ' FROM tickets t WHERE t.registration_id = ?', [...\Ismile\Admin\CheckinWorkspace::insideSql(2)[1], $list['id']]) === $row['inside2']['seconds']);
+$check('Day 1 with no exit scan: the list counts it until 19:45 on 19 Nov', \Ismile\Admin\CheckinWorkspace::insideText(\Ismile\Admin\CheckinWorkspace::rows(['attendance' => 'day1', 'q' => $day1['ref']])[0]['inside1']) === 'Stayed 10 h 45 min 0 s');
+
 // ---- The desk (live): refused at and after the end time, a visit before ----
 $config = require getenv('ISMILE_CONFIG');
 App::boot(['env' => 'live'] + $config);
