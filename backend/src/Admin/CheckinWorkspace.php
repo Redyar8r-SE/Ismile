@@ -10,6 +10,9 @@ use Ismile\Registrations;
 
 final class CheckinWorkspace
 {
+    /** Guests shown at first, and added each time the list is scrolled to its end. */
+    public const BATCH = 20;
+
     // PSOOLA scans the tickets at the door (copied in by PsoolaCheckIns), so
     // there is no iSmile scanner tab: the workspace opens on Attended.
     public const TABS = [
@@ -173,7 +176,7 @@ final class CheckinWorkspace
     {
         $filters=self::filters($filters);
         [$where,$params]=self::where($filters['q'],$filters['attendance'],$filters);
-        $paging=$limit!==null?' LIMIT '.max(1,min(100,$limit)).' OFFSET '.max(0,$offset):'';
+        $paging=$limit!==null?' LIMIT '.max(1,min(5000,$limit)).' OFFSET '.max(0,$offset):'';
         return Db::all('SELECT r.*,t.id AS ticket_id,t.version AS ticket_version,t.source AS ticket_source,t.ticket_no,a1.checked_in_at AS day1,a2.checked_in_at AS day2,a1.checked_out_at AS out1,a2.checked_out_at AS out2,a1.checkin_method AS method1,a2.checkin_method AS method2,u1.name AS staff1,u2.name AS staff2,c.certificate_no FROM '.self::from()." WHERE $where ORDER BY ".self::order($filters['sort'],$filters['attendance']).$paging,$params);
     }
 

@@ -1238,3 +1238,63 @@ document.addEventListener("DOMContentLoaded", () => {
   // Back/forward from the browser cache: show the page normally again.
   window.addEventListener("pageshow", () => document.body.classList.remove("po-busy"));
 })();
+
+// Registration lists (Attended, Guest list): no pages. The first 20 guests
+// show; scrolling to the end of the list brings 20 more, again and again.
+// The address keeps ?shown=N so the 10-second refresh keeps them all.
+document.addEventListener("DOMContentLoaded", () => {
+  if (!document.querySelector("[data-more-rows]")) return;
+  let loading = false;
+  const more = async () => {
+    const marker = document.querySelector("[data-more-rows]");
+    const body = marker?.closest(".table-wrap")?.querySelector("tbody");
+    if (loading || !marker || !body) return;
+    loading = true;
+    marker.classList.add("is-loading");
+    const from = Number(marker.dataset.from), total = Number(marker.dataset.total), batch = Number(marker.dataset.batch) || 20;
+    try {
+      const url = new URL(location.href);
+      url.searchParams.delete("shown");
+      url.searchParams.set("from", String(from));
+      const response = await fetch(url, { credentials: "same-origin", cache: "no-store", headers: { Accept: "text/html" } });
+      if (!response.ok) return;
+      const page = new DOMParser().parseFromString(await response.text(), "text/html");
+      const have = new Set([...body.querySelectorAll("tr[data-row-key]")].map(row => row.dataset.rowKey));
+      body.querySelector("tr.empty-row")?.remove();
+      for (const row of page.querySelectorAll("[data-live-region] tbody tr[data-row-key]")) {
+        if (!have.has(row.dataset.rowKey)) body.append(document.importNode(row, true));
+      }
+      const shown = Math.min(total, from + batch);
+      const address = new URL(location.href);
+      address.searchParams.set("shown", String(shown));
+      history.replaceState(null, "", address.href);
+      if (shown >= total) {
+        marker.className = "checkin-more is-done";
+        marker.removeAttribute("data-more-rows");
+        marker.textContent = `All ${total.toLocaleString("en-US")} shown.`;
+      } else {
+        marker.dataset.from = String(shown);
+        marker.querySelector("[data-more-shown]").textContent = shown.toLocaleString("en-US");
+      }
+    } catch {
+      // Offline: the "Show more" button stays for another try.
+    } finally {
+      loading = false;
+      document.querySelector("[data-more-rows]")?.classList.remove("is-loading");
+      requestAnimationFrame(check);
+    }
+  };
+  // Near the end of the list box (or of the page on a phone, where the box does not scroll)?
+  const check = () => {
+    const marker = document.querySelector("[data-more-rows]");
+    if (!marker || loading) return;
+    const wrap = marker.closest(".table-wrap");
+    const scrolls = wrap && wrap.scrollHeight > wrap.clientHeight + 1 && getComputedStyle(wrap).overflowY !== "visible";
+    const bottom = Math.min(window.innerHeight, scrolls ? wrap.getBoundingClientRect().bottom : Infinity);
+    if (marker.getBoundingClientRect().top < bottom + 300) more();
+  };
+  document.addEventListener("scroll", check, { capture: true, passive: true });
+  window.addEventListener("resize", check, { passive: true });
+  document.addEventListener("click", event => { if (event.target.closest("[data-more-button]")) more(); });
+  check();
+});
