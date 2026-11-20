@@ -157,7 +157,7 @@ $moreOpen = $filters['state'] !== '' || $filters['by'] !== '';
     <td><?php if ($link): ?><a href="<?= $e($link) ?>"><code><?= $e($guest['ref']) ?></code></a><?php else: ?><code><?= $e($guest['ref']) ?></code><?php endif; ?></td>
     <td><div class="guest-cell"><span class="guest-avatar" aria-hidden="true"><?= $e(mb_strtoupper(mb_substr((string) $guest['first_name'], 0, 1))) ?></span><div>
       <?php if ($link): ?><a href="<?= $e($link) ?>"><b><?= $e(Registrations::fullName($guest)) ?></b></a><?php else: ?><b><?= $e(Registrations::fullName($guest)) ?></b><?php endif; ?>
-      <small><span class="added-by-tag association"><?= $e($guest['association']) ?></span>
+      <small><span class="added-by-tag association org"><?= $e($guest['association']) ?></span>
       <?= match ($state) { 'waiting' => ' <span class="pill gold">Waiting for PSOOLA</span>', 'review' => ' <span class="pill red">Check in Payments</span>', 'cancelled' => ' ' . Page::pill('cancelled'), default => '' } ?></small>
     </div></div></td>
     <td dir="ltr"><?= $e((string) $guest['phone']) ?></td>
@@ -213,7 +213,7 @@ $association = AssociationGuests::NAME;
   data-received-plain="<?= $e('I checked the details. The ' . $association . ' will pay iSmile later.') ?>">
   <?= Page::csrfField() ?><?= Page::onceField() ?>
   <p class="muted">For a guest the <b><?= $e($association) ?></b> registers: enter their details and press <b>Add by association</b>. PSOOLA issues the ticket at once and emails the QR. The association pays iSmile later.</p>
-  <div class="association-guest-banner"><span class="added-by-tag association"><?= $e($association) ?></span><span>This guest is saved as added by the <?= $e($association) ?>, pays later.</span></div>
+  <div class="association-guest-banner"><span class="added-by-tag association org"><?= $e($association) ?></span><span>This guest is saved as added by the <?= $e($association) ?>, pays later.</span></div>
   <fieldset class="form-section">
     <legend>1. Guest's details</legend>
     <div class="row3"><label>First name<input name="first_name" maxlength="60" value="<?= $value('first_name') ?>" autocomplete="off" required></label><label>Second name<input name="father_name" maxlength="60" value="<?= $value('father_name') ?>" required></label><label>Last name<input name="grandfather_name" maxlength="60" value="<?= $value('grandfather_name') ?>" required></label></div>
