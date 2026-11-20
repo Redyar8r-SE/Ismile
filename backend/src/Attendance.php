@@ -37,6 +37,91 @@ final class Attendance
         return $end !== '' && ($at ?? App::now()) >= $end;
     }
 
+    /**
+     * Every visit (owner, 20 Nov 2026): scanned in starts a visit, scanned out
+     * ends it, scanned in again starts a new one. The time inside is the sum
+     * of the visits, so it pauses while the guest is outside.
+     * A new visit only starts when the last one has ended at or before $at.
+     */
+    public static function visitIn(int $ticketId, int $day, string $at): bool
+    {
+        $last = Db::one('SELECT entered_at, left_at FROM attendance_visits WHERE ticket_id = ? AND event_day = ? ORDER BY entered_at DESC LIMIT 1', [$ticketId, $day]);
+        if ($last !== null && ($last['left_at'] === null || $last['left_at'] > $at || $last['entered_at'] >= $at)) return false;
+        return Db::run('INSERT IGNORE INTO attendance_visits (ticket_id, event_day, entered_at, left_at, created_at) VALUES (?, ?, ?, NULL, ?)', [$ticketId, $day, $at, App::now()]) > 0;
+    }
+
+    /** Scanned out: ends the visit still open (one that started before $at). */
+    public static function visitOut(int $ticketId, int $day, string $at): bool
+    {
+        if (!Db::value('SELECT id FROM attendance_visits WHERE ticket_id = ? AND event_day = ? LIMIT 1', [$ticketId, $day])) {
+            // That day's arrival from before visits were kept: it is the first visit.
+            $arrived = Db::value('SELECT checked_in_at FROM ticket_attendance WHERE ticket_id = ? AND event_day = ?', [$ticketId, $day]);
+            if ($arrived === null) return false;
+            self::visitIn($ticketId, $day, (string) $arrived);
+        }
+        return Db::run('UPDATE attendance_visits SET left_at = ? WHERE ticket_id = ? AND event_day = ? AND left_at IS NULL AND entered_at < ? ORDER BY entered_at DESC LIMIT 1', [$at, $ticketId, $day, $at]) > 0;
+    }
+
+    /**
+     * One ticket's visits, by event day, oldest first.
+     *
+     * @return array<int, list<array{entered_at: string, left_at: ?string}>>
+     */
+    public static function visits(int $ticketId): array
+    {
+        $days = [];
+        foreach (Db::all('SELECT event_day, entered_at, left_at FROM attendance_visits WHERE ticket_id = ? ORDER BY event_day, entered_at', [$ticketId]) as $row) {
+            $days[(int) $row['event_day']][] = ['entered_at' => $row['entered_at'], 'left_at' => $row['left_at']];
+        }
+        return $days;
+    }
+
+    /**
+     * Seconds inside on one event day: every ended visit, plus a visit with
+     * no exit scan yet, counted up to now while that day is going on, and
+     * up to the end of the summit (Day 2, 19:45) once it is over.
+     * 'open' = inside now; 'closed_at_end' = a visit was stopped at the end
+     * of the summit; 'unknown' = an earlier day's visit has no exit scan, so
+     * that time cannot be counted.
+     *
+     * @param list<array{entered_at: string, left_at: ?string}> $visits
+     * @return array{seconds: int, open: bool, closed_at_end: bool, unknown: bool}
+     */
+    public static function timeInside(array $visits, int $day, ?string $now = null): array
+    {
+        $now ??= App::now();
+        $end = $day === 2 ? self::closesAt() : '';
+        $limit = null;
+        if ($end !== '' && $now >= $end) {
+            $limit = $end;
+        } elseif (substr($now, 0, 10) === Settings::get('event_day' . $day)) {
+            $limit = $now;
+        }
+        $total = ['seconds' => 0, 'open' => false, 'closed_at_end' => false, 'unknown' => false];
+        foreach ($visits as $visit) {
+            if ($visit['left_at'] !== null) {
+                $total['seconds'] += max(0, strtotime($visit['left_at']) - strtotime($visit['entered_at']));
+            } elseif ($limit !== null) {
+                $total['seconds'] += max(0, strtotime($limit) - strtotime($visit['entered_at']));
+                $total[$limit === $end ? 'closed_at_end' : 'open'] = true;
+            } else {
+                $total['unknown'] = true;
+            }
+        }
+        return $total;
+    }
+
+    /** "1 h 5 min 20 s": exact to the second. */
+    public static function durationText(int $seconds): string
+    {
+        $h = intdiv($seconds, 3600);
+        $m = intdiv($seconds % 3600, 60);
+        $s = $seconds % 60;
+        if ($h > 0) return $h . ' h ' . $m . ' min ' . $s . ' s';
+        if ($m > 0) return $m . ' min ' . $s . ' s';
+        return $s . ' s';
+    }
+
     /** Live admissions use the server date, including forms left open before midnight. */
     public static function admissionDay(int $requestedDay, ?string $date = null): int
     {
@@ -89,6 +174,7 @@ final class Attendance
             $arrival = Db::one('SELECT * FROM ticket_attendance WHERE ticket_id = ? AND event_day = ?', [$ticket['id'], $day]);
             if ($arrival !== null) return ['duplicate' => true, 'arrival' => $arrival, 'ticket' => $ticket, 'day' => $day];
             $id = Db::insert('ticket_attendance', ['ticket_id' => $ticket['id'], 'event_day' => $day, 'checked_in_at' => $now, 'checked_in_by' => $user['id'], 'checkin_method' => $method]);
+            self::visitIn((int) $ticket['id'], $day, $now);
             // Keep the old field as the first arrival, for existing dashboard queries.
             Db::run('UPDATE tickets SET checked_in_at = COALESCE(checked_in_at, ?), checked_in_by = COALESCE(checked_in_by, ?) WHERE id = ?', [$now, $user['id'], $ticket['id']]);
             Certificates::issue($registration, $ticket);

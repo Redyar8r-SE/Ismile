@@ -150,10 +150,15 @@ final class PsoolaCheckIns
         if ($inside === false) {
             // Only after that day's arrival, and only when the time is new.
             $changed = Db::run('UPDATE ticket_attendance SET checked_out_at = ? WHERE ticket_id = ? AND event_day = ? AND checked_in_at < ? AND NOT (checked_out_at <=> ?)', [$at, $ticketId, $day, $at, $at]);
-            return $changed > 0 ? 'left' : '';
+            // Every visit (20 Nov 2026): this exit ends the visit going on.
+            $ended = Attendance::visitOut($ticketId, $day, $at);
+            return $changed > 0 || $ended ? 'left' : '';
         }
         $changed = Db::run('UPDATE ticket_attendance SET checked_out_at = NULL WHERE ticket_id = ? AND event_day = ? AND checked_out_at IS NOT NULL AND checked_out_at <= ?', [$ticketId, $day, $at]);
-        return $changed > 0 ? 'back_in' : '';
+        // Back in: a new visit starts at this scan (the time outside is not counted).
+        $started = Db::value('SELECT id FROM ticket_attendance WHERE ticket_id = ? AND event_day = ?', [$ticketId, $day]) !== null
+            && Attendance::visitIn($ticketId, $day, $at);
+        return $changed > 0 || $started ? 'back_in' : '';
     }
 
     /**
@@ -254,6 +259,7 @@ final class PsoolaCheckIns
             }
             $registration = Registrations::find((int) $ticket['registration_id']);
             Db::insert('ticket_attendance', ['ticket_id' => $ticketId, 'event_day' => $day, 'checked_in_at' => $at, 'checked_in_by' => null, 'checkin_method' => 'psoola']);
+            Attendance::visitIn($ticketId, $day, $at);
             Db::run('UPDATE tickets SET checked_in_at = LEAST(COALESCE(checked_in_at, ?), ?) WHERE id = ?', [$at, $at, $ticketId]);
             Certificates::issue($registration, $ticket);
             Audit::log(null, 'checkin.psoola', 'registration', (int) $registration['id'], ['ticket' => $ticket['ticket_no'], 'psoola_ticket' => $ticketCode, 'day' => $day]);

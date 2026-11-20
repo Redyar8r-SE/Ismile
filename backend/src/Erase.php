@@ -118,6 +118,7 @@ final class Erase
                 'sponsored_ticket_orders' => Db::all('SELECT * FROM sponsored_ticket_orders WHERE registration_id=? FOR UPDATE',[$id]),
                 'tickets'           => $tickets,
                 'ticket_attendance' => self::rowsIn('ticket_attendance', 'ticket_id', $ticketIds),
+                'attendance_visits' => self::rowsIn('attendance_visits', 'ticket_id', $ticketIds),
                 'certificates'      => Db::all('SELECT * FROM certificates WHERE registration_id = ? FOR UPDATE', [$id]),
                 'workshop_bookings' => $bookings,
                 // Rows in other lists that point at this person: printed badge
@@ -141,6 +142,7 @@ final class Erase
             // Children first, so no foreign key is left pointing at a deleted row.
             $paymentIds = array_map('intval', array_column($snapshot['payments'], 'id'));
             if ($ticketIds) {
+                Db::run('DELETE FROM attendance_visits WHERE ticket_id IN (' . self::marks($ticketIds) . ')', $ticketIds);
                 Db::run('DELETE FROM ticket_attendance WHERE ticket_id IN (' . self::marks($ticketIds) . ')', $ticketIds);
             }
             Db::run('DELETE FROM certificates WHERE registration_id = ?', [$id]);

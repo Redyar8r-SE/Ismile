@@ -21,6 +21,7 @@ if (!isset($registration, $user, $id)) { http_response_code(404); exit; }
 $ticket = Tickets::forRegistration($id);
 $activeTicket = $ticket && $ticket['cancelled_at'] === null;
 $attendance = $activeTicket ? Db::all('SELECT event_day, checked_in_at, checked_out_at FROM ticket_attendance WHERE ticket_id=? ORDER BY event_day', [$ticket['id']]) : [];
+$visits = $activeTicket ? \Ismile\Attendance::visits((int)$ticket['id']) : [];
 $payments = Db::all('SELECT * FROM payments WHERE registration_id=? ORDER BY id DESC', [$id]);
 $paidPayment = null;
 foreach ($payments as $payment) if ($payment['status'] === 'paid') { $paidPayment = $payment; break; }
@@ -166,7 +167,7 @@ if ($inCheckin) echo \Ismile\Admin\CheckinWorkspace::navigation('guests',$user,$
         foreach ([1,2] as $day) {
             $arrival = array_values(array_filter($attendance,static fn($a)=>(int)$a['event_day']===$day))[0] ?? null;
             $date = \Ismile\Settings::get('event_day'.$day);
-            $attRows[] = ['kind'=>'Summit','name'=>'Day '.$day,'when'=>$date ? date('D j M', strtotime($date)) : '','in'=>$arrival['checked_in_at'] ?? null,'out'=>$arrival['checked_out_at'] ?? null,'today'=>$date === $today,'scanned'=>true];
+            $attRows[] = ['kind'=>'Summit','name'=>'Day '.$day,'when'=>$date ? date('D j M', strtotime($date)) : '','in'=>$arrival['checked_in_at'] ?? null,'out'=>$arrival['checked_out_at'] ?? null,'today'=>$date === $today,'scanned'=>true,'day'=>$day,'visits'=>$visits[$day] ?? []];
         }
         foreach ($bookings as $booking) {
             $workshop = Workshops::find($booking['workshop_id']);
@@ -177,7 +178,13 @@ if ($inCheckin) echo \Ismile\Admin\CheckinWorkspace::navigation('guests',$user,$
         }
         ?>
         <ul class="rd-att-list">
-        <?php foreach ($attRows as $att): $stay = \Ismile\Admin\CheckinWorkspace::stayText($att['in'],$att['out'],$att['today']); ?>
+        <?php foreach ($attRows as $att):
+            $stay = \Ismile\Admin\CheckinWorkspace::stayText($att['in'],$att['out'],$att['today']);
+            // Summit days: every visit in and out, the time inside pauses while outside (owner, 20 Nov 2026).
+            $visitList = $att['visits'] ?? [];
+            $inside = $visitList ? \Ismile\Attendance::timeInside($visitList, (int)$att['day']) : null;
+            if ($inside !== null) $stay = '';
+        ?>
           <li class="rd-att<?= $att['in'] ? ' is-in' : '' ?><?= $att['out'] ? ' is-left' : '' ?>">
             <span class="rd-att-kind <?= $att['kind'] === 'Summit' ? 'summit' : 'workshop' ?>"><?= $icon($att['kind'] === 'Summit' ? 'ticket' : 'workshops') ?><?= $e($att['kind']) ?></span>
             <div class="rd-att-what"><b><?= $e($att['name']) ?></b><?php if ($att['when'] !== ''): ?><small><?= $e($att['when']) ?></small><?php endif; ?></div>
@@ -190,6 +197,31 @@ if ($inCheckin) echo \Ismile\Admin\CheckinWorkspace::navigation('guests',$user,$
             <?php elseif (!$att['scanned']): ?><span class="rd-att-chip none">Company workshop, no door scan</span>
             <?php else: ?><span class="rd-att-chip none"><?= $icon('clock') ?>Not arrived</span><?php endif; ?>
             </div>
+            <?php if ($inside !== null): $now = \Ismile\App::now(); $end = \Ismile\Attendance::closesAt(); ?>
+            <div class="rd-visits">
+              <div class="rd-visit-total<?= $inside['open'] ? ' is-open' : '' ?>"><?= $icon('clock') ?><span>Time inside</span><b><?= $e(\Ismile\Attendance::durationText($inside['seconds'])) ?></b><em><?= count($visitList) ?> <?= count($visitList) === 1 ? 'visit' : 'visits' ?></em><?php if ($inside['open']): ?><em class="live">Counting now</em><?php endif; ?></div>
+              <ol class="rd-visit-list">
+              <?php foreach ($visitList as $n => $visit):
+                  $inAt = strtotime($visit['entered_at']);
+                  $outAt = $visit['left_at'] !== null ? strtotime($visit['left_at']) : null;
+                  $last = $n === count($visitList) - 1;
+                  $untilEnd = $outAt === null && $inside['closed_at_end'] && $last;
+                  $untilNow = $outAt === null && $inside['open'] && $last;
+                  $length = $outAt !== null ? $outAt - $inAt : ($untilEnd ? strtotime($end) - $inAt : ($untilNow ? strtotime($now) - $inAt : null));
+              ?>
+                <li>
+                  <span class="rd-visit-no">Visit <?= $n + 1 ?></span>
+                  <span class="rd-visit-time in" title="<?= $e(date('j M Y, H:i:s', $inAt)) ?> (Iraq time)"><?= $icon('check') ?>In <b><?= date('H:i:s', $inAt) ?></b></span>
+                  <?php if ($outAt !== null): ?><span class="rd-visit-time out" title="<?= $e(date('j M Y, H:i:s', $outAt)) ?> (Iraq time)"><?= $icon('logout') ?>Out <b><?= date('H:i:s', $outAt) ?></b></span>
+                  <?php elseif ($untilNow): ?><span class="rd-visit-time now"><?= $icon('users') ?>Inside now</span>
+                  <?php elseif ($untilEnd): ?><span class="rd-visit-time end"><?= $icon('clock') ?>No exit scan, counted until <?= date('H:i', strtotime($end)) ?> (summit end)</span>
+                  <?php else: ?><span class="rd-visit-time unknown">No exit scan, time not counted</span><?php endif; ?>
+                  <?php if ($length !== null): ?><span class="rd-visit-length"><?= $e(\Ismile\Attendance::durationText(max(0, $length))) ?></span><?php endif; ?>
+                </li>
+              <?php endforeach; ?>
+              </ol>
+            </div>
+            <?php endif; ?>
           </li>
         <?php endforeach; ?>
         </ul>

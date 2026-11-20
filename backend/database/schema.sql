@@ -379,6 +379,22 @@ CREATE TABLE IF NOT EXISTS ticket_attendance (
   CONSTRAINT ck_attendance_day CHECK (event_day IN (1, 2))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Every visit inside the venue (owner, 20 Nov 2026): each time a guest is
+-- scanned in and out, so the time inside pauses while they are outside.
+CREATE TABLE IF NOT EXISTS attendance_visits (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  ticket_id INT UNSIGNED NOT NULL,
+  event_day TINYINT UNSIGNED NOT NULL,
+  entered_at DATETIME NOT NULL,                            -- scanned in (or checked in at the desk)
+  left_at DATETIME NULL,                                   -- scanned out; NULL while inside
+  created_at DATETIME NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_visit_entry (ticket_id, event_day, entered_at),
+  KEY k_visit_open (ticket_id, event_day, left_at),
+  CONSTRAINT fk_visit_ticket FOREIGN KEY (ticket_id) REFERENCES tickets (id),
+  CONSTRAINT ck_visit_day CHECK (event_day IN (1, 2))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS certificates (
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,
   registration_id INT UNSIGNED NOT NULL,
