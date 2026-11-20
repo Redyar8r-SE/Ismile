@@ -54,25 +54,27 @@ Settings::set('event_day2', $tomorrow);
 Settings::set('lunch_capacity_day1', '0');
 Settings::set('lunch_capacity_day2', '0');
 $check('a lunch day whose date has passed is closed', Registrations::lunchClosed(1));
-$check('a lunch day still to come is open', !Registrations::lunchClosed(2));
-Settings::set('event_day1', date('Y-m-d'));
-$check('today\'s lunch closes at 17:00 Iraq time', Registrations::lunchClosed(1) === (App::now() >= date('Y-m-d') . ' 17:00:00'));
-Settings::set('event_day1', $yesterday);
+// Owner, 20 Nov 2026: all lunch is closed now, so even a day still to come is closed.
+$check('all lunch closed: a lunch day still to come is closed too', Registrations::ALL_LUNCH_CLOSED && Registrations::lunchClosed(2));
 
 $caller = static fn (array $more = []): array => $more + ['first_name' => 'Late', 'father_name' => 'Lunch', 'grandfather_name' => 'Guest',
     'phone' => '0750' . random_int(1000000, 9999999), 'email' => 'late-' . bin2hex(random_bytes(4)) . '@example.invalid', 'specialty' => 'gp', 'ticket' => 'professional'];
 $check('desk, phone and free-ticket forms refuse a closed lunch day',
     $error(fn () => Checkouts::officeRow($caller(['lunch_day1' => '1']))) === Registrations::lunchClosedMessage(1));
-$row = Checkouts::officeRow($caller(['lunch_day2' => '1']));
-$check('the same forms still take a lunch day that is open', $row['lunch_day2'] === 1 && $row['lunch_day1'] === 0);
+$check('all lunch closed: the same forms refuse Lunch day 2 too',
+    $error(fn () => Checkouts::officeRow($caller(['lunch_day2' => '1']))) === Registrations::lunchClosedMessage(2));
+$row = Checkouts::officeRow($caller());
+$check('the same forms still take a ticket with no lunch', $row['lunch_day2'] === 0 && $row['lunch_day1'] === 0);
 $check('VIP cannot have the closed day as its included lunch',
     $error(fn () => Checkouts::officeRow($caller(['ticket' => 'vip', 'lunch_day1' => '1', 'vip_lunch_day' => '1']))) === Registrations::lunchClosedMessage(1));
-$vip = Checkouts::officeRow($caller(['ticket' => 'vip', 'lunch_day2' => '1', 'vip_lunch_day' => '2']));
-$check('VIP with the open day as its included lunch is fine', $vip['vip_lunch_day'] === 2);
+$check('all lunch closed: VIP cannot have Day 2 as its included lunch either',
+    $error(fn () => Checkouts::officeRow($caller(['ticket' => 'vip', 'lunch_day2' => '1', 'vip_lunch_day' => '2']))) === Registrations::lunchClosedMessage(2));
 $check('an unpaid form holding the closed lunch day cannot be paid', Registrations::lunchFullFor(['id' => 0, 'lunch_day1' => 1, 'lunch_day2' => 0]));
-$check('an unpaid form with only the open lunch day can be paid', !Registrations::lunchFullFor(['id' => 0, 'lunch_day1' => 0, 'lunch_day2' => 1]));
+$check('all lunch closed: an unpaid form holding Lunch day 2 cannot be paid', Registrations::lunchFullFor(['id' => 0, 'lunch_day1' => 0, 'lunch_day2' => 1]));
+$check('an unpaid form with no lunch can still be paid', !Registrations::lunchFullFor(['id' => 0, 'lunch_day1' => 0, 'lunch_day2' => 0]));
 $state = Registrations::publicState('en');
 $check('the website is told the closed lunch day is not available', $state['lunch']['day1'] === false);
+$check('all lunch closed: the website is told Day 2 lunch is not available', $state['lunch']['day2'] === false);
 $lunchAddOns = new ReflectionMethod(SpeakerTickets::class, 'lunchAddOns');
 $check('a speaker\'s free lunch cannot be the closed day',
     $error(fn () => $lunchAddOns->invoke(null, ['lunch_day1' => '1'])) === Registrations::lunchClosedMessage(1));

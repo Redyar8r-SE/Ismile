@@ -164,8 +164,12 @@ final class Registrations
      * any route: website, payment link, desk, phone, free ticket or speaker.
      * People who already have it keep it.
      */
+    /** Owner, 20 Nov 2026: close all lunch now, nobody can add any lunch day any more. */
+    public const ALL_LUNCH_CLOSED = true;
+
     public static function lunchClosed(int $day): bool
     {
+        if (self::ALL_LUNCH_CLOSED) return true;
         $date = Settings::get('event_day' . $day);
         return preg_match('/^\d{4}-\d{2}-\d{2}$/D', $date) === 1 && App::now() >= $date . ' ' . self::LUNCH_CLOSES_AT;
     }
@@ -173,7 +177,7 @@ final class Registrations
     /** The words staff see when they tick a closed lunch day. */
     public static function lunchClosedMessage(int $day): string
     {
-        return 'Lunch day ' . $day . ' is closed: that summit day is over. Untick it.';
+        return 'Lunch day ' . $day . ' is closed: no more lunch can be added. Untick it.';
     }
 
     public static function lunchFull(int $day): bool
