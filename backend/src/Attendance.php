@@ -19,6 +19,24 @@ final class Attendance
         return null;
     }
 
+    /**
+     * When the summit ends (owner, 20 Nov 2026: Day 2 at 19:45), as
+     * Y-m-d H:i:s, or '' when the last day or the time is not set.
+     */
+    public static function closesAt(): string
+    {
+        $day = Settings::get('event_day2');
+        $time = substr(Settings::get('event_end_time'), 0, 5);
+        return ($day === '' || !preg_match('/^\d{2}:\d{2}$/', $time)) ? '' : $day . ' ' . $time . ':00';
+    }
+
+    /** True from the end of the summit on (19:45:00 itself included): no check-in or check-out counts. */
+    public static function closed(?string $at = null): bool
+    {
+        $end = self::closesAt();
+        return $end !== '' && ($at ?? App::now()) >= $end;
+    }
+
     /** Live admissions use the server date, including forms left open before midnight. */
     public static function admissionDay(int $requestedDay, ?string $date = null): int
     {
@@ -64,6 +82,9 @@ final class Attendance
             }
             // A request may have waited on another scanner's lock across midnight.
             $now = App::now();
+            if (App::isLive() && self::closed($now)) {
+                throw new UserError('The summit ended at ' . date('g:i A', strtotime(self::closesAt())) . ' on ' . date('j M', strtotime(self::closesAt())) . '. Check-in is closed.');
+            }
             $day = self::admissionDay($day, substr($now, 0, 10));
             $arrival = Db::one('SELECT * FROM ticket_attendance WHERE ticket_id = ? AND event_day = ?', [$ticket['id'], $day]);
             if ($arrival !== null) return ['duplicate' => true, 'arrival' => $arrival, 'ticket' => $ticket, 'day' => $day];

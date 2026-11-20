@@ -33,6 +33,9 @@ final class Settings
         'ticket_qr_in_email'    => '1',     // Legacy setting; ticket emails always include the QR and PDF.
         'event_day1'            => '2026-11-19',
         'event_day2'            => '2026-11-20',
+        // The summit ends at this time on Day 2 (owner, 20 Nov 2026): from then
+        // on no check-in or check-out is recorded, from the door or from PSOOLA.
+        'event_end_time'        => '19:45',
         'pay_link_days'         => '7',
         // Not on the Settings page: the prices the timed job last saw, so any
         // change to data/tickets.json is noticed, logged and announced.

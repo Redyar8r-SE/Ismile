@@ -11,6 +11,7 @@ declare(strict_types=1);
 namespace Ismile\Payments;
 
 use Ismile\App;
+use Ismile\Attendance;
 use Ismile\Audit;
 use Ismile\Db;
 
@@ -87,6 +88,8 @@ final class PsoolaWorkshopCheckIns
                 }
                 $first = $later;   // scanned before (a test), then on the workshop day
             }
+            // From the end of the summit on (Day 2, 19:45) a scan counts for nothing.
+            if (Attendance::closed($first)) continue;
             // Arrived: the first scan (an earlier one replaces a later one, never the other way).
             if (Db::run('UPDATE workshop_bookings SET checked_in_at = ? WHERE id = ? AND (checked_in_at IS NULL OR checked_in_at > ?)', [$first, $bookingId, $first]) > 0) {
                 $counts['arrived']++;
@@ -94,7 +97,7 @@ final class PsoolaWorkshopCheckIns
             }
             $inside = $scan['inside'] ?? null;
             $last = $time($scan['lastScannedAt'] ?? null);
-            if (!is_bool($inside) || !$onDay($last)) continue;
+            if (!is_bool($inside) || !$onDay($last) || Attendance::closed($last)) continue;
             if ($inside === false) {
                 if (Db::run('UPDATE workshop_bookings SET checked_out_at = ? WHERE id = ? AND checked_in_at < ? AND NOT (checked_out_at <=> ?)', [$last, $bookingId, $last, $last]) > 0) $counts['left']++;
             } elseif (Db::run('UPDATE workshop_bookings SET checked_out_at = NULL WHERE id = ? AND checked_out_at IS NOT NULL AND checked_out_at <= ?', [$bookingId, $last]) > 0) {

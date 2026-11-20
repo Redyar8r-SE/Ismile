@@ -117,6 +117,8 @@ final class PsoolaCheckIns
                 continue;
             }
             foreach ($days as $day => $at) {
+                // A scan from the end of the summit on (Day 2, 19:45) is not an arrival.
+                if (Attendance::closed($at)) continue;
                 if (self::admit($ticketId, $day, $at, (string) ($scan['ticketCode'] ?? ''))) {
                     $counts['added']++;
                 }
@@ -141,6 +143,8 @@ final class PsoolaCheckIns
         $ms = $scan['lastScannedAt'] ?? null;
         if (!is_bool($inside) || (!is_int($ms) && !is_float($ms))) return '';
         $at = date('Y-m-d H:i:s', (int) floor($ms / 1000));
+        // From the end of the summit on (Day 2, 19:45) a scan is neither a check-out nor back in.
+        if (Attendance::closed($at)) return '';
         $day = Attendance::currentDay(substr($at, 0, 10));
         if ($day === null) return '';
         if ($inside === false) {

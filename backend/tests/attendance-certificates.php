@@ -185,11 +185,24 @@ $check('midnight switches an old Day 1 form to Day 2', Attendance::admissionDay(
 $check('a missing form day still uses the current live day', Attendance::admissionDay(0, '2026-11-20')===2);
 $check('there is no third-day reset', $rejects(static fn()=>Attendance::admissionDay(1, '2026-11-22')));
 $check('live admission cannot be performed outside its real date', $rejects(static fn() => Attendance::checkIn(Tickets::qrPayload($fresh), Attendance::currentDay()===1 ? 2 : 1, $staff)));
-(new ReflectionProperty(Settings::class, 'cache'))->setValue(null, ['event_day1'=>date('Y-m-d',strtotime('yesterday')),'event_day2'=>date('Y-m-d')]+$saved);
+(new ReflectionProperty(Settings::class, 'cache'))->setValue(null, ['event_day1'=>date('Y-m-d',strtotime('yesterday')),'event_day2'=>date('Y-m-d'),'event_end_time'=>'23:59']+$saved);
 $overnightAdmission=Attendance::checkIn($overnightQr,1,$staff);
 $check('same QR from Day 1 works on live Day 2 with a stale Day 1 form', !$overnightAdmission['duplicate'] && $overnightAdmission['day']===2);
 $check('repeat scan after the midnight rollover is blocked for Day 2', Attendance::checkIn($overnightQr,1,$staff)['duplicate']);
 $check('midnight rollover preserves both attendance records', (int)Db::value('SELECT COUNT(*) FROM ticket_attendance WHERE ticket_id=?',[$overnightTicket['id']])===2);
+// The summit ends on Day 2 at 19:45 (owner, 20 Nov 2026): no check-in from then on, 19:45:00 included.
+(new ReflectionProperty(Settings::class, 'cache'))->setValue(null, ['event_day1'=>'2026-11-19','event_day2'=>'2026-11-20']+$saved);
+$check('the summit ends on Day 2 at 19:45', Attendance::closesAt()==='2026-11-20 19:45:00');
+$check('19:44:59 on Day 2 is still open', !Attendance::closed('2026-11-20 19:44:59'));
+$check('19:45:00 on Day 2 is closed', Attendance::closed('2026-11-20 19:45:00'));
+$check('later that night and the next day are closed', Attendance::closed('2026-11-20 23:10:00') && Attendance::closed('2026-11-21 08:00:00'));
+$check('Day 1 evening is not affected', !Attendance::closed('2026-11-19 20:30:00'));
+$late=$make('Late');
+$lateTicket=Tickets::forRegistration((int)$late['id']);
+(new ReflectionProperty(Settings::class, 'cache'))->setValue(null, ['event_day1'=>date('Y-m-d',strtotime('yesterday')),'event_day2'=>date('Y-m-d'),'event_end_time'=>date('H:i')]+$saved);
+$check('after the end time a live QR check-in is refused', $rejects(static fn() => Attendance::checkIn(Tickets::qrPayload($lateTicket), 2, $staff)));
+$check('after the end time a live manual check-in is refused', $rejects(static fn() => Attendance::checkInManually((int)$lateTicket['id'], (int)$lateTicket['version'], 2, $staff, true)));
+$check('nothing was recorded after the end time', (int)Db::value('SELECT COUNT(*) FROM ticket_attendance WHERE ticket_id=?',[$lateTicket['id']])===0);
 (new ReflectionProperty(Settings::class, 'cache'))->setValue(null,$saved);
 App::boot(['env'=>'test']+$config);
 $check('test rehearsals retain the selected day', Attendance::admissionDay(1, '2026-11-20')===1);

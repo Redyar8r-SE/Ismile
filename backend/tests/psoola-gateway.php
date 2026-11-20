@@ -647,6 +647,22 @@ if ($database) {
         \Ismile\Payments\PsoolaCheckIns::record([['lastScannedAt' => $ms('2026-11-19 15:00:00')] + $dayOne])['left'] === 0
         && \Ismile\Payments\PsoolaCheckIns::record([['inside' => false, 'lastScannedAt' => $ms('2026-11-19 08:00:00')] + $dayOne])['left'] === 0 && $leftAt() === null);
 
+    // The summit ends on Day 2 at 19:45 (owner, 20 Nov 2026): later gate scans are neither arrivals nor check-outs.
+    $dayTwo = ['ticketCode' => 'BDG3', 'order' => ['id' => 'ord_badge_used']];
+    $dayTwoCount = static fn (): int => (int) Db::value('SELECT COUNT(*) FROM ticket_attendance a JOIN tickets t ON t.id = a.ticket_id WHERE t.registration_id = ? AND a.event_day = 2', [$used]);
+    $check('a Day 2 gate scan at 19:45:00 is not an arrival', \Ismile\Payments\PsoolaCheckIns::record([['firstScannedAt' => $ms('2026-11-19 09:00:00'), 'lastScannedAt' => $ms('2026-11-20 19:45:00'), 'inside' => true] + $dayTwo])['added'] === 0
+        && $dayTwoCount() === 0);
+    $check('a Day 2 gate scan at 19:44:59 is still an arrival', \Ismile\Payments\PsoolaCheckIns::record([['firstScannedAt' => $ms('2026-11-19 09:00:00'), 'lastScannedAt' => $ms('2026-11-20 19:44:59'), 'inside' => true] + $dayTwo])['added'] === 1
+        && $dayTwoCount() === 1);
+    $dayTwoOut = static fn (): ?string => Db::value('SELECT a.checked_out_at FROM ticket_attendance a JOIN tickets t ON t.id = a.ticket_id WHERE t.registration_id = ? AND a.event_day = 2', [$used]);
+    $check('a check-out scan at 19:45:00 or later is not recorded', \Ismile\Payments\PsoolaCheckIns::record([['firstScannedAt' => $ms('2026-11-19 09:00:00'), 'lastScannedAt' => $ms('2026-11-20 19:45:00'), 'inside' => false] + $dayTwo])['left'] === 0
+        && \Ismile\Payments\PsoolaCheckIns::record([['firstScannedAt' => $ms('2026-11-19 09:00:00'), 'lastScannedAt' => $ms('2026-11-20 21:00:00'), 'inside' => false] + $dayTwo])['left'] === 0
+        && $dayTwoOut() === null);
+    Db::run('UPDATE ticket_attendance a JOIN tickets t ON t.id = a.ticket_id SET a.checked_out_at = ? WHERE t.registration_id = ? AND a.event_day = 2', ['2026-11-20 19:30:00', $used]);
+    $check('scanned back in after 19:45: the earlier check-out stays', \Ismile\Payments\PsoolaCheckIns::record([['firstScannedAt' => $ms('2026-11-19 09:00:00'), 'lastScannedAt' => $ms('2026-11-20 19:50:00'), 'inside' => true] + $dayTwo])['back_in'] === 0
+        && $dayTwoOut() === '2026-11-20 19:30:00');
+    Db::run('DELETE a FROM ticket_attendance a JOIN tickets t ON t.id = a.ticket_id WHERE t.registration_id = ? AND a.event_day = 2', [$used]);
+
     // Time at the summit (19 Nov 2026): Under 1 hour / 1 hour or more, arrival to check-out.
     $setLeft = static fn (?string $at) => Db::run('UPDATE ticket_attendance a JOIN tickets t ON t.id = a.ticket_id SET a.checked_out_at = ? WHERE t.registration_id = ? AND a.event_day = 1', [$at, $used]);
     $stay = static fn (string $which): int => count(CheckinWorkspace::rows(['attendance' => 'day1', 'stay' => $which, 'q' => Registrations::find($used)['ref']]));
@@ -693,6 +709,14 @@ if ($database) {
         && $booking()['checked_in_at'] === null);
     $check('scanned before, then on the workshop day: the arrival is the scan on the day', \Ismile\Payments\PsoolaWorkshopCheckIns::record($wid, [$wsScan(['firstScannedAt' => $ms('2026-11-18 10:00:00'), 'lastScannedAt' => $ms('2026-11-19 14:20:00')])])['arrived'] === 1
         && $booking()['checked_in_at'] === '2026-11-19 14:20:00');
+    // After the summit ends (Day 2, 19:45) workshop door scans count for nothing either.
+    Db::run("UPDATE workshops SET scheduled_date = '2026-11-20' WHERE id = ?", [$wid]);
+    Db::run('UPDATE workshop_bookings SET checked_in_at = NULL, checked_out_at = NULL WHERE id = ?', [$bookingId]);
+    $check('a workshop scan at 19:45 on Day 2 is not an arrival', \Ismile\Payments\PsoolaWorkshopCheckIns::record($wid, [$wsScan(['firstScannedAt' => $ms('2026-11-20 19:45:00'), 'lastScannedAt' => $ms('2026-11-20 19:45:00')])])['arrived'] === 0
+        && $booking()['checked_in_at'] === null);
+    $check('a workshop check-out at 19:45 on Day 2 is not recorded', \Ismile\Payments\PsoolaWorkshopCheckIns::record($wid, [$wsScan(['firstScannedAt' => $ms('2026-11-20 18:00:00'), 'lastScannedAt' => $ms('2026-11-20 19:45:00'), 'inside' => false])])['left'] === 0
+        && $booking() === ['checked_in_at' => '2026-11-20 18:00:00', 'checked_out_at' => null]);
+    Db::run("UPDATE workshops SET scheduled_date = '2026-11-19' WHERE id = ?", [$wid]);
     Db::run('UPDATE workshop_bookings SET removed_at = ? WHERE id = ?', [App::now(), $bookingId]);
     $check('a removed workshop booking takes no scans', \Ismile\Payments\PsoolaWorkshopCheckIns::record($wid, [$wsScan(['inside' => false, 'lastScannedAt' => $ms('2026-11-19 16:00:00')])])['unmatched'] === 1);
 
